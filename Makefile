@@ -33,6 +33,7 @@ $(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl
 
 ## ------ Tests ------
 
+PERL = ./perl
 PROVE = ./prove
 
 test: test-deps test-main
@@ -40,6 +41,6 @@ test: test-deps test-main
 test-deps: deps
 
 test-main:
-	$(PROVE) t/modules/*.t
+	$(PROVE) t/tests/*.t t/modules/*.t t/parsing.t
 
 ## License: Public Domain.

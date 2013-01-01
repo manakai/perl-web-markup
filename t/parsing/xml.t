@@ -1,10 +1,11 @@
-package test::Whatpm::XML::Parser;
+package test::Web::XML::Parser;
 use strict;
 use warnings;
 no warnings 'utf8';
 use Path::Class;
-use lib file (__FILE__)->dir->parent->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->parent->subdir ('modules', 'testdataparser', 'lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'testdataparser', 'lib')->stringify;
 use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
@@ -12,7 +13,8 @@ use Encode;
 sub bytes ($) { encode 'utf8', $_[0] }
 my $DEBUG = $ENV{DEBUG};
 
-my $test_dir_name = 't/xml/';
+my $test_dir_name = file (__FILE__)->dir->parent->parent->
+    subdir ('t_deps/tests/xml/parsing/manakai') . '/';
 
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
@@ -33,8 +35,8 @@ sub Data::Dumper::qquote {
 } # Data::Dumper::qquote
 
 if ($DEBUG) {
-  my $not_found = {%{$Whatpm::HTML::Debug::cp or {}}};
-  $Whatpm::HTML::Debug::cp_pass = sub {
+  my $not_found = {%{$Web::HTML::Debug::cp or {}}};
+  $Web::HTML::Debug::cp_pass = sub {
     my $id = shift;
     delete $not_found->{$id};
   };
@@ -46,10 +48,10 @@ if ($DEBUG) {
   }
 }
 
-use Whatpm::XML::Parser;
-use Whatpm::NanoDOM;
-use Whatpm::Charset::UnicodeChecker;
-use Whatpm::HTML::Dumper qw/dumptree/;
+use Web::XML::Parser;
+use NanoDOM;
+#use Whatpm::Charset::UnicodeChecker;
+use Web::HTML::Dumper qw/dumptree/;
 
 my $dom;
 if ($ENV{USE_REAL_DOM}) {
@@ -80,7 +82,7 @@ sub test ($) {
     }
   }
 
-  my $doc = $dom ? $dom->create_document : Whatpm::NanoDOM::Document->new;
+  my $doc = $dom ? $dom->create_document : NanoDOM::Document->new;
   my @errors;
   
   $SIG{INT} = sub {
@@ -104,7 +106,7 @@ sub test ($) {
     #return Whatpm::Charset::UnicodeChecker->new_handle ($_[0], 'html5');
   }; # $chk
 
-  my $p = Whatpm::XML::Parser->new;
+  my $p = Web::XML::Parser->new;
   my $result;
   unless (defined $test->{element}) {
     $p->parse_char_string ($test->{data}->[0] => $doc, $onerror, $chk);
@@ -113,7 +115,7 @@ sub test ($) {
     ## TODO: ...
     my $el = $doc->create_element_ns
       ('http://www.w3.org/1999/xhtml', [undef, $test->{element}]);
-    Whatpm::HTML->set_inner_html ($el, $test->{data}->[0], $onerror, $chk);
+    Web::HTML::Parser->set_inner_html ($el, $test->{data}->[0], $onerror, $chk);
     $result = dumptree ($el);
   }
   

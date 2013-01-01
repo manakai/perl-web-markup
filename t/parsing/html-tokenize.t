@@ -1,10 +1,10 @@
-package test::Whatpm::HTML::Tokenizer::html_tokenizer;
+package test::Web::HTML::Tokenizer::html_tokenizer;
 use strict;
 use warnings;
 no warnings 'utf8';
 use Path::Class;
-use lib file (__FILE__)->dir->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->parent->subdir ('lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use base qw(Test::Class);
 use Test::Differences;
 use JSON 1.07;
@@ -13,8 +13,10 @@ $JSON::UTF8 = 1;
 
 my $DEBUG = $ENV{DEBUG};
 
-my $test_dir_name = 't/';
-my $dir_name = 't/data/html-tokenizer/';
+my $test_dir_name = file (__FILE__)->dir->parent->parent->
+    subdir ('t_deps/tests/html/parsing/manakai') . '/';
+my $dir_name = file (__FILE__)->dir->parent->parent->
+    subdir ('t_deps/tests/html/parsing/html5lib/html-tokenizer') . '/';
 
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
@@ -30,9 +32,9 @@ $Data::Dumper::Sortkeys = 1;
 
 if ($DEBUG) {
   no warnings 'once';
-  my $not_found = {%{$Whatpm::HTML::Debug::cp or {}}};
+  my $not_found = {%{$Web::HTML::Debug::cp or {}}};
 
-  $Whatpm::HTML::Debug::cp_pass = sub {
+  $Web::HTML::Debug::cp_pass = sub {
     my $id = shift;
     delete $not_found->{$id};
   };
@@ -45,7 +47,7 @@ if ($DEBUG) {
   }
 }
 
-use Whatpm::HTML;
+use Web::HTML::Parser;
 
 sub _tests : Tests {
   my $self = shift;
@@ -110,7 +112,7 @@ sub _tokenize_test ($$) {
     my @cm = @{$test->{contentModelFlags} || ['PCDATA']};
     my $last_start_tag = $test->{lastStartTag};
     for my $cm (@cm) {
-      my $p = Whatpm::HTML->new;
+      my $p = Web::HTML::Tokenizer->new;
       my $i = 0;
       my @token;
 
@@ -125,38 +127,38 @@ sub _tokenize_test ($$) {
         warn $args{type}, "\n" if $DEBUG;
         push @token, 'ParseError';
       };
-      $p->{insertion_mode} = Whatpm::HTML::Parser::BEFORE_HEAD_IM (); # dummy
+      $p->{insertion_mode} = Web::HTML::Parser::BEFORE_HEAD_IM (); # dummy
       
       $p->_initialize_tokenizer;
       $p->{state} = {
-        CDATA => Whatpm::HTML::RAWTEXT_STATE (),
-        RCDATA => Whatpm::HTML::RCDATA_STATE (),
-        PCDATA => Whatpm::HTML::DATA_STATE (),
-        SCRIPT => Whatpm::HTML::SCRIPT_DATA_STATE (),
-        PLAINTEXT => Whatpm::HTML::PLAINTEXT_STATE (),
+        CDATA => Web::HTML::Defs::RAWTEXT_STATE (),
+        RCDATA => Web::HTML::Defs::RCDATA_STATE (),
+        PCDATA => Web::HTML::Defs::DATA_STATE (),
+        SCRIPT => Web::HTML::Defs::SCRIPT_DATA_STATE (),
+        PLAINTEXT => Web::HTML::Defs::PLAINTEXT_STATE (),
       }->{$cm};
       $p->{last_stag_name} = $last_start_tag;
 
       while (1) {
         my $token = $p->_get_next_token;
-        last if $token->{type} == Whatpm::HTML::END_OF_FILE_TOKEN ();
+        last if $token->{type} == Web::HTML::Defs::END_OF_FILE_TOKEN ();
         
         my $test_token = [
          {
-          Whatpm::HTML::DOCTYPE_TOKEN () => 'DOCTYPE',
-          Whatpm::HTML::START_TAG_TOKEN () => 'StartTag',
-          Whatpm::HTML::END_TAG_TOKEN () => 'EndTag',
-          Whatpm::HTML::COMMENT_TOKEN () => 'Comment',
-          Whatpm::HTML::CHARACTER_TOKEN () => 'Character',
+          Web::HTML::Defs::DOCTYPE_TOKEN () => 'DOCTYPE',
+          Web::HTML::Defs::START_TAG_TOKEN () => 'StartTag',
+          Web::HTML::Defs::END_TAG_TOKEN () => 'EndTag',
+          Web::HTML::Defs::COMMENT_TOKEN () => 'Comment',
+          Web::HTML::Defs::CHARACTER_TOKEN () => 'Character',
          }->{$token->{type}} || $token->{type},
         ];
         $test_token->[1] = $token->{tag_name} if defined $token->{tag_name};
         $test_token->[1] = $token->{data} if defined $token->{data};
-        if ($token->{type} == Whatpm::HTML::START_TAG_TOKEN ()) {
+        if ($token->{type} == Web::HTML::Defs::START_TAG_TOKEN ()) {
           $test_token->[2] = {map {$_->{name} => $_->{value}} values %{$token->{attributes}}};
           $test_token->[3] = 1 if $p->{self_closing};
           delete $p->{self_closing};
-        } elsif ($token->{type} == Whatpm::HTML::DOCTYPE_TOKEN ()) {
+        } elsif ($token->{type} == Web::HTML::Defs::DOCTYPE_TOKEN ()) {
           $test_token->[1] = $token->{name};
           $test_token->[2] = $token->{pubid};
           $test_token->[3] = $token->{sysid};
