@@ -3,7 +3,7 @@ perl:
   - "5.10"
 before_install: git submodule update --init
 install: "make test-deps"
-script: "make test && ./perl t/parsing.t"
+script: "make test || ./perl t/parsing.t"
 notifications:
   email:
     - wakaba@suikawiki.org
