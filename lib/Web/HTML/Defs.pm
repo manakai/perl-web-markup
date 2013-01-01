@@ -2,9 +2,19 @@ package Web::HTML::Defs;
 use strict;
 use warnings;
 our $VERSION = '1.0';
-use Exporter::Lite;
+use Carp;
 
 our @EXPORT;
+sub import ($;@) {
+  my $from_class = shift;
+  my ($to_class, $file, $line) = caller;
+  for (@_ ? @_ : @EXPORT) {
+    my $code = $from_class->can ($_)
+        or croak qq{"$_" is not exported by the $from_class module at $file line $line};
+    no strict 'refs';
+    *{$to_class . '::' . $_} = $code;
+  }
+} # import
 
 ## ------ Special character-like constants ------
 

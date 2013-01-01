@@ -1,0 +1,6 @@
+Data::Dumper
+Path::Class
+Scalar::Util
+Test::Class
+Test::Differences
+Test::More

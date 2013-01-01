@@ -11,7 +11,7 @@ use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
 use Web::HTML::Parser;
-use Web::HTML::Tokenizer qw(:token);
+use Web::HTML::Defs;
 
 sub _abort : Test(10) {
   my $tokenizer = Web::HTML::Parser->new;
