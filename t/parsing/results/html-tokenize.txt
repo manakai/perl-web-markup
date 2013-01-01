@@ -1,3 +1,5 @@
+# 
+# test::Web::HTML::Tokenizer::html_tokenizer->_tests
 # t_deps/tests/html/parsing/html5lib/html-tokenizer/test1.test
 ok 1 - Correct Doctype lowercase: qq'<!DOCTYPE html>'
 ok 2 - Correct Doctype uppercase: qq'<!DOCTYPE HTML>'
@@ -1691,6 +1693,7 @@ ok 1686 - EOF in attribute value (unquoted) state: qq'<a a =a'
 ok 1687 - EOF in after attribute value state: qq'<a a =\x{27}a\x{27}'
 # t_deps/tests/html/parsing/html5lib/html-tokenizer/contentModelFlags.test
 not ok 1688 - PLAINTEXT content model flag: qq'<head>&body;'
+
 #   Failed test 'PLAINTEXT content model flag: qq'<head>&body;''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1716,6 +1719,7 @@ ok 1689 - End tag closing RCDATA or RAWTEXT: qq'foo</xmp>'
 ok 1690 - End tag closing RCDATA or RAWTEXT (case-insensitivity): qq'foo</xMp>'
 ok 1691 - End tag closing RCDATA or RAWTEXT (ending with space): qq'foo</xmp '
 not ok 1692 - End tag closing RCDATA or RAWTEXT (ending with EOF): qq'foo</xmp'
+
 #   Failed test 'End tag closing RCDATA or RAWTEXT (ending with EOF): qq'foo</xmp''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1734,6 +1738,7 @@ not ok 1692 - End tag closing RCDATA or RAWTEXT (ending with EOF): qq'foo</xmp'
 # 
 ok 1693 - End tag closing RCDATA or RAWTEXT (ending with slash): qq'foo</xmp/'
 not ok 1694 - End tag not closing RCDATA or RAWTEXT (ending with left-angle-bracket): qq'foo</xmp<'
+
 #   Failed test 'End tag not closing RCDATA or RAWTEXT (ending with left-angle-bracket): qq'foo</xmp<''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1751,6 +1756,7 @@ not ok 1694 - End tag not closing RCDATA or RAWTEXT (ending with left-angle-brac
 # +---+------------------------------+---+------------------------------+
 # 
 not ok 1695 - End tag with incorrect name in RCDATA or RAWTEXT: qq'</foo>bar</xmp>'
+
 #   Failed test 'End tag with incorrect name in RCDATA or RAWTEXT: qq'</foo>bar</xmp>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1775,6 +1781,7 @@ not ok 1695 - End tag with incorrect name in RCDATA or RAWTEXT: qq'</foo>bar</xm
 # +---+------------------------------+---+------------------------------+
 # 
 not ok 1696 - End tag with incorrect name in RCDATA or RAWTEXT (starting like correct name): qq'</foo>bar</xmpaar>'
+
 #   Failed test 'End tag with incorrect name in RCDATA or RAWTEXT (starting like correct name): qq'</foo>bar</xmpaar>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1800,6 +1807,7 @@ not ok 1696 - End tag with incorrect name in RCDATA or RAWTEXT (starting like co
 # 
 ok 1697 - End tag closing RCDATA or RAWTEXT, switching back to PCDATA: qq'foo</xmp></baz>'
 not ok 1698 - RAWTEXT w/ something looking like an entity: qq'&foo;'
+
 #   Failed test 'RAWTEXT w/ something looking like an entity: qq'&foo;''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1819,6 +1827,7 @@ not ok 1698 - RAWTEXT w/ something looking like an entity: qq'&foo;'
 ok 1699 - RCDATA w/ an entity: qq'&lt;'
 # t_deps/tests/html/parsing/html5lib/html-tokenizer/escapeFlag.test
 not ok 1700 - Commented close tag in RCDATA or RAWTEXT: qq'foo<!--</xmp>--></xmp>'
+
 #   Failed test 'Commented close tag in RCDATA or RAWTEXT: qq'foo<!--</xmp>--></xmp>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1847,6 +1856,7 @@ not ok 1700 - Commented close tag in RCDATA or RAWTEXT: qq'foo<!--</xmp>--></xmp
 # +---+------------------------------+---+------------------------------+
 # 
 not ok 1701 - Bogus comment in RCDATA or RAWTEXT: qq'foo<!-->baz</xmp>'
+
 #   Failed test 'Bogus comment in RCDATA or RAWTEXT: qq'foo<!-->baz</xmp>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1876,6 +1886,7 @@ not ok 1701 - Bogus comment in RCDATA or RAWTEXT: qq'foo<!-->baz</xmp>'
 # +---+------------------------------+---+-------------------------------+
 # 
 not ok 1702 - End tag surrounded by bogus comment in RCDATA or RAWTEXT: qq'foo<!--></xmp><!-->baz</xmp>'
+
 #   Failed test 'End tag surrounded by bogus comment in RCDATA or RAWTEXT: qq'foo<!--></xmp><!-->baz</xmp>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1897,6 +1908,7 @@ not ok 1702 - End tag surrounded by bogus comment in RCDATA or RAWTEXT: qq'foo<!
 # +---+------------------------------+---+------------------------------+
 # 
 not ok 1703 - Commented entities in RCDATA: qq' &amp; <!-- &amp; --> &amp; </xmp>'
+
 #   Failed test 'Commented entities in RCDATA: qq' &amp; <!-- &amp; --> &amp; </xmp>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -1925,6 +1937,7 @@ not ok 1703 - Commented entities in RCDATA: qq' &amp; <!-- &amp; --> &amp; </xmp
 # +---+------------------------------+---+------------------------------------+
 # 
 not ok 1704 - Incorrect comment ending sequences in RCDATA or RAWTEXT: qq'foo<!-- x --x>x-- >x--!>x--<></xmp>'
+
 #   Failed test 'Incorrect comment ending sequences in RCDATA or RAWTEXT: qq'foo<!-- x --x>x-- >x--!>x--<></xmp>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2030,6 +2043,7 @@ ok 1774 - Decimal numeric entity followed by hex character A.: qq'&\#97F'
 # t_deps/tests/html/parsing/html5lib/html-tokenizer/xmlViolation.test
 ok 1775 - Non-XML character: qq'a\x{FFFF}b'
 not ok 1776 - Non-XML space: qq'a\x{0C}b'
+
 #   Failed test 'Non-XML space: qq'a\x{0C}b''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2052,6 +2066,7 @@ ok 1779 - CR in bogus comment state: qq'<?\x{0D}'
 ok 1780 - CRLF in bogus comment state: qq'<?\x{0D}\x{0A}'
 ok 1781 - NUL in RCDATA and RAWTEXT: qq'\x{5C}u0000'
 not ok 1782 - skip first BOM but not later ones: qq'\x{FEFF}foo\x{FEFF}bar'
+
 #   Failed test 'skip first BOM but not later ones: qq'\x{FEFF}foo\x{FEFF}bar''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2071,6 +2086,7 @@ ok 1783 - Non BMP-charref in in RCDATA: qq'&NotEqualTilde;'
 ok 1784 - Bad charref in in RCDATA: qq'&NotEqualTild;'
 ok 1785 - lowercase endtags in RCDATA and RAWTEXT: qq'</XMP>'
 not ok 1786 - bad endtag in RCDATA and RAWTEXT: qq'</ XMP>'
+
 #   Failed test 'bad endtag in RCDATA and RAWTEXT: qq'</ XMP>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2088,6 +2104,7 @@ not ok 1786 - bad endtag in RCDATA and RAWTEXT: qq'</ XMP>'
 # +---+-----------------------------+---+------------------------------+
 # 
 not ok 1787 - bad endtag in RCDATA and RAWTEXT: qq'</xm>'
+
 #   Failed test 'bad endtag in RCDATA and RAWTEXT: qq'</xm>''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2104,6 +2121,7 @@ not ok 1787 - bad endtag in RCDATA and RAWTEXT: qq'</xm>'
 # +---+---------------------------+------------------------------+
 # 
 not ok 1788 - bad endtag in RCDATA and RAWTEXT: qq'</xm '
+
 #   Failed test 'bad endtag in RCDATA and RAWTEXT: qq'</xm ''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2120,6 +2138,7 @@ not ok 1788 - bad endtag in RCDATA and RAWTEXT: qq'</xm '
 # +---+----------------------------+---+------------------------------+
 # 
 not ok 1789 - bad endtag in RCDATA and RAWTEXT: qq'</xm/'
+
 #   Failed test 'bad endtag in RCDATA and RAWTEXT: qq'</xm/''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2137,6 +2156,7 @@ not ok 1789 - bad endtag in RCDATA and RAWTEXT: qq'</xm/'
 # 
 ok 1790 - Non BMP-charref in attribute: qq'<p id="&NotEqualTilde;">'
 not ok 1791 - --!NUL in comment : qq'<!----!\x{5C}u0000-->'
+
 #   Failed test '--!NUL in comment : qq'<!----!\x{5C}u0000-->''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2810,6 +2830,7 @@ ok 2442 - Valid Unicode character U+100000: qq'\x{100000}'
 ok 2443 - Valid Unicode character U+10FFFD: qq'\x{10FFFD}'
 # t_deps/tests/html/parsing/html5lib/html-tokenizer/unicodeCharsProblematic.test
 not ok 2444 - Invalid Unicode character U+DFFF: qq'\x{5C}uDFFF'
+
 #   Failed test 'Invalid Unicode character U+DFFF: qq'\x{5C}uDFFF''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2827,6 +2848,7 @@ not ok 2444 - Invalid Unicode character U+DFFF: qq'\x{5C}uDFFF'
 # +---+--------------------------------+---+--------------------------------+
 # 
 not ok 2445 - Invalid Unicode character U+D800: qq'\x{5C}uD800'
+
 #   Failed test 'Invalid Unicode character U+D800: qq'\x{5C}uD800''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2844,6 +2866,7 @@ not ok 2445 - Invalid Unicode character U+D800: qq'\x{5C}uD800'
 # +---+--------------------------------+---+--------------------------------+
 # 
 not ok 2446 - Invalid Unicode character U+DFFF with valid preceding character: qq'a\x{5C}uDFFF'
+
 #   Failed test 'Invalid Unicode character U+DFFF with valid preceding character: qq'a\x{5C}uDFFF''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
@@ -2861,6 +2884,7 @@ not ok 2446 - Invalid Unicode character U+DFFF with valid preceding character: q
 # +---+---------------------------------+---+---------------------------------+
 # 
 not ok 2447 - Invalid Unicode character U+D800 with valid following character: qq'\x{5C}uD800a'
+
 #   Failed test 'Invalid Unicode character U+D800 with valid following character: qq'\x{5C}uD800a''
 #   at HTML-tokenizer.t ok line 1.
 #   (in test::Web::HTML::Tokenizer::html_tokenizer->_tests)
