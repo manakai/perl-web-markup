@@ -2,6 +2,9 @@
 
 all: generated-pm-files
 
+PERL = ./perl
+PROVE = ./prove
+
 ## ------ Setup ------
 
 WGET = wget
@@ -31,10 +34,23 @@ $(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl
 	perl bin/mkhtmlparser.pl $< > $@
 	perl -Ilib -c $@
 
-## ------ Tests ------
+CURL = curl
 
-PERL = ./perl
-PROVE = ./prove
+update-entities: local/bin/pmbp.pl
+	perl local/bin/pmbp.pl --install-module JSON
+	$(CURL) http://www.whatwg.org/specs/web-apps/current-work/entities.json | \
+	$(PERL) -MJSON -MData::Dumper -e ' #\
+	  local $$/ = undef; #\
+	  $$data = JSON->new->decode (scalar <>); #\
+	  $$Data::Dumper::Sortkeys = 1; #\
+	  $$Data::Dumper::Useqq = 1; #\
+	  $$pm = Dumper {map { (substr $$_, 1) => $$data->{$$_}->{characters} } keys %$$data}; #\
+	  $$pm =~ s/VAR1/Web::HTML::EntityChar/; #\
+	  print "$$pm\n1;\n# © Copyright 2004-2011 Apple Computer, Inc., Mozilla Foundation, and Opera Software ASA.\n# You are granted a license to use, reproduce and create derivative works of this document."; #\
+	' > lib/Web/HTML/_NamedEntityList.pm
+	perl -c lib/Web/HTML/_NamedEntityList.pm
+
+## ------ Tests ------
 
 test: test-deps test-main
 

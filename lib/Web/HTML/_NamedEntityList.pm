@@ -2231,43 +2231,7 @@ $Web::HTML::EntityChar = {
           "zwj;" => "\x{200d}",
           "zwnj;" => "\x{200c}"
         };
+
 1;
-__DATA__
-
-=head1 NAME
-
-mkentitylist.pl - Generate a named entity list for HTML parser
-
-_NamedEntityList.pm - A named entity list for HTML parser
-
-=head1 DESCRIPTION
-
-The C<Whatpm/_NamedEntityList.pm> file contains the list of the named
-character references taht can be used in HTML documents, as defined by
-the Web Applications 1.0 specification, both conforming and
-non-conforming.  The file is referenced by the HTML tokenizer
-implementation, L<Whatpm::HTML::Tokenizer>.
-
-The C<mkentitylist.pl> script is used to generate the
-C<_NamedEntityList.pm> file from the table of the named character
-references in the Web Applications 1.0 specification.
-
-=head1 SEE ALSO
-
-L<Whatpm::HTML::Tokenizer>.
-
-Web Applications 1.0 - Named character references
-<http://www.whatwg.org/specs/web-apps/current-work/complete.html#named-character-references>.
-
-=head1 LICENSE
-
-(C) Copyright 2004-2007 Apple Computer, Inc., Mozilla Foundation, and
-Opera Software ASA.
-
-Copyright 2007-2010 Wakaba <w@suika.fam.cx>.
-
-You are granted a license to use, reproduce and create derivative
-works of this document.
-
-=cut
-
+# © Copyright 2004-2011 Apple Computer, Inc., Mozilla Foundation, and Opera Software ASA.
+# You are granted a license to use, reproduce and create derivative works of this document.
