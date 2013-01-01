@@ -19,3 +19,8 @@ $perl $parsing/html-tree.t > $tmp/html-tree.txt 2>&1
 $perl $parsing/xml.t > $tmp/xml.txt 2>&1
 (diff -uB $results/xml.txt $tmp/xml.txt \
   && echo "ok 3") || echo "not ok 3"
+
+# Return value
+diff -uB $results/html-tokenize.txt $tmp/html-tokenize.txt > /dev/null && \
+diff -uB $results/html-tree.txt $tmp/html-tree.txt > /dev/null && \
+diff -uB $results/xml.txt $tmp/xml.txt > /dev/null
