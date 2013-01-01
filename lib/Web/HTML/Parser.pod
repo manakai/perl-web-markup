@@ -1,12 +1,12 @@
 =head1 NAME
 
-Whatpm::HTML::Parser - An HTML parser
+Web::HTML::Parser - An HTML parser
 
 =head1 SYNOPSIS
 
-  use Whatpm::HTML::Parser;
+  use Web::HTML::Parser;
   use Message::DOM::DOMImplementation;
-  $parser = Whatpm::HTML::Parser->new;
+  $parser = Web::HTML::Parser->new;
   $dom = Message::DOM::DOMImplementation->new;
   $doc = $dom->create_document;
   
@@ -19,7 +19,7 @@ Whatpm::HTML::Parser - An HTML parser
 
 =head1 DESCRIPTION
 
-The C<Whatpm::HTML::Parser> module is an implementation of the HTML
+The C<Web::HTML::Parser> module is an implementation of the HTML
 parser.  It implements the HTML parsing algorithm as defined by HTML
 Living Standard.  Therefore, it's parsing behavior is fully compatible
 with Web browsers with HTML5 parser enabled.
@@ -28,16 +28,16 @@ with Web browsers with HTML5 parser enabled.
 
 It is recommended to use standard DOM interface, such as C<inner_html>
 method of the C<Document> object, to parse an HTML string, where
-possible.  The L<Whatpm::HTML::Parser> module, which, in fact, is used
+possible.  The L<Web::HTML::Parser> module, which, in fact, is used
 to implement the C<inner_html> method, offers more control on how
 parser behaves, which would not be useful unless you are writing a
 complex user agent such as browser or validator.
 
-The L<Whatpm::HTML::Parser> module provides following methods:
+The L<Web::HTML::Parser> module provides following methods:
 
 =over 4
 
-=item $parser = Whatpm::HTML::Parser->new
+=item $parser = Web::HTML::Parser->new
 
 Create a new parser.
 
@@ -90,7 +90,9 @@ The second argument to the method must be a string of characters.
 
 Get or set the error handler for the parser.  Any parse error, as well
 as warning and information, is reported to the handler.  See
-L<Whatpm::Errors> for more information.
+L<Whatpm::Errors>
+<https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
+for more information.
 
 =back
 
@@ -109,11 +111,11 @@ status.
 
 L<Message::DOM::Document>, L<Message::DOM::Element>.
 
-L<Whatpm::HTML::Serializer>.
+L<Web::HTML::Serializer>.
 
-L<Whatpm::ContentChecker>.
+L<Web::ContentChecker>.
 
-L<Whatpm::XML::Parser>.
+L<Web::XML::Parser>.
 
 =head1 SPECIFICATIONS
 

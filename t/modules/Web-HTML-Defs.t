@@ -1,12 +1,11 @@
-package test::Whatpm::HTML::Defs;
+package test::Web::HTML::Defs;
 use strict;
 use warnings;
 use Path::Class;
-use lib file (__FILE__)->dir->subdir ('lib')->stringify;
-use Test::Manakai::Default;
+use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use base qw(Test::Class);
-use Test::MoreMore;
-use Whatpm::HTML::Defs;
+use Test::More;
+use Web::HTML::Defs;
 
 sub _chars : Test(3) {
   ok EOF_CHAR;

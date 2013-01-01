@@ -1,25 +1,26 @@
-package test::Whatpm::HTML::Parser;
+package test::Web::HTML::Parser;
 use strict;
 use warnings;
 use Path::Class;
-use lib file (__FILE__)->dir->subdir ('lib')->stringify;
-use Test::Manakai::Default;
+use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'testdataparser', 'lib')->stringify;
 use base qw(Test::Class);
-use Test::MoreMore;
-use Whatpm::HTML::Parser;
-use Message::DOM::DOMImplementation;
-use Message::DOM::Document;
+use Test::More;
+use Test::Differences;
+use Web::HTML::Parser;
+use NanoDOM;
 
 sub _html_parser_gc : Test(2) {
   my $parser_destroy_called = 0;
   my $doc_destroy_called = 0;
 
   no warnings 'redefine';
-  local *Whatpm::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
-  local *Message::DOM::Document::DESTROY = sub { $doc_destroy_called++ };
+  local *Web::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
+  local *NanoDOM::Document::DESTROY = sub { $doc_destroy_called++ };
 
-  my $doc = Message::DOM::DOMImplementation->new->create_document;
-  Whatpm::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
+  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  Web::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
 
   is $parser_destroy_called, 1;
 
@@ -34,12 +35,12 @@ sub _html_fragment_parser_gc : Test(6) {
 
   no warnings 'redefine';
   no warnings 'once';
-  local *Whatpm::HTML::DESTROY = sub { $parser_destroy_called++ };
-  local *Message::DOM::Document::DESTROY = sub { $doc_destroy_called++ };
-  local *Message::DOM::Element::DESTROY = sub { $el_destroy_called++ };
+  local *Web::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
+  local *NanoDOM::Document::DESTROY = sub { $doc_destroy_called++ };
+  local *NanoDOM::Element::DESTROY = sub { $el_destroy_called++ };
 
-  my $doc = Message::DOM::DOMImplementation->new->create_document;
-  my $el = $doc->create_element ('p');
+  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  my $el = $doc->create_element_ns (undef, [undef, 'p']);
 
   $el->inner_html (q[]);
   is $el_destroy_called, 1; # fragment parser's |Element|
@@ -55,10 +56,10 @@ sub _html_fragment_parser_gc : Test(6) {
 } # _html_fragment_parser_gc
 
 sub _html_parser_srcdoc : Test(3) {
-  my $doc = Message::DOM::DOMImplementation->new->create_document;
+  my $doc = NanoDOM::DOMImplementation->new->create_document;
   $doc->manakai_is_srcdoc (1);
 
-  Whatpm::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
+  Web::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
 
   ok $doc->manakai_is_html;
   is $doc->compat_mode, 'CSS1Compat';
@@ -66,34 +67,34 @@ sub _html_parser_srcdoc : Test(3) {
 } # _html_parser_srcdoc
 
 sub _html_parser_change_the_encoding_char_string : Test(4) {
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my $called = 0;
   my $onerror = sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
   };
   
-  my $doc = Message::DOM::DOMImplementation->new->create_document;
+  my $doc = NanoDOM::DOMImplementation->new->create_document;
   $parser->parse_char_string ('<meta charset=shift_jis>' => $doc, sub { });
   ok !$called;
   is $doc->input_encoding, undef;
   
-  my $doc2 = Message::DOM::DOMImplementation->new->create_document;
+  my $doc2 = NanoDOM::DOMImplementation->new->create_document;
   $parser->parse_char_string ('<meta http-equiv=Content-Type content="text/html; charset=shift_jis">' => $doc2, sub { });
   ok !$called;
   is $doc2->input_encoding, undef;
 } # _html_parser_change_the_encoding_char_string
 
 sub _html_parser_change_the_encoding_fragment : Test(2) {
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my $called = 0;
   my $onerror = sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
   };
   
-  my $doc = Message::DOM::DOMImplementation->new->create_document;
-  my $el = $doc->create_element ('div');
+  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  my $el = $doc->create_element_ns (undef, [undef, 'div']);
 
   $parser->set_inner_html ($el, '<meta charset=shift_jis>', sub { });
   ok !$called;
@@ -103,13 +104,13 @@ sub _html_parser_change_the_encoding_fragment : Test(2) {
 } # _html_parser_change_the_encoding_fragment
 
 sub _html_parser_change_the_encoding_byte_string : Test(32) {
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my $called = 0;
   my $onerror = sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
   };
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
 
   for my $input (
     '<meta charset=shift_jis>',
@@ -137,13 +138,13 @@ sub _html_parser_change_the_encoding_byte_string : Test(32) {
 } # _html_parser_change_the_encoding_byte_string
 
 sub _html_parser_change_the_encoding_byte_string_changed : Test(48) {
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my $called = 0;
   my $onerror = sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
   };
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
 
   for (
     ['<meta charset=shift_jis>' => 'shift_jis'],
@@ -182,13 +183,13 @@ sub _html_parser_change_the_encoding_byte_string_changed : Test(48) {
 } # _html_parser_change_the_encoding_byte_string_changed
 
 sub _html_parser_change_the_encoding_byte_string_not_called : Test(28) {
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my $called = 0;
   my $onerror = sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
   };
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
 
   for my $input (
     '',
@@ -215,13 +216,13 @@ sub _html_parser_change_the_encoding_byte_string_not_called : Test(28) {
 } # _html_parser_change_the_encoding_byte_string_not_called
 
 sub _html_parser_change_the_encoding_byte_string_with_charset : Test(2) {
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my $called = 0;
   my $onerror = sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
   };
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
 
   for my $input (
     '<meta http-equiv=content-type content="text/html; charset=shift_jis">',
@@ -234,22 +235,22 @@ sub _html_parser_change_the_encoding_byte_string_with_charset : Test(2) {
 } # _html_parser_change_the_encoding_byte_string_with_charset
 
 sub _parse_char_string : Test(4) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<!DOCTYPE html><html lang=en><title>\x{0500}\x{200}</title>\x{500}};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   $parser->parse_char_string ($input => $doc);
-  is $doc->child_nodes->length, 2;
+  is scalar @{$doc->child_nodes}, 2;
   eq_or_diff $doc->inner_html, qq{<!DOCTYPE html><html lang="en"><head><title>\x{0500}\x{0200}</title></head><body>\x{0500}</body></html>};
   is $doc->input_encoding, undef; # XXX Should be UTF-8 for consistency with DOM4?
   is $doc->manakai_is_html, 1;
 } # _parse_char_string
 
 sub _parse_char_string_onerror_old : Test(2) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my @error;
   $parser->parse_char_string ($input => $doc, sub {
     push @error, {@_};
@@ -265,10 +266,10 @@ sub _parse_char_string_onerror_old : Test(2) {
 } # _parse_char_string_onerror_old
 
 sub _parse_char_string_onerror_new : Test(2) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my @error;
   $parser->onerror (sub {
     push @error, {@_};
@@ -285,34 +286,34 @@ sub _parse_char_string_onerror_new : Test(2) {
 } # _parse_char_string_onerror_new
 
 sub _parse_char_string_old_children : Test(3) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   $doc->inner_html (q{<foo><bar/></foo><!---->});
-  is $doc->child_nodes->length, 2;
+  is scalar @{$doc->child_nodes}, 2;
 
   my $input = qq{<html lang=en>};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   $parser->parse_char_string ($input => $doc);
 
-  is $doc->child_nodes->length, 1;
+  is scalar @{$doc->child_nodes}, 1;
   eq_or_diff $doc->inner_html, q{<html lang="en"><head></head><body></body></html>};
 } # _parse_char_string_old_children
 
 sub _parse_char_string_encoding_decl : Test(2) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en><meta charset=euc-jp>};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   $parser->parse_char_string ($input => $doc);
   eq_or_diff $doc->inner_html, q{<html lang="en"><head><meta charset="euc-jp"></head><body></body></html>};
   is $doc->input_encoding, undef;
 } # _parse_char_string_encoding_decl
 
 sub _parse_byte_string_latin1 : Test(2) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\xCF\xEF\xEE\x21\x21};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   $parser->parse_byte_string ('iso-8859-1', $input => $doc);
 
   eq_or_diff $doc->inner_html, qq{<html lang="en"><head></head><body>\xCF\xEF\xEE\x21\x21</body></html>};
@@ -320,10 +321,10 @@ sub _parse_byte_string_latin1 : Test(2) {
 } # _parse_byte_string_latin1
 
 sub _parse_byte_string_utf8 : Test(2) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\xCF\xAF\xEE\x21\x21};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   $parser->parse_byte_string ('utf-8', $input => $doc);
 
   eq_or_diff $doc->inner_html, qq{<html lang="en"><head></head><body>\x{03ef}\x{fffd}\x21\x21</body></html>};
@@ -331,10 +332,10 @@ sub _parse_byte_string_utf8 : Test(2) {
 } # _parse_byte_string_utf8
 
 sub _parse_byte_string_onerror_new : Test(2) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\xC3\xAC};
-  my $parser = Whatpm::HTML::Parser->new;
+  my $parser = Web::HTML::Parser->new;
   my @error;
   $parser->onerror (sub {
     push @error, {@_};

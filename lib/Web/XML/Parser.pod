@@ -1,12 +1,12 @@
 =head1 NAME
 
-Whatpm::XML::Parser - An XML parser
+Web::XML::Parser - An XML parser
 
 =head1 SYNOPSIS
 
-  use Whatpm::XML::Parser;
+  use Web::XML::Parser;
   use Message::DOM::DOMImplementation;
-  $parser = Whatpm::XML::Parser->new;
+  $parser = Web::XML::Parser->new;
   $dom = Message::DOM::DOMImplementation->new;
   $doc = $dom->create_document;
   
@@ -17,7 +17,7 @@ Whatpm::XML::Parser - An XML parser
 
 =head1 DESCRIPTION
 
-The C<Whatpm::XML::Parser> module is an implementation of the XML
+The C<Web::XML::Parser> module is an implementation of the XML
 parser.  The parser is not Draconian - the parser does not holt on
 well-formedness errors.  It implements a variant of XML5 proposal,
 which defines error handling for ill-formed XML documents.
@@ -26,16 +26,16 @@ which defines error handling for ill-formed XML documents.
 
 It is recommended to use standard DOM interface, such as C<inner_html>
 method of the C<Document> object, to parse an XML string, where
-possible.  The L<Whatpm::XML::Parser> module, which, in fact, is used
+possible.  The L<Web::XML::Parser> module, which, in fact, is used
 to implement the C<inner_html> method, offers more control on how
 parser behaves, which would not be useful unless you are writing a
 complex user agent such as browser or validator.
 
-The L<Whatpm::XML::Parser> module provides following methods:
+The L<Web::XML::Parser> module provides following methods:
 
 =over 4
 
-=item $parser = Whatpm::XML::Parser->new
+=item $parser = Web::XML::Parser->new
 
 Create a new parser.
 
@@ -57,7 +57,7 @@ removed by the parser.
 
 Get or set the error handler for the parser.  Any parse error, as well
 as warning and information, is reported to the handler.  See
-L<Whatpm::Errors> for more information.
+L<Web::Errors> for more information.
 
 =back
 
@@ -68,9 +68,9 @@ specified as an argument to parse methods.
 
 L<Message::DOM::Document>, L<Message::DOM::Element>.
 
-L<Whatpm::ContentChecker>.
+L<Web::ContentChecker>.
 
-L<Whatpm::HTML::Parser>.
+L<Web::HTML::Parser>.
 
 =head1 SPECIFICATIONS
 

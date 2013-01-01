@@ -1,18 +1,20 @@
-package test::Whatpm::HTML::Tokenizer;
+package test::Web::HTML::Tokenizer;
 use strict;
 use warnings;
 no warnings 'utf8';
 use Path::Class;
-use lib file (__FILE__)->dir->subdir ('lib')->stringify;
-use Test::Manakai::Default;
+use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'testdataparser', 'lib')->stringify;
 use base qw(Test::Class);
-use Test::MoreMore;
+use Test::More;
+use Test::Differences;
 use Test::HTCT::Parser;
-use Whatpm::HTML;
-use Whatpm::HTML::Tokenizer qw(:token);
+use Web::HTML::Parser;
+use Web::HTML::Tokenizer qw(:token);
 
 sub _abort : Test(10) {
-  my $tokenizer = Whatpm::HTML->new;
+  my $tokenizer = Web::HTML::Parser->new;
 
   my $eof;
 

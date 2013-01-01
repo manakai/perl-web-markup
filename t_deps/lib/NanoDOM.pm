@@ -1,25 +1,25 @@
 =head1 NAME
 
-Whatpm::NanoDOM - A Non-Conforming Implementation of DOM Subset
+NanoDOM - A Non-Conforming Implementation of DOM Subset
 
 =head1 DESCRIPTION
 
-The C<Whatpm::NanoDOM> module contains a non-conforming implementation
+The C<NanoDOM> module contains a non-conforming implementation
 of a subset of DOM.  It is the intention that this module is
-used only for the purpose of testing the C<Whatpm::HTML> module.
+used only for the purpose of testing the C<HTML> module.
 
 See source code if you would like to know what it does.
 
 =cut
 
-package Whatpm::NanoDOM;
+package NanoDOM;
 use strict;
 use warnings;
 our $VERSION = '1.31';
 
 require Scalar::Util;
 
-package Whatpm::NanoDOM::DOMImplementation;
+package NanoDOM::DOMImplementation;
 
 sub new ($) {
   my $class = shift;
@@ -28,10 +28,10 @@ sub new ($) {
 } # new
 
 sub create_document ($) {
-  return Whatpm::NanoDOM::Document->new;
+  return NanoDOM::Document->new;
 } # create_document
 
-package Whatpm::NanoDOM::Node;
+package NanoDOM::Node;
 
 sub new ($) {
   my $class = shift;
@@ -59,7 +59,7 @@ sub manakai_parent_element ($) {
 sub child_nodes ($) {
   $_[0]->{child_nodes} ||= [];
   if (ref $_[0]->{child_nodes} eq 'ARRAY') {
-    bless $_[0]->{child_nodes}, 'Whatpm::NanoDOM::NodeList';
+    bless $_[0]->{child_nodes}, 'NanoDOM::NodeList';
   }
   return $_[0]->{child_nodes};
 } # child_nodes
@@ -169,7 +169,7 @@ sub text_content ($;$) {
   my $self = shift;
   if (@_) {
     @{$self->{child_nodes}} = (); ## NOTE: parent_node not unset.
-    $self->append_child (Whatpm::NanoDOM::Text->new ($_[0])) if length $_[0];
+    $self->append_child (NanoDOM::Text->new ($_[0])) if length $_[0];
     return unless wantarray;
   }
   my $r = '';
@@ -206,8 +206,8 @@ sub NOTATION_NODE () { 12 }
 sub ELEMENT_TYPE_DEFINITION_NODE () { 81001 }
 sub ATTRIBUTE_DEFINITION_NODE () { 81002 }
 
-package Whatpm::NanoDOM::Document;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::Document;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($) {
   my $self = shift->SUPER::new;
@@ -235,19 +235,19 @@ sub strict_error_checking {
 
 sub create_text_node ($$) {
   shift;
-  return Whatpm::NanoDOM::Text->new (shift);
+  return NanoDOM::Text->new (shift);
 } # create_text_node
 
 sub create_comment ($$) {
   shift;
-  return Whatpm::NanoDOM::Comment->new (shift);
+  return NanoDOM::Comment->new (shift);
 } # create_comment
 
 ## The second parameter only supports manakai extended way
 ## to specify qualified name - "[$prefix, $local_name]"
 sub create_attribute_ns ($$$) {
   my ($self, $nsuri, $qn) = @_;
-  return Whatpm::NanoDOM::Attr->new (undef, $nsuri, $qn->[0], $qn->[1], '');
+  return NanoDOM::Attr->new (undef, $nsuri, $qn->[0], $qn->[1], '');
 
   ## NOTE: Created attribute node should be set to an element node
   ## as far as possible.  |onwer_document| of the attribute node, for
@@ -258,45 +258,49 @@ sub create_attribute_ns ($$$) {
 ## to specify qualified name - "[$prefix, $local_name]"
 sub create_element_ns ($$$) {
   my ($self, $nsuri, $qn) = @_;
-  return Whatpm::NanoDOM::Element->new ($self, $nsuri, $qn->[0], $qn->[1]);
+  return NanoDOM::Element->new ($self, $nsuri, $qn->[0], $qn->[1]);
 } # create_element_ns
 
 ## A manakai extension
 sub create_document_type_definition ($$) {
   shift;
-  return Whatpm::NanoDOM::DocumentType->new (shift);
+  return NanoDOM::DocumentType->new (shift);
 } # create_document_type_definition
 
 ## A manakai extension.
 sub create_element_type_definition ($$) {
   shift;
-  return Whatpm::NanoDOM::ElementTypeDefinition->new (shift);
+  return NanoDOM::ElementTypeDefinition->new (shift);
 } # create_element_type_definition
 
 ## A manakai extension.
 sub create_general_entity ($$) {
   shift;
-  return Whatpm::NanoDOM::Entity->new (shift);
+  return NanoDOM::Entity->new (shift);
 } # create_general_entity
 
 ## A manakai extension.
 sub create_notation ($$) {
   shift;
-  return Whatpm::NanoDOM::Notation->new (shift);
+  return NanoDOM::Notation->new (shift);
 } # create_notation
 
 ## A manakai extension.
 sub create_attribute_definition ($$) {
   shift;
-  return Whatpm::NanoDOM::AttributeDefinition->new (shift);
+  return NanoDOM::AttributeDefinition->new (shift);
 } # create_attribute_definition
 
 sub create_processing_instruction ($$$) {
-  return Whatpm::NanoDOM::ProcessingInstruction->new (@_);
-} # creat_processing_instruction
+  return NanoDOM::ProcessingInstruction->new (@_);
+} # create_processing_instruction
+
+sub create_document_fragment ($) {
+  return NanoDOM::DocumentFragment->new;
+} # create_document_fragment
 
 sub implementation ($) {
-  return 'Whatpm::NanoDOM::DOMImplementation';
+  return 'NanoDOM::DOMImplementation';
 } # implementation
 
 sub document_element ($) {
@@ -447,8 +451,48 @@ sub get_element_by_id ($$) {
   return undef;
 } # get_element_by_id
 
-package Whatpm::NanoDOM::Element;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+sub inner_html ($;$) {
+  my $self = $_[0];
+  if ($self->{manakai_is_html}) {
+    if (@_ > 1) {
+      for ($self->child_nodes->to_list) {
+        $self->remove_child ($_);
+      }
+
+      require Web::HTML::Parser;
+      Web::HTML::Parser->parse_char_string ($_[1] => $self);
+      return unless defined wantarray;
+    }
+
+    require Web::HTML::Serializer;
+    return ${ Web::HTML::Serializer->get_inner_html ($self) };
+  } else { # XML
+    if (@_ > 1) {
+      my $doc = $self->implementation->create_document;
+      require Web::XML::Parser;
+      $doc = Web::XML::Parser->parse_char_string ($_[1] => $doc);
+      for ($self->child_nodes->to_list) {
+        $self->remove_child ($_);
+      }
+      for my $node (map { $_ } $doc->child_nodes->to_list) {
+        $self->append_child ($self->adopt_node ($node));
+      }
+      return unless defined wantarray;
+    }
+
+    require XMLSerializer;
+    my $r = '';
+    for my $node ($self->child_nodes->to_list) {
+      $r .= ${ XMLSerializer->get_outer_xml ($node, sub {
+        # INVALID_STATE_ERR
+      }) };
+    }
+    return $r;
+  }
+} # inner_html
+
+package NanoDOM::Element;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$$$$) {
   my $self = shift->SUPER::new;
@@ -495,7 +539,7 @@ sub manakai_append_text ($$) {
       $self->{child_nodes}->[-1]->node_type == 3) {
     $self->{child_nodes}->[-1]->manakai_append_text (shift);
   } else {
-    my $text = Whatpm::NanoDOM::Text->new (shift);
+    my $text = NanoDOM::Text->new (shift);
     $self->append_child ($text);
   }
 } # manakai_append_text
@@ -591,7 +635,7 @@ sub has_attribute_ns ($$$) {
 sub set_attribute_ns ($$$$) {
   my ($self, $nsuri, $qn, $value) = @_;
   $self->{attributes}->{defined $nsuri ? $nsuri : ''}->{$qn->[1]}
-    = Whatpm::NanoDOM::Attr->new ($self, $nsuri, $qn->[0], $qn->[1], $value);
+    = NanoDOM::Attr->new ($self, $nsuri, $qn->[0], $qn->[1], $value);
 } # set_attribute_ns
 
 sub set_attribute_node_ns ($$) {
@@ -618,17 +662,17 @@ sub inner_html ($;$) {
   my $self = $_[0];
 
   if (@_ > 1) {
-    require Whatpm::HTML;
-    Whatpm::HTML->set_inner_html ($self, $_[1]);
+    require Web::HTML::Parser;
+    Web::HTML::Parser->set_inner_html ($self, $_[1]);
     return unless defined wantarray;
   }
   
-  require Whatpm::HTML::Serializer;
-  return ${ Whatpm::HTML::Serializer->get_inner_html ($self) };
+  require Web::HTML::Serializer;
+  return ${ Web::HTML::Serializer->get_inner_html ($self) };
 } # inner_html
 
-package Whatpm::NanoDOM::Attr;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::Attr;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$$$$$) {
   my $self = shift->SUPER::new;
@@ -649,6 +693,7 @@ sub namespace_uri ($) {
 sub manakai_local_name ($) {
   return shift->{local_name};
 } # manakai_local_name
+*local_name = \&manakai_local_name;
 
 sub node_type { 2 }
 
@@ -687,8 +732,8 @@ sub manakai_attribute_type ($;$) {
   return $_[0]->{manakai_attribute_type} || 0;
 }
 
-package Whatpm::NanoDOM::CharacterData;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::CharacterData;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$) {
   my $self = shift->SUPER::new;
@@ -706,18 +751,18 @@ sub data ($) {
   return shift->{data};
 } # data
 
-package Whatpm::NanoDOM::Text;
-push our @ISA, 'Whatpm::NanoDOM::CharacterData';
+package NanoDOM::Text;
+push our @ISA, 'NanoDOM::CharacterData';
 
 sub node_type () { 3 }
 
-package Whatpm::NanoDOM::Comment;
-push our @ISA, 'Whatpm::NanoDOM::CharacterData';
+package NanoDOM::Comment;
+push our @ISA, 'NanoDOM::CharacterData';
 
 sub node_type () { 8 }
 
-package Whatpm::NanoDOM::DocumentType;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::DocumentType;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$) {
   my $self = shift->SUPER::new;
@@ -781,8 +826,8 @@ sub set_notation_node ($$) {
   $_[0]->{notations}->{$_[1]->node_name} = $_[1];
 } # set_notation_node
 
-package Whatpm::NanoDOM::ProcessingInstruction;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::ProcessingInstruction;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$$$) {
   my $self = shift->SUPER::new;
@@ -805,8 +850,8 @@ sub data ($;$) {
   return $_[0]->{data};
 } # data
 
-package Whatpm::NanoDOM::Entity;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::Entity;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$) {
   my $self = shift->SUPER::new;
@@ -832,8 +877,8 @@ sub notation_name ($;$) {
   return $_[0]->{notation_name};
 } # notation_name
 
-package Whatpm::NanoDOM::Notation;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::Notation;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$) {
   my $self = shift->SUPER::new;
@@ -853,8 +898,8 @@ sub system_id ($;$) {
   return $_[0]->{system_id};
 } # system_id
 
-package Whatpm::NanoDOM::ElementTypeDefinition;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::ElementTypeDefinition;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$) {
   my $self = shift->SUPER::new;
@@ -881,8 +926,8 @@ sub set_attribute_definition_node ($$) {
   $_[0]->{attribute_definitions}->{$_[1]->node_name} = $_[1];
 } # set_attribute_definition_node
 
-package Whatpm::NanoDOM::AttributeDefinition;
-push our @ISA, 'Whatpm::NanoDOM::Node';
+package NanoDOM::AttributeDefinition;
+push our @ISA, 'NanoDOM::Node';
 
 sub new ($$) {
   my $self = shift->SUPER::new;
@@ -905,7 +950,30 @@ sub declared_type ($;$) {
   return $_[0]->{declared_type} || 0;
 } # declared_type
 
-package Whatpm::NanoDOM::NodeList;
+package NanoDOM::DocumentFragment;
+push our @ISA, 'NanoDOM::Node';
+
+sub new ($) {
+  my $self = shift->SUPER::new;
+  $self->{child_nodes} = [];
+  return $self;
+} # new
+
+sub node_type () { 11 }
+
+## A manakai extension
+sub manakai_append_text ($$) {
+  my $self = shift;
+  if (@{$self->{child_nodes}} and
+      $self->{child_nodes}->[-1]->node_type == 3) {
+    $self->{child_nodes}->[-1]->manakai_append_text (shift);
+  } else {
+    my $text = NanoDOM::Text->new (shift);
+    $self->append_child ($text);
+  }
+} # manakai_append_text
+
+package NanoDOM::NodeList;
 
 sub to_list ($) {
   return @{$_[0]};
@@ -913,11 +981,7 @@ sub to_list ($) {
 
 =head1 SEE ALSO
 
-L<Whatpm::HTML|Whatpm::HTML>
-
-L<Whatpm::XML::Parser|Whatpm::XML::Parser>
-
-L<Whatpm::ContentChecker|Whatpm::ContentChecker>
+L<Web::HTML::Parser>, L<Web::XML::Parser>, L<Web::Validator>.
 
 =head1 AUTHOR
 

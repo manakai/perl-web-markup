@@ -1,25 +1,25 @@
 =head1 NAME
 
-Whatpm::HTML::Serializer - HTML DOM Serializer
+Web::HTML::Serializer - HTML DOM Serializer
 
 =head1 SYNOPSIS
 
-  require Whatpm::HTML::Serializer;
+  require Web::HTML::Serializer;
   
   ## Serialize an HTML document
-  my $html = Whatpm::HTML::Serializer->get_inner_html ($doc);
+  my $html = Web::HTML::Serializer->get_inner_html ($doc);
       ## NOTE: $html = $doc->inner_html is preferred.
   
   ## Serialize an HTML element
-  my $html = Whatpm::HTML::Serializer->get_inner_html ($el);
+  my $html = Web::HTML::Serializer->get_inner_html ($el);
       ## NOTE: $html = $el->inner_html is preferred.
   
   ## Serialize an HTML document fragment
-  my $html = Whatpm::HTML::Serializer->get_inner_html ($df);
+  my $html = Web::HTML::Serializer->get_inner_html ($df);
 
 =head1 DESCRIPTION
 
-The C<Whatpm::HTML::Serializer> module provides a function that
+The C<Web::HTML::Serializer> module provides a function that
 implements the fragment serialization algorithm of HTML5.  It can
 be used to serialize a HTML C<Document> or C<Element> node into
 an HTML document or fragment.
@@ -57,7 +57,7 @@ DOM C<Document> and C<Element> nodes.
 
 =over 4
 
-=item I<$html> = Whatpm::HTML::Serializer->get_inner_html (I<$node>, [I<$onerror>])
+=item I<$html> = Web::HTML::Serializer->get_inner_html (I<$node>, [I<$onerror>])
 
 Serialize a node by the HTML fragment serialization algorithm.
 
@@ -92,14 +92,15 @@ algorithm.
 
 =head1 SEE ALSO
 
-Whatpm <http://suika.fam.cx/www/markup/html/whatpm/readme>.
+Web <http://suika.fam.cx/www/markup/html/whatpm/readme>.
 
 Web Applications 1.0 - HTML fragment serialization algorithm
 <http://www.whatwg.org/specs/web-apps/current-work/complete.html#html-fragment-serialization-algorithm>.
 
 Modules L<Message::DOM::Document> and L<Message::DOM::Element> of
 manakai are implementing the C<inner_html> attribute using the
-C<Whatpm::HTML::Serializer> module.
+L<Whatpm::HTML::Serializer> module, from which the
+C<Web::HTML::Serializer> module derived.
 
 =head1 AUTHOR
 

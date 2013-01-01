@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 
-all:
+all: generated-pm-files
 
 ## ------ Setup ------
 
@@ -20,6 +20,17 @@ pmbp-install: pmbp-upgrade
             --create-perl-command-shortcut perl \
             --create-perl-command-shortcut prove
 
+## ------ Build ------
+
+GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm \
+  lib/Web/XML/Parser.pm
+
+generated-pm-files: $(GENERATED_PM_FILES)
+
+$(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl
+	perl bin/mkhtmlparser.pl $< > $@
+	perl -Ilib -c $@
+
 ## ------ Tests ------
 
 PROVE = ./prove
@@ -29,6 +40,6 @@ test: test-deps test-main
 test-deps: deps
 
 test-main:
-	$(PROVE) t/object/*.t
+	$(PROVE) t/modules/*.t
 
 ## License: Public Domain.

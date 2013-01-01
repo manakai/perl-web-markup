@@ -1,4 +1,4 @@
-package Whatpm::HTML::Serializer;
+package Web::HTML::Serializer;
 use strict;
 use warnings;
 our $VERSION = '1.8';
@@ -20,7 +20,7 @@ sub _in_cdata ($) {
     noframes => 1,
     plaintext => 1,
   }->{$ln};
-  return $Whatpm::ScriptingEnabled if $ln eq 'noscript';
+  return $Web::ScriptingEnabled if $ln eq 'noscript';
 
   return 0;
 } # _in_cdata

@@ -1,9 +1,9 @@
-package Whatpm::HTML::InputStream;
+package Web::HTML::InputStream;
 use strict;
 use warnings;
 no warnings 'utf8';
 our $VERSION = '1.0';
-use Whatpm::HTML::Defs;
+use Web::HTML::Defs;
 
 ## ------ Constructor ------
 
@@ -399,14 +399,15 @@ sub _encoding_sniffing ($;%) {
       }
 
       ## Step 7. UniversalCharDet
-      require Whatpm::Charset::UniversalCharDet;
-      my $name = _get_encoding_name
-          +Whatpm::Charset::UniversalCharDet->detect_byte_string ($$head);
-      if ($name) {
-        $self->{input_encoding} = $name;
-        $self->{confident} = 0; # tentative
-        return;
-      }
+# XXX
+#      require Web::Charset::UniversalCharDet;
+#      my $name = _get_encoding_name
+#          +Web::Charset::UniversalCharDet->detect_byte_string ($$head);
+#      if ($name) {
+#        $self->{input_encoding} = $name;
+#        $self->{confident} = 0; # tentative
+#        return;
+#      }
     } # $head
   }
 

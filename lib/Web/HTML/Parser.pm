@@ -8,7 +8,7 @@ use Web::HTML::Defs;
 use Web::HTML::Tokenizer;
 push our @ISA, qw(Web::HTML::Tokenizer);
 
-!!!pdebug { use Data::Dumper; };
+
 
 use Web::HTML::Tokenizer;
 
@@ -580,7 +580,7 @@ sub IN_SELECT_IM () { SELECT_IMS | 0b01 }
 sub IN_SELECT_IN_TABLE_IM () { SELECT_IMS | 0b10 }
 sub IN_COLUMN_GROUP_IM () { 0b10 }
 
-!!!pdebug { sub _printim ($) { my $v = shift; (print STDERR "C-") && ($v = $v & ~IN_CDATA_RCDATA_IM) if $v >= 0 && $v & IN_CDATA_RCDATA_IM; for (grep { /_IM$/ } keys %Web::HTML::Parser::) { if (__PACKAGE__->$_ == $v) { print STDERR $_, "\n"; return; } } print STDERR $v, "\n"; } };
+
 
 sub _initialize_tree_constructor ($) {
   my $self = shift;
@@ -634,7 +634,7 @@ sub _reset_insertion_mode ($) {
     if ($self->{open_elements}->[0]->[0] eq $node->[0]) {
       $last = 1;
       if (defined $self->{inner_html_node}) {
-        !!!cp ('t28');
+        
         $node = $self->{inner_html_node};
       } else {
         die "_reset_insertion_mode: t27";
@@ -645,16 +645,16 @@ sub _reset_insertion_mode ($) {
     my $new_mode;
     if ($node->[1] == TABLE_CELL_EL) {
       if ($last) {
-        !!!cp ('t28.2');
+        
         #
       } else {
-        !!!cp ('t28.3');
+        
         $new_mode = IN_CELL_IM;
       } 
     } elsif ($node->[1] & FOREIGN_EL) {
       #
     } else {
-      !!!cp ('t28.4');
+      
       $new_mode = {
         select => IN_SELECT_IM,
         ## NOTE: |option| and |optgroup| do not set insertion mode to
@@ -677,15 +677,15 @@ sub _reset_insertion_mode ($) {
     if ($node->[1] == HTML_EL) {
       ## NOTE: Commented out in the spec (HTML5 revision 3894).
       #unless (defined $self->{head_element}) {
-        !!!cp ('t29');
+        
         $self->{insertion_mode} = BEFORE_HEAD_IM;
       #} else {
-        !!!cp ('t30');
+        
       #  $self->{insertion_mode} = AFTER_HEAD_IM;
       #}
       last LOOP;
     } else {
-      !!!cp ('t31');
+      
     }
     
     ## Step 15
@@ -707,7 +707,31 @@ sub _reset_insertion_mode ($) {
 
     ## Step 1
     my $start_tag_name = $self->{t}->{tag_name};
-    !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+    
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
 
     ## Step 2
     if ($parse_refs) {
@@ -720,8 +744,8 @@ sub _reset_insertion_mode ($) {
     ## Step 3, 4
     $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
 
-    !!!nack ('t40.1');
-    !!!next-token;
+    
+    $self->{t} = $self->_get_next_token;
   }; # $parse_rcdata
 
   my $script_start_tag = sub ($$$) {
@@ -729,7 +753,24 @@ sub _reset_insertion_mode ($) {
 
     ## Step 1
     my $script_el;
-    !!!create-element ($script_el, HTML_NS, 'script', $self->{t}->{attributes}, $self->{t});
+    
+      $script_el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'script']);
+    
+        for my $attr_name (keys %{ $self->{t}->{attributes}}) {
+          my $attr_t =  $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $script_el->set_attribute_node_ns ($attr);
+        }
+      
+        $script_el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $script_el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
 
     ## Step 2
     ## TODO: mark as "parser-inserted"
@@ -748,8 +789,8 @@ sub _reset_insertion_mode ($) {
     ## Step 6-7
     $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
 
-    !!!nack ('t40.2');
-    !!!next-token;
+    
+    $self->{t} = $self->_get_next_token;
   }; # $script_start_tag
 
 sub push_afe ($$) {
@@ -806,7 +847,7 @@ sub push_afe ($$) {
     ## Step 2
     OUTER: {
       if ($outer_loop_counter >= 8) {
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         last OUTER;
       }
 
@@ -818,23 +859,23 @@ sub push_afe ($$) {
       my $formatting_element_i_in_active;
       AFE: for (reverse 0..$#$active_formatting_elements) {
         if ($active_formatting_elements->[$_]->[0] eq '#marker') {
-          !!!cp ('t52');
+          
           last AFE;
         } elsif ($active_formatting_elements->[$_]->[0]->manakai_local_name
                      eq $tag_name) {
           ## NOTE: Non-HTML elements can't be in the list of active
           ## formatting elements.
-          !!!cp ('t51');
+          
           $formatting_element = $active_formatting_elements->[$_];
           $formatting_element_i_in_active = $_;
           last AFE;
         }
       } # AFE
       unless (defined $formatting_element) {
-        !!!cp ('t53');
-        !!!parse-error (type => 'unmatched end tag', text => $tag_name, token => $end_tag_token);
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag', text => $tag_name, token => $end_tag_token);
         ## Ignore the token
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         return;
       }
       ## has an element in scope
@@ -844,35 +885,35 @@ sub push_afe ($$) {
         my $node = $self->{open_elements}->[$_];
         if ($node->[0] eq $formatting_element->[0]) {
           if ($in_scope) {
-            !!!cp ('t54');
+            
             $formatting_element_i_in_open = $_;
             last INSCOPE;
           } else { # in open elements but not in scope
-            !!!cp ('t55');
-            !!!parse-error (type => 'unmatched end tag',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name},
                             token => $end_tag_token);
             ## Ignore the token
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             return;
           }
         } elsif ($node->[1] & SCOPING_EL) {
-          !!!cp ('t56');
+          
           $in_scope = 0;
         }
       } # INSCOPE
       unless (defined $formatting_element_i_in_open) {
-        !!!cp ('t57');
-        !!!parse-error (type => 'unmatched end tag',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                         text => $self->{t}->{tag_name},
                         token => $end_tag_token);
         pop @$active_formatting_elements; # $formatting_element
-        !!!next-token; ## TODO: ok?
+        $self->{t} = $self->_get_next_token; ## TODO: ok?
         return;
       }
       if (not $self->{open_elements}->[-1]->[0] eq $formatting_element->[0]) {
-        !!!cp ('t58');
-        !!!parse-error (type => 'not closed',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                         text => $self->{open_elements}->[-1]->[0]
                             ->manakai_local_name,
                         token => $end_tag_token);
@@ -884,22 +925,22 @@ sub push_afe ($$) {
       OE: for (reverse 0..$#{$self->{open_elements}}) {
         my $node = $self->{open_elements}->[$_];
         if ($node->[1] & SPECIAL_EL or $node->[1] & SCOPING_EL) { ## "Special"
-          !!!cp ('t59');
+          
           $furthest_block = $node;
           $furthest_block_i_in_open = $_;
 	  ## NOTE: The topmost (eldest) node.
         } elsif ($node->[0] eq $formatting_element->[0]) {
-          !!!cp ('t60');
+          
           last OE;
         }
       } # OE
       
       ## Step 6
       unless (defined $furthest_block) { # MUST
-        !!!cp ('t61');
+        
         splice @{$self->{open_elements}}, $formatting_element_i_in_open;
         splice @$active_formatting_elements, $formatting_element_i_in_active, 1;
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         return;
       }
       
@@ -922,7 +963,7 @@ sub push_afe ($$) {
       INNER: {
         ## Step 9.2
         if ($inner_loop_counter >= 3) {
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           last OUTER;
         }
 
@@ -939,7 +980,7 @@ sub push_afe ($$) {
         S7S2: {
           for (reverse 0..$#$active_formatting_elements) {
             if ($active_formatting_elements->[$_]->[0] eq $node->[0]) {
-              !!!cp ('t63');
+              
               $node_i_in_active = $_;
               $node_token = $active_formatting_elements->[$_]->[2];
               last S7S2;
@@ -954,7 +995,24 @@ sub push_afe ($$) {
         
         ## Step 9.7
         my $new_element = [];
-        !!!create-element ($new_element->[0], HTML_NS, $node_token->{tag_name}, $node_token->{attributes}, $node_token);
+        
+      $new_element->[0] = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $node_token->{tag_name}]);
+    
+        for my $attr_name (keys %{ $node_token->{attributes}}) {
+          my $attr_t =  $node_token->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $new_element->[0]->set_attribute_node_ns ($attr);
+        }
+      
+        $new_element->[0]->set_user_data (manakai_source_line => $node_token->{line})
+            if defined $node_token->{line};
+        $new_element->[0]->set_user_data (manakai_source_column => $node_token->{column})
+            if defined $node_token->{column};
+      
         $new_element->[1] = $node->[1];
         $new_element->[2] = $node_token;
         $active_formatting_elements->[$node_i_in_active] = $new_element;
@@ -963,7 +1021,7 @@ sub push_afe ($$) {
         
         ## Step 9.8
         if ($last_node->[0] eq $furthest_block->[0]) {
-          !!!cp ('t64');
+          
           $bookmark_prev_el = $node->[0];
         }
         
@@ -984,7 +1042,7 @@ sub push_afe ($$) {
         my $next_sibling;
         OE: for (reverse 0..$#{$self->{open_elements}}) {
           if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-            !!!cp ('t65.2');
+            
             $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0];
             $next_sibling = $self->{open_elements}->[$_]->[0];
             undef $next_sibling
@@ -997,13 +1055,30 @@ sub push_afe ($$) {
         $foster_parent_element->insert_before ($last_node->[0], $next_sibling);
         $open_tables->[-1]->[1] = 1; # tainted
       } else {
-        !!!cp ('t65.3');
+        
         $common_ancestor_node->[0]->append_child ($last_node->[0]);
       }
       
       ## Step 11
       my $new_element = [];
-      !!!create-element ($new_element->[0], HTML_NS, $formatting_element->[2]->{tag_name}, $formatting_element->[2]->{attributes}, $formatting_element->[2]);
+      
+      $new_element->[0] = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $formatting_element->[2]->{tag_name}]);
+    
+        for my $attr_name (keys %{ $formatting_element->[2]->{attributes}}) {
+          my $attr_t =  $formatting_element->[2]->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $new_element->[0]->set_attribute_node_ns ($attr);
+        }
+      
+        $new_element->[0]->set_user_data (manakai_source_line => $formatting_element->[2]->{line})
+            if defined $formatting_element->[2]->{line};
+        $new_element->[0]->set_user_data (manakai_source_column => $formatting_element->[2]->{column})
+            if defined $formatting_element->[2]->{column};
+      
       $new_element->[1] = $formatting_element->[1];
       $new_element->[2] = $formatting_element->[2];
       
@@ -1018,11 +1093,11 @@ sub push_afe ($$) {
       my $i;
       AFE: for (reverse 0..$#$active_formatting_elements) {
         if ($active_formatting_elements->[$_]->[0] eq $formatting_element->[0]) {
-          !!!cp ('t66');
+          
           splice @$active_formatting_elements, $_, 1;
           $i-- and last AFE if defined $i;
         } elsif ($active_formatting_elements->[$_]->[0] eq $bookmark_prev_el) {
-          !!!cp ('t67');
+          
           $i = $_;
         }
       } # AFE
@@ -1032,11 +1107,11 @@ sub push_afe ($$) {
       undef $i;
       OE: for (reverse 0..$#{$self->{open_elements}}) {
         if ($self->{open_elements}->[$_]->[0] eq $formatting_element->[0]) {
-          !!!cp ('t68');
+          
           splice @{$self->{open_elements}}, $_, 1;
           $i-- and last OE if defined $i;
         } elsif ($self->{open_elements}->[$_]->[0] eq $furthest_block->[0]) {
-          !!!cp ('t69');
+          
           $i = $_;
         }
       } # OE
@@ -1061,7 +1136,7 @@ sub push_afe ($$) {
     return if $entry->[0] eq '#marker';
     for (@{$self->{open_elements}}) {
       if ($entry->[0] eq $_->[0]) {
-        !!!cp ('t32');
+        
         return;
       }
     }
@@ -1076,23 +1151,23 @@ sub push_afe ($$) {
 
       ## Step 6
       if ($entry->[0] eq '#marker') {
-        !!!cp ('t33_1');
+        
         #
       } else {
         my $in_open_elements;
         OE: for (@{$self->{open_elements}}) {
           if ($entry->[0] eq $_->[0]) {
-            !!!cp ('t33');
+            
             $in_open_elements = 1;
             last OE;
           }
         }
         if ($in_open_elements) {
-          !!!cp ('t34');
+          
           #
         } else {
           ## NOTE: <!DOCTYPE HTML><p><b><i><u></p> <p>X
-          !!!cp ('t35');
+          
           redo S4;
         }
       }
@@ -1115,7 +1190,7 @@ sub push_afe ($$) {
 
       ## Step 11
       unless ($clone->[0] eq $active_formatting_elements->[-1]->[0]) {
-        !!!cp ('t36');
+        
         ## Step 7'
         $i++;
         $entry = $active_formatting_elements->[$i];
@@ -1123,7 +1198,7 @@ sub push_afe ($$) {
         redo S7;
       }
 
-      !!!cp ('t37');
+      
     } # S7
   }; # $reconstruct_active_formatting_elements
 
@@ -1131,13 +1206,13 @@ sub push_afe ($$) {
     my $active_formatting_elements = $_[0];
     for (reverse 0..$#$active_formatting_elements) {
       if ($active_formatting_elements->[$_]->[0] eq '#marker') {
-        !!!cp ('t38');
+        
         splice @$active_formatting_elements, $_;
         return;
       }
     }
 
-    !!!cp ('t39');
+    
   }; # $clear_up_to_marker
   my $insert_to_current = sub {
     #my ($self, $child, $open_tables) = @_;
@@ -1155,7 +1230,7 @@ sub push_afe ($$) {
       my $next_sibling;
       OE: for (reverse 0..$#{$self->{open_elements}}) {
         if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-          !!!cp ('t71');
+          
           $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0];
           $next_sibling = $self->{open_elements}->[$_]->[0];
           undef $next_sibling
@@ -1168,7 +1243,7 @@ sub push_afe ($$) {
       $foster_parent_element->insert_before ($child, $next_sibling);
       $open_tables->[-1]->[1] = 1; # tainted
     } else {
-      !!!cp ('t72');
+      
       $self->{open_elements}->[-1]->[0]->append_child ($child);
     }
   }; # $insert_to_foster
@@ -1190,20 +1265,20 @@ sub _construct_tree ($) {
   my $open_tables = $self->{open_tables} ||= [];
 
   B: while (1) {
-    !!!pdebug { print STDERR join ' ', map { $_->[0] ? $_->[0]->manakai_local_name : '' } @{$self->{open_elements}}; print STDERR ' '; _printim ($self->{insertion_mode}); warn Dumper $self->{t}; };
+    
 
     if ($self->{t}->{type} == ABORT_TOKEN) {
       return;
     }
 
     if ($self->{t}->{n}++ == 100) {
-      !!!parse-error (type => 'parser impl error', # XXXtest
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'parser impl error', # XXXtest
                       token => $self->{t});
       require Data::Dumper;
       warn "====== HTML Parser Error ======\n";
       warn join (' ', map { $_->[0]->manakai_local_name } @{$self->{open_elements}}) . ' #' . $self->{insertion_mode} . "\n";
       warn Data::Dumper::Dumper ($self->{t});
-      !!!next-token;
+      $self->{t} = $self->_get_next_token;
       next B;
     }
 
@@ -1220,8 +1295,8 @@ sub _construct_tree ($) {
             ($doctype_name);
         
         if ($doctype_name ne 'html') {
-          !!!cp ('t1');
-          !!!parse-error (type => 'not HTML5', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not HTML5', token => $self->{t});
         } elsif (defined $self->{t}->{pubid}) {
           ## Obsolete permitted DOCTYPEs (case-sensitive)
           my $xsysid = $Web::HTML::ParserData::ObsoletePermittedDoctypes
@@ -1231,24 +1306,24 @@ sub _construct_tree ($) {
                 $self->{t}->{pubid} =~ /HTML 4/) or
                (defined $self->{t}->{sysid} and
                 $self->{t}->{sysid} eq $xsysid))) {
-            !!!cp ('t2');
-            !!!parse-error (type => 'obs DOCTYPE', token => $self->{t},
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'obs DOCTYPE', token => $self->{t},
                             level => $self->{level}->{obsconforming});
           } else {
-            !!!cp ('t2.1');
-            !!!parse-error (type => 'not HTML5', token => $self->{t});
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not HTML5', token => $self->{t});
           }
         } elsif (defined $self->{t}->{sysid}) {
           if ($self->{t}->{sysid} eq 'about:legacy-compat') {
             ## <!DOCTYPE HTML SYSTEM "about:legacy-compat">
-            !!!cp ('t1.2');
-            !!!parse-error (type => 'XSLT-compat', token => $self->{t},
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'XSLT-compat', token => $self->{t},
                             level => $self->{level}->{should});
           } else {
-            !!!parse-error (type => 'not HTML5', token => $self->{t});
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not HTML5', token => $self->{t});
           }
         } else { ## <!DOCTYPE HTML>
-          !!!cp ('t3');
+          
           #
         }
         
@@ -1273,7 +1348,7 @@ sub _construct_tree ($) {
         $self->{document}->manakai_compat_mode ('no quirks');
         
         if ($self->{t}->{quirks} or $doctype_name ne 'html') {
-          !!!cp ('t4');
+          
           $self->{document}->manakai_compat_mode ('quirks');
         } elsif (defined $self->{t}->{pubid}) {
           my $pubid = $self->{t}->{pubid};
@@ -1288,26 +1363,26 @@ sub _construct_tree ($) {
           }
           if ($match or
               $Web::HTML::ParserData::QuirkyPublicIDs->{$pubid}) {
-            !!!cp ('t5');
+            
             $self->{document}->manakai_compat_mode ('quirks');
           } elsif ($pubid =~ m[^-//W3C//DTD HTML 4.01 FRAMESET//] or
                    $pubid =~ m[^-//W3C//DTD HTML 4.01 TRANSITIONAL//]) {
             if (not defined $self->{t}->{sysid}) {
-              !!!cp ('t6');
+              
               $self->{document}->manakai_compat_mode ('quirks');
             } else {
-              !!!cp ('t7');
+              
               $self->{document}->manakai_compat_mode ('limited quirks');
             }
           } elsif ($pubid =~ m[^-//W3C//DTD XHTML 1.0 FRAMESET//] or
                    $pubid =~ m[^-//W3C//DTD XHTML 1.0 TRANSITIONAL//]) {
-            !!!cp ('t8');
+            
             $self->{document}->manakai_compat_mode ('limited quirks');
           } else {
-            !!!cp ('t9');
+            
           }
         } else {
-          !!!cp ('t10');
+          
         }
         if (defined $self->{t}->{sysid}) {
           my $sysid = $self->{t}->{sysid};
@@ -1316,16 +1391,16 @@ sub _construct_tree ($) {
             ## NOTE: Ensure that |PUBLIC "(limited quirks)"
             ## "(quirks)"| is signaled as in quirks mode!
             $self->{document}->manakai_compat_mode ('quirks');
-            !!!cp ('t11');
+            
           } else {
-            !!!cp ('t12');
+            
           }
         } else {
-          !!!cp ('t13');
+          
         }
         
         $self->{insertion_mode} = BEFORE_HTML_IM;
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
                 START_TAG_TOKEN, 1,
@@ -1333,81 +1408,81 @@ sub _construct_tree ($) {
                 END_OF_FILE_TOKEN, 1,
                }->{$self->{t}->{type}}) {
         unless ($self->{document}->manakai_is_srcdoc) {
-          !!!cp ('t14.1');
-          !!!parse-error (type => 'no DOCTYPE', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE', token => $self->{t});
           $self->{document}->manakai_compat_mode ('quirks');
         } else {
-          !!!cp ('t14.2');
+          
         }
         $self->{insertion_mode} = BEFORE_HTML_IM;
         ## Reprocess the token.
-        !!!ack-later;
+        
         redo B;
       } elsif ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           ## Ignore the token
           
           unless (length $self->{t}->{data}) {
-            !!!cp ('t15');
+            
             ## Stay in the insertion mode.
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             redo B;
           } else {
-            !!!cp ('t16');
+            
           }
         } else {
-          !!!cp ('t17');
+          
         }
         
         unless ($self->{document}->manakai_is_srcdoc) {
-          !!!cp ('t17.1');
-          !!!parse-error (type => 'no DOCTYPE', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE', token => $self->{t});
           $self->{document}->manakai_compat_mode ('quirks');
         } else {
-          !!!cp ('t17.2');
+          
         }
         $self->{insertion_mode} = BEFORE_HTML_IM;
         ## Reprocess the token.
         redo B;
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
-        !!!cp ('t18');
+        
         my $comment = $self->{document}->create_comment
             ($self->{t}->{data});
         $self->{document}->append_child ($comment);
         
         ## Stay in the insertion mode.
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";
       }
     } elsif ($self->{insertion_mode} == BEFORE_HTML_IM) {
       if ($self->{t}->{type} == DOCTYPE_TOKEN) {
-        !!!cp ('t19');
-        !!!parse-error (type => 'in html:#DOCTYPE', token => $self->{t});
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#DOCTYPE', token => $self->{t});
         ## Ignore the token.
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
-        !!!cp ('t20');
+        
         my $comment = $self->{document}->create_comment
             ($self->{t}->{data});
         $self->{document}->append_child ($comment);
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           ## Ignore the token.
           
           unless (length $self->{t}->{data}) {
-            !!!cp ('t21');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             redo B;
           } else {
-            !!!cp ('t22');
+            
           }
         } else {
-          !!!cp ('t23');
+          
         }
         
         $self->{application_cache_selection}->(undef);
@@ -1416,56 +1491,81 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'html') {
           my $root_element;
-          !!!create-element ($root_element, HTML_NS, $self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+      $root_element = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{ $self->{t}->{attributes}}) {
+          my $attr_t =  $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $root_element->set_attribute_node_ns ($attr);
+        }
+      
+        $root_element->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $root_element->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
           $self->{document}->append_child ($root_element);
           push @{$self->{open_elements}},
               [$root_element, $el_category->{html}];
           
           if ($self->{t}->{attributes}->{manifest}) {
-            !!!cp ('t24');
+            
             ## XXX resolve URL and drop fragment
             ## <http://html5.org/tools/web-apps-tracker?from=3479&to=3480>
             ## <http://manakai.g.hatena.ne.jp/task/2/95>
             $self->{application_cache_selection}
                  ->($self->{t}->{attributes}->{manifest}->{value});
           } else {
-            !!!cp ('t25');
+            
             $self->{application_cache_selection}->(undef);
           }
           
-          !!!nack ('t25.1');
           
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           $self->{insertion_mode} = BEFORE_HEAD_IM;
           next B;
         } else {
-          !!!cp ('t25.2');
+          
           #
         }
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         if ({
              head => 1, body => 1, html => 1, br => 1,
             }->{$self->{t}->{tag_name}}) {
-          !!!cp ('t25.3');
+          
           #
         } else {
-          !!!cp ('t25.4');
-          !!!parse-error (type => 'unmatched end tag',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name},
                           token => $self->{t});
           ## Ignore the token.
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           redo B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        !!!cp ('t26');
+        
         #
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";
       }
       
       my $root_element;
-      !!!create-element ($root_element, HTML_NS, 'html',, $self->{t});
+      
+      $root_element = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'html']);
+    
+        $root_element->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $root_element->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
       $self->{document}->append_child ($root_element);
       push @{$self->{open_elements}},
           [$root_element, $el_category->{html}];
@@ -1474,7 +1574,7 @@ sub _construct_tree ($) {
       $self->{application_cache_selection}->(undef);
       
       ## Reprocess the token.
-      !!!ack-later;
+      
       $self->{insertion_mode} = BEFORE_HEAD_IM;
       redo B;
     } # insertion mode
@@ -1512,7 +1612,7 @@ sub _construct_tree ($) {
          }
        }) or
       ($self->{t}->{type} == END_OF_FILE_TOKEN)) {
-      !!!cp ('t87.1');
+      
       ## Use the rules for the current insertion mode in HTML content.
       #
     } else {
@@ -1522,14 +1622,14 @@ sub _construct_tree ($) {
         ## "In foreign content", character tokens.
         my $data = $self->{t}->{data};
         while ($data =~ s/\x00/\x{FFFD}/) {
-          !!!parse-error (type => 'NULL', token => $self->{t});
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
         }
         $self->{open_elements}->[-1]->[0]->manakai_append_text ($data);
         if ($data =~ /[^\x09\x0A\x0C\x0D\x20]/) {
           delete $self->{frameset_ok};
         }
         
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         ## "In foreign content", start tag token.
@@ -1542,9 +1642,9 @@ sub _construct_tree ($) {
             $self->{t}->{attributes}->{size}))
         ) {
           ## "In foreign content", HTML-only start tag.
-          !!!cp ('t87.2');
+          
 
-          !!!parse-error (type => 'not closed',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                           text => $self->{open_elements}->[-1]->[0]
                               ->manakai_local_name,
                           token => $self->{t});
@@ -1593,16 +1693,59 @@ sub _construct_tree ($) {
 
           ## "adjust foreign attributes" - done in insert-element-f
 
-          !!!insert-element-f ($nsuri, $tag_name, $self->{t}->{attributes}, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        ($nsuri, [undef,   $tag_name]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (
+          @{
+            $foreign_attr_xname->{$attr_name} ||
+            [undef, [undef,
+                     ($nsuri) eq SVG_NS ?
+                         ($svg_attr_name->{$attr_name} || $attr_name) :
+                     ($nsuri) eq MML_NS ?
+                         ($mml_attr_name->{$attr_name} || $attr_name) :
+                         $attr_name]]
+          }
+        );
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, ($el_category_f->{$nsuri}->{ $tag_name} || 0) | FOREIGN_EL | (($nsuri) eq SVG_NS ? SVG_EL : ($nsuri) eq MML_NS ? MML_EL : 0)];
+
+      if ( $self->{t}->{attributes}->{xmlns} and  $self->{t}->{attributes}->{xmlns}->{value} ne ($nsuri)) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
+## TODO: Error type documentation
+      }
+      if ( $self->{t}->{attributes}->{'xmlns:xlink'} and
+           $self->{t}->{attributes}->{'xmlns:xlink'}->{value} ne q<http://www.w3.org/1999/xlink>) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
+      }
+    }
+  
 
           if ($self->{self_closing}) {
             pop @{$self->{open_elements}};
-            !!!ack ('t87.3');
+            delete $self->{self_closing};
           } else {
-            !!!cp ('t87.4');
+            
           }
 
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         }
 
@@ -1613,16 +1756,16 @@ sub _construct_tree ($) {
             $self->{open_elements}->[-1]->[1] == SVG_SCRIPT_EL) {
           ## "In foreign content", "script" end tag, if the current
           ## node is an SVG |script| element.
-          !!!cp ('t87.41');
+          
           pop @{$self->{open_elements}};
 
           ## XXXscript: Execute script here.
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
 
         } else {
           ## "In foreign content", end tag.
-          !!!cp ('t87.42');
+          
           
           ## 1.
           my $i = -1;
@@ -1632,7 +1775,7 @@ sub _construct_tree ($) {
           my $tag_name = $node->[0]->manakai_local_name;
           $tag_name =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
           if ($tag_name ne $self->{t}->{tag_name}) {
-            !!!parse-error (type => 'unmatched end tag',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name},
                             level => $self->{level}->{must});
           }
@@ -1643,7 +1786,7 @@ sub _construct_tree ($) {
             $tag_name =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($tag_name eq $self->{t}->{tag_name}) {
               splice @{$self->{open_elements}}, $i, -$i, ();
-              !!!next-token;
+              $self->{t} = $self->_get_next_token;
               next B;
             }
             
@@ -1665,14 +1808,14 @@ sub _construct_tree ($) {
         ## "In foreign content", comment token.
         my $comment = $self->{document}->create_comment ($self->{t}->{data});
         $self->{open_elements}->[-1]->[0]->append_child ($comment);
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
-        !!!cp ('t87.2');
+        
         ## "In foreign content", DOCTYPE token.
-        !!!parse-error (type => 'in html:#DOCTYPE', token => $self->{t});
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#DOCTYPE', token => $self->{t});
         ## Ignore the token.
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";        
@@ -1685,10 +1828,10 @@ sub _construct_tree ($) {
       C: {
         my $s;
         if ($self->{t}->{type} == CHARACTER_TOKEN) {
-          !!!cp ('t194');
+          
           $self->{pending_chars} ||= [];
           push @{$self->{pending_chars}}, $self->{t};
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
           ## There is an "insert pending chars" code clone.
@@ -1696,20 +1839,20 @@ sub _construct_tree ($) {
             $s = join '', map { $_->{data} } @{$self->{pending_chars}};
             delete $self->{pending_chars};
             while ($s =~ s/\x00//) {
-              !!!parse-error (type => 'NULL', token => $self->{t});
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
             }
             if ($s eq '') {
               last C;
             } elsif ($s =~ /[^\x09\x0A\x0C\x0D\x20]/) {
-              !!!cp ('t195');
+              
               #
             } else {
-              !!!cp ('t195.1');
+              
               $self->{open_elements}->[-1]->[0]->manakai_append_text ($s);
               last C;
             }
           } else {
-            !!!cp ('t195.2');
+            
             last C;
           }
         }
@@ -1717,7 +1860,7 @@ sub _construct_tree ($) {
         ## "in table" insertion mode, "Anything else".
 
         ## Foster parenting.
-        !!!parse-error (type => 'in table:#text', token => $self->{t});
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:#text', token => $self->{t});
 
         ## NOTE: As if in body, but insert into the foster parent element.
         $reconstruct_active_formatting_elements
@@ -1730,7 +1873,7 @@ sub _construct_tree ($) {
           my $next_sibling;
           OE: for (reverse 0..$#{$self->{open_elements}}) {
             if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-              !!!cp ('t197');
+              
               $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0];
               $next_sibling = $self->{open_elements}->[$_]->[0];
               undef $next_sibling
@@ -1740,7 +1883,7 @@ sub _construct_tree ($) {
           } # OE
           $foster_parent_element ||= $self->{open_elements}->[0]->[0];
 
-          !!!cp ('t199');
+          
           $foster_parent_element->insert_before
               ($self->{document}->create_text_node ($s), $next_sibling);
 
@@ -1753,61 +1896,61 @@ sub _construct_tree ($) {
           ## created is irrelevant, since the foster parent'ed nodes
           ## are discarded and fragment parsing does not invoke any
           ## script.
-          !!!cp ('t200');
+          
           $self->{open_elements}->[-1]->[0]->manakai_append_text ($s);
         }
       } # C
     } # TABLE_IMS
 
     if ($self->{t}->{type} == DOCTYPE_TOKEN) {
-      !!!cp ('t73');
-      !!!parse-error (type => 'in html:#DOCTYPE', token => $self->{t});
+      
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#DOCTYPE', token => $self->{t});
       ## Ignore the token
       ## Stay in the phase
-      !!!next-token;
+      $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{t}->{type} == START_TAG_TOKEN and
              $self->{t}->{tag_name} eq 'html') {
       if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-        !!!cp ('t79');
-        !!!parse-error (type => 'after html', text => 'html', token => $self->{t});
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html', text => 'html', token => $self->{t});
         $self->{insertion_mode} = AFTER_BODY_IM;
       } elsif ($self->{insertion_mode} == AFTER_HTML_FRAMESET_IM) {
-        !!!cp ('t80');
-        !!!parse-error (type => 'after html', text => 'html', token => $self->{t});
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html', text => 'html', token => $self->{t});
         $self->{insertion_mode} = AFTER_FRAMESET_IM;
       } else {
-        !!!cp ('t81');
+        
       }
 
-      !!!cp ('t82');
-      !!!parse-error (type => 'not first start tag', token => $self->{t});
+      
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'not first start tag', token => $self->{t});
       my $top_el = $self->{open_elements}->[0]->[0];
       for my $attr_name (keys %{$self->{t}->{attributes}}) {
         unless ($top_el->has_attribute_ns (undef, $attr_name)) {
-          !!!cp ('t84');
+          
           $top_el->set_attribute_ns
             (undef, [undef, $attr_name], 
              $self->{t}->{attributes}->{$attr_name}->{value});
         }
       }
-      !!!nack ('t84.1');
-      !!!next-token;
+      
+      $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
       my $comment = $self->{document}->create_comment ($self->{t}->{data});
       if ($self->{insertion_mode} & AFTER_HTML_IMS) {
-        !!!cp ('t85');
+        
         $self->{document}->append_child ($comment);
       } elsif ($self->{insertion_mode} == AFTER_BODY_IM) {
-        !!!cp ('t86');
+        
         $self->{open_elements}->[0]->[0]->append_child ($comment);
       } else {
-        !!!cp ('t87');
+        
         $self->{open_elements}->[-1]->[0]->append_child ($comment);
         $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
       }
-      !!!next-token;
+      $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{insertion_mode} & IN_CDATA_RCDATA_IM) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
@@ -1815,20 +1958,20 @@ sub _construct_tree ($) {
         delete $self->{ignore_newline};
 
         if (length $self->{t}->{data}) {
-          !!!cp ('t43');
+          
           ## NOTE: NULLs are replaced into U+FFFDs in tokenizer.
           $self->{open_elements}->[-1]->[0]->manakai_append_text
               ($self->{t}->{data});
         } else {
-          !!!cp ('t43.1');
+          
         }
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         delete $self->{ignore_newline};
 
         if ($self->{t}->{tag_name} eq 'script') {
-          !!!cp ('t50');
+          
           
           ## Para 1-2
           my $script = pop @{$self->{open_elements}};
@@ -1851,22 +1994,22 @@ sub _construct_tree ($) {
             ## TODO: ...
           ## TODO: }
 
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
-          !!!cp ('t42');
+          
  
           pop @{$self->{open_elements}};
 
           $self->{insertion_mode} &= ~ IN_CDATA_RCDATA_IM;
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         delete $self->{ignore_newline};
 
-        !!!cp ('t44');
-        !!!parse-error (type => 'not closed',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                         text => $self->{open_elements}->[-1]->[0]
                             ->manakai_local_name,
                         token => $self->{t});
@@ -1889,25 +2032,33 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           unless ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            !!!cp ('t88.2');
+            
             $self->{open_elements}->[-1]->[0]->manakai_append_text ($1);
           } else {
-            !!!cp ('t88.1');
+            
             ## Ignore the token.
             #
           }
           unless (length $self->{t}->{data}) {
-            !!!cp ('t88');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           }
 ## TODO: set $self->{t}->{column} appropriately
         }
 
         if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          !!!cp ('t89');
+          
           ## As if <head>
-          !!!create-element ($self->{head_element}, HTML_NS, 'head',, $self->{t});
+          
+      $self->{head_element} = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'head']);
+    
+        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
           $self->{open_elements}->[-1]->[0]->append_child ($self->{head_element});
           push @{$self->{open_elements}},
               [$self->{head_element}, $el_category->{head}];
@@ -1917,10 +2068,10 @@ sub _construct_tree ($) {
 
           ## Reprocess in the "after head" insertion mode...
         } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-          !!!cp ('t90');
+          
           ## As if </noscript>
           pop @{$self->{open_elements}};
-          !!!parse-error (type => 'in noscript:#text', token => $self->{t});
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript:#text', token => $self->{t});
           
           ## Reprocess in the "in head" insertion mode...
           ## As if </head>
@@ -1928,17 +2079,32 @@ sub _construct_tree ($) {
 
           ## Reprocess in the "after head" insertion mode...
         } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-          !!!cp ('t91');
+          
           pop @{$self->{open_elements}};
 
           ## Reprocess in the "after head" insertion mode...
         } else {
-          !!!cp ('t92');
+          
         }
 
         ## "after head" insertion mode
         ## As if <body>
-        !!!insert-element ('body',, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'body']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
+    }
+  
         $self->{insertion_mode} = IN_BODY_IM;
         ## The "frameset-ok" flag is left unchanged in this case.
         ## Reporcess the token.
@@ -1946,37 +2112,62 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'head') {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            !!!cp ('t93');
-            !!!create-element ($self->{head_element}, HTML_NS, $self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+            
+            
+      $self->{head_element} = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{ $self->{t}->{attributes}}) {
+          my $attr_t =  $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $self->{head_element}->set_attribute_node_ns ($attr);
+        }
+      
+        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
             $self->{open_elements}->[-1]->[0]->append_child
                 ($self->{head_element});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
             $self->{insertion_mode} = IN_HEAD_IM;
-            !!!nack ('t93.1');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t93.2');
-            !!!parse-error (type => 'after head', text => 'head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head', text => 'head',
                             token => $self->{t});
             ## Ignore the token
-            !!!nack ('t93.3');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           } else {
-            !!!cp ('t95');
-            !!!parse-error (type => 'in head:head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in head:head',
                             token => $self->{t}); # or in head noscript
             ## Ignore the token
-            !!!nack ('t95.1');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           }
         } elsif ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          !!!cp ('t96');
+          
           ## As if <head>
-          !!!create-element ($self->{head_element}, HTML_NS, 'head',, $self->{t});
+          
+      $self->{head_element} = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'head']);
+    
+        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
           $self->{open_elements}->[-1]->[0]->append_child ($self->{head_element});
           push @{$self->{open_elements}},
               [$self->{head_element}, $el_category->{head}];
@@ -1984,59 +2175,107 @@ sub _construct_tree ($) {
           $self->{insertion_mode} = IN_HEAD_IM;
           ## Reprocess in the "in head" insertion mode...
         } else {
-          !!!cp ('t97');
+          
         }
 
         if ($self->{t}->{tag_name} eq 'base') {
           if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            !!!cp ('t98');
+            
             ## As if </noscript>
             pop @{$self->{open_elements}};
-            !!!parse-error (type => 'in noscript', text => 'base',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript', text => 'base',
                             token => $self->{t});
           
             $self->{insertion_mode} = IN_HEAD_IM;
             ## Reprocess in the "in head" insertion mode...
           } else {
-            !!!cp ('t99');
+            
           }
 
           ## NOTE: There is a "as if in head" code clone.
           if ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t100');
-            !!!parse-error (type => 'after head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
           } else {
-            !!!cp ('t101');
+            
           }
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
           pop @{$self->{open_elements}};
           pop @{$self->{open_elements}} # <head>
               if $self->{insertion_mode} == AFTER_HEAD_IM;
-          !!!nack ('t101.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         } elsif ({
           link => 1, basefont => 1, bgsound => 1,
         }->{$self->{t}->{tag_name}}) {
           ## NOTE: There is a "as if in head" code clone.
           if ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t102');
-            !!!parse-error (type => 'after head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
           } else {
-            !!!cp ('t103');
+            
           }
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
           pop @{$self->{open_elements}};
           pop @{$self->{open_elements}} # <head>
               if $self->{insertion_mode} == AFTER_HEAD_IM;
-          !!!ack ('t103.1');
-          !!!next-token;
+          delete $self->{self_closing};
+          $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'command') {
           if ($self->{insertion_mode} == IN_HEAD_IM) {
@@ -2045,37 +2284,85 @@ sub _construct_tree ($) {
             ## is already changed to |IN_HEAD_IM|.
 
             ## NOTE: There is a "as if in head" code clone.
-            !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+            
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
             pop @{$self->{open_elements}};
             pop @{$self->{open_elements}} # <head>
                 if $self->{insertion_mode} == AFTER_HEAD_IM;
-            !!!ack ('t103.2');
-            !!!next-token;
+            delete $self->{self_closing};
+            $self->{t} = $self->_get_next_token;
             next B;
           } else {
             ## NOTE: "in head noscript" or "after head" insertion mode
             ## - in these cases, these tags are treated as same as
             ## normal in-body tags.
-            !!!cp ('t103.3');
+            
             #
           }
         } elsif ($self->{t}->{tag_name} eq 'meta') {
           ## NOTE: There is a "as if in head" code clone.
           if ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t104');
-            !!!parse-error (type => 'after head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
           } else {
-            !!!cp ('t105');
+            
           }
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
           my $meta_el = pop @{$self->{open_elements}};
 
               unless ($self->{confident}) {
                 if ($self->{t}->{attributes}->{charset}) {
-                  !!!cp ('t106');
+                  
                   ## NOTE: Whether the encoding is supported or not,
                   ## an ASCII-compatible charset is not, is handled in
                   ## the |_change_encoding| method.
@@ -2099,7 +2386,7 @@ sub _construct_tree ($) {
                           [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
                           ([^"'\x09\x0A\x0C\x0D\x20]
                            [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
-                    !!!cp ('t107');
+                    
                     ## NOTE: Whether the encoding is supported or not,
                     ## an ASCII-compatible charset is not, is handled
                     ## in the |_change_encoding| method.
@@ -2113,19 +2400,19 @@ sub _construct_tree ($) {
                                              $self->{t}->{attributes}->{content}
                                                    ->{has_reference});
                   } else {
-                    !!!cp ('t108');
+                    
                   }
                 }
               } else {
                 if ($self->{t}->{attributes}->{charset}) {
-                  !!!cp ('t109');
+                  
                   $meta_el->[0]->get_attribute_node_ns (undef, 'charset')
                       ->set_user_data (manakai_has_reference =>
                                            $self->{t}->{attributes}->{charset}
                                                ->{has_reference});
                 }
                 if ($self->{t}->{attributes}->{content}) {
-                  !!!cp ('t110');
+                  
                   $meta_el->[0]->get_attribute_node_ns (undef, 'content')
                       ->set_user_data (manakai_has_reference =>
                                            $self->{t}->{attributes}->{content}
@@ -2135,27 +2422,27 @@ sub _construct_tree ($) {
 
               pop @{$self->{open_elements}} # <head>
                   if $self->{insertion_mode} == AFTER_HEAD_IM;
-              !!!ack ('t110.1');
-              !!!next-token;
+              delete $self->{self_closing};
+              $self->{t} = $self->_get_next_token;
               next B;
         } elsif ($self->{t}->{tag_name} eq 'title') {
           if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            !!!cp ('t111');
+            
             ## As if </noscript>
             pop @{$self->{open_elements}};
-            !!!parse-error (type => 'in noscript', text => 'title',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript', text => 'title',
                             token => $self->{t});
           
             $self->{insertion_mode} = IN_HEAD_IM;
             ## Reprocess in the "in head" insertion mode...
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t112');
-            !!!parse-error (type => 'after head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
           } else {
-            !!!cp ('t113');
+            
           }
 
           ## NOTE: There is a "as if in head" code clone.
@@ -2177,13 +2464,13 @@ sub _construct_tree ($) {
           ## insertion mode IN_HEAD_IM)
           ## NOTE: There is a "as if in head" code clone.
           if ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t114');
-            !!!parse-error (type => 'after head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
           } else {
-            !!!cp ('t115');
+            
           }
           $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
           splice @{$self->{open_elements}}, -2, 1, () # <head>
@@ -2191,43 +2478,67 @@ sub _construct_tree ($) {
           next B;
         } elsif ($self->{t}->{tag_name} eq 'noscript') {
               if ($self->{insertion_mode} == IN_HEAD_IM) {
-                !!!cp ('t116');
+                
                 ## NOTE: and scripting is disalbed
-                !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+                
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
                 $self->{insertion_mode} = IN_HEAD_NOSCRIPT_IM;
-                !!!nack ('t116.1');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-                !!!cp ('t117');
-                !!!parse-error (type => 'in noscript', text => 'noscript',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript', text => 'noscript',
                                 token => $self->{t});
                 ## Ignore the token
-                !!!nack ('t117.1');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               } else {
-                !!!cp ('t118');
+                
                 #
               }
         } elsif ($self->{t}->{tag_name} eq 'script') {
           if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            !!!cp ('t119');
+            
             ## As if </noscript>
             pop @{$self->{open_elements}};
-            !!!parse-error (type => 'in noscript', text => 'script',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript', text => 'script',
                             token => $self->{t});
           
             $self->{insertion_mode} = IN_HEAD_IM;
             ## Reprocess in the "in head" insertion mode...
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t120');
-            !!!parse-error (type => 'after head',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
           } else {
-            !!!cp ('t121');
+            
           }
 
           ## NOTE: There is a "as if in head" code clone.
@@ -2239,10 +2550,10 @@ sub _construct_tree ($) {
         } elsif ($self->{t}->{tag_name} eq 'body' or
                  $self->{t}->{tag_name} eq 'frameset') {
           if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            !!!cp ('t122');
+            
             ## As if </noscript>
             pop @{$self->{open_elements}};
-            !!!parse-error (type => 'in noscript',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             
             ## Reprocess in the "in head" insertion mode...
@@ -2251,39 +2562,63 @@ sub _construct_tree ($) {
             
             ## Reprocess in the "after head" insertion mode...
           } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-            !!!cp ('t124');
+            
             pop @{$self->{open_elements}};
             
             ## Reprocess in the "after head" insertion mode...
           } else {
-            !!!cp ('t125');
+            
           }
 
           ## "after head" insertion mode
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
           if ($self->{t}->{tag_name} eq 'body') {
-            !!!cp ('t126');
+            
             delete $self->{frameset_ok};
             $self->{insertion_mode} = IN_BODY_IM;
           } elsif ($self->{t}->{tag_name} eq 'frameset') {
-            !!!cp ('t127');
+            
             $self->{insertion_mode} = IN_FRAMESET_IM;
           } else {
             die "$0: tag name: $self->{tag_name}";
           }
-          !!!nack ('t127.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
-          !!!cp ('t128');
+          
           #
         }
 
             if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-              !!!cp ('t129');
+              
               ## As if </noscript>
               pop @{$self->{open_elements}};
-              !!!parse-error (type => 'in noscript:/',
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript:/',
                               text => $self->{t}->{tag_name}, token => $self->{t});
               
               ## Reprocess in the "in head" insertion mode...
@@ -2292,22 +2627,37 @@ sub _construct_tree ($) {
 
               ## Reprocess in the "after head" insertion mode...
             } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-              !!!cp ('t130');
+              
               ## As if </head>
               pop @{$self->{open_elements}};
 
               ## Reprocess in the "after head" insertion mode...
             } else {
-              !!!cp ('t131');
+              
             }
 
         ## "after head" insertion mode
         ## As if <body>
-        !!!insert-element ('body',, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'body']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
+    }
+  
         $self->{insertion_mode} = IN_BODY_IM;
         ## The "frameset-ok" flag is not changed in this case.
         ## Reprocess the token.
-        !!!ack-later;
+        
         next B;
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         ## "Before head", "in head", and "after head" insertion modes
@@ -2319,9 +2669,17 @@ sub _construct_tree ($) {
 
         if ($self->{t}->{tag_name} eq 'head') {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            !!!cp ('t132');
+            
             ## As if <head>
-            !!!create-element ($self->{head_element}, HTML_NS, 'head',, $self->{t});
+            
+      $self->{head_element} = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'head']);
+    
+        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
             $self->{open_elements}->[-1]->[0]->append_child ($self->{head_element});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
@@ -2329,32 +2687,32 @@ sub _construct_tree ($) {
             ## Reprocess in the "in head" insertion mode...
             pop @{$self->{open_elements}};
             $self->{insertion_mode} = AFTER_HEAD_IM;
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             next B;
           } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            !!!cp ('t133');
+            
             #
           } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-            !!!cp ('t134');
+            
             pop @{$self->{open_elements}};
             $self->{insertion_mode} = AFTER_HEAD_IM;
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             next B;
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t134.1');
+            
             #
           } else {
             die "$0: $self->{insertion_mode}: Unknown insertion mode";
           }
         } elsif ($self->{t}->{tag_name} eq 'noscript') {
           if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            !!!cp ('t136');
+            
             pop @{$self->{open_elements}};
             $self->{insertion_mode} = IN_HEAD_IM;
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             next B;
           } else {
-            !!!cp ('t138');
+            
             #
           }
         } elsif ({
@@ -2363,24 +2721,32 @@ sub _construct_tree ($) {
             br => 1,
         }->{$self->{t}->{tag_name}}) {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            !!!cp ('t142.2');
+            
             ## (before head) as if <head>, (in head) as if </head>
-            !!!create-element ($self->{head_element}, HTML_NS, 'head',, $self->{t});
+            
+      $self->{head_element} = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'head']);
+    
+        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
             $self->{open_elements}->[-1]->[0]->append_child ($self->{head_element});
             $self->{insertion_mode} = AFTER_HEAD_IM;
   
             ## Reprocess in the "after head" insertion mode...
           } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-            !!!cp ('t143.2');
+            
             ## As if </head>
             pop @{$self->{open_elements}};
             $self->{insertion_mode} = AFTER_HEAD_IM;
   
             ## Reprocess in the "after head" insertion mode...
           } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            !!!cp ('t143.3');
+            
             ## NOTE: Two parse errors for <head><noscript></br>
-            !!!parse-error (type => 'unmatched end tag',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             ## As if </noscript>
             pop @{$self->{open_elements}};
@@ -2393,7 +2759,7 @@ sub _construct_tree ($) {
 
             ## Reprocess in the "after head" insertion mode...
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            !!!cp ('t143.4');
+            
             #
           } else {
             die "$0: $self->{insertion_mode}: Unknown insertion mode";
@@ -2401,7 +2767,22 @@ sub _construct_tree ($) {
 
           ## "after head" insertion mode
           ## As if <body>
-          !!!insert-element ('body',, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'body']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
+    }
+  
           $self->{insertion_mode} = IN_BODY_IM;
           ## The "frameset-ok" flag is left unchanged in this case.
           ## Reprocess the token.
@@ -2409,18 +2790,26 @@ sub _construct_tree ($) {
         }
 
         ## End tags are ignored by default.
-        !!!cp ('t145');
-        !!!parse-error (type => 'unmatched end tag',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                         text => $self->{t}->{tag_name}, token => $self->{t});
         ## Ignore the token.
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          !!!cp ('t149.1');
+          
 
           ## NOTE: As if <head>
-          !!!create-element ($self->{head_element}, HTML_NS, 'head',, $self->{t});
+          
+      $self->{head_element} = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'head']);
+    
+        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
           $self->{open_elements}->[-1]->[0]->append_child
               ($self->{head_element});
           #push @{$self->{open_elements}},
@@ -2435,7 +2824,7 @@ sub _construct_tree ($) {
           
           #
         } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-          !!!cp ('t149.2');
+          
 
           ## NOTE: As if </head>
           pop @{$self->{open_elements}};
@@ -2444,9 +2833,9 @@ sub _construct_tree ($) {
 
           #
         } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-          !!!cp ('t149.3');
+          
 
-          !!!parse-error (type => 'in noscript:#eof', token => $self->{t});
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript:#eof', token => $self->{t});
 
           ## As if </noscript>
           pop @{$self->{open_elements}};
@@ -2460,12 +2849,27 @@ sub _construct_tree ($) {
 
           #
         } else {
-          !!!cp ('t149.4');
+          
           #
         }
 
         ## NOTE: As if <body>
-        !!!insert-element ('body',, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'body']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
+    }
+  
         $self->{insertion_mode} = IN_BODY_IM;
         ## The "frameset-ok" flag is left unchanged in this case.
         ## Reprocess the token.
@@ -2481,14 +2885,14 @@ sub _construct_tree ($) {
         ## cases.
 
         while ($self->{t}->{data} =~ s/\x00//g) {
-          !!!parse-error (type => 'NULL', token => $self->{t});
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
         }
         if ($self->{t}->{data} eq '') {
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         }
 
-        !!!cp ('t150');
+        
         $reconstruct_active_formatting_elements
             ->($self, $insert_to_current, $active_formatting_elements,
                $open_tables);
@@ -2500,7 +2904,7 @@ sub _construct_tree ($) {
           delete $self->{frameset_ok};
         }
 
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
             if ({
@@ -2512,31 +2916,35 @@ sub _construct_tree ($) {
                 for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[1] == TABLE_CELL_EL) {
-                    !!!cp ('t151');
+                    
 
                     ## Close the cell
-                    !!!back-token; # <x>
+                    
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <x>
                     $self->{t} = {type => END_TAG_TOKEN,
                               tag_name => $node->[0]->manakai_local_name,
                               line => $self->{t}->{line},
                               column => $self->{t}->{column}};
                     next B;
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    !!!cp ('t152');
+                    
                     ## ISSUE: This case can never be reached, maybe.
                     last;
                   }
                 }
 
-                !!!cp ('t153');
-                !!!parse-error (type => 'start tag not allowed',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'start tag not allowed',
                     text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!nack ('t153.1');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               } elsif (($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
-                !!!parse-error (type => 'not closed', text => 'caption',
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed', text => 'caption',
                                 token => $self->{t});
                 
                 ## NOTE: As if </caption>.
@@ -2546,39 +2954,39 @@ sub _construct_tree ($) {
                   for (reverse 0..$#{$self->{open_elements}}) {
                     my $node = $self->{open_elements}->[$_];
                     if ($node->[1] == CAPTION_EL) {
-                      !!!cp ('t155');
+                      
                       $i = $_;
                       last INSCOPE;
                     } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                      !!!cp ('t156');
+                      
                       last;
                     }
                   }
 
-                  !!!cp ('t157');
-                  !!!parse-error (type => 'start tag not allowed',
+                  
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'start tag not allowed',
                                   text => $self->{t}->{tag_name}, token => $self->{t});
                   ## Ignore the token
-                  !!!nack ('t157.1');
-                  !!!next-token;
+                  
+                  $self->{t} = $self->_get_next_token;
                   next B;
                 } # INSCOPE
                 
                 ## generate implied end tags
                 while ($self->{open_elements}->[-1]->[1]
                            & END_TAG_OPTIONAL_EL) {
-                  !!!cp ('t158');
+                  
                   pop @{$self->{open_elements}};
                 }
 
                 unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
-                  !!!cp ('t159');
-                  !!!parse-error (type => 'not closed',
+                  
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                                   text => $self->{open_elements}->[-1]->[0]
                                       ->manakai_local_name,
                                   token => $self->{t});
                 } else {
-                  !!!cp ('t160');
+                  
                 }
                 
                 splice @{$self->{open_elements}}, $i;
@@ -2588,14 +2996,14 @@ sub _construct_tree ($) {
                 $self->{insertion_mode} = IN_TABLE_IM;
                 
                 ## reprocess
-                !!!ack-later;
+                
                 next B;
               } else {
-                !!!cp ('t161');
+                
                 #
               }
             } else {
-              !!!cp ('t162');
+              
               #
             }
           } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
@@ -2606,40 +3014,40 @@ sub _construct_tree ($) {
                 INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-                    !!!cp ('t163');
+                    
                     $i = $_;
                     last INSCOPE;
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    !!!cp ('t164');
+                    
                     last INSCOPE;
                   }
                 } # INSCOPE
                   unless (defined $i) {
-                    !!!cp ('t165');
-                    !!!parse-error (type => 'unmatched end tag',
+                    
+                    $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                     text => $self->{t}->{tag_name},
                                     token => $self->{t});
                     ## Ignore the token
-                    !!!next-token;
+                    $self->{t} = $self->_get_next_token;
                     next B;
                   }
                 
                 ## generate implied end tags
                 while ($self->{open_elements}->[-1]->[1]
                            & END_TAG_OPTIONAL_EL) {
-                  !!!cp ('t166');
+                  
                   pop @{$self->{open_elements}};
                 }
 
                 if ($self->{open_elements}->[-1]->[0]->manakai_local_name
                         ne $self->{t}->{tag_name}) {
-                  !!!cp ('t167');
-                  !!!parse-error (type => 'not closed',
+                  
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                                   text => $self->{open_elements}->[-1]->[0]
                                       ->manakai_local_name,
                                   token => $self->{t});
                 } else {
-                  !!!cp ('t168');
+                  
                 }
                 
                 splice @{$self->{open_elements}}, $i;
@@ -2648,17 +3056,17 @@ sub _construct_tree ($) {
                 
                 $self->{insertion_mode} = IN_ROW_IM;
                 
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               } elsif (($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
-                !!!cp ('t169');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               } else {
-                !!!cp ('t170');
+                
                 #
               }
             } elsif ($self->{t}->{tag_name} eq 'caption') {
@@ -2669,38 +3077,38 @@ sub _construct_tree ($) {
                   for (reverse 0..$#{$self->{open_elements}}) {
                     my $node = $self->{open_elements}->[$_];
                     if ($node->[1] == CAPTION_EL) {
-                      !!!cp ('t171');
+                      
                       $i = $_;
                       last INSCOPE;
                     } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                      !!!cp ('t172');
+                      
                       last;
                     }
                   }
 
-                  !!!cp ('t173');
-                  !!!parse-error (type => 'unmatched end tag',
+                  
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                   text => $self->{t}->{tag_name}, token => $self->{t});
                   ## Ignore the token
-                  !!!next-token;
+                  $self->{t} = $self->_get_next_token;
                   next B;
                 } # INSCOPE
                 
                 ## generate implied end tags
                 while ($self->{open_elements}->[-1]->[1]
                            & END_TAG_OPTIONAL_EL) {
-                  !!!cp ('t174');
+                  
                   pop @{$self->{open_elements}};
                 }
                 
                 unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
-                  !!!cp ('t175');
-                  !!!parse-error (type => 'not closed',
+                  
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                                   text => $self->{open_elements}->[-1]->[0]
                                       ->manakai_local_name,
                                   token => $self->{t});
                 } else {
-                  !!!cp ('t176');
+                  
                 }
                 
                 splice @{$self->{open_elements}}, $i;
@@ -2709,17 +3117,17 @@ sub _construct_tree ($) {
                 
                 $self->{insertion_mode} = IN_TABLE_IM;
                 
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               } elsif (($self->{insertion_mode} & IM_MASK) == IN_CELL_IM) {
-                !!!cp ('t177');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               } else {
-                !!!cp ('t178');
+                
                 #
               }
             } elsif ({
@@ -2734,37 +3142,41 @@ sub _construct_tree ($) {
                 for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-                    !!!cp ('t179');
+                    
                     $i = $_;
 
                     ## Close the cell
-                    !!!back-token; # </x>
+                    
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # </x>
                     $self->{t} = {type => END_TAG_TOKEN, tag_name => $tn,
                               line => $self->{t}->{line},
                               column => $self->{t}->{column}};
                     next B;
                   } elsif ($node->[1] == TABLE_CELL_EL) {
-                    !!!cp ('t180');
+                    
                     $tn = $node->[0]->manakai_local_name;
                     ## NOTE: There is exactly one |td| or |th| element
                     ## in scope in the stack of open elements by definition.
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
                     ## ISSUE: Can this be reached?
-                    !!!cp ('t181');
+                    
                     last;
                   }
                 }
 
-                !!!cp ('t182');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                     text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               } # INSCOPE
             } elsif ($self->{t}->{tag_name} eq 'table' and
                      ($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
-              !!!parse-error (type => 'not closed', text => 'caption',
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed', text => 'caption',
                               token => $self->{t});
 
               ## As if </caption>
@@ -2773,38 +3185,38 @@ sub _construct_tree ($) {
               INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                 my $node = $self->{open_elements}->[$_];
                 if ($node->[1] == CAPTION_EL) {
-                  !!!cp ('t184');
+                  
                   $i = $_;
                   last INSCOPE;
                 } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                  !!!cp ('t185');
+                  
                   last INSCOPE;
                 }
               } # INSCOPE
               unless (defined $i) {
-                !!!cp ('t186');
+                
 	## TODO: Wrong error type?
-                !!!parse-error (type => 'unmatched end tag',
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => 'caption', token => $self->{t});
                 ## Ignore the token
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               }
               
               ## generate implied end tags
               while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL) {
-                !!!cp ('t187');
+                
                 pop @{$self->{open_elements}};
               }
 
               unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
-                !!!cp ('t188');
-                !!!parse-error (type => 'not closed',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                                 text => $self->{open_elements}->[-1]->[0]
                                     ->manakai_local_name,
                                 token => $self->{t});
               } else {
-                !!!cp ('t189');
+                
               }
 
               splice @{$self->{open_elements}}, $i;
@@ -2819,14 +3231,14 @@ sub _construct_tree ($) {
                       body => 1, col => 1, colgroup => 1, html => 1,
                      }->{$self->{t}->{tag_name}}) {
               if ($self->{insertion_mode} & BODY_TABLE_IMS) {
-                !!!cp ('t190');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               } else {
-                !!!cp ('t191');
+                
                 #
               }
         } elsif ({
@@ -2834,21 +3246,21 @@ sub _construct_tree ($) {
                   thead => 1, tr => 1,
                  }->{$self->{t}->{tag_name}} and
                  ($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
-          !!!cp ('t192');
-          !!!parse-error (type => 'unmatched end tag',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
-          !!!cp ('t193');
+          
           #
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         for my $entry (@{$self->{open_elements}}) {
           unless ($entry->[1] & ALL_END_TAG_OPTIONAL_EL) {
-            !!!cp ('t75');
-            !!!parse-error (type => 'in body:#eof', token => $self->{t});
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
             last;
           }
         }
@@ -2871,61 +3283,139 @@ sub _construct_tree ($) {
             ## Clear back to table context
             while (not ($self->{open_elements}->[-1]->[1]
                             & TABLE_SCOPING_EL)) {
-              !!!cp ('t201');
+              
               pop @{$self->{open_elements}};
             }
             
-            !!!insert-element ('tbody',, $self->{t});
+            
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'tbody']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{'tbody'} || 0];
+    }
+  
             $self->{insertion_mode} = IN_TABLE_BODY_IM;
             ## reprocess in the "in table body" insertion mode...
           }
           
           if (($self->{insertion_mode} & IM_MASK) == IN_TABLE_BODY_IM) {
             unless ($self->{t}->{tag_name} eq 'tr') {
-              !!!cp ('t202');
-              !!!parse-error (type => 'missing start tag:tr', token => $self->{t});
+              
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'missing start tag:tr', token => $self->{t});
             }
                 
             ## Clear back to table body context
             while (not ($self->{open_elements}->[-1]->[1]
                             & TABLE_ROWS_SCOPING_EL)) {
-              !!!cp ('t203');
+              
               ## ISSUE: Can this case be reached?
               pop @{$self->{open_elements}};
             }
                 
             $self->{insertion_mode} = IN_ROW_IM;
             if ($self->{t}->{tag_name} eq 'tr') {
-              !!!cp ('t204');
-              !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+              
+              
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
               $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
-              !!!nack ('t204');
-              !!!next-token;
+              
+              $self->{t} = $self->_get_next_token;
               next B;
             } else {
-              !!!cp ('t205');
-              !!!insert-element ('tr',, $self->{t});
+              
+              
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'tr']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{'tr'} || 0];
+    }
+  
               ## reprocess in the "in row" insertion mode
             }
           } else {
-            !!!cp ('t206');
+            
           }
 
               ## Clear back to table row context
               while (not ($self->{open_elements}->[-1]->[1]
                               & TABLE_ROW_SCOPING_EL)) {
-                !!!cp ('t207');
+                
                 pop @{$self->{open_elements}};
               }
               
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           $self->{insertion_mode} = IN_CELL_IM;
 
           push @$active_formatting_elements, ['#marker', '', undef];
           
-          !!!nack ('t207.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         } elsif ({
                   caption => 1, col => 1, colgroup => 1,
@@ -2940,29 +3430,29 @@ sub _construct_tree ($) {
             INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
               my $node = $self->{open_elements}->[$_];
               if ($node->[1] == TABLE_ROW_EL) {
-                !!!cp ('t208');
+                
                 $i = $_;
                 last INSCOPE;
               } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                !!!cp ('t209');
+                
                 last INSCOPE;
               }
             } # INSCOPE
             unless (defined $i) { 
-              !!!cp ('t210');
+              
               ## TODO: This type is wrong.
-              !!!parse-error (type => 'unmacthed end tag',
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmacthed end tag',
                               text => $self->{t}->{tag_name}, token => $self->{t});
               ## Ignore the token
-              !!!nack ('t210.1');
-              !!!next-token;
+              
+              $self->{t} = $self->_get_next_token;
               next B;
             }
                 
                 ## Clear back to table row context
                 while (not ($self->{open_elements}->[-1]->[1]
                                 & TABLE_ROW_SCOPING_EL)) {
-                  !!!cp ('t211');
+                  
                   ## ISSUE: Can this case be reached?
                   pop @{$self->{open_elements}};
                 }
@@ -2970,12 +3460,12 @@ sub _construct_tree ($) {
                 pop @{$self->{open_elements}}; # tr
                 $self->{insertion_mode} = IN_TABLE_BODY_IM;
                 if ($self->{t}->{tag_name} eq 'tr') {
-                  !!!cp ('t212');
+                  
                   ## reprocess
-                  !!!ack-later;
+                  
                   next B;
                 } else {
-                  !!!cp ('t213');
+                  
                   ## reprocess in the "in table body" insertion mode...
                 }
               }
@@ -2986,29 +3476,29 @@ sub _construct_tree ($) {
                 INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[1] == TABLE_ROW_GROUP_EL) {
-                    !!!cp ('t214');
+                    
                     $i = $_;
                     last INSCOPE;
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    !!!cp ('t215');
+                    
                     last INSCOPE;
                   }
                 } # INSCOPE
                 unless (defined $i) {
-                  !!!cp ('t216');
+                  
 ## TODO: This erorr type is wrong.
-                  !!!parse-error (type => 'unmatched end tag',
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                   text => $self->{t}->{tag_name}, token => $self->{t});
                   ## Ignore the token
-                  !!!nack ('t216.1');
-                  !!!next-token;
+                  
+                  $self->{t} = $self->_get_next_token;
                   next B;
                 }
 
                 ## Clear back to table body context
                 while (not ($self->{open_elements}->[-1]->[1]
                                 & TABLE_ROWS_SCOPING_EL)) {
-                  !!!cp ('t217');
+                  
                   ## ISSUE: Can this state be reached?
                   pop @{$self->{open_elements}};
                 }
@@ -3024,23 +3514,38 @@ sub _construct_tree ($) {
                 $self->{insertion_mode} = IN_TABLE_IM;
                 ## reprocess in "in table" insertion mode...
               } else {
-                !!!cp ('t218');
+                
               }
 
           if ($self->{t}->{tag_name} eq 'col') {
             ## Clear back to table context
             while (not ($self->{open_elements}->[-1]->[1]
                             & TABLE_SCOPING_EL)) {
-              !!!cp ('t219');
+              
               ## ISSUE: Can this state be reached?
               pop @{$self->{open_elements}};
             }
             
-            !!!insert-element ('colgroup',, $self->{t});
+            
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'colgroup']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{'colgroup'} || 0];
+    }
+  
             $self->{insertion_mode} = IN_COLUMN_GROUP_IM;
             ## reprocess
             $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
-            !!!ack-later;
+            
             next B;
           } elsif ({
                     caption => 1,
@@ -3050,7 +3555,7 @@ sub _construct_tree ($) {
             ## Clear back to table context
             while (not ($self->{open_elements}->[-1]->[1]
                         & TABLE_SCOPING_EL)) {
-              !!!cp ('t220');
+              
               ## ISSUE: Can this state be reached?
               pop @{$self->{open_elements}};
             }
@@ -3058,7 +3563,31 @@ sub _construct_tree ($) {
             push @$active_formatting_elements, ['#marker', '', undef]
                 if $self->{t}->{tag_name} eq 'caption';
             
-            !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+            
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
             $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
             $self->{insertion_mode} = {
                                        caption => IN_CAPTION_IM,
@@ -3067,14 +3596,14 @@ sub _construct_tree ($) {
                                        tfoot => IN_TABLE_BODY_IM,
                                        thead => IN_TABLE_BODY_IM,
                                       }->{$self->{t}->{tag_name}};
-            !!!next-token;
-            !!!nack ('t220.1');
+            $self->{t} = $self->_get_next_token;
+            
             next B;
           } else {
             die "$0: in table: <>: $self->{t}->{tag_name}";
           }
             } elsif ($self->{t}->{tag_name} eq 'table') {
-              !!!parse-error (type => 'not closed',
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                               text => $self->{open_elements}->[-1]->[0]
                                   ->manakai_local_name,
                               token => $self->{t});
@@ -3086,41 +3615,41 @@ sub _construct_tree ($) {
               INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                 my $node = $self->{open_elements}->[$_];
                 if ($node->[1] == TABLE_EL) {
-                  !!!cp ('t221');
+                  
                   $i = $_;
                   last INSCOPE;
                 } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                  !!!cp ('t222');
+                  
                   last INSCOPE;
                 }
               } # INSCOPE
               unless (defined $i) {
-                !!!cp ('t223');
+                
 ## TODO: The following is wrong, maybe.
-                !!!parse-error (type => 'unmatched end tag', text => 'table',
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag', text => 'table',
                                 token => $self->{t});
                 ## Ignore tokens </table><table>
-                !!!nack ('t223.1');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               }
               
 ## TODO: Followings are removed from the latest spec. 
               ## generate implied end tags
               while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL) {
-                !!!cp ('t224');
+                
                 pop @{$self->{open_elements}};
               }
 
               unless ($self->{open_elements}->[-1]->[1] == TABLE_EL) {
-                !!!cp ('t225');
+                
                 ## NOTE: |<table><tr><table>|
-                !!!parse-error (type => 'not closed',
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                                 text => $self->{open_elements}->[-1]->[0]
                                     ->manakai_local_name,
                                 token => $self->{t});
               } else {
-                !!!cp ('t226');
+                
               }
 
               splice @{$self->{open_elements}}, $i;
@@ -3129,16 +3658,16 @@ sub _construct_tree ($) {
               $self->_reset_insertion_mode; 
 
           ## reprocess
-          !!!ack-later;
+          
           next B;
         } elsif ($self->{t}->{tag_name} eq 'style') {
-          !!!cp ('t227.8');
+          
           ## NOTE: This is a "as if in head" code clone.
           $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           next B;
         } elsif ($self->{t}->{tag_name} eq 'script') {
-          !!!cp ('t227.6');
+          
           ## NOTE: This is a "as if in head" code clone.
           $script_start_tag->($self, $insert, $open_tables);
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
@@ -3148,52 +3677,100 @@ sub _construct_tree ($) {
             my $type = $self->{t}->{attributes}->{type}->{value};
             $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($type eq 'hidden') {
-              !!!cp ('t227.3');
-              !!!parse-error (type => 'in table',
+              
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table',
                               text => $self->{t}->{tag_name}, token => $self->{t});
 
-              !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+              
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
               $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
 
               ## TODO: form element pointer
 
               pop @{$self->{open_elements}};
 
-              !!!next-token;
-              !!!ack ('t227.2.1');
+              $self->{t} = $self->_get_next_token;
+              delete $self->{self_closing};
               next B;
             } else {
-              !!!cp ('t227.1');
+              
               #
             }
           } else {
-            !!!cp ('t227.4');
+            
             #
           }
         } elsif ($self->{t}->{tag_name} eq 'form') {
-          !!!parse-error (type => 'form in table', token => $self->{t}); # XXX documentation
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'form in table', token => $self->{t}); # XXX documentation
           
           if ($self->{form_element}) {
             ## Ignore the token.
-            !!!next-token;
-            !!!nack ('t227.5');
+            $self->{t} = $self->_get_next_token;
+            
             next B;
           } else {
-            !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+            
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
             $self->{form_element} = $self->{open_elements}->[-1]->[0];
             
             pop @{$self->{open_elements}};
             
-            !!!next-token;
-            !!!nack ('t227.6');
+            $self->{t} = $self->_get_next_token;
+            
             next B;
           }
         } else {
-          !!!cp ('t227');
+          
           #
         }
 
-        !!!parse-error (type => 'in table', text => $self->{t}->{tag_name},
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table', text => $self->{t}->{tag_name},
                         token => $self->{t});
 
         $self->{insert} = $insert = $insert_to_foster;
@@ -3206,38 +3783,38 @@ sub _construct_tree ($) {
               INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                 my $node = $self->{open_elements}->[$_];
                 if ($node->[1] == TABLE_ROW_EL) {
-                  !!!cp ('t228');
+                  
                   $i = $_;
                   last INSCOPE;
                 } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                  !!!cp ('t229');
+                  
                   last INSCOPE;
                 }
               } # INSCOPE
               unless (defined $i) {
-                !!!cp ('t230');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!nack ('t230.1');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               } else {
-                !!!cp ('t232');
+                
               }
 
               ## Clear back to table row context
               while (not ($self->{open_elements}->[-1]->[1]
                               & TABLE_ROW_SCOPING_EL)) {
-                !!!cp ('t231');
+                
 ## ISSUE: Can this state be reached?
                 pop @{$self->{open_elements}};
               }
 
               pop @{$self->{open_elements}}; # tr
               $self->{insertion_mode} = IN_TABLE_BODY_IM;
-              !!!next-token;
-              !!!nack ('t231.1');
+              $self->{t} = $self->_get_next_token;
+              
               next B;
             } elsif ($self->{t}->{tag_name} eq 'table') {
               if (($self->{insertion_mode} & IM_MASK) == IN_ROW_IM) {
@@ -3248,29 +3825,29 @@ sub _construct_tree ($) {
                 INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[1] == TABLE_ROW_EL) {
-                    !!!cp ('t233');
+                    
                     $i = $_;
                     last INSCOPE;
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    !!!cp ('t234');
+                    
                     last INSCOPE;
                   }
                 } # INSCOPE
                 unless (defined $i) {
-                  !!!cp ('t235');
+                  
 ## TODO: The following is wrong.
-                  !!!parse-error (type => 'unmatched end tag',
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                   text => $self->{t}->{type}, token => $self->{t});
                   ## Ignore the token
-                  !!!nack ('t236.1');
-                  !!!next-token;
+                  
+                  $self->{t} = $self->_get_next_token;
                   next B;
                 }
                 
                 ## Clear back to table row context
                 while (not ($self->{open_elements}->[-1]->[1]
                                 & TABLE_ROW_SCOPING_EL)) {
-                  !!!cp ('t236');
+                  
 ## ISSUE: Can this state be reached?
                   pop @{$self->{open_elements}};
                 }
@@ -3286,28 +3863,28 @@ sub _construct_tree ($) {
                 INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[1] == TABLE_ROW_GROUP_EL) {
-                    !!!cp ('t237');
+                    
                     $i = $_;
                     last INSCOPE;
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    !!!cp ('t238');
+                    
                     last INSCOPE;
                   }
                 } # INSCOPE
                 unless (defined $i) {
-                  !!!cp ('t239');
-                  !!!parse-error (type => 'unmatched end tag',
+                  
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                   text => $self->{t}->{tag_name}, token => $self->{t});
                   ## Ignore the token
-                  !!!nack ('t239.1');
-                  !!!next-token;
+                  
+                  $self->{t} = $self->_get_next_token;
                   next B;
                 }
                 
                 ## Clear back to table body context
                 while (not ($self->{open_elements}->[-1]->[1]
                                 & TABLE_ROWS_SCOPING_EL)) {
-                  !!!cp ('t240');
+                  
                   pop @{$self->{open_elements}};
                 }
                 
@@ -3333,21 +3910,21 @@ sub _construct_tree ($) {
               INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                 my $node = $self->{open_elements}->[$_];
                 if ($node->[1] == TABLE_EL) {
-                  !!!cp ('t241');
+                  
                   $i = $_;
                   last INSCOPE;
                 } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                  !!!cp ('t242');
+                  
                   last INSCOPE;
                 }
               } # INSCOPE
               unless (defined $i) {
-                !!!cp ('t243');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!nack ('t243.1');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               }
                 
@@ -3356,7 +3933,7 @@ sub _construct_tree ($) {
               
               $self->_reset_insertion_mode;
               
-              !!!next-token;
+              $self->{t} = $self->_get_next_token;
               next B;
             } elsif ({
                       tbody => 1, tfoot => 1, thead => 1,
@@ -3368,21 +3945,21 @@ sub _construct_tree ($) {
                 INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-                    !!!cp ('t247');
+                    
                     $i = $_;
                     last INSCOPE;
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    !!!cp ('t248');
+                    
                     last INSCOPE;
                   }
                 } # INSCOPE
                   unless (defined $i) {
-                    !!!cp ('t249');
-                    !!!parse-error (type => 'unmatched end tag',
+                    
+                    $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                     text => $self->{t}->{tag_name}, token => $self->{t});
                     ## Ignore the token
-                    !!!nack ('t249.1');
-                    !!!next-token;
+                    
+                    $self->{t} = $self->_get_next_token;
                     next B;
                   }
                 
@@ -3393,28 +3970,28 @@ sub _construct_tree ($) {
                 INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                   my $node = $self->{open_elements}->[$_];
                   if ($node->[1] == TABLE_ROW_EL) {
-                    !!!cp ('t250');
+                    
                     $i = $_;
                     last INSCOPE;
                   } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    !!!cp ('t251');
+                    
                     last INSCOPE;
                   }
                 } # INSCOPE
                   unless (defined $i) {
-                    !!!cp ('t252');
-                    !!!parse-error (type => 'unmatched end tag',
+                    
+                    $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                     text => 'tr', token => $self->{t});
                     ## Ignore the token
-                    !!!nack ('t252.1');
-                    !!!next-token;
+                    
+                    $self->{t} = $self->_get_next_token;
                     next B;
                   }
                 
                 ## Clear back to table row context
                 while (not ($self->{open_elements}->[-1]->[1]
                                 & TABLE_ROW_SCOPING_EL)) {
-                  !!!cp ('t253');
+                  
 ## ISSUE: Can this case be reached?
                   pop @{$self->{open_elements}};
                 }
@@ -3429,36 +4006,36 @@ sub _construct_tree ($) {
               INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
                 my $node = $self->{open_elements}->[$_];
                 if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-                  !!!cp ('t254');
+                  
                   $i = $_;
                   last INSCOPE;
                 } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                  !!!cp ('t255');
+                  
                   last INSCOPE;
                 }
               } # INSCOPE
               unless (defined $i) {
-                !!!cp ('t256');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
-                !!!nack ('t256.1');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               }
 
               ## Clear back to table body context
               while (not ($self->{open_elements}->[-1]->[1]
                               & TABLE_ROWS_SCOPING_EL)) {
-                !!!cp ('t257');
+                
 ## ISSUE: Can this case be reached?
                 pop @{$self->{open_elements}};
               }
 
               pop @{$self->{open_elements}};
               $self->{insertion_mode} = IN_TABLE_IM;
-              !!!nack ('t257.1');
-              !!!next-token;
+              
+              $self->{t} = $self->_get_next_token;
               next B;
             } elsif ({
                       body => 1, caption => 1, col => 1, colgroup => 1,
@@ -3466,16 +4043,16 @@ sub _construct_tree ($) {
                       tr => 1, # $self->{insertion_mode} == IN_ROW_IM
                       tbody => 1, tfoot => 1, thead => 1, # $self->{insertion_mode} == IN_TABLE_IM
                      }->{$self->{t}->{tag_name}}) {
-          !!!cp ('t258');
-          !!!parse-error (type => 'unmatched end tag',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token
-          !!!nack ('t258.1');
-           !!!next-token;
+          
+           $self->{t} = $self->_get_next_token;
           next B;
         } else {
-          !!!cp ('t259');
-          !!!parse-error (type => 'in table:/',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
 
           $self->{insert} = $insert = $insert_to_foster;
@@ -3484,11 +4061,11 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         unless ($self->{open_elements}->[-1]->[1] == HTML_EL and
                 @{$self->{open_elements}} == 1) { # redundant, maybe
-          !!!parse-error (type => 'in body:#eof', token => $self->{t});
-          !!!cp ('t259.1');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
+          
           #
         } else {
-          !!!cp ('t259.2');
+          
           #
         }
 
@@ -3502,63 +4079,87 @@ sub _construct_tree ($) {
             if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
               $self->{open_elements}->[-1]->[0]->manakai_append_text ($1);
               unless (length $self->{t}->{data}) {
-                !!!cp ('t260');
-                !!!next-token;
+                
+                $self->{t} = $self->_get_next_token;
                 next B;
               }
             }
             
-            !!!cp ('t261');
+            
             #
           } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
             if ($self->{t}->{tag_name} eq 'col') {
-              !!!cp ('t262');
-              !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+              
+              
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
               pop @{$self->{open_elements}};
-              !!!ack ('t262.1');
-              !!!next-token;
+              delete $self->{self_closing};
+              $self->{t} = $self->_get_next_token;
               next B;
             } else { 
-              !!!cp ('t263');
+              
               #
             }
           } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
             if ($self->{t}->{tag_name} eq 'colgroup') {
               if ($self->{open_elements}->[-1]->[1] == HTML_EL) {
-                !!!cp ('t264');
-                !!!parse-error (type => 'unmatched end tag',
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                                 text => 'colgroup', token => $self->{t});
                 ## Ignore the token
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;
               } else {
-                !!!cp ('t265');
+                
                 pop @{$self->{open_elements}}; # colgroup
                 $self->{insertion_mode} = IN_TABLE_IM;
-                !!!next-token;
+                $self->{t} = $self->_get_next_token;
                 next B;             
               }
             } elsif ($self->{t}->{tag_name} eq 'col') {
-              !!!cp ('t266');
-              !!!parse-error (type => 'unmatched end tag',
+              
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                               text => 'col', token => $self->{t});
               ## Ignore the token
-              !!!next-token;
+              $self->{t} = $self->_get_next_token;
               next B;
             } else {
-              !!!cp ('t267');
+              
               # 
             }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         if ($self->{open_elements}->[-1]->[1] == HTML_EL and
             @{$self->{open_elements}} == 1) { # redundant, maybe
-          !!!cp ('t270.2');
+          
           ## Stop parsing.
           last B;
         } else {
           ## XXXgeneratetoken
           ## NOTE: As if </colgroup>.
-          !!!cp ('t270.1');
+          
           pop @{$self->{open_elements}}; # colgroup
           $self->{insertion_mode} = IN_TABLE_IM;
           ## Reprocess.
@@ -3571,78 +4172,126 @@ sub _construct_tree ($) {
           ## XXXgeneratetoken
           ## As if </colgroup>
           if ($self->{open_elements}->[-1]->[1] == HTML_EL) {
-            !!!cp ('t269');
+            
 ## TODO: Wrong error type?
-            !!!parse-error (type => 'unmatched end tag',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => 'colgroup', token => $self->{t});
             ## Ignore the token
-            !!!nack ('t269.1');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           } else {
-            !!!cp ('t270');
+            
             pop @{$self->{open_elements}}; # colgroup
             $self->{insertion_mode} = IN_TABLE_IM;
-            !!!ack-later;
+            
             ## reprocess
             next B;
           }
     } elsif ($self->{insertion_mode} & SELECT_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        !!!cp ('t271');
+        
         my $data = $self->{t}->{data};
         while ($data =~ s/\x00//) {
-          !!!parse-error (type => 'NULL', token => $self->{t});
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
         }
         $self->{open_elements}->[-1]->[0]->manakai_append_text ($data)
             if $data ne '';
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'option') {
           if ($self->{open_elements}->[-1]->[1] == OPTION_EL) {
-            !!!cp ('t272');
+            
             ## XXXgeneratetoken
             ## As if </option>
             pop @{$self->{open_elements}};
           } else {
-            !!!cp ('t273');
+            
           }
 
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
-          !!!nack ('t273.1');
-          !!!next-token;
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'optgroup') {
           if ($self->{open_elements}->[-1]->[1] == OPTION_EL) {
-            !!!cp ('t274');
+            
             ## XXXgenereatetoken
             ## As if </option>
             pop @{$self->{open_elements}};
           } else {
-            !!!cp ('t275');
+            
           }
 
           if ($self->{open_elements}->[-1]->[1] == OPTGROUP_EL) {
-            !!!cp ('t276');
+            
             ## XXXgeneratetoken
             ## As if </optgroup>
             pop @{$self->{open_elements}};
           } else {
-            !!!cp ('t277');
+            
           }
 
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
-          !!!nack ('t277.1');
-          !!!next-token;
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
+          
+          $self->{t} = $self->_get_next_token;
           next B;
 
         } elsif ($self->{t}->{tag_name} eq 'select') {
           ## "In select" / "in select in table" insertion mode,
           ## "select" start tag.
-          !!!cp ('t278');
+          
 
-          !!!parse-error (type => 'select in select', ## XXX: documentation
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'select in select', ## XXX: documentation
                           token => $self->{t});
 
           ## XXXgenereatetoken
@@ -3658,7 +4307,7 @@ sub _construct_tree ($) {
           ## "input", "keygen", "textarea" start tag.
 
           ## Parse error.
-          !!!parse-error (type => 'not closed', text => 'select',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed', text => 'select',
                           token => $self->{t});
 
           ## If there "have an element in select scope" where element
@@ -3667,28 +4316,32 @@ sub _construct_tree ($) {
           INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
             my $node = $self->{open_elements}->[$_];
             if ($node->[1] == SELECT_EL) {
-              !!!cp ('t280');
+              
               $i = $_;
               last INSCOPE;
             } elsif ($node->[1] == OPTGROUP_EL or
                      $node->[1] == OPTION_EL) {
-              !!!cp ('t280.2');
+              
               #
             } else {
-              !!!cp ('t279');
+              
               last INSCOPE;
             }
           } # INSCOPE
           unless (defined $i) {
             ## Ignore the token.
-            !!!nack ('t280.1');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           }
 
           ## Otherwise, act as if there were </select>, then reprocess
           ## the token.
-          !!!back-token;
+          
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+    
           $self->{t} = {type => END_TAG_TOKEN, tag_name => 'select',
                     line => $self->{t}->{line}, column => $self->{t}->{column}};
           next B;
@@ -3704,27 +4357,31 @@ sub _construct_tree ($) {
           ## tags.
 
           ## Parse error.
-          !!!parse-error (type => 'not closed', text => 'select',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed', text => 'select',
                           token => $self->{t});
 
           ## Act as if there were </select>, then reprocess the token.
-          !!!back-token;
+          
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+    
           $self->{t} = {type => END_TAG_TOKEN, tag_name => 'select',
                     line => $self->{t}->{line}, column => $self->{t}->{column}};
           next B;
 
         } elsif ($self->{t}->{tag_name} eq 'script') {
-          !!!cp ('t281.3');
+          
           ## NOTE: This is an "as if in head" code clone
           $script_start_tag->($self, $insert, $open_tables);
           next B;
         } else {
-          !!!cp ('t282');
-          !!!parse-error (type => 'in select',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in select',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token
-          !!!nack ('t282.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         }
 
@@ -3732,34 +4389,34 @@ sub _construct_tree ($) {
         if ($self->{t}->{tag_name} eq 'optgroup') {
           if ($self->{open_elements}->[-1]->[1] == OPTION_EL and
               $self->{open_elements}->[-2]->[1] == OPTGROUP_EL) {
-            !!!cp ('t283');
+            
             ## XXXgeneratetoken
             ## As if </option>
             splice @{$self->{open_elements}}, -2;
           } elsif ($self->{open_elements}->[-1]->[1] == OPTGROUP_EL) {
-            !!!cp ('t284');
+            
             pop @{$self->{open_elements}};
           } else {
-            !!!cp ('t285');
-            !!!parse-error (type => 'unmatched end tag',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             ## Ignore the token
           }
-          !!!nack ('t285.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'option') {
           if ($self->{open_elements}->[-1]->[1] == OPTION_EL) {
-            !!!cp ('t286');
+            
             pop @{$self->{open_elements}};
           } else {
-            !!!cp ('t287');
-            !!!parse-error (type => 'unmatched end tag',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             ## Ignore the token
           }
-          !!!nack ('t287.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
 
         } elsif ($self->{t}->{tag_name} eq 'select') {
@@ -3772,36 +4429,36 @@ sub _construct_tree ($) {
           INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
             my $node = $self->{open_elements}->[$_];
             if ($node->[1] == SELECT_EL) {
-              !!!cp ('t288');
+              
               $i = $_;
               last INSCOPE;
             } elsif ($node->[1] == OPTION_EL or
                      $node->[1] == OPTGROUP_EL) {
-              !!!cp ('t289.1');
+              
               #
             } else {
-              !!!cp ('t289');
+              
               last INSCOPE;
             }
           } # INSCOPE
           unless (defined $i) {
-            !!!cp ('t290');
-            !!!parse-error (type => 'unmatched end tag',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             ## Ignore the token.
-            !!!nack ('t290.1');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           }
           
           ## Otherwise,
-          !!!cp ('t291');
+          
           splice @{$self->{open_elements}}, $i;
 
           $self->_reset_insertion_mode;
 
-          !!!nack ('t291.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
 
         } elsif (
@@ -3814,7 +4471,7 @@ sub _construct_tree ($) {
           ## "In select in table" insertion mode, table-related end
           ## tags.
 
-          !!!parse-error (type => 'unmatched end tag',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
 
           ## There "have an element in table scope" where the element
@@ -3823,44 +4480,48 @@ sub _construct_tree ($) {
           INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
             my $node = $self->{open_elements}->[$_];
             if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-              !!!cp ('t292');
+              
               $i = $_;
               last INSCOPE;
             } elsif ($node->[1] & TABLE_SCOPING_EL) {
-              !!!cp ('t293');
+              
               last INSCOPE;
             }
           } # INSCOPE
           unless (defined $i) {
-            !!!cp ('t294');
+            
             ## Ignore the token
-            !!!nack ('t294.1');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           }
           
           ## Act as if there were </select>, then reprocess the token.
-          !!!back-token;
+          
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+    
           $self->{t} = {type => END_TAG_TOKEN, tag_name => 'select',
                     line => $self->{t}->{line}, column => $self->{t}->{column}};
           next B;
 
         } else {
-          !!!cp ('t299');
-          !!!parse-error (type => 'in select:/',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in select:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token
-          !!!nack ('t299.3');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         unless ($self->{open_elements}->[-1]->[1] == HTML_EL and
                 @{$self->{open_elements}} == 1) { # redundant, maybe
-          !!!cp ('t299.1');
-          !!!parse-error (type => 'in body:#eof', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
         } else {
-          !!!cp ('t299.2');
+          
         }
 
         ## Stop parsing.
@@ -3880,20 +4541,20 @@ sub _construct_tree ($) {
           $self->{open_elements}->[-1]->[0]->manakai_append_text ($1);
           
           unless (length $self->{t}->{data}) {
-            !!!cp ('t300');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           }
         }
         
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-          !!!cp ('t301');
-          !!!parse-error (type => 'after html:#text', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html:#text', token => $self->{t});
           #
         } else {
-          !!!cp ('t302');
+          
           ## "after body" insertion mode
-          !!!parse-error (type => 'after body:#text', token => $self->{t});
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after body:#text', token => $self->{t});
           #
         }
 
@@ -3902,53 +4563,53 @@ sub _construct_tree ($) {
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-          !!!cp ('t303');
-          !!!parse-error (type => 'after html',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           #
         } else {
-          !!!cp ('t304');
+          
           ## "after body" insertion mode
-          !!!parse-error (type => 'after body',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after body',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           #
         }
 
         $self->{insertion_mode} = IN_BODY_IM;
-        !!!ack-later;
+        
         ## reprocess
         next B;
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-          !!!cp ('t305');
-          !!!parse-error (type => 'after html:/',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           
           $self->{insertion_mode} = IN_BODY_IM;
           ## Reprocess.
           next B;
         } else {
-          !!!cp ('t306');
+          
         }
 
         ## "after body" insertion mode
         if ($self->{t}->{tag_name} eq 'html') {
           if (defined $self->{inner_html_node}) {
-            !!!cp ('t307');
-            !!!parse-error (type => 'unmatched end tag',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => 'html', token => $self->{t});
             ## Ignore the token
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             next B;
           } else {
-            !!!cp ('t308');
+            
             $self->{insertion_mode} = AFTER_HTML_BODY_IM;
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             next B;
           }
         } else {
-          !!!cp ('t309');
-          !!!parse-error (type => 'after body:/',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after body:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
 
           $self->{insertion_mode} = IN_BODY_IM;
@@ -3956,7 +4617,7 @@ sub _construct_tree ($) {
           next B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        !!!cp ('t309.2');
+        
         ## Stop parsing
         last B;
       } else {
@@ -3968,31 +4629,31 @@ sub _construct_tree ($) {
           $self->{open_elements}->[-1]->[0]->manakai_append_text ($1);
           
           unless (length $self->{t}->{data}) {
-            !!!cp ('t310');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
             next B;
           }
         }
         
         if ($self->{t}->{data} =~ s/^[^\x09\x0A\x0C\x20]+//) {
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
-            !!!cp ('t311');
-            !!!parse-error (type => 'in frameset:#text', token => $self->{t});
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in frameset:#text', token => $self->{t});
           } elsif ($self->{insertion_mode} == AFTER_FRAMESET_IM) {
-            !!!cp ('t312');
-            !!!parse-error (type => 'after frameset:#text', token => $self->{t});
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after frameset:#text', token => $self->{t});
           } else { # "after after frameset"
-            !!!cp ('t313');
-            !!!parse-error (type => 'after html:#text', token => $self->{t});
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html:#text', token => $self->{t});
           }
           
           ## Ignore the token.
           if (length $self->{t}->{data}) {
-            !!!cp ('t314');
+            
             ## reprocess the rest of characters
           } else {
-            !!!cp ('t315');
-            !!!next-token;
+            
+            $self->{t} = $self->_get_next_token;
           }
           next B;
         }
@@ -4001,21 +4662,69 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'frameset' and
             $self->{insertion_mode} == IN_FRAMESET_IM) {
-          !!!cp ('t318');
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
-          !!!nack ('t318.1');
-          !!!next-token;
+          
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'frame' and
                  $self->{insertion_mode} == IN_FRAMESET_IM) {
-          !!!cp ('t319');
-          !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
           pop @{$self->{open_elements}};
-          !!!ack ('t319.1');
-          !!!next-token;
+          delete $self->{self_closing};
+          $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'noframes') {
-          !!!cp ('t320');
+          
           ## NOTE: As if in head.
           $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
           next B;
@@ -4024,21 +4733,21 @@ sub _construct_tree ($) {
           ## has no parse error.
         } else {
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
-            !!!cp ('t321');
-            !!!parse-error (type => 'in frameset',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in frameset',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } elsif ($self->{insertion_mode} == AFTER_FRAMESET_IM) {
-            !!!cp ('t322');
-            !!!parse-error (type => 'after frameset',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after frameset',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } else { # "after after frameset"
-            !!!cp ('t322.2');
-            !!!parse-error (type => 'after after frameset',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after after frameset',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           }
           ## Ignore the token
-          !!!nack ('t322.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         }
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
@@ -4046,56 +4755,56 @@ sub _construct_tree ($) {
             $self->{insertion_mode} == IN_FRAMESET_IM) {
           if ($self->{open_elements}->[-1]->[1] == HTML_EL and
               @{$self->{open_elements}} == 1) {
-            !!!cp ('t325');
-            !!!parse-error (type => 'unmatched end tag',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             ## Ignore the token
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
           } else {
-            !!!cp ('t326');
+            
             pop @{$self->{open_elements}};
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
           }
 
           if (not defined $self->{inner_html_node} and
               not ($self->{open_elements}->[-1]->[1] == FRAMESET_EL)) {
-            !!!cp ('t327');
+            
             $self->{insertion_mode} = AFTER_FRAMESET_IM;
           } else {
-            !!!cp ('t328');
+            
           }
           next B;
         } elsif ($self->{t}->{tag_name} eq 'html' and
                  $self->{insertion_mode} == AFTER_FRAMESET_IM) {
-          !!!cp ('t329');
+          
           $self->{insertion_mode} = AFTER_HTML_FRAMESET_IM;
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
-            !!!cp ('t330');
-            !!!parse-error (type => 'in frameset:/',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in frameset:/',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } elsif ($self->{insertion_mode} == AFTER_FRAMESET_IM) {
-            !!!cp ('t330.1');
-            !!!parse-error (type => 'after frameset:/',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after frameset:/',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } else { # "after after html"
-            !!!cp ('t331');
-            !!!parse-error (type => 'after after frameset:/',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after after frameset:/',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           }
           ## Ignore the token
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         unless ($self->{open_elements}->[-1]->[1] == HTML_EL and
                 @{$self->{open_elements}} == 1) { # redundant, maybe
-          !!!cp ('t331.1');
-          !!!parse-error (type => 'in body:#eof', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
         } else {
-          !!!cp ('t331.2');
+          
         }
         
         ## Stop parsing
@@ -4110,33 +4819,81 @@ sub _construct_tree ($) {
     ## "in body" insertion mode
     if ($self->{t}->{type} == START_TAG_TOKEN) {
       if ($self->{t}->{tag_name} eq 'script') {
-        !!!cp ('t332');
+        
         ## NOTE: This is an "as if in head" code clone
         $script_start_tag->($self, $insert, $open_tables);
         next B;
       } elsif ($self->{t}->{tag_name} eq 'style') {
-        !!!cp ('t333');
+        
         ## NOTE: This is an "as if in head" code clone
         $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
         next B;
       } elsif ({
         base => 1, command => 1, link => 1, basefont => 1, bgsound => 1,
       }->{$self->{t}->{tag_name}}) {
-        !!!cp ('t334');
+        
         ## NOTE: This is an "as if in head" code clone, only "-t" differs
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         pop @{$self->{open_elements}};
-        !!!ack ('t334.1');
-        !!!next-token;
+        delete $self->{self_closing};
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'meta') {
         ## NOTE: This is an "as if in head" code clone, only "-t" differs
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         my $meta_el = pop @{$self->{open_elements}};
 
         unless ($self->{confident}) {
           if ($self->{t}->{attributes}->{charset}) {
-            !!!cp ('t335');
+            
             ## NOTE: Whether the encoding is supported or not, an
             ## ASCII-compatible charset is not, is handled in the
             ## |_change_encoding| method.
@@ -4160,7 +4917,7 @@ sub _construct_tree ($) {
                     [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
                     ([^"'\x09\x0A\x0C\x0D\x20][^\x09\x0A\x0C\x0D\x20\x3B]*))
                    /x) {
-              !!!cp ('t336');
+              
               ## NOTE: Whether the encoding is supported or not, an
               ## ASCII-compatible charset is not, is handled in the
               ## |_change_encoding| method.
@@ -4177,14 +4934,14 @@ sub _construct_tree ($) {
           }
         } else {
           if ($self->{t}->{attributes}->{charset}) {
-            !!!cp ('t337');
+            
             $meta_el->[0]->get_attribute_node_ns (undef, 'charset')
                 ->set_user_data (manakai_has_reference =>
                                      $self->{t}->{attributes}->{charset}
                                          ->{has_reference});
           }
           if ($self->{t}->{attributes}->{content}) {
-            !!!cp ('t338');
+            
             $meta_el->[0]->get_attribute_node_ns (undef, 'content')
                 ->set_user_data (manakai_has_reference =>
                                      $self->{t}->{attributes}->{content}
@@ -4192,51 +4949,51 @@ sub _construct_tree ($) {
           }
         }
 
-        !!!ack ('t338.1');
-        !!!next-token;
+        delete $self->{self_closing};
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'title') {
-        !!!cp ('t341');
+        
         ## NOTE: This is an "as if in head" code clone
         $parse_rcdata->($self, $insert, $open_tables, 1); # RCDATA
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'body') {
         ## "In body" insertion mode, "body" start tag token.
-        !!!parse-error (type => 'in body', text => 'body', token => $self->{t});
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body', text => 'body', token => $self->{t});
               
         if (@{$self->{open_elements}} == 1 or
             not ($self->{open_elements}->[1]->[1] == BODY_EL)) {
-          !!!cp ('t342');
+          
           ## Ignore the token
         } else {
           delete $self->{frameset_ok};
           my $body_el = $self->{open_elements}->[1]->[0];
           for my $attr_name (keys %{$self->{t}->{attributes}}) {
             unless ($body_el->has_attribute_ns (undef, $attr_name)) {
-              !!!cp ('t343');
+              
               $body_el->set_attribute_ns
                 (undef, [undef, $attr_name],
                  $self->{t}->{attributes}->{$attr_name}->{value});
             }
           }
         }
-        !!!nack ('t343.1');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'frameset') {
-        !!!parse-error (type => 'in body', text => $self->{t}->{tag_name},
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body', text => $self->{t}->{tag_name},
                         token => $self->{t});
 
         if (@{$self->{open_elements}} == 1 or
             not ($self->{open_elements}->[1]->[1] == BODY_EL)) {
-          !!!cp ('t343.2');
+          
           ## Ignore the token.
         } elsif (not $self->{frameset_ok}) {
-          !!!cp ('t343.3');
+          
           ## Ignore the token.
         } else {
-          !!!cp ('t343.4');
+          
           
           ## 1. Remove the second element.
           my $body = $self->{open_elements}->[1]->[0];
@@ -4247,14 +5004,38 @@ sub _construct_tree ($) {
           splice @{$self->{open_elements}}, 1;
 
           ## 3. Insert.
-          !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+          
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
 
           ## 4. Switch.
           $self->{insertion_mode} = IN_FRAMESET_IM;
         }
 
-        !!!nack ('t343.5');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         next B;
 
       } elsif ({
@@ -4286,11 +5067,11 @@ sub _construct_tree ($) {
 
         ## 1. When there is an opening |form| element:
         if ($self->{t}->{tag_name} eq 'form' and defined $self->{form_element}) {
-          !!!cp ('t350');
-          !!!parse-error (type => 'in form:form', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in form:form', token => $self->{t});
           ## Ignore the token
-          !!!nack ('t350.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           next B;
         }
 
@@ -4300,13 +5081,17 @@ sub _construct_tree ($) {
           ## "have a |p| element in button scope"
           INSCOPE: for (reverse @{$self->{open_elements}}) {
             if ($_->[1] == P_EL) {
-              !!!cp ('t344');
-              !!!back-token; # <form>
+              
+              
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <form>
               $self->{t} = {type => END_TAG_TOKEN, tag_name => 'p',
                         line => $self->{t}->{line}, column => $self->{t}->{column}};
               next B;
             } elsif ($_->[1] & BUTTON_SCOPING_EL) {
-              !!!cp ('t345');
+              
               last INSCOPE;
             }
           } # INSCOPE
@@ -4316,7 +5101,7 @@ sub _construct_tree ($) {
         if ({h1 => 1, h2 => 1, h3 => 1,
              h4 => 1, h5 => 1, h6 => 1}->{$self->{t}->{tag_name}}) {
           if ($self->{open_elements}->[-1]->[1] == HEADING_EL) {
-            !!!parse-error (type => 'not closed',
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                             text => $self->{open_elements}->[-1]->[0]->manakai_local_name,
                             token => $self->{t});
             pop @{$self->{open_elements}};
@@ -4324,51 +5109,75 @@ sub _construct_tree ($) {
         }
 
         ## 4. Insertion.
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         if ($self->{t}->{tag_name} eq 'pre' or $self->{t}->{tag_name} eq 'listing') {
-          !!!nack ('t346.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
           if ($self->{t}->{type} == CHARACTER_TOKEN) {
             $self->{t}->{data} =~ s/^\x0A//;
             unless (length $self->{t}->{data}) {
-              !!!cp ('t346');
-              !!!next-token;
+              
+              $self->{t} = $self->_get_next_token;
             } else {
-              !!!cp ('t349');
+              
             }
           } else {
-            !!!cp ('t348');
+            
           }
 
           delete $self->{frameset_ok};
         } elsif ($self->{t}->{tag_name} eq 'form') {
-          !!!cp ('t347.1');
+          
           $self->{form_element} = $self->{open_elements}->[-1]->[0];
 
-          !!!nack ('t347.2');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
         } elsif ($self->{t}->{tag_name} eq 'table') {
-          !!!cp ('t382');
+          
           push @{$open_tables}, [$self->{open_elements}->[-1]->[0]];
 
           delete $self->{frameset_ok};
           
           $self->{insertion_mode} = IN_TABLE_IM;
 
-          !!!nack ('t382.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
         } elsif ($self->{t}->{tag_name} eq 'hr') {
-          !!!cp ('t386');
+          
           pop @{$self->{open_elements}};
           
-          !!!ack ('t386.1');
+          delete $self->{self_closing};
 
           delete $self->{frameset_ok};
 
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
         } else {
-          !!!nack ('t347.1');
-          !!!next-token;
+          
+          $self->{t} = $self->_get_next_token;
         }
         next B;
 
@@ -4411,12 +5220,12 @@ sub _construct_tree ($) {
 
               ## 2. If current node != "li", parse error
               if ($non_optional) {
-                !!!parse-error (type => 'not closed',
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                                 text => $non_optional->[0]->manakai_local_name,
                                 token => $self->{t});
-                !!!cp ('t355');
+                
               } else {
-                !!!cp ('t356');
+                
               }
 
               ## 3. Pop
@@ -4432,13 +5241,13 @@ sub _construct_tree ($) {
                    (not $node->[1] & ADDRESS_DIV_P_EL)
                   ) {
             ## 4.
-            !!!cp ('t357');
+            
             last; ## goto 6.
           } elsif ($node->[1] & END_TAG_OPTIONAL_EL) {
-            !!!cp ('t358');
+            
             #
           } else {
-            !!!cp ('t359');
+            
             $non_optional ||= $node;
             #
           }
@@ -4450,24 +5259,52 @@ sub _construct_tree ($) {
         ## 6. (a) "have a |p| element in button scope".
         INSCOPE: for (reverse @{$self->{open_elements}}) {
           if ($_->[1] == P_EL) {
-            !!!cp ('t353');
+            
 
             ## NOTE: |<p><li>|, for example.
 
-            !!!back-token; # <x>
+            
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <x>
             $self->{t} = {type => END_TAG_TOKEN, tag_name => 'p',
                       line => $self->{t}->{line}, column => $self->{t}->{column}};
             next B;
           } elsif ($_->[1] & BUTTON_SCOPING_EL) {
-            !!!cp ('t354');
+            
             last INSCOPE;
           }
         } # INSCOPE
 
         ## 6. (b) insert
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
-        !!!nack ('t359.1');
-        !!!next-token;
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
+        
+        $self->{t} = $self->_get_next_token;
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'dt' or $self->{t}->{tag_name} eq 'dd') {
@@ -4497,12 +5334,12 @@ sub _construct_tree ($) {
 
               ## 2. If current node != "dt"|"dd", parse error
               if ($non_optional) {
-                !!!parse-error (type => 'not closed',
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                                 text => $non_optional->[0]->manakai_local_name,
                                 token => $self->{t});
-                !!!cp ('t355.1');
+                
               } else {
-                !!!cp ('t356.1');
+                
               }
 
               ## 3. Pop
@@ -4518,13 +5355,13 @@ sub _construct_tree ($) {
                    (not $node->[1] & ADDRESS_DIV_P_EL)
                   ) {
             ## 4.
-            !!!cp ('t357.1');
+            
             last; ## goto 5.
           } elsif ($node->[1] & END_TAG_OPTIONAL_EL) {
-            !!!cp ('t358.1');
+            
             #
           } else {
-            !!!cp ('t359.1');
+            
             $non_optional ||= $node;
             #
           }
@@ -4536,21 +5373,49 @@ sub _construct_tree ($) {
         ## 6. (a) "have a |p| element in button scope".
         INSCOPE: for (reverse @{$self->{open_elements}}) {
           if ($_->[1] == P_EL) {
-            !!!cp ('t353.1');
-            !!!back-token; # <x>
+            
+            
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <x>
             $self->{t} = {type => END_TAG_TOKEN, tag_name => 'p',
                       line => $self->{t}->{line}, column => $self->{t}->{column}};
             next B;
           } elsif ($_->[1] & BUTTON_SCOPING_EL) {
-            !!!cp ('t354.1');
+            
             last INSCOPE;
           }
         } # INSCOPE
 
         ## 6. (b) insert
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
-        !!!nack ('t359.2');
-        !!!next-token;
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
+        
+        $self->{t} = $self->_get_next_token;
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'plaintext') {
@@ -4560,33 +5425,65 @@ sub _construct_tree ($) {
         ## "has a |p| element in scope".
         INSCOPE: for (reverse @{$self->{open_elements}}) {
           if ($_->[1] == P_EL) {
-            !!!cp ('t367');
-            !!!back-token; # <plaintext>
+            
+            
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <plaintext>
             $self->{t} = {type => END_TAG_TOKEN, tag_name => 'p',
                       line => $self->{t}->{line}, column => $self->{t}->{column}};
             next B;
           } elsif ($_->[1] & BUTTON_SCOPING_EL) {
-            !!!cp ('t368');
+            
             last INSCOPE;
           }
         } # INSCOPE
           
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         
         $self->{state} = PLAINTEXT_STATE;
           
-        !!!nack ('t368.1');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'a') {
         AFE: for my $i (reverse 0..$#$active_formatting_elements) {
           my $node = $active_formatting_elements->[$i];
           if ($node->[1] == A_EL) {
-            !!!cp ('t371');
-            !!!parse-error (type => 'in a:a', token => $self->{t});
             
-            !!!back-token; # <a>
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in a:a', token => $self->{t});
+            
+            
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <a>
             $self->{t} = {type => END_TAG_TOKEN, tag_name => 'a',
                       line => $self->{t}->{line}, column => $self->{t}->{column}};
             $formatting_end_tag->($self, $active_formatting_elements,
@@ -4594,21 +5491,21 @@ sub _construct_tree ($) {
             
             AFE2: for (reverse 0..$#$active_formatting_elements) {
               if ($active_formatting_elements->[$_]->[0] eq $node->[0]) {
-                !!!cp ('t372');
+                
                 splice @$active_formatting_elements, $_, 1;
                 last AFE2;
               }
             } # AFE2
             OE: for (reverse 0..$#{$self->{open_elements}}) {
               if ($self->{open_elements}->[$_]->[0] eq $node->[0]) {
-                !!!cp ('t373');
+                
                 splice @{$self->{open_elements}}, $_, 1;
                 last OE;
               }
             } # OE
             last AFE;
           } elsif ($node->[0] eq '#marker') {
-            !!!cp ('t374');
+            
             last AFE;
           }
         } # AFE
@@ -4618,14 +5515,38 @@ sub _construct_tree ($) {
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
 
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         push_afe [$self->{open_elements}->[-1]->[0],
                   $self->{open_elements}->[-1]->[1],
                   $self->{t}]
             => $active_formatting_elements;
 
-        !!!nack ('t374.1');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'nobr') {
         my $insert = $self->{insertion_mode} & TABLE_IMS
@@ -4637,40 +5558,72 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == NOBR_EL) {
-            !!!cp ('t376');
-            !!!parse-error (type => 'in nobr:nobr', token => $self->{t});
-            !!!back-token; # <nobr>
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in nobr:nobr', token => $self->{t});
+            
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <nobr>
             $self->{t} = {type => END_TAG_TOKEN, tag_name => 'nobr',
                       line => $self->{t}->{line}, column => $self->{t}->{column}};
             next B;
           } elsif ($node->[1] & SCOPING_EL) {
-            !!!cp ('t377');
+            
             last INSCOPE;
           }
         } # INSCOPE
         
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         push_afe [$self->{open_elements}->[-1]->[0],
                   $self->{open_elements}->[-1]->[1],
                   $self->{t}]
             => $active_formatting_elements;
         
-        !!!nack ('t377.1');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'button') {
         ## has a button element in scope
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == BUTTON_EL) {
-            !!!cp ('t378');
-            !!!parse-error (type => 'in button:button', token => $self->{t});
-            !!!back-token; # <button>
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in button:button', token => $self->{t});
+            
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <button>
             $self->{t} = {type => END_TAG_TOKEN, tag_name => 'button',
                       line => $self->{t}->{line}, column => $self->{t}->{column}};
             next B;
           } elsif ($node->[1] & SCOPING_EL) {
-            !!!cp ('t379');
+            
             last INSCOPE;
           }
         } # INSCOPE
@@ -4680,14 +5633,38 @@ sub _construct_tree ($) {
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
           
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
 
         ## TODO: associate with $self->{form_element} if defined
 
         delete $self->{frameset_ok};
 
-        !!!nack ('t379.1');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
                 xmp => 1,
@@ -4699,18 +5676,22 @@ sub _construct_tree ($) {
         if ($self->{t}->{tag_name} eq 'xmp') {
           ## "In body" insertion mode, "xmp" start tag.  As normal
           ## flow-content element start tag, but CDATA parsing.
-          !!!cp ('t381');
+          
 
           ## "have a |p| element in button scope".
           INSCOPE: for (reverse @{$self->{open_elements}}) {
             if ($_->[1] == P_EL) {
-              !!!cp ('t381.2');
-              !!!back-token; # <xmp>
+              
+              
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <xmp>
               $self->{t} = {type => END_TAG_TOKEN, tag_name => 'p',
                         line => $self->{t}->{line}, column => $self->{t}->{column}};
               next B;
             } elsif ($_->[1] & BUTTON_SCOPING_EL) {
-              !!!cp ('t381.3');
+              
               last INSCOPE;
             }
           } # INSCOPE
@@ -4723,25 +5704,25 @@ sub _construct_tree ($) {
 
           delete $self->{frameset_ok};
         } elsif ($self->{t}->{tag_name} eq 'iframe') {
-          !!!cp ('t381.1');
+          
           delete $self->{frameset_ok};
         } else {
-          !!!cp ('t399');
+          
         }
         ## NOTE: There is an "as if in body" code clone.
         $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
         next B;
       } elsif ($self->{t}->{tag_name} eq 'isindex') {
-        !!!parse-error (type => 'isindex', token => $self->{t});
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'isindex', token => $self->{t});
         
         if (defined $self->{form_element}) {
-          !!!cp ('t389');
+          
           ## Ignore the token
-          !!!nack ('t389'); ## NOTE: Not acknowledged.
-          !!!next-token;
+           ## NOTE: Not acknowledged.
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
-          !!!ack ('t391.1');
+          delete $self->{self_closing};
 
           my $at = $self->{t}->{attributes};
           my $form_attrs;
@@ -4760,12 +5741,12 @@ sub _construct_tree ($) {
                          line => $self->{t}->{line}, column => $self->{t}->{column}},
                        );
           if ($prompt_attr) {
-            !!!cp ('t390');
+            
             push @tokens, {type => CHARACTER_TOKEN, data => $prompt_attr->{value},
                            #line => $self->{t}->{line}, column => $self->{t}->{column},
                           };
           } else {
-            !!!cp ('t391');
+            
             push @tokens, {type => CHARACTER_TOKEN,
                            data => 'This is a searchable index. Enter search keywords: ',
                            #line => $self->{t}->{line}, column => $self->{t}->{column},
@@ -4782,13 +5763,37 @@ sub _construct_tree ($) {
                          line => $self->{t}->{line}, column => $self->{t}->{column}},
                         {type => END_TAG_TOKEN, tag_name => 'form',
                          line => $self->{t}->{line}, column => $self->{t}->{column}};
-          !!!back-token (@tokens);
-          !!!next-token;
+          unshift @{$self->{token}}, (@tokens);
+          $self->{t} = $self->_get_next_token;
           next B;
         }
       } elsif ($self->{t}->{tag_name} eq 'textarea') {
         ## 1. Insert
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         
         ## Step 2 # XXX
         ## TODO: $self->{form_element} if defined
@@ -4806,16 +5811,20 @@ sub _construct_tree ($) {
         ## 5. Frameset-ng.
         delete $self->{frameset_ok};
 
-        !!!nack ('t392.1');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'optgroup' or
                $self->{t}->{tag_name} eq 'option') {
         if ($self->{open_elements}->[-1]->[1] == OPTION_EL) {
-          !!!cp ('t397.1');
+          
           ## XXXgeneratetoken
           ## NOTE: As if </option>
-          !!!back-token; # <option> or <optgroup>
+          
+      $self->{t}->{self_closing} = $self->{self_closing};
+      unshift @{$self->{token}}, $self->{t};
+      delete $self->{self_closing};
+     # <option> or <optgroup>
           $self->{t} = {type => END_TAG_TOKEN, tag_name => 'option',
                     line => $self->{t}->{line}, column => $self->{t}->{column}};
           next B;
@@ -4826,10 +5835,34 @@ sub _construct_tree ($) {
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
 
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
 
-        !!!nack ('t397.3');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{tag_name} eq 'rt' or
                $self->{t}->{tag_name} eq 'rp') {
@@ -4837,30 +5870,54 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == RUBY_EL) {
-            !!!cp ('t398.1');
+            
             ## generate implied end tags
             while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL) {
-              !!!cp ('t398.2');
+              
               pop @{$self->{open_elements}};
             }
             unless ($self->{open_elements}->[-1]->[1] == RUBY_EL) {
-              !!!cp ('t398.3');
-              !!!parse-error (type => 'not closed',
+              
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                               text => $self->{open_elements}->[-1]->[0]
                                   ->manakai_local_name,
                               token => $self->{t});
             }
             last INSCOPE;
           } elsif ($node->[1] & SCOPING_EL) {
-            !!!cp ('t398.4');
+            
             last INSCOPE;
           }
         } # INSCOPE
 
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
 
-        !!!nack ('t398.5');
-        !!!next-token;
+        
+        $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{tag_name} eq 'math' or
                $self->{t}->{tag_name} eq 'svg') {
@@ -4875,16 +5932,59 @@ sub _construct_tree ($) {
 
         ## "adjust foreign attributes" - done in insert-element-f
         
-        !!!insert-element-f ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS, $self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS, [undef,   $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (
+          @{
+            $foreign_attr_xname->{$attr_name} ||
+            [undef, [undef,
+                     ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq SVG_NS ?
+                         ($svg_attr_name->{$attr_name} || $attr_name) :
+                     ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq MML_NS ?
+                         ($mml_attr_name->{$attr_name} || $attr_name) :
+                         $attr_name]]
+          }
+        );
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, ($el_category_f->{$self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS}->{ $self->{t}->{tag_name}} || 0) | FOREIGN_EL | (($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq SVG_NS ? SVG_EL : ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq MML_NS ? MML_EL : 0)];
+
+      if ( $self->{t}->{attributes}->{xmlns} and  $self->{t}->{attributes}->{xmlns}->{value} ne ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS)) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
+## TODO: Error type documentation
+      }
+      if ( $self->{t}->{attributes}->{'xmlns:xlink'} and
+           $self->{t}->{attributes}->{'xmlns:xlink'}->{value} ne q<http://www.w3.org/1999/xlink>) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
+      }
+    }
+  
         
         if ($self->{self_closing}) {
           pop @{$self->{open_elements}};
-          !!!ack ('t398.6');
+          delete $self->{self_closing};
         } else {
-          !!!cp ('t398.7');
+          
         }
 
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
                 caption => 1, col => 1, colgroup => 1, frame => 1,
@@ -4892,29 +5992,53 @@ sub _construct_tree ($) {
                 tbody => 1, td => 1, tfoot => 1, th => 1,
                 thead => 1, tr => 1,
                }->{$self->{t}->{tag_name}}) {
-        !!!cp ('t401');
-        !!!parse-error (type => 'in body',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body',
                         text => $self->{t}->{tag_name}, token => $self->{t});
         ## Ignore the token
-        !!!nack ('t401.1'); ## NOTE: |<col/>| or |<frame/>| here is an error.
-        !!!next-token;
+         ## NOTE: |<col/>| or |<frame/>| here is an error.
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'param' or
                $self->{t}->{tag_name} eq 'source' or
                $self->{t}->{tag_name} eq 'track') {
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
         pop @{$self->{open_elements}};
 
-        !!!ack ('t398.5');
-        !!!next-token;
+        delete $self->{self_closing};
+        $self->{t} = $self->_get_next_token;
         redo B;
       } else {
         if ($self->{t}->{tag_name} eq 'image') {
-          !!!cp ('t384');
-          !!!parse-error (type => 'image', token => $self->{t});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'image', token => $self->{t});
           $self->{t}->{tag_name} = 'img';
         } else {
-          !!!cp ('t385');
+          
         }
 
         ## NOTE: There is an "as if <br>" code clone.
@@ -4923,31 +6047,55 @@ sub _construct_tree ($) {
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
         
-        !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
+        
+    {
+      my $el;
+      
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
+    
+        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
+          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
+          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
+          $attr->value ($attr_t->{value});
+          $attr->set_user_data (manakai_source_line => $attr_t->{line});
+          $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $el->set_attribute_node_ns ($attr);
+        }
+      
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
+      $insert->($self, $el, $open_tables);
+      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
+    }
+  
 
         if ({
              applet => 1, marquee => 1, object => 1,
             }->{$self->{t}->{tag_name}}) {
-          !!!cp ('t380');
+          
 
           push @$active_formatting_elements, ['#marker', '', undef];
 
           delete $self->{frameset_ok};
 
-          !!!nack ('t380.1');
+          
         } elsif ({
                   b => 1, big => 1, code => 1, em => 1, font => 1, i => 1,
                   s => 1, small => 1, strike => 1,
                   strong => 1, tt => 1, u => 1,
                  }->{$self->{t}->{tag_name}}) {
-          !!!cp ('t375');
+          
           push_afe [$self->{open_elements}->[-1]->[0],
                $self->{open_elements}->[-1]->[1],
                $self->{t}]
               => $active_formatting_elements;
-          !!!nack ('t375.1');
+          
         } elsif ($self->{t}->{tag_name} eq 'input') {
-          !!!cp ('t388');
+          
           ## TODO: associate with $self->{form_element} if defined
 
           pop @{$self->{open_elements}};
@@ -4964,17 +6112,17 @@ sub _construct_tree ($) {
             delete $self->{frameset_ok};
           }
 
-          !!!ack ('t388.2');
+          delete $self->{self_closing};
         } elsif ({
           area => 1, br => 1, embed => 1, img => 1, wbr => 1, keygen => 1,
         }->{$self->{t}->{tag_name}}) {
-          !!!cp ('t388.1');
+          
 
           pop @{$self->{open_elements}};
 
           delete $self->{frameset_ok};
 
-          !!!ack ('t388.3');
+          delete $self->{self_closing};
         } elsif ($self->{t}->{tag_name} eq 'select') {
           ## TODO: associate with $self->{form_element} if defined
 
@@ -4982,18 +6130,18 @@ sub _construct_tree ($) {
           
           if ($self->{insertion_mode} & TABLE_IMS or
               $self->{insertion_mode} & BODY_TABLE_IMS) {
-            !!!cp ('t400.1');
+            
             $self->{insertion_mode} = IN_SELECT_IN_TABLE_IM;
           } else {
-            !!!cp ('t400.2');
+            
             $self->{insertion_mode} = IN_SELECT_IM;
           }
-          !!!nack ('t400.3');
+          
         } else {
-          !!!nack ('t402');
+          
         }
         
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       }
     } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
@@ -5005,11 +6153,11 @@ sub _construct_tree ($) {
         INSCOPE: {
           for (reverse @{$self->{open_elements}}) {
             if ($_->[1] == BODY_EL) {
-              !!!cp ('t405');
+              
               $i = $_;
               last INSCOPE;
             } elsif ($_->[1] & SCOPING_EL) {
-              !!!cp ('t405.1');
+              
               last;
             }
           }
@@ -5017,10 +6165,10 @@ sub _construct_tree ($) {
           ## NOTE: |<marquee></body>|, |<svg><foreignobject></body>|,
           ## and fragment cases.
 
-          !!!parse-error (type => 'unmatched end tag',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token.  (</body> or </html>)
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
           next B;
         } # INSCOPE
 
@@ -5030,20 +6178,20 @@ sub _construct_tree ($) {
                   $_->[1] == OPTGROUP_EL ||
                   $_->[1] == OPTION_EL ||
                   $_->[1] == RUBY_COMPONENT_EL) {
-            !!!cp ('t403');
-            !!!parse-error (type => 'not closed',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                             text => $_->[0]->manakai_local_name,
                             token => $self->{t});
             last;
           } else {
-            !!!cp ('t404');
+            
           }
         }
 
         ## 3. Switch the insertion mode.
         $self->{insertion_mode} = AFTER_BODY_IM;
         if ($self->{t}->{tag_name} eq 'body') {
-          !!!next-token;
+          $self->{t} = $self->_get_next_token;
         } else { # html
           ## Reprocess.
         }
@@ -5078,23 +6226,23 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-            !!!cp ('t410');
+            
             $i = $_;
             last INSCOPE;
           } elsif ($node->[1] & SCOPING_EL) {
-            !!!cp ('t411');
+            
             last INSCOPE;
           } elsif ($self->{t}->{tag_name} eq 'li' and
                    {ul => 1, ol => 1}->{$node->[0]->manakai_local_name}) {
             ## Has an element in list item scope
-            !!!cp ('t411.4');
+            
             last INSCOPE;
           }
         } # INSCOPE
 
         unless (defined $i) { # has an element in scope
-          !!!cp ('t413');
-          !!!parse-error (type => 'unmatched end tag',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## NOTE: Ignore the token.
         } else {
@@ -5110,20 +6258,20 @@ sub _construct_tree ($) {
                   rt => 1,
                   rp => 1,
                  }->{$self->{open_elements}->[-1]->[0]->manakai_local_name}) {
-            !!!cp ('t409');
+            
             pop @{$self->{open_elements}};
           }
 
           ## Step 2.
           if ($self->{open_elements}->[-1]->[0]->manakai_local_name
                   ne $self->{t}->{tag_name}) {
-            !!!cp ('t412');
-            !!!parse-error (type => 'not closed',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                             text => $self->{open_elements}->[-1]->[0]
                                 ->manakai_local_name,
                             token => $self->{t});
           } else {
-            !!!cp ('t414');
+            
           }
 
           ## Step 3.
@@ -5135,7 +6283,7 @@ sub _construct_tree ($) {
                 applet => 1, marquee => 1, object => 1,
               }->{$self->{t}->{tag_name}};
         }
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'form') {
         ## NOTE: As normal, but interacts with the form element pointer
@@ -5147,44 +6295,44 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == FORM_EL) {
-            !!!cp ('t418');
+            
             $i = $_;
             last INSCOPE;
           } elsif ($node->[1] & SCOPING_EL) {
-            !!!cp ('t419');
+            
             last INSCOPE;
           }
         } # INSCOPE
 
         unless (defined $i) { # has an element in scope
-          !!!cp ('t421');
-          !!!parse-error (type => 'unmatched end tag',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## NOTE: Ignore the token.
         } else {
           ## Step 1. generate implied end tags
           while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL) {
-            !!!cp ('t417');
+            
             pop @{$self->{open_elements}};
           }
           
           ## Step 2. 
           if ($self->{open_elements}->[-1]->[0]->manakai_local_name
                   ne $self->{t}->{tag_name}) {
-            !!!cp ('t417.1');
-            !!!parse-error (type => 'not closed',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                             text => $self->{open_elements}->[-1]->[0]
                                 ->manakai_local_name,
                             token => $self->{t});
           } else {
-            !!!cp ('t420');
+            
           }  
           
           ## Step 3.
           splice @{$self->{open_elements}}, $i;
         }
 
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
                 ## NOTE: As normal, except acts as a closer for any ...
@@ -5195,42 +6343,42 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == HEADING_EL) {
-            !!!cp ('t423');
+            
             $i = $_;
             last INSCOPE;
           } elsif ($node->[1] & SCOPING_EL) {
-            !!!cp ('t424');
+            
             last INSCOPE;
           }
         } # INSCOPE
 
         unless (defined $i) { # has an element in scope
-          !!!cp ('t425.1');
-          !!!parse-error (type => 'unmatched end tag',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## NOTE: Ignore the token.
         } else {
           ## Step 1. generate implied end tags
           while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL) {
-            !!!cp ('t422');
+            
             pop @{$self->{open_elements}};
           }
           
           ## Step 2.
           if ($self->{open_elements}->[-1]->[0]->manakai_local_name
                   ne $self->{t}->{tag_name}) {
-            !!!cp ('t425');
-            !!!parse-error (type => 'unmatched end tag',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } else {
-            !!!cp ('t426');
+            
           }
 
           ## Step 3.
           splice @{$self->{open_elements}}, $i;
         }
         
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'p') {
@@ -5243,18 +6391,18 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == P_EL) {
-            !!!cp ('t410.1');
+            
             $i = $_;
             last INSCOPE;
           } elsif ($node->[1] & BUTTON_SCOPING_EL) {
-            !!!cp ('t411.1');
+            
             last INSCOPE;
           } elsif ($node->[1] & END_TAG_OPTIONAL_EL) {
             ## NOTE: |END_TAG_OPTIONAL_EL| includes "p"
-            !!!cp ('t411.2');
+            
             #
           } else {
-            !!!cp ('t411.3');
+            
             $non_optional ||= $node;
             #
           }
@@ -5266,30 +6414,38 @@ sub _construct_tree ($) {
 
           ## 2. If current node != "p", parse error
           if ($non_optional) {
-            !!!cp ('t412.1');
-            !!!parse-error (type => 'not closed',
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                             text => $non_optional->[0]->manakai_local_name,
                             token => $self->{t});
           } else {
-            !!!cp ('t414.1');
+            
           }
 
           ## 3. Pop
           splice @{$self->{open_elements}}, $i;
         } else {
-          !!!cp ('t413.1');
-          !!!parse-error (type => 'unmatched end tag',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
 
-          !!!cp ('t415.1');
+          
           ## As if <p>, then reprocess the current token
           my $el;
-          !!!create-element ($el, HTML_NS, 'p',, $self->{t});
+          
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'p']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
           $insert->($self, $el, $open_tables);
           ## NOTE: Not inserted into |$self->{open_elements}|.
         }
 
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
                 a => 1,
@@ -5297,13 +6453,13 @@ sub _construct_tree ($) {
                 nobr => 1, s => 1, small => 1, strike => 1,
                 strong => 1, tt => 1, u => 1,
                }->{$self->{t}->{tag_name}}) {
-        !!!cp ('t427');
+        
         $formatting_end_tag->($self, $active_formatting_elements,
                               $open_tables, $self->{t});
         next B;
       } elsif ($self->{t}->{tag_name} eq 'br') {
-        !!!cp ('t428');
-        !!!parse-error (type => 'unmatched end tag',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                         text => 'br', token => $self->{t});
 
         ## As if <br>
@@ -5313,11 +6469,19 @@ sub _construct_tree ($) {
             ->($self, $insert, $active_formatting_elements, $open_tables);
         
         my $el;
-        !!!create-element ($el, HTML_NS, 'br',, $self->{t});
+        
+      $el = $self->{document}->create_element_ns
+        (HTML_NS, [undef,  'br']);
+    
+        $el->set_user_data (manakai_source_line => $self->{t}->{line})
+            if defined $self->{t}->{line};
+        $el->set_user_data (manakai_source_column => $self->{t}->{column})
+            if defined $self->{t}->{column};
+      
         $insert->($self, $el, $open_tables);
         
         ## Ignore the token.
-        !!!next-token;
+        $self->{t} = $self->_get_next_token;
         next B;
       } else {
         if ($self->{t}->{tag_name} eq 'sarcasm') {
@@ -5338,7 +6502,7 @@ sub _construct_tree ($) {
             while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL and
                    $self->{open_elements}->[-1]->[0]->manakai_local_name
                        ne $self->{t}->{tag_name}) {
-              !!!cp ('t430');
+              
               ## NOTE: |<ruby><rt></ruby>|.
               pop @{$self->{open_elements}};
               $node_i++;
@@ -5349,29 +6513,29 @@ sub _construct_tree ($) {
                 = $self->{open_elements}->[-1]->[0]->manakai_local_name;
             $current_tag_name =~ tr/A-Z/a-z/;
             if ($current_tag_name ne $self->{t}->{tag_name}) {
-              !!!cp ('t431');
+              
               ## NOTE: <x><y></x>
-              !!!parse-error (type => 'not closed',
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
                               text => $self->{open_elements}->[-1]->[0]
                                   ->manakai_local_name,
                               token => $self->{t});
             } else {
-              !!!cp ('t432');
+              
             }
             
             ## Step 3
             splice @{$self->{open_elements}}, $node_i if $node_i < 0;
 
-            !!!next-token;
+            $self->{t} = $self->_get_next_token;
             last LOOP;
           } else {
             ## Step 3
             if ($node->[1] & SPECIAL_EL or $node->[1] & SCOPING_EL) { ## "Special"
-              !!!cp ('t433');
-              !!!parse-error (type => 'unmatched end tag',
+              
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                               text => $self->{t}->{tag_name}, token => $self->{t});
               ## Ignore the token
-              !!!next-token;
+              $self->{t} = $self->_get_next_token;
               last LOOP;
 
               ## NOTE: |<span><dd></span>a|: In Safari 3.1.2 and Opera
@@ -5380,7 +6544,7 @@ sub _construct_tree ($) {
               ## "a" is a child of both <body> and <dd>.
             }
             
-            !!!cp ('t434');
+            
           }
           
           ## Step 4
@@ -5532,7 +6696,7 @@ sub set_inner_html ($$$$) {
         my $nsuri = $anode->namespace_uri;
         if (defined $nsuri and $nsuri eq HTML_NS) {
           if ($anode->manakai_local_name eq 'form') {
-            !!!cp ('i5');
+            
             $p->{form_element} = $anode;
             last AN;
           }

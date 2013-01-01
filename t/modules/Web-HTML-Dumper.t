@@ -1,16 +1,16 @@
-package test::Whatpm::HTML::Dumper;
+package test::Web::HTML::Dumper;
 use strict;
 use warnings;
 use Path::Class;
-use lib file (__FILE__)->dir->parent->subdir ('lib')->stringify;
-use lib glob file (__FILE__)->dir->parent->subdir ('modules', '*', 'lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use base qw(Test::Class);
 use Test::More;
-use Message::DOM::DOMImplementation;
-use Whatpm::HTML::Dumper;
+use NanoDOM;
+use Web::HTML::Dumper;
 
 sub _dump : Test(1) {
-  my $dom = Message::DOM::DOMImplementation->new;
+  my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   $doc->manakai_is_html (1);
   $doc->inner_html (q{<!DOCTYPE html><html><body>ff<p clasS=Abc>xx<img/>});

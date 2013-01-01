@@ -1,4 +1,4 @@
-package Whatpm::HTML::Defs;
+package Web::HTML::Defs;
 use strict;
 use warnings;
 our $VERSION = '1.0';
@@ -254,7 +254,7 @@ push @EXPORT, qw(
 
 ## Whether the parsed string is in the foreign island or not affect
 ## how tokenization is done, unfortunately.  These are a copy of some
-## of tokenization state constants.  See Whatpm::HTML for the full
+## of tokenization state constants.  See Web::HTML for the full
 ## list and the descriptions for constants.
 
 push @EXPORT, qw(FOREIGN_EL);

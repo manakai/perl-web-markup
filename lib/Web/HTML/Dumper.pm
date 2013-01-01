@@ -1,4 +1,4 @@
-package Whatpm::HTML::Dumper;
+package Web::HTML::Dumper;
 use strict;
 use warnings;
 our $VERSION = '1.8';

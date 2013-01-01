@@ -1,4 +1,4 @@
-package Whatpm::HTML::ParserData;
+package Web::HTML::ParserData;
 use strict;
 use warnings;
 our $VERSION = '1.0';
@@ -212,8 +212,8 @@ our $SVGElementNameFixup = {
 
 ## ------ Character references ------
 
-require Whatpm::_NamedEntityList;
-our $NamedCharRefs = $Whatpm::HTML::EntityChar;
+require Web::HTML::_NamedEntityList;
+our $NamedCharRefs = $Web::HTML::EntityChar;
 
 ## <http://www.whatwg.org/specs/web-apps/current-work/#tokenizing-character-references>.
 our $CharRefReplacements = {
@@ -364,11 +364,11 @@ our $QuirkyPublicIDs = {
 
 =head1 NAME
 
-Whatpm::HTML::ParserData - Data for HTML parser
+Web::HTML::ParserData - Data for HTML parser
 
 =head1 DESCRIPTION
 
-The C<Whatpm::HTML::ParserData> module contains data for HTML parser,
+The C<Web::HTML::ParserData> module contains data for HTML parser,
 extracted from the HTML Living Standard.
 
 =head1 CONSTANTS

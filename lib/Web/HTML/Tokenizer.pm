@@ -111,7 +111,9 @@ sub _initialize_tokenizer ($) {
   $self->{char_buffer_pos} = 0;
   $self->{nc} = -1; # next input character
   #$self->{next_nc}
-  !!!next-input-character;
+  
+    $self->_set_nc;
+  
   $self->{token} = [];
   # $self->{escape}
 
@@ -1103,7 +1105,7 @@ sub _get_next_token ($) {
     ## NOTE: The |$self->{self_closing}| flag can never be set to
     ## tokens except for start tag tokens.  A start tag token is
     ## always set to |$self->{ct}| before it is emitted.
-    !!!parse-error (type => 'nestc', token => $self->{ct});
+    $self->{parse_error}->(level => $self->{level}->{must}, type => 'nestc', token => $self->{ct});
     delete $self->{self_closing};
   }
 
@@ -1123,22 +1125,22 @@ sub _get_next_token ($) {
 
     my $state = $self->{state};
 
-    !!!tdebug { printf STDERR "U+%04X\t%d\n", $nc, $state };
+    
 
     my $c = $nc > 0x007F ? KEY_ELSE_CHAR : $c_to_key->[$nc];
     my $action = $self->{action_set}->[$state]->[$c]
         || $self->{action_set}->[$state]->[KEY_ELSE_CHAR];
 
     if ($action and not $action->{skip}) {
-      !!!tdebug { warn "ACTION: $action->{name}\n" };
+      
 
       if (defined $action->{error}) {
         if ($action->{error_delta}) {
-          !!!parse-error (type => $action->{error},
+          $self->{parse_error}->(level => $self->{level}->{must}, type => $action->{error},
                           line => $self->{line_prev},
                           column => $self->{column_prev} - $action->{error_delta} + 1);
         } else {
-          !!!parse-error (type => $action->{error});
+          $self->{parse_error}->(level => $self->{level}->{must}, type => $action->{error});
         }
       }
 
@@ -1183,11 +1185,11 @@ sub _get_next_token ($) {
           };
         } elsif ($aca->{leave}) {
           if (exists $self->{ct}->{attributes}->{$self->{ca}->{name}}) {
-            !!!cp (57);
-            !!!parse-error (type => 'duplicate attribute', text => $self->{ca}->{name}, line => $self->{ca}->{line}, column => $self->{ca}->{column});
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'duplicate attribute', text => $self->{ca}->{name}, line => $self->{ca}->{line}, column => $self->{ca}->{column});
             ## Discard $self->{ca}.
           } else {
-            !!!cp (58);
+            
             $self->{ct}->{attributes}->{$self->{ca}->{name}} = $self->{ca};
             $self->{ca}->{index} = ++$self->{ct}->{last_index};
           }
@@ -1199,20 +1201,20 @@ sub _get_next_token ($) {
         $self->{kwd} .= chr ($nc + $action->{buffer}->{append})
             if defined $action->{buffer}->{append};
 
-        !!!tdebug { warn "BUFFER: " . $self->{kwd} . "\n" if defined $self->{kwd} and length $self->{kwd} };
+        
       }
 
       if (defined $action->{emit}) {
         if ($action->{emit} eq '') {
           if ($self->{ct}->{type} == START_TAG_TOKEN) {
-            !!!cp (46);
+            
             $self->{last_stag_name} = $self->{ct}->{tag_name};
           } elsif ($self->{ct}->{type} == END_TAG_TOKEN) {
             if ($self->{ct}->{attributes}) {
-              !!!cp (47);
-              !!!parse-error (type => 'end tag attribute');
+              
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'end tag attribute');
             } else {
-              !!!cp (48);
+              
             }
           } else {
             die "$0: $self->{ct}->{type}: Unknown token type";
@@ -1221,9 +1223,11 @@ sub _get_next_token ($) {
           if ($action->{reconsume}) {
             #
           } else {
-            !!!next-input-character;
+            
+    $self->_set_nc;
+  
           }
-          !!!emit ($self->{ct});
+          return  ($self->{ct});
         } else {
           my $token = {type => $action->{emit}};
           if (defined $action->{emit_data}) {
@@ -1253,15 +1257,19 @@ sub _get_next_token ($) {
           if ($action->{reconsume}) {
             #
           } else {
-            !!!next-input-character;
+            
+    $self->_set_nc;
+  
           }
-          !!!emit ($token);
+          return  ($token);
         }
       } else {
         if ($action->{reconsume}) {
           #
         } else {
-          !!!next-input-character;
+          
+    $self->_set_nc;
+  
         }
       }
 
@@ -1287,7 +1295,7 @@ sub _get_next_token ($) {
       } else {
         ## No start tag token has ever been emitted
         ## NOTE: See <http://krijnhoetmer.nl/irc-logs/whatwg/20070626#l-564>.
-        !!!cp (28);
+        
         $self->{state} = {
           (RCDATA_END_TAG_OPEN_STATE) => RCDATA_STATE,
           (RAWTEXT_END_TAG_OPEN_STATE) => RAWTEXT_STATE,
@@ -1296,7 +1304,7 @@ sub _get_next_token ($) {
               => SCRIPT_DATA_ESCAPED_STATE,
         }->{$state} or die "${state}'s next state not found";
         ## Reconsume.
-        !!!emit ({type => CHARACTER_TOKEN, data => '</',
+        return  ({type => CHARACTER_TOKEN, data => '</',
                   line => $l, column => $c});
         redo A;
       }
@@ -1307,13 +1315,15 @@ sub _get_next_token ($) {
         $ch =~ tr/a-z/A-Z/;
         my $nch = chr $nc;
         if ($nch eq $ch or $nch eq $CH) {
-          !!!cp (24);
+          
           ## Stay in the state.
           $self->{kwd} .= $nch;
-          !!!next-input-character;
+          
+    $self->_set_nc;
+  
           redo A;
         } else {
-          !!!cp (25);
+          
           $self->{state} = {
             (RCDATA_END_TAG_OPEN_STATE) => RCDATA_STATE,
             (RAWTEXT_END_TAG_OPEN_STATE) => RAWTEXT_STATE,
@@ -1322,7 +1332,7 @@ sub _get_next_token ($) {
                 => SCRIPT_DATA_ESCAPED_STATE,
           }->{$state} or die "${state}'s next state not found";
           ## Reconsume.
-          !!!emit ({type => CHARACTER_TOKEN,
+          return  ({type => CHARACTER_TOKEN,
                     data => '</' . $self->{kwd},
                     line => $self->{line_prev},
                     column => $self->{column_prev} - 1 - length $self->{kwd},
@@ -1335,7 +1345,7 @@ sub _get_next_token ($) {
                  0x003E => 1, # >
                  0x002F => 1, # /
                 }->{$nc}) {
-          !!!cp (26);
+          
           ## Reconsume.
           $self->{state} = {
             (RCDATA_END_TAG_OPEN_STATE) => RCDATA_STATE,
@@ -1344,14 +1354,14 @@ sub _get_next_token ($) {
             (SCRIPT_DATA_ESCAPED_END_TAG_OPEN_STATE)
                 => SCRIPT_DATA_ESCAPED_STATE,
           }->{$self->{state}} or die "${state}'s next state not found";
-          !!!emit ({type => CHARACTER_TOKEN,
+          return  ({type => CHARACTER_TOKEN,
                     data => '</' . $self->{kwd},
                     line => $self->{line_prev},
                     column => $self->{column_prev} - 1 - length $self->{kwd},
                    });
           redo A;
         } else {
-          !!!cp (27);
+          
           $self->{ct}
               = {type => END_TAG_TOKEN,
                  tag_name => $self->{last_stag_name},
@@ -1379,8 +1389,10 @@ sub _get_next_token ($) {
               ? SCRIPT_DATA_ESCAPED_STATE
               : SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
         }
-        !!!next-input-character;
-        !!!emit ($token);
+        
+    $self->_set_nc;
+  
+        return  ($token);
         redo A;
       } else {
         die "$state/$nc is implemented";
@@ -1391,19 +1403,21 @@ sub _get_next_token ($) {
       
       if ($nc == 0x0022) { # "
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          !!!cp (95.1);
+          
           ## XML5: "DOCTYPE ATTLIST name after state".
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
           $self->{state} = AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE;
         } else {
-          !!!cp (95);
+          
           ## XML5: "Tag attribute name before state".
           $self->{state} = AFTER_ATTRIBUTE_VALUE_QUOTED_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0026) { # &
-        !!!cp (96);
+        
         ## XML5: Not defined yet.
 
         ## NOTE: In the spec, the tokenizer is switched to the 
@@ -1413,17 +1427,21 @@ sub _get_next_token ($) {
         $self->{prev_state} = $state;
         $self->{entity_add} = 0x0022; # "
         $self->{state} = ENTITY_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($self->{is_xml} and 
                $is_space->{$nc}) {
-        !!!cp (97.1);
+        
         $self->{ca}->{value} .= ' ';
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed attribute value');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed attribute value');
         if ($self->{ct}->{type} == START_TAG_TOKEN or
             $self->{ct}->{type} == END_TAG_TOKEN) {
           $self->{state} = DATA_STATE;
@@ -1441,19 +1459,21 @@ sub _get_next_token ($) {
           die "$0: $self->{ct}->{type}: Unknown token type";
         }
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ca}->{value} .= "\x{FFFD}";
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         ## XML5 [ATTLIST]: Not defined yet.
         if ($self->{is_xml} and $nc == 0x003C) { # <
-          !!!cp (100);
+          
           ## XML5: Not a parse error.
-          !!!parse-error (type => 'lt in attr value'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lt in attr value'); ## TODO: type
         } else {
-          !!!cp (100.1);
+          
         }
         $self->{ca}->{value} .= chr ($nc);
 
@@ -1465,7 +1485,9 @@ sub _get_next_token ($) {
         #                      length $self->{ca}->{value});
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE) {
@@ -1474,19 +1496,21 @@ sub _get_next_token ($) {
 
       if ($nc == 0x0027) { # '
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          !!!cp (101.1);
+          
           ## XML5: "DOCTYPE ATTLIST name after state".
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
           $self->{state} = AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE;
         } else {
-          !!!cp (101);
+          
           ## XML5: "Before attribute name state" (sic).
           $self->{state} = AFTER_ATTRIBUTE_VALUE_QUOTED_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0026) { # &
-        !!!cp (102);
+        
         ## XML5: Not defined yet.
 
         ## NOTE: In the spec, the tokenizer is switched to the 
@@ -1496,17 +1520,21 @@ sub _get_next_token ($) {
         $self->{entity_add} = 0x0027; # '
         $self->{prev_state} = $state;
         $self->{state} = ENTITY_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($self->{is_xml} and 
                $is_space->{$nc}) {
-        !!!cp (103.1);
+        
         $self->{ca}->{value} .= ' ';
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed attribute value');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed attribute value');
         if ($self->{ct}->{type} == START_TAG_TOKEN or
             $self->{ct}->{type} == END_TAG_TOKEN) {
           $self->{state} = DATA_STATE;
@@ -1524,19 +1552,21 @@ sub _get_next_token ($) {
           die "$0: $self->{ct}->{type}: Unknown token type";
         }
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ca}->{value} .= "\x{FFFD}";
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         ## XML5 [ATTLIST]: Not defined yet.
         if ($self->{is_xml} and $nc == 0x003C) { # <
-          !!!cp (106);
+          
           ## XML5: Not a parse error.
-          !!!parse-error (type => 'lt in attr value'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lt in attr value'); ## TODO: type
         } else {
-          !!!cp (106.1);
+          
         }
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
@@ -1547,7 +1577,9 @@ sub _get_next_token ($) {
         #                      length $self->{ca}->{value});
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
@@ -1555,18 +1587,20 @@ sub _get_next_token ($) {
 
       if ($is_space->{$nc}) {
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          !!!cp (107.1);
+          
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
           $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
         } else {
-          !!!cp (107);
+          
           ## XML5: "Tag attribute name before state".
           $self->{state} = BEFORE_ATTRIBUTE_NAME_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0026) { # &
-        !!!cp (108);
+        
 
         ## XML5: Not defined yet.
 
@@ -1578,60 +1612,68 @@ sub _get_next_token ($) {
         $self->{entity_add} = 0x003E; # >
         $self->{prev_state} = $state;
         $self->{state} = ENTITY_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == START_TAG_TOKEN) {
-          !!!cp (109);
+          
           $self->{last_stag_name} = $self->{ct}->{tag_name};
 
           $self->{state} = DATA_STATE;
-          !!!next-input-character;
-          !!!emit ($self->{ct}); # start tag
+          
+    $self->_set_nc;
+  
+          return  ($self->{ct}); # start tag
           redo A;
         } elsif ($self->{ct}->{type} == END_TAG_TOKEN) {
           if ($self->{ct}->{attributes}) {
-            !!!cp (110);
-            !!!parse-error (type => 'end tag attribute');
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'end tag attribute');
           } else {
             ## NOTE: This state should never be reached.
-            !!!cp (111);
+            
           }
 
           $self->{state} = DATA_STATE;
-          !!!next-input-character;
-          !!!emit ($self->{ct}); # end tag
+          
+    $self->_set_nc;
+  
+          return  ($self->{ct}); # end tag
           redo A;
         } elsif ($self->{ct}->{type} == ATTLIST_TOKEN) {
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-          !!!next-input-character;
-          !!!emit ($self->{ct}); # ATTLIST
+          
+    $self->_set_nc;
+  
+          return  ($self->{ct}); # ATTLIST
           redo A;
         } else {
           die "$0: $self->{ct}->{type}: Unknown token type";
         }
       } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == START_TAG_TOKEN) {
-          !!!cp (112);
-          !!!parse-error (type => 'unclosed tag');
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed tag');
           $self->{last_stag_name} = $self->{ct}->{tag_name};
 
           $self->{state} = DATA_STATE;
           ## reconsume
 
           ## Discard the token.
-          #!!!emit ($self->{ct}); # start tag
+          #return  ($self->{ct}); # start tag
           
           redo A;
         } elsif ($self->{ct}->{type} == END_TAG_TOKEN) {
-          !!!parse-error (type => 'unclosed tag');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed tag');
           $self->{state} = DATA_STATE;
           ## Reconsume the current input character.
           ## Discard the current token, including attributes.
           redo A;
         } elsif ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          !!!parse-error (type => 'unclosed md'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
           ## Reconsume the current input character.
@@ -1641,10 +1683,12 @@ sub _get_next_token ($) {
           die "$0: $self->{ct}->{type}: Unknown token type";
         }
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ca}->{value} .= "\x{FFFD}";
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         if ({
@@ -1654,11 +1698,11 @@ sub _get_next_token ($) {
              0x003C => 1, # <
              0x0060 => 1, # `
             }->{$nc}) {
-          !!!cp (115);
+          
           ## XML5: Not a parse error.
-          !!!parse-error (type => 'bad attribute value');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad attribute value');
         } else {
-          !!!cp (116);
+          
         }
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
@@ -1670,7 +1714,9 @@ sub _get_next_token ($) {
         #                      length $self->{ca}->{value});
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == SELF_CLOSING_START_TAG_STATE) {
@@ -1678,25 +1724,27 @@ sub _get_next_token ($) {
 
       if ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == END_TAG_TOKEN) {
-          !!!cp ('124.2');
-          !!!parse-error (type => 'nestc', token => $self->{ct});
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'nestc', token => $self->{ct});
           ## XXX: Different type than slash in start tag
           if ($self->{ct}->{attributes}) {
-            !!!cp ('124.4');
-            !!!parse-error (type => 'end tag attribute');
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'end tag attribute');
           } else {
-            !!!cp ('124.5');
+            
           }
           ## XXX: Test |<title></title/>|
         } else {
-          !!!cp ('124.3');
+          
           $self->{self_closing} = 1;
         }
 
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # start tag or end tag
+        return  ($self->{ct}); # start tag or end tag
 
         redo A;
       } else {
@@ -1710,35 +1758,39 @@ sub _get_next_token ($) {
       
       if ($nc == 0x003E) { # >
         if ($self->{in_subset}) {
-          !!!cp (123);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (124);
+          
           $self->{state} = DATA_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
         redo A;
       } elsif ($nc == -1) { 
         if ($self->{in_subset}) {
-          !!!cp (125.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (125);
+          
           $self->{state} = DATA_STATE;
         }
         ## reconsume
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
         redo A;
       } elsif ($nc == 0x0000) {
         $self->{ct}->{data} .= "\x{FFFD}"; # comment
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (126);
+        
         $self->{ct}->{data} .= chr ($nc); # comment
         $self->{ct}->{data} .= $self->_read_chars
             ({"\x00" => 1, ">" => 1});
@@ -1747,24 +1799,30 @@ sub _get_next_token ($) {
         #                      length $self->{ct}->{data});
 
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == MARKUP_DECLARATION_OPEN_STATE) {
       ## XML5: "Markup declaration state".
       
       if ($nc == 0x002D) { # -
-        !!!cp (133);
+        
         $self->{state} = MD_HYPHEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0044 or # D
                $nc == 0x0064) { # d
         ## ASCII case-insensitive.
-        !!!cp (130);
+        
         $self->{state} = MD_DOCTYPE_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((
                 ## Web::XML::Parser
@@ -1778,16 +1836,18 @@ sub _get_next_token ($) {
                  ($self->{open_elements}->[-1]->[1] & FOREIGN_EL))
                ) and
                $nc == 0x005B) { # [
-        !!!cp (135.4);                
+                        
         $self->{state} = MD_CDATA_STATE;
         $self->{kwd} = '[';
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (136);
+        
       }
 
-      !!!parse-error (type => 'bogus comment',
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                       line => $self->{line_prev},
                       column => $self->{column_prev} - 1);
       ## Reconsume.
@@ -1817,24 +1877,26 @@ sub _get_next_token ($) {
             0x0070, # p
             NEVER_CHAR, # (e)
           ]->[length $self->{kwd}]) {
-        !!!cp (131);
+        
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 6 and
                ($nc == 0x0045 or # E
                 $nc == 0x0065)) { # e
         if ($self->{is_xml} and
             ($self->{kwd} ne 'DOCTYP' or $nc == 0x0065)) {
-          !!!cp (129);
+          
           ## XML5: case-sensitive.
-          !!!parse-error (type => 'lowercase keyword', ## TODO
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO
                           text => 'DOCTYPE',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 5);
         } else {
-          !!!cp (129.1);
+          
         }
         $self->{state} = DOCTYPE_STATE;
         $self->{ct} = {type => DOCTYPE_TOKEN,
@@ -1842,11 +1904,13 @@ sub _get_next_token ($) {
                                   line => $self->{line_prev},
                                   column => $self->{column_prev} - 7,
                                  };
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (132);        
-        !!!parse-error (type => 'bogus comment',
+                
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1 - length $self->{kwd});
         $self->{state} = BOGUS_COMMENT_STATE;
@@ -1867,23 +1931,25 @@ sub _get_next_token ($) {
             '[CDAT' => 0x0041, # A
             '[CDATA' => NEVER_CHAR, # ([)
           }->{$self->{kwd}}) {
-        !!!cp (135.1);
+        
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($self->{kwd} eq '[CDATA' and
                $nc == 0x005B) { # [
         if ($self->{is_xml} and 
             not $self->{tainted} and
             @{$self->{open_elements} or []} == 0) {
-          !!!cp (135.2);
-          !!!parse-error (type => 'cdata outside of root element',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'cdata outside of root element',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 7);
           $self->{tainted} = 1;
         } else {
-          !!!cp (135.21);
+          
         }
 
         $self->{ct} = {type => CHARACTER_TOKEN,
@@ -1891,11 +1957,13 @@ sub _get_next_token ($) {
                                   line => $self->{line_prev},
                                   column => $self->{column_prev} - 7};
         $self->{state} = CDATA_SECTION_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (135.3);
-        !!!parse-error (type => 'bogus comment',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1 - length $self->{kwd});
         $self->{state} = BOGUS_COMMENT_STATE;
@@ -1909,129 +1977,149 @@ sub _get_next_token ($) {
       }
     } elsif ($state == COMMENT_START_STATE) {
       if ($nc == 0x002D) { # -
-        !!!cp (137);
+        
         $self->{state} = COMMENT_START_DASH_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'bogus comment');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment');
         if ($self->{in_subset}) {
-          !!!cp (138.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (138);
+          
           $self->{state} = DATA_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed comment');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed comment');
         if ($self->{in_subset}) {
-          !!!cp (139.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (139);
+          
           $self->{state} = DATA_STATE;
         }
         ## reconsume
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{data} .= "\x{FFFD}"; # comment
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (140);
+        
         $self->{ct}->{data} # comment
             .= chr ($nc);
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == COMMENT_START_DASH_STATE) {
       if ($nc == 0x002D) { # -
-        !!!cp (141);
+        
         $self->{state} = COMMENT_END_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'bogus comment');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment');
         if ($self->{in_subset}) {
-          !!!cp (142.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (142);
+          
           $self->{state} = DATA_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed comment');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed comment');
         if ($self->{in_subset}) {
-          !!!cp (143.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (143);
+          
           $self->{state} = DATA_STATE;
         }
         ## reconsume
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{data} .= "-\x{FFFD}"; # comment
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (144);
+        
         $self->{ct}->{data} # comment
             .= '-' . chr ($nc);
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == COMMENT_STATE) {
       ## XML5: "Comment state" and "DOCTYPE comment state".
 
       if ($nc == 0x002D) { # -
-        !!!cp (145);
+        
         $self->{state} = COMMENT_END_DASH_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed comment');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed comment');
         if ($self->{in_subset}) {
-          !!!cp (146.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (146);
+          
           $self->{state} = DATA_STATE;
         }
         ## reconsume
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{data} .= "\x{FFFD}"; # comment
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (147);
+        
         $self->{ct}->{data} .= chr ($nc); # comment
         $self->{ct}->{data} .= $self->_read_chars
             ({"\x00" => 1, "-" => 1});
@@ -2040,42 +2128,50 @@ sub _get_next_token ($) {
         #                      length $self->{ct}->{data});
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == COMMENT_END_DASH_STATE) {
       ## XML5: "Comment dash state" and "DOCTYPE comment dash state".
 
       if ($nc == 0x002D) { # -
-        !!!cp (148);
+        
         $self->{state} = COMMENT_END_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed comment');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed comment');
         if ($self->{in_subset}) {
-          !!!cp (149.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (149);
+          
           $self->{state} = DATA_STATE;
         }
         ## reconsume
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{data} .= "-\x{FFFD}"; # comment
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (150);
+        
         $self->{ct}->{data} .= '-' . chr ($nc); # comment
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == COMMENT_END_STATE or
@@ -2085,98 +2181,110 @@ sub _get_next_token ($) {
 
       if ($nc == 0x003E) { # >
         if ($self->{in_subset}) {
-          !!!cp (151.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (151);
+          
           $self->{state} = DATA_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == 0x002D) { # -
         if ($state == COMMENT_END_BANG_STATE) {
-          !!!cp (154.3);
+          
           $self->{ct}->{data} .= '--!'; # comment
           $self->{state} = COMMENT_END_DASH_STATE;
         } else {
-          !!!cp (152);
+          
           ## XML5: Not a parse error.
-          !!!parse-error (type => 'dash in comment',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'dash in comment',
                           line => $self->{line_prev},
                           column => $self->{column_prev});
           $self->{ct}->{data} .= '-'; # comment
           ## Stay in the state
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($state != COMMENT_END_BANG_STATE and
                $nc == 0x0021) { # !
-        !!!cp (152.2);
-        !!!parse-error (type => 'comment end bang'); # XXX error type
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'comment end bang'); # XXX error type
         $self->{state} = COMMENT_END_BANG_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed comment');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed comment');
         if ($self->{in_subset}) {
-          !!!cp (153.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (153);
+          
           $self->{state} = DATA_STATE;
         }
         ## Reconsume.
 
-        !!!emit ($self->{ct}); # comment
+        return  ($self->{ct}); # comment
 
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         if ($state == COMMENT_END_BANG_STATE) {
           $self->{ct}->{data} .= "--!\x{FFFD}"; # comment
         } else {
           $self->{ct}->{data} .= "--\x{FFFD}"; # comment
         }
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (154);
+        
         if ($state == COMMENT_END_BANG_STATE) {
           $self->{ct}->{data} .= '--!' . chr ($nc); # comment
         } else {
-          !!!parse-error (type => 'dash in comment',
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'dash in comment',
                           line => $self->{line_prev},
                           column => $self->{column_prev});
           $self->{ct}->{data} .= '--' . chr ($nc); # comment
         }
         $self->{state} = COMMENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } 
     } elsif ($state == DOCTYPE_STATE) {
       if ($is_space->{$nc}) {
-        !!!cp (155);
+        
         $self->{state} = BEFORE_DOCTYPE_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
-        !!!cp (155.1);
-        !!!parse-error (type => 'unclosed DOCTYPE');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
         $self->{ct}->{quirks} = 1;
 
         $self->{state} = DATA_STATE;
         ## Reconsume.
-        !!!emit ($self->{ct}); # DOCTYPE (quirks)
+        return  ($self->{ct}); # DOCTYPE (quirks)
 
         redo A;
       } else {
-        !!!cp (156);
+        
         ## XML5: Swith to the bogus comment state.
-        !!!parse-error (type => 'no space before DOCTYPE name');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before DOCTYPE name');
         $self->{state} = BEFORE_DOCTYPE_NAME_STATE;
         ## reconsume
         redo A;
@@ -2185,114 +2293,138 @@ sub _get_next_token ($) {
       ## XML5: "DOCTYPE root name before state".
 
       if ($is_space->{$nc}) {
-        !!!cp (157);
+        
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!cp (158);
+        
         ## XML5: No parse error.
-        !!!parse-error (type => 'no DOCTYPE name');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE name');
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # DOCTYPE (quirks)
+        return  ($self->{ct}); # DOCTYPE (quirks)
 
         redo A;
       } elsif (0x0041 <= $nc and $nc <= 0x005A) { # A..Z
-        !!!cp (158.1);
+        
         $self->{ct}->{name} # DOCTYPE
             = chr ($nc + ($self->{is_xml} ? 0 : 0x0020));
         delete $self->{ct}->{quirks};
         $self->{state} = DOCTYPE_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
-        !!!cp (159);
-        !!!parse-error (type => 'no DOCTYPE name');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE name');
         $self->{state} = DATA_STATE;
         ## reconsume
 
-        !!!emit ($self->{ct}); # DOCTYPE (quirks)
+        return  ($self->{ct}); # DOCTYPE (quirks)
 
         redo A;
       } elsif ($self->{is_xml} and $nc == 0x005B) { # [
-        !!!cp (159.1);
-        !!!parse-error (type => 'no DOCTYPE name');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE name');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{name} = "\x{FFFD}";
         delete $self->{ct}->{quirks};
         $self->{state} = DOCTYPE_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (160);
+        
         $self->{ct}->{name} = chr $nc;
         delete $self->{ct}->{quirks};
         $self->{state} = DOCTYPE_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_NAME_STATE) {
       ## XML5: "DOCTYPE root name state".
 
       if ($is_space->{$nc}) {
-        !!!cp (161);
+        
         $self->{state} = AFTER_DOCTYPE_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!cp (162);
+        
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # DOCTYPE
+        return  ($self->{ct}); # DOCTYPE
 
         redo A;
       } elsif (0x0041 <= $nc and $nc <= 0x005A) { # A..Z
-        !!!cp (162.1);
+        
         $self->{ct}->{name} # DOCTYPE
             .= chr ($nc + ($self->{is_xml} ? 0 : 0x0020));
         delete $self->{ct}->{quirks};
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
-        !!!cp (163);
-        !!!parse-error (type => 'unclosed DOCTYPE');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
         $self->{state} = DATA_STATE;
         ## reconsume
 
         $self->{ct}->{quirks} = 1;
-        !!!emit ($self->{ct}); # DOCTYPE
+        return  ($self->{ct}); # DOCTYPE
 
         redo A;
       } elsif ($self->{is_xml} and $nc == 0x005B) { # [
-        !!!cp (163.1);
+        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{name} .= "\x{FFFD}"; # DOCTYPE
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (164);
+        
         $self->{ct}->{name} .= chr ($nc); # DOCTYPE
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_DOCTYPE_NAME_STATE) {
@@ -2300,91 +2432,107 @@ sub _get_next_token ($) {
       ## state", but implemented differently.
 
       if ($is_space->{$nc}) {
-        !!!cp (165);
+        
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (166);
+          
           $self->{state} = DATA_STATE;
         } else {
-          !!!cp (166.1);
-          !!!parse-error (type => 'no md def'); ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md def'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == -1) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (167);
-          !!!parse-error (type => 'unclosed DOCTYPE');
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (167.12);
-          !!!parse-error (type => 'unclosed md'); ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
         ## Reconsume.
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == 0x0050 or # P
                $nc == 0x0070) { # p
-        !!!cp (167.1);
+        
         $self->{state} = PUBLIC_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0053 or # S
                $nc == 0x0073) { # s
-        !!!cp (167.2);
+        
         $self->{state} = SYSTEM_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022 and # "
                ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN or
                 $self->{ct}->{type} == PARAMETER_ENTITY_TOKEN)) {
-        !!!cp (167.21);
+        
         $self->{state} = DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE;
         $self->{ct}->{value} = ''; # ENTITY
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027 and # '
                ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN or
                 $self->{ct}->{type} == PARAMETER_ENTITY_TOKEN)) {
-        !!!cp (167.22);
+        
         $self->{state} = DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE;
         $self->{ct}->{value} = ''; # ENTITY
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        !!!cp (167.3);
+        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } else {
-        !!!parse-error (type => 'string after DOCTYPE name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after DOCTYPE name'); ## TODO: type
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (180);
+          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          !!!cp (180.1);
+          
           $self->{state} = BOGUS_MD_STATE;
         }
 
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == PUBLIC_STATE) {
@@ -2405,37 +2553,41 @@ sub _get_next_token ($) {
             0x0069, # i
             NEVER_CHAR, # (c)
           ]->[length $self->{kwd}]) {
-        !!!cp (175);
+        
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 5 and
                ($nc == 0x0043 or # C
                 $nc == 0x0063)) { # c
         if ($self->{is_xml} and
             ($self->{kwd} ne 'PUBLI' or $nc == 0x0063)) { # c
-          !!!cp (168.1);
-          !!!parse-error (type => 'lowercase keyword', ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'PUBLIC',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 4);
         } else {
-          !!!cp (168);
+          
         }
         $self->{state} = AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'string after DOCTYPE name', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after DOCTYPE name', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev} + 1 - length $self->{kwd});
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (169);
+          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          !!!cp (169.1);
+          
           $self->{state} = BOGUS_MD_STATE;
         }
         ## Reconsume.
@@ -2459,37 +2611,41 @@ sub _get_next_token ($) {
             0x0065, # e
             NEVER_CHAR, # (m)
           ]->[length $self->{kwd}]) {
-        !!!cp (170);
+        
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 5 and
                ($nc == 0x004D or # M
                 $nc == 0x006D)) { # m
         if ($self->{is_xml} and
             ($self->{kwd} ne 'SYSTE' or $nc == 0x006D)) { # m
-          !!!cp (171.1);
-          !!!parse-error (type => 'lowercase keyword', ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'SYSTEM',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 4);
         } else {
-          !!!cp (171);
+          
         }
         $self->{state} = AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'string after DOCTYPE name', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after DOCTYPE name', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev} + 1 - length $self->{kwd});
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (172);
+          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          !!!cp (172.1);
+          
           $self->{state} = BOGUS_MD_STATE;
         }
         ## Reconsume.
@@ -2498,133 +2654,151 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE or
              $state == BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE) {
       if ($is_space->{$nc}) {
-        !!!cp (181.5);
+        
         ## Stay in or switch to the state.
         $self->{state} = BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         if ($state == AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE) {
-          !!!cp (181.6);
-          !!!parse-error (type => 'no space before pubid literal'); # XXX documentation
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before pubid literal'); # XXX documentation
         } else {
-          !!!cp (182);
+          
         }
         $self->{ct}->{pubid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         if ($state == AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE) {
-          !!!cp (182.1);
-          !!!parse-error (type => 'no space before pubid literal'); # XXX documentation
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before pubid literal'); # XXX documentation
         } else {
-          !!!cp (183);
+          
         }
         $self->{ct}->{pubid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no PUBLIC literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
         
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (184);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (184.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (185);
-          !!!parse-error (type => 'unclosed DOCTYPE');
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (185.1);
-          !!!parse-error (type => 'unclosed md'); ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
         ## Reconsume.
-        !!!emit ($self->{ct}); # DOCTYPE
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        !!!cp (186.1);
-        !!!parse-error (type => 'no PUBLIC literal');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } else {
-        !!!parse-error (type => 'string after PUBLIC');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after PUBLIC');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (186);
+          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          !!!cp (186.2);
+          
           $self->{state} = BOGUS_MD_STATE;
         }
 
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE) {
       if ($nc == 0x0022) { # "
-        !!!cp (187);
+        
         $self->{state} = AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed PUBLIC literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (188);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (188.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed PUBLIC literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (189);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (189.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
         ## Reconsume.
-        !!!emit ($self->{ct}); # DOCTYPE
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{pubid} .= "\x{FFFD}"; # DOCTYPE/ENTITY/NOTATION
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (190);
+        
         $self->{ct}->{pubid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{pubid} .= $self->_read_chars
             ({"\x00" => 1, q<"> => 1, ">" => 1});
@@ -2632,53 +2806,61 @@ sub _get_next_token ($) {
         #                      length $self->{ct}->{pubid});
 
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE) {
       if ($nc == 0x0027) { # '
-        !!!cp (191);
+        
         $self->{state} = AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed PUBLIC literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (192);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (192.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed PUBLIC literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (193);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (193.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
       
         ## reconsume
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{pubid} .= "\x{FFFD}"; # DOCTYPE/ENTITY/NOTATION
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (194);
+        
         $self->{ct}->{pubid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{pubid} .= $self->_read_chars
             ({"\x00" => 1, "'" => 1, ">" => 1});
@@ -2686,233 +2868,265 @@ sub _get_next_token ($) {
         #                      length $self->{ct}->{pubid});
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE or
              $state == BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE) {
       if ($is_space->{$nc}) {
-        !!!cp (195);
+        
         ## Stay in or switch to the state.
         $self->{state} = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         if ($state == AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE) {
-          !!!cp (196.1);
-          !!!parse-error (type => 'no space before system literal'); # XXX documentation
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
         } else {
-          !!!cp (196);
+          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE/ENTITY/NOTATION
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         if ($state == AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE) {
-          !!!cp (197.1);
-          !!!parse-error (type => 'no space before system literal'); # XXX documentation
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
         } else {
-          !!!cp (197);
+          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE/ENTITY/NOTATION
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
           if ($self->{is_xml}) {
-            !!!cp (198.1);
-            !!!parse-error (type => 'no SYSTEM literal');
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
           } else {
-            !!!cp (198);
+            
           }
           $self->{state} = DATA_STATE;
         } else {
           if ($self->{ct}->{type} == NOTATION_TOKEN) {
-            !!!cp (198.2);
+            
           } else {
-            !!!cp (198.3);
-            !!!parse-error (type => 'no SYSTEM literal');            
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');            
           }
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (199);
-          !!!parse-error (type => 'unclosed DOCTYPE');
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!parse-error (type => 'unclosed md'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
         ## Reconsume.
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        !!!cp (200.1);
-        !!!parse-error (type => 'no SYSTEM literal');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } else {
-        !!!parse-error (type => 'string after PUBLIC literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (200);
+          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          !!!cp (200.2);
+          
           $self->{state} = BOGUS_MD_STATE;
         }
 
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE or
              $state == BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE) {
       if ($is_space->{$nc}) {
-        !!!cp (201);
+        
         ## Stay in or switch to the state.
         $self->{state} = BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         if ($state == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE) {
-          !!!cp (201.6);
-          !!!parse-error (type => 'no space before system literal'); # XXX documentation
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
         } else {
-          !!!cp (202);
+          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         if ($state == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE) {
-          !!!cp (201.7);
-          !!!parse-error (type => 'no space before system literal'); # XXX documentation
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
         } else {
-          !!!cp (203);
+          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no SYSTEM literal');
-        !!!next-input-character;
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
+        
+    $self->_set_nc;
+  
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (204);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (204.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (205);
-          !!!parse-error (type => 'unclosed DOCTYPE');
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (205.1);
-          !!!parse-error (type => 'unclosed md'); ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
         ## Reconsume.
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        !!!cp (206.1);
-        !!!parse-error (type => 'no SYSTEM literal');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
 
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } else {
-        !!!parse-error (type => 'string after SYSTEM');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after SYSTEM');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (206);          
+                    
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          !!!cp (206.2);
+          
           $self->{state} = BOGUS_MD_STATE;
         }
 
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE) {
       if ($nc == 0x0022) { # "
-        !!!cp (207);
+        
         $self->{state} = AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif (not $self->{is_xml} and $nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed SYSTEM literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (208);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (208.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed SYSTEM literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (209);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (209.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
         ## reconsume
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{sysid} .= "\x{FFFD}"; # DOCTYPE/ENTITY/NOTATION
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (210);
+        
         $self->{ct}->{sysid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{sysid} .= $self->_read_chars
             ({"\x00" => 1, q<"> => 1, ">" => 1});
@@ -2920,49 +3134,57 @@ sub _get_next_token ($) {
         #                      length $self->{ct}->{sysid});
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE) {
       if ($nc == 0x0027) { # '
-        !!!cp (211);
+        
         $self->{state} = AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif (not $self->{is_xml} and $nc == 0x003E) { # >
-        !!!cp (212);
-        !!!parse-error (type => 'unclosed SYSTEM literal');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
         $self->{ct}->{quirks} = 1;
-        !!!emit ($self->{ct}); # DOCTYPE
+        return  ($self->{ct}); # DOCTYPE
 
         redo A;
       } elsif ($nc == -1) {
-        !!!parse-error (type => 'unclosed SYSTEM literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (213);
+          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (213.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
         ## reconsume
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == 0x0000) {
-        !!!parse-error (type => 'NULL');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         $self->{ct}->{sysid} .= "\x{FFFD}"; # DOCTYPE/ENTITY/NOTATION
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (214);
+        
         $self->{ct}->{sysid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{sysid} .= $self->_read_chars
             ({"\x00" => 1, "'" => 1, ">" => 1});
@@ -2970,147 +3192,173 @@ sub _get_next_token ($) {
         #                      length $self->{ct}->{sysid});
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE) {
       if ($is_space->{$nc}) {
         if ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN) {
-          !!!cp (215.1);
+          
           $self->{state} = BEFORE_NDATA_STATE;
         } else {
-          !!!cp (215);
+          
           ## Stay in the state
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (216);
+          
           $self->{state} = DATA_STATE;
         } else {
-          !!!cp (216.1);
+          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN and
                ($nc == 0x004E or # N
                 $nc == 0x006E)) { # n
-        !!!cp (216.2);
-        !!!parse-error (type => 'no space before NDATA'); ## TODO: type
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before NDATA'); ## TODO: type
         $self->{state} = NDATA_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (217);
-          !!!parse-error (type => 'unclosed DOCTYPE');
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          !!!cp (217.1);
-          !!!parse-error (type => 'unclosed md'); ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
         ## reconsume
-        !!!emit ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        !!!cp (218.1);
+        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } else {
-        !!!parse-error (type => 'string after SYSTEM literal');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after SYSTEM literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          !!!cp (218);
+          
           #$self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          !!!cp (218.2);
+          
           $self->{state} = BOGUS_MD_STATE;
         }
 
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == BEFORE_NDATA_STATE) {
       if ($is_space->{$nc}) {
-        !!!cp (218.3);
+        
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!cp (218.4);
+        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ENTITY
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ENTITY
         redo A;
       } elsif ($nc == 0x004E or # N
                $nc == 0x006E) { # n
-        !!!cp (218.5);
+        
         $self->{state} = NDATA_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
-        !!!cp (218.6);
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         ## reconsume
-        !!!emit ($self->{ct}); # ENTITY
+        return  ($self->{ct}); # ENTITY
         redo A;
       } else {
-        !!!cp (218.7);
-        !!!parse-error (type => 'string after SYSTEM literal');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after SYSTEM literal');
         $self->{state} = BOGUS_MD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == BOGUS_DOCTYPE_STATE) {
       if ($nc == 0x003E) { # >
-        !!!cp (219);
+        
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
 
-        !!!emit ($self->{ct}); # DOCTYPE
+        return  ($self->{ct}); # DOCTYPE
 
         redo A;
       } elsif ($self->{is_xml} and $nc == 0x005B) { # [
-        !!!cp (220.1);
+        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # DOCTYPE
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # DOCTYPE
         redo A;
       } elsif ($nc == -1) {
-        !!!cp (220);
+        
         $self->{state} = DATA_STATE;
         ## reconsume
 
-        !!!emit ($self->{ct}); # DOCTYPE
+        return  ($self->{ct}); # DOCTYPE
 
         redo A;
       } else {
-        !!!cp (221);
+        
         my $s = '';
         $self->_read_chars ({"[" => 1, ">" => 1});
         #$self->{read_until}->($s, q{>[}, 0);
 
         ## Stay in the state
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == CDATA_SECTION_STATE) {
@@ -3121,30 +3369,32 @@ sub _get_next_token ($) {
       ## XML5: "CDATA state".
       
       if ($nc == 0x005D) { # ]
-        !!!cp (221.1);
+        
         $self->{state} = CDATA_SECTION_MSE1_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == -1) {
         if ($self->{is_xml}) {
-          !!!cp (221.11);
-          !!!parse-error (type => 'no mse'); ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no mse'); ## TODO: type
         } else {
-          !!!cp (221.12);
+          
         }
 
         $self->{state} = DATA_STATE;
         ## Reconsume.
         if (length $self->{ct}->{data}) { # character
-          !!!cp (221.2);
-          !!!emit ($self->{ct}); # character
+          
+          return  ($self->{ct}); # character
         } else {
-          !!!cp (221.3);
+          
           ## No token to emit. $self->{ct} is discarded.
         }        
         redo A;
       } else {
-        !!!cp (221.4);
+        
         $self->{ct}->{data} .= chr $nc;
         $self->{ct}->{data} .= $self->_read_chars
             ({"\x00" => 1, "]" => 1});
@@ -3157,7 +3407,9 @@ sub _get_next_token ($) {
         ## for the ease of processing in the tree constructor.
 
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
 
@@ -3166,12 +3418,14 @@ sub _get_next_token ($) {
       ## XML5: "CDATA bracket state".
 
       if ($nc == 0x005D) { # ]
-        !!!cp (221.5);
+        
         $self->{state} = CDATA_SECTION_MSE2_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (221.6);
+        
         ## XML5: If EOF, "]" is not appended and changed to the data state.
         $self->{ct}->{data} .= ']';
         $self->{state} = CDATA_SECTION_STATE; ## XML5: Stay in the state.
@@ -3183,23 +3437,27 @@ sub _get_next_token ($) {
 
       if ($nc == 0x003E) { # >
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         if (length $self->{ct}->{data}) { # character
-          !!!cp (221.7);
-          !!!emit ($self->{ct}); # character
+          
+          return  ($self->{ct}); # character
         } else {
-          !!!cp (221.8);
+          
           ## No token to emit. $self->{ct} is discarded.
         }
         redo A;
       } elsif ($nc == 0x005D) { # ]
-        !!!cp (221.9); # character
+         # character
         $self->{ct}->{data} .= ']'; ## Add first "]" of "]]]".
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (221.11);
+        
         $self->{ct}->{data} .= ']]'; # character
         $self->{state} = CDATA_SECTION_STATE;
         ## Reconsume. ## XML5: Emit.
@@ -3224,39 +3482,43 @@ sub _get_next_token ($) {
             $self->{entity_add} => 1,
           }->{$nc}) {
         if ($self->{is_xml}) {
-          !!!cp (1001.1);
-          !!!parse-error (type => 'bare ero',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare ero',
                           line => $self->{line_prev},
                           column => $self->{column_prev}
                               + ($nc == -1 ? 1 : 0));
         } else {
-          !!!cp (1001);
+          
           ## No error
         }
         ## Don't consume
         ## Return nothing.
         #
       } elsif ($nc == 0x0023) { # #
-        !!!cp (999);
+        
         $self->{state} = ENTITY_HASH_STATE;
         $self->{kwd} = '#';
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($self->{is_xml} or
                (0x0041 <= $nc and
                 $nc <= 0x005A) or # A..Z
                (0x0061 <= $nc and
                 $nc <= 0x007A)) { # a..z
-        !!!cp (998);
+        
         require Web::HTML::_NamedEntityList;
         $self->{state} = ENTITY_NAME_STATE;
         $self->{kwd} = chr $nc;
         $self->{entity__value} = $self->{kwd};
         $self->{entity__match} = 0;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!cp (1027);
+        
         ## Return nothing.
         #
       }
@@ -3273,16 +3535,16 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
-        !!!cp (997);
+        
         $self->{state} = $self->{prev_state};
         ## Reconsume.
-        !!!emit ({type => CHARACTER_TOKEN, data => '&',
+        return  ({type => CHARACTER_TOKEN, data => '&',
                   line => $self->{line_prev},
                   column => $self->{column_prev},
                  });
         redo A;
       } else {
-        !!!cp (996);
+        
         $self->{ca}->{value} .= '&';
         $self->{state} = $self->{prev_state};
         ## Reconsume.
@@ -3290,29 +3552,35 @@ sub _get_next_token ($) {
       }
     } elsif ($state == ENTITY_HASH_STATE) {
       if ($nc == 0x0078) { # x
-        !!!cp (995);
+        
         $self->{state} = HEXREF_X_STATE;
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0058) { # X
-        !!!cp (995.1);
+        
         if ($self->{is_xml}) {
-          !!!parse-error (type => 'uppercase hcro'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'uppercase hcro'); ## TODO: type
         }
         $self->{state} = HEXREF_X_STATE;
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif (0x0030 <= $nc and
                $nc <= 0x0039) { # 0..9
-        !!!cp (994);
+        
         $self->{state} = NCR_NUM_STATE;
         $self->{kwd} = $nc - 0x0030;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'bare nero',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare nero',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1);
 
@@ -3322,17 +3590,17 @@ sub _get_next_token ($) {
 
         if ($self->{prev_state} == DATA_STATE or
             $self->{prev_state} == RCDATA_STATE) {
-          !!!cp (1019);
+          
           $self->{state} = $self->{prev_state};
           ## Reconsume.
-          !!!emit ({type => CHARACTER_TOKEN,
+          return  ({type => CHARACTER_TOKEN,
                     data => '&#',
                     line => $self->{line_prev},
                     column => $self->{column_prev} - 1,
                    });
           redo A;
         } else {
-          !!!cp (993);
+          
           $self->{ca}->{value} .= '&#';
           $self->{state} = $self->{prev_state};
           ## Reconsume.
@@ -3342,20 +3610,24 @@ sub _get_next_token ($) {
     } elsif ($state == NCR_NUM_STATE) {
       if (0x0030 <= $nc and 
           $nc <= 0x0039) { # 0..9
-        !!!cp (1012);
+        
         $self->{kwd} *= 10;
         $self->{kwd} += $nc - 0x0030;
         
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003B) { # ;
-        !!!cp (1013);
-        !!!next-input-character;
+        
+        
+    $self->_set_nc;
+  
         #
       } else {
-        !!!cp (1014);
-        !!!parse-error (type => 'no refc');
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
         ## Reconsume.
         #
       }
@@ -3364,14 +3636,14 @@ sub _get_next_token ($) {
       my $l = $self->{line_prev};
       my $c = $self->{column_prev};
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
-        !!!parse-error (type => 'invalid character reference',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'invalid character reference',
                         text => (sprintf 'U+%04X', $code),
                         level => $self->{level}->{$replace->[1]},
                         line => $l, column => $c);
         $code = $replace->[0];
       } elsif ($code > 0x10FFFF) {
-        !!!cp (1016);
-        !!!parse-error (type => 'invalid character reference',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'invalid character reference',
                         text => (sprintf 'U-%08X', $code),
                         level => $self->{level}->{must},
                         line => $l, column => $c);
@@ -3380,16 +3652,16 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
-        !!!cp (992);
+        
         $self->{state} = $self->{prev_state};
         ## Reconsume.
-        !!!emit ({type => CHARACTER_TOKEN, data => chr $code,
+        return  ({type => CHARACTER_TOKEN, data => chr $code,
                   has_reference => 1,
                   line => $l, column => $c,
                  });
         redo A;
       } else {
-        !!!cp (991);
+        
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
         $self->{state} = $self->{prev_state};
@@ -3401,13 +3673,13 @@ sub _get_next_token ($) {
           (0x0041 <= $nc and $nc <= 0x0046) or
           (0x0061 <= $nc and $nc <= 0x0066)) {
         # 0..9, A..F, a..f
-        !!!cp (990);
+        
         $self->{state} = HEXREF_HEX_STATE;
         $self->{kwd} = 0;
         ## Reconsume.
         redo A;
       } else {
-        !!!parse-error (type => 'bare hcro',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare hcro',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 2);
 
@@ -3417,17 +3689,17 @@ sub _get_next_token ($) {
 
         if ($self->{prev_state} == DATA_STATE or
             $self->{prev_state} == RCDATA_STATE) {
-          !!!cp (1005);
+          
           $self->{state} = $self->{prev_state};
           ## Reconsume.
-          !!!emit ({type => CHARACTER_TOKEN,
+          return  ({type => CHARACTER_TOKEN,
                     data => '&' . $self->{kwd},
                     line => $self->{line_prev},
                     column => $self->{column_prev} - length $self->{kwd},
                    });
           redo A;
         } else {
-          !!!cp (989);
+          
           $self->{ca}->{value} .= '&' . $self->{kwd};
           $self->{state} = $self->{prev_state};
           ## Reconsume.
@@ -3437,35 +3709,43 @@ sub _get_next_token ($) {
     } elsif ($state == HEXREF_HEX_STATE) {
       if (0x0030 <= $nc and $nc <= 0x0039) {
         # 0..9
-        !!!cp (1002);
+        
         $self->{kwd} *= 0x10;
         $self->{kwd} += $nc - 0x0030;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif (0x0061 <= $nc and
                $nc <= 0x0066) { # a..f
-        !!!cp (1003);
+        
         $self->{kwd} *= 0x10;
         $self->{kwd} += $nc - 0x0060 + 9;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif (0x0041 <= $nc and
                $nc <= 0x0046) { # A..F
-        !!!cp (1004);
+        
         $self->{kwd} *= 0x10;
         $self->{kwd} += $nc - 0x0040 + 9;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003B) { # ;
-        !!!cp (1006);
-        !!!next-input-character;
+        
+        
+    $self->_set_nc;
+  
         #
       } else {
-        !!!cp (1007);
-        !!!parse-error (type => 'no refc',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc',
                         line => $self->{line},
                         column => $self->{column});
         ## Reconsume.
@@ -3476,14 +3756,14 @@ sub _get_next_token ($) {
       my $l = $self->{line_prev};
       my $c = $self->{column_prev};
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
-        !!!parse-error (type => 'invalid character reference',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'invalid character reference',
                         text => (sprintf 'U+%04X', $code),
                         level => $self->{level}->{$replace->[1]},
                         line => $l, column => $c);
         $code = $replace->[0];
       } elsif ($code > 0x10FFFF) {
-        !!!cp (1009);
-        !!!parse-error (type => 'invalid character reference',
+        
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'invalid character reference',
                         text => (sprintf 'U-%08X', $code),
                         level => $self->{level}->{must},
                         line => $l, column => $c);
@@ -3492,16 +3772,16 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
-        !!!cp (988);
+        
         $self->{state} = $self->{prev_state};
         ## Reconsume.
-        !!!emit ({type => CHARACTER_TOKEN, data => chr $code,
+        return  ({type => CHARACTER_TOKEN, data => chr $code,
                   has_reference => 1,
                   line => $l, column => $c,
                  });
         redo A;
       } else {
-        !!!cp (987);
+        
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
         $self->{state} = $self->{prev_state};
@@ -3537,15 +3817,15 @@ sub _get_next_token ($) {
             if (defined $self->{ge}->{$self->{kwd}}) {
               ## A declared XML entity.
               if ($self->{ge}->{$self->{kwd}}->{only_text}) {
-                !!!cp (1020.1);
+                
                 $self->{entity__value} = $self->{ge}->{$self->{kwd}}->{value};
               } else {
                 if (defined $self->{ge}->{$self->{kwd}}->{notation}) {
-                  !!!cp (1020.2);
-                  !!!parse-error (type => 'unparsed entity', ## TODO: type
+                  
+                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'unparsed entity', ## TODO: type
                                   value => $self->{kwd});
                 } else {
-                  !!!cp (1020.3);
+                  
                 }
                 $self->{entity__value} = '&' . $self->{kwd}; ## TODO: expand
               }
@@ -3553,8 +3833,8 @@ sub _get_next_token ($) {
               ## An HTML character reference.
               if ($self->{is_xml}) {
                 ## Not a declared XML entity.
-                !!!cp (1020.4);
-                !!!parse-error (type => 'entity not declared', ## TODO: type
+                
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## TODO: type
                                 value => $self->{kwd},
                                 level => {
                                           'amp;' => $self->{level}->{warn},
@@ -3567,41 +3847,49 @@ sub _get_next_token ($) {
                                 line => $self->{line_prev},
                                 column => $self->{column} - length $self->{kwd});
               } else {
-                !!!cp (1020);
+                
               }
               $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
             }
             $self->{entity__match} = 1; ## Matched exactly with ";" entity.
-            !!!next-input-character;
+            
+    $self->_set_nc;
+  
             #
           } else {
-            !!!cp (1021);
+            
             $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
             $self->{entity__match} = -1; ## Exactly matched to non-";" entity.
             ## Stay in the state.
-            !!!next-input-character;
+            
+    $self->_set_nc;
+  
             redo A;
           }
         } else {
           if ($nc == 0x003B) { # ;
             ## A reserved HTML character reference or an undeclared
             ## XML entity reference.
-            !!!cp (1021.2);
-            !!!parse-error (type => 'entity not declared', ## XXXtype
+            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## XXXtype
                             value => $self->{kwd},
                             level => $self->{level}->{must},
                             line => $self->{line_prev},
                             column => $self->{column} - length $self->{kwd});
             $self->{entity__value} .= chr $nc;
             $self->{entity__match} *= 2; ## Matched (positive) or not (zero)
-            !!!next-input-character;
+            
+    $self->_set_nc;
+  
             #
           } else {
-            !!!cp (1022);
+            
             $self->{entity__value} .= chr $nc;
             $self->{entity__match} *= 2; ## Matched (positive) or not (zero)
             ## Stay in the state.
-            !!!next-input-character;
+            
+    $self->_set_nc;
+  
             redo A;
           }
         }
@@ -3616,7 +3904,7 @@ sub _get_next_token ($) {
       my $data;
       my $has_ref;
       if ($self->{entity__match} > 0) { ## A ";" entity.
-        !!!cp (1023);
+        
         $data = $self->{entity__value};
         ## Strictly speaking the $has_ref flag should not be set if
         ## there is no matched entity.  However, this flag is used
@@ -3631,7 +3919,7 @@ sub _get_next_token ($) {
             $self->{entity__match} < -1) {
           ## In attribute-value contexts, matched non-";" string is
           ## left as is if there is trailing alphabetical letters.
-          !!!cp (1024);
+          
           $data = '&' . $self->{kwd};
           #
         } else {
@@ -3641,20 +3929,20 @@ sub _get_next_token ($) {
           ## alphabetical letters is replaced as a character reference
           ## (with trailing letters).  Note that use of a no-";"
           ## character reference is always non-conforming.
-          !!!cp (1025);
-          !!!parse-error (type => 'no refc');
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
           $data = $self->{entity__value};
           $has_ref = 1;
           #
         }
       } else { ## Unmatched string.
         if ($self->{is_xml} and not $self->{kwd} =~ /;$/) {
-          !!!cp (1026.1);
-          !!!parse-error (type => 'bare ero',
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare ero',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - length $self->{kwd});
         } else {
-          !!!cp (1026);
+          
         }
         $data = '&' . $self->{kwd};
         #
@@ -3672,10 +3960,10 @@ sub _get_next_token ($) {
  
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
-        !!!cp (986);
+        
         $self->{state} = $self->{prev_state};
         ## Reconsume.
-        !!!emit ({type => CHARACTER_TOKEN,
+        return  ({type => CHARACTER_TOKEN,
                   data => $data,
                   has_reference => $has_ref,
                   line => $self->{line_prev},
@@ -3683,7 +3971,7 @@ sub _get_next_token ($) {
                  });
         redo A;
       } else {
-        !!!cp (985);
+        
         $self->{ca}->{value} .= $data;
         $self->{ca}->{has_reference} = 1 if $has_ref;
         $self->{state} = $self->{prev_state};
@@ -3703,7 +3991,7 @@ sub _get_next_token ($) {
         ## pi state": Switch to the "DOCTYPE pi after state".  EOF:
         ## "DOCTYPE pi state": Parse error, switch to the "data
         ## state".
-        !!!parse-error (type => 'bare pio', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare pio', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev}
                             - 1 * ($nc != -1));
@@ -3719,7 +4007,7 @@ sub _get_next_token ($) {
       } else {
         ## XML5: "DOCTYPE pi state": Stay in the state.
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct} = {type => PI_TOKEN,
                        target => $nc == 0x0000 ? "\x{FFFD}" : chr $nc,
@@ -3728,24 +4016,28 @@ sub _get_next_token ($) {
                        column => $self->{column_prev} - 1,
                       };
         $self->{state} = PI_TARGET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == PI_TARGET_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = PI_TARGET_AFTER_STATE;
         $self->{kwd} = chr $nc; # "temporary buffer"
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'no pic'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no pic'); ## TODO: type
         if ($self->{in_subset}) {
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
           $self->{state} = DATA_STATE;
         }
         ## Reconsume.
-        !!!emit ({type => COMMENT_TOKEN,
+        return  ({type => COMMENT_TOKEN,
                   data => '?' . $self->{ct}->{target},
                   line => $self->{ct}->{line},
                   column => $self->{ct}->{column}});
@@ -3753,22 +4045,28 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x003F) { # ?
         $self->{state} = PI_AFTER_STATE;
         $self->{kwd} = ''; # "temporary buffer"
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         ## XML5: typo ("tag name" -> "target")
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{target} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # pi
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == PI_TARGET_AFTER_STATE) {
       if ($is_space->{$nc}) {
         $self->{kwd} .= chr $nc; # "temporary buffer"
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         $self->{state} = PI_DATA_STATE;
@@ -3778,17 +4076,19 @@ sub _get_next_token ($) {
     } elsif ($state == PI_DATA_STATE) {
       if ($nc == 0x003F) { # ?
         $self->{state} = PI_DATA_AFTER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'no pic'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no pic'); ## TODO: type
         if ($self->{in_subset}) {
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state"
         } else {
           $self->{state} = DATA_STATE;
         }
         ## Reprocess.
-        !!!emit ({type => COMMENT_TOKEN,
+        return  ({type => COMMENT_TOKEN,
                   data => '?' . $self->{ct}->{target} .
                       $self->{kwd} . # "temporary buffer"
                       $self->{ct}->{data},
@@ -3797,7 +4097,7 @@ sub _get_next_token ($) {
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{data} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # pi
         $self->{ct}->{data} .= $self->_read_chars
@@ -3806,7 +4106,9 @@ sub _get_next_token ($) {
         #                      length $self->{ct}->{data});
 
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Reprocess.
         redo A;
       }
@@ -3819,19 +4121,23 @@ sub _get_next_token ($) {
         } else {
           $self->{state} = DATA_STATE;
         }
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # pi
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # pi
         redo A;
       } elsif ($nc == 0x003F) { # ?
-        !!!parse-error (type => 'no s after target', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no s after target', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev}); ## XML5: no error
         $self->{ct}->{data} .= '?';
         $self->{state} = PI_DATA_AFTER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'no s after target', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no s after target', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev}
                             + 1 * ($nc == -1)); ## XML5: no error
@@ -3855,12 +4161,14 @@ sub _get_next_token ($) {
         ## characters differs from XML 1.0.
         #!!! next-input-character;
         $self->{nc} = ABORT_CHAR;
-        !!!emit ($self->{ct}); # pi
+        return  ($self->{ct}); # pi
         redo A;
       } elsif ($nc == 0x003F) { # ?
         $self->{ct}->{data} .= '?';
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         $self->{ct}->{data} .= '?'; ## XML5: not appended
@@ -3872,7 +4180,9 @@ sub _get_next_token ($) {
     } elsif ($state == DOCTYPE_INTERNAL_SUBSET_STATE) {
       if ($nc == 0x003C) { # <
         $self->{state} = DOCTYPE_TAG_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0025) { # %
         ## XML5: Not defined yet.
@@ -3881,98 +4191,120 @@ sub _get_next_token ($) {
 
         if (not $self->{stop_processing} and
             not $self->{document}->xml_standalone) {
-          !!!parse-error (type => 'stop processing', ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'stop processing', ## TODO: type
                           level => $self->{level}->{info});
           $self->{stop_processing} = 1;
         }
 
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x005D) { # ]
         delete $self->{in_subset};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_AFTER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed internal subset'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed internal subset'); ## TODO: type
         delete $self->{in_subset};
         $self->{state} = DATA_STATE;
         ## Reconsume.
-        !!!emit ({type => END_OF_DOCTYPE_TOKEN});
+        return  ({type => END_OF_DOCTYPE_TOKEN});
         redo A;
       } else {
         unless ($self->{internal_subset_tainted}) {
           ## XML5: No parse error.
-          !!!parse-error (type => 'string in internal subset');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'string in internal subset');
           $self->{internal_subset_tainted} = 1;
         }
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_INTERNAL_SUBSET_AFTER_STATE) {
       if ($nc == 0x003E) { # >
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
-        !!!emit ({type => END_OF_DOCTYPE_TOKEN});
+        
+    $self->_set_nc;
+  
+        return  ({type => END_OF_DOCTYPE_TOKEN});
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed DOCTYPE');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
         $self->{state} = DATA_STATE;
         ## Reconsume.
-        !!!emit ({type => END_OF_DOCTYPE_TOKEN});
+        return  ({type => END_OF_DOCTYPE_TOKEN});
         redo A;
       } else {
         ## XML5: No parse error and stay in the state.
-        !!!parse-error (type => 'string after internal subset'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after internal subset'); ## TODO: type
 
         $self->{state} = BOGUS_DOCTYPE_INTERNAL_SUBSET_AFTER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == BOGUS_DOCTYPE_INTERNAL_SUBSET_AFTER_STATE) {
       if ($nc == 0x003E) { # >
         $self->{state} = DATA_STATE;
-        !!!next-input-character;
-        !!!emit ({type => END_OF_DOCTYPE_TOKEN});
+        
+    $self->_set_nc;
+  
+        return  ({type => END_OF_DOCTYPE_TOKEN});
         redo A;
       } elsif ($nc == EOF_CHAR) {
         $self->{state} = DATA_STATE;
         ## Reconsume.
-        !!!emit ({type => END_OF_DOCTYPE_TOKEN});
+        return  ({type => END_OF_DOCTYPE_TOKEN});
         redo A;
       } else {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_TAG_STATE) {
       if ($nc == 0x0021) { # !
         $self->{state} = DOCTYPE_MARKUP_DECLARATION_OPEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003F) { # ?
         $self->{state} = PI_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'bare stago');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare stago');
         $self->{state} = DATA_STATE;
         ## Reconsume.
         redo A;
       } else {
-        !!!parse-error (type => 'bare stago', ## XML5: Not a parse error.
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare stago', ## XML5: Not a parse error.
                         line => $self->{line_prev},
                         column => $self->{column_prev});
         $self->{state} = BOGUS_COMMENT_STATE;
         $self->{ct} = {type => COMMENT_TOKEN,
                        data => '',
                       }; ## NOTE: Will be discarded.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_MARKUP_DECLARATION_OPEN_STATE) {
@@ -3980,32 +4312,40 @@ sub _get_next_token ($) {
       
       if ($nc == 0x002D) { # -
         $self->{state} = MD_HYPHEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0045 or # E
                $nc == 0x0065) { # e
         $self->{state} = MD_E_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0041 or # A
                $nc == 0x0061) { # a
         $self->{state} = MD_ATTLIST_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x004E or # N
                $nc == 0x006E) { # n
         $self->{state} = MD_NOTATION_STATE;
         $self->{kwd} = chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         #
       }
       
       ## XML5: No parse error.
-      !!!parse-error (type => 'bogus comment',
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                       line => $self->{line_prev},
                       column => $self->{column_prev} - 1);
       ## Reconsume.
@@ -4017,18 +4357,22 @@ sub _get_next_token ($) {
           $nc == 0x006E) { # n
         $self->{state} = MD_ENTITY_STATE;
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x004C or # L
                $nc == 0x006C) { # l
         ## XML5: <!ELEMENT> not supported.
         $self->{state} = MD_ELEMENT_STATE;
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         ## XML5: No parse error.
-        !!!parse-error (type => 'bogus comment',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 2
                             + 1 * ($nc == EOF_CHAR));
@@ -4056,13 +4400,15 @@ sub _get_next_token ($) {
           ]->[length $self->{kwd}]) {
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 5 and
                ($nc == 0x0059 or # Y
                 $nc == 0x0079)) { # y
         if ($self->{kwd} ne 'ENTIT' or $nc == 0x0079) {
-          !!!parse-error (type => 'lowercase keyword', ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'ENTITY',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 4);
@@ -4071,10 +4417,12 @@ sub _get_next_token ($) {
                        line => $self->{line_prev},
                        column => $self->{column_prev} - 6};
         $self->{state} = DOCTYPE_MD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'bogus comment',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
                             - (length $self->{kwd})
@@ -4105,13 +4453,15 @@ sub _get_next_token ($) {
           ]->[length $self->{kwd}]) {
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 6 and
                ($nc == 0x0054 or # T
                 $nc == 0x0074)) { # t
         if ($self->{kwd} ne 'ELEMEN' or $nc == 0x0074) {
-          !!!parse-error (type => 'lowercase keyword', ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'ELEMENT',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 5);
@@ -4120,10 +4470,12 @@ sub _get_next_token ($) {
                        line => $self->{line_prev},
                        column => $self->{column_prev} - 7};
         $self->{state} = DOCTYPE_MD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'bogus comment',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
                             - (length $self->{kwd})
@@ -4154,13 +4506,15 @@ sub _get_next_token ($) {
           ]->[length $self->{kwd}]) {
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 6 and
                ($nc == 0x0054 or # T
                 $nc == 0x0074)) { # t
         if ($self->{kwd} ne 'ATTLIS' or $nc == 0x0074) {
-          !!!parse-error (type => 'lowercase keyword', ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'ATTLIST',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 5);
@@ -4170,10 +4524,12 @@ sub _get_next_token ($) {
                        line => $self->{line_prev},
                        column => $self->{column_prev} - 7};
         $self->{state} = DOCTYPE_MD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'bogus comment',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
                              - (length $self->{kwd})
@@ -4206,13 +4562,15 @@ sub _get_next_token ($) {
           ]->[length $self->{kwd}]) {
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 7 and
                ($nc == 0x004E or # N
                 $nc == 0x006E)) { # n
         if ($self->{kwd} ne 'NOTATIO' or $nc == 0x006E) {
-          !!!parse-error (type => 'lowercase keyword', ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'NOTATION',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 6);
@@ -4221,10 +4579,12 @@ sub _get_next_token ($) {
                        line => $self->{line_prev},
                        column => $self->{column_prev} - 8};
         $self->{state} = DOCTYPE_MD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'bogus comment',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
                             - (length $self->{kwd})
@@ -4241,29 +4601,35 @@ sub _get_next_token ($) {
       if ($is_space->{$nc}) {
         ## XML5: [NOTATION] Switch to the "DOCTYPE NOTATION identifier state".
         $self->{state} = BEFORE_MD_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN and 
                $nc == 0x0025) { # %
         ## XML5: Switch to the "DOCTYPE bogus comment state".
-        !!!parse-error (type => 'no space before md name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before md name'); ## TODO: type
         $self->{state} = DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
         ## Reconsume.
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Switch to the "DOCTYPE bogus comment state".
-        !!!parse-error (type => 'no md name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md name'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         ## XML5: Switch to the "DOCTYPE bogus comment state".
-        !!!parse-error (type => 'no space before md name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before md name'); ## TODO: type
         $self->{state} = BEFORE_MD_NAME_STATE;
         redo A;
       }
@@ -4273,32 +4639,40 @@ sub _get_next_token ($) {
 
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN and 
                $nc == 0x0025) { # %
         $self->{state} = DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "Anything else".
-        !!!parse-error (type => 'no md name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md name'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
         ## Reconsume.
         redo A;
       } else {
         ## XML5: [ATTLIST] Not defined yet.
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{name} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
         $self->{state} = MD_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE) {
@@ -4306,22 +4680,26 @@ sub _get_next_token ($) {
         ## XML5: Switch to the "DOCTYPE ENTITY parameter state".
         $self->{ct}->{type} = PARAMETER_ENTITY_TOKEN;
         $self->{state} = BEFORE_MD_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "Anything else".
-        !!!parse-error (type => 'no md name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md name'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
         ## Reconsume.
         redo A;
       } else {
         ## XML5: No parse error.
-        !!!parse-error (type => 'no space after ENTITY percent'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space after ENTITY percent'); ## TODO: type
         $self->{state} = BOGUS_COMMENT_STATE;
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
         ## Reconsume.
@@ -4338,223 +4716,285 @@ sub _get_next_token ($) {
         } else { # ENTITY/NOTATION
           $self->{state} = AFTER_DOCTYPE_NAME_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
           #
         } else {
-          !!!parse-error (type => 'no md def'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md def'); ## TODO: type
         }
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT/ENTITY/ATTLIST/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ELEMENT/ENTITY/ATTLIST/NOTATION
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: [ATTLIST] No parse error.
-        !!!parse-error (type => 'unclosed md');
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
         ## Reconsume.
         redo A;
       } else {
         ## XML5: [ATTLIST] Not defined yet.
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{name} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ATTLIST_NAME_AFTER_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
         ## Discard the current token.
         redo A;
       } else {
         ## XML5: Not defined yet.
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ca} = {name => $nc == 0x0000 ? "\x{FFFD}" : chr $nc, # attrdef
                        tokens => [],
                        line => $self->{line}, column => $self->{column}};
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no attr type'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr type'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == 0x0028) { # (
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no space before paren'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before paren'); ## TODO: type
         $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         ## XML5: Not defined yet.
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ca}->{name} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no attr type'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr type'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == 0x0028) { # (
         ## XML5: Same as "anything else".
         $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the token.
         redo A;
       } else {
         ## XML5: Not defined yet.
         $self->{ca}->{type} = chr $nc;
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0023) { # #
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no attr default'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == 0x0028) { # (
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no space before paren'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before paren'); ## TODO: type
         $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the token.
         redo A;
       } else {
         ## XML5: Not defined yet.
         $self->{ca}->{type} .= chr $nc;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0028) { # (
         ## XML5: Same as "anything else".
         $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0023) { # #
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no attr default'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         ## XML5: Switch to the "DOCTYPE bogus comment state".
-        !!!parse-error (type => 'unquoted attr value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
@@ -4563,149 +5003,197 @@ sub _get_next_token ($) {
     } elsif ($state == BEFORE_ALLOWED_TOKEN_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x007C) { # |
-        !!!parse-error (type => 'empty allowed token'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'empty allowed token'); ## TODO: type
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0029) { # )
-        !!!parse-error (type => 'empty allowed token'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'empty allowed token'); ## TODO: type
         $self->{state} = AFTER_ALLOWED_TOKENS_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed allowed tokens'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed allowed tokens'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         push @{$self->{ca}->{tokens}}, $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
         $self->{state} = ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == ALLOWED_TOKEN_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = AFTER_ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x007C) { # |
         $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0029) { # )
         $self->{state} = AFTER_ALLOWED_TOKENS_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed allowed tokens'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed allowed tokens'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ca}->{tokens}->[-1] .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_ALLOWED_TOKEN_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x007C) { # |
         $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0029) { # )
         $self->{state} = AFTER_ALLOWED_TOKENS_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed allowed tokens'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed allowed tokens'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
-        !!!parse-error (type => 'space in allowed token', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'space in allowed token', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev});
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ca}->{tokens}->[-1] .= ' ' . ($nc == 0x0000 ? "\x{FFFD}" : chr $nc);
         $self->{state} = ALLOWED_TOKEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_ALLOWED_TOKENS_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = BEFORE_ATTR_DEFAULT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0023) { # #
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no attr default'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
-        !!!parse-error (type => 'unquoted attr value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -4713,36 +5201,48 @@ sub _get_next_token ($) {
     } elsif ($state == BEFORE_ATTR_DEFAULT_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0023) { # #
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no attr default'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
-        !!!parse-error (type => 'unquoted attr value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -4750,7 +5250,7 @@ sub _get_next_token ($) {
     } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE) {
       if ($is_space->{$nc}) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'no default type'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no default type'); ## TODO: type
         $self->{state} = BOGUS_MD_STATE;
         ## Reconsume.
         redo A;
@@ -4759,102 +5259,134 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         # XXX parse error?
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no attr default'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         $self->{ca}->{default} = chr $nc;
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         ## XML5: Same as "anything else".
-        !!!parse-error (type => 'no space before default value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         ## XML5: Same as "anything else".
         push @{$self->{ct}->{attrdefs}}, $self->{ca};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         push @{$self->{ct}->{attrdefs}}, $self->{ca};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         $self->{ca}->{default} .= chr $nc;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0022) { # "
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0027) { # '
         $self->{ca}->{value} = '';
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         push @{$self->{ct}->{attrdefs}}, $self->{ca};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST
         redo A;
       } elsif ($nc == EOF_CHAR) {
         ## XML5: No parse error.
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         push @{$self->{ct}->{attrdefs}}, $self->{ca};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
@@ -4876,7 +5408,7 @@ sub _get_next_token ($) {
         ## Reconsume.
         redo A;
       } else {
-        !!!parse-error (type => 'no space before attr name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before attr name'); ## TODO: type
         $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
         ## Reconsume.
         redo A;
@@ -4897,32 +5429,36 @@ sub _get_next_token ($) {
             0x0074, # t
             NEVER_CHAR, # (a)
           ]->[length $self->{kwd}]) {
-        !!!cp (172.2);
+        
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ((length $self->{kwd}) == 4 and
                ($nc == 0x0041 or # A
                 $nc == 0x0061)) { # a
         if ($self->{kwd} ne 'NDAT' or $nc == 0x0061) { # a
-          !!!cp (172.3);
-          !!!parse-error (type => 'lowercase keyword', ## TODO: type
+          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'NDATA',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 4);
         } else {
-          !!!cp (172.4);
+          
         }
         $self->{state} = AFTER_NDATA_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
-        !!!parse-error (type => 'string after literal', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after literal', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev} + 1
                             - length $self->{kwd});
-        !!!cp (172.5);
+        
         $self->{state} = BOGUS_MD_STATE;
         ## Reconsume.
         redo A;
@@ -4930,22 +5466,28 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_NDATA_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = BEFORE_NOTATION_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no notation name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no notation name'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ENTITY
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ENTITY
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
-        !!!parse-error (type => 'string after literal', ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after literal', ## TODO: type
                         line => $self->{line_prev},
                         column => $self->{column_prev} + 1
                             - length $self->{kwd});
@@ -4956,104 +5498,132 @@ sub _get_next_token ($) {
     } elsif ($state == BEFORE_NOTATION_NAME_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no notation name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no notation name'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ENTITY
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ENTITY
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{notation} = $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
         $self->{state} = NOTATION_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == NOTATION_NAME_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = AFTER_MD_DEF_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ENTITY
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ENTITY
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## The current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{notation} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE) {
       if ($nc == 0x0022) { # "
         $self->{state} = AFTER_MD_DEF_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0026) { # &
         $self->{prev_state} = $state;
         $self->{state} = ENTITY_VALUE_ENTITY_STATE;
         $self->{entity_add} = 0x0022; # "
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
 ## TODO: %
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed entity value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed entity value'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         ## Reconsume.
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{value} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE) {
       if ($nc == 0x0027) { # '
         $self->{state} = AFTER_MD_DEF_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0026) { # &
         $self->{prev_state} = $state;
         $self->{state} = ENTITY_VALUE_ENTITY_STATE;
         $self->{entity_add} = 0x0027; # '
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
 ## TODO: %
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed entity value'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed entity value'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         ## Reconsume.
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{value} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == ENTITY_VALUE_ENTITY_STATE) {
@@ -5062,7 +5632,7 @@ sub _get_next_token ($) {
             0x003C => 1, 0x0026 => 1, (EOF_CHAR) => 1, # <, &
             $self->{entity_add} => 1,
           }->{$nc}) {
-        !!!parse-error (type => 'bare ero',
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare ero',
                         line => $self->{line_prev},
                         column => $self->{column_prev}
                             + ($nc == EOF_CHAR ? 1 : 0));
@@ -5073,7 +5643,9 @@ sub _get_next_token ($) {
         $self->{ca} = $self->{ct};
         $self->{state} = ENTITY_HASH_STATE;
         $self->{kwd} = '#';
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } else {
         #
@@ -5086,190 +5658,248 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_ELEMENT_NAME_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = BEFORE_ELEMENT_CONTENT_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0028) { # (
         $self->{state} = AFTER_CM_GROUP_OPEN_STATE;
         $self->{ct}->{content} = ['('];
         $self->{group_depth} = 1;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no md def'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md def'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ELEMENT
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{content} = [$nc == 0x0000 ? "\x{FFFD}" : chr $nc];
         $self->{state} = CONTENT_KEYWORD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == CONTENT_KEYWORD_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = AFTER_MD_DEF_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ELEMENT
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{content}->[-1] .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ELEMENT
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_CM_GROUP_OPEN_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0028) { # (
         $self->{group_depth}++;
         push @{$self->{ct}->{content}}, chr $nc;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x007C or # |
                $nc == 0x002C) { # ,
-        !!!parse-error (type => 'empty element name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'empty element name'); ## TODO: type
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0029) { # )
-        !!!parse-error (type => 'empty element name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'empty element name'); ## TODO: type
         push @{$self->{ct}->{content}}, chr $nc;
         $self->{group_depth}--;
         $self->{state} = AFTER_CM_GROUP_CLOSE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed cm group'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed cm group'); ## TODO: type
         push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ELEMENT
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         push @{$self->{ct}->{content}}, $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
         $self->{state} = CM_ELEMENT_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == CM_ELEMENT_NAME_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x002A or # *
                $nc == 0x002B or # +
                $nc == 0x003F) { # ?
         push @{$self->{ct}->{content}}, chr $nc;
         $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x007C or # |
                $nc == 0x002C) { # ,
         push @{$self->{ct}->{content}}, $nc == 0x007C ? ' | ' : ', ';
         $self->{state} = AFTER_CM_GROUP_OPEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0029) { # )
         $self->{group_depth}--;
         push @{$self->{ct}->{content}}, chr $nc;
         $self->{state} = AFTER_CM_GROUP_CLOSE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed cm group'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed cm group'); ## TODO: type
         push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ELEMENT
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the token.
         redo A;
       } else {
         if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
         $self->{ct}->{content}->[-1] .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_CM_ELEMENT_NAME_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x007C or # |
                $nc == 0x002C) { # ,
         push @{$self->{ct}->{content}}, $nc == 0x007C ? ' | ' : ', ';
         $self->{state} = AFTER_CM_GROUP_OPEN_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0029) { # )
         $self->{group_depth}--;
         push @{$self->{ct}->{content}}, chr $nc;
         $self->{state} = AFTER_CM_GROUP_CLOSE_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed cm group'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed cm group'); ## TODO: type
         push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ELEMENT
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
-        !!!parse-error (type => 'after element name'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'after element name'); ## TODO: type
         push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = BOGUS_MD_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } elsif ($state == AFTER_CM_GROUP_CLOSE_STATE) {
@@ -5279,7 +5909,9 @@ sub _get_next_token ($) {
         } else {
           $self->{state} = AFTER_MD_DEF_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x002A or # *
                $nc == 0x002B or # +
@@ -5290,42 +5922,50 @@ sub _get_next_token ($) {
         } else {
           $self->{state} = AFTER_MD_DEF_STATE;
         }
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x0029) { # )
         if ($self->{group_depth}) {
           $self->{group_depth}--;
           push @{$self->{ct}->{content}}, chr $nc;
           ## Stay in the state.
-          !!!next-input-character;
+          
+    $self->_set_nc;
+  
           redo A;
         } else {
-          !!!parse-error (type => 'string after md def'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after md def'); ## TODO: type
           $self->{state} = BOGUS_MD_STATE;
           ## Reconsume.
           redo A;
         }
       } elsif ($nc == 0x003E) { # >
         if ($self->{group_depth}) {
-          !!!parse-error (type => 'unclosed cm group'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed cm group'); ## TODO: type
           push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         }
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ELEMENT
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
         if ($self->{group_depth}) {
           $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
         } else {
-          !!!parse-error (type => 'string after md def'); ## TODO: type
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after md def'); ## TODO: type
           $self->{state} = BOGUS_MD_STATE;
         }
         ## Reconsume.
@@ -5334,21 +5974,27 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_MD_DEF_STATE) {
       if ($is_space->{$nc}) {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       } elsif ($nc == 0x003E) { # >
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ENTITY/ELEMENT
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ENTITY/ELEMENT
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         ## Discard the current token.
         redo A;
       } else {
-        !!!parse-error (type => 'string after md def'); ## TODO: type
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after md def'); ## TODO: type
         $self->{state} = BOGUS_MD_STATE;
         ## Reconsume.
         redo A;
@@ -5356,8 +6002,10 @@ sub _get_next_token ($) {
     } elsif ($state == BOGUS_MD_STATE) {
       if ($nc == 0x003E) { # >
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ATTLIST/ENTITY/NOTATION
+        
+    $self->_set_nc;
+  
+        return  ($self->{ct}); # ATTLIST/ENTITY/NOTATION
         redo A;
       } elsif ($nc == EOF_CHAR) {
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
@@ -5366,7 +6014,9 @@ sub _get_next_token ($) {
         redo A;
       } else {
         ## Stay in the state.
-        !!!next-input-character;
+        
+    $self->_set_nc;
+  
         redo A;
       }
     } else {

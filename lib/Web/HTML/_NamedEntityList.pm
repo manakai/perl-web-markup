@@ -1,4 +1,4 @@
-$Whatpm::HTML::EntityChar = {
+$Web::HTML::EntityChar = {
           "AElig" => "\x{c6}",
           "AElig;" => "\x{c6}",
           "AMP" => "&",
