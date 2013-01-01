@@ -9,7 +9,7 @@ perl=$basedir/../perl
 mkdir -p $tmp
 
 $perl $parsing/html-tokenize.t > $tmp/html-tokenize.txt 2>&1
-(diff -uB $results/html-tokenize.txt $tmp/html-tokenize.txt \
+(diff -uB $results/html-tokenize.txt $tmp/html-tokenize.txt > /dev/null \
   && echo "ok 1") || echo "not ok 1"
 
 $perl $parsing/html-tree.t > $tmp/html-tree.txt 2>&1
