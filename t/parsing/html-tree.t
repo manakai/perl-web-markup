@@ -146,7 +146,7 @@ sub test ($) {
     'SHOULD-level error: ' . Data::Dumper::qquote ($test->{data}->[0]) . '; ' .
     join (', ', @shoulds) . ';' . join (', ', @{$test->{shoulds}->[0] or []});
 
-  $test->{document}->[0] .= "\x0A" if length $test->{document}->[0];
+  $test->{document}->[0] .= "\x0A" if defined $test->{document}->[0] and length $test->{document}->[0];
   eq_or_diff $result, $test->{document}->[0], bytes
       'Document tree: ' . Data::Dumper::qquote ($test->{data}->[0]);
 } # test

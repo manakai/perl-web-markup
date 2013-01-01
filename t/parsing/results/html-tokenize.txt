@@ -1,5 +1,3 @@
-# 
-# test::Web::HTML::Tokenizer::html_tokenizer->_tests
 # t_deps/tests/html/parsing/html5lib/html-tokenizer/test1.test
 ok 1 - Correct Doctype lowercase: qq'<!DOCTYPE html>'
 ok 2 - Correct Doctype uppercase: qq'<!DOCTYPE HTML>'
