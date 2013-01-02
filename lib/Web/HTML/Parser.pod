@@ -68,18 +68,15 @@ The third argument to the method must be a DOM C<Document> object
 (L<Message::DOM::Document>).  Any child nodes of the document is first
 removed by the parser.
 
-=item $parser->parse_char_string_with_context ($chars, $context, $target, $method)
+=item $node_list = $parser->parse_char_string_with_context ($chars, $context, $empty_doc)
 
 Parse a string of characters using the context node I<$context>, using
-the method I<$method>, and set the result to the node I<$target>.
+the empty document I<$empty_doc>.
 
-The first argument to the method must be a string of characters.
+The first argument to the method must be a string of characters.  The
+second argument must be an element or C<undef>.
 
-If the I<$method> is C<innerHTML>, the I<$context> argument must be an
-element node of C<undef> and the I<$target> node must be a C<RootNode>
-(i.e. C<Document>, C<DocumentFragment>, or C<Element>).
-
-Other I<$method> values are not supported.
+The method returns the result node list.
 
 =item $code = $parser->onerror
 

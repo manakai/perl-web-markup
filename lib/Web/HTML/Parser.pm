@@ -6577,19 +6577,17 @@ sub _construct_tree ($) {
   ## TODO: script stuffs
 } # _tree_construct_main
 
-sub parse_char_string_with_context ($$$$$) {
+sub parse_char_string_with_context ($$$$) {
   my $self = $_[0];
   # $s $_[1]
   my $context = $_[2]; # Element or undef
-  my $target = $_[3]; # RootNode
-  my $method = $_[4]; # 'innerHTML'
+  # $empty_doc $_[3]
 
   ## HTML fragment parsing algorithm
   ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>
 
   # 1.
-  my $doc = ($target->owner_document || $target)
-      ->implementation->create_document;
+  my $doc = $_[3];
   $doc->manakai_is_html (1);
   $self->{document} = $doc;
 
@@ -6640,17 +6638,17 @@ sub parse_char_string_with_context ($$$$$) {
         $self->{state} = PLAINTEXT_STATE;
       }
       
-      $self->{inner_html_node} = [$target, $el_category->{$node_ln}];
+      $self->{inner_html_node} = [$context, $el_category->{$node_ln}];
     } elsif ($node_ns eq SVG_NS) {
-      $self->{inner_html_node} = [$target,
+      $self->{inner_html_node} = [$context,
                                   $el_category_f->{$node_ns}->{$node_ln}
                                       || FOREIGN_EL | SVG_EL];
     } elsif ($node_ns eq MML_NS) {
-      $self->{inner_html_node} = [$target,
+      $self->{inner_html_node} = [$context,
                                   $el_category_f->{$node_ns}->{$node_ln}
                                       || FOREIGN_EL | MML_EL];
     } else {
-      $self->{inner_html_node} = [$target, FOREIGN_EL];
+      $self->{inner_html_node} = [$context, FOREIGN_EL];
     }
     
     # 2.
@@ -6687,30 +6685,11 @@ sub parse_char_string_with_context ($$$$$) {
   $self->{t} = $self->_get_next_token;
   $self->_construct_tree;
 
-  # 7.
-  my $new_children = defined $context ? $root->child_nodes : $doc->child_nodes;
-
   $self->_terminate_tree_constructor;
   $self->_clear_refs;
 
-  ## For elements:
-  ##   - <http://domparsing.spec.whatwg.org/#innerhtml>
-  ##   - <http://domparsing.spec.whatwg.org/#parsing>
-  ## For documents:
-  ##   - <http://html5.org/tools/web-apps-tracker?from=6531&to=6532>
-  ##   - <https://github.com/whatwg/domparsing/commit/59301cd77d4badbe16489087132a35621a2d460c>
-  ## For document fragments:
-  ##   - <http://suika.fam.cx/~wakaba/wiki/sw/n/manakai++DOM%20Extensions#anchor-143>
-  
-  if ($target->node_type == 9) { # DOCUMENT_NODE
-    # XXX If the document has an active parser, abort the parser.
-  }
-
-  # XXX MutationObserver consideration
-  for ($target->child_nodes->to_list) {
-    $target->remove_child ($_);
-  }
-  $target->append_child ($_) for $new_children->to_list;
+  # 7.
+  return defined $context ? $root->child_nodes : $doc->child_nodes;
 } # parse_char_string_with_context
 
 1;

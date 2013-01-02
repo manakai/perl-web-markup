@@ -124,7 +124,9 @@ sub test ($) {
       $el = $doc->create_element_ns
           (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
     }
-    $parser->parse_char_string_with_context ($test->{data}->[0], $el, $el);
+    my $children = $parser->parse_char_string_with_context
+        ($test->{data}->[0], $el, new NanoDOM::Document);
+    $el->append_child ($_) for $children->to_list;
     $result = dumptree ($el);
   }
   

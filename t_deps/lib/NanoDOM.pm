@@ -664,8 +664,12 @@ sub inner_html ($;$) {
 
   if (@_ > 1) {
     require Web::HTML::Parser;
-    Web::HTML::Parser->new->parse_char_string_with_context
-        ($_[1], $self, $self);
+    my $children = Web::HTML::Parser->new->parse_char_string_with_context
+        ($_[1], $self, NanoDOM::Document->new);
+    $self->text_content ('');
+    for ($children->to_list) {
+      $self->append_child ($_);
+    }
     return unless defined wantarray;
   }
   

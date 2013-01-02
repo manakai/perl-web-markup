@@ -97,12 +97,12 @@ sub _html_parser_change_the_encoding_fragment : Test(2) {
   my $el = $doc->create_element_ns (undef, [undef, 'div']);
 
   $parser->parse_char_string_with_context
-      ('<meta charset=shift_jis>', $el, $el, 'innerHTML');
+      ('<meta charset=shift_jis>', $el, NanoDOM::Document->new);
   ok !$called;
 
   $parser->parse_char_string_with_context
       ('<meta http-equiv=content-type content="text/html; charset=shift_jis">',
-       $el, $el, 'innerHTML');
+       $el, NanoDOM::Document->new);
   ok !$called;
 } # _html_parser_change_the_encoding_fragment
 
