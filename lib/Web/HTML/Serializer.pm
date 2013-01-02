@@ -1,7 +1,18 @@
 package Web::HTML::Serializer;
 use strict;
 use warnings;
-our $VERSION = '1.8';
+our $VERSION = '1.9';
+
+sub new ($) {
+  return bless {}, $_[0];
+} # new
+
+sub onerror ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onerror} = $_[1];
+  }
+  return $_[0]->{onerror} || sub { my %args = @_; die $args{type} };
+} # onerror
 
 sub _in_cdata ($) {
   my $node = $_[0];
@@ -25,8 +36,8 @@ sub _in_cdata ($) {
   return 0;
 } # _in_cdata
 
-sub get_inner_html ($$$) {
-  my (undef, $node, $onerror) = @_;
+sub get_inner_html ($$) {
+  my $node = $_[1];
 
   ## Step 1
   my $s = '';
@@ -124,8 +135,8 @@ sub get_inner_html ($$$) {
     } elsif ($nt == 5) { # EntityReference
       push @node, map { [$_, $c->[1]] } $child->child_nodes->to_list;
     } else {
-      # INVALID_STATE_ERROR
-      $onerror->($child) if defined $onerror;
+      # XXXerror
+      $_[0]->onerror->(type => 'node type not supported', value => $nt);
     }
   } # C
   
@@ -133,13 +144,13 @@ sub get_inner_html ($$$) {
   return \$s;
 } # get_inner_html
 
+1;
+
 =head1 LICENSE
 
-Copyright 2007-2011 Wakaba <w@suika.fam.cx>
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
 =cut
-
-1;

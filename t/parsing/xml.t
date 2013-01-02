@@ -50,7 +50,6 @@ if ($DEBUG) {
 
 use Web::XML::Parser;
 use NanoDOM;
-#use Whatpm::Charset::UnicodeChecker;
 use Web::HTML::Dumper qw/dumptree/;
 
 my $dom;
@@ -90,7 +89,8 @@ sub test ($) {
     exit;
   };
 
-  my $onerror = sub {
+  my $p = Web::XML::Parser->new;
+  $p->onerror (sub {
     my %opt = @_;
     push @errors, join ';',
         $opt{token}->{line} || $opt{line},
@@ -99,23 +99,17 @@ sub test ($) {
         defined $opt{text} ? $opt{text} : '',
         defined $opt{value} ? $opt{value} : '',
         $opt{level};
-  };
+  }); # onerror
 
-  my $chk = sub {
-    return $_[0];
-    #return Whatpm::Charset::UnicodeChecker->new_handle ($_[0], 'html5');
-  }; # $chk
-
-  my $p = Web::XML::Parser->new;
   my $result;
   unless (defined $test->{element}) {
-    $p->parse_char_string ($test->{data}->[0] => $doc, $onerror, $chk);
+    $p->parse_char_string ($test->{data}->[0] => $doc);
     $result = dumptree ($doc);
   } else {
     ## TODO: ...
     my $el = $doc->create_element_ns
       ('http://www.w3.org/1999/xhtml', [undef, $test->{element}]);
-    Web::HTML::Parser->set_inner_html ($el, $test->{data}->[0], $onerror, $chk);
+    $p->XXXset_inner_html ($el, $test->{data}->[0]);
     $result = dumptree ($el);
   }
   
@@ -124,6 +118,7 @@ sub test ($) {
   @errors = sort {$a cmp $b} @errors;
   @{$test->{errors}->[0]} = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};
   
+#line 60 "HTML-tree.t test () skip"
   eq_or_diff join ("\n", @errors), join ("\n", @{$test->{errors}->[0] or []}),
       bytes 'Parse error: ' . Data::Dumper::qquote ($test->{data}->[0]);
 

@@ -68,21 +68,18 @@ The third argument to the method must be a DOM C<Document> object
 (L<Message::DOM::Document>).  Any child nodes of the document is first
 removed by the parser.
 
-=item $parser->set_inner_html ($node, $chars)
+=item $parser->parse_char_string_with_context ($chars, $context, $target, $method)
 
-Parse a string of characters in the context of a node.  If the node is
-a C<Document>, this is equivalent to the C<parse_char_string> method.
-If the node is an C<Element>, parsing is performed in the fragment
-mode.
+Parse a string of characters using the context node I<$context>, using
+the method I<$method>, and set the result to the node I<$target>.
 
-The first argument to the method must be a DOM C<Node> object
-(L<Message::DOM::Node>) that is also a C<Document>
-(L<Message::DOM::Document>) or an C<Element>
-(L<Message::DOM::Element>).  The node is used to give the context to
-the parser and to receive the parsed subtree.  Any existing child
-node of the node is removed first.
+The first argument to the method must be a string of characters.
 
-The second argument to the method must be a string of characters.
+If the I<$method> is C<innerHTML>, the I<$context> argument must be an
+element node of C<undef> and the I<$target> node must be a C<RootNode>
+(i.e. C<Document>, C<DocumentFragment>, or C<Element>).
+
+Other I<$method> values are not supported.
 
 =item $code = $parser->onerror
 
@@ -121,7 +118,7 @@ L<Web::XML::Parser>.
 
 =over 4
 
-=item [HTML]
+=item HTML
 
 HTML Living Standard - Parsing HTML documents
 <http://www.whatwg.org/specs/web-apps/current-work/#parsing>.
@@ -129,20 +126,31 @@ HTML Living Standard - Parsing HTML documents
 HTML Living Standard - Parsing HTML fragments
 <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>.
 
-=item [ENCODING]
+Document.prototype.innerHTML
+<http://html5.org/tools/web-apps-tracker?from=6531&to=6532>.
 
-Encoding Standard
-<http://dvcs.w3.org/hg/encoding/raw-file/tip/Overview.html>.
+=item DOMPARSING
+
+DOM Parsing and Serialization <http://domparsing.spec.whatwg.org/>.
+
+=item ENCODING
+
+Encoding Standard <http://encoding.spec.whatwg.org/>.
+
+=item MANAKAI
+
+manakai's DOM Extensions
+<http://domparsing.spec.whatwg.org/#innerhtml>.
 
 =back
 
 =head1 AUTHOR
 
-Wakaba <w@suika.fam.cx>.
+Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

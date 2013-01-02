@@ -304,8 +304,8 @@ my $foreign_attr_xname = $Web::HTML::ParserData::ForeignAttrNamespaceFixup;
 
 ## ------ String parse API ------
 
-sub parse_byte_string ($$$$;$$) {
-  #my ($self, $charset_name, $string, $doc, $onerror, $get_wrapper) = @_;
+sub parse_byte_string ($$$$) {
+  #my ($self, $charset_name, $string, $doc) = @_;
   my $self = ref $_[0] ? $_[0] : $_[0]->new;
   my $doc = $self->{document} = $_[3];
 
@@ -337,7 +337,7 @@ sub parse_byte_string ($$$$;$$) {
       return 0;
     };
 
-    my $onerror = $_[4] || $self->onerror;
+    my $onerror = $self->onerror;
     $self->{parse_error} = sub {
       $onerror->(line => $self->{line}, column => $self->{column}, @_);
     };
@@ -375,8 +375,8 @@ sub parse_byte_string ($$$$;$$) {
 ## XXX The policy mentioned above might change when we implement
 ## Encoding Standard spec.
 
-sub parse_char_string ($$$;$$) {
-  #my ($self, $string, $document, $onerror, $get_wrapper) = @_;
+sub parse_char_string ($$$) {
+  #my ($self, $string, $document) = @_;
   my $self = ref $_[0] ? $_[0] : $_[0]->new;
   my $doc = $self->{document} = $_[2];
   @{$self->{document}->child_nodes} = ();
@@ -393,7 +393,7 @@ sub parse_char_string ($$$;$$) {
   $self->{chars_pull_next} = sub { 0 };
   delete $self->{chars_was_cr};
 
-  my $onerror = $_[3] || $self->onerror;
+  my $onerror = $self->onerror;
   $self->{parse_error} = sub {
     $onerror->(line => $self->{line}, column => $self->{column}, @_);
   };
@@ -6565,87 +6565,55 @@ sub _construct_tree ($) {
   ## TODO: script stuffs
 } # _tree_construct_main
 
-## XXX: How this method is organized is somewhat out of date, although
-## it still does what the current spec documents.
-sub set_inner_html ($$$$) {
-  #my ($self, $string, $onerror, $get_wrapper) = @_;
-  my ($class, $self);
-  if (ref $_[0]) {
-    $self = shift;
-    $class = ref $self;
-  } else {
-    $class = shift;
-    $self = $class->new;
-  }
-  my $node = shift; # /context/
-  #my $s = \$_[0];
-  my $onerror = $_[1];
-  my $get_wrapper = $_[2] || sub ($) { return $_[0] };
+sub parse_char_string_with_context ($$$$$) {
+  my $self = $_[0];
+  # $s $_[1]
+  my $context = $_[2];
+  my $target = $_[3];
+  my $method = $_[4];
 
-  my $nt = $node->node_type;
-  if ($nt == 9) { # Document (invoke the algorithm with no /context/ element)
-    # MUST
-    
-    ## Step 1 # MUST
-    ## TODO: If the document has an active parser, ...
-    ## ISSUE: There is an issue in the spec.
-    
-    ## Step 2 # MUST
-    for ($node->child_nodes->to_list) {
-      $node->remove_child ($_);
-    }
+  ## HTML fragment parsing algorithm
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>
 
-    ## Step 3, 4, 5 # MUST
-    $self->parse_char_string ($_[0] => $node, $onerror, $get_wrapper);
-  } elsif ($nt == 1) { # Element (invoke the algorithm with /context/ element)
-    ## TODO: If non-html element
+  # 1.
+  my $doc = ($target->owner_document || $target)
+      ->implementation->create_document;
+  $doc->manakai_is_html (1);
+  $self->{document} = $doc;
 
-    ## NOTE: Most of this code is copied from |parse_string|
+  # 2.
+  $doc->manakai_compat_mode ($context->owner_document->manakai_compat_mode)
+      if defined $context;
 
-## TODO: Support for $get_wrapper
+  # 3.
+  $self->{line_prev} = $self->{line} = 1;
+  $self->{column_prev} = -1;
+  $self->{column} = 0;
 
-    ## F1. Create an HTML document.
-    my $this_doc = $node->owner_document;
-    my $doc = $this_doc->implementation->create_document;
-    $doc->manakai_is_html (1);
+  $self->{chars} = [split //, $_[1]];
+  $self->{chars_pos} = 0;
+  $self->{chars_pull_next} = sub { 0 };
+  delete $self->{chars_was_cr};
 
-    ## F2. Propagate quirkness flag
-    my $node_doc = $node->owner_document;
-    $doc->manakai_compat_mode ($node_doc->manakai_compat_mode);
+  my $ponerror = $self->onerror;
+  $self->{parse_error} = sub {
+    $ponerror->(line => $self->{line}, column => $self->{column}, @_);
+  };
 
-    ## F3. Create an HTML parser
-    my $p = $self;
-    $p->{document} = $doc;
+  $self->_initialize_tokenizer;
+  $self->_initialize_tree_constructor;
 
-    ## Step 8 # MUST
-    my $i = 0;
-    $p->{line_prev} = $p->{line} = 1;
-    $p->{column_prev} = -1;
-    $p->{column} = 0;
-
-    $self->{chars} = [split //, $_[0]];
-    $self->{chars_pos} = 0;
-    $self->{chars_pull_next} = sub { 0 };
-    delete $self->{chars_was_cr};
-
-    my $ponerror = $onerror || $self->onerror;
-    $p->{parse_error} = sub {
-      $ponerror->(line => $p->{line}, column => $p->{column}, @_);
-    };
-
-    $p->_initialize_tokenizer;
-    $p->_initialize_tree_constructor;
-
-    ## F4. If /context/ is not undef...
-
-    ## F4.1. content model flag
-    my $node_ns = $node->namespace_uri || '';
-    my $node_ln = $node->manakai_local_name;
+  # 4.
+  my $root;
+  if (defined $context) {
+    my $node_ns = $context->namespace_uri || '';
+    my $node_ln = $context->local_name;
     if ($node_ns eq HTML_NS) {
+      # 1.
       if ($node_ln eq 'title' or $node_ln eq 'textarea') {
-        $p->{state} = RCDATA_STATE;
+        $self->{state} = RCDATA_STATE;
       } elsif ($node_ln eq 'script') {
-        $p->{state} = SCRIPT_DATA_STATE;
+        $self->{state} = SCRIPT_DATA_STATE;
       } elsif ({
         style => 1,
         script => 1,
@@ -6653,90 +6621,91 @@ sub set_inner_html ($$$$) {
         iframe => 1,
         noembed => 1,
         noframes => 1,
-        noscript => 1,
+        noscript => 1, # $self->{scripting_flag}, # XXX
       }->{$node_ln}) {
-        $p->{state} = RAWTEXT_STATE;
+        $self->{state} = RAWTEXT_STATE;
       } elsif ($node_ln eq 'plaintext') {
-        $p->{state} = PLAINTEXT_STATE;
+        $self->{state} = PLAINTEXT_STATE;
       }
       
-      $p->{inner_html_node} = [$node, $el_category->{$node_ln}];
+      $self->{inner_html_node} = [$target, $el_category->{$node_ln}];
     } elsif ($node_ns eq SVG_NS) {
-      $p->{inner_html_node} = [$node,
-                               $el_category_f->{$node_ns}->{$node_ln}
-                                   || FOREIGN_EL | SVG_EL];
+      $self->{inner_html_node} = [$target,
+                                  $el_category_f->{$node_ns}->{$node_ln}
+                                      || FOREIGN_EL | SVG_EL];
     } elsif ($node_ns eq MML_NS) {
-      $p->{inner_html_node} = [$node,
-                               $el_category_f->{$node_ns}->{$node_ln}
-                                   || FOREIGN_EL | MML_EL];
+      $self->{inner_html_node} = [$target,
+                                  $el_category_f->{$node_ns}->{$node_ln}
+                                      || FOREIGN_EL | MML_EL];
     } else {
-      $p->{inner_html_node} = [$node, FOREIGN_EL];
+      $self->{inner_html_node} = [$target, FOREIGN_EL];
     }
+    
+    # 2.
+    $root = $doc->create_element_ns (HTML_NS, [undef, 'html']);
 
-    ## F4.2. Root |html| element
-    my $root = $doc->create_element_ns
-      ('http://www.w3.org/1999/xhtml', [undef, 'html']);
-
-    ## F4.3.
+    # 3.
     $doc->append_child ($root);
 
-    ## F4.4.
-    push @{$p->{open_elements}}, [$root, $el_category->{html}];
-    $p->{open_tables} = [[$root]];
+    # 4.
+    push @{$self->{open_elements}}, [$root, $el_category->{html}];
+    $self->{open_tables} = [[$root]];
+    undef $self->{head_element};
 
-    undef $p->{head_element};
+    # 5.
+    $self->_reset_insertion_mode;
 
-    ## F4.5.
-    $p->_reset_insertion_mode;
-
-    ## F4.6.
-    my $anode = $node;
-    AN: while (defined $anode) {
-      if ($anode->node_type == 1) {
-        my $nsuri = $anode->namespace_uri;
-        if (defined $nsuri and $nsuri eq HTML_NS) {
-          if ($anode->manakai_local_name eq 'form') {
-            
-            $p->{form_element} = $anode;
-            last AN;
-          }
-        }
+    # 6.
+    my $anode = $context;
+    while (defined $anode) {
+      if ($anode->node_type == 1 and
+          ($anode->namespace_uri || '') eq HTML_NS and
+          $anode->local_name eq 'form') {
+        $self->{form_element} = $anode;
+        last;
       }
       $anode = $anode->parent_node;
-    } # AN
-
-    ## F.5. Set the input stream.
-    $p->{confident} = 1; ## Confident: irrelevant.
-
-    ## F.6. Start the parser.
-    $p->{t} = $p->_get_next_token;
-    $p->_construct_tree;
-
-    ## F.7.
-    for ($node->child_nodes->to_list) {
-      $node->remove_child ($_);
     }
-    ## ISSUE: mutation events? read-only?
+  } # $context
 
-    ## Step 11 # MUST
-    for ($root->child_nodes->to_list) {
-      $this_doc->adopt_node ($_);
-      $node->append_child ($_);
-    }
-    ## ISSUE: mutation events?
+  # 5.
+  $self->{confident} = 1; ## Confident: irrelevant.
 
-    $p->_terminate_tree_constructor;
-    $p->_clear_refs;
-  } else {
-    die "$0: |set_inner_html| is not defined for node of type $nt";
+  # 6.
+  $self->{t} = $self->_get_next_token;
+  $self->_construct_tree;
+
+  # 7.
+  my $new_children = defined $context ? $root->child_nodes : $doc->child_nodes;
+
+  $self->_terminate_tree_constructor;
+  $self->_clear_refs;
+
+  ## For elements:
+  ##   - <http://domparsing.spec.whatwg.org/#innerhtml>
+  ##   - <http://domparsing.spec.whatwg.org/#parsing>
+  ## For documents:
+  ##   - <http://html5.org/tools/web-apps-tracker?from=6531&to=6532>
+  ##   - <https://github.com/whatwg/domparsing/commit/59301cd77d4badbe16489087132a35621a2d460c>
+  ## For document fragments:
+  ##   - <http://suika.fam.cx/~wakaba/wiki/sw/n/manakai++DOM%20Extensions#anchor-143>
+  
+  if ($target->node_type == 9) { # DOCUMENT_NODE
+    # XXX If the document has an active parser, abort the parser.
   }
-} # set_inner_html
+
+  # XXX MutationObserver consideration
+  for ($target->child_nodes->to_list) {
+    $target->remove_child ($_);
+  }
+  $target->append_child ($_) for $new_children->to_list;
+} # parse_char_string_with_context
 
 1;
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <w@suika.fam.cx>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -69,18 +69,18 @@ sub _html_parser_srcdoc : Test(3) {
 sub _html_parser_change_the_encoding_char_string : Test(4) {
   my $parser = Web::HTML::Parser->new;
   my $called = 0;
-  my $onerror = sub {
+  $parser->onerror (sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
-  };
+  });
   
   my $doc = NanoDOM::DOMImplementation->new->create_document;
-  $parser->parse_char_string ('<meta charset=shift_jis>' => $doc, sub { });
+  $parser->parse_char_string ('<meta charset=shift_jis>' => $doc);
   ok !$called;
   is $doc->input_encoding, undef;
   
   my $doc2 = NanoDOM::DOMImplementation->new->create_document;
-  $parser->parse_char_string ('<meta http-equiv=Content-Type content="text/html; charset=shift_jis">' => $doc2, sub { });
+  $parser->parse_char_string ('<meta http-equiv=Content-Type content="text/html; charset=shift_jis">' => $doc2);
   ok !$called;
   is $doc2->input_encoding, undef;
 } # _html_parser_change_the_encoding_char_string
@@ -88,28 +88,31 @@ sub _html_parser_change_the_encoding_char_string : Test(4) {
 sub _html_parser_change_the_encoding_fragment : Test(2) {
   my $parser = Web::HTML::Parser->new;
   my $called = 0;
-  my $onerror = sub {
+  $parser->onerror (sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
-  };
+  });
   
   my $doc = NanoDOM::DOMImplementation->new->create_document;
   my $el = $doc->create_element_ns (undef, [undef, 'div']);
 
-  $parser->set_inner_html ($el, '<meta charset=shift_jis>', sub { });
+  $parser->parse_char_string_with_context
+      ('<meta charset=shift_jis>', $el, $el, 'innerHTML');
   ok !$called;
 
-  $parser->set_inner_html ($el, '<meta http-equiv=content-type content="text/html; charset=shift_jis">', sub { });
+  $parser->parse_char_string_with_context
+      ('<meta http-equiv=content-type content="text/html; charset=shift_jis">',
+       $el, $el, 'innerHTML');
   ok !$called;
 } # _html_parser_change_the_encoding_fragment
 
 sub _html_parser_change_the_encoding_byte_string : Test(32) {
   my $parser = Web::HTML::Parser->new;
   my $called = 0;
-  my $onerror = sub {
+  $parser->onerror (sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
-  };
+  });
   my $dom = NanoDOM::DOMImplementation->new;
 
   for my $input (
@@ -131,7 +134,7 @@ sub _html_parser_change_the_encoding_byte_string : Test(32) {
     '<meta http-equiv=content-type content="charset=shift_jis">',
   ) {
     my $doc = $dom->create_document;
-    $parser->parse_byte_string (undef, (' ' x 1024) . $input => $doc, $onerror);
+    $parser->parse_byte_string (undef, (' ' x 1024) . $input => $doc);
     ok $called;
     is $doc->input_encoding, 'shift_jis';
   }
@@ -140,10 +143,10 @@ sub _html_parser_change_the_encoding_byte_string : Test(32) {
 sub _html_parser_change_the_encoding_byte_string_changed : Test(48) {
   my $parser = Web::HTML::Parser->new;
   my $called = 0;
-  my $onerror = sub {
+  $parser->onerror (sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
-  };
+  });
   my $dom = NanoDOM::DOMImplementation->new;
 
   for (
@@ -176,7 +179,7 @@ sub _html_parser_change_the_encoding_byte_string_changed : Test(48) {
     ['<p><meta http-equiv=content-type content="text/html; charset=utf-16le">' => 'utf-8'],
   ) {
     my $doc = $dom->create_document;
-    $parser->parse_byte_string (undef, (' ' x 1024) . $_->[0] => $doc, $onerror);
+    $parser->parse_byte_string (undef, (' ' x 1024) . $_->[0] => $doc);
     ok $called;
     is $doc->input_encoding, $_->[1];
   }
@@ -185,10 +188,10 @@ sub _html_parser_change_the_encoding_byte_string_changed : Test(48) {
 sub _html_parser_change_the_encoding_byte_string_not_called : Test(28) {
   my $parser = Web::HTML::Parser->new;
   my $called = 0;
-  my $onerror = sub {
+  $parser->onerror (sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
-  };
+  });
   my $dom = NanoDOM::DOMImplementation->new;
 
   for my $input (
@@ -209,7 +212,7 @@ sub _html_parser_change_the_encoding_byte_string_not_called : Test(28) {
     '<meta http-equiv=content-type content="text/html; charset=unicode">',
   ) {
     my $doc = $dom->create_document;
-    $parser->parse_byte_string (undef, (' ' x 1024) . $input => $doc, $onerror);
+    $parser->parse_byte_string (undef, (' ' x 1024) . $input => $doc);
     ok !$called;
     like $doc->input_encoding, qr[windows-1252|us-ascii];
   }
@@ -218,17 +221,17 @@ sub _html_parser_change_the_encoding_byte_string_not_called : Test(28) {
 sub _html_parser_change_the_encoding_byte_string_with_charset : Test(2) {
   my $parser = Web::HTML::Parser->new;
   my $called = 0;
-  my $onerror = sub {
+  $parser->onerror (sub {
     my %args = @_;
     $called = 1 if $args{type} eq 'charset label detected';
-  };
+  });
   my $dom = NanoDOM::DOMImplementation->new;
 
   for my $input (
     '<meta http-equiv=content-type content="text/html; charset=shift_jis">',
   ) {
     my $doc = $dom->create_document;
-    $parser->parse_byte_string ('euc-jp', (' ' x 1024) . $input => $doc, $onerror);
+    $parser->parse_byte_string ('euc-jp', (' ' x 1024) . $input => $doc);
     ok !$called;
     is $doc->input_encoding, 'euc-jp';
   }
@@ -252,9 +255,10 @@ sub _parse_char_string_onerror_old : Test(2) {
   my $input = qq{<html lang=en>};
   my $parser = Web::HTML::Parser->new;
   my @error;
-  $parser->parse_char_string ($input => $doc, sub {
+  $parser->onerror (sub {
     push @error, {@_};
   });
+  $parser->parse_char_string ($input => $doc);
   ok $error[0]->{token};
   delete $error[0]->{token};
   eq_or_diff \@error, [{

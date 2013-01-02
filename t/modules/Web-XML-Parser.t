@@ -65,9 +65,10 @@ sub _parse_char_string_onerror : Test(3) {
   my $doc = $dom->create_document;
   
   my @error;
-  $parser->parse_char_string ($s => $doc, sub {
+  $parser->onerror (sub {
     push @error, {@_};
   });
+  $parser->parse_char_string ($s => $doc);
   eq_or_diff $doc->inner_html,
       qq{<foo>\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
   is scalar @{$doc->child_nodes}, 2;

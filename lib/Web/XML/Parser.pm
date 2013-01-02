@@ -8,8 +8,8 @@ use Web::HTML::InputStream;
 use Web::HTML::Tokenizer;
 push our @ISA, qw(Web::HTML::Tokenizer);
 
-sub parse_char_string ($$$;$$) {
-  #my ($self, $string, $document, $onerror, $get_wrapper) = @_;
+sub parse_char_string ($$$) {
+  #my ($self, $string, $document) = @_;
   my $self = ref $_[0] ? $_[0] : $_[0]->new;
   my $doc = $self->{document} = $_[2];
   @{$self->{document}->child_nodes} = ();
@@ -26,7 +26,7 @@ sub parse_char_string ($$$;$$) {
   $self->{chars_pull_next} = sub { 0 };
   delete $self->{chars_was_cr};
 
-  my $onerror = $_[3] || $self->onerror;
+  my $onerror = $self->onerror;
   $self->{parse_error} = sub {
     $onerror->(line => $self->{line}, column => $self->{column}, @_);
   };

@@ -52,8 +52,6 @@ if ($DEBUG) {
 
 use Web::HTML::Parser;
 use NanoDOM;
-# XXX
-#use Whatpm::Charset::UnicodeChecker;
 use Web::HTML::Dumper qw/dumptree/;
 
 my $dom;
@@ -98,25 +96,19 @@ sub test ($) {
     $doc->manakai_is_srcdoc (1);
   }
 
-  my $onerror = sub {
+  my $parser = new Web::HTML::Parser;
+  $parser->onerror (sub {
     my %opt = @_;
     if ($opt{level} eq 's') {
       push @shoulds, join ':', grep { defined } $opt{line}, $opt{column}, $opt{type}, $opt{text};
     } else {
       push @errors, join ':', grep { defined } $opt{line}, $opt{column}, $opt{type}, $opt{text};
     }
-  };
-
-  my $chk = sub {
-    # XXX
-    #return Whatpm::Charset::UnicodeChecker->new_handle ($_[0], 'html5');
-    return $_[0];
-  }; # $chk
+  }); # onerror
 
   my $result;
   unless (defined $test->{element}) {
-    Web::HTML::Parser->parse_char_string
-        ($test->{data}->[0] => $doc, $onerror, $chk);
+    $parser->parse_char_string ($test->{data}->[0] => $doc);
     $result = dumptree ($doc);
   } else {
     my $el;
@@ -132,10 +124,11 @@ sub test ($) {
       $el = $doc->create_element_ns
           (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
     }
-    Web::HTML::Parser->set_inner_html ($el, $test->{data}->[0], $onerror, $chk);
+    $parser->parse_char_string_with_context ($test->{data}->[0], $el, $el);
     $result = dumptree ($el);
   }
   
+#line 69 "HTML-tree.t test () skip"
   warn "No #errors section ($test->{data}->[0])" unless $test->{errors};
     
 #line 1 "HTML-tree.t test () ok"

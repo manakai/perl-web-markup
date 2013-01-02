@@ -153,7 +153,7 @@ sub _plaintext : Test(35) {
         ($tag_name eq 'plaintext' ? '<plaintext>' : '<' . $tag_name . '></' . $tag_name . '>');
     my $pt = $el->first_child;
     is $pt->inner_html, q<>;
-    
+
     $pt->inner_html (q<abc>);
     is $pt->inner_html, q<abc>;
     

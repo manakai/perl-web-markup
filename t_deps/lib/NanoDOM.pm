@@ -71,6 +71,7 @@ sub namespace_uri ($) { return undef }
 ## NOTE: Only applied to Elements and Documents
 sub append_child ($$) {
   my ($self, $new_child) = @_;
+  ($self->owner_document || $self)->adopt_node ($new_child);
   if (defined $new_child->{parent_node}) {
     my $parent_list = $new_child->{parent_node}->{child_nodes};
     for (reverse 0..$#$parent_list) {
@@ -88,6 +89,7 @@ sub append_child ($$) {
 ## NOTE: Only applied to Elements and Documents
 sub insert_before ($$;$) {
   my ($self, $new_child, $ref_child) = @_;
+  ($self->owner_document || $self)->adopt_node ($new_child);
   if (defined $new_child->{parent_node}) {
     my $parent_list = $new_child->{parent_node}->{child_nodes};
     for (0..$#$parent_list) {
@@ -182,6 +184,10 @@ sub text_content ($;$) {
   }
   return $r;
 } # text_content
+
+sub owner_document ($) {
+  return shift->{owner_document};
+} # owner_document
 
 sub get_user_data ($$) {
   return $_[0]->{$_[1]};
@@ -287,8 +293,7 @@ sub create_notation ($$) {
 
 ## A manakai extension.
 sub create_attribute_definition ($$) {
-  shift;
-  return NanoDOM::AttributeDefinition->new (shift);
+  return NanoDOM::AttributeDefinition->new ($_[0], $_[1]);
 } # create_attribute_definition
 
 sub create_processing_instruction ($$$) {
@@ -296,7 +301,7 @@ sub create_processing_instruction ($$$) {
 } # create_processing_instruction
 
 sub create_document_fragment ($) {
-  return NanoDOM::DocumentFragment->new;
+  return NanoDOM::DocumentFragment->new ($_[0]);
 } # create_document_fragment
 
 sub implementation ($) {
@@ -506,10 +511,6 @@ sub new ($$$$$) {
   return $self;
 } # new
 
-sub owner_document ($) {
-  return shift->{owner_document};
-} # owner_document
-
 sub clone_node ($$) {
   my ($self, $deep) = @_; ## NOTE: Deep cloning is not supported
   my $clone = bless {
@@ -663,7 +664,8 @@ sub inner_html ($;$) {
 
   if (@_ > 1) {
     require Web::HTML::Parser;
-    Web::HTML::Parser->set_inner_html ($self, $_[1]);
+    Web::HTML::Parser->new->parse_char_string_with_context
+        ($_[1], $self, $self);
     return unless defined wantarray;
   }
   
@@ -931,6 +933,8 @@ push our @ISA, 'NanoDOM::Node';
 
 sub new ($$) {
   my $self = shift->SUPER::new;
+  $self->{owner_document} = shift;
+  Scalar::Util::weaken ($self->{owner_document});
   $self->{node_name} = shift;
   $self->{allowed_tokens} = [];
   return $self;
@@ -955,6 +959,8 @@ push our @ISA, 'NanoDOM::Node';
 
 sub new ($) {
   my $self = shift->SUPER::new;
+  $self->{owner_document} = shift;
+  Scalar::Util::weaken ($self->{owner_document});
   $self->{child_nodes} = [];
   return $self;
 } # new
