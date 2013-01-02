@@ -140,7 +140,7 @@ Encoding Standard <http://encoding.spec.whatwg.org/>.
 =item MANAKAI
 
 manakai's DOM Extensions
-<http://domparsing.spec.whatwg.org/#innerhtml>.
+<http://suika.fam.cx/~wakaba/wiki/sw/n/manakai++DOM%20Extensions>.
 
 =back
 

@@ -311,7 +311,10 @@ sub parse_byte_string ($$$$) {
 
   my $embedded_encoding_name;
   PARSER: {
-    @{$self->{document}->child_nodes} = ();
+    {
+      local $self->{document}->dom_config->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'} = 0;
+      $self->{document}->text_content ('');
+    }
     
     my $inputref = \($_[2]);
     $self->_encoding_sniffing
@@ -379,7 +382,10 @@ sub parse_char_string ($$$) {
   #my ($self, $string, $document) = @_;
   my $self = ref $_[0] ? $_[0] : $_[0]->new;
   my $doc = $self->{document} = $_[2];
-  @{$self->{document}->child_nodes} = ();
+  {
+    local $self->{document}->dom_config->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'} = 0;
+    $self->{document}->text_content ('');
+  }
 
   ## Confidence: irrelevant.
   $self->{confident} = 1 unless exists $self->{confident};
@@ -438,7 +444,10 @@ sub parse_bytes_start ($$$) {
 
 sub _parse_bytes_start_parsing ($;%) {
   my ($self, %args) = @_;
-  @{$self->{document}->child_nodes} = ();
+  {
+    local $self->{document}->dom_config->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'} = 0;
+    $self->{document}->text_content ('');
+  }
   $self->{line_prev} = $self->{line} = 1;
   $self->{column_prev} = -1;
   $self->{column} = 0;
@@ -621,6 +630,9 @@ sub _terminate_tree_constructor ($) {
 
 sub _reset_insertion_mode ($) {
   my $self = shift;
+
+  ## Reset the insertion mode appropriately
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#reset-the-insertion-mode-appropriately>
 
   ## Step 1
   my $last;

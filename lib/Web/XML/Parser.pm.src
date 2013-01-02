@@ -12,7 +12,10 @@ sub parse_char_string ($$$) {
   #my ($self, $string, $document) = @_;
   my $self = ref $_[0] ? $_[0] : $_[0]->new;
   my $doc = $self->{document} = $_[2];
-  @{$self->{document}->child_nodes} = ();
+  {
+    local $self->{document}->dom_config->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'} = 0;
+    $self->{document}->text_content ('');
+  }
 
   ## Confidence: irrelevant.
   $self->{confident} = 1 unless exists $self->{confident};
