@@ -411,7 +411,7 @@ sub parse_char_string ($$$) {
   $self->_terminate_tree_constructor;
   $self->_clear_refs;
 
-  return $doc;
+  return {};
 } # parse_char_string
 
 ## ------ Stream parse API (experimental) ------

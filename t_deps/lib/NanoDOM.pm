@@ -465,7 +465,7 @@ sub inner_html ($;$) {
       }
 
       require Web::HTML::Parser;
-      Web::HTML::Parser->parse_char_string ($_[1] => $self);
+      Web::HTML::Parser->new->parse_char_string ($_[1] => $self);
       return unless defined wantarray;
     }
 
@@ -475,7 +475,7 @@ sub inner_html ($;$) {
     if (@_ > 1) {
       my $doc = $self->implementation->create_document;
       require Web::XML::Parser;
-      $doc = Web::XML::Parser->parse_char_string ($_[1] => $doc);
+      Web::XML::Parser->new->parse_char_string ($_[1] => $doc);
       for ($self->child_nodes->to_list) {
         $self->remove_child ($_);
       }

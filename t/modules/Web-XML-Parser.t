@@ -21,7 +21,7 @@ sub _xml_parser_gc : Test(2) {
   local *NanoDOM::Document::DESTROY = sub { $doc_destroy_called++ };
 
   my $doc = NanoDOM::DOMImplementation->new->create_document;
-  Web::XML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
+  Web::XML::Parser->new->parse_char_string (q<<p>abc</p>> => $doc);
 
   is $parser_destroy_called, 1;
 

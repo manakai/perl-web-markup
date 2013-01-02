@@ -10,7 +10,7 @@ push our @ISA, qw(Web::HTML::Tokenizer);
 
 sub parse_char_string ($$$) {
   #my ($self, $string, $document) = @_;
-  my $self = ref $_[0] ? $_[0] : $_[0]->new;
+  my $self = $_[0];
   my $doc = $self->{document} = $_[2];
   {
     local $self->{document}->dom_config->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'} = 0;
@@ -43,7 +43,7 @@ sub parse_char_string ($$$) {
   $self->_terminate_tree_constructor;
   $self->_clear_refs;
 
-  return $doc;
+  return {};
 } # parse_char_string
 
 ## ------ Tree construction ------
