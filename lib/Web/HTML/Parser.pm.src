@@ -5404,9 +5404,9 @@ sub _construct_tree ($) {
 sub parse_char_string_with_context ($$$$$) {
   my $self = $_[0];
   # $s $_[1]
-  my $context = $_[2];
-  my $target = $_[3];
-  my $method = $_[4];
+  my $context = $_[2]; # Element or undef
+  my $target = $_[3]; # RootNode
+  my $method = $_[4]; # 'innerHTML'
 
   ## HTML fragment parsing algorithm
   ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>

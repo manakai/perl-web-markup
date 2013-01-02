@@ -355,6 +355,18 @@ sub _parse_byte_string_onerror_new : Test(2) {
   }];
 } # _parse_byte_string_onerror_new
 
+sub _parse_char_string_with_context_doc : Test(1) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  $doc->manakai_is_html (1);
+
+  my $parser = Web::HTML::Parser->new;
+  $parser->parse_char_string_with_context
+      ('hoge<p>foo<tr>bar', undef, $doc, 'innerHTML');
+
+  is $doc->inner_html, '<html><head></head><body>hoge<p>foobar</p></body></html>';
+} # _parse_char_string_with_context_doc
+
 __PACKAGE__->runtests;
 
 1;
