@@ -41,6 +41,8 @@ sub _clear_refs ($) {
   delete $self->{t};
   delete $self->{embedded_encoding_name};
   delete $self->{byte_buffer};
+  delete $self->{inner_html_node};
+  delete $self->{inner_html_tag_name};
 } # _clear_refs
 
 ## ------ Error handling ------

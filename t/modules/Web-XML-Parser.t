@@ -78,6 +78,24 @@ sub _parse_char_string_onerror : Test(3) {
                         line => 1, column => 15}];
 } # _parse_char_string_old_content
 
+sub _parse_char_string_with_context : Test(8) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el = $doc->create_element_ns (undef, [undef, 'nnn']);
+  my $children = $parser->parse_char_string_with_context
+      ('<hoge>aaa<!-- bb -->bb<foo/>cc</hoge>aa<bb/>',
+       $el, NanoDOM::Document->new);
+  
+  is scalar @$children, 3;
+  is $children->[0]->namespace_uri, undef;
+  is $children->[0]->manakai_tag_name, 'hoge';
+  is $children->[0]->inner_html, 'aaa<!-- bb -->bb<foo></foo>cc';
+  is $children->[1]->data, 'aa';
+  is $children->[2]->namespace_uri, undef;
+  is $children->[2]->manakai_tag_name, 'bb';
+  is $children->[2]->text_content, '';
+} # _parse_char_string_with_context
+
 __PACKAGE__->runtests;
 
 1;

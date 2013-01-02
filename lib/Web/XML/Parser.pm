@@ -8,6 +8,14 @@ use Web::HTML::InputStream;
 use Web::HTML::Tokenizer;
 push our @ISA, qw(Web::HTML::Tokenizer);
 
+## Insertion modes
+sub BEFORE_XML_DECL_IM () { 0 }
+sub AFTER_XML_DECL_IM () { 1 }
+sub BEFORE_ROOT_ELEMENT_IM () { 2 }
+sub IN_ELEMENT_IM () { 3 }
+sub AFTER_ROOT_ELEMENT_IM () { 4 }
+sub IN_SUBSET_IM () { 5 }
+
 sub parse_char_string ($$$) {
   #my ($self, $string, $document) = @_;
   my $self = $_[0];
@@ -46,21 +54,80 @@ sub parse_char_string ($$$) {
   return {};
 } # parse_char_string
 
-## ------ Tree construction ------
+sub parse_char_string_with_context ($$$$) {
+  my $self = $_[0];
+  # $s $_[1]
+  my $context = $_[2]; # Element or undef
+  # $empty_doc $_[3]
 
-## Insertion modes
-sub BEFORE_XML_DECL_IM () { 0 }
-sub AFTER_XML_DECL_IM () { 1 }
-sub BEFORE_ROOT_ELEMENT_IM () { 2 }
-sub IN_ELEMENT_IM () { 3 }
-sub AFTER_ROOT_ELEMENT_IM () { 4 }
-sub IN_SUBSET_IM () { 5 }
+  ## XML fragment parsing algorithm
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-fragments>
+
+  ## 1.
+  my $doc = $_[3];
+  $self->{document} = $doc;
+  
+  ## Confidence: irrelevant.
+  $self->{confident} = 1 unless exists $self->{confident};
+
+  $self->{line_prev} = $self->{line} = 1;
+  $self->{column_prev} = -1;
+  $self->{column} = 0;
+
+  # 3.
+  $self->{chars} = [split //, $_[1]];
+  $self->{chars_pos} = 0;
+  $self->{chars_pull_next} = sub { 0 };
+  delete $self->{chars_was_cr};
+
+  my $onerror = $self->onerror;
+  $self->{parse_error} = sub {
+    $onerror->(line => $self->{line}, column => $self->{column}, @_);
+  };
+
+  $self->{is_xml} = 1;
+
+  $self->_initialize_tokenizer;
+  $self->_initialize_tree_constructor;
+
+  my $root;
+  if (defined $context) {
+    # 4., 6. (Fake end tag)
+    $self->{inner_html_tag_name} = $context->manakai_tag_name;
+
+    # 2. Fake start tag
+    $root = $doc->create_element_ns
+        ($context->namespace_uri, [$context->prefix, $context->local_name]);
+    my $nsmap = {}; # XXX
+    $nsmap->{''} = $context->lookup_namespace_uri (''); # XXX
+    push @{$self->{open_elements}},
+        [$root, $self->{inner_html_tag_name}, $nsmap];
+    $doc->append_child ($root);
+    $self->{insertion_mode} = IN_ELEMENT_IM;
+  }
+
+  $self->{t} = $self->_get_next_token;
+
+  # 5. If not well-formed, throw SyntaxError - should be handled by
+  # callee using $self->onerror.
+
+  # XXX and well-formedness errors not detected by this parser
+
+  $self->_construct_tree;
+  $self->_terminate_tree_constructor;
+  $self->_clear_refs;
+
+  # 7.
+  return defined $context ? $root->child_nodes : $doc->child_nodes;
+} # parse_char_string_with_context
+
+## ------ Tree construction ------
 
 sub _initialize_tree_constructor ($) {
   my $self = shift;
   ## NOTE: $self->{document} MUST be specified before this method is called
   $self->{document}->strict_error_checking (0);
-  ## TODO: Turn mutation events off # MUST
+  ## (Turn mutation events off)
   $self->{document}->dom_config
       ->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'}
       = 0;
@@ -85,11 +152,14 @@ sub _terminate_tree_constructor ($) {
   $self->{document}->dom_config
       ->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'}
       = 1;
-  ## TODO: Turn mutation events on
+  ## (Turn mutation events on)
 } # _terminate_tree_constructor
 
 ## Tree construction stage
 
+
+# XXX external entity support
+# <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
 
 ## NOTE: Differences from the XML5 draft are marked as "XML5:".
 
@@ -603,9 +673,26 @@ sub _tree_in_element ($) {
     } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
       if ($self->{t}->{tag_name} eq '') {
         ## Short end tag token.
-        pop @{$self->{open_elements}};
+        if (@{$self->{open_elements}} == 1 and
+            defined $self->{inner_html_tag_name}) {
+          ## Not in XML5: Fragment case
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                          text => '',
+                          token => $self->{t});
+        } else {
+          pop @{$self->{open_elements}};
+        }
       } elsif ($self->{open_elements}->[-1]->[1] eq $self->{t}->{tag_name}) {
-        pop @{$self->{open_elements}};
+        if (@{$self->{open_elements}} == 1 and
+            defined $self->{inner_html_tag_name} and
+            $self->{inner_html_tag_name} eq $self->{t}->{tag_name}) {
+          ## Not in XML5: Fragment case
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                          text => $self->{t}->{tag_name},
+                          token => $self->{t});
+        } else {
+          pop @{$self->{open_elements}};
+        }
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                         text => $self->{t}->{tag_name},
@@ -645,8 +732,15 @@ sub _tree_in_element ($) {
       $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof',
-                      token => $self->{t});
+      if (defined $self->{inner_html_tag_name} and
+          @{$self->{open_elements}} == 1 and
+          $self->{open_elements}->[0]->[1] eq $self->{inner_html_tag_name}) {
+        ## Not in XML5: Fragment case
+        #
+      } else {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof',
+                        token => $self->{t});
+      }
       
       $self->{insertion_mode} = AFTER_ROOT_ELEMENT_IM;
       $self->{t} = $self->_get_next_token;

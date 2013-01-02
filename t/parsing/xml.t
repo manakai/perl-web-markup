@@ -106,10 +106,22 @@ sub test ($) {
     $p->parse_char_string ($test->{data}->[0] => $doc);
     $result = dumptree ($doc);
   } else {
-    ## TODO: ...
-    my $el = $doc->create_element_ns
-      ('http://www.w3.org/1999/xhtml', [undef, $test->{element}]);
-    $p->XXXset_inner_html ($el, $test->{data}->[0]);
+    my $el;
+    if ($test->{element} =~ s/^svg\s*//) {
+      $el = $doc->create_element_ns
+          (q<http://www.w3.org/2000/svg>, [undef, $test->{element}]);
+    } elsif ($test->{element} =~ s/^math\s*//) {
+      $el = $doc->create_element_ns
+          (q<http://www.w3.org/1998/Math/MathML>, [undef, $test->{element}]);
+    } elsif ($test->{element} =~ s/^\{([^{}]*)\}\s*//) {
+      $el = $doc->create_element_ns ($1, [undef, $test->{element}]);
+    } else {
+      $el = $doc->create_element_ns
+          (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
+    }
+    my $children = $p->parse_char_string_with_context
+        ($test->{data}->[0], $el, new NanoDOM::Document);
+    $el->append_child ($_) for $children->to_list;
     $result = dumptree ($el);
   }
   
@@ -216,6 +228,7 @@ my @FILES = grep {$_} split /\s+/, qq[
   ${test_dir_name}notations-1.dat
   ${test_dir_name}entrefs-1.dat
   ${test_dir_name}entrefs-2.dat
+  ${test_dir_name}fragment-1.dat
 ];
 
 for_each_test ($_, {

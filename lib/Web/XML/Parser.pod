@@ -51,6 +51,16 @@ The second argument to the method must be a DOM C<Document> object
 (L<Message::DOM::Document>).  Any child nodes of the document is first
 removed by the parser.
 
+=item $node_list = $parser->parse_char_string_with_context ($chars, $context, $empty_doc)
+
+Parse a string of characters using the context node I<$context>, using
+the empty document I<$empty_doc>.
+
+The first argument to the method must be a string of characters.  The
+second argument must be an element or C<undef>.
+
+The method returns the result node list.
+
 =item $code = $parser->onerror
 
 =item $parser->onerror ($new_code)
