@@ -115,7 +115,8 @@ sub dumptree ($) {
       $r .= qq[">\x0A];
     } elsif ($nt == $child->[0]->ELEMENT_TYPE_DEFINITION_NODE) {
       $r .= $child->[1] . '<!ELEMENT ' . $child->[0]->node_name . ' ';
-      $r .= $child->[0]->content_model_text;
+      my $cm = $child->[0]->content_model_text;
+      $r .= $cm if defined $cm;
       $r .= ">\x0A";
       unshift @node,
           map { [$_, $child->[1] . '  '] }
