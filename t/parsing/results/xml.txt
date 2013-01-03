@@ -3592,18 +3592,7 @@ ok 3576 - Parse error: qq'<?xml version="1.1"\x{2028}?>\x{85}<p>abc</p>'
 ok 3577 - XML version: qq'<?xml version="1.1"\x{2028}?>\x{85}<p>abc</p>'
 ok 3578 - XML encoding: qq'<?xml version="1.1"\x{2028}?>\x{85}<p>abc</p>'
 ok 3579 - XML standalone: qq'<?xml version="1.1"\x{2028}?>\x{85}<p>abc</p>'
-not ok 3580 - Document tree: qq'<?xml version="1.1"\x{2028}?>\x{85}<p>abc</p>'
-#   Failed test 'Document tree: qq'<?xml version="1.1"\x{2028}?>\x{85}<p>abc</p>''
-#   at HTML-tree.t test () skip line 128.
-# +---+--------------------------------+----------------------------+
-# | Ln|Got                             |Expected                    |
-# +---+--------------------------------+----------------------------+
-# *  1|'<?xml version="1.1"\x{2028}?>  |'<?xml version="1.1"\x85?>  *
-# |  2|"\x85"                          |"\x85"                      |
-# |  3|<{} p>                          |<{} p>                      |
-# |  4|  "abc"                         |  "abc"                     |
-# |  5|'                               |'                           |
-# +---+--------------------------------+----------------------------+
+ok 3580 - Document tree: qq'<?xml version="1.1"\x{2028}?>\x{85}<p>abc</p>'
 # t_deps/tests/xml/parsing/manakai/tree-1.dat
 ok 3581 - Parse error: qq'<a/>'
 ok 3582 - XML version: qq'<a/>'
@@ -5561,26 +5550,12 @@ ok 5527 - XML version: qq'<?xml version="1.0" standalone="yes"?>\x{0A}<!DOCTYPE 
 ok 5528 - XML encoding: qq'<?xml version="1.0" standalone="yes"?>\x{0A}<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA \#IMPLIED>\x{0A}%x;\x{0A}<!ATTLIST d e CDATA \#IMPLIED>\x{0A}]><a/>'
 ok 5529 - XML standalone: qq'<?xml version="1.0" standalone="yes"?>\x{0A}<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA \#IMPLIED>\x{0A}%x;\x{0A}<!ATTLIST d e CDATA \#IMPLIED>\x{0A}]><a/>'
 ok 5530 - Document tree: qq'<?xml version="1.0" standalone="yes"?>\x{0A}<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA \#IMPLIED>\x{0A}%x;\x{0A}<!ATTLIST d e CDATA \#IMPLIED>\x{0A}]><a/>'
-not ok 5531 - Parse error: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab \x{09}\x{0C}\x{0D}\x{0A}cd">\x{0A}]><a/>'
-#   Failed test 'Parse error: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab \x{09}\x{0C}\x{0D}\x{0A}cd">\x{0A}]><a/>''
-#   at HTML-tree.t test () skip line 60.
-# +---+-------------------------------+----------+
-# | Ln|Got                            |Expected  |
-# +---+-------------------------------+----------+
-# *  1|'2;26;control char;;U+000C;m'  |''        *
-# +---+-------------------------------+----------+
+ok 5531 - Parse error: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab \x{09}\x{0C}\x{0D}\x{0A}cd">\x{0A}]><a/>'
 ok 5532 - XML version: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab \x{09}\x{0C}\x{0D}\x{0A}cd">\x{0A}]><a/>'
 ok 5533 - XML encoding: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab \x{09}\x{0C}\x{0D}\x{0A}cd">\x{0A}]><a/>'
 ok 5534 - XML standalone: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab \x{09}\x{0C}\x{0D}\x{0A}cd">\x{0A}]><a/>'
 ok 5535 - Document tree: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab \x{09}\x{0C}\x{0D}\x{0A}cd">\x{0A}]><a/>'
-not ok 5536 - Parse error: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab&\#xd;&\#xa;&\#x9;&\#x20;&\#xc;">\x{0A}]>\x{0A}<a/>'
-#   Failed test 'Parse error: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab&\#xd;&\#xa;&\#x9;&\#x20;&\#xc;">\x{0A}]>\x{0A}<a/>''
-#   at HTML-tree.t test () skip line 60.
-# +---+----------------------------------------------+----------+
-# | Ln|Got                                           |Expected  |
-# +---+----------------------------------------------+----------+
-# *  1|'2;49;invalid character reference;U+000C;;m'  |''        *
-# +---+----------------------------------------------+----------+
+ok 5536 - Parse error: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab&\#xd;&\#xa;&\#x9;&\#x20;&\#xc;">\x{0A}]>\x{0A}<a/>'
 ok 5537 - XML version: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab&\#xd;&\#xa;&\#x9;&\#x20;&\#xc;">\x{0A}]>\x{0A}<a/>'
 ok 5538 - XML encoding: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab&\#xd;&\#xa;&\#x9;&\#x20;&\#xc;">\x{0A}]>\x{0A}<a/>'
 ok 5539 - XML standalone: qq'<!DOCTYPE a[\x{0A}<!ATTLIST b c CDATA "ab&\#xd;&\#xa;&\#x9;&\#x20;&\#xc;">\x{0A}]>\x{0A}<a/>'
@@ -7112,5 +7087,45 @@ ok 7059 - XML encoding: qq'<!DOCTYPE a[\x{0A}  <!ENTITY b "&\x{4E00}\x{4E01};">\
 ok 7060 - XML standalone: qq'<!DOCTYPE a[\x{0A}  <!ENTITY b "&\x{4E00}\x{4E01};">\x{0A}]>\x{0A}<a/>'
 ok 7061 - Entities: qq'<!DOCTYPE a[\x{0A}  <!ENTITY b "&\x{4E00}\x{4E01};">\x{0A}]>\x{0A}<a/>'
 ok 7062 - Document tree: qq'<!DOCTYPE a[\x{0A}  <!ENTITY b "&\x{4E00}\x{4E01};">\x{0A}]>\x{0A}<a/>'
-1..7062
-# Looks like you failed 3 tests of 7062.
+# t_deps/tests/xml/parsing/manakai/fragment-1.dat
+ok 7063 - Parse error: qq'hoge'
+ok 7064 - XML version: qq'hoge'
+ok 7065 - XML encoding: qq'hoge'
+ok 7066 - XML standalone: qq'hoge'
+ok 7067 - Document tree: qq'hoge'
+ok 7068 - Parse error: qq'<foo>aa</foo>bar'
+ok 7069 - XML version: qq'<foo>aa</foo>bar'
+ok 7070 - XML encoding: qq'<foo>aa</foo>bar'
+ok 7071 - XML standalone: qq'<foo>aa</foo>bar'
+ok 7072 - Document tree: qq'<foo>aa</foo>bar'
+ok 7073 - Parse error: qq'<aa/>bb'
+ok 7074 - XML version: qq'<aa/>bb'
+ok 7075 - XML encoding: qq'<aa/>bb'
+ok 7076 - XML standalone: qq'<aa/>bb'
+ok 7077 - Document tree: qq'<aa/>bb'
+ok 7078 - Parse error: qq'<foo xmlns=""/>'
+ok 7079 - XML version: qq'<foo xmlns=""/>'
+ok 7080 - XML encoding: qq'<foo xmlns=""/>'
+ok 7081 - XML standalone: qq'<foo xmlns=""/>'
+ok 7082 - Document tree: qq'<foo xmlns=""/>'
+ok 7083 - Parse error: qq'<hoge/>'
+ok 7084 - XML version: qq'<hoge/>'
+ok 7085 - XML encoding: qq'<hoge/>'
+ok 7086 - XML standalone: qq'<hoge/>'
+ok 7087 - Document tree: qq'<hoge/>'
+ok 7088 - Parse error: qq'<hoge>aaaa'
+ok 7089 - XML version: qq'<hoge>aaaa'
+ok 7090 - XML encoding: qq'<hoge>aaaa'
+ok 7091 - XML standalone: qq'<hoge>aaaa'
+ok 7092 - Document tree: qq'<hoge>aaaa'
+ok 7093 - Parse error: qq'<hoge/>aaaa</foo>bb'
+ok 7094 - XML version: qq'<hoge/>aaaa</foo>bb'
+ok 7095 - XML encoding: qq'<hoge/>aaaa</foo>bb'
+ok 7096 - XML standalone: qq'<hoge/>aaaa</foo>bb'
+ok 7097 - Document tree: qq'<hoge/>aaaa</foo>bb'
+ok 7098 - Parse error: qq'<hoge/>aaaa</>bb'
+ok 7099 - XML version: qq'<hoge/>aaaa</>bb'
+ok 7100 - XML encoding: qq'<hoge/>aaaa</>bb'
+ok 7101 - XML standalone: qq'<hoge/>aaaa</>bb'
+ok 7102 - Document tree: qq'<hoge/>aaaa</>bb'
+1..7102
