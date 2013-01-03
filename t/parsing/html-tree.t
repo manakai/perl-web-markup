@@ -51,14 +51,11 @@ if ($DEBUG) {
 }
 
 use Web::HTML::Parser;
-use NanoDOM;
 use Web::HTML::Dumper qw/dumptree/;
 
-my $dom;
-if ($ENV{USE_REAL_DOM}) {
-  require Message::DOM::DOMImplementation;
-  $dom = Message::DOM::DOMImplementation->new;
-}
+my $dom_class = $ENV{DOM_IMPL_CLASS} || 'NanoDOM::DOMImplementation';
+eval qq{ require $dom_class } or die $@;
+my $dom = $dom_class->new;
 
 sub test ($) {
   my $test = shift;
@@ -83,11 +80,11 @@ sub test ($) {
     }
   }
 
-  my $doc = $dom ? $dom->create_document : NanoDOM::Document->new;
+  my $doc = $dom->create_document;
   my @errors;
   my @shoulds;
   
-  $SIG{INT} = sub {
+  local $SIG{INT} = sub {
     print scalar dumptree ($doc);
     exit;
   };
@@ -125,7 +122,7 @@ sub test ($) {
           (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
     }
     my $children = $parser->parse_char_string_with_context
-        ($test->{data}->[0], $el, new NanoDOM::Document);
+        ($test->{data}->[0], $el, $dom->create_document);
     $el->append_child ($_) for $children->to_list;
     $result = dumptree ($el);
   }
@@ -216,5 +213,6 @@ for_each_test ($_, {
   'document-fragment' => {is_prefixed => 1},
 }, \&test) for @FILES;
 
+undef $dom;
 done_testing;
 ## License: Public Domain.

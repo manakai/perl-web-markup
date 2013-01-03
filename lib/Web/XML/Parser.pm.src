@@ -131,6 +131,9 @@ sub _initialize_tree_constructor ($) {
   $self->{document}->dom_config
       ->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'}
       = 0;
+  $self->{document}->dom_config->{manakai_allow_doctype_children} = 1
+      if exists $self->{document}->dom_config
+          ->{manakai_allow_doctype_children};
   $self->{document}->manakai_is_html (0);
   $self->{document}->set_user_data (manakai_source_line => 1);
   $self->{document}->set_user_data (manakai_source_column => 1);
@@ -152,6 +155,9 @@ sub _terminate_tree_constructor ($) {
   $self->{document}->dom_config
       ->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'}
       = 1;
+  $self->{document}->dom_config->{manakai_allow_doctype_children} = 0
+      if exists $self->{document}->dom_config
+          ->{manakai_allow_doctype_children};
   ## (Turn mutation events on)
 } # _terminate_tree_constructor
 
