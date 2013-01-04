@@ -134,6 +134,8 @@ sub get_inner_html ($$) {
       $s .= '<!DOCTYPE ' . $child->name . '>';
     } elsif ($nt == 7) { # ProcessingInstruction
       $s .= '<?' . $child->target . ' ' . $child->data . '>';
+    } elsif ($nt == 9 or $nt == 11) { # Document / DocumentFragment
+      unshift @node, map { [$_, $c->[1]] } $child->child_nodes->to_list;
     } elsif ($nt == 5) { # EntityReference
       push @node, map { [$_, $c->[1]] } $child->child_nodes->to_list;
     } else {

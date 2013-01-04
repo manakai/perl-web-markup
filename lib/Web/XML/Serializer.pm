@@ -280,9 +280,11 @@ sub get_inner_html ($$) {
     } elsif ($nt == 10) { # DocumentType
       $s .= '<!DOCTYPE ' . $child->name . '>';
     } elsif ($nt == 7) { # ProcessingInstruction
-      $s .= '<?' . $child->target . ' ' . $child->data . '>';
+      $s .= '<?' . $child->target . ' ' . $child->data . '?>';
+    } elsif ($nt == 9 or $nt == 11) { # Document / DocumentFragment
+      unshift @node, map { [$_, $c->[1], $c->[2]] } $child->child_nodes->to_list;
     } elsif ($nt == 5) { # EntityReference
-      push @node, map { [$_, $c->[1]] } $child->child_nodes->to_list;
+      push @node, map { [$_, $c->[1], $c->[2]] } $child->child_nodes->to_list;
     } else {
       # XXXerror
       $_[0]->onerror->(type => 'node type not supported', value => $nt);
