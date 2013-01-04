@@ -167,6 +167,35 @@ sub _element_xmlns_6 : Test(1) {
       q<<abv:xml xmlns:abv="http://hoge/" xmlns:xml="http://hoge/"></abv:xml>>;
 } # _element_xmlns_6
 
+sub _element_xmlns_7 : Test(1) {
+  my ($doc, $el) = create_el_from_html ('');
+  my $ab1 = $doc->create_element_ns ('http://hoge1/', [undef, 'bb']);
+  my $ab2 = $doc->create_element_ns ('http://hoge2/', [undef, 'bb']);
+  my $ab3 = $doc->create_element_ns (undef, [undef, 'bb']);
+  my $ab4 = $doc->create_element_ns ('http://hoge4/', [undef, 'bb']);
+  $el->append_child ($ab1);
+  $ab1->append_child ($ab2);
+  $ab2->append_child ($ab3);
+  $ab3->append_child ($ab4);
+  is ${Web::XML::Serializer->new->get_inner_html ($el)},
+      q<<bb xmlns="http://hoge1/"><bb xmlns="http://hoge2/"><bb xmlns=""><bb xmlns="http://hoge4/"></bb></bb></bb></bb>>;
+} # _element_xmlns_7
+
+sub _element_xmlns_8 : Test(1) {
+  my ($doc, $el) = create_el_from_html ('');
+  my $ab1 = $doc->create_element_ns ('http://hoge1/', [undef, 'bb']);
+  my $ab2 = $doc->create_element_ns ('http://hoge2/', [undef, 'bb']);
+  my $ab3 = $doc->create_element_ns (undef, [undef, 'bb']);
+  my $ab4 = $doc->create_element_ns ('http://hoge4/', [undef, 'bb']);
+  $ab4->set_attribute_ns ('http://www.w3.org/2000/xmlns/', [undef, 'xmlns'], '');
+  $el->append_child ($ab1);
+  $ab1->append_child ($ab2);
+  $ab2->append_child ($ab3);
+  $ab3->append_child ($ab4);
+  is ${Web::XML::Serializer->new->get_inner_html ($el)},
+      q<<bb xmlns="http://hoge1/"><bb xmlns="http://hoge2/"><bb xmlns=""><a0:bb xmlns:a0="http://hoge4/" xmlns=""></a0:bb></bb></bb></bb>>;
+} # _element_xmlns_8
+
 sub _attr_name_null : Test(1) {
   my ($doc, $el) = create_el_from_html ('<p>');
   my $p = $el->first_child;

@@ -102,7 +102,7 @@ sub parse_char_string_with_context ($$$$) {
     {
       my $prefixes = {};
       my $p = $context;
-      while ($p) {
+      while ($p and $p->node_type == 1) { # ELEMENT_NODE
         $prefixes->{$_->local_name} = 1 for grep {
           ($_->namespace_uri || '') eq Web::HTML::ParserData::XMLNS_NS;
         } @{$p->attributes or []};

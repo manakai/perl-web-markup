@@ -65,8 +65,7 @@ sub get_qname ($$$$$$$) {
         $qname eq 'xmlns') {
       # 3.
       #
-    } elsif ($_[6] and not defined $prefix and
-             (not defined $_[4] or not defined ${$_[4]})) {
+    } elsif ($_[6] and not defined $prefix and not defined $_[4]) {
       # 4.
 
       # 1.
@@ -96,18 +95,30 @@ sub get_qname ($$$$$$$) {
 
       # 3.
       $qname = $prefix . ':' . $qname;
-    } elsif (defined ($prefix = [grep {
+    } elsif (defined (my $prefix2 = [grep {
       defined $nsmap_hashref->{$_} and
       defined ${$nsmap_hashref->{$_}} and
       ${$nsmap_hashref->{$_}} eq $nsurl;
     } keys %$nsmap_hashref]->[-1])) {
       # 8.
-      $qname = $prefix . ':' . $qname;
-    } elsif ($_[6] and defined $_[4] and defined ${$_[4]} and ${$_[4]} eq $nsurl) {
+      $qname = $prefix2 . ':' . $qname;
+    } elsif ($_[6] and defined $_[4] and defined ${$_[4]} and
+             ${$_[4]} eq $nsurl) {
       # 9.
       # 
-    } else {
+    } elsif ($_[6] and not defined $prefix and not [grep {
+               ($_->namespace_uri || '') eq Web::HTML::ParserData::XMLNS_NS and
+               $_->local_name eq 'xmlns';
+             } @$attrs]->[0]) {
       # 10.
+
+      # 1.
+      $_[4] = \$nsurl;
+      
+      # 2.
+      $new_attr = ['xmlns', $nsurl];
+    } else {
+      # 11.
 
       # 1.
       my $n = 0;
@@ -262,6 +273,8 @@ sub get_inner_html ($$) {
       $value =~ s/>/&gt;/g;
       #$value =~ s/"/&quot;/g;
       $s .= $value;
+
+      # XXX Should we support Text->serializeAsCDATA [DOMPARSING]?
     } elsif ($nt == 8) { # Comment
       $s .= '<!--' . $child->data . '-->';
     } elsif ($nt == 10) { # DocumentType
