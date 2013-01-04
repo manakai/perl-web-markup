@@ -2,7 +2,7 @@
 
 perl-web-markup - A pure-perl HTML and XML processor
 
-=head MODULES
+=head1 MODULES
 
 =over 4
 
