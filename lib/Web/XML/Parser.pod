@@ -69,6 +69,16 @@ Get or set the error handler for the parser.  Any parse error, as well
 as warning and information, is reported to the handler.  See
 L<Web::Errors> for more information.
 
+=item $parser->throw ($code)
+
+Terminate the parser and run the specified code reference.  The code
+reference must throw an exception.
+
+If the error handler specified by the C<onerror> method throw an
+exception, it must not be directly thrown and this method must be used
+instead.  Otherwise resources used by the parser is not destroyed due
+to the unexpected termination.
+
 =back
 
 Parsed document structure is reflected to the C<Document> object
@@ -128,11 +138,11 @@ manakai DOM Extensions
 
 =head1 AUTHOR
 
-Wakaba <w@suika.fam.cx>.
+Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

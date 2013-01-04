@@ -88,6 +88,16 @@ L<Whatpm::Errors>
 <https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
 for more information.
 
+=item $parser->throw ($code)
+
+Terminate the parser and run the specified code reference.  The code
+reference must throw an exception.
+
+If the error handler specified by the C<onerror> method throw an
+exception, it must not be directly thrown and this method must be used
+instead.  Otherwise resources used by the parser is not destroyed due
+to the unexpected termination.
+
 =back
 
 Parsed document structure is reflected to the C<Document> object

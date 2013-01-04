@@ -359,8 +359,7 @@ sub parse_byte_string ($$$$) {
       }
       die $error;
     }
-    $self->_terminate_tree_constructor;
-    $self->_clear_refs;
+    $self->_on_terminate;
   } # PARSER
 
   return $doc;
@@ -408,8 +407,7 @@ sub parse_char_string ($$$) {
   $self->_initialize_tree_constructor;
   $self->{t} = $self->_get_next_token;
   $self->_construct_tree;
-  $self->_terminate_tree_constructor;
-  $self->_clear_refs;
+  $self->_on_terminate;
 
   return {};
 } # parse_char_string
@@ -540,9 +538,13 @@ sub parse_bytes_end {
     $self->_parse_bytes_start_parsing;
   }
 
-  $self->_terminate_tree_constructor;
-  $self->_clear_refs;
+  $self->_on_terminate;
 } # parse_bytes_end
+
+sub _on_terminate ($) {
+  $_[0]->_terminate_tree_constructor;
+  $_[0]->_clear_refs;
+} # _on_terminate
 
 ## ------ Insertion modes ------
 
@@ -616,7 +618,7 @@ sub _initialize_tree_constructor ($) {
 
 sub _terminate_tree_constructor ($) {
   my $self = shift;
-  $self->{document}->strict_error_checking (1);
+  $self->{document}->strict_error_checking (1) if $self->{document};
   delete $self->{active_formatting_elements};
   delete $self->{insert};
   delete $self->{open_tables};
@@ -5521,8 +5523,7 @@ sub parse_char_string_with_context ($$$$) {
   $self->{t} = $self->_get_next_token;
   $self->_construct_tree;
 
-  $self->_terminate_tree_constructor;
-  $self->_clear_refs;
+  $self->_on_terminate;
 
   # 7.
   return defined $context ? $root->child_nodes : $doc->child_nodes;

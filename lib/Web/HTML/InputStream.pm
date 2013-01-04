@@ -28,6 +28,15 @@ sub new ($) {
 
 ## ------ Parser common operations ------
 
+sub throw ($$) {
+  $_[0]->_on_terminate;
+  $_[1]->();
+} # throw
+
+sub _on_terminate ($) {
+  $_[0]->_clear_refs;
+} # _on_terminate
+
 sub _clear_refs ($) {
   my $self = $_[0];
   ## Remove self references.
@@ -43,6 +52,7 @@ sub _clear_refs ($) {
   delete $self->{byte_buffer};
   delete $self->{inner_html_node};
   delete $self->{inner_html_tag_name};
+  delete $self->{onerror};
 } # _clear_refs
 
 ## ------ Error handling ------
@@ -634,7 +644,7 @@ sub _read_chars ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

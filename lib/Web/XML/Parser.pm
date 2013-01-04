@@ -48,8 +48,7 @@ sub parse_char_string ($$$) {
   $self->_initialize_tree_constructor;
   $self->{t} = $self->_get_next_token;
   $self->_construct_tree;
-  $self->_terminate_tree_constructor;
-  $self->_clear_refs;
+  $self->_on_terminate;
 
   return {};
 } # parse_char_string
@@ -98,7 +97,10 @@ sub parse_char_string_with_context ($$$$) {
     # 2. Fake start tag
     $root = $doc->create_element_ns
         ($context->namespace_uri, [$context->prefix, $context->local_name]);
-    my $nsmap = {}; # XXX
+    my $nsmap = {
+      xml => q<http://www.w3.org/XML/1998/namespace>,
+      xmlns => q<http://www.w3.org/2000/xmlns/>,
+    }; # XXX
     $nsmap->{''} = $context->lookup_namespace_uri (''); # XXX
     push @{$self->{open_elements}},
         [$root, $self->{inner_html_tag_name}, $nsmap];
@@ -114,12 +116,16 @@ sub parse_char_string_with_context ($$$$) {
   # XXX and well-formedness errors not detected by this parser
 
   $self->_construct_tree;
-  $self->_terminate_tree_constructor;
-  $self->_clear_refs;
+  $self->_on_terminate;
 
   # 7.
   return defined $context ? $root->child_nodes : $doc->child_nodes;
 } # parse_char_string_with_context
+
+sub _on_terminate ($) {
+  $_[0]->_terminate_tree_constructor;
+  $_[0]->_clear_refs;
+} # _on_terminate
 
 ## ------ Tree construction ------
 
@@ -151,14 +157,15 @@ sub _initialize_tree_constructor ($) {
 
 sub _terminate_tree_constructor ($) {
   my $self = shift;
-  $self->{document}->strict_error_checking (1);
-  $self->{document}->dom_config
-      ->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'}
-      = 1;
-  $self->{document}->dom_config->{manakai_allow_doctype_children} = 0
-      if exists $self->{document}->dom_config
-          ->{manakai_allow_doctype_children};
-  ## (Turn mutation events on)
+  if (my $doc = $self->{document}) {
+    $doc->strict_error_checking (1);
+    $doc->dom_config
+        ->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'}
+        = 1;
+    $doc->dom_config->{manakai_allow_doctype_children} = 0
+        if exists $doc->dom_config->{manakai_allow_doctype_children};
+    ## (Turn mutation events on)
+  }
 } # _terminate_tree_constructor
 
 ## Tree construction stage
