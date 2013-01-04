@@ -1,0 +1,77 @@
+=head1 NAME
+
+perl-web-markup - A pure-perl HTML and XML processor
+
+=head MODULES
+
+=over 4
+
+=item L<Web::HTML::Parser>
+
+An HTML parser.
+
+=item L<Web::HTML::Serializer>
+
+An HTML serializer.
+
+=item L<Web::XML::Parser>
+
+An XML parser.
+
+=item L<Web::XML::Serializer>
+
+An XML serializer.
+
+=back
+
+=head1 DEPENDENCY
+
+These modules require Perl 5.8 or later.  The only required module is
+L<Encode>.
+
+In addition, a DOM implementation is required as input (and output) to
+these modules, although there is no direct dependency.  The DOM
+implementation must support a subset of features defined in DOM
+Standard, DOM Parsing and Serialization Standard, DOM3 Core, DOM
+Document Type Definitions, DOM Perl Binding, and manakai's DOM
+Extensions, to the extent implemented by the "NanoDOM" module
+(C<t_deps/lib/NanoDOM.pm>).  An example of such a DOM implementation
+is contained in the perl-web-dom package
+<https://github.com/manakai/perl-web-dom>.
+
+=head1 SEE ALSO
+
+The perl-web-dom package <https://github.com/manakai/perl-web-dom>
+implements DOM interfaces, which contains standard ways to parse or
+serialize HTML/XML documents.  They are implemented using the
+perl-web-markup package.
+
+=head1 HISTORY
+
+Most of these modules are originally developed under the name of
+"Whatpm" in 2007-2008
+<http://suika.fam.cx/www/markup/html/whatpm/readme> and then merged
+into the manakai-core package
+<http://suika.fam.cx/www/manakai-core/doc/web/>.  Those modules are
+split again into this separate package in 2013.
+
+=head1 DEVELOPMENT
+
+The latest version of these modules are available at the GitHub
+repository: <https://github.com/manakai/perl-web-markup>.
+
+Test results can be reviewed at Travis CI
+<https://travis-ci.org/manakai/perl-web-markup>.
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
