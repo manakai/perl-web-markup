@@ -198,7 +198,7 @@ sub get_inner_html ($$) {
           @$nsmap = grep { $_->[0] ne $ln } @$nsmap;
 
           # 2.-3.
-          push @$nsmap, [$ln, $value eq '' ? \undef : $value];
+          push @$nsmap, [$ln, $value eq '' ? \undef : \$value];
         }
       } # $attr
 
