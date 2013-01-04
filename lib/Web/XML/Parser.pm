@@ -4,6 +4,7 @@ use warnings;
 no warnings 'utf8';
 our $VERSION = '3.0';
 use Web::HTML::Defs;
+use Web::HTML::ParserData;
 use Web::HTML::InputStream;
 use Web::HTML::Tokenizer;
 push our @ISA, qw(Web::HTML::Tokenizer);
@@ -97,11 +98,24 @@ sub parse_char_string_with_context ($$$$) {
     # 2. Fake start tag
     $root = $doc->create_element_ns
         ($context->namespace_uri, [$context->prefix, $context->local_name]);
-    my $nsmap = {
-      xml => q<http://www.w3.org/XML/1998/namespace>,
-      xmlns => q<http://www.w3.org/2000/xmlns/>,
-    }; # XXX
-    $nsmap->{''} = $context->lookup_namespace_uri (''); # XXX
+    my $nsmap = {};
+    {
+      my $prefixes = {};
+      my $p = $context;
+      while ($p) {
+        $prefixes->{$_->local_name} = 1 for grep {
+          ($_->namespace_uri || '') eq Web::HTML::ParserData::XMLNS_NS;
+        } @{$p->attributes or []};
+        my $prefix = $p->prefix;
+        $prefixes->{$prefix} = 1 if defined $prefix;
+        $p = $p->parent_node;
+      }
+      for ('', keys %$prefixes) {
+        $nsmap->{$_} = $context->lookup_namespace_uri ($_);
+      }
+      $nsmap->{xml} = Web::HTML::ParserData::XML_NS;
+      $nsmap->{xmlns} = Web::HTML::ParserData::XMLNS_NS;
+    }
     push @{$self->{open_elements}},
         [$root, $self->{inner_html_tag_name}, $nsmap];
     $doc->append_child ($root);

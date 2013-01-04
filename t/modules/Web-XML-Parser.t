@@ -97,13 +97,109 @@ sub _parse_char_string_with_context : Test(8) {
   is $children->[2]->text_content, '';
 } # _parse_char_string_with_context
 
+sub _parse_char_string_with_context_ns1 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el = $doc->create_element_ns ('http://foo/', [undef, 'nnn']);
+  my $children = $parser->parse_char_string_with_context
+      ('<hoge/>', $el, NanoDOM::Document->new);
+  is $children->[0]->namespace_uri, 'http://foo/';
+} # _parse_char_string_with_context_ns1
+
+sub _parse_char_string_with_context_ns2 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el = $doc->create_element_ns ('http://foo/', ['ho', 'nnn']);
+  my $children = $parser->parse_char_string_with_context
+      ('<ho:hoge/>', $el, NanoDOM::Document->new);
+  is $children->[0]->namespace_uri, 'http://foo/';
+} # _parse_char_string_with_context_ns2
+
+sub _parse_char_string_with_context_ns3 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el1 = $doc->create_element_ns ('http://foo/', ['ho', 'nnn']);
+  my $el2 = $doc->create_element_ns ('http://bar/', ['ho', 'nnn']);
+  $el1->append_child ($el2);
+  my $children = $parser->parse_char_string_with_context
+      ('<ho:hoge/>', $el2, NanoDOM::Document->new);
+  is $children->[0]->namespace_uri, 'http://bar/';
+} # _parse_char_string_with_context_ns3
+
+sub _parse_char_string_with_context_ns4 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el1 = $doc->create_element_ns ('http://foo/', ['ho', 'nnn']);
+  $el1->set_attribute_ns ('http://www.w3.org/2000/xmlns/', ['xmlns', 'a5'],
+                          'http://ns1/');
+  my $el2 = $doc->create_element_ns ('http://bar/', ['ho', 'nnn']);
+  $el1->append_child ($el2);
+  my $children = $parser->parse_char_string_with_context
+      ('<a5:hoge/>', $el2, NanoDOM::Document->new);
+  is $children->[0]->namespace_uri, 'http://ns1/';
+} # _parse_char_string_with_context_ns4
+
+sub _parse_char_string_with_context_ns5 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el1 = $doc->create_element_ns ('http://foo/', ['ho', 'nnn']);
+  $el1->set_attribute_ns ('http://www.w3.org/2000/xmlns/', [undef, 'xmlns'],
+                          'http://ns1/');
+  my $el2 = $doc->create_element_ns ('http://bar/', ['ho', 'nnn']);
+  $el1->append_child ($el2);
+  my $children = $parser->parse_char_string_with_context
+      ('<hoge/>', $el2, NanoDOM::Document->new);
+  is $children->[0]->namespace_uri, 'http://ns1/';
+} # _parse_char_string_with_context_ns5
+
+sub _parse_char_string_with_context_ns6 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el1 = $doc->create_element_ns ('http://foo/', ['ho', 'nnn']);
+  my $el2 = $doc->create_element_ns ('http://bar/', [undef, 'nnn']);
+  $el2->set_attribute_ns ('http://www.w3.org/2000/xmlns/', ['xmlns', 'ho'],
+                          '');
+  $el1->append_child ($el2);
+  my $children = $parser->parse_char_string_with_context
+      ('<ho:hoge/>', $el2, NanoDOM::Document->new);
+  is $children->[0]->namespace_uri, undef;
+} # _parse_char_string_with_context_ns6
+
+sub _parse_char_string_with_context_ns7 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el1 = $doc->create_element_ns ('http://foo/', ['ho', 'nnn']);
+  my $el2 = $doc->create_element_ns ('http://bar/', [undef, 'nnn']);
+  $el2->set_attribute_ns ('http://www.w3.org/2000/xmlns/', ['xmlns', 'xml'],
+                          'http://foo/');
+  $el1->append_child ($el2);
+  my $children = $parser->parse_char_string_with_context
+      ('<hoge xml:lang="en"/>', $el2, NanoDOM::Document->new);
+  is $children->[0]->attributes->[0]->namespace_uri,
+      'http://www.w3.org/XML/1998/namespace';
+} # _parse_char_string_with_context_ns7
+
+sub _parse_char_string_with_context_ns8 : Test(1) {
+  my $parser = Web::XML::Parser->new;
+  my $doc = new NanoDOM::Document;
+  my $el1 = $doc->create_element_ns ('http://foo/', ['ho', 'nnn']);
+  my $el2 = $doc->create_element_ns ('http://bar/', [undef, 'nnn']);
+  $el2->set_attribute_ns ('http://www.w3.org/2000/xmlns/', ['xmlns', 'abc'],
+                          'http://foo/');
+  $el1->append_child ($el2);
+  my $children = $parser->parse_char_string_with_context
+      ('<hoge abc:lang="en"/>', $el2, NanoDOM::Document->new);
+  is $children->[0]->attributes->[0]->namespace_uri,
+      'http://foo/';
+} # _parse_char_string_with_context_ns8
+
 __PACKAGE__->runtests;
 
 1;
 
 =head1 LICENSE
 
-Copyright 2009-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2009-2013 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
