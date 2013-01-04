@@ -1,0 +1,122 @@
+=head1 NAME
+
+Web::XML::Serializer - XML DOM Serializer
+
+=head1 SYNOPSIS
+
+  require Web::XML::Serializer;
+  
+  ## Serialize an XML document
+  my $xmlref = Web::XML::Serializer->get_inner_html ($doc);
+  
+  ## Serialize an XML element
+  my $xmlref = Web::XML::Serializer->get_inner_html ($el);
+  
+  ## Serialize an XML document fragment
+  my $xmlref = Web::XML::Serializer->get_inner_html ($df);
+
+=head1 DESCRIPTION
+
+The C<Web::XML::Serializer> module provides a function that implements
+the fragment serialization algorithm of HTML5.  It can be used to
+serialize an XML C<Document>, C<Element>, or C<DocumentFragment> node
+into an XML document or fragment.
+
+Note that the algorithm cannot be used to serialize an arbitrary DOM
+tree; an attempt to serialize a DOM that cannot be represented in a
+static XML document (fragment) will result in an ill-formed document
+or in a document representing different DOM tree.
+
+For example, the DOM tree:
+
+  +- Element |p|
+       +- Comment |ho --><!-- ge|
+
+... cannot be represented in XML serialization.  The serialization
+algorithm will generate a well-formed XML fragment:
+
+  <p><!--ho --><!-- ge--></p>
+
+... but it represents another DOM tree:
+
+  +- Element |p|
+       +- Comment |ho |
+       +- Comment | ge|
+
+... without raising any error or warning.  This is a limitation of the
+XML serialization format.
+
+B<NOTE>: Usually you don't have to call this module directly, since
+L<Web::DOM::Document> and L<Web::DOM::Element> modules implement the
+C<inner_html> attribute for DOM C<Document> and C<Element> nodes.
+
+=head1 METHODS
+
+=over 4
+
+=item $serializer = Web::XML::Serializer->new
+
+Return a new instance of the serializer.
+
+=item $serializer->onerror ($onerror)
+
+Set the error handler.  It must be a reference to C<CODE>, which will
+be invoked when an error occurs.  If the algorithm is required to
+raise an C<InvalidStateError> exception, i.e. if the algorithm is
+faced to a C<Node> whose type is different from any of ones supported
+by the algorithm, the C<CODE> is invoked with that C<Node> as an
+argument.  It is expected for the C<CODE> to raise an exception.  If
+no exception is raised, the C<Node> is ignored for the purpose of the
+algorithm.
+
+In addition, future version of the module might invoke the code
+reference when a C<SyntaxError> exception should be thrown according
+to the HTML standard.
+
+If no error handler is explicitly specified, an empty C<CODE> is used
+as default (i.e. do nothing).
+
+=item SCALARREF = $serializer->get_inner_html ($node)
+
+Serialize the specified node using the XML fragment serialization
+algorithm.  The result is returned as a reference to the character
+string.
+
+=back
+
+=head1 SPECIFICATIONS
+
+=over 4
+
+=item HTML
+
+HTML Standard
+<http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>.
+
+=item DOMPARSING
+
+DOM Parsing and Serialization Standard
+<http://domparsing.spec.whatwg.org/#concept-serialize-xml>.
+
+=back
+
+=head1 SEE ALSO
+
+L<Web::HTML::Serializer>.
+
+L<Web::DOM::RootNode>.
+
+Namespace fixup <http://suika.fam.cx/www/markup/xml/nsfixup>.
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

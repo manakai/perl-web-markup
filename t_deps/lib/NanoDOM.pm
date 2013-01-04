@@ -485,14 +485,8 @@ sub inner_html ($;$) {
       return unless defined wantarray;
     }
 
-    require XMLSerializer;
-    my $r = '';
-    for my $node ($self->child_nodes->to_list) {
-      $r .= ${ XMLSerializer->get_outer_xml ($node, sub {
-        # INVALID_STATE_ERR
-      }) };
-    }
-    return $r;
+    require Web::XML::Serializer;
+    return ${ Web::XML::Serializer->get_inner_html ($self) };
   }
 } # inner_html
 

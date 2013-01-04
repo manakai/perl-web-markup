@@ -1,6 +1,7 @@
 package Web::HTML::Serializer;
 use strict;
 use warnings;
+no warnings 'utf8';
 our $VERSION = '1.9';
 
 sub new ($) {
@@ -43,8 +44,9 @@ sub get_inner_html ($$) {
   my $s = '';
   
   ## Step 2
-  my $node_in_cdata = _in_cdata ($node);
-  my @node = map { [$_, $node_in_cdata] } $node->child_nodes->to_list;
+  my $node_in_cdata = ref $node eq 'ARRAY' ? 0 : _in_cdata ($node);
+  my @node = map { [$_, $node_in_cdata] }
+      ref $node eq 'ARRAY' ? @$node : $node->child_nodes->to_list;
   C: while (@node) {
     ## Step 2.1
     my $c = shift @node;
