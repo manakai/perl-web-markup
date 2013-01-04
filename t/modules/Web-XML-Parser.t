@@ -35,7 +35,8 @@ sub _parse_char_string : Test(7) {
   my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
   $parser->parse_char_string ($s => $doc);
-  eq_or_diff $doc->inner_html, qq{<foo>\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
+  eq_or_diff $doc->inner_html,
+      qq{<foo xmlns="">\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
   is $doc->input_encoding, undef;
   is $doc->xml_version, '1.0';
   is $doc->xml_encoding, undef;
@@ -54,7 +55,7 @@ sub _parse_char_string_old_content : Test(3) {
   
   $parser->parse_char_string ($s => $doc);
   eq_or_diff $doc->inner_html,
-      qq{<foo>\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
+      qq{<foo xmlns="">\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
   is scalar @{$doc->child_nodes}, 2;
 } # _parse_char_string_old_content
 
@@ -70,7 +71,7 @@ sub _parse_char_string_onerror : Test(3) {
   });
   $parser->parse_char_string ($s => $doc);
   eq_or_diff $doc->inner_html,
-      qq{<foo>\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
+      qq{<foo xmlns="">\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
   is scalar @{$doc->child_nodes}, 2;
   delete $error[0]->{token};
   eq_or_diff \@error, [{type => 'unquoted attr value',
@@ -89,7 +90,7 @@ sub _parse_char_string_with_context : Test(8) {
   is scalar @$children, 3;
   is $children->[0]->namespace_uri, undef;
   is $children->[0]->manakai_tag_name, 'hoge';
-  is $children->[0]->inner_html, 'aaa<!-- bb -->bb<foo></foo>cc';
+  is $children->[0]->inner_html, 'aaa<!-- bb -->bb<foo xmlns=""></foo>cc';
   is $children->[1]->data, 'aa';
   is $children->[2]->namespace_uri, undef;
   is $children->[2]->manakai_tag_name, 'bb';

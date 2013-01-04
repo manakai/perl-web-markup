@@ -819,18 +819,33 @@ sub inner_html ($;$) {
   my $self = $_[0];
 
   if (@_ > 1) {
-    require Web::HTML::Parser;
-    my $children = Web::HTML::Parser->new->parse_char_string_with_context
-        ($_[1], $self, NanoDOM::Document->new);
-    $self->text_content ('');
-    for ($children->to_list) {
-      $self->append_child ($_);
+    if ($self->{owner_document}->{manakai_is_html}) {
+      require Web::HTML::Parser;
+      my $children = Web::HTML::Parser->new->parse_char_string_with_context
+          ($_[1], $self, NanoDOM::Document->new);
+      $self->text_content ('');
+      for ($children->to_list) {
+        $self->append_child ($_);
+      }
+    } else {
+      require Web::XML::Parser;
+      my $children = Web::XML::Parser->new->parse_char_string_with_context
+          ($_[1], $self, NanoDOM::Document->new);
+      $self->text_content ('');
+      for ($children->to_list) {
+        $self->append_child ($_);
+      }
     }
     return unless defined wantarray;
   }
   
-  require Web::HTML::Serializer;
-  return ${ Web::HTML::Serializer->get_inner_html ($self) };
+  if ($self->{owner_document}->{manakai_is_html}) {
+    require Web::HTML::Serializer;
+    return ${ Web::HTML::Serializer->get_inner_html ($self) };
+  } else {
+    require Web::XML::Serializer;
+    return ${ Web::XML::Serializer->get_inner_html ($self) };
+  }
 } # inner_html
 
 package NanoDOM::Attr;
