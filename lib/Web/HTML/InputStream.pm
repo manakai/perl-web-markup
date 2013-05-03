@@ -411,15 +411,15 @@ sub _encoding_sniffing ($;%) {
       }
 
       ## Step 7. UniversalCharDet
-# XXX
-#      require Web::Charset::UniversalCharDet;
-#      my $name = _get_encoding_name
-#          +Web::Charset::UniversalCharDet->detect_byte_string ($$head);
-#      if ($name) {
-#        $self->{input_encoding} = $name;
-#        $self->{confident} = 0; # tentative
-#        return;
-#      }
+      require Web::Encoding::UnivCharDet;
+      my $det = Web::Encoding::UnivCharDet->new;
+      # XXX locale-dependent configuration
+      my $name = _get_encoding_name $det->detect_byte_string ($$head);
+      if ($name) {
+        $self->{input_encoding} = $name;
+        $self->{confident} = 0; # tentative
+        return;
+      }
     } # $head
   }
 

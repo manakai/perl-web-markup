@@ -26,8 +26,10 @@ An XML serializer.
 
 =head1 DEPENDENCY
 
-These modules require Perl 5.8 or later.  The only required module is
-L<Encode>.
+These modules require Perl 5.8 or later.  They requires L<Encode>,
+which is included in the Perl distribution, and modules from the
+<https://github.com/manakai/perl-web-encodings> repository, which is a
+submodule of the Git repository.
 
 In addition, a DOM implementation is required as input (and output) to
 these modules, although there is no direct dependency.  The DOM

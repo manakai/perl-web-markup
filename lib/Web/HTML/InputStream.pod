@@ -9,6 +9,11 @@ stream for HTML/XML parsers (tokenizers), including the coordination
 with character encoding layer.  This module is not intended to be used
 standalone.
 
+=head1 DEPENDENCY
+
+The module requires L<Web::Encoding::UnivCharDet> in the
+<https://github.com/manakai/perl-web-encodings> repository.
+
 =head1 SEE ALSO
 
 L<Web::HTML::Parser>, L<Web::XML::Parser>.
@@ -26,14 +31,17 @@ HTML Living Standard - The input byte stream
 
 =item [ENCODING]
 
-Encoding Standard
-<http://dvcs.w3.org/hg/encoding/raw-file/tip/Overview.html>.
+Encoding Standard <http://encoding.spec.whatwg.org/>.
 
 =back
 
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
