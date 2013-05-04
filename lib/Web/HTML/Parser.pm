@@ -321,8 +321,8 @@ sub parse_byte_string ($$$$) {
         (transport_encoding_name => $_[1],
          embedded_encoding_name => $embedded_encoding_name,
          read_head => sub {
-           return $inputref;
-         });
+           return \substr $$inputref, 0, 1024;
+         }); # $self->{confident} is set within this method.
     $self->{document}->input_encoding ($self->{input_encoding});
 
     $self->{line_prev} = $self->{line} = 1;
@@ -387,7 +387,7 @@ sub parse_char_string ($$$) {
   }
 
   ## Confidence: irrelevant.
-  $self->{confident} = 1 unless exists $self->{confident};
+  $self->{confident} = 1;
 
   $self->{line_prev} = $self->{line} = 1;
   $self->{column_prev} = -1;
@@ -458,8 +458,8 @@ sub _parse_bytes_start_parsing ($;%) {
        transport_encoding_name => $args{transport_encoding_name},
        no_body_data_yet => $args{no_body_data_yet},
        read_head => sub {
-         return \($self->{byte_buffer});
-     });
+         return \(substr $self->{byte_buffer}, 0, 1024);
+     }); # $self->{confident} is set within this method.
   if (not $self->{input_encoding} and $args{no_body_data_yet}) {
     delete $self->{parse_bytes_started};
     return;

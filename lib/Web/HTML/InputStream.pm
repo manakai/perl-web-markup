@@ -380,8 +380,12 @@ sub _encoding_sniffing ($;%) {
 
   ## Step 3. Sniffing
   if ($args{read_head}) {
+    ## Wait 500ms or 1024 bytes, whichever came first (See
+    ## Web::HTML::Parser for how and when to use this callback).
     my $head = $args{read_head}->();
+
     if (defined $head) {
+      # XXX BOM prefers to charset=""
       ## Step 4. BOM
       if ($$head =~ /^\xFE\xFF/) {
         $self->{input_encoding} = 'utf-16be';
@@ -398,7 +402,16 @@ sub _encoding_sniffing ($;%) {
       }
 
       ## Step 5. <meta charset>
-      # XXX
+      {
+        my $name = $self->_prescan_byte_stream ($$head);
+        if ($name) {
+          $self->{input_encoding} = $name;
+          $self->{confident} = 0; # tentative
+          return;
+        }
+      }
+
+      # XXX parent browsing context
 
       ## Step 6. History
       if ($args{get_history_encoding_name}) {
@@ -440,6 +453,131 @@ sub _encoding_sniffing ($;%) {
 
   # XXX expose sniffing info for validator
 } # _encoding_sniffing
+
+# prescan a byte stream to determine its encoding
+# <http://www.whatwg.org/specs/web-apps/current-work/#prescan-a-byte-stream-to-determine-its-encoding>
+sub _prescan_byte_stream ($$) {
+  # 1.
+  (pos $_[1]) = 0;
+
+  # 2.
+  LOOP: {
+    $_[1] =~ /\G<!--+>/gc;
+    $_[1] =~ /\G<!--.*?-->/gcs;
+    if ($_[1] =~ /\G<[Mm][Ee][Tt][Aa](?=[\x09\x0A\x0C\x0D\x20\x2F])/gc) {
+      # 1.
+      #
+
+      # 2.-5.
+      my $attr_list = {};
+      my $got_pragma = 0;
+      my $need_pragma = undef;
+      my $charset;
+
+      # 6.
+      ATTRS: {
+        my $attr = $_[0]->_get_attr ($_[1]) or last ATTRS;
+
+        # 7.
+        redo ATTRS if $attr_list->{$attr->{name}};
+        
+        # 8.
+        $attr_list->{$attr->{name}} = $attr;
+
+        # 9.
+        if ($attr->{name} eq 'http-equiv') {
+          $got_pragma = 1 if $attr->{value} eq 'content-type';
+        } elsif ($attr->{name} eq 'content') {
+          # algorithm for extracting a character encoding from a
+          # |meta| element
+          # <http://www.whatwg.org/specs/web-apps/current-work/#algorithm-for-extracting-a-character-encoding-from-a-meta-element>
+          if (not defined $charset and
+              $attr->{value} =~ /[Cc][Hh][Aa][Rr][Ss][Ee][Tt]
+                                 [\x09\x0A\x0C\x0D\x20]*=
+                                 [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
+                                 ([^"'\x09\x0A\x0C\x0D\x20]
+                                  [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
+            $charset = _get_encoding_name
+                (defined $1 ? $1 : defined $2 ? $2 : $3);
+            $need_pragma = 1;
+          }
+        } elsif ($attr->{name} eq 'charset') {
+          $charset = _get_encoding_name $attr->{value};
+          $need_pragma = 0;
+        }
+
+        # 10.
+        return undef if pos $_[1] >= length $_[1];
+        redo ATTRS;
+      } # ATTRS
+
+      # 11. Processing, 12.
+      if (not defined $need_pragma or
+          ($need_pragma and not $got_pragma)) {
+        #
+      } elsif (defined $charset) {
+        # 13.
+        $charset = 'utf-8' if $charset eq 'utf-16' or $charset eq 'utf-16be';
+
+        # 14.-15.
+        return $charset if defined $charset;
+      }
+    } elsif ($_[1] =~ m{\G</?[A-Za-z][^\x09\x0A\x0C\x0D\x20>]*}gc) {
+      {
+        $_[0]->_get_attr ($_[1]) and redo;
+      }
+    } elsif ($_[1] =~ m{\G<[!/?][^>]*}gc) {
+      #
+    }
+
+    # 3. Next byte
+    $_[1] =~ /\G[^<]+/gc;
+    return undef if pos $_[1] >= length $_[1];
+    redo LOOP;
+  } # LOOP
+} # _prescan_byte_stream
+
+# get an attribute
+# <http://www.whatwg.org/specs/web-apps/current-work/#concept-get-attributes-when-sniffing>
+sub _get_attr ($$) {
+  # 1.
+  $_[1] =~ /\G[\x09\x0A\x0C\x0D\x20\x2F]+/gc;
+
+  # 2.
+  return undef if $_[1] =~ /\G(?=>)/gc;
+  
+  # 3.
+  my $attr = {name => '', value => ''};
+
+  # 4.-5.
+  if ($_[1] =~ m{\G([^\x09\x0A\x0C\x0D\x20/>][^\x09\x0A\x0C\x0D\x20/>=]*)}gc) {
+    $attr->{name} .= $1;
+    $attr->{name} =~ tr/A-Z/a-z/;
+  }
+  return $attr if $_[1] =~ m{\G(?=[/>])}gc;
+
+  # 6.
+  $_[1] =~ m{\G[\x09\x0A\x0C\x0D\x20]+}gc;
+
+  # 7.-8.
+  return $attr unless $_[1] =~ m{\G=}gc;
+
+  # 9.
+  $_[1] =~ m{\G[\x09\x0A\x0C\x0D\x20]+}gc;
+
+  # 10.-12.
+  if ($_[1] =~ m{\G\x22([^\x22]*)\x22}gc) {
+    $attr->{value} .= $1;
+    $attr->{value} =~ tr/A-Z/a-z/;
+  } elsif ($_[1] =~ m{\G\x27([^\x27]*)\x27}gc) {
+    $attr->{value} .= $1;
+    $attr->{value} =~ tr/A-Z/a-z/;
+  } elsif ($_[1] =~ m{\G([^\x09\x0A\x0C\x0D\x20>]+)}gc) {
+    $attr->{value} .= $1;
+    $attr->{value} =~ tr/A-Z/a-z/;
+  }
+  return $attr;
+} # _get_attr
 
 sub _change_encoding {
   my ($self, $name, $token) = @_;

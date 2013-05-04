@@ -27,7 +27,7 @@ sub parse_char_string ($$$) {
   }
 
   ## Confidence: irrelevant.
-  $self->{confident} = 1 unless exists $self->{confident};
+  $self->{confident} = 1;
 
   $self->{line_prev} = $self->{line} = 1;
   $self->{column_prev} = -1;
@@ -68,7 +68,7 @@ sub parse_char_string_with_context ($$$$) {
   $self->{document} = $doc;
   
   ## Confidence: irrelevant.
-  $self->{confident} = 1 unless exists $self->{confident};
+  $self->{confident} = 1;
 
   $self->{line_prev} = $self->{line} = 1;
   $self->{column_prev} = -1;
