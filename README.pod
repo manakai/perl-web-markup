@@ -22,6 +22,10 @@ An XML parser.
 
 An XML serializer.
 
+=item L<Web::RDF::XML::Parser>
+
+An RDF/XML implementation.
+
 =back
 
 =head1 DEPENDENCY
@@ -29,7 +33,8 @@ An XML serializer.
 These modules require Perl 5.8 or later.  They requires L<Encode>,
 which is included in the Perl distribution, and modules from the
 <https://github.com/manakai/perl-web-encodings> repository, which is a
-submodule of the Git repository.
+submodule of the Git repository.  The L<Web::RDF::XML::Parser> module
+has more submodule dependency (see its documentation for details).
 
 In addition, a DOM implementation is required as input (and output) to
 these modules, although there is no direct dependency.  The DOM
@@ -52,10 +57,10 @@ perl-web-markup package.
 
 Most of these modules are originally developed under the name of
 "Whatpm" in 2007-2008
-<http://suika.fam.cx/www/markup/html/whatpm/readme> and then merged
-into the manakai-core package
-<http://suika.fam.cx/www/manakai-core/doc/web/>.  Those modules are
-split again into this separate package in 2013.
+<http://suika.suikawiki.org/www/markup/html/whatpm/readme> and then
+merged into the manakai-core package
+<http://suika.suikawiki.org/www/manakai-core/doc/web/>.  Those modules
+are split again into this separate package in 2013.
 
 =head1 DEVELOPMENT
 

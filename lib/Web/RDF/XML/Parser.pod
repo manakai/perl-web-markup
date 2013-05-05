@@ -1,0 +1,115 @@
+=head1 NAME
+
+Web::RDF::XML::Parser - An RDF/XML parser
+
+=head1 SYNOPSIS
+
+  use Web::RDF::XML::Parser;
+  $rdf = Web::RDF::XML::Parser->new;
+  $rdf->ontriple (sub {
+    push @result, {@_};
+  });
+  $rdf->convert_document ($doc);
+
+=head1 DESCRIPTION
+
+The C<Web::RDF::XML::Parser> module is an implementation of RDF/XML.
+With the module, the RDF triples embedded in the RDF/XML document can
+be extracted.
+
+=head1 METHODS
+
+Following methods are available:
+
+=over 4
+
+=item $rdf = Web::RDF::XML::Parser->new
+
+Create a new instance of RDF/XML parser.
+
+=item $rdf->ontriple ($code)
+
+=item $code = $rdf->ontriple
+
+Get or set the callback function which is invoked for each triple
+extracted from the document.
+
+The callback is invoked with following name/value pairs as arguments:
+C<subject>, C<predicate>, C<object>, C<id>, and C<node>.  First three
+values represent node (or literal) in the triple.  They are hash
+references, containing one or more of followings: C<uri> (URL for the
+node), C<bnodeid> (graph-local ID for the bnode), C<value> (literal
+value), C<language> (language tag), and C<datatype> (data type URL).
+Optional C<id> value represents the ID of the triple.  The node from
+which the triple is extracted is given as C<node>.  The callback is
+not expected to throw any exception.
+
+=item $code = $rdf->onerror
+
+=item $rdf->onerror ($code)
+
+Get or set the error handler for the parser. Any parse error, as well
+as warning and information, is reported to the handler. See
+L<Whatpm::Errors>
+<https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
+for more information.
+
+=item $rdf->convert_document ($doc)
+
+Extract the triples from a document.  The argument must be a DOM
+C<Document> (e.g. a L<Web::DOM::Document> object).  Extracted triples
+are reported through the C<ontriple> callback.
+
+=item $rdf->convert_rdf_element ($doc)
+
+Extract the triples from an element.  The argument must be a DOM
+C<element> containing the triples, e.g. an C<rdf:RDF> element.
+Extracted triples are reported through the C<ontriple> callback.
+
+=back
+
+=head1 DEPENDENCY
+
+Perl 5.8 or later is required.
+
+This module requires L<Char::Class::XML> from
+<https://github.com/wakaba/perl-charclass> and
+L<Web::URL::Canonicalize> from
+<https://github.com/manakai/perl-web-url>.
+
+In addition, it expects DOM objects (e.g. L<Web::DOM::Document> and
+L<Web::DOM::Element> from <https://github.com/manakai/perl-web-dom>)
+as input, although there is no direct dependency.
+
+=head1 SPECIFICATION
+
+=over 4
+
+=item RDFXML
+
+RDF/XML Syntax Specification (Revised), W3C,
+<http://www.w3.org/TR/REC-rdf-syntax/>.
+
+=back
+
+=head1 TODO
+
+The RDF/XML specification does not fully define error handling rule.
+This implementation is trying to copy what W3C RDF Validator does,
+although the attempt is far from complete.
+
+Need to provide hooks for validation of e.g. langauge tags, URLs, and
+non-RDF contents.
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
