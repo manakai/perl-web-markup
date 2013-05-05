@@ -348,6 +348,9 @@ sub _encoding_sniffing ($;%) {
   ## <http://www.whatwg.org/specs/web-apps/current-work/#change-the-encoding>
   ## Step 5. Encoding from <meta charset>
   if ($args{embedded_encoding_name}) {
+    ## $args{embedded_encoding_name}, if specified, must be a
+    ## canonicalized encoding name, provided by the "change the
+    ## encoding" algorithm.
     my $name = _get_encoding_name $args{embedded_encoding_name};
     if ($name) {
       $self->{input_encoding} = $name;
@@ -358,6 +361,8 @@ sub _encoding_sniffing ($;%) {
 
   ## Step 1. User-specified encoding
   if ($args{user_encoding_name}) {
+    ## $args{user_encoding_name}, if specified, must be a
+    ## canonicalized encoding name from the Encoding Standard.
     my $name = _get_encoding_name $args{user_encoding_name};
     if ($name) {
       $self->{input_encoding} = $name;
@@ -366,8 +371,48 @@ sub _encoding_sniffing ($;%) {
     }
   }
 
-  ## Step 2. Transport-layer encoding
+  return if $args{no_body_data_yet};
+  ## $args{no_body_data_yet} flag must be set to true if the body of
+  ## the resource is not available to the parser such that
+  ## $args{read_head} callback ought not be invoked yet.
+
+  ## Step 2. Wait 500ms or 1024 bytes, whichever came first (See
+  ## Web::HTML::Parser for how and when to use this callback).
+  my $head = $args{read_head} ? $args{read_head}->() : undef;
+  ## $args{read_head} must be a callback which, when invoked, returns
+  ## a byte string used to sniff the character encoding of the input
+  ## stream.  As described in the HTML Standard, it should be at most
+  ## 1024 bytes.  The callback should not invoke sync I/O.  This
+  ## method should be invoked with $args{no_body_data_yet} flag unset
+  ## only after 500ms has past or 1024 bytes has been received.  The
+  ## callback should not invoke any exception.
+
+  ## Step 3. BOM
+  if (defined $head) {
+    if ($$head =~ /^\xFE\xFF/) {
+      $self->{input_encoding} = 'utf-16be';
+      $self->{confident} = 1; # certain
+      return;
+    } elsif ($$head =~ /^\xFF\xFE/) {
+      $self->{input_encoding} = 'utf-16'; # = utf-16le
+      $self->{confident} = 1; # certain
+      return;
+    } elsif ($$head =~ /^\xEF\xBB\xBF/) {
+      $self->{input_encoding} = 'utf-8';
+      $self->{confident} = 1; # certain
+      return;
+    }
+  }
+
+  ## Step 4. Transport-layer encoding
   if ($args{transport_encoding_name}) {
+    ## $args{transport_encoding_name} must be specified iff the
+    ## underlying protocol provides the character encoding for the
+    ## input stream.  For HTTP, the |charset=""| parameter in the
+    ## |Content-Type:| header specifies the character encoding.  The
+    ## value is interpreted as an encoding name or alias defined in
+    ## the Encoding Standard.  (Invalid encoding name will be
+    ## ignored.)
     my $name = _get_encoding_name $args{transport_encoding_name};
     if ($name) {
       $self->{input_encoding} = $name;
@@ -376,68 +421,65 @@ sub _encoding_sniffing ($;%) {
     }
   }
 
-  return if $args{no_body_data_yet};
+  ## Step 5. <meta charset>
+  if (defined $head) {
+    my $name = $self->_prescan_byte_stream ($$head);
+    if ($name) {
+      $self->{input_encoding} = $name;
+      $self->{confident} = 0; # tentative
+      return;
+    }
+  }
 
-  ## Step 3. Sniffing
-  if ($args{read_head}) {
-    ## Wait 500ms or 1024 bytes, whichever came first (See
-    ## Web::HTML::Parser for how and when to use this callback).
-    my $head = $args{read_head}->();
+  ## Step 6. Parent browsing context
+  if ($args{parent_document}) {
+    ## $args{parent_document}, if specified, must be the |Document|
+    ## through which the new (to be parsed) document is nested, or the
+    ## active document of the parent browsing context of the new
+    ## document.
 
-    if (defined $head) {
-      # XXX BOM prefers to charset=""
-      ## Step 4. BOM
-      if ($$head =~ /^\xFE\xFF/) {
-        $self->{input_encoding} = 'utf-16be';
-        $self->{confident} = 1; # certain
-        return;
-      } elsif ($$head =~ /^\xFF\xFE/) {
-        $self->{input_encoding} = 'utf-16le';
-        $self->{confident} = 1; # certain
-        return;
-      } elsif ($$head =~ /^\xEF\xBB\xBF/) {
-        $self->{input_encoding} = 'utf-8';
-        $self->{confident} = 1; # certain
-        return;
-      }
+    # XXX
+    # if $args{parent_document}->origin equals $self->document->origin and
+    #    $args{parent_document}->charset is ASCII compatible {
+    #   $self->{input_encoding} = $args{parent_document}->charset;
+    #   $self->{confident} = 0; # tentative
+    #   return;
+    # }
+  }
 
-      ## Step 5. <meta charset>
-      {
-        my $name = $self->_prescan_byte_stream ($$head);
-        if ($name) {
-          $self->{input_encoding} = $name;
-          $self->{confident} = 0; # tentative
-          return;
-        }
-      }
+  ## Step 7. History
+  if ($args{get_history_encoding_name}) {
+    ## EXPERIMENTAL: $args{get_history_encoding_name}, if specified,
+    ## must be a callback which returns the canonical character
+    ## encoding name for the input stream, guessed by e.g. last visit
+    ## to this page.
+    # XXX how to handle async access to history DB?
+    my $name = _get_encoding_name $args{get_history_encoding_name}->();
+    if ($name) {
+      $self->{input_encoding} = $name;
+      $self->{confident} = 0; # tentative
+      return;
+    }
+  }
 
-      # XXX parent browsing context
-
-      ## Step 6. History
-      if ($args{get_history_encoding_name}) {
-        my $name = _get_encoding_name $args{get_history_encoding_name}->();
-        if ($name) {
-          $self->{input_encoding} = $name;
-          $self->{confident} = 0; # tentative
-          return;
-        }
-      }
-
-      ## Step 7. UniversalCharDet
-      require Web::Encoding::UnivCharDet;
-      my $det = Web::Encoding::UnivCharDet->new;
-      # XXX locale-dependent configuration
-      my $name = _get_encoding_name $det->detect_byte_string ($$head);
-      if ($name) {
-        $self->{input_encoding} = $name;
-        $self->{confident} = 0; # tentative
-        return;
-      }
-    } # $head
+  ## Step 8. UniversalCharDet
+  if (defined $head) {
+    require Web::Encoding::UnivCharDet;
+    my $det = Web::Encoding::UnivCharDet->new;
+    # XXX locale-dependent configuration
+    my $name = _get_encoding_name $det->detect_byte_string ($$head);
+    if ($name) {
+      $self->{input_encoding} = $name;
+      $self->{confident} = 0; # tentative
+      return;
+    }
   }
 
   ## Step 8. Locale-dependent default
   if ($args{locale}) {
+    ## $args{locale}, if specified, must be the locale language tag,
+    ## lowercase-normalized, used to obtain the default character
+    ## encoding.
     my $name = _get_encoding_name $LocaleDefaultCharset->{$args{locale}};
     if ($name) {
       $self->{input_encoding} = $name;

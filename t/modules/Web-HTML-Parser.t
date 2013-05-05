@@ -297,6 +297,33 @@ sub _html_parser_change_the_encoding_byte_string_with_charset : Test(4) {
   }
 } # _html_parser_change_the_encoding_byte_string_with_charset
 
+sub _html_parser_bom : Test(20) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  for my $test (
+    ["\xFE\xFFhogefuga", undef, 'utf-16be'],
+    ["\xFE\xFFhogefuga", 'utf-16le', 'utf-16be'],
+    ["\xFE\xFFhogefuga", 'utf-16', 'utf-16be'],
+    ["\xFF\xFEhogefuga", undef, 'utf-16'],
+    ["\xFF\xFEhogefuga", 'utf-16le', 'utf-16'],
+    ["\xFF\xFEhogefuga", 'utf-16be', 'utf-16'],
+    ["\xFF\xFEhogefuga", 'utf-8', 'utf-16'],
+    ["\xEF\xBB\xBF\xFE\xFEhogefuga", undef, 'utf-8'],
+    ["\xEF\xBB\xBF\xFE\xFEhogefuga", 'utf-8', 'utf-8'],
+    ["\xEF\xBB\xBF\xFE\xFEhogefuga", 'us-ascii', 'utf-8'],
+  ) {
+    my $parser = Web::HTML::Parser->new;
+    my $called = 0;
+    $parser->onerror (sub {
+      my %args = @_;
+      $called = 1 if $args{type} eq 'charset label detected';
+    });
+    my $doc = $dom->create_document;
+    $parser->parse_byte_string ($test->[1], $test->[0] => $doc);
+    ok !$called;
+    is $doc->input_encoding, $test->[2];
+  }
+} # _html_parser_bom
+
 sub _parse_char_string : Test(4) {
   my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
