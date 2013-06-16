@@ -40,6 +40,7 @@ sub _html_fragment_parser_gc : Test(6) {
   local *NanoDOM::Element::DESTROY = sub { $el_destroy_called++ };
 
   my $doc = NanoDOM::DOMImplementation->new->create_document;
+  $doc->manakai_is_html (1);
   my $el = $doc->create_element_ns (undef, [undef, 'p']);
 
   $el->inner_html (q[]);

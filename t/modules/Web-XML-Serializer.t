@@ -430,7 +430,7 @@ sub _nanodom : Test(1) {
   $el->append_child ($doc->create_processing_instruction ('xml', 'version="1.0?>"'));
   $doc->append_child ($div);
   my $html = Web::XML::Serializer->new->get_inner_html ($doc);
-  eq_or_diff $$html, qq{<div xmlns="http://www.w3.org/1999/xhtml"><p title="<!&amp;&quot;'>&nbsp;">a b \x{1000}\x{2000}&lt;!&amp;"'&gt;&nbsp;<!--A -- B--><?xml version="1.0?>"></p></div>};
+  eq_or_diff $$html, qq{<div xmlns="http://www.w3.org/1999/xhtml"><p title="<!&amp;&quot;'>&nbsp;">a b \x{1000}\x{2000}&lt;!&amp;"'&gt;&nbsp;<!--A -- B--><?xml version="1.0?>"?></p></div>};
 }
 
 __PACKAGE__->runtests;
@@ -439,7 +439,7 @@ __PACKAGE__->runtests;
 
 =head1 LICENSE
 
-Copyright 2009-2013 Wakaba <w@suika.fam.cx>.
+Copyright 2009-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
