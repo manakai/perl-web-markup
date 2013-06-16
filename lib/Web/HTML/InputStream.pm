@@ -298,37 +298,33 @@ my $CharsetMap = {
           'x-x-big5' => 'big5'
 }; # $CharsetMap
 
-my $LocaleDefaultCharset = {
-  ar => 'utf-8',
-  be => 'iso-8859-5',
-  bg => 'windows-1251',
-  cs => 'iso-8859-2',
-  cy => 'utf-8',
-  fa => 'utf-8',
-  he => 'windows-1255',
-  hr => 'utf-8',
-  hu => 'iso-8859-2',
-  ja => 'shift_jis',
-  kk => 'utf-8',
-  ko => 'euc-kr',
-  ku => 'windows-1254',
-  lt => 'windows-1257',
-  lv => 'iso-8859-13',
-  mk => 'utf-8',
-  or => 'utf-8',
-  pl => 'iso-8859-2',
-  ro => 'utf-8',
-  ru => 'windows-1251',
-  sk => 'windows-1250',
-  sl => 'iso-8859-2',
-  sr => 'utf-8',
-  th => 'windows-874',
-  tr => 'windows-1254',
-  uk => 'windows-1251',
-  vi => 'utf-8',
-  'zh-cn' => 'gb18030',
-  'zh-tw' => 'big5',
-};
+# XXX Move to web-encodings?
+my $LocaleDefaultCharset = {qw(
+  ar windows-1256
+  bg windows-1251
+  cs windows-1250
+  et windows-1257
+  fa windows-1256
+  he windows-1255
+  hr windows-1250
+  hu iso-8859-2
+  ja shift_jis
+  ko euc-kr
+  ku windows-1254
+  lt windows-1257
+  lv windows-1257
+  pl iso-8859-2
+  ru windows-1251
+  sk windows-1250
+  sl iso-8859-2
+  sr windows-1251
+  th windows-874
+  tr windows-1254
+  uk windows-1251
+  vi windows-1258
+  zh-cn gb18030
+  zh-tw big5
+)};
 
 # XXX
 sub _get_encoding_name ($) {
