@@ -1,0 +1,53 @@
+=head1 NAME
+
+Web::XPath::Parser - An XPath parser
+
+=head1 DESCRIPTION
+
+The C<Web::XPath::Parser> module contains an XPath parser, i.e. a
+processor to convert XPath string into its internal data structure
+representation.
+
+=head1 METHODS
+
+Following methods are available:
+
+=over 4
+
+=item $parser = Web::XPath::Parser->new
+
+Return a new instance of the parser.
+
+=back
+
+=head1 SPECIFICATIONS
+
+=over 4
+
+=item XPATH1
+
+XML Path Language (XPath) Version 1.0 <http://www.w3.org/TR/xpath/>.
+
+XML Path Language (XPath) Version 1.0 Specification Errata
+<http://www.w3.org/1999/11/REC-xpath-19991116-errata/>.
+
+The C<NCName> production rule in the Namespaces in XML 1.0 (Second
+Edition) <http://www.w3.org/TR/2006/REC-xml-names-20060816/#NT-NCName>
+MUST be used to parse the XPath expression.  (In other word, changes
+made by XML 1.1 or XML 1.0 Fifth Edition are not incorporated and even
+for an HTML document the same definition of C<NCName> is applied.)
+
+=back
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
