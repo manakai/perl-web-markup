@@ -8,6 +8,17 @@ sub new ($) {
   return bless {}, $_[0];
 } # new
 
+sub onerror ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onerror} = $_[1];
+  }
+  return $_[0]->{onerror} ||= sub {
+    my %args = @_;
+    warn sprintf "%d: %s (%s)\n",
+        $args{index}, $args{type}, $args{level};
+  };
+} # onerror
+
 sub tokenize ($$) {
   my $input = $_[1];
   my $length = length $input;
@@ -155,18 +166,22 @@ my %Op = (
   negate => 2,
   '|' => 1,
   path => 0,
-  # step function Number Literal VariableReference root
+  # step function num str var root
 );
 
-sub parse_expression ($$) {
+sub parse_char_string_as_expression ($$) {
   my ($self) = @_;
   my $tokens = $self->tokenize ($_[1]);
   if ($tokens->[0]->[0] eq 'error') {
-    # XXX
+    $self->onerror->(type => 'xpath:syntax error', # XXX
+                     index => $tokens->[0]->[1],
+                     level => 'm');
     return undef;
   }
 
-  my $open = [{type => 'expr', delim => 'EOF'}, {type => 'path', steps => []}];
+  my $open = [{type => 'expr', delim => 'EOF',
+               predicates => []},
+              {type => 'path', steps => []}];
   $open->[0]->{value} = $open->[1];
   my $state = 'before UnaryExpr';
   my $t = shift @$tokens;
@@ -267,6 +282,8 @@ sub parse_expression ($$) {
         $step->{prefix} = $t->[2];
         $step->{local_name} = $t->[3];
         $t = shift @$tokens;
+        push @{$open->[-1]->{steps}}, $step;
+        $state = 'after NodeTest';
       } elsif ($t->[0] eq 'NodeType') {
         $step->{node_type} = $t->[2];
         $t = shift @$tokens;
@@ -279,6 +296,8 @@ sub parse_expression ($$) {
           }
           if ($t->[0] eq ')') {
             $t = shift @$tokens;
+            push @{$open->[-1]->{steps}}, $step;
+            $state = 'after NodeTest';
           } else {
             last W;
           }
@@ -292,15 +311,13 @@ sub parse_expression ($$) {
           last W;
         }
       }
-
-      push @{$open->[-1]->{steps}}, $step;
-      $state = 'after NodeTest';
     } elsif ($state eq 'after NodeTest') {
       if ($t->[0] eq '[') {
         $t = shift @$tokens;
         my $path = {type => 'path', steps => []};
         my $expr = {type => 'expr', value => $path,
-                    delim => ']', next => 'after NodeTest'};
+                    delim => ']', next => 'after NodeTest',
+                    predicates => []};
         push @{$open->[-1]->{steps}->[-1]->{predicates}}, $expr;
         push @$open, $expr, $path;
         $state = 'before UnaryExpr';
@@ -308,37 +325,50 @@ sub parse_expression ($$) {
         $state = 'after Step';
       }
     } elsif ($state eq 'PrimaryExpr') {
-      if ($t->[0] eq 'VariableReference' or
-          $t->[0] eq 'Literal' or
-          $t->[0] eq 'Number') {
-        push @{$open->[-1]->{steps}}, {type => $t->[0], value => $t->[2]};
+      if ($t->[0] eq 'Literal') {
+        push @{$open->[-1]->{steps}},
+            {type => 'str', value => $t->[2], predicates => []};
         $t = shift @$tokens;
-        $state = 'after Step';
+        $state = 'after NodeTest';
+      } elsif ($t->[0] eq 'Number') {
+        push @{$open->[-1]->{steps}},
+            {type => 'num', value => 0+$t->[2], predicates => []};
+        $t = shift @$tokens;
+        $state = 'after NodeTest';
+      } elsif ($t->[0] eq 'VariableReference') {
+        push @{$open->[-1]->{steps}}, # XXX NSResolver
+            {type => 'var', prefix => $t->[2], local_name => $t->[3],
+             predicates => []};
+        $t = shift @$tokens;
+        $state = 'after NodeTest';
       } elsif ($t->[0] eq '(') { # ( Expr )
         $t = shift @$tokens;
         my $path = {type => 'path', steps => []};
         my $expr = {type => 'expr', value => $path,
-                    delim => ')', next => 'after Step'};
+                    delim => ')', next => 'after NodeTest',
+                    predicates => []};
         push @{$open->[-1]->{steps}}, $expr;
         push @$open, $expr, $path;
         $state = 'before UnaryExpr';
       } elsif ($t->[0] eq 'FunctionName') { # FunctionCall
-        my $prefix = $t->[2];
+        my $prefix = $t->[2]; # XXX nsurl
         my $ln = $t->[3];
         $t = shift @$tokens;
         if ($t->[0] eq '(') {
           $t = shift @$tokens;
           if ($t->[0] eq ')') {
+            $t = shift @$tokens;
             push @{$open->[-1]->{steps}},
                 {type => 'function', prefix => $prefix, local_name => $ln,
-                 args => []};
-            $state = 'after Step';
+                 args => [], predicates => []};
+            $state = 'after NodeTest';
           } else {
             my $path = {type => 'path', steps => []};
-            my $expr = {type => 'expr', value => $path,
-                        delim => ')', sep => ',', next => 'after Step'};
+            my $expr = {type => 'expr', value => $path, predicates => [],
+                        delim => ')', sep => ',', next => 'after NodeTest'};
             my $func = {type => 'function',
-                        prefix => $prefix, local_name => $ln, args => [$expr]};
+                        prefix => $prefix, local_name => $ln, args => [$expr],
+                        predicates => []};
             push @{$open->[-1]->{steps}}, $func;
             push @$open, $func, $expr, $path;
             $state = 'before UnaryExpr';
@@ -370,7 +400,7 @@ sub parse_expression ($$) {
     } elsif ($state eq 'after PathExpr') {
       if ($t->[0] eq 'Operator' and $t->[2] eq '|') {
         my $i = -1;
-        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= $Op{$t->[2]};
+        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= ($Op{$t->[2]} || 0);
         my $child1 = {%{$open->[$i]}};
         my $child2 = {type => 'path', steps => []};
         %{$open->[$i]} = (type => $t->[2], left => $child1, right => $child2);
@@ -379,7 +409,7 @@ sub parse_expression ($$) {
         $state = 'PathExpr';
       } elsif ($t->[0] eq 'Operator') {
         my $i = -1;
-        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= $Op{$t->[2]};
+        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= ($Op{$t->[2]} || 0);
         my $child1 = {%{$open->[$i]}};
         my $child2 = {type => 'path', steps => []};
         %{$open->[$i]} = (type => $t->[2], left => $child1, right => $child2);
@@ -408,7 +438,8 @@ sub parse_expression ($$) {
           $t = shift @$tokens;
           my $path = {type => 'path', steps => []};
           my $expr = {type => 'expr', value => $path,
-                      delim => ')', sep => ',', next => 'after Step'};
+                      delim => ')', sep => ',', next => 'after Step',
+                      predicates => []};
           pop @$open;
           push @{$open->[-1]->{args}}, $expr;
           push @$open, $expr, $path;
@@ -422,11 +453,11 @@ sub parse_expression ($$) {
     } # $state
   } # W
 
-  # XXX
-  use Data::Dumper;
-  warn Dumper $open;
-  die;
-} # parse_expression
+  $self->onerror->(type => 'xpath:syntax error', # XXX
+                   index => $t->[1],
+                   level => 'm');
+  return undef;
+} # parse_char_string_as_expression
 
 1;
 

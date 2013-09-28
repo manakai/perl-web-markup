@@ -18,7 +18,30 @@ Following methods are available:
 
 Return a new instance of the parser.
 
+=item $code = $parser->onerror
+
+=item $parser->onerror ($new_code)
+
+Get or set the error handler for the parser.  Any parse error, as well
+as warning and information, is reported to the handler.  See
+L<Whatpm::Errors>
+<https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
+for more information.
+
+=item $parsed = $parser->parse_char_string_as_expression ($string)
+
+Parse the specified character string as an XPath 1.0 expression.  If
+the parsing does not fail, it returns the parsed data structure.  If
+the parsing fails, it reports the parse errors via the C<onerror>
+handler and returns C<undef>.
+
 =back
+
+The parser does not examine whether the input string does not contain
+non-Unicode character (i.e. U-00110000) for performance reason.  If
+your application would like to fully conform to relevant standards,
+you have to ensure that the input does not contain any character
+greater than U+10FFFF before invoking the parser.
 
 =head1 SPECIFICATIONS
 
@@ -36,6 +59,13 @@ Edition) <http://www.w3.org/TR/2006/REC-xml-names-20060816/#NT-NCName>
 MUST be used to parse the XPath expression.  (In other word, changes
 made by XML 1.1 or XML 1.0 Fifth Edition are not incorporated and even
 for an HTML document the same definition of C<NCName> is applied.)
+
+If the tokenizer can't tokenize the entire input string, it MUST throw
+an syntax error and abort the parsing process.
+
+In the C<Literal> production rule, any Unicode code point
+(i.e. U+0000-U+10FFFF) MUST be allowed.  (This is a willful violation
+to the XPath 1.0 specification for compatibility with browsers.)
 
 =back
 
