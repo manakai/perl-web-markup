@@ -361,6 +361,8 @@ for my $test (
     $parser->onerror (sub {
       push @error, {@_};
     });
+    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     eq_or_diff $result, $test->[1];
     eq_or_diff \@error, [];
@@ -393,6 +395,8 @@ for my $test (
       push @error, {@_};
     });
     $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
+    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     eq_or_diff $result, $test->[2];
     eq_or_diff \@error, [];
@@ -482,6 +486,8 @@ for my $test (
     $parser->onerror (sub {
       push @error, {@_};
     });
+    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     is $result, undef;
     eq_or_diff \@error, [{index => $test->[1], type => 'xpath:syntax error',
@@ -508,6 +514,8 @@ for my $test (
       push @error, {@_};
     });
     $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
+    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     is $result, undef;
     eq_or_diff \@error,
@@ -516,6 +524,117 @@ for my $test (
     done $c;
   } n => 2, name => ['parse_char_string_as_expression', $test->[0]];
 }
+
+test {
+  my $c = shift;
+  my $parser = Web::XPath::Parser->new;
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->variable_checker (sub { 0 });
+  my $result = $parser->parse_char_string_as_expression ('$hoge');
+  is $result, undef;
+  eq_or_diff \@error,
+      [{index => 0, type => 'xpath:variable:unknown',
+        level => 'm', value => 'hoge'}];
+  done $c;
+} n => 2, name => ['parse_char_string_as_expression', 'variable unknown'];
+
+test {
+  my $c = shift;
+  my $parser = Web::XPath::Parser->new;
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->ns_resolver (sub { 'abc' });
+  $parser->variable_checker (sub { 0 });
+  my $result = $parser->parse_char_string_as_expression ('$hoge:fuga');
+  is $result, undef;
+  eq_or_diff \@error,
+      [{index => 0, type => 'xpath:variable:unknown',
+        level => 'm', value => 'hoge:fuga'}];
+  done $c;
+} n => 2, name => ['parse_char_string_as_expression', 'variable unknown'];
+
+test {
+  my $c = shift;
+  my $parser = Web::XPath::Parser->new;
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->function_checker (sub { undef });
+  my $result = $parser->parse_char_string_as_expression ('hoge ()');
+  is $result, undef;
+  eq_or_diff \@error,
+      [{index => 0, type => 'xpath:function:unknown',
+        level => 'm', value => 'hoge'}];
+  done $c;
+} n => 2, name => ['parse_char_string_as_expression', 'function unknown'];
+
+test {
+  my $c = shift;
+  my $parser = Web::XPath::Parser->new;
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->ns_resolver (sub { 'abc' });
+  $parser->function_checker (sub { undef });
+  my $result = $parser->parse_char_string_as_expression ('hoge:fuga()');
+  is $result, undef;
+  eq_or_diff \@error,
+      [{index => 0, type => 'xpath:function:unknown',
+        level => 'm', value => 'hoge:fuga'}];
+  done $c;
+} n => 2, name => ['parse_char_string_as_expression', 'function unknown'];
+
+test {
+  my $c = shift;
+  my $parser = Web::XPath::Parser->new;
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->function_checker (sub { [1, 1] });
+  my $result = $parser->parse_char_string_as_expression ('hoge ()');
+  is $result, undef;
+  eq_or_diff \@error,
+      [{index => 6, type => 'xpath:function:min', level => 'm'}];
+  done $c;
+} n => 2, name => ['parse_char_string_as_expression', 'function unknown'];
+
+test {
+  my $c = shift;
+  my $parser = Web::XPath::Parser->new;
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->function_checker (sub { [2, 3] });
+  my $result = $parser->parse_char_string_as_expression ('hoge (12)');
+  is $result, undef;
+  eq_or_diff \@error,
+      [{index => 9, type => 'xpath:function:min', level => 'm'}];
+  done $c;
+} n => 2, name => ['parse_char_string_as_expression', 'function unknown'];
+
+test {
+  my $c = shift;
+  my $parser = Web::XPath::Parser->new;
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->function_checker (sub { [2, 2] });
+  my $result = $parser->parse_char_string_as_expression ('hoge (12, 31, 4)');
+  is $result, undef;
+  eq_or_diff \@error,
+      [{index => 16, type => 'xpath:function:max', level => 'm'}];
+  done $c;
+} n => 2, name => ['parse_char_string_as_expression', 'function unknown'];
 
 run_tests;
 

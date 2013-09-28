@@ -33,14 +33,45 @@ for more information.
 =item $parser->ns_resolver ($new_code)
 
 Get or set the namespace prefix resolver.  It must be a code reference
-(or C<undef> to unset).  The code reference would be invoked with an
+(or C<undef> to unset).  The code reference will be invoked with an
 argument, which is a character string representing the namespace
-prefix.  The code reference MUST return a character string
-representing the namespace URL.  The code reference MUST NOT throw an
-exception.  Note that the null namespace cannot be represented.
+prefix.  The code reference must return a character string
+representing the namespace URL.  The code reference must not throw an
+exception.  It must return consistent result.  Note that the null
+namespace cannot be represented.
 
 If the namespace resolver is not specified, there is no namespace
 binding applicable to XPath expression parsing.
+
+=item $code = $parser->variable_checker
+
+=item $parser->variable_checker ($new_code)
+
+Get or set the variable checker.  It must be a code reference (or
+C<undef> to unset).  The code reference will be invoked with two
+character string arguments: namespace URL and local name.  If the
+namespace URL is C<undef>, it represents the null namespace.  Note
+that the empty string is different from C<undef>.  The code reference
+must return whether the variable identified by the namespace URL and
+local name is defined or not.  The code reference must not throw an
+exception.  It must return consistent result.
+
+=item $code = $parser->function_checker
+
+=item $parser->function_checker ($new_code)
+
+Get or set the function checker.  It must be a code reference (or
+C<undef> to unset).  The code reference will be invoked with two
+character string arguments: namespace URL and local name.  If the
+namespace URL is C<undef>, it represents the null namespace.  Note
+that the empty string is different from C<undef>.  The code reference
+must return whether the function identified by the namespace URL and
+local name is defined or not.  If the function is defined, it must
+return an array reference with two numbers.  The first number
+represents the minimum number of arguments.  The second number
+represents the maximum number of arguments.  The first number must be
+less than or equal to the second number.  The code reference must not
+throw an exception.  It must return consistent result.
 
 =item $parsed = $parser->parse_char_string_as_expression ($string)
 
@@ -81,9 +112,24 @@ In the C<Literal> production rule, any Unicode code point
 (i.e. U+0000-U+10FFFF) MUST be allowed.  (This is a willful violation
 to the XPath 1.0 specification for compatibility with browsers.)
 
-The parser MUST resolve any namespace prefix in the input string at
-the same time as the parsing.  If the prefix cannot be resolved, it
-MUST throw a namespace error and abort the parsing process.
+The parser MUST resolve any namespace prefix in the input string.  If
+the prefix cannot be resolved, it MUST throw a namespace error and
+abort the parsing process.
+
+The empty string namespace URL MUST NOT be interpreted as the null
+namespace.
+
+The parser MUST examine whether any variable reference in the input
+string references a variable included in the variable bindings of the
+context.  If the variable is not found, it MUST throw a syntax error
+and abort the parsing process.
+
+The parser MUST examine whether any function call in the input string
+idetifies a function included in the function library of the context.
+If the function is not defined, the number of arguments is less than
+the minimum number of acceptable arguments, or the number of argument
+is greater than the maximum number of acceptable arguments, then it
+MUST throw a syntax error and abort the parsing process.
 
 =back
 

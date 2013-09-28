@@ -26,6 +26,20 @@ sub ns_resolver ($;$) {
   return $_[0]->{ns_resolver} ||= sub ($) { return undef };
 } # ns_resolver
 
+sub function_checker ($;$) {
+  if (@_ > 1) {
+    $_[0]->{function_checker} = $_[1];
+  }
+  return $_[0]->{function_checker} ||= sub ($$) { return undef };
+} # function_checker
+
+sub variable_checker ($;$) {
+  if (@_ > 1) {
+    $_[0]->{variable_checker} = $_[1];
+  }
+  return $_[0]->{variable_checker} ||= sub ($$) { return 0 };
+} # variable_checker
+
 sub tokenize ($$) {
   my $input = $_[1];
   my $length = length $input;
@@ -366,6 +380,13 @@ sub parse_char_string_as_expression ($$) {
             return undef;
           }
         }
+        unless ($self->variable_checker->(defined $step->{nsurl} ? ${$step->{nsurl}} : undef, $step->{local_name})) {
+          $self->onerror->(type => 'xpath:variable:unknown', # XXX
+                           level => 'm',
+                           index => $t->[1],
+                           value => (defined $step->{prefix} ? "$step->{prefix}:$step->{local_name}" : $step->{local_name}));
+          return undef;
+        }
         push @{$open->[-1]->{steps}}, $step;
         $t = shift @$tokens;
         $state = 'after NodeTest';
@@ -392,10 +413,24 @@ sub parse_char_string_as_expression ($$) {
         }
         my $prefix = $t->[2];
         my $ln = $t->[3];
+        my $chk = $self->function_checker->(defined $nsurl ? $$nsurl : undef, $ln);
+        unless ($chk) {
+          $self->onerror->(type => 'xpath:function:unknown', # XXX
+                           level => 'm',
+                           index => $t->[1],
+                           value => (defined $prefix ? "$prefix:$ln" : $ln));
+          return undef;
+        }
         $t = shift @$tokens;
         if ($t->[0] eq '(') {
           $t = shift @$tokens;
           if ($t->[0] eq ')') {
+            unless ($chk->[0] == 0) {
+              $self->onerror->(type => 'xpath:function:min', # XXX
+                               level => 'm',
+                               index => $t->[1]);
+              return undef;
+            }
             $t = shift @$tokens;
             push @{$open->[-1]->{steps}},
                 {type => 'function', prefix => $prefix, local_name => $ln,
@@ -408,6 +443,7 @@ sub parse_char_string_as_expression ($$) {
                         delim => ')', sep => ',', next => 'after NodeTest'};
             my $func = {type => 'function',
                         prefix => $prefix, local_name => $ln, args => [$expr],
+                        args_chk => $chk,
                         predicates => []};
             $func->{nsurl} = $nsurl if defined $nsurl;
             push @{$open->[-1]->{steps}}, $func;
@@ -469,7 +505,21 @@ sub parse_char_string_as_expression ($$) {
             $t = shift @$tokens;
             $state = delete $open->[-1]->{next};
             pop @$open;
-            pop @$open if $open->[-1]->{type} eq 'function';
+            if ($open->[-1]->{type} eq 'function') {
+              if (@{$open->[-1]->{args}} < $open->[-1]->{args_chk}->[0]) {
+                $self->onerror->(type => 'xpath:function:min', # XXX
+                                 level => 'm',
+                                 index => $t->[1]);
+                return undef;
+              } elsif ($open->[-1]->{args_chk}->[1] < @{$open->[-1]->{args}}) {
+                $self->onerror->(type => 'xpath:function:max', # XXX
+                                 level => 'm',
+                                 index => $t->[1]);
+                return undef;
+              }
+              delete $open->[-1]->{args_chk};
+              pop @$open;
+            }
           }
         } elsif (defined $open->[-1]->{sep} and
                  $t->[0] eq $open->[-1]->{sep}) {
