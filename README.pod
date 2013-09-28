@@ -24,7 +24,11 @@ An XML serializer.
 
 =item L<Web::RDF::XML::Parser>
 
-An RDF/XML implementation.
+An RDF/XML parser.
+
+=item L<Web::XPath::Parser>
+
+An XPath 1.0 parser.
 
 =back
 
