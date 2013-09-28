@@ -28,6 +28,20 @@ L<Whatpm::Errors>
 <https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
 for more information.
 
+=item $code = $parser->ns_resolver
+
+=item $parser->ns_resolver ($new_code)
+
+Get or set the namespace prefix resolver.  It must be a code reference
+(or C<undef> to unset).  The code reference would be invoked with an
+argument, which is a character string representing the namespace
+prefix.  The code reference MUST return a character string
+representing the namespace URL.  The code reference MUST NOT throw an
+exception.  Note that the null namespace cannot be represented.
+
+If the namespace resolver is not specified, there is no namespace
+binding applicable to XPath expression parsing.
+
 =item $parsed = $parser->parse_char_string_as_expression ($string)
 
 Parse the specified character string as an XPath 1.0 expression.  If
@@ -66,6 +80,10 @@ an syntax error and abort the parsing process.
 In the C<Literal> production rule, any Unicode code point
 (i.e. U+0000-U+10FFFF) MUST be allowed.  (This is a willful violation
 to the XPath 1.0 specification for compatibility with browsers.)
+
+The parser MUST resolve any namespace prefix in the input string at
+the same time as the parsing.  If the prefix cannot be resolved, it
+MUST throw a namespace error and abort the parsing process.
 
 =back
 

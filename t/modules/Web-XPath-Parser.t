@@ -68,7 +68,8 @@ for my $test (
   {in => q{:bar:baz}, out => [['error', 0]]},
   {in => q{foobar()}, out => [['FunctionName', 0, undef, 'foobar'], ['(', 6], [')', 7], ['EOF', 8]]},
   {in => q{foo:bar()}, out => [['FunctionName', 0, 'foo', 'bar'], ['(', 7], [')', 8], ['EOF', 9]]},
-  {in => q{foo:*()}, out => [['NameTest', 0, 'foo', undef], ['(', 5], [')', 6], ['EOF', 7]]},
+  #{in => q{foo:*()}, out => [['NameTest', 0, 'foo', undef], ['(', 5], [')', 6], ['EOF', 7]]},
+  {in => q{foo:*()}, out => [['error', 5]]},
   {in => q{*()}, out => [['NameTest', 0, undef, undef], ['(', 1], [')', 2], ['EOF', 3]]},
   {in => q{*:bar()}, out => [['error', 1]]},
   {in => q{$*}, out => [['error', 0]]},
@@ -368,6 +369,38 @@ for my $test (
 }
 
 for my $test (
+  ['hoge:fuga', {hoge => 'ab c'} => X LP [S 'child', 'hoge', 'ab c', 'fuga', []]],
+  ['hoge:fuga/ab:*', {hoge => 'ab c', ab => 'AB'}
+       => X LP [(S 'child', 'hoge', 'ab c', 'fuga', []),
+                (S 'child', 'ab', 'AB', undef, [])]],
+  ['hoge:fuga/hoge:*', {hoge => 'ab c', ab => 'AB'}
+       => X LP [(S 'child', 'hoge', 'ab c', 'fuga', []),
+                (S 'child', 'hoge', 'ab c', undef, [])]],
+  ['hoge:fuga/hoge:*', {hoge => ''}
+       => X LP [(S 'child', 'hoge', '', 'fuga', []),
+                (S 'child', 'hoge', '', undef, [])]],
+  ['$hoge:fuga', {hoge => 'ab c'} => X LP [VAR 'hoge', 'ab c', 'fuga', []]],
+  ['hoge:fuga()', {hoge => 'ab c'} => X LP [F 'hoge', 'ab c', 'fuga', [], []]],
+  ['hoge:fuga(a)', {hoge => 'ab c'}
+       => X LP [F 'hoge', 'ab c', 'fuga',
+                [X LP [S 'child', undef, undef, 'a', []]], []]],
+) {
+  test {
+    my $c = shift;
+    my $parser = Web::XPath::Parser->new;
+    my @error;
+    $parser->onerror (sub {
+      push @error, {@_};
+    });
+    $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
+    my $result = $parser->parse_char_string_as_expression ($test->[0]);
+    eq_or_diff $result, $test->[2];
+    eq_or_diff \@error, [];
+    done $c;
+  } n => 2, name => ['parse_char_string_as_expression', $test->[0]];
+}
+
+for my $test (
   ['', 0],
   ["\x09\x0A ", 3],
   ['!-', 0],
@@ -438,6 +471,9 @@ for my $test (
   ['* yz', 2],
   ['!= yz', 0],
   ['ab <> yz', 4],
+  ['ab <> yz:ab', 4],
+  ['ab <> $yz:ab', 4],
+  ['ab <> yz:ab()', 4],
 ) {
   test {
     my $c = shift;
@@ -450,6 +486,33 @@ for my $test (
     is $result, undef;
     eq_or_diff \@error, [{index => $test->[1], type => 'xpath:syntax error',
                           level => 'm'}];
+    done $c;
+  } n => 2, name => ['parse_char_string_as_expression', $test->[0]];
+}
+
+for my $test (
+  ['ab:*', {} => 0, 'ab'],
+  ['ab:yz', {} => 0, 'ab'],
+  ['c:d/ab:yz', {c => 'xy'} => 4, 'ab'],
+  ['$ab:yz', {} => 1, 'ab'],
+  ['ab:yz()', {} => 0, 'ab'],
+  ['ab:yz(12)', {} => 0, 'ab'],
+  ['ab:yz(12)/foo:bar', {} => 0, 'ab'],
+  ['ab:yz(12', {} => 0, 'ab'],
+) {
+  test {
+    my $c = shift;
+    my $parser = Web::XPath::Parser->new;
+    my @error;
+    $parser->onerror (sub {
+      push @error, {@_};
+    });
+    $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
+    my $result = $parser->parse_char_string_as_expression ($test->[0]);
+    is $result, undef;
+    eq_or_diff \@error,
+        [{index => $test->[2], type => 'namespace prefix:not declared',
+          level => 'm', value => $test->[3]}];
     done $c;
   } n => 2, name => ['parse_char_string_as_expression', $test->[0]];
 }

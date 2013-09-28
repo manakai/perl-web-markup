@@ -19,6 +19,13 @@ sub onerror ($;$) {
   };
 } # onerror
 
+sub ns_resolver ($;$) {
+  if (@_ > 1) {
+    $_[0]->{ns_resolver} = $_[1];
+  }
+  return $_[0]->{ns_resolver} ||= sub ($) { return undef };
+} # ns_resolver
+
 sub tokenize ($$) {
   my $input = $_[1];
   my $length = length $input;
@@ -110,6 +117,8 @@ sub tokenize ($$) {
         if ($token[$i+2]->[0] eq '*') {
           if ($token[$i-1]->[0] eq '$') {
             return [['error', $token[$i-1]->[1]]];
+          } elsif ($token[$i+3]->[0] eq '(') {
+            return [['error', $token[$i+3]->[1]]];
           }
           $token[$i] = ['NameTest', $token[$i]->[1], $token[$i]->[2], undef];
         } elsif ($token[$i+2]->[0] eq 'NCName') {
@@ -278,7 +287,16 @@ sub parse_char_string_as_expression ($$) {
 
       # NodeTest
       if ($t->[0] eq 'NameTest') {
-        # XXX NSResolver
+        if (defined $t->[2]) {
+          $step->{nsurl} = \($self->ns_resolver->($t->[2]));
+          if (not defined ${$step->{nsurl}}) {
+            $self->onerror->(type => 'namespace prefix:not declared',
+                             level => 'm',
+                             index => $t->[1],
+                             value => $t->[2]);
+            return undef;
+          }
+        }
         $step->{prefix} = $t->[2];
         $step->{local_name} = $t->[3];
         $t = shift @$tokens;
@@ -336,9 +354,19 @@ sub parse_char_string_as_expression ($$) {
         $t = shift @$tokens;
         $state = 'after NodeTest';
       } elsif ($t->[0] eq 'VariableReference') {
-        push @{$open->[-1]->{steps}}, # XXX NSResolver
-            {type => 'var', prefix => $t->[2], local_name => $t->[3],
-             predicates => []};
+        my $step = {type => 'var', prefix => $t->[2], local_name => $t->[3],
+                    predicates => []};
+        if (defined $t->[2]) {
+          $step->{nsurl} = \($self->ns_resolver->($t->[2]));
+          if (not defined ${$step->{nsurl}}) {
+            $self->onerror->(type => 'namespace prefix:not declared',
+                             level => 'm',
+                             index => $t->[1] + 1,
+                             value => $t->[2]);
+            return undef;
+          }
+        }
+        push @{$open->[-1]->{steps}}, $step;
         $t = shift @$tokens;
         $state = 'after NodeTest';
       } elsif ($t->[0] eq '(') { # ( Expr )
@@ -351,7 +379,18 @@ sub parse_char_string_as_expression ($$) {
         push @$open, $expr, $path;
         $state = 'before UnaryExpr';
       } elsif ($t->[0] eq 'FunctionName') { # FunctionCall
-        my $prefix = $t->[2]; # XXX nsurl
+        my $nsurl;
+        if (defined $t->[2]) {
+          $nsurl = \($self->ns_resolver->($t->[2]));
+          if (not defined $$nsurl) {
+            $self->onerror->(type => 'namespace prefix:not declared',
+                             level => 'm',
+                             index => $t->[1],
+                             value => $t->[2]);
+            return undef;
+          }
+        }
+        my $prefix = $t->[2];
         my $ln = $t->[3];
         $t = shift @$tokens;
         if ($t->[0] eq '(') {
@@ -361,6 +400,7 @@ sub parse_char_string_as_expression ($$) {
             push @{$open->[-1]->{steps}},
                 {type => 'function', prefix => $prefix, local_name => $ln,
                  args => [], predicates => []};
+            $open->[-1]->{steps}->[-1]->{nsurl} = $nsurl if defined $nsurl;
             $state = 'after NodeTest';
           } else {
             my $path = {type => 'path', steps => []};
@@ -369,6 +409,7 @@ sub parse_char_string_as_expression ($$) {
             my $func = {type => 'function',
                         prefix => $prefix, local_name => $ln, args => [$expr],
                         predicates => []};
+            $func->{nsurl} = $nsurl if defined $nsurl;
             push @{$open->[-1]->{steps}}, $func;
             push @$open, $func, $expr, $path;
             $state = 'before UnaryExpr';
