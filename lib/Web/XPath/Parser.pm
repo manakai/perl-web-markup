@@ -19,31 +19,31 @@ sub tokenize ($$) {
     } elsif ($input =~ s/^\.\.//) {
       push @token, ['..'];
     } elsif ($input =~ s/^(\.[0-9]+)//) {
-      push @token, ['Number', $1];
+      push @token, ['Number', undef, $1];
     } elsif ($input =~ s/^([0-9]+(?:\.[0-9]*)?)//) {
-      push @token, ['Number', $1];
+      push @token, ['Number', undef, $1];
     } elsif ($input =~ s/^:://) {
       push @token, ['::'];
     } elsif ($input =~ s{^//}{}) {
-      push @token, ['Operator', '//'];
+      push @token, ['Operator', undef, '//'];
     } elsif ($input =~ s{^([!<>]=)}{}) {
-      push @token, ['Operator', $1];
+      push @token, ['Operator', undef, $1];
     } elsif ($input =~ s/^([()\[\].\@,])//) {
       push @token, [$1];
     } elsif ($input =~ s{^([/|+=<>-])}{}) {
-      push @token, ['Operator', $1];
+      push @token, ['Operator', undef, $1];
     } elsif ($input =~ s/^([:*\$])//) {
       push @token, [$1];
-      $token[-1]->[3] = 1 + length $input;
-      $token[-1]->[2] = $input =~ s/^[\x09\x0A\x0D\x20]+//;
+      $token[-1]->[4] = 1 + length $input;
+      $token[-1]->[3] = $input =~ s/^[\x09\x0A\x0D\x20]+//;
     } elsif ($input =~ s/^"([^"]*)"//) {
-      push @token, ['Literal', $1];
+      push @token, ['Literal', undef, $1];
     } elsif ($input =~ s/^'([^']*)'//) {
-      push @token, ['Literal', $1];
+      push @token, ['Literal', undef, $1];
     } elsif ($input =~ s/^(\p{InXML_NCNameStartChar10_1}\p{InXMLNCNameChar10_1}*)//) {
-      push @token, ['NCName', $1];
-      $token[-1]->[3] = (length $1) + (length $input);
-      $token[-1]->[2] = $input =~ s/^[\x09\x0A\x0D\x20]+//;
+      push @token, ['NCName', undef, $1];
+      $token[-1]->[4] = (length $1) + (length $input);
+      $token[-1]->[3] = $input =~ s/^[\x09\x0A\x0D\x20]+//;
     } else {
       return [['error', $length - length $input]];
     }
@@ -55,24 +55,24 @@ sub tokenize ($$) {
     if ($token[$i]->[0] eq '*') {
       if (not {SOF => 1, '@' => 1, '::' => 1, '(' => 1,
                '[' => 1, ',' => 1, Operator => 1}->{$token[$i-1]->[0]}) {
-        $token[$i] = ['Operator', '*'];
+        $token[$i] = ['Operator', undef, '*'];
       } else {
-        $token[$i] = ['NameTest', undef, undef];
+        $token[$i] = ['NameTest', undef, undef, undef];
       }
     } elsif ($token[$i]->[0] eq 'NCName') {
       if (not {SOF => 1, '@' => 1, '::' => 1, '(' => 1,
                '[' => 1, ',' => 1, Operator => 1}->{$token[$i-1]->[0]}) {
-        if ({and => 1, or => 1, mod => 1, div => 1}->{$token[$i]->[1]}) {
-          $token[$i] = ['Operator', $token[$i]->[1]];
+        if ({and => 1, or => 1, mod => 1, div => 1}->{$token[$i]->[2]}) {
+          $token[$i] = ['Operator', undef, $token[$i]->[2]];
           next;
         }
       }
       if ($token[$i+1]->[0] eq '(') {
         if ({comment => 1, text => 1, 'processing-instruction' => 1,
-             node => 1}->{$token[$i]->[1]}) {
-          $token[$i] = ['NodeType', $token[$i]->[1]];
+             node => 1}->{$token[$i]->[2]}) {
+          $token[$i] = ['NodeType', undef, $token[$i]->[2]];
         } else {
-          $token[$i] = ['FunctionName', undef, $token[$i]->[1]];
+          $token[$i] = ['FunctionName', undef, undef, $token[$i]->[2]];
         }
       } elsif ($token[$i+1]->[0] eq '::') {
         if ({ancestor => 1, 'ancestor-or-self' => 1,
@@ -83,57 +83,59 @@ sub tokenize ($$) {
              namespace => 1,
              parent => 1,
              preceding => 1, 'preceding-sibling' => 1,
-             self => 1}->{$token[$i]->[1]}) {
-          $token[$i] = ['AxisName', $token[$i]->[1]];
+             self => 1}->{$token[$i]->[2]}) {
+          $token[$i] = ['AxisName', undef, $token[$i]->[2]];
         } else {
-          return [['error', $length - $token[$i]->[3]]];
+          return [['error', $length - $token[$i]->[4]]];
         }
-      } elsif ($token[$i]->[2]) { # Followed by S
-        if ($token[$i-1]->[0] eq '$' and not $token[$i-1]->[2]) {
-          $token[$i] = ['VariableReference', undef, $token[$i]->[1]];
+      } elsif ($token[$i]->[3]) { # Followed by S
+        if ($token[$i-1]->[0] eq '$' and not $token[$i-1]->[3]) {
+          $token[$i] = ['VariableReference', undef, undef, $token[$i]->[2]];
           $token[$i-1]->[0] = '';
         } else {
-          $token[$i] = ['NameTest', undef, $token[$i]->[1]];
+          $token[$i] = ['NameTest', undef, undef, $token[$i]->[2]];
         }
-      } elsif ($token[$i+1]->[0] eq ':' and not $token[$i+1]->[2]) {
+      } elsif ($token[$i+1]->[0] eq ':' and not $token[$i+1]->[3]) {
         if ($token[$i+2]->[0] eq '*') {
           if ($token[$i-1]->[0] eq '$') {
-            return [['error', $length - $token[$i-1]->[3]]];
+            return [['error', $length - $token[$i-1]->[4]]];
           }
-          $token[$i] = ['NameTest', $token[$i]->[1], undef];
+          $token[$i] = ['NameTest', undef, $token[$i]->[2], undef];
         } elsif ($token[$i+2]->[0] eq 'NCName') {
           if ($token[$i+3]->[0] eq '(') {
             if ({comment => 1, text => 1, 'processing-instruction' => 1,
-                 node => 1}->{$token[$i+2]->[1]}) {
-              return [['error', $length - $token[$i+2]->[3]]];
+                 node => 1}->{$token[$i+2]->[2]}) {
+              return [['error', $length - $token[$i+2]->[4]]];
             } else {
-              $token[$i] = ['FunctionName', $token[$i]->[1], $token[$i+2]->[1]];
+              $token[$i] = ['FunctionName', undef,
+                            $token[$i]->[2], $token[$i+2]->[2]];
             }
           } elsif ($token[$i+3]->[0] eq '::') {
-            return [['error', $length - $token[$i+2]->[3]]];
-          } elsif ($token[$i-1]->[0] eq '$' and not $token[$i-1]->[2]) {
-            $token[$i] = ['VariableReference',
-                          $token[$i]->[1], $token[$i+2]->[1]];
+            return [['error', $length - $token[$i+2]->[4]]];
+          } elsif ($token[$i-1]->[0] eq '$' and not $token[$i-1]->[3]) {
+            $token[$i] = ['VariableReference', undef,
+                          $token[$i]->[2], $token[$i+2]->[2]];
             $token[$i-1]->[0] = '';
           } else {
-            $token[$i] = ['NameTest', $token[$i]->[1], $token[$i+2]->[1]];
+            $token[$i] = ['NameTest', undef,
+                          $token[$i]->[2], $token[$i+2]->[2]];
           }
         } else {
-          return [['error', $length - $token[$i]->[3]]];
+          return [['error', $length - $token[$i]->[4]]];
         }
         $token[$i+1]->[0] = '';
         $token[$i+2]->[0] = '';
       } elsif ($token[$i-1]->[0] eq '$') {
-        $token[$i] = ['VariableReference', undef, $token[$i]->[1]];
+        $token[$i] = ['VariableReference', undef, undef, $token[$i]->[2]];
         $token[$i-1]->[0] = '';
       } else {
-        $token[$i] = ['NameTest', undef, $token[$i]->[1]];
+        $token[$i] = ['NameTest', undef, undef, $token[$i]->[2]];
       }
     }
   }
 
   @token = grep {
-    return [['error', $length - $_->[3]]] if $_->[0] eq ':' or $_->[0] eq '$';
+    return [['error', $length - $_->[4]]] if $_->[0] eq ':' or $_->[0] eq '$';
     $_->[0] ne '';
   } @token;
   shift @token; # SOF
@@ -169,7 +171,7 @@ sub parse_expression ($$) {
   my $t = shift @$tokens;
   W: while (1) {
     if ($state eq 'before UnaryExpr') {
-      if ($t->[0] eq 'Operator' and $t->[1] eq '-') {
+      if ($t->[0] eq 'Operator' and $t->[2] eq '-') {
         my $right = {%{$open->[-1]}};
         %{$open->[-1]} = (type => 'negate', right => $right);
         push @$open, $right;
@@ -189,11 +191,11 @@ sub parse_expression ($$) {
       }
     } elsif ($state eq 'LocationPath') {
       if ($t->[0] eq 'Operator') {
-        if ($t->[1] eq '/') {
+        if ($t->[2] eq '/') {
           push @{$open->[-1]->{steps}}, {type => 'root'};
           $t = shift @$tokens;
           $state = 'before Step?';
-        } elsif ($t->[1] eq '//') {
+        } elsif ($t->[2] eq '//') {
           push @{$open->[-1]->{steps}},
               {type => 'root'},
               {type => 'step',
@@ -244,7 +246,7 @@ sub parse_expression ($$) {
 
       # AxisSpecifier
       if ($t->[0] eq 'AxisName') {
-        $step->{axis} = $t->[1];
+        $step->{axis} = $t->[2];
         $t = shift @$tokens;
         if ($t->[0] eq '::') {
           $t = shift @$tokens;
@@ -260,17 +262,18 @@ sub parse_expression ($$) {
 
       # NodeTest
       if ($t->[0] eq 'NameTest') {
-        $step->{prefix} = $t->[1];
-        $step->{local_name} = $t->[2];
+        # XXX NSResolver
+        $step->{prefix} = $t->[2];
+        $step->{local_name} = $t->[3];
         $t = shift @$tokens;
       } elsif ($t->[0] eq 'NodeType') {
-        $step->{node_type} = $t->[1];
+        $step->{node_type} = $t->[2];
         $t = shift @$tokens;
         if ($t->[0] eq '(') {
           $t = shift @$tokens;
           if ($step->{node_type} eq 'processing-instruction' and
               $t->[0] eq 'Literal') {
-            $step->{target} = $t->[1];
+            $step->{target} = $t->[2];
             $t = shift @$tokens;
           }
           if ($t->[0] eq ')') {
@@ -307,7 +310,7 @@ sub parse_expression ($$) {
       if ($t->[0] eq 'VariableReference' or
           $t->[0] eq 'Literal' or
           $t->[0] eq 'Number') {
-        push @{$open->[-1]->{steps}}, {type => $t->[0], value => $t->[1]};
+        push @{$open->[-1]->{steps}}, {type => $t->[0], value => $t->[2]};
         $t = shift @$tokens;
         $state = 'after Step';
       } elsif ($t->[0] eq '(') { # ( Expr )
@@ -319,8 +322,8 @@ sub parse_expression ($$) {
         push @$open, $expr, $path;
         $state = 'before UnaryExpr';
       } elsif ($t->[0] eq 'FunctionName') { # FunctionCall
-        my $prefix = $t->[1];
-        my $ln = $t->[2];
+        my $prefix = $t->[2];
+        my $ln = $t->[3];
         $t = shift @$tokens;
         if ($t->[0] eq '(') {
           $t = shift @$tokens;
@@ -347,10 +350,10 @@ sub parse_expression ($$) {
       }
     } elsif ($state eq 'after Step') {
       if ($t->[0] eq 'Operator') {
-        if ($t->[1] eq '/') {
+        if ($t->[2] eq '/') {
           $t = shift @$tokens;
           $state = 'before Step';
-        } elsif ($t->[1] eq '//') {
+        } elsif ($t->[2] eq '//') {
           push @{$open->[-1]->{steps}},
               {type => 'step',
                axis => 'descendant-or-self', node_type => 'node',
@@ -364,21 +367,21 @@ sub parse_expression ($$) {
         $state = 'after PathExpr';
       }
     } elsif ($state eq 'after PathExpr') {
-      if ($t->[0] eq 'Operator' and $t->[1] eq '|') {
+      if ($t->[0] eq 'Operator' and $t->[2] eq '|') {
         my $i = -1;
-        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= $Op{$t->[1]};
+        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= $Op{$t->[2]};
         my $child1 = {%{$open->[$i]}};
         my $child2 = {type => 'path', steps => []};
-        %{$open->[$i]} = (type => $t->[1], left => $child1, right => $child2);
+        %{$open->[$i]} = (type => $t->[2], left => $child1, right => $child2);
         push @$open, $child2;
         $t = shift @$tokens;
         $state = 'PathExpr';
       } elsif ($t->[0] eq 'Operator') {
         my $i = -1;
-        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= $Op{$t->[1]};
+        $i-- while exists $open->[$i-1] and $Op{$open->[$i-1]->{type}} <= $Op{$t->[2]};
         my $child1 = {%{$open->[$i]}};
         my $child2 = {type => 'path', steps => []};
-        %{$open->[$i]} = (type => $t->[1], left => $child1, right => $child2);
+        %{$open->[$i]} = (type => $t->[2], left => $child1, right => $child2);
         splice @$open, $i+1 if $i < -1;
         push @$open, $child2;
         $t = shift @$tokens;
