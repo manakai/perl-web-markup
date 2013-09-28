@@ -17,62 +17,61 @@ sub tokenize ($$) {
     if ($input =~ s/^[\x09\x0A\x0D\x20]+//) { # S
       #
     } elsif ($input =~ s/^\.\.//) {
-      push @token, ['..'];
+      push @token, ['..', $length-($+[0]-$-[0])-length $input];
     } elsif ($input =~ s/^(\.[0-9]+)//) {
-      push @token, ['Number', undef, $1];
+      push @token, ['Number', $length-($+[0]-$-[0])-length $input, $1];
     } elsif ($input =~ s/^([0-9]+(?:\.[0-9]*)?)//) {
-      push @token, ['Number', undef, $1];
+      push @token, ['Number', $length-($+[0]-$-[0])-length $input, $1];
     } elsif ($input =~ s/^:://) {
-      push @token, ['::'];
+      push @token, ['::', $length-($+[0]-$-[0])-length $input];
     } elsif ($input =~ s{^//}{}) {
-      push @token, ['Operator', undef, '//'];
+      push @token, ['Operator', $length-($+[0]-$-[0])-length $input, '//'];
     } elsif ($input =~ s{^([!<>]=)}{}) {
-      push @token, ['Operator', undef, $1];
+      push @token, ['Operator', $length-($+[0]-$-[0])-length $input, $1];
     } elsif ($input =~ s/^([()\[\].\@,])//) {
-      push @token, [$1];
+      push @token, [$1, $length-($+[0]-$-[0])-length $input];
     } elsif ($input =~ s{^([/|+=<>-])}{}) {
-      push @token, ['Operator', undef, $1];
+      push @token, ['Operator', $length-($+[0]-$-[0])-length $input, $1];
     } elsif ($input =~ s/^([:*\$])//) {
-      push @token, [$1];
-      $token[-1]->[4] = 1 + length $input;
+      push @token, [$1, $length-($+[0]-$-[0])-length $input];
       $token[-1]->[3] = $input =~ s/^[\x09\x0A\x0D\x20]+//;
     } elsif ($input =~ s/^"([^"]*)"//) {
-      push @token, ['Literal', undef, $1];
+      push @token, ['Literal', $length-($+[0]-$-[0])-length $input, $1];
     } elsif ($input =~ s/^'([^']*)'//) {
-      push @token, ['Literal', undef, $1];
+      push @token, ['Literal', $length-($+[0]-$-[0])-length $input, $1];
     } elsif ($input =~ s/^(\p{InXML_NCNameStartChar10_1}\p{InXMLNCNameChar10_1}*)//) {
-      push @token, ['NCName', undef, $1];
-      $token[-1]->[4] = (length $1) + (length $input);
+      push @token, ['NCName', $length-($+[0]-$-[0])-length $input, $1];
       $token[-1]->[3] = $input =~ s/^[\x09\x0A\x0D\x20]+//;
     } else {
       return [['error', $length - length $input]];
     }
   }
-  unshift @token, ['SOF'];
-  push @token, ['EOF'];
+  unshift @token, ['SOF', 0];
+  push @token, ['EOF', $length];
 
   for my $i (0..$#token) {
     if ($token[$i]->[0] eq '*') {
       if (not {SOF => 1, '@' => 1, '::' => 1, '(' => 1,
                '[' => 1, ',' => 1, Operator => 1}->{$token[$i-1]->[0]}) {
-        $token[$i] = ['Operator', undef, '*'];
+        $token[$i] = ['Operator', $token[$i]->[1], '*'];
       } else {
-        $token[$i] = ['NameTest', undef, undef, undef];
+        $token[$i] = ['NameTest', $token[$i]->[1], undef, undef];
       }
     } elsif ($token[$i]->[0] eq 'NCName') {
       if (not {SOF => 1, '@' => 1, '::' => 1, '(' => 1,
                '[' => 1, ',' => 1, Operator => 1}->{$token[$i-1]->[0]}) {
         if ({and => 1, or => 1, mod => 1, div => 1}->{$token[$i]->[2]}) {
-          $token[$i] = ['Operator', undef, $token[$i]->[2]];
+          $token[$i] = ['Operator', $token[$i]->[1], $token[$i]->[2]];
           next;
         }
       }
       if ($token[$i+1]->[0] eq '(') {
         if ({comment => 1, text => 1, 'processing-instruction' => 1,
              node => 1}->{$token[$i]->[2]}) {
-          $token[$i] = ['NodeType', undef, $token[$i]->[2]];
+          $token[$i] = ['NodeType', $token[$i]->[1], $token[$i]->[2]];
         } else {
-          $token[$i] = ['FunctionName', undef, undef, $token[$i]->[2]];
+          $token[$i] = ['FunctionName', $token[$i]->[1],
+                        undef, $token[$i]->[2]];
         }
       } elsif ($token[$i+1]->[0] eq '::') {
         if ({ancestor => 1, 'ancestor-or-self' => 1,
@@ -84,58 +83,60 @@ sub tokenize ($$) {
              parent => 1,
              preceding => 1, 'preceding-sibling' => 1,
              self => 1}->{$token[$i]->[2]}) {
-          $token[$i] = ['AxisName', undef, $token[$i]->[2]];
+          $token[$i] = ['AxisName', $token[$i]->[1], $token[$i]->[2]];
         } else {
-          return [['error', $length - $token[$i]->[4]]];
+          return [['error', $token[$i]->[1]]];
         }
       } elsif ($token[$i]->[3]) { # Followed by S
         if ($token[$i-1]->[0] eq '$' and not $token[$i-1]->[3]) {
-          $token[$i] = ['VariableReference', undef, undef, $token[$i]->[2]];
+          $token[$i] = ['VariableReference', $token[$i-1]->[1],
+                        undef, $token[$i]->[2]];
           $token[$i-1]->[0] = '';
         } else {
-          $token[$i] = ['NameTest', undef, undef, $token[$i]->[2]];
+          $token[$i] = ['NameTest', $token[$i]->[1], undef, $token[$i]->[2]];
         }
       } elsif ($token[$i+1]->[0] eq ':' and not $token[$i+1]->[3]) {
         if ($token[$i+2]->[0] eq '*') {
           if ($token[$i-1]->[0] eq '$') {
-            return [['error', $length - $token[$i-1]->[4]]];
+            return [['error', $token[$i-1]->[1]]];
           }
-          $token[$i] = ['NameTest', undef, $token[$i]->[2], undef];
+          $token[$i] = ['NameTest', $token[$i]->[1], $token[$i]->[2], undef];
         } elsif ($token[$i+2]->[0] eq 'NCName') {
           if ($token[$i+3]->[0] eq '(') {
             if ({comment => 1, text => 1, 'processing-instruction' => 1,
                  node => 1}->{$token[$i+2]->[2]}) {
-              return [['error', $length - $token[$i+2]->[4]]];
+              return [['error', $token[$i+2]->[1]]];
             } else {
-              $token[$i] = ['FunctionName', undef,
+              $token[$i] = ['FunctionName', $token[$i]->[1],
                             $token[$i]->[2], $token[$i+2]->[2]];
             }
           } elsif ($token[$i+3]->[0] eq '::') {
-            return [['error', $length - $token[$i+2]->[4]]];
+            return [['error', $token[$i+2]->[1]]];
           } elsif ($token[$i-1]->[0] eq '$' and not $token[$i-1]->[3]) {
-            $token[$i] = ['VariableReference', undef,
+            $token[$i] = ['VariableReference', $token[$i-1]->[1],
                           $token[$i]->[2], $token[$i+2]->[2]];
             $token[$i-1]->[0] = '';
           } else {
-            $token[$i] = ['NameTest', undef,
+            $token[$i] = ['NameTest', $token[$i]->[1],
                           $token[$i]->[2], $token[$i+2]->[2]];
           }
         } else {
-          return [['error', $length - $token[$i]->[4]]];
+          return [['error', $token[$i]->[1]]];
         }
         $token[$i+1]->[0] = '';
         $token[$i+2]->[0] = '';
       } elsif ($token[$i-1]->[0] eq '$') {
-        $token[$i] = ['VariableReference', undef, undef, $token[$i]->[2]];
+        $token[$i] = ['VariableReference', $token[$i-1]->[1],
+                      undef, $token[$i]->[2]];
         $token[$i-1]->[0] = '';
       } else {
-        $token[$i] = ['NameTest', undef, undef, $token[$i]->[2]];
+        $token[$i] = ['NameTest', $token[$i]->[1], undef, $token[$i]->[2]];
       }
     }
   }
 
   @token = grep {
-    return [['error', $length - $_->[4]]] if $_->[0] eq ':' or $_->[0] eq '$';
+    return [['error', $_->[1]]] if $_->[0] eq ':' or $_->[0] eq '$';
     $_->[0] ne '';
   } @token;
   shift @token; # SOF
