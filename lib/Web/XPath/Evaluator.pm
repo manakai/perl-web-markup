@@ -8,6 +8,18 @@ sub new ($) {
   return bless {}, $_[0];
 } # new
 
+sub onerror ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onerror} = $_[1];
+  }
+  return $_[0]->{onerror} || sub {
+    my %args = @_;
+    warn sprintf "%s%s (%s)\n",
+        $args{type}, defined $args{value} ? " ($args{value})" : '',
+        $args{level};
+  };
+} # onerror
+
 sub _n ($) {
   return unpack 'd', pack 'd', $_[0];
 } # _n
@@ -27,6 +39,7 @@ my $compare = sub {
   my ($n_eq, $s_eq) = @_;
   return sub {
     my ($self, $left, $right) = @_;
+
     if ($left->{type} eq 'node-set' and $right->{type} eq 'node-set') {
       for my $ln (@{$left->{value}}) {
         my $ls = _string_value $ln;
@@ -219,10 +232,16 @@ sub to_string ($$) {
     } elsif ($value->{value} eq '-inf') {
       return {type => 'string', value => '-Infinity'};
     } else {
-      my $v = sprintf '%.17f', $value->{value};
-      $v =~ s/0+\z// if $v =~ /\./;
-      $v =~ s/\.\z//;
-      return {type => 'string', value => $v};
+      my $n = $value->{value};
+      for (my $i = 0; ; $i++) {
+        my $f = sprintf '%.'.$i.'f', $n;
+        if ($f == $n) {
+          $f =~ s/0+\z//;
+          $f =~ s/\.\z//;
+          return {type => 'string', value => $f};
+        }
+      }
+      die "Can't serialize |$n|";
     }
   } elsif ($value->{type} eq 'boolean') {
     return {type => 'string', value => $value->{value} ? 'true' : 'false'};
@@ -401,7 +420,7 @@ sub evaluate ($$$;%) {
     } elsif ($op->[0]->{type} eq 'and-left') {
       my $value = pop @value;
       $value = $self->to_boolean ($value);
-      unless ($value) { # and's left-hand side is false
+      unless ($value->{value}) { # and's left-hand side is false
         shift @op; # right
         shift @op; # 2
       }
@@ -409,7 +428,7 @@ sub evaluate ($$$;%) {
     } elsif ($op->[0]->{type} eq 'or-left') {
       my $value = pop @value;
       $value = $self->to_boolean ($value);
-      if ($value) { # or's left-hand side is true
+      if ($value->{value}) { # or's left-hand side is true
         shift @op; # right
         shift @op; # 2
       }
