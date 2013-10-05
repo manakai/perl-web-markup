@@ -16,10 +16,14 @@ my $documents = {};
 sub get_node_path ($) {
   my $node = shift;
   my $r = '';
-  my $parent = $node->parent_node;
-  unless ($parent) {
+  if ($node->node_type == $node->DOCUMENT_NODE) {
     return '/';
   }
+  if ($node->node_type == $node->ATTRIBUTE_NODE) {
+    $r = '/@' . $node->node_name;
+    $node = $node->owner_element or return $r;
+  }
+  my $parent = $node->parent_node;
   while ($parent) {
     my $i = 0;
     for (@{$parent->child_nodes}) {
@@ -38,8 +42,12 @@ sub get_node_by_path ($$) {
   if ($path eq '/') {
     return $doc;
   } else {
-    for (map {$_ - 1} grep {$_} split m#/#, $path) {
-      $doc = $doc->child_nodes->[$_];
+    for (grep {$_} split m#/#, $path) {
+      if ($_ =~ /^\@(.+)$/) {
+        $doc = $doc->get_attribute_node ($1) or die "No $_";
+      } else {
+        $doc = $doc->child_nodes->[$_ - 1] or die "No $_";
+      }
     }
     return $doc;
   }
@@ -138,8 +146,7 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
           } elsif ($r->{type} eq 'string') {
             $actual = '"' . $r->{value} . '"';
           } elsif ($r->{type} eq 'node-set') {
-            $actual = join "\n", sort { $a cmp $b }
-                map { get_node_path $_ } @{$r->{value}};
+            $actual = join "\n", map { get_node_path $_ } @{$r->{value}};
           } else {
             die "Unknown result value type |$r->{type}|";
           }

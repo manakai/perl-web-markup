@@ -187,6 +187,8 @@ my %Op = (
     my $right = $self->to_boolean ($_[2]) or return undef;
     return {type => 'boolean', value => $left->{value} && $right->{value}};
   },
+
+  # XXX |
 ); # %Op
 
 sub to_boolean ($$) {
@@ -279,11 +281,15 @@ sub to_number ($$) {
   }
 } # to_number
 
-sub _process_name_test ($$$) {
-  my ($self, $v, $step) = @_;
+sub _process_name_test ($$$;%) {
+  my ($self, $v, $step, %args) = @_;
   my $nt = $step->{node_type};
   if (not defined $nt) {
-    @$v = grep { $_->node_type == 1 } @$v;
+    if ($args{attr}) {
+      @$v = grep { $_->node_type == 2 } @$v; # ATTRIBUTE_NODE
+    } else {
+      @$v = grep { $_->node_type == 1 } @$v; # ELEMENT_NODE
+    }
     if (defined $step->{local_name} or defined $step->{prefix}) {
       @$v = grep { $_->local_name eq $step->{local_name} } @$v
           if defined $step->{local_name};
@@ -315,6 +321,18 @@ sub _process_name_test ($$$) {
   return $v;
 } # _process_name_test
 
+sub _descendant ($) {
+  my @node = ($_[0]);
+  my @n;
+  while (@node) {
+    my $node = shift @node;
+    push @n, $node;
+    unshift @node, @{$node->child_nodes};
+  }
+  shift @n;
+  return @n;
+} # _descendant
+
 sub _process_step ($$$) {
   my ($self, $value, $step) = @_;
   my $v = [];
@@ -323,8 +341,105 @@ sub _process_step ($$$) {
       push @$v, @{$n->child_nodes};
     }
     $v = $self->_process_name_test ($v, $step);
-
-# XXX
+  } elsif ($step->{axis} eq 'descendant' or
+           $step->{axis} eq 'descendant-or-self') {
+    for my $n (@{$value->{value}}) {
+      push @$v, $n if $step->{axis} =~ /self\z/;
+      push @$v, _descendant $n;
+    }
+    $v = $self->_process_name_test ($v, $step);
+  } elsif ($step->{axis} eq 'parent' or
+           $step->{axis} eq 'ancestor' or
+           $step->{axis} eq 'ancestor-or-self') {
+    for my $n (@{$value->{value}}) {
+      push @$v, $n if $step->{axis} =~ /self\z/;
+      my $node;
+      if ($n->node_type == 2) { # ATTRIBUTE_NODE
+        $node = $n->owner_element;
+        push @$v, $node if defined $node;
+      } else {
+        $node = $n->parent_node;
+        push @$v, $node if defined $node;
+      }
+      if ($step->{axis} =~ /^ancestor/ and $node) {
+        while ($node = $node->parent_node) {
+          push @$v, $node;
+        }
+      }
+    } # $n
+    $v = $self->_process_name_test ($v, $step);
+  } elsif ($step->{axis} eq 'following-sibling') {
+    for my $n (@{$value->{value}}) {
+      my $parent = $n->parent_node or last;
+      my $flag;
+      for (@{$parent->child_nodes}) {
+        if ($_ eq $n) {
+          $flag = 1;
+        } elsif ($flag) {
+          push @$v, $_;
+        }
+      }
+    } # $n
+    $v = $self->_process_name_test ($v, $step);
+  } elsif ($step->{axis} eq 'following') {
+    for my $n (@{$value->{value}}) {
+      my $m = $n;
+      while ($m) {
+        my $parent = $m->parent_node or last;
+        my $flag;
+        for (@{$parent->child_nodes}) {
+          if ($_ eq $m) {
+            $flag = 1;
+          } elsif ($flag) {
+            push @$v, $_, _descendant $_;
+          }
+        }
+        $m = $parent;
+      } # $m
+    } # $n
+    $v = $self->_process_name_test ($v, $step);
+  } elsif ($step->{axis} eq 'preceding-sibling') {
+    for my $n (@{$value->{value}}) {
+      my @vv;
+      my $parent = $n->parent_node or last;
+      for (@{$parent->child_nodes}) {
+        if ($_ eq $n) {
+          last;
+        } else {
+          unshift @vv, $_;
+        }
+      }
+      push @$v, @vv;
+    } # $n
+    $v = $self->_process_name_test ($v, $step);
+  } elsif ($step->{axis} eq 'preceding') {
+    for my $n (@{$value->{value}}) {
+      my $m = $n;
+      my @vv;
+      while ($m) {
+        my $parent = $m->parent_node or last;
+        my @vvv;
+        for (@{$parent->child_nodes}) {
+          if ($_ eq $m) {
+            last;
+          } else {
+            push @vvv, $_, _descendant $_;
+          }
+        }
+        unshift @vv, @vvv;
+        $m = $parent;
+      } # $m
+      push @$v, reverse @vv;
+    } # $n
+    $v = $self->_process_name_test ($v, $step);
+  } elsif ($step->{axis} eq 'self') {
+    @$v = @{$value->{value}};
+    $v = $self->_process_name_test ($v, $step);
+  } elsif ($step->{axis} eq 'attribute') {
+    @$v = grep { ($_->namespace_uri || '') ne q<http://www.w3.org/2000/xmlns/> } map { @{$_->attributes or []} } @{$value->{value}};
+    $v = $self->_process_name_test ($v, $step, attr => 1);
+  } elsif ($step->{axis} eq 'namespace') {
+    $v = [];
   } else {
     die "Axis |$step->{axis}| is not supported";
   }
