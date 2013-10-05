@@ -7,21 +7,100 @@ use Test::HTCT::Parser;
 use Test::Differences;
 use Web::XPath::Parser;
 use Web::XPath::Evaluator;
+use Web::DOM::Document;
+use Web::HTML::Parser;
+use Web::XML::Parser;
+
+my $documents = {};
+
+sub get_node_path ($) {
+  my $node = shift;
+  my $r = '';
+  my $parent = $node->parent_node;
+  unless ($parent) {
+    return '/';
+  }
+  while ($parent) {
+    my $i = 0;
+    for (@{$parent->child_nodes}) {
+      $i++;
+      if ($_ eq $node) {
+        $r = '/' . $i . $r;
+      }
+    }
+    ($parent, $node) = ($parent->parent_node, $parent);
+  }
+  return $r;
+} # get_node_path
+
+sub get_node_by_path ($$) {
+  my ($doc, $path) = @_;
+  if ($path eq '/') {
+    return $doc;
+  } else {
+    for (map {$_ - 1} grep {$_} split m#/#, $path) {
+      $doc = $doc->child_nodes->[$_];
+    }
+    return $doc;
+  }
+} # get_node_by_path
 
 for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'tests', 'xpath', 'evaluation')->children) {
+  $documents->{$f, ''} = new Web::DOM::Document;
+
   for_each_test ($f->stringify, {
     data => {is_prefixed => 1},
-    errors => {is_list => 1},
-    result => {is_prefixed => 1},
+    errors => {is_list => 1, multiple => 1},
+    result => {is_prefixed => 1, multiple => 1},
+    ns => {is_list => 1},
+    html => {is_prefixed => 1},
+    xml => {is_prefixed => 1},
   }, sub {
     my $test = shift;
+
+    if ($test->{html}) {
+      my $doc = new Web::DOM::Document;
+      my $doc_name = $test->{html}->[1]->[0];
+      if (exists $documents->{$f, $doc_name}) {
+        warn "# Document |$doc_name| is already defined\n";
+      }
+
+      $doc->manakai_is_html (1);
+      my $parser = Web::HTML::Parser->new;
+      $parser->parse_char_string ($test->{html}->[0] => $doc);
+      $documents->{$f, $doc_name} = $doc;
+      return;
+    } elsif ($test->{xml}) {
+      my $doc = new Web::DOM::Document;
+      my $doc_name = $test->{xml}->[1]->[0];
+      if (exists $documents->{$f, $doc_name}) {
+        warn "# Document |$doc_name| is already defined\n";
+      }
+
+      my $parser = Web::XML::Parser->new;
+      $parser->parse_char_string ($test->{xml}->[0] => $doc);
+      $documents->{$f, $doc_name} = $doc;
+      return;
+    }
 
     test {
       my $c = shift;
 
-      my $node; # XXX
+      my %ns;
+      for (@{$test->{ns}->[0] or []}) {
+        if (/^(\S+)\s+(\S+)$/) {
+          $ns{$1} = $2 eq '<null>' ? undef : $2 eq '<empty>' ? '' : $2;
+        } elsif (/^(\S+)$/) {
+          $ns{''} = $1 eq '<null>' ? undef : $1 eq '<empty>' ? '' : $1;
+        }
+      }
+
+      my $lookup_ns = sub {
+        return $ns{$_[0] // ''};
+      }; # lookup_namespace_uri
 
       my $parser = Web::XPath::Parser->new;
+      $parser->ns_resolver ($lookup_ns);
       my $parsed = $parser->parse_char_string_as_expression
           ($test->{data}->[0]);
 
@@ -31,28 +110,47 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
         my %args = @_;
         push @error, join ';', $args{level}, $args{type}, $args{value} // '';
       });
-      my $result = $evaluator->evaluate ($parsed, $node);
 
-      my $actual;
-      if (not defined $result) {
-        #
-      } elsif ($result->{type} eq 'number') {
-        $actual = $result->{value};
-      } elsif ($result->{type} eq 'boolean') {
-        $actual = $result->{value} ? 'true' : 'false';
-      } elsif ($result->{type} eq 'string') {
-        $actual = '"' . $result->{value} . '"';
-      } elsif ($result->{type} eq 'node-set') {
-        die;
-      } else {
-        die "Unknown result value type |$result->{type}|";
+      my $xerrors = {};
+      for (@{$test->{errors} or []}) {
+        my $label = $_->[1]->[0] // '';
+        my $root = $_->[1]->[1] // '/';
+        $xerrors->{$label, $root} = $_;
       }
 
-      eq_or_diff $actual, $test->{result}->[0];
-      eq_or_diff \@error, $test->{errors}->[0] || [];
+      for my $result (@{$test->{result} or []}) {
+        my $label = $result->[1]->[0] // '';
+        my $root = $result->[1]->[1] // '/';
+        my $doc = $documents->{$f, $label} or die "Test |$label| not found\n";
+        my $root_node = get_node_by_path ($doc, $root);
+        @error = ();
+
+        test {
+          my $r = $evaluator->evaluate ($parsed, $root_node);
+
+          my $actual;
+          if (not defined $r) {
+            #
+          } elsif ($r->{type} eq 'number') {
+            $actual = $r->{value};
+          } elsif ($r->{type} eq 'boolean') {
+            $actual = $r->{value} ? 'true' : 'false';
+          } elsif ($r->{type} eq 'string') {
+            $actual = '"' . $r->{value} . '"';
+          } elsif ($r->{type} eq 'node-set') {
+            $actual = join "\n", sort { $a cmp $b }
+                map { get_node_path $_ } @{$r->{value}};
+          } else {
+            die "Unknown result value type |$r->{type}|";
+          }
+
+          eq_or_diff $actual, $result->[0];
+          eq_or_diff \@error, $xerrors->{$label, $root}->[0] || [];
+        } $c, name => [$label, $root];
+      }
 
       done $c;
-    } n => 2, name => [$f->basename, $test->{data}->[0]];
+    } n => 2 * @{$test->{result}}, name => [$f->basename, $test->{data}->[0]];
   });
 } # $f
 

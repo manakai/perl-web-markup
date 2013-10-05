@@ -338,6 +338,7 @@ sub _process_step ($$$) {
 
 sub evaluate ($$$;%) {
   my ($self, $expr, $context_node, %args) = @_;
+  return undef unless defined $expr;
 
   my @op = ([$expr, {node => $context_node,
                      size => $args{context_size} || 1,
@@ -349,13 +350,13 @@ sub evaluate ($$$;%) {
       unshift @op, [$op->[0]->{value}, $op->[1]];
     } elsif ($op->[0]->{type} eq 'path') {
       my @step = @{$op->[0]->{steps}};
-      my $value;
+      my $value = {type => 'node-set', value => [$op->[1]->{node}]};
       my $first_step = shift @step;
       if ($first_step->{type} eq 'step') {
         $value = $self->_process_step ($value, $first_step);
       } elsif ($first_step->{type} eq 'root') {
         my $node = $op->[1]->{node};
-        $node = $node->owner_document || $node;
+        $node = $node->owner_document || $node; # XXX
         $value = {type => 'node-set', value => [$node]};
       } elsif ($first_step->{type} eq 'str') {
         $value = {type => 'string', value => $first_step->{value}};

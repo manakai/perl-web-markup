@@ -353,6 +353,9 @@ for my $test (
                 (LP [S 'child', undef, undef, 'b', []])),
        (OP '*', (LP [S 'child', undef, undef, 'c', []]),
                 (LP [S 'child', undef, undef, 'y', []]))],
+  ['(/) and 0' => X OP 'and',
+       (LP [X LP [ROOT]]),
+       (LP [NUM 0, []])],
 ) {
   test {
     my $c = shift;
@@ -478,6 +481,7 @@ for my $test (
   ['ab <> yz:ab', 4],
   ['ab <> $yz:ab', 4],
   ['ab <> yz:ab()', 4],
+  ['/ and 0', 6],
 ) {
   test {
     my $c = shift;
