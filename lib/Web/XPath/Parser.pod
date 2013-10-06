@@ -2,6 +2,12 @@
 
 Web::XPath::Parser - An XPath parser
 
+=head1 SYNOPSIS
+
+  use Web::XPath::Parser;
+  $parser = Web::XPath::Parser->new;
+  $parsed = $parser->parse_char_string_as_expression ('/child::a/child::b');
+
 =head1 DESCRIPTION
 
 The C<Web::XPath::Parser> module contains an XPath parser, i.e. a
@@ -56,22 +62,15 @@ must return whether the variable identified by the namespace URL and
 local name is defined or not.  The code reference must not throw an
 exception.  It must return consistent result.
 
-=item $code = $parser->function_checker
+=item $package = $parser->function_library
 
-=item $parser->function_checker ($new_code)
+=item $parser->function_library ($package)
 
-Get or set the function checker.  It must be a code reference (or
-C<undef> to unset).  The code reference will be invoked with two
-character string arguments: namespace URL and local name.  If the
-namespace URL is C<undef>, it represents the null namespace.  Note
-that the empty string is different from C<undef>.  The code reference
-must return whether the function identified by the namespace URL and
-local name is defined or not.  If the function is defined, it must
-return an array reference with two numbers.  The first number
-represents the minimum number of arguments.  The second number
-represents the maximum number of arguments.  The first number must be
-less than or equal to the second number.  The code reference must not
-throw an exception.  It must return consistent result.
+Get or set the package name of the function library used to parse the
+XPath expression.  It must be a Perl package name string, which
+identifies L<Web::XPath::FunctionLibrary>, its subclass, or
+equivalent.  The module is C<require>d if necessary.  See
+L<Web::XPath::FunctionLibrary> for details.
 
 =item $parsed = $parser->parse_char_string_as_expression ($string)
 
@@ -80,6 +79,9 @@ the parsing does not fail, it returns the parsed data structure.  If
 the parsing fails, it reports the parse errors via the C<onerror>
 handler and returns C<undef>.
 
+The parsed data structure can be used as input to
+L<Web::XPath::Evaluator>.
+
 =back
 
 The parser does not examine whether the input string does not contain
@@ -87,6 +89,10 @@ non-Unicode character (i.e. U-00110000) for performance reason.  If
 your application would like to fully conform to relevant standards,
 you have to ensure that the input does not contain any character
 greater than U+10FFFF before invoking the parser.
+
+=head1 SEE ALSO
+
+L<Web::XPath::Evaluator>.
 
 =head1 SPECIFICATIONS
 

@@ -21,12 +21,12 @@ sub onerror ($;$) {
   };
 } # onerror
 
-sub is_html ($;$) {
+sub function_library ($;$) {
   if (@_ > 1) {
-    $_[0]->{is_html} = $_[1];
+    $_[0]->{function_library} = $_[1];
   }
-  return $_[0]->{is_html};
-} # is_html
+  return $_[0]->{function_library} || 'Web::XPath::FunctionLibrary';
+} # function_library
 
 ## Ensure that the number is a double-precision 64-bit IEEE 754
 ## floating point number.
@@ -45,7 +45,8 @@ sub _string_value ($) {
   if ($_[0]->node_type == 9) { # DOCUMENT_NODE
     return join '',
         map { defined $_ ? $_ : '' }
-        map { $_->text_content } @{$_[0]->child_nodes};
+        map { $_->text_content }
+        grep { $_->node_type == 1 } @{$_[0]->child_nodes};
   } else {
     my $value = $_[0]->text_content;
     return defined $value ? $value : '';
@@ -149,8 +150,19 @@ my %Op = (
     my $self = $_[0];
     my $left = $self->to_number ($_[1]) or return undef;
     my $right = $self->to_number ($_[2]) or return undef;
-    return {type => 'number',
-            value => _n ($left->{value} / $right->{value})};
+    return {type => 'number', value => 0+'nan'}
+        if $left->{value} eq 'nan';
+    my $n = eval { $left->{value} / $right->{value} };
+    if (not defined $n) {
+      my $neg = $left->{value} < 0;
+      if ((sprintf '%g', $right->{value}) =~ /^-/) {
+        return {type => 'number', value => $neg ? 0+"inf" : 0+"-inf"};
+      } else {
+        return {type => 'number', value => $neg ? 0+"-inf" : 0+"inf"};
+      }
+    } else {
+      return {type => 'number', value => _n ($n)};
+    }
   },
   'mod' => sub {
     my $self = $_[0];
@@ -253,15 +265,14 @@ sub to_string ($$) {
   ## <http://www.w3.org/TR/xpath/#function-string>.
 
   if ($value->{type} eq 'node-set') {
-    my @node = sort {
-      0; # XXX sort by document order
-    } @{$value->{value}};
+    $self->sort_node_set ($value);
+    my @node = @{$value->{value}};
     return {type => 'string',
             value => join '', map {
               _string_value $_;
             } @node};
   } elsif ($value->{type} eq 'number') {
-    if ($value->{value} eq 'nan') {
+    if ($value->{value} eq 'nan' or $value->{value} eq '-nan') {
       return {type => 'string', value => 'NaN'};
     } elsif ($value->{value} eq 'inf') {
       return {type => 'string', value => 'Infinity'};
@@ -274,7 +285,7 @@ sub to_string ($$) {
         if ($f == $n) {
           $f =~ s/0+\z//;
           $f =~ s/\.\z//;
-          return {type => 'string', value => $f};
+          return {type => 'string', value => $f || '0'};
         }
       }
       die "Can't serialize |$n|";
@@ -333,8 +344,8 @@ sub sort_node_set ($$) {
   delete $node_set->{unordered};
 } # sort_node_set
 
-sub _process_name_test ($$$;%) {
-  my ($self, $v, $step, %args) = @_;
+sub _process_name_test ($$$$;%) {
+  my ($self, $v, $step, $ctx, %args) = @_;
   my $nt = $step->{node_type};
   if (not defined $nt) {
     if ($args{attr}) {
@@ -342,13 +353,14 @@ sub _process_name_test ($$$;%) {
     } else {
       @$v = grep { $_->node_type == 1 } @$v; # ELEMENT_NODE
     }
-    if (defined $step->{local_name} or defined $step->{prefix}) {
+    if (@$v and (defined $step->{local_name} or defined $step->{prefix})) {
       @$v = grep { $_->local_name eq $step->{local_name} } @$v
           if defined $step->{local_name};
 
       my $nsurl;
       if (not defined $step->{prefix}) {
-        if (not $args{attr} and $self->is_html) {
+        if (not $args{attr} and
+            ($ctx->{node}->owner_document || $ctx->{node})->manakai_is_html) {
           $nsurl = \'http://www.w3.org/1999/xhtml';
         }
       } else {
@@ -387,21 +399,21 @@ sub _descendant ($) {
   return @n;
 } # _descendant
 
-sub _process_step ($$$) {
-  my ($self, $value, $step) = @_;
+sub _process_step ($$$$) {
+  my ($self, $value, $step, $ctx) = @_;
   my $v = [];
   if ($step->{axis} eq 'child') {
     for my $n (@{$value->{value}}) {
       push @$v, @{$n->child_nodes};
     }
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'descendant' or
            $step->{axis} eq 'descendant-or-self') {
     for my $n (@{$value->{value}}) {
       push @$v, $n if $step->{axis} =~ /self\z/;
       push @$v, _descendant $n;
     }
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'parent' or
            $step->{axis} eq 'ancestor' or
            $step->{axis} eq 'ancestor-or-self') {
@@ -421,7 +433,7 @@ sub _process_step ($$$) {
         }
       }
     } # $n
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'following-sibling') {
     for my $n (@{$value->{value}}) {
       my $parent = $n->parent_node or last;
@@ -434,7 +446,7 @@ sub _process_step ($$$) {
         }
       }
     } # $n
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'following') {
     for my $n (@{$value->{value}}) {
       my $m = $n;
@@ -451,7 +463,7 @@ sub _process_step ($$$) {
         $m = $parent;
       } # $m
     } # $n
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'preceding-sibling') {
     for my $n (@{$value->{value}}) {
       my @vv;
@@ -465,7 +477,7 @@ sub _process_step ($$$) {
       }
       push @$v, @vv;
     } # $n
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'preceding') {
     for my $n (@{$value->{value}}) {
       my $m = $n;
@@ -485,13 +497,13 @@ sub _process_step ($$$) {
       } # $m
       push @$v, reverse @vv;
     } # $n
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'self') {
     @$v = @{$value->{value}};
-    $v = $self->_process_name_test ($v, $step);
+    $v = $self->_process_name_test ($v, $step, $ctx);
   } elsif ($step->{axis} eq 'attribute') {
     @$v = grep { ($_->namespace_uri || '') ne q<http://www.w3.org/2000/xmlns/> } map { @{$_->attributes or []} } @{$value->{value}};
-    $v = $self->_process_name_test ($v, $step, attr => 1);
+    $v = $self->_process_name_test ($v, $step, $ctx, attr => 1);
   } elsif ($step->{axis} eq 'namespace') {
     $v = [];
   } else {
@@ -549,7 +561,7 @@ sub evaluate ($$$;%) {
       my $value = {type => 'node-set', value => [$op->[1]->{node}]};
       my $first_step = shift @step;
       if ($first_step->{type} eq 'step') {
-        $value = $self->_process_step ($value, $first_step);
+        $value = $self->_process_step ($value, $first_step, $op->[1]);
       } elsif ($first_step->{type} eq 'root') {
         my $node = $op->[1]->{node};
         $node = $node->parent_node while $node->parent_node;
@@ -561,11 +573,25 @@ sub evaluate ($$$;%) {
       } elsif ($first_step->{type} eq 'var') {
         # XXX
       } elsif ($first_step->{type} eq 'function') {
-        # XXX
+        my @args;
+        for (@{$first_step->{args}}) {
+          my $value = $self->evaluate
+              ($_, $op->[1]->{node},
+               context_size => $op->[1]->{size},
+               context_position => $op->[1]->{position}) or return undef;
+          push @args, $value;
+        }
+        my $lib = $self->function_library;
+        eval qq{ require $lib } or die $@;
+        $value = $lib->get_code
+            (defined $first_step->{nsurl} ? ${$first_step->{nsurl}} : undef,
+             $first_step->{local_name})
+                ->($self, \@args, $op->[1]) or return undef;
       } elsif ($first_step->{type} eq 'expr') {
         $value = $self->evaluate ($first_step, $op->[1]->{node},
                                   context_size => $op->[1]->{size},
-                                  context_position => $op->[1]->{position});
+                                  context_position => $op->[1]->{position})
+            or return undef;
         if ($value->{type} eq 'node-set' and
             $value->{reversed} and
             not $value->{unordered}) {
@@ -592,7 +618,7 @@ sub evaluate ($$$;%) {
         my $step = shift @step;
         if ($step->{type} eq 'step') {
           my $unordered = $value->{unordered};
-          $value = $self->_process_step ($value, $step);
+          $value = $self->_process_step ($value, $step, $op->[1]);
           $value->{unordered} = 1 if $unordered;
           if (@{$step->{predicates} or []}) {
             $value = $self->_process_predicates ($value, $step)

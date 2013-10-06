@@ -1,0 +1,118 @@
+=head1 NAME
+
+Web::XPath::FunctionLibrary - XPath 1.0 Core Function Library
+
+=head1 DESCRIPTION
+
+The C<Web::XPath::FunctionLibrary> module contains an implementation
+of the XPath 1.0 Core Function Library.  It can be used directly, or
+by subclassing and adding more functions.
+
+=head1 METHODS
+
+The module that can be used as the function library in parsing or
+evaluating of expressions must implement the following class methods:
+
+=over 4
+
+=item [$min, $max] = Web::XPath::FunctionLibrary->get_argument_number ($nsurl, $ln)
+
+Return whether the specified function is defined or not, and if
+defined, the minimum and maximum numbers of the arguments for the
+function.
+
+This method is invoked with two character string arguments: namespace
+URL and local name.  If the namespace URL is C<undef>, it represents
+the null namespace.  Note that the empty string is different from
+C<undef>.  If the function identified by the namespace URL and local
+name is not defined, the method must return C<undef>.
+
+If the function is defined, the method must return an array reference
+with two non-negative integers.  The first number represents the
+minimum number of arguments.  The second number represents the maximum
+number of arguments.  The first number must be less than or equal to
+the second number.
+
+The method must not throw any exception.  It must always return
+consistent result.
+
+=item $code = Web::XPath::FunctionLibrary->get_code ($nsurl, $ln)
+
+Return the implementation of the specified function.
+
+This method is invoked with two character string arguments: namespace
+URL and local name.  If the namespace URL is C<undef>, it represents
+the null namespace.  Note that the empty string is different from
+C<undef>.  If the function identified by the namespace URL and local
+name is not defined, the method must return C<undef>.
+
+If the function is defined, the method must return a code reference.
+The code reference will be invoked with three arguments: I<$self>,
+I<$args>, and I<$context>.
+
+The I<$self> argument is the L<Web::XPath::Evaluator> object on which
+the XPath expression is evaluated.  The code may invoke (non-private)
+methods on the object, and it may report any error by invoking the C<<
+$self->onerror >> code reference.
+
+The I<$args> argument is an array reference, containing the XPath
+values obtained by evaluating the argument expressions of the
+function, in order.  The code must not modify them.
+
+The I<$context> argument is a hash reference, containing the following
+key/value pairs: C<node> is the context node; C<size> is the context
+size, represented as a Perl number; C<position> is the context
+position, represented as a Perl number.  The code must not modify
+them.
+
+If the code reports a must-level error, it may return the C<undef>
+value.  If the C<undef> value is returned, the evaluation is
+immediately terminated.  Otherwise, the code must return an XPath
+value.  The value is used as the return value of the function.
+
+See L<Web::XPath::Evaluator> for details on how XPath values are
+represented.
+
+The method and the code reference returned by the method must not
+throw any exception.  They must always return consistent result.
+
+=back
+
+These methods must return consistent result.
+
+=head1 SEE ALSO
+
+L<Web::XPath::Parser>, L<Web::XPath::Evaluator>.
+
+=head1 SPECIFICATIONS
+
+=over 4
+
+=item XPATH
+
+XML Path Language (XPath) Version 1.0 <http://www.w3.org/TR/xpath/>.
+
+For the purpose of the C<number()> function, whitespace is defined as
+the production rule C<S> [XML].
+
+It is an error if the argument to the C<number()>, C<boolean()>, or
+C<string()> function is not of a supported type.
+
+=item XML
+
+Extensible Markup Language (XML) 1.0 <http://www.w3.org/TR/xml/>.
+
+=back
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

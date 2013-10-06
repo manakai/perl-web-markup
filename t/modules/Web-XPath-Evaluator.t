@@ -55,6 +55,31 @@ test {
   done $c;
 } n => 3, name => '/';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $df = $doc->create_document_fragment;
+  $df->inner_html (q{<p>aa</p>bxx<!--cc-->});
+  my $parser = Web::XPath::Parser->new;
+  my $expr = $parser->parse_char_string_as_expression ('string()');
+  my $eval = Web::XPath::Evaluator->new;
+  my $result = $eval->evaluate ($expr, $df);
+  eq_or_diff $result, {type => 'string', value => 'aabxx'};
+  done $c;
+} n => 1, name => 'document fragment string()';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $node = $doc->create_element_type_definition ('x');
+  my $parser = Web::XPath::Parser->new;
+  my $expr = $parser->parse_char_string_as_expression ('string()');
+  my $eval = Web::XPath::Evaluator->new;
+  my $result = $eval->evaluate ($expr, $node);
+  eq_or_diff $result, {type => 'string', value => ''};
+  done $c;
+} n => 1, name => 'non-standard string()';
+
 run_tests;
 
 =head1 LICENSE

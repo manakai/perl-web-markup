@@ -30,6 +30,10 @@ An RDF/XML parser.
 
 An XPath 1.0 parser.
 
+=item L<Web::XPath::Evaluator>
+
+An XPath 1.0 evaluator.
+
 =back
 
 =head1 DEPENDENCY

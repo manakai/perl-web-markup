@@ -1,0 +1,188 @@
+=head1 NAME
+
+Web::XPath::Evaluator - XPath 1.0 evaluator
+
+=head1 SYNOPSIS
+
+  use Web::XPath::Evaluator;
+  $eval = Web::XPath::Evaluator->new;
+  $value = $eval->evaluate ($parsed_expression);
+
+=head1 METHODS
+
+Following methods are available:
+
+=over 4
+
+=item $eval = Web::XPath::Evaluator->new
+
+Return a new evaluator.
+
+=item $code = $eval->onerror
+
+=item $eval->onerror ($new_code)
+
+Get or set the error handler for the evaluator.  Any error, as well as
+warning and information, is reported to the handler.  See
+L<Whatpm::Errors>
+<https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
+for more information.
+
+=item $package = $eval->function_library
+
+=item $eval->function_library ($package)
+
+Get or set the package name of the function library used to evaluate
+the XPath expression.  It must be a Perl package name string, which
+identifies L<Web::XPath::FunctionLibrary>, its subclass, or
+equivalent.  The module is C<require>d if necessary.  See
+L<Web::XPath::FunctionLibrary> for details.
+
+=item $value = $eval->evaluate ($parsed_expr, $context_node, context_size => $n, context_position => $n)
+
+Evaluate an expression.
+
+The first argument must be a parsed XPath 1.0 expression data
+structure (See L<Web::XPath::Parser>).
+
+The second argument must be the context node.  The node must be a DOM
+node, whose implementation conforming the manakai's DOM Perl binding
+specification.  In addition, the implementation must also support the
+C<manakaiIsHTML> attribute of the C<Document> interface.
+L<Web::DOM::Document> and related modules in the web-dom package is
+such a DOM implementation.
+
+Additionally, following key/value pairs can be specified:
+C<context_size> is a Perl integer used as the context size;
+C<context_position> is a Perl integer used as the context position.
+The context size must be greater than or equal to the context
+position.  The context position must be positive.  Their default is
+C<1>.
+
+Any error during the evaluation of the expression is reported through
+the C<onerror> handler.  If a fatal error is encountered, the method
+returns C<undef>.  Otherwise, the result XPath value of the evaluation
+is returned.
+
+=item $boolean = $self->to_boolean ($value)
+
+=item $number = $self->to_number ($value)
+
+=item $string = $self->to_string ($value)
+
+Convert the specified XPath value into boolean, number, or string, by
+the C<boolean>, C<number()>, or C<string()> function, respectively.
+The argument must be an XPath value.  If the argument is already of
+the specified type, it is returned as is.  Otherwise a new value is
+returned.
+
+Any error during the conversion is reported through the C<onerror>
+handler.  If a fatal error is encountered, the method returns
+C<undef>.
+
+=item $self->sort_node_set ($value)
+
+Sort the nodes in the node-set.  The argument must be an XPath value.
+If the value is not a node-set, it is unchanged.  If the nodes are
+already sorted, it is unchanged.  Otherwise, the nodes are sorted in
+place by document order or reverse document order, depending on the
+C<reversed> flag of the value.
+
+=back
+
+=head1 VALUES
+
+An XPath 1.0 value is represented as a hash reference.
+
+=head2 Boolean
+
+A boolean value is represented as following key/value pairs: C<type>
+is C<boolean>; C<value> is a Perl boolean value, representing the
+boolean value.
+
+=head2 Number
+
+A number value is represented as following key/value pairs: C<type> is
+C<number>; C<value> is a Perl number, representing the number value.
+Note that C<value> can be a number value representing C<nan>, C<-nan>,
+C<inf>, C<-inf>, C<0>, or C<-0>.
+
+=head2 String
+
+A string value is represented as following key/value pairs: C<type> is
+C<string>; C<value> is a Perl string, representing the string value.
+Note that if C<value> is not utf8-flagged, it is interpreted as
+Latin-1 string as usual.
+
+=head2 Node-set
+
+A node-set value is represented as following key/value pairs: C<type>
+is C<node-set>; C<value> is an array reference, containing the nodes
+in the node-set; C<unordered> is a Perl boolean value, representing
+whether the nodes are unsorted or not; C<reversed> is a Perl boolean
+value, representing whether the nodes are sorted in reverse order or
+not.
+
+If C<unordered> is true, whether the nodes in the C<value> is sorted
+or not is unknown.  Otherwise, if C<reversed> is true, the nodes in
+the C<value> is sorted in reverse document order.  Otherwise, the
+nodes in the C<value> is sorted in document order.
+
+=back
+
+Any other non-basic data type is not supported.
+
+=head1 SEE ALSO
+
+L<Web::XPath::Parser>.
+
+=head1 SPECIFICATIONS
+
+=over 4
+
+=item XPATH
+
+XML Path Language (XPath) Version 1.0 <http://www.w3.org/TR/xpath/>.
+
+XML Path Language (XPath) Version 1.0 Specification Errata
+<http://www.w3.org/1999/11/REC-xpath-19991116-errata/>.
+
+HTML - Interactions with XPath and XSLT
+<http://www.whatwg.org/specs/web-apps/current-work/#interactions-with-xpath-and-xslt>.
+
+For a node whose type is not defined by XPath 1.0 specification, the
+string-value of the node is the empty string.
+
+If an operand of C<=> or C<!=> is an object of a type other than the
+four basic types, it is converted in a way that is dependent on that
+type.  It is an error if it is not defined.
+
+The document order is defined in terms of the
+C<compareDocumentPosition> method of the C<Node> interface [DOM] as
+follows.  If C<nodeA.compareDocumentPosition (nodeB) &
+DOCUMENT_POSITION_PRECEDING> is true, I<nodeA> preceeds I<nodeB>.
+Otherwise, if C<nodeA.compareDocumentPosition (nodeB) &
+DOCUMENT_POSITION_FOLLOWING> is true, I<nodeA> follows I<nodeB>.
+Otherwise, they are same in document order.
+
+If an error is found during the evaluation of an expression, the
+evaluation MUST be immediately aborted.
+
+=item DOM
+
+DOM Standard <http://dom.spec.whatwg.org/>.
+
+=back
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

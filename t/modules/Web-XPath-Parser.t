@@ -1,11 +1,25 @@
 use strict;
 use warnings;
 use Path::Class;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'test-x1', 'lib')->stringify;
 use Test::X1;
 use Test::More;
 use Test::Differences;
+use Test::XPathParser;
 use Web::XPath::Parser;
+
+sub funclib ($) {
+  my $checker = shift;
+  my $rand = int rand 1000000;
+  no strict 'refs';
+  *{"test::temp::package_${rand}::get_argument_number"} = sub {
+    shift;
+    return $checker->(@_);
+  };
+  $INC{"test/temp/package_${rand}.pm"} = 1;
+  return "test::temp::package_${rand}";
+} # funclib
 
 for my $test (
   {in => '', out => [['EOF', 0]]},
@@ -105,31 +119,6 @@ for my $test (
     done $c;
   } n => 1, name => ['tokenize', $test->{in}];
 }
-
-sub S ($$$$$) { +{type => 'step', axis => $_[0],
-                  prefix => $_[1], (defined $_[2] ? (nsurl => \($_[2])) : ()),
-                  local_name => $_[3],
-                  predicates => $_[4]} }
-sub Sf ($$$$) { +{type => 'step', axis => $_[0],
-                  node_type => $_[1],
-                  (defined $_[2] ? (target => $_[2]) : ()),
-                  predicates => $_[3]} }
-sub STR ($$) { {type => 'str', value => $_[0], predicates => $_[1]} }
-sub NUM ($$) { {type => 'num', value => $_[0], predicates => $_[1]} }
-sub VAR ($$$$) { +{type => 'var',
-                   prefix => $_[0], (defined $_[1] ? (nsurl => \($_[1])) : ()),
-                   local_name => $_[2],
-                   predicates => $_[3]} }
-sub F ($$$$$) { +{type => 'function',
-                  prefix => $_[0], (defined $_[1] ? (nsurl => \($_[1])) : ()),
-                  local_name => $_[2],
-                  args => $_[3],
-                  predicates => $_[4]} }
-sub ROOT () { {type => 'root'} }
-sub LP ($) { {type => 'path', steps => $_[0]} }
-sub OP ($$$) { {type => $_[0], left => $_[1], right => $_[2]} }
-sub NEG ($) { {type => 'negate', right => $_[0]} }
-sub X ($;$) { {type => 'expr', value => $_[0], predicates => $_[1] || []} }
 
 for my $test (
   [' / ' => X LP [ROOT]],
@@ -364,7 +353,7 @@ for my $test (
     $parser->onerror (sub {
       push @error, {@_};
     });
-    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->function_library (funclib sub { [0, 0+'inf'] });
     $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     eq_or_diff $result, $test->[1];
@@ -398,7 +387,7 @@ for my $test (
       push @error, {@_};
     });
     $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
-    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->function_library (funclib sub { [0, 0+'inf'] });
     $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     eq_or_diff $result, $test->[2];
@@ -491,7 +480,7 @@ for my $test (
     $parser->onerror (sub {
       push @error, {@_};
     });
-    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->function_library (funclib sub { [0, 0+'inf'] });
     $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     is $result, undef;
@@ -519,7 +508,7 @@ for my $test (
       push @error, {@_};
     });
     $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
-    $parser->function_checker (sub { [0, 0+'inf'] });
+    $parser->function_library (funclib sub { [0, 0+'inf'] });
     $parser->variable_checker (sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     is $result, undef;
@@ -570,7 +559,7 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->function_checker (sub { undef });
+  $parser->function_library (funclib sub { undef });
   my $result = $parser->parse_char_string_as_expression ('hoge ()');
   is $result, undef;
   eq_or_diff \@error,
@@ -587,7 +576,7 @@ test {
     push @error, {@_};
   });
   $parser->ns_resolver (sub { 'abc' });
-  $parser->function_checker (sub { undef });
+  $parser->function_library (funclib sub { undef });
   my $result = $parser->parse_char_string_as_expression ('hoge:fuga()');
   is $result, undef;
   eq_or_diff \@error,
@@ -603,7 +592,7 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->function_checker (sub { [1, 1] });
+  $parser->function_library (funclib sub { [1, 1] });
   my $result = $parser->parse_char_string_as_expression ('hoge ()');
   is $result, undef;
   eq_or_diff \@error,
@@ -618,7 +607,7 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->function_checker (sub { [2, 3] });
+  $parser->function_library (funclib sub { [2, 3] });
   my $result = $parser->parse_char_string_as_expression ('hoge (12)');
   is $result, undef;
   eq_or_diff \@error,
@@ -633,7 +622,7 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->function_checker (sub { [2, 2] });
+  $parser->function_library (funclib sub { [2, 2] });
   my $result = $parser->parse_char_string_as_expression ('hoge (12, 31, 4)');
   is $result, undef;
   eq_or_diff \@error,

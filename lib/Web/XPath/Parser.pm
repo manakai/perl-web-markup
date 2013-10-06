@@ -26,12 +26,12 @@ sub ns_resolver ($;$) {
   return $_[0]->{ns_resolver} ||= sub ($) { return undef };
 } # ns_resolver
 
-sub function_checker ($;$) {
+sub function_library ($;$) {
   if (@_ > 1) {
-    $_[0]->{function_checker} = $_[1];
+    $_[0]->{function_library} = $_[1];
   }
-  return $_[0]->{function_checker} ||= sub ($$) { return undef };
-} # function_checker
+  return $_[0]->{function_library} || 'Web::XPath::FunctionLibrary';
+} # function_library
 
 sub variable_checker ($;$) {
   if (@_ > 1) {
@@ -413,7 +413,10 @@ sub parse_char_string_as_expression ($$) {
         }
         my $prefix = $t->[2];
         my $ln = $t->[3];
-        my $chk = $self->function_checker->(defined $nsurl ? $$nsurl : undef, $ln);
+        my $lib = $self->function_library;
+        eval qq{ require $lib } or die $@;
+        my $chk = $lib->get_argument_number
+            (defined $nsurl ? $$nsurl : undef, $ln);
         unless ($chk) {
           $self->onerror->(type => 'xpath:function:unknown', # XXX
                            level => 'm',
