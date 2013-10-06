@@ -482,6 +482,7 @@ for my $test (
   ['ab <> $yz:ab', 4],
   ['ab <> yz:ab()', 4],
   ['/ and 0', 6],
+  ['/ho/ge/[@aa]', 7],
 ) {
   test {
     my $c = shift;

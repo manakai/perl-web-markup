@@ -139,7 +139,7 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
 
           my $actual;
           if (not defined $r) {
-            #
+            $actual = 'null';
           } elsif ($r->{type} eq 'number') {
             $actual = $r->{value};
           } elsif ($r->{type} eq 'boolean') {
@@ -147,6 +147,7 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
           } elsif ($r->{type} eq 'string') {
             $actual = '"' . $r->{value} . '"';
           } elsif ($r->{type} eq 'node-set') {
+            $evaluator->sort_node_set ($r);
             $actual = join "\n", map { get_node_path $_ } @{$r->{value}};
           } else {
             die "Unknown result value type |$r->{type}|";

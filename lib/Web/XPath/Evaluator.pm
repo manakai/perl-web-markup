@@ -3,6 +3,7 @@ use strict;
 use warnings;
 our $VERSION = '1.0';
 use POSIX ();
+use Scalar::Util qw(refaddr);
 
 sub new ($) {
   return bless {}, $_[0];
@@ -27,17 +28,26 @@ sub is_html ($;$) {
   return $_[0]->{is_html};
 } # is_html
 
+## Ensure that the number is a double-precision 64-bit IEEE 754
+## floating point number.
 sub _n ($) {
   return unpack 'd', pack 'd', $_[0];
 } # _n
 
+sub _node_set_uniq ($) {
+  my $v = $_[0];
+  my %found;
+  @$v = grep { not $found{refaddr $_}++ } @$v;
+  return $v;
+} # _node_set_uniq
+
 sub _string_value ($) {
-  if ($_->node_type == 9) { # DOCUMENT_NODE
+  if ($_[0]->node_type == 9) { # DOCUMENT_NODE
     return join '',
         map { defined $_ ? $_ : '' }
-        map { $_->text_content } @{$_->child_nodes};
+        map { $_->text_content } @{$_[0]->child_nodes};
   } else {
-    my $value = $_->text_content;
+    my $value = $_[0]->text_content;
     return defined $value ? $value : '';
   }
 } # _string_value
@@ -80,9 +90,9 @@ my $compare = sub {
         return {type => 'boolean',
                 value => $s_eq->(!!$self->to_boolean ($left)->{value}, !!$right->{value})};
       } else {
-        $self->onerror (type => 'xpath:incompat type', # XXX
-                        level => 'm',
-                        value => $right->{type});
+        $self->onerror->(type => 'xpath:incompat with =', # XXX
+                         level => 'm',
+                         value => $right->{type});
         return undef;
       }
     } elsif ($left->{type} eq 'boolean' or $right->{type} eq 'boolean') {
@@ -105,9 +115,9 @@ my $compare = sub {
       $type = $right->{type} if $type eq 'string' or
                                 $type eq 'number' or
                                 $type eq 'boolean';
-      $self->onerror (type => 'xpath:incompat type', # XXX
-                      level => 'm',
-                      value => $type);
+      $self->onerror->(type => 'xpath:incompat with =', # XXX
+                       level => 'm',
+                       value => $type);
       return undef;
     }
   };
@@ -195,7 +205,24 @@ my %Op = (
     return {type => 'boolean', value => $left->{value} && $right->{value}};
   },
 
-  # XXX |
+  '|' => sub {
+    my ($self, $left, $right) = @_;
+    if ($left->{type} ne 'node-set') {
+      $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+                       level => 'm',
+                       value => $left->{type});
+      return undef;
+    }
+    if ($right->{type} ne 'node-set') {
+      $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+                       level => 'm',
+                       value => $right->{type});
+      return undef;
+    }
+    return {type => 'node-set',
+            value => _node_set_uniq [@{$left->{value}}, @{$right->{value}}],
+            unordered => 1};
+  },
 ); # %Op
 
 sub to_boolean ($$) {
@@ -212,9 +239,9 @@ sub to_boolean ($$) {
   } elsif ($value->{type} eq 'string') {
     return {type => 'boolean', value => !!length $value->{value}};
   } else {
-    $self->onerror (type => 'xpath:incompat type', # XXX
-                    level => 'm',
-                    value => $value->{type});
+    $self->onerror->(type => 'xpath:incompat with boolean', # XXX
+                     level => 'm',
+                     value => $value->{type});
     return undef;
   }
 } # to_boolean
@@ -255,9 +282,9 @@ sub to_string ($$) {
   } elsif ($value->{type} eq 'boolean') {
     return {type => 'string', value => $value->{value} ? 'true' : 'false'};
   } else {
-    $self->onerror (type => 'xpath:incompat type', # XXX
-                    level => 'm',
-                    value => $value->{type});
+    $self->onerror->(type => 'xpath:incompat with string', # XXX
+                     level => 'm',
+                     value => $value->{type});
     return undef;
   }
 } # to_string
@@ -281,12 +308,30 @@ sub to_number ($$) {
   } elsif ($value->{type} eq 'boolean') {
     return {type => 'number', value => $value->{value} ? 1 : 0};
   } else {
-    $self->onerror (type => 'xpath:incompat type', # XXX
-                    level => 'm',
-                    value => $value->{type});
+    $self->onerror->(type => 'xpath:incompat with number', # XXX
+                     level => 'm',
+                     value => $value->{type});
     return undef;
   }
 } # to_number
+
+sub sort_node_set ($$) {
+  my (undef, $node_set) = @_;
+  return unless $node_set->{type} eq 'node-set';
+  return unless $node_set->{unordered};
+  return unless @{$node_set->{value}};
+
+  my $p = $node_set->{value}->[0]->DOCUMENT_POSITION_PRECEDING;
+  my $f = $node_set->{value}->[0]->DOCUMENT_POSITION_FOLLOWING;
+
+  $node_set->{value} = [sort {
+    my $compare = $a->compare_document_position ($b);
+    $compare & $p ? +1 : $compare & $f ? -1 : 0;
+  } @{$node_set->{value}}];
+  @{$node_set->{value}} = reverse @{$node_set->{value}}
+      if $node_set->{reversed};
+  delete $node_set->{unordered};
+} # sort_node_set
 
 sub _process_name_test ($$$;%) {
   my ($self, $v, $step, %args) = @_;
@@ -453,12 +498,39 @@ sub _process_step ($$$) {
     die "Axis |$step->{axis}| is not supported";
   }
 
-  # XXX uniquness
+  ## $v doesn't contain duplication at this point.
+  #$v = _node_set_uniq $v;
 
-  # XXX predicate
-  
-  return {type => 'node-set', value => $v};
+  my $node_set = {type => 'node-set', value => $v};
+  $node_set->{reversed} = 1 if $step->{axis} =~ /^(?:ancestor|preceding)/;
+  return $node_set;
 } # _process_step
+
+sub _process_predicates ($$$) {
+  my ($self, $value, $step) = @_;
+  for my $pred (@{$step->{predicates}}) {
+    $self->sort_node_set ($value);
+    my $size = @{$value->{value}} or return $value;
+    my @value;
+    my $pos = 1;
+    for my $node (@{$value->{value}}) {
+      my $result = $self->evaluate ($pred, $node,
+                                    context_size => $size,
+                                    context_position => $pos)
+          or return undef;
+      if ($result->{type} eq 'number') {
+        $result = $result->{value} == $pos;
+      } else {
+        $result = $self->to_boolean ($result) or return undef;
+        $result = $result->{value};
+      }
+      push @value, $node if $result;
+      $pos++;
+    }
+    @{$value->{value}} = @value;
+  } # $pred
+  return $value;
+} # _process_predicates
 
 sub evaluate ($$$;%) {
   my ($self, $expr, $context_node, %args) = @_;
@@ -480,7 +552,7 @@ sub evaluate ($$$;%) {
         $value = $self->_process_step ($value, $first_step);
       } elsif ($first_step->{type} eq 'root') {
         my $node = $op->[1]->{node};
-        $node = $node->owner_document || $node; # XXX
+        $node = $node->parent_node while $node->parent_node;
         $value = {type => 'node-set', value => [$node]};
       } elsif ($first_step->{type} eq 'str') {
         $value = {type => 'string', value => $first_step->{value}};
@@ -494,18 +566,36 @@ sub evaluate ($$$;%) {
         $value = $self->evaluate ($first_step, $op->[1]->{node},
                                   context_size => $op->[1]->{size},
                                   context_position => $op->[1]->{position});
+        if ($value->{type} eq 'node-set' and
+            $value->{reversed} and
+            not $value->{unordered}) {
+          @{$value->{value}} = reverse @{$value->{value}};
+        }
       } else {
         die "Unknown step type: |$first_step->{type}|";
       }
 
-      if (@step and not $value->{type} eq 'node-set') {
-        # XXX
+      if ((@step or @{$first_step->{predicates} or []}) and
+          not $value->{type} eq 'node-set') {
+        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+                         level => 'm',
+                         value => $value->{type});
+        return undef;
+      }
+
+      if (@{$first_step->{predicates} or []}) {
+        $value = $self->_process_predicates ($value, $first_step)
+            or return undef;
       }
 
       while (@step) {
         my $step = shift @step;
         if ($step->{type} eq 'step') {
           $value = $self->_process_step ($value, $step);
+          if (@{$step->{predicates} or []}) {
+            $value = $self->_process_predicates ($value, $step)
+                or return undef;
+          }
         } else {
           die "Unknown step type: |$step->{type}|";
         }

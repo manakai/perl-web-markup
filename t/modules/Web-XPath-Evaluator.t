@@ -30,6 +30,31 @@ test {
   done $c;
 } n => 1, name => 'adjucent text nodes';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('a');
+  my $parser = Web::XPath::Parser->new;
+  my $expr = $parser->parse_char_string_as_expression ('/');
+  my $eval = Web::XPath::Evaluator->new;
+  {
+    my $result = $eval->evaluate ($expr, $el);
+    eq_or_diff $result, {type => 'node-set', value => [$el]};
+  }
+  my $el2 = $doc->create_text_node ('');
+  $el->append_child ($el2);
+  {
+    my $result = $eval->evaluate ($expr, $el2);
+    eq_or_diff $result, {type => 'node-set', value => [$el]};
+  }
+  $doc->append_child ($el);
+  {
+    my $result = $eval->evaluate ($expr, $el2);
+    eq_or_diff $result, {type => 'node-set', value => [$doc]};
+  }
+  done $c;
+} n => 3, name => '/';
+
 run_tests;
 
 =head1 LICENSE
