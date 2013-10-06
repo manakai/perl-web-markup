@@ -130,6 +130,7 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
         my $label = $result->[1]->[0] // '';
         my $root = $result->[1]->[1] // '/';
         my $doc = $documents->{$f, $label} or die "Test |$label| not found\n";
+        $evaluator->is_html ($doc->manakai_is_html);
         my $root_node = get_node_by_path ($doc, $root);
         @error = ();
 

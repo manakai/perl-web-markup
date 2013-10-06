@@ -20,6 +20,13 @@ sub onerror ($;$) {
   };
 } # onerror
 
+sub is_html ($;$) {
+  if (@_ > 1) {
+    $_[0]->{is_html} = $_[1];
+  }
+  return $_[0]->{is_html};
+} # is_html
+
 sub _n ($) {
   return unpack 'd', pack 'd', $_[0];
 } # _n
@@ -296,7 +303,9 @@ sub _process_name_test ($$$;%) {
 
       my $nsurl;
       if (not defined $step->{prefix}) {
-        # XXX
+        if (not $args{attr} and $self->is_html) {
+          $nsurl = \'http://www.w3.org/1999/xhtml';
+        }
       } else {
         $nsurl = $step->{nsurl};
       }
