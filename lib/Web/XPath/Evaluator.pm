@@ -591,7 +591,9 @@ sub evaluate ($$$;%) {
       while (@step) {
         my $step = shift @step;
         if ($step->{type} eq 'step') {
+          my $unordered = $value->{unordered};
           $value = $self->_process_step ($value, $step);
+          $value->{unordered} = 1 if $unordered;
           if (@{$step->{predicates} or []}) {
             $value = $self->_process_predicates ($value, $step)
                 or return undef;
