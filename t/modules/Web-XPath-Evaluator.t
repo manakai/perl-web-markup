@@ -323,6 +323,52 @@ test {
   done $c;
 } n => 2, name => 'variable is not defined';
 
+test {
+  my $c = shift;
+  my $doc1 = new Web::DOM::Document;
+  $doc1->manakai_is_html (1);
+  my $el1 = $doc1->create_element ('hoge');
+  my $el3 = $doc1->create_element_ns (undef, 'hoge');
+  $doc1->append_child ($el1);
+  $el1->append_child ($el3);
+  my $doc2 = new Web::DOM::Document;
+  my $el2 = $doc2->create_element ('hoge');
+  my $el4 = $doc2->create_element_ns (undef, 'hoge');
+  $doc2->append_child ($el2);
+  $el2->append_child ($el4);
+  my $parser = Web::XPath::Parser->new;
+  my $eval = Web::XPath::Evaluator->new;
+  my $ns1 = $eval->to_xpath_node_set ([$doc1, $doc2]);
+  $parser->variable_bindings->set_variable (undef, 'a' => $ns1);
+  $eval->variable_bindings ($parser->variable_bindings);
+  my $expr = $parser->parse_char_string_as_expression ('$a//hoge');
+  my $ns2 = $eval->to_xpath_node_set ([$el1, $el2]);
+  $eval->sort_node_set ($ns2);
+  my $ns3 = $eval->to_xpath_node_set ([$el3, $el4]);
+  $eval->sort_node_set ($ns3);
+  {
+    my $result = $eval->evaluate ($expr, $doc1);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, $ns2;
+  }
+  {
+    my $result = $eval->evaluate ($expr, $doc2);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, $ns3;
+  }
+  {
+    my $result = $eval->evaluate ($expr, $el1);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, $ns2;
+  }
+  {
+    my $result = $eval->evaluate ($expr, $el2);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, $ns3;
+  }
+  done $c;
+} n => 4, name => 'HTML and XML';
+
 run_tests;
 
 =head1 LICENSE
