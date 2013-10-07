@@ -13,6 +13,151 @@ sub _round ($) {
 } # _round
 
 my $Functions = {
+  last => {
+    args => [0, 0],
+    code => sub {
+      my ($self, $args, $ctx) = @_;
+      return {type => 'number', value => $ctx->{size}};
+    },
+  }, # last
+  position => {
+    args => [0, 0],
+    code => sub {
+      my ($self, $args, $ctx) = @_;
+      return {type => 'number', value => $ctx->{position}};
+    },
+  }, # position
+  count => {
+    args => [1, 1],
+    code => sub {
+      my ($self, $args, $ctx) = @_;
+      if ($args->[0]->{type} ne 'node-set') {
+        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+                         level => 'm',
+                         value => $args->[0]->{type});
+        return undef;
+      }
+      return {type => 'number', value => scalar @{$args->[0]->{value}}};
+    },
+  }, # count
+  id => {
+    args => [1, 1],
+    code => sub {
+      my ($self, $args, $ctx) = @_;
+      my %id;
+      if ($args->[0]->{type} eq 'node-set') {
+        for (@{$args->[0]->{value}}) {
+          for (split /[\x09\x0A\x0D\x20]+/, $self->to_string_value ($_)->{value}) {
+            $id{$_} = 1;
+          }
+        }
+      } else {
+        my $value = $self->to_string ($args->[0]) or return undef;
+        %id = map { $_ => 1 } split /[\x09\x0A\x0D\x20]+/, $value->{value};
+      }
+      delete $id{''};
+
+      my $node = $ctx->{node};
+      $node = $node->parent_node while $node->parent_node;
+      if ($node->node_type == 9) { # DOCUMENT_NODE
+        return {type => 'node-set',
+                value => [grep { defined $_ } map { $node->get_element_by_id ($_) } keys %id],
+                unordered => 1};
+      } else {
+        # /descendant-or-self()/*[id() = ?][position() = 1]
+        my @node;
+        my @n = ($node);
+        while (@n) {
+          my $n = shift @n;
+          if ($n->node_type == 1) { # ELEMENT_NODE
+            if ($id{$n->id}) {
+              push @node, $n;
+              delete $id{$n->id};
+            }
+          } else {
+            unshift @n, @{$n->child_nodes};
+          }
+        }
+        return {type => 'node-set', value => \@node, unordered => 1};
+      }
+    },
+  }, # id
+  'local-name' => {
+    args => [0, 1],
+    code => sub {
+      my ($self, $args, $ctx) = @_;
+      my $node;
+      if (not $args->[0]) {
+        $node = $ctx->{node};
+      } elsif ($args->[0]->{type} ne 'node-set') {
+        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+                         level => 'm',
+                         value => $args->[0]->{type});
+        return undef;
+      } else {
+        $self->sort_node_set ($args->[0]);
+        $node = $args->[0]->{value}->[0]
+            or return {type => 'string', value => ''};
+      }
+      if ($node->node_type == 7) { # PROCESSING_INSTRUCTION_NODE
+        return {type => 'string', value => $node->target};
+      } else {
+        my $n = $node->local_name;
+        return {type => 'string', value => defined $n ? $n : ''};
+      }
+    },
+  }, # local-name
+  'namespace-uri' => {
+    args => [0, 1],
+    code => sub {
+      my ($self, $args, $ctx) = @_;
+      my $node;
+      if (not $args->[0]) {
+        $node = $ctx->{node};
+      } elsif ($args->[0]->{type} ne 'node-set') {
+        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+                         level => 'm',
+                         value => $args->[0]->{type});
+        return undef;
+      } else {
+        $self->sort_node_set ($args->[0]);
+        $node = $args->[0]->{value}->[0]
+            or return {type => 'string', value => ''};
+      }
+      my $n = $node->namespace_uri;
+      return {type => 'string', value => defined $n ? $n : ''};
+    },
+  }, # namespace-uri
+  name => {
+    args => [0, 1],
+    code => sub {
+      my ($self, $args, $ctx) = @_;
+      my $node;
+      if (not $args->[0]) {
+        $node = $ctx->{node};
+      } elsif ($args->[0]->{type} ne 'node-set') {
+        $self->onerror->(type => 'xpath:incompat with node-set', # XXX
+                         level => 'm',
+                         value => $args->[0]->{type});
+        return undef;
+      } else {
+        $self->sort_node_set ($args->[0]);
+        $node = $args->[0]->{value}->[0]
+            or return {type => 'string', value => ''};
+      }
+      my $nt = $node->node_type;
+      if ($nt == 1) { # ELEMENT_NODE
+        return {type => 'string', value => $node->manakai_tag_name};
+      } elsif ($nt == 2) { # ATTRIBUTE_NODE
+        return {type => 'string', value => $node->name};
+      } elsif ($nt == 7) { # PROCESSING_INSTRUCTION_NODE
+        return {type => 'string', value => $node->target};
+      } else {
+        return {type => 'string', value => ''};
+      }
+    },
+  }, # name
+
   string => {
     args => [0, 1],
     code => sub {

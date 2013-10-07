@@ -119,9 +119,20 @@ number MUST be done by the same way as the C<number()> function, and
 the calculation of the sum MUST be done by adding the numbers to
 positive zero in the same way as the C<+> operator.
 
+DOM Standard's definition for unique identifier (ID) [DOM] MUST be
+used for the C<id()> function.
+
+For a node whose type is not defined by XPath 1.0 specification, the
+string-value of the node is the empty string.  It has no
+expanded-name.
+
 =item XML
 
 Extensible Markup Language (XML) 1.0 <http://www.w3.org/TR/xml/>.
+
+=item DOM
+
+DOM Standard <http://dom.spec.whatwg.org/>.
 
 =back
 

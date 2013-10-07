@@ -45,12 +45,7 @@ Evaluate an expression.
 The first argument must be a parsed XPath 1.0 expression data
 structure (See L<Web::XPath::Parser>).
 
-The second argument must be the context node.  The node must be a DOM
-node, whose implementation conforming the manakai's DOM Perl binding
-specification.  In addition, the implementation must also support the
-C<manakaiIsHTML> attribute of the C<Document> interface.
-L<Web::DOM::Document> and related modules in the web-dom package is
-such a DOM implementation.
+The second argument must be the context node.
 
 Additionally, following key/value pairs can be specified:
 C<context_size> is a Perl integer used as the context size;
@@ -141,6 +136,16 @@ nodes in the C<value> is sorted in document order.
 
 Any other non-basic data type is not supported.
 
+=head1 NODES
+
+The node must be a DOM node, whose implementation conforming the
+manakai's DOM Perl binding specification.  In addition, the
+implementation must also support the C<manakaiIsHTML> attribute of the
+C<Document> interface and the C<manakaiTagName> attribute of the
+C<Node> interface.  L<Web::DOM::Document> and related modules in the
+web-dom package <https://github.com/manakai/perl-web-dom> is such a
+DOM implementation.
+
 =head1 SEE ALSO
 
 L<Web::XPath::Parser>.
@@ -158,9 +163,6 @@ XML Path Language (XPath) Version 1.0 Specification Errata
 
 HTML - Interactions with XPath and XSLT
 <http://www.whatwg.org/specs/web-apps/current-work/#interactions-with-xpath-and-xslt>.
-
-For a node whose type is not defined by XPath 1.0 specification, the
-string-value of the node is the empty string.
 
 If an operand of C<=> or C<!=> is an object of a type other than the
 four basic types, it is converted in a way that is dependent on that

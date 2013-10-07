@@ -344,7 +344,10 @@ sub sort_node_set ($$) {
   my (undef, $node_set) = @_;
   return unless $node_set->{type} eq 'node-set';
   return unless $node_set->{unordered};
-  return unless @{$node_set->{value}};
+  unless (@{$node_set->{value}}) {
+    delete $node_set->{unordered};
+    return;
+  }
 
   my $p = $node_set->{value}->[0]->DOCUMENT_POSITION_PRECEDING;
   my $f = $node_set->{value}->[0]->DOCUMENT_POSITION_FOLLOWING;
@@ -606,9 +609,8 @@ sub evaluate ($$$;%) {
                                   context_size => $op->[1]->{size},
                                   context_position => $op->[1]->{position})
             or return undef;
-        if ($value->{type} eq 'node-set' and
-            $value->{reversed} and
-            not $value->{unordered}) {
+        if ($value->{type} eq 'node-set' and $value->{reversed}) {
+          $self->sort_node_set ($value);
           @{$value->{value}} = reverse @{$value->{value}};
         }
       } else {

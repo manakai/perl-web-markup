@@ -111,6 +111,86 @@ test {
   done $c;
 } n => 6, name => 'to_xpath_number';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->inner_html (q{<p id="foo">aa</p>});
+  my $df = $doc->create_document_fragment;
+  $df->inner_html (q{<p>aa</p><q id="foo"></q><q id=""/><q id="foo"></q>});
+  my $parser = Web::XPath::Parser->new;
+  my $eval = Web::XPath::Evaluator->new;
+  {
+    my $expr = $parser->parse_char_string_as_expression ('id("foo")');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'node-set', value => [$df->child_nodes->[1]]};
+  }
+  {
+    my $expr = $parser->parse_char_string_as_expression ('id("")');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'node-set', value => []};
+  }
+  done $c;
+} n => 2, name => 'id() on non-document tree';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->inner_html (q{<p id="foo">aa</p>});
+  my $df = $doc->create_document_fragment;
+  $df->inner_html (q{<p>aa</p><q id="foo"></q><q id=""/><q id="foo"></q>});
+  my $parser = Web::XPath::Parser->new;
+  my $eval = Web::XPath::Evaluator->new;
+  {
+    my $expr = $parser->parse_char_string_as_expression ('name()');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'string', value => ''};
+  }
+  {
+    my $expr = $parser->parse_char_string_as_expression ('namespace-uri()');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'string', value => ''};
+  }
+  {
+    my $expr = $parser->parse_char_string_as_expression ('local-name()');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'string', value => ''};
+  }
+  done $c;
+} n => 3, name => 'name() on non-document tree';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->inner_html (q{<p id="foo">aa</p>});
+  my $df = $doc->create_attribute_definition ('aa');
+  my $parser = Web::XPath::Parser->new;
+  my $eval = Web::XPath::Evaluator->new;
+  {
+    my $expr = $parser->parse_char_string_as_expression ('name()');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'string', value => ''};
+  }
+  {
+    my $expr = $parser->parse_char_string_as_expression ('namespace-uri()');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'string', value => ''};
+  }
+  {
+    my $expr = $parser->parse_char_string_as_expression ('local-name()');
+    my $result = $eval->evaluate ($expr, $df);
+    $eval->sort_node_set ($result);
+    eq_or_diff $result, {type => 'string', value => ''};
+  }
+  done $c;
+} n => 3, name => 'name() on non-document tree';
+
 run_tests;
 
 =head1 LICENSE
