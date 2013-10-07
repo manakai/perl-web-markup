@@ -155,7 +155,9 @@ my %Op = (
     my $n = eval { $left->{value} / $right->{value} };
     if (not defined $n) {
       my $neg = $left->{value} < 0;
-      if ((sprintf '%g', $right->{value}) =~ /^-/) {
+      if ($left->{value} == 0) {
+        return {type => 'number', value => 0+'nan'};
+      } elsif ((sprintf '%g', $right->{value}) =~ /^-/) {
         return {type => 'number', value => $neg ? 0+"inf" : 0+"-inf"};
       } else {
         return {type => 'number', value => $neg ? 0+"-inf" : 0+"inf"};
@@ -312,7 +314,11 @@ sub to_number ($$) {
 
   if ($value->{type} eq 'string') {
     if ($value->{value} =~ /\A[\x09\x0A\x0D\x20]*(-?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+))[\x09\x0A\x0D\x20]*\z/) {
-      return {type => 'number', value => 0+$1};
+      my $v = {type => 'number', value => 0+$1};
+      if ($v->{value} == 0 and $value->{value} =~ /\A[\x09\x0A\x0D\x20]*-/) {
+        $v->{value} = 1/"-inf";
+      }
+      return $v;
     } else {
       return {type => 'number', value => 0+'nan'};
     }
@@ -325,6 +331,14 @@ sub to_number ($$) {
     return undef;
   }
 } # to_number
+
+sub to_xpath_number ($$) {
+  return {type => 'number', value => _n $_[1]};
+} # to_xpath_number
+
+sub to_string_value ($$) {
+  return {type => 'string', value => _string_value $_[1]};
+} # to_string_value
 
 sub sort_node_set ($$) {
   my (undef, $node_set) = @_;
@@ -510,11 +524,11 @@ sub _process_step ($$$$) {
     die "Axis |$step->{axis}| is not supported";
   }
 
-  ## $v doesn't contain duplication at this point.
-  #$v = _node_set_uniq $v;
+  $v = _node_set_uniq $v if @{$value->{value}} > 1;
 
   my $node_set = {type => 'node-set', value => $v};
   $node_set->{reversed} = 1 if $step->{axis} =~ /^(?:ancestor|preceding)/;
+  $node_set->{unordered} = 1 if @{$value->{value}} > 1;
   return $node_set;
 } # _process_step
 

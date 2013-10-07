@@ -80,6 +80,16 @@ throw any exception.  They must always return consistent result.
 
 These methods must return consistent result.
 
+=head1 FUNCTIONS
+
+This module implements the following XPath functions from the XPath
+1.0 Core Function Library: C<boolean()>, C<ceiling()>, C<concat()>,
+C<contains()>, C<false()>, C<floor()>, C<lang()>,
+C<normalize-space()>, C<not()>, C<number()>, C<round()>,
+C<starts-with()>, C<string()>, C<string-length()>, C<substring()>,
+C<substring-after()>, C<substring-before()>, C<sum()>, C<translate()>,
+and C<true()>.
+
 =head1 SEE ALSO
 
 L<Web::XPath::Parser>, L<Web::XPath::Evaluator>.
@@ -92,11 +102,22 @@ L<Web::XPath::Parser>, L<Web::XPath::Evaluator>.
 
 XML Path Language (XPath) Version 1.0 <http://www.w3.org/TR/xpath/>.
 
+XML Path Language (XPath) Version 1.0 Specification Errata
+<http://www.w3.org/1999/11/REC-xpath-19991116-errata/>.
+
 For the purpose of the C<number()> function, whitespace is defined as
 the production rule C<S> [XML].
 
 It is an error if the argument to the C<number()>, C<boolean()>, or
 C<string()> function is not of a supported type.
+
+For the purpose of the C<lang()> function, the C<xml:lang> attribute
+value MUST be compared ASCII case-insensitively.
+
+For the purpose of the C<sum()> function, convertion of a string to a
+number MUST be done by the same way as the C<number()> function, and
+the calculation of the sum MUST be done by adding the numbers to
+positive zero in the same way as the C<+> operator.
 
 =item XML
 

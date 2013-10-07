@@ -80,6 +80,37 @@ test {
   done $c;
 } n => 1, name => 'non-standard string()';
 
+test {
+  my $c = shift;
+  my $eval = Web::XPath::Evaluator->new;
+  my $doc = new Web::DOM::Document;
+  eq_or_diff $eval->to_string_value ($doc), {type => 'string', value => ''};
+  my $el = $doc->create_element ('a');
+  eq_or_diff $eval->to_string_value ($el), {type => 'string', value => ''};
+  $el->text_content ('aagtw');
+  eq_or_diff $eval->to_string_value ($el), {type => 'string', value => 'aagtw'};
+  eq_or_diff $eval->to_string_value ($el->first_child), {type => 'string', value => 'aagtw'};
+  $el->append_child ($doc->create_comment ('gwagw'));
+  eq_or_diff $eval->to_string_value ($el), {type => 'string', value => 'aagtw'};
+  $doc->append_child ($doc->create_processing_instruction ('xy', 'aw'));
+  eq_or_diff $eval->to_string_value ($doc), {type => 'string', value => ''};
+  $doc->append_child ($el);
+  eq_or_diff $eval->to_string_value ($doc), {type => 'string', value => 'aagtw'};
+  done $c;
+} n => 7, name => 'to_string_value';
+
+test {
+  my $c = shift;
+  my $eval = Web::XPath::Evaluator->new;
+  eq_or_diff $eval->to_xpath_number (0), {type => 'number', value => 0};
+  eq_or_diff $eval->to_xpath_number (-12.4), {type => 'number', value => -12.4};
+  eq_or_diff $eval->to_xpath_number (0+'inf'), {type => 'number', value => 0+'inf'};
+  eq_or_diff $eval->to_xpath_number (0+'nan'), {type => 'number', value => 0+'nan'};
+  eq_or_diff $eval->to_xpath_number ('abcee'), {type => 'number', value => 0};
+  eq_or_diff $eval->to_xpath_number ('52152abeae'), {type => 'number', value => 52152};
+  done $c;
+} n => 6, name => 'to_xpath_number';
+
 run_tests;
 
 =head1 LICENSE

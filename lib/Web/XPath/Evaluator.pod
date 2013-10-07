@@ -64,11 +64,15 @@ the C<onerror> handler.  If a fatal error is encountered, the method
 returns C<undef>.  Otherwise, the result XPath value of the evaluation
 is returned.
 
-=item $boolean = $self->to_boolean ($value)
+=item $value = $self->to_xpath_number ($number)
 
-=item $number = $self->to_number ($value)
+Convert the specified Perl number to equivalent XPath number value.
 
-=item $string = $self->to_string ($value)
+=item $value = $self->to_boolean ($value)
+
+=item $value = $self->to_number ($value)
+
+=item $value = $self->to_string ($value)
 
 Convert the specified XPath value into boolean, number, or string, by
 the C<boolean>, C<number()>, or C<string()> function, respectively.
@@ -79,6 +83,11 @@ returned.
 Any error during the conversion is reported through the C<onerror>
 handler.  If a fatal error is encountered, the method returns
 C<undef>.
+
+=item $value = $self->to_string_value ($node)
+
+Return an XPath string value representing the string-value of the
+specified node.  The argument must be a node.
 
 =item $self->sort_node_set ($value)
 
