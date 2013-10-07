@@ -260,6 +260,10 @@ sub to_boolean ($$) {
   }
 } # to_boolean
 
+sub to_xpath_boolean ($$) {
+  return {type => 'boolean', value => !!$_[1]};
+} # to_xpath_boolean
+
 sub to_string ($$) {
   my ($self, $value) = @_;
   return $value if $value->{type} eq 'string';
@@ -301,6 +305,10 @@ sub to_string ($$) {
     return undef;
   }
 } # to_string
+
+sub to_xpath_string ($$) {
+  return {type => 'string', value => ''.$_[1]};
+} # to_xpath_string
 
 sub to_number ($$) {
   my ($self, $value) = @_;
@@ -360,6 +368,20 @@ sub sort_node_set ($$) {
       if $node_set->{reversed};
   delete $node_set->{unordered};
 } # sort_node_set
+
+sub to_xpath_node_set ($$) {
+  return {type => 'node-set', value => _node_set_uniq [@{$_[1]}],
+          unordered => 1};
+} # to_xpath_node_set
+
+sub set_variable ($$$$) {
+  my ($self, $nsurl, $ln, $value) = @_;
+  if (defined $nsurl) {
+    $self->{var}->{$nsurl}->{$ln} = $value;
+  } else {
+    $self->{default_var}->{$ln} = $value;
+  }
+} # set_variable
 
 sub _process_name_test ($$$$;%) {
   my ($self, $v, $step, $ctx, %args) = @_;
@@ -588,7 +610,15 @@ sub evaluate ($$$;%) {
       } elsif ($first_step->{type} eq 'num') {
         $value = {type => 'number', value => _n $first_step->{value}};
       } elsif ($first_step->{type} eq 'var') {
-        # XXX
+        $value = defined $first_step->{nsurl}
+            ? $self->{var}->{${$first_step->{nsurl}}}->{$first_step->{local_name}}
+            : $self->{default_var}->{$first_step->{local_name}};
+        unless ($value) {
+          $self->onerror->(type => 'xpath:var not defined', # XXX
+                           level => 'm',
+                           value => (defined $first_step->{prefix} ? $first_step->{prefix} . ':' : '') . $first_step->{local_name});
+          return undef;
+        }
       } elsif ($first_step->{type} eq 'function') {
         my @args;
         for (@{$first_step->{args}}) {

@@ -38,6 +38,16 @@ identifies L<Web::XPath::FunctionLibrary>, its subclass, or
 equivalent.  The module is C<require>d if necessary.  See
 L<Web::XPath::FunctionLibrary> for details.
 
+=item $eval->set_variable ($nsurl, $ln, $value)
+
+Add a variable binding.  The first and second arguments must be a Perl
+string representing the namespace URL and the local name of the
+variable.  The namespace URL can be C<undef>, representing the null
+namespace.  The third argument must be an XPath value.
+
+If the variable is already bound to another value, the old binding is
+removed.
+
 =item $value = $eval->evaluate ($parsed_expr, $context_node, context_size => $n, context_position => $n)
 
 Evaluate an expression.
@@ -59,9 +69,19 @@ the C<onerror> handler.  If a fatal error is encountered, the method
 returns C<undef>.  Otherwise, the result XPath value of the evaluation
 is returned.
 
+=item $value = $self->to_xpath_boolean ($boolean)
+
 =item $value = $self->to_xpath_number ($number)
 
-Convert the specified Perl number to equivalent XPath number value.
+=item $value = $self->to_xpath_string ($string)
+
+Convert the specified Perl boolean, number, or string to equivalent
+XPath value.
+
+=item $value = $self->to_xpath_node_set ([$node, $node, ...])
+
+Create an XPath node-set from the specified array reference of zero or
+more nodes.
 
 =item $value = $self->to_boolean ($value)
 
