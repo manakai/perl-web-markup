@@ -33,12 +33,15 @@ sub function_library ($;$) {
   return $_[0]->{function_library} || 'Web::XPath::FunctionLibrary';
 } # function_library
 
-sub variable_checker ($;$) {
+sub variable_bindings ($;$) {
   if (@_ > 1) {
-    $_[0]->{variable_checker} = $_[1];
+    $_[0]->{variable_bindings} = $_[1];
   }
-  return $_[0]->{variable_checker} ||= sub ($$) { return 0 };
-} # variable_checker
+  return $_[0]->{variable_bindings} ||= do {
+    require Web::XPath::VariableBindings;
+    Web::XPath::VariableBindings->new;
+  };
+} # variable_bindings
 
 sub tokenize ($$) {
   my $input = $_[1];
@@ -380,7 +383,8 @@ sub parse_char_string_as_expression ($$) {
             return undef;
           }
         }
-        unless ($self->variable_checker->(defined $step->{nsurl} ? ${$step->{nsurl}} : undef, $step->{local_name})) {
+        unless ($self->variable_bindings->has_variable
+                    (defined $step->{nsurl} ? ${$step->{nsurl}} : undef, $step->{local_name})) {
           $self->onerror->(type => 'xpath:variable:unknown', # XXX
                            level => 'm',
                            index => $t->[1],

@@ -28,6 +28,16 @@ sub function_library ($;$) {
   return $_[0]->{function_library} || 'Web::XPath::FunctionLibrary';
 } # function_library
 
+sub variable_bindings ($;$) {
+  if (@_ > 1) {
+    $_[0]->{variable_bindings} = $_[1];
+  }
+  return $_[0]->{variable_bindings} ||= do {
+    require Web::XPath::VariableBindings;
+    Web::XPath::VariableBindings->new;
+  };
+} # variable_bindings
+
 ## Ensure that the number is a double-precision 64-bit IEEE 754
 ## floating point number.
 sub _n ($) {
@@ -374,15 +384,6 @@ sub to_xpath_node_set ($$) {
           unordered => 1};
 } # to_xpath_node_set
 
-sub set_variable ($$$$) {
-  my ($self, $nsurl, $ln, $value) = @_;
-  if (defined $nsurl) {
-    $self->{var}->{$nsurl}->{$ln} = $value;
-  } else {
-    $self->{default_var}->{$ln} = $value;
-  }
-} # set_variable
-
 sub _process_name_test ($$$$;%) {
   my ($self, $v, $step, $ctx, %args) = @_;
   my $nt = $step->{node_type};
@@ -610,9 +611,9 @@ sub evaluate ($$$;%) {
       } elsif ($first_step->{type} eq 'num') {
         $value = {type => 'number', value => _n $first_step->{value}};
       } elsif ($first_step->{type} eq 'var') {
-        $value = defined $first_step->{nsurl}
-            ? $self->{var}->{${$first_step->{nsurl}}}->{$first_step->{local_name}}
-            : $self->{default_var}->{$first_step->{local_name}};
+        $value = $self->variable_bindings->get_variable
+            (defined $first_step->{nsurl} ? ${$first_step->{nsurl}} : undef,
+             $first_step->{local_name});
         unless ($value) {
           $self->onerror->(type => 'xpath:var not defined', # XXX
                            level => 'm',

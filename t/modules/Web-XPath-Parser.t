@@ -21,6 +21,18 @@ sub funclib ($) {
   return "test::temp::package_${rand}";
 } # funclib
 
+sub vars ($) {
+  my $checker = shift;
+  my $rand = int rand 1000000;
+  no strict 'refs';
+  *{"test::temp::package_${rand}::has_variable"} = sub {
+    shift;
+    return $checker->(@_);
+  };
+  $INC{"test/temp/package_${rand}.pm"} = 1;
+  return "test::temp::package_${rand}";
+} # vars
+
 for my $test (
   {in => '', out => [['EOF', 0]]},
   {in => 'a', out => [['NameTest', 0, undef, 'a'], ['EOF', 1]]},
@@ -354,7 +366,7 @@ for my $test (
       push @error, {@_};
     });
     $parser->function_library (funclib sub { [0, 0+'inf'] });
-    $parser->variable_checker (sub { 1 });
+    $parser->variable_bindings (vars sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     eq_or_diff $result, $test->[1];
     eq_or_diff \@error, [];
@@ -388,7 +400,7 @@ for my $test (
     });
     $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
     $parser->function_library (funclib sub { [0, 0+'inf'] });
-    $parser->variable_checker (sub { 1 });
+    $parser->variable_bindings (vars sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     eq_or_diff $result, $test->[2];
     eq_or_diff \@error, [];
@@ -481,7 +493,7 @@ for my $test (
       push @error, {@_};
     });
     $parser->function_library (funclib sub { [0, 0+'inf'] });
-    $parser->variable_checker (sub { 1 });
+    $parser->variable_bindings (vars sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     is $result, undef;
     eq_or_diff \@error, [{index => $test->[1], type => 'xpath:syntax error',
@@ -509,7 +521,7 @@ for my $test (
     });
     $parser->ns_resolver (sub { return $test->[1]->{$_[0]} });
     $parser->function_library (funclib sub { [0, 0+'inf'] });
-    $parser->variable_checker (sub { 1 });
+    $parser->variable_bindings (vars sub { 1 });
     my $result = $parser->parse_char_string_as_expression ($test->[0]);
     is $result, undef;
     eq_or_diff \@error,
@@ -526,7 +538,6 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->variable_checker (sub { 0 });
   my $result = $parser->parse_char_string_as_expression ('$hoge');
   is $result, undef;
   eq_or_diff \@error,
@@ -543,7 +554,6 @@ test {
     push @error, {@_};
   });
   $parser->ns_resolver (sub { 'abc' });
-  $parser->variable_checker (sub { 0 });
   my $result = $parser->parse_char_string_as_expression ('$hoge:fuga');
   is $result, undef;
   eq_or_diff \@error,

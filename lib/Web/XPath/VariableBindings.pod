@@ -1,0 +1,90 @@
+=head1 NAME
+
+Web::XPath::VariableBindings - Set of XPath variable bindings
+
+=head1 DESCRIPTION
+
+The C<Web::XPath::VariableBindings> module is a set of variable
+bindings used to parse and evaluate XPath 1.0 expressions.  This
+class, its subclass, or any class that implements the required methods
+as described in later section can be used as the variable bindings for
+the L<Web::XPath::Parser> and L<Web::XPath::Evaluator> modules.
+
+In many cases the C<Web::XPath::VariableBindings> module is useful
+enough.  However, it sometimes desired to implement a custom variable
+bindings module, e.g. for sharing XSLT variable bindings among XPath
+and XSLT implementations.
+
+=head1 METHODS
+
+The C<Web::XPath::VariableBindings> module has the C<new> class
+method, which returns a new instance of the empty variable bindings.
+
+The module that can be used as the set of variable bindings in parsing
+or evaluating of expressions must implement the following instance
+methods:
+
+=over 4
+
+=item $boolean = $vars->has_variable ($nsurl, $ln)
+
+Return whether the specified variable is defined or not.  It is
+invoked with two Perl character string arguments: namespace URL and
+local name.  If the namespace URL is C<undef>, it represents the null
+namespace.  Note that the empty string is different from C<undef>.  It
+must return whether the variable identified by the namespace URL and
+local name is defined or not, as a Perl boolean value.  It must not
+throw an exception.  It must return consistent result.
+
+=item $value = $vars->get_variable ($nsurl, $ln)
+
+Return the value bound to the specified variable, if any.  It is
+invoked with two Perl character string arguments: namespace URL and
+local name.  If the namespace URL is C<undef>, it represents the null
+namespace.  Note that the empty string is different from C<undef>.  It
+must return the XPath value bound to the variable identified by the
+namespace URL and local name, if any.  If the variable is not bound to
+any value, it must return C<undef>.  It must not throw an exception.
+It must return consistent result.
+
+=item $vars->set_variable ($nsurl, $ln, $value)
+
+Add a variable binding.  The first and second arguments must be a Perl
+character string representing the namespace URL and the local name of
+the variable.  If the namespace URL is C<undef>, it represents the
+null namespace.  The third argument must be an XPath value.  It must
+not throw an exception.  It must return consistent result.
+
+If the variable is already bound to another value, the old binding is
+removed.
+
+=back
+
+=head1 SEE ALSO
+
+L<Web::XPath::Parser>, L<Web::XPath::Evaluator>.
+
+See L<Web::XPath::Evaluator> for XPath value data structures.
+
+=head1 SPECIFICATION
+
+=over 4
+
+=item XPATH
+
+XML Path Language (XPath) Version 1.0 <http://www.w3.org/TR/xpath/>.
+
+=back
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

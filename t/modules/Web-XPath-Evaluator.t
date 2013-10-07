@@ -195,9 +195,9 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
   my $eval = Web::XPath::Evaluator->new;
-  $eval->set_variable (undef, 'ab-c' => $eval->to_xpath_string ('hog e'));
+  $parser->variable_bindings->set_variable (undef, 'ab-c' => $eval->to_xpath_string ('hog e'));
+  $eval->variable_bindings ($parser->variable_bindings);
   my $expr = $parser->parse_char_string_as_expression ('$ab-c');
   my $result = $eval->evaluate ($expr, $doc);
   eq_or_diff $result, {type => 'string', value => 'hog e'};
@@ -208,10 +208,10 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
   $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
-  $eval->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_number (-31.55));
+  $parser->variable_bindings->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_number (-31.55));
+  $eval->variable_bindings ($parser->variable_bindings);
   my $expr = $parser->parse_char_string_as_expression ('$f:ab-c');
   my $result = $eval->evaluate ($expr, $doc);
   eq_or_diff $result, {type => 'number', value => -31.55};
@@ -222,10 +222,10 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
   $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
-  $eval->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_boolean (1));
+  $parser->variable_bindings->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_boolean (1));
+  $eval->variable_bindings ($parser->variable_bindings);
   my $expr = $parser->parse_char_string_as_expression ('$f:ab-c');
   my $result = $eval->evaluate ($expr, $doc);
   eq_or_diff $result, {type => 'boolean', value => 1};
@@ -236,14 +236,14 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
   $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
   my @error;
   $eval->onerror (sub {
     push @error, {@_};
   });
-  $eval->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_boolean (1));
+  $parser->variable_bindings->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_boolean (1));
+  $eval->variable_bindings ($parser->variable_bindings);
   my $expr = $parser->parse_char_string_as_expression ('$f:ab-c/abc');
   my $result = $eval->evaluate ($expr, $doc);
   is $result, undef;
@@ -257,10 +257,10 @@ test {
   my $doc = new Web::DOM::Document;
   my $e1 = $doc->create_element ('aa');
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
-  $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
-  $eval->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_node_set ([$e1, $doc, $doc]));
+  $parser->variable_bindings->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_node_set ([$e1, $doc, $doc]));
+  $parser->ns_resolver (sub { 'http://f/' });
+  $eval->variable_bindings ($parser->variable_bindings);
   my $expr = $parser->parse_char_string_as_expression ('$f:ab-c');
   my $result = $eval->evaluate ($expr, $doc);
   eq_or_diff $result, {type => 'node-set', value => [$e1, $doc], unordered => 1};
@@ -273,10 +273,10 @@ test {
   my $e1 = $doc->create_element ('aa');
   $doc->append_child ($e1);
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
   $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
-  $eval->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_node_set ([$e1, $doc]));
+  $parser->variable_bindings->set_variable ('http://f/', 'ab-c' => $eval->to_xpath_node_set ([$e1, $doc]));
+  $eval->variable_bindings ($parser->variable_bindings);
   my $expr = $parser->parse_char_string_as_expression ('$f:ab-c[2]');
   my $result = $eval->evaluate ($expr, $doc);
   eq_or_diff $result, {type => 'node-set', value => [$e1]};
@@ -288,14 +288,14 @@ test {
   my $doc = new Web::DOM::Document;
   my $e1 = $doc->create_element ('aa');
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
   $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
   my @error;
   $eval->onerror (sub {
     push @error, {@_};
   });
-  $eval->set_variable ('', 'ab-c' => $eval->to_xpath_node_set ([$e1, $doc]));
+  $parser->variable_bindings->set_variable (undef, 'ab-c', $eval->to_xpath_string (''));
+  $eval->variable_bindings->set_variable ('', 'ab-c' => $eval->to_xpath_node_set ([$e1, $doc]));
   my $expr = $parser->parse_char_string_as_expression ('$ab-c');
   my $result = $eval->evaluate ($expr, $doc);
   is $result, undef;
@@ -308,9 +308,9 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XPath::Parser->new;
-  $parser->variable_checker (sub { 1 });
-  $parser->ns_resolver (sub { 'http://f/' });
   my $eval = Web::XPath::Evaluator->new;
+  $parser->ns_resolver (sub { 'http://f/' });
+  $parser->variable_bindings->set_variable ('http://f/', 'ab-c', $eval->to_xpath_string (''));
   my @error;
   $eval->onerror (sub {
     push @error, {@_};

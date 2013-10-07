@@ -38,15 +38,12 @@ identifies L<Web::XPath::FunctionLibrary>, its subclass, or
 equivalent.  The module is C<require>d if necessary.  See
 L<Web::XPath::FunctionLibrary> for details.
 
-=item $eval->set_variable ($nsurl, $ln, $value)
+=item $vars = $eval->variable_bindings
 
-Add a variable binding.  The first and second arguments must be a Perl
-string representing the namespace URL and the local name of the
-variable.  The namespace URL can be C<undef>, representing the null
-namespace.  The third argument must be an XPath value.
+=item $eval->variable_bindings ($vars)
 
-If the variable is already bound to another value, the old binding is
-removed.
+Get or set the L<Web::XPath::VariableBindings> object, containing the
+set of variable bindings used to evaluate XPath expressions.
 
 =item $value = $eval->evaluate ($parsed_expr, $context_node, context_size => $n, context_position => $n)
 

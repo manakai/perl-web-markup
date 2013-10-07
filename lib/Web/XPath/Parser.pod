@@ -49,18 +49,12 @@ namespace cannot be represented.
 If the namespace resolver is not specified, there is no namespace
 binding applicable to XPath expression parsing.
 
-=item $code = $parser->variable_checker
+=item $vars = $parser->variable_bindings
 
-=item $parser->variable_checker ($new_code)
+=item $parser->variable_bindings ($vars)
 
-Get or set the variable checker.  It must be a code reference (or
-C<undef> to unset).  The code reference will be invoked with two
-character string arguments: namespace URL and local name.  If the
-namespace URL is C<undef>, it represents the null namespace.  Note
-that the empty string is different from C<undef>.  The code reference
-must return whether the variable identified by the namespace URL and
-local name is defined or not.  The code reference must not throw an
-exception.  It must return consistent result.
+Get or set the L<Web::XPath::VariableBindings> object, containing the
+set of variable bindings used to parse XPath expressions.
 
 =item $package = $parser->function_library
 
