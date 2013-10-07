@@ -90,6 +90,30 @@ C<starts-with()>, C<string()>, C<string-length()>, C<substring()>,
 C<substring-after()>, C<substring-before()>, C<sum()>, C<translate()>,
 and C<true()>.
 
+=head2 Handling of surrogate characters
+
+Web browsers use UTF-16 as its internal character code, while Perl
+uses UTF-8.  This difference affects behavior of some functions when
+arguments or relevant values contain one or more surrogate code points
+and/or characters that are represented by surrogate code points in
+UTF-16 (i.e. U+D800-DFFF and U+10000-U+10FFFF).
+
+Following functions are implemented in terms of characters:
+C<concat()>, C<contains()>, C<id()>, C<lang()>, C<string()>,
+C<substring-before()>, C<substring-after()>, and C<translate()> and
+the C<=> and C<!=> operators.  In other words, they are implemented in
+the same way as XPath implementations strictly conforming to the XPath
+1.0 specification and their result can be different from those in Web
+browsers.
+
+Following functions are implemented in terms of code points:
+C<string-length()> and C<substring()>.  That is, their results are
+same as Web browsers and can be different from strict XPath 1.0
+implementations.
+
+For more information on handling of surrogates, see manakai's DOM Perl
+Binding specification [MANAKAI].
+
 =head1 SEE ALSO
 
 L<Web::XPath::Parser>, L<Web::XPath::Evaluator>.
@@ -122,6 +146,10 @@ positive zero in the same way as the C<+> operator.
 DOM Standard's definition for unique identifier (ID) [DOM] MUST be
 used for the C<id()> function.
 
+For the purpose of the C<substring()> function and the
+C<string-length()> function, UTF-16 code units MUST be considered as
+characters.
+
 For a node whose type is not defined by XPath 1.0 specification, the
 string-value of the node is the empty string.  It has no
 expanded-name.
@@ -133,6 +161,11 @@ Extensible Markup Language (XML) 1.0 <http://www.w3.org/TR/xml/>.
 =item DOM
 
 DOM Standard <http://dom.spec.whatwg.org/>.
+
+=item MANAKAI
+
+manakai's DOM Perl Binding
+<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai's%20DOM%20Perl%20Binding>.
 
 =back
 

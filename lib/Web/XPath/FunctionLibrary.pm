@@ -206,7 +206,6 @@ my $Functions = {
       my ($self, $args, $ctx) = @_;
       my $s1 = $self->to_string ($args->[0]) or return undef;
       my $s2 = $self->to_string ($args->[1]) or return undef;
-      # XXX surrogate
       my $vv = [length $s2->{value}
                     ? split /\Q$s2->{value}\E/, $s1->{value}, 2
                     : ('', '...')];
@@ -220,7 +219,6 @@ my $Functions = {
       my ($self, $args, $ctx) = @_;
       my $s1 = $self->to_string ($args->[0]) or return undef;
       my $s2 = $self->to_string ($args->[1]) or return undef;
-      # XXX surrogate
       my $v = [length $s2->{value}
                    ? split /\Q$s2->{value}\E/, $s1->{value}, 2
                    : ('', $s1->{value})]->[1];
@@ -237,16 +235,27 @@ my $Functions = {
       my $n2 = $args->[2] ? $self->to_number ($args->[2]) || return undef : undef;
       $n1 = -1 + _round $n1->{value};
       return {type => 'string', value => ''} if $n1 eq '-inf';
-      # XXX surrogate
-      $n1 = 0 if $n1 < 0;
       if (defined $n2) {
-        $n2 = -1 + $n1 + _round $n2->{value};
-        $n2 = 0 if $n2 < 0;
+        $n2 = $n1 + _round $n2->{value};
+        $n2 = 1 if $n2 < 1;
+        $n1 = 0 if $n1 < 0;
+        $n2 = $n2 - $n1;
         $n2 = undef if $n2 eq 'inf';
+      } else {
+        $n1 = 0 if $n1 < 0;
       }
-      return {type => 'string',
-              value => defined $n2 ? substr $s1->{value}, $n1, $n2
-                                   : substr $s1->{value}, $n1};
+      if ($s1->{value} =~ /[\x{10000}-\x{10FFFF}]/) {
+        my $text = ($ctx->{node}->owner_document || $ctx->{node})
+            ->create_text_node ($s1->{value});
+        my $max = $text->length - $n1;
+        $n2 = $max if not defined $n2 or $n2 > $max;
+        return {type => 'string',
+                value => $text->substring_data ($n1, $n2)};
+      } else {
+        return {type => 'string',
+                value => defined $n2 ? substr $s1->{value}, $n1, $n2
+                                     : substr $s1->{value}, $n1};
+      }
     },
   }, # substring
   'string-length' => {
@@ -259,8 +268,13 @@ my $Functions = {
       } else {
         $value = $self->to_string ({type => 'node-set', value => [$ctx->{node}]});
       }
-      # XXX surrogate
-      return {type => 'number', value => length $value->{value}};
+      if ($value->{value} =~ /[\x{10000}-\x{10FFFF}]/) {
+        return {type => 'number',
+                value => ($ctx->{node}->owner_document || $ctx->{node})
+                    ->create_text_node ($value->{value})->length};
+      } else {
+        return {type => 'number', value => length $value->{value}};
+      }
     },
   }, # string-length
   'normalize-space' => {
@@ -288,7 +302,6 @@ my $Functions = {
       my $s1 = $self->to_string ($args->[0]) or return undef;
       my $s2 = $self->to_string ($args->[1]) or return undef;
       my $s3 = $self->to_string ($args->[2]) or return undef;
-      # XXX surrogate
       return $s1 unless length $s2->{value};
       my $pattern = qr/[\Q$s2->{value}\E]/;
       return $s1 unless $s1->{value} =~ /$pattern/;
