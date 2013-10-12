@@ -99,11 +99,11 @@ and/or characters that are represented by surrogate code points in
 UTF-16 (i.e. U+D800-DFFF and U+10000-U+10FFFF).
 
 Following functions are implemented in terms of characters:
-C<concat()>, C<contains()>, C<id()>, C<lang()>, C<string()>,
-C<substring-before()>, C<substring-after()>, and C<translate()> and
-the C<=> and C<!=> operators.  In other words, they are implemented in
-the same way as XPath implementations strictly conforming to the XPath
-1.0 specification and their result can be different from those in Web
+C<concat()>, C<string()>, and C<translate()>, and string match
+operations (including the C<=> operation, the C<substring-before()>
+function and so on).  In other words, they are implemented in the same
+way as XPath implementations strictly conforming to the XPath 1.0
+specification and their result can be different from those in Web
 browsers.
 
 Following functions are implemented in terms of code points:
@@ -143,8 +143,17 @@ number MUST be done by the same way as the C<number()> function, and
 the calculation of the sum MUST be done by adding the numbers to
 positive zero in the same way as the C<+> operator.
 
-DOM Standard's definition for unique identifier (ID) [DOM] MUST be
-used for the C<id()> function.
+For the purpose of the C<id()> function, the element whose unique ID
+is I<i> MUST be obtained by the following steps:
+
+  1. If I<i> is the empty string, return null and abort these steps.
+
+  2. Otherwise, evaluate C</descendant-or-self::*[dom:id () = $i][1]>
+     where C<dom:id()> is a function that returns the unique
+     identifier (ID) of the element [DOM] and I<$i> is string I<i>.
+
+  3. If the previous step results in an empty node-set, return null.
+     Otherwise, return the node in the node-set.
 
 For the purpose of the C<substring()> function and the
 C<string-length()> function, UTF-16 code units MUST be considered as
