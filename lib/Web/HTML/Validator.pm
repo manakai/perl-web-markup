@@ -305,8 +305,6 @@ our %AnyChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } else {
       #
     }
@@ -608,7 +606,6 @@ sub check_element ($$$;$) {
 
   $self->{level} ||= $default_error_level;
 
-  $self->{plus_elements} = {};
   $self->{minus_elements} = {};
   $self->{id} = {};
   $self->{id_type} = {}; # 'form' / 'labelable' / 'menu'
@@ -806,7 +803,6 @@ sub check_element ($$$;$) {
     }
   }
 
-  delete $self->{plus_elements};
   delete $self->{minus_elements};
   delete $self->{onerror};
   delete $self->{id};
@@ -846,31 +842,6 @@ sub _remove_minus_elements ($$) {
   }
 } # _remove_minus_elements
 
-sub _add_plus_elements ($$@) {
-  my $self = shift;
-  my $element_state = shift;
-  for my $elements (@_) {
-    for my $nsuri (keys %$elements) {
-      for my $ln (keys %{$elements->{$nsuri}}) {
-        unless ($self->{plus_elements}->{$nsuri}->{$ln}) {
-          $element_state->{plus_elements_original}->{$nsuri}->{$ln} = 0;
-          $self->{plus_elements}->{$nsuri}->{$ln} = 1;
-        }
-      }
-    }
-  }
-} # _add_plus_elements
-
-sub _remove_plus_elements ($$) {
-  my $self = shift;
-  my $element_state = shift;
-  for my $nsuri (keys %{$element_state->{plus_elements_original}}) {
-    for my $ln (keys %{$element_state->{plus_elements_original}->{$nsuri}}) {
-      delete $self->{plus_elements}->{$nsuri}->{$ln};
-    }
-  }
-} # _remove_plus_elements
-
 sub _attr_status_info ($$$) {
   my ($self, $attr, $status_code) = @_;
 
@@ -905,62 +876,6 @@ sub _attr_status_info ($$$) {
                      type => 'status:'.$status.':attr',
                      level => $self->{level}->{info});
 } # _attr_status_info
-
-sub _add_minuses ($@) {
-  my $self = shift;
-  my $r = {};
-  for my $list (@_) {
-    for my $ns (keys %$list) {
-      for my $ln (keys %{$list->{$ns}}) {
-        unless ($self->{minuses}->{$ns}->{$ln}) {
-          $self->{minuses}->{$ns}->{$ln} = 1;
-          $r->{$ns}->{$ln} = 1;
-        }
-      }
-    }
-  }
-  return {type => 'plus', list => $r};
-} # _add_minuses
-
-sub _add_pluses ($@) {
-  my $self = shift;
-  my $r = {};
-  for my $list (@_) {
-    for my $ns (keys %$list) {
-      for my $ln (keys %{$list->{$ns}}) {
-        unless ($self->{pluses}->{$ns}->{$ln}) {
-          $self->{pluses}->{$ns}->{$ln} = 1;
-          $r->{$ns}->{$ln} = 1;
-        }
-      }
-    }
-  }
-  return {type => 'minus', list => $r};
-} # _add_pluses
-
-sub _remove_minuses ($$) {
-  my ($self, $todo) = @_;
-  if ($todo->{type} eq 'minus') {
-    for my $ns (keys %{$todo->{list}}) {
-      for my $ln (keys %{$todo->{list}->{$ns}}) {
-        delete $self->{pluses}->{$ns}->{$ln} if $todo->{list}->{$ns}->{$ln};
-      }
-    }
-  } elsif ($todo->{type} eq 'plus') {
-    for my $ns (keys %{$todo->{list}}) {
-      for my $ln (keys %{$todo->{list}->{$ns}}) {
-        delete $self->{minuses}->{$ns}->{$ln} if $todo->{list}->{$ns}->{$ln};
-      }
-    }
-  } else {
-    die "$0: Unknown +- type: $todo->{type}";
-  }
-  1;
-} # _remove_minuses
-
-## NOTE: Priority for "minuses" and "pluses" are currently left
-## undefined and implemented inconsistently; it is not a problem for
-## now, since no element belongs to both lists.
 
 use Char::Class::XML qw/InXML_NCNameStartChar10 InXMLNCNameChar10/;
 
@@ -2841,8 +2756,6 @@ my %HTMLEmptyChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:empty',
@@ -2869,8 +2782,6 @@ my %HTMLTextChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed:text',
                          level => $self->{level}->{must});
@@ -2896,8 +2807,6 @@ my %HTMLFlowContentChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
       if ($element_state->{has_non_style} or
           not $child_el->has_attribute_ns (undef, 'scoped')) {
@@ -2958,8 +2867,6 @@ my %HTMLPhrasingContentChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
       #
     } else {
@@ -2999,8 +2906,6 @@ my %TransparentChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($self->{flag}->{in_phrasing}) {
       if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
         #
@@ -3085,8 +2990,6 @@ $Element->{+HTML_NS}->{html} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($element_state->{phase} eq 'before head') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'head') {
         $element_state->{phase} = 'after head';            
@@ -3170,8 +3073,6 @@ $Element->{+HTML_NS}->{head} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'title') {
       unless ($element_state->{has_title}) {
         $element_state->{has_title} = 1;
@@ -3824,8 +3725,6 @@ $Element->{+HTML_NS}->{style} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($element_state->{allow_element}) {
       #
     } else {
@@ -4012,8 +3911,6 @@ $Element->{+HTML_NS}->{script} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } else {
       if ($element_state->{inline_documentation_only}) {
         $self->{onerror}->(node => $child_el,
@@ -4104,8 +4001,6 @@ $Element->{+HTML_NS}->{noscript} = {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:minus',
                            level => $self->{level}->{must});
-      } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-        #
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'link') {
         #
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
@@ -4356,8 +4251,6 @@ $Element->{+HTML_NS}->{hgroup} = {
       if ($child_nsuri eq HTML_NS and $child_ln =~ /\Ah[1-6]\z/) {
         $element_state2->{has_hn} = 1;
       }
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln =~ /\Ah[1-6]\z/) {
       ## NOTE: Use $element_state2 instead of $element_state here so
       ## that the |h2| element in |<hgroup><ins><h2>| is not counted
@@ -4694,8 +4587,6 @@ $Element->{+HTML_NS}->{ol} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
       #
     } else {
@@ -4820,8 +4711,6 @@ $Element->{+HTML_NS}->{dl} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($element_state->{phase} eq 'in dds') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
         #$element_state->{phase} = 'in dds';
@@ -5837,8 +5726,6 @@ $Element->{+HTML_NS}->{ruby} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($element_state->{phase} eq 'before-rb') {
       if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'in-rb';
@@ -6124,8 +6011,6 @@ $Element->{+HTML_NS}->{rbc} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'rb') {
       $element_state->{has_rb} = 1;
     } else {
@@ -6169,8 +6054,6 @@ $Element->{+HTML_NS}->{rtc} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'rt') {
       $element_state->{has_rt} = 1;
     } else {
@@ -6350,8 +6233,6 @@ $Element->{+HTML_NS}->{figure} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($element_state->{phase} eq 'flow') {
       if ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
         #
@@ -6931,8 +6812,6 @@ $Element->{+HTML_NS}->{object} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
       $element_state->{has_non_legend} = 1;
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'param') {
       if ($element_state->{has_non_param}) {
         my $type = $self->{flag}->{in_phrasing}
@@ -7185,8 +7064,6 @@ $Element->{+HTML_NS}->{video} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
       delete $element_state->{allow_source};
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'source') {
       unless ($element_state->{allow_source}) {
         my $type = $self->{flag}->{in_phrasing}
@@ -7803,8 +7680,6 @@ $Element->{+HTML_NS}->{table} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($element_state->{phase} eq 'in tbodys') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'tbody') {
         #$element_state->{phase} = 'in tbodys';
@@ -8077,8 +7952,6 @@ $Element->{+HTML_NS}->{colgroup} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'col') {
       if ($item->{node}->has_attribute_ns (undef, 'span')) {
         $self->{onerror}->(node => $child_el,
@@ -8153,8 +8026,6 @@ $Element->{+HTML_NS}->{tbody} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tr') {
       #
     } else {
@@ -8224,8 +8095,6 @@ $Element->{+HTML_NS}->{tr} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'td') {
       #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'th') {
@@ -8491,8 +8360,6 @@ $Element->{+HTML_NS}->{fieldset} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
       $element_state->{has_non_legend} = 1;
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'legend') {
       if ($element_state->{has_non_legend}) {
         $self->{onerror}->(node => $child_el,
@@ -9660,8 +9527,6 @@ $Element->{+HTML_NS}->{select} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and
              {
                option => 1, optgroup => 1,
@@ -9720,8 +9585,6 @@ $Element->{+HTML_NS}->{datalist} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($element_state->{phase} eq 'phrasing') {
       if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
         #
@@ -9822,8 +9685,6 @@ $Element->{+HTML_NS}->{optgroup} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'option') {
       #
     } else {
@@ -10347,8 +10208,6 @@ $Element->{+HTML_NS}->{details} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
       $element_state->{has_non_summary} = 1;
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'summary') {
       if ($element_state->{has_non_summary}) {
         $self->{onerror}->(node => $child_el,
@@ -10525,8 +10384,6 @@ $Element->{+HTML_NS}->{menu} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
       if ($element_state->{phase} eq 'li') {
         #
@@ -10650,8 +10507,6 @@ $Element->{+HTML_NS}->{frameset} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq HTML_NS and
              ($child_ln eq 'frameset' or $child_ln eq 'frame')) {
       $item->{has_frame_or_frameset} = 1;
@@ -10919,8 +10774,6 @@ my %AtomTextConstruct = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } else {
       if ($element_state->{type} eq 'text' or
           $element_state->{type} eq 'html') { # MUST NOT
@@ -10999,8 +10852,6 @@ my %AtomPersonConstruct = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq ATOM_NS) {
       if ($child_ln eq 'name') {
         if ($element_state->{has_name}) {
@@ -11206,8 +11057,6 @@ $Element->{+ATOM_NS}->{entry} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq ATOM_NS) {
       my $not_allowed;
       if ({ # MUST (0, 1)
@@ -11368,8 +11217,6 @@ $Element->{+ATOM_NS}->{feed} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq ATOM_NS) {
       my $not_allowed;
       if ($child_ln eq 'entry') {
@@ -11545,8 +11392,6 @@ $Element->{+ATOM_NS}->{content} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } else {
       if ($element_state->{type} eq 'text' or
           $element_state->{type} eq 'html' or
@@ -11910,8 +11755,6 @@ $Element->{+ATOM_NS}->{source} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } elsif ($child_nsuri eq ATOM_NS) {
       my $not_allowed;
       if ($child_ln eq 'entry') {
@@ -12061,8 +11904,6 @@ $Element->{+THR_NS}->{total} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{plus_elements}->{$child_nsuri}->{$child_ln}) {
-      #
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed',
