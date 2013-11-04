@@ -468,21 +468,12 @@ my $default_error_level = {
   xml_id_error => 'm', ## TODO: ?
   nc => 'm', ## XML Namespace Constraints ## TODO: correct?
 
-  ## |Whatpm::URIChecker|
-  uri_syntax => 'm',
-  uri_fact => 'm',
-  uri_lc_must => 'm',
-  uri_lc_should => 'w',
-
   ## |Message::MIME::Type|
   mime_must => 'm', # lowercase "must"
   mime_fact => 'm',
   mime_strongly_discouraged => 'w',
   mime_discouraged => 'w',
   http_fact => 'm',
-
-  ## |Whatpm::LangTag|
-  langtag_fact => 'm',
 
   ## |Whatpm::RDFXML|
   rdf_fact => 'm',
@@ -1425,10 +1416,12 @@ my $HTMLLinkTypesAttrChecker = sub {
 
     if ($word =~ /:/) {
       ## XXX MUST be an absolute URL (HTML5 revision 4533)
-      require Whatpm::URIChecker;
-      Whatpm::URIChecker->check_iri_reference ($word, sub {
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($word);
+      $chk->onerror (sub {
         $self->{onerror}->(value => $word, @_, node => $attr);
-      }, $self->{level});
+      });
+      $chk->check_iri_reference;
       
       ## TODO: absolute
       push @{$self->{return}->{uri}->{$word} ||= []},
@@ -1468,10 +1461,12 @@ my $HTMLURIAttrChecker = sub {
   my ($self, $attr, $item, $element_state) = @_;
   ## ISSUE: Relative references are allowed? (RFC 3987 "IRI" is an absolute reference with optional fragment identifier.)
   my $value = $attr->value;
-  require Whatpm::URIChecker;
-  Whatpm::URIChecker->check_iri_reference ($value, sub {
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($value);
+  $chk->onerror (sub {
     $self->{onerror}->(@_, node => $attr);
-  }, $self->{level});
+  });
+  $chk->check_iri_reference;
   $self->{has_uri_attr} = 1; ## TODO: <html manifest>
 
   my $attr_name = $attr->name;
@@ -1516,10 +1511,12 @@ my $HTMLSpaceURIsAttrChecker = sub {
               archive => 'resource'}->{$attr->name};
 
   for my $value (keys %word) {
-    require Whatpm::URIChecker;
-    Whatpm::URIChecker->check_iri_reference ($value, sub {
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($value);
+    $chk->onerror (sub {
       $self->{onerror}->(value => $value, @_, node => $attr);
-    }, $self->{level});
+    });
+    $chk->check_iri_reference;
 
     ## TODO: absolute
     push @{$self->{return}->{uri}->{$value} ||= []},
@@ -2165,10 +2162,12 @@ my $InputmodeAttrChecker = sub {
       #
     } else {
       # XXX Valid non-empty URL that is an absolute URL
-      require Whatpm::URIChecker;
-      Whatpm::URIChecker->check_iri_reference ($value, sub {
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($value);
+      $chk->onerror (sub {
         $self->{onerror}->(value => $value, @_, node => $attr);
-      }, $self->{level});
+      });
+      $chk->check_iri_reference;
       
       push @{$self->{return}->{uri}->{$value} ||= []},
           {node => $attr, type => {namespace => 1}};
@@ -3688,10 +3687,12 @@ $Element->{+HTML_NS}->{meta} = {
             }
 
             ## XXXURL
-            require Whatpm::URIChecker;
-            Whatpm::URIChecker->check_iri_reference ($content, sub {
+            require Web::URL::Checker;
+            my $chk = Web::URL::Checker->new_from_string ($content);
+            $chk->onerror (sub {
               $self->{onerror}->(value => $content, @_, node => $content_attr);
-            }, $self->{level});
+            });
+            $chk->check_iri_reference;
             $self->{has_uri_attr} = 1; ## NOTE: One of "attributes with URLs".
 
             $element_state->{uri_info}->{content}->{node} = $content_attr;
@@ -6985,7 +6986,7 @@ $Element->{+HTML_NS}->{applet} = {
       my $value = $attr->value;
       my @value = length $value ? split /,/, $value, -1 : ();
 
-      require Whatpm::URIChecker;
+      require Web::URL::Checker;
       for my $v (@value) {
         $v =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
         $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
@@ -6995,9 +6996,11 @@ $Element->{+HTML_NS}->{applet} = {
                              node => $attr,
                              level => $self->{level}->{must});
         } else {
-          Whatpm::URIChecker->check_iri_reference ($v, sub {
+          my $chk = Web::URL::Checker->new_from_string ($v);
+          $chk->onerror (sub {
             $self->{onerror}->(value => $v, @_, node => $attr);
-          }, $self->{level});
+          });
+          $chk->check_iri_reference;
         }
 
         ## TODO: absolute
@@ -11110,10 +11113,12 @@ $Element->{+ATOM_NS}->{uri} = {
     my ($self, $item, $element_state) = @_;
 
     ## NOTE: There MUST NOT be any white space.
-    require Whatpm::URIChecker;
-    Whatpm::URIChecker->check_iri_reference ($element_state->{value}, sub {
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
+    $chk->onerror (sub {
       $self->{onerror}->(@_, node => $item->{node});
-    }, $self->{level});
+    });
+    $chk->check_iri_reference;
 
     $AtomChecker{check_end}->(@_);
   },
@@ -11502,10 +11507,12 @@ $Element->{+ATOM_NS}->{content} = {
       $item->{parent_state}->{require_summary} = 1;
 
       ## NOTE: There MUST NOT be any white space.
-      require Whatpm::URIChecker;
-      Whatpm::URIChecker->check_iri_reference ($attr->value, sub {
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_strng ($attr->value);
+      $chk->onerror (sub {
         $self->{onerror}->(@_, node => $item->{node});
-      }, $self->{level});
+      });
+      $chk->check_iri_reference;
     },
     type => sub {
       my ($self, $attr, $item, $element_state) = @_;
@@ -11677,10 +11684,12 @@ $Element->{+ATOM_NS}->{category} = {
     scheme => sub { # NOTE: No MUST.
       my ($self, $attr) = @_;
       ## NOTE: There MUST NOT be any white space.
-      require Whatpm::URIChecker;
-      Whatpm::URIChecker->check_iri ($attr->value, sub {
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($attr->value);
+      $chk->onerror (sub {
         $self->{onerror}->(@_, node => $attr);
-      }, $self->{level});
+      });
+      $chk->check_iri;
     },
     term => sub {
       my ($self, $attr, $item, $element_state) = @_;
@@ -11718,10 +11727,12 @@ $Element->{+ATOM_NS}->{generator} = {
     uri => sub { # MUST
       my ($self, $attr) = @_;
       ## NOTE: There MUST NOT be any white space.
-      require Whatpm::URIChecker;
-      Whatpm::URIChecker->check_iri_reference ($attr->value, sub {
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($attr->value);
+      $chk->onerror (sub {
         $self->{onerror}->(@_, node => $attr);
-      }, $self->{level});
+      });
+      $chk->check_iri_reference;
       ## NOTE: Dereferencing SHOULD produce a representation
       ## that is relevant to the agent.
     },
@@ -11753,10 +11764,12 @@ $Element->{+ATOM_NS}->{icon} = {
 
     ## NOTE: No MUST.
     ## NOTE: There MUST NOT be any white space.
-    require Whatpm::URIChecker;
-    Whatpm::URIChecker->check_iri_reference ($element_state->{value}, sub {
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
+    $chk->onerror (sub {
       $self->{onerror}->(@_, node => $item->{node});
-    }, $self->{level});
+    });
+    $chk->check_iri_reference;
 
     ## NOTE: Image SHOULD be 1:1 and SHOULD be small
 
@@ -11779,10 +11792,12 @@ $Element->{+ATOM_NS}->{id} = {
     my ($self, $item, $element_state) = @_;
 
     ## NOTE: There MUST NOT be any white space.
-    require Whatpm::URIChecker;
-    Whatpm::URIChecker->check_iri ($element_state->{value}, sub {
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
+    $chk->onerror (sub {
       $self->{onerror}->(@_, node => $item->{node});
-    }, $self->{level});
+    });
+    $chk->check_iri;
     ## TODO: SHOULD be normalized
 
     $AtomChecker{check_end}->(@_);
@@ -11792,10 +11807,12 @@ $Element->{+ATOM_NS}->{id} = {
 my $AtomIRIReferenceAttrChecker = sub {
   my ($self, $attr) = @_;
   ## NOTE: There MUST NOT be any white space.
-  require Whatpm::URIChecker;
-  Whatpm::URIChecker->check_iri_reference ($attr->value, sub {
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($attr->value);
+  $chk->onerror (sub {
     $self->{onerror}->(@_, node => $attr);
-  }, $self->{level});
+  });
+  $chk->check_iri_reference;
 }; # $AtomIRIReferenceAttrChecker
 
 $Element->{+ATOM_NS}->{link} = {
@@ -11812,10 +11829,12 @@ $Element->{+ATOM_NS}->{link} = {
       }
 
       ## NOTE: There MUST NOT be any white space.
-      require Whatpm::URIChecker;
-      Whatpm::URIChecker->check_iri ($value, sub {
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($value);
+      $chk->onerror (sub {
         $self->{onerror}->(@_, node => $attr);
-      }, $self->{level});
+      });
+      $chk->check_iri;
 
       ## TODO: Warn if unregistered
 
@@ -11874,10 +11893,12 @@ $Element->{+ATOM_NS}->{logo} = {
     my ($self, $item, $element_state) = @_;  
 
     ## NOTE: There MUST NOT be any white space.
-    require Whatpm::URIChecker;
-    Whatpm::URIChecker->check_iri_reference ($element_state->{value}, sub {
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
+    $chk->onerror (sub {
       $self->{onerror}->(@_, node => $item->{node});
-    }, $self->{level});
+    });
+    $chk->check_iri_reference;
     
     ## NOTE: Image SHOULD be 2:1
 
@@ -12003,10 +12024,12 @@ $Element->{+THR_NS}->{'in-reply-to'} = {
 
       ## NOTE: Same as |atom:id|.
       ## NOTE: There MUST NOT be any white space.
-      require Whatpm::URIChecker;
-      Whatpm::URIChecker->check_iri ($attr->value, sub {
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($attr->value);
+      $chk->onerror (sub {
         $self->{onerror}->(@_, node => $attr);
-      }, $self->{level});
+      });
+      $chk->check_iri;
 
       ## TODO: Check against ID guideline...
     },

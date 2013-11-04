@@ -4,6 +4,8 @@ perl-web-markup - A pure-perl HTML and XML processor
 
 =head1 MODULES
 
+Following modules are available:
+
 =over 4
 
 =item L<Web::HTML::Parser>
@@ -13,6 +15,10 @@ An HTML parser.
 =item L<Web::HTML::Serializer>
 
 An HTML serializer.
+
+=item L<Web::HTML::Validator>
+
+A DOM conformance checker (for HTML and XML).
 
 =item L<Web::XML::Parser>
 
@@ -54,6 +60,9 @@ Perl Binding, and manakai's DOM Extensions, to the extent implemented
 by the "NanoDOM" module (C<t_deps/lib/NanoDOM.pm>).  An example of
 such a DOM implementation is contained in the perl-web-dom package
 <https://github.com/manakai/perl-web-dom>.
+
+The L<Web::HTML::Validator> module requires additional external
+modules; see its documentation.
 
 =head1 SEE ALSO
 

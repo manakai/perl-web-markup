@@ -30,6 +30,8 @@ standards such as HTML.
 
 This module contains two class methods:
 
+XXX API is not stable yet
+
 =over 4
 
 =item Web::HTML::Validator->check_document (I<$document>, I<$onerror>)
@@ -150,6 +152,15 @@ the time of invocation of the method C<element_start> for the element
 being checked.
 
 =back
+
+=head1 DEPENDENCY
+
+In addition to the dependency documented in the README
+<https://github.com/manakai/perl-web-markup/blob/master/README.pod#dependency>,
+following modules are required: perl-web-langtag
+<https://github.com/manakai/perl-web-langtag>, perl-web-url
+<https://github.com/manakai/perl-web-url>.  Also, see
+L<Web::RDF::XML::Parser>'s dependency section.
 
 =head1 SEE ALSO
 
