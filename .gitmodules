@@ -19,3 +19,6 @@
 [submodule "modules/charclass"]
 	path = modules/charclass
 	url = git://github.com/wakaba/perl-charclass.git
+[submodule "t_deps/modules/web-langtag"]
+	path = t_deps/modules/web-langtag
+	url = git://github.com/manakai/perl-web-langtag

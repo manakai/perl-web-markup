@@ -61,7 +61,8 @@ test: test-deps test-main test-main-webdom
 test-deps: deps
 
 test-main:
-	$(PROVE) t/tests/*.t t/modules/*.t t/parsing.t t/parsing/xml.t
+	$(PROVE) t/tests/*.t t/modules/*.t t/parsing.t t/parsing/xml.t \
+	    t/processing/*.t t/valudation/*.t
 
 test-main-webdom: local/bin/pmbp.pl
 	-git clone git://github.com/manakai/perl-web-dom local/submodules/web-dom
