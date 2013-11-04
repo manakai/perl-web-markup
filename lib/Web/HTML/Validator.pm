@@ -25,30 +25,6 @@ sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 
-my $Namespace = {
-  '' => {loaded => 1},
-#  q<http://www.w3.org/2005/Atom> => {module => 'Web::HTML::Validator::Atom'},
-#  q<http://purl.org/syndication/history/1.0>
-#      => {module => 'Web::HTML::Validator::Atom'},
-#  q<http://purl.org/syndication/threading/1.0>
-#      => {module => 'Web::HTML::Validator::Atom'},
-#  (HTML_NS) => {module => 'Web::HTML::Validator::HTML'},
-  (XML_NS) => {loaded => 1},
-  (XMLNS_NS) => {loaded => 1},
-  q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> => {loaded => 1},
-};
-
-sub load_ns_module ($) {
-  my $nsuri = shift; # namespace URI or ''
-  unless ($Namespace->{$nsuri}->{loaded}) {
-    if ($Namespace->{$nsuri}->{module}) {
-      eval qq{ require $Namespace->{$nsuri}->{module} } or die $@;
-    } else {
-      $Namespace->{$nsuri}->{loaded} = 1;
-    }
-  }
-} # load_ns_module
-
 ## ------ Attribute conformance checkers ------
 
 ## Web Applications 1.0 "Valid MIME type"
@@ -263,11 +239,7 @@ our %AnyChecker = (
     my ($self, $item, $element_state) = @_;
     for my $attr (@{$item->{node}->attributes}) {
       my $attr_ns = $attr->namespace_uri;
-      if (defined $attr_ns) {
-        load_ns_module ($attr_ns);
-      } else {
-        $attr_ns = '';
-      }
+      $attr_ns = '' if not defined $attr_ns;
       my $attr_ln = $attr->manakai_local_name;
       
       my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
@@ -502,11 +474,7 @@ sub check_document ($$$;$) {
   }
   
   my $docel_nsuri = $docel->namespace_uri;
-  if (defined $docel_nsuri) {
-    load_ns_module ($docel_nsuri);
-  } else {
-    $docel_nsuri = '';
-  }
+  $docel_nsuri = '' if not defined $docel_nsuri;
   my $docel_def = $Element->{$docel_nsuri}->{$docel->manakai_local_name} ||
     $Element->{$docel_nsuri}->{''} ||
     $ElementDefault;
@@ -644,11 +612,7 @@ sub check_element ($$$;$) {
     } elsif ($item->{type} eq 'element') {
       my $el = $item->{node};
       my $el_nsuri = $el->namespace_uri;
-      if (defined $el_nsuri) {
-        load_ns_module ($el_nsuri);
-      } else {
-        $el_nsuri = '';
-      }
+      $el_nsuri = '' if not defined $el_nsuri;
       my $el_ln = $el->manakai_local_name;
       
       my $element_state = {};
@@ -10655,8 +10619,6 @@ $Element->{+HTML_NS}->{noframes} = {
 ## object/@content-length, option/@name, script/@implements,
 ## section/@cite, style/@disabled
 
-$Web::HTML::Validator::Namespace->{+HTML_NS}->{loaded} = 1;
-
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
 sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
@@ -11935,9 +11897,6 @@ $Element->{+THR_NS}->{total} = {
 ## TODO: Check as archive document, page feed document, ...
 
 ## TODO: APP [RFC 5023]
-
-$Web::HTML::Validator::Namespace->{+ATOM_NS}->{loaded} = 1;
-$Web::HTML::Validator::Namespace->{+THR_NS}->{loaded} = 1;
 
 package Web::HTML::Validator::HTML::Metadata;
 use strict;
