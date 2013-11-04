@@ -13,7 +13,6 @@ use Web::XPath::FunctionLibrary;
 test {
   my $c = shift;
   my $parser = Web::XPath::Parser->new;
-  $parser->function_checker (Web::XPath::FunctionLibrary->get_checker);
   my $parsed = $parser->parse_char_string_as_expression ('string()');
   eq_or_diff $parsed, X LP [F undef, undef, 'string', [], []];
   done $c;
@@ -22,7 +21,6 @@ test {
 test {
   my $c = shift;
   my $parser = Web::XPath::Parser->new;
-  $parser->function_checker (Web::XPath::FunctionLibrary->get_checker);
   my $parsed = $parser->parse_char_string_as_expression ('string(12)');
   eq_or_diff $parsed, X LP [F undef, undef, 'string', [X LP [NUM 12, []]], []];
   done $c;
@@ -35,7 +33,6 @@ test {
   $parser->onerror (sub {
     push @error, {@_};
   });
-  $parser->function_checker (Web::XPath::FunctionLibrary->get_checker);
   my $parsed = $parser->parse_char_string_as_expression ('string(12, 4)');
   eq_or_diff $parsed, undef;
   eq_or_diff \@error, [{type => 'xpath:function:max',
