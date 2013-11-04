@@ -157,12 +157,23 @@ being checked.
 
 In addition to the dependency documented in the README
 <https://github.com/manakai/perl-web-markup/blob/master/README.pod#dependency>,
-following modules are required: perl-web-css
-<https://github.com/manakai/perl-web-css>, perl-web-langtag
-<https://github.com/manakai/perl-web-langtag>, perl-web-resource
-<https://github.com/manakai/perl-web-resource>, perl-web-url
-<https://github.com/manakai/perl-web-url>.  Also, see
-L<Web::RDF::XML::Parser>'s dependency section.
+following modules are required:
+
+=over 4
+
+=item perl-web-css <https://github.com/manakai/perl-web-css>
+
+=item perl-web-datetime <https://github.com/manakai/perl-web-datetime>
+
+=item perl-web-langtag <https://github.com/manakai/perl-web-langtag>
+
+=item perl-web-resource <https://github.com/manakai/perl-web-resource>
+
+=item perl-web-url <https://github.com/manakai/perl-web-url>
+
+=back
+
+Also, see L<Web::RDF::XML::Parser>'s dependency section.
 
 =head1 SEE ALSO
 

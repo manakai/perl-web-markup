@@ -28,3 +28,6 @@
 [submodule "t_deps/modules/web-css"]
 	path = t_deps/modules/web-css
 	url = git://github.com/manakai/perl-web-css
+[submodule "t_deps/modules/web-datetime"]
+	path = t_deps/modules/web-datetime
+	url = git://github.com/manakai/perl-web-datetime
