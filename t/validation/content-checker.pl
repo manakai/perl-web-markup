@@ -2,6 +2,7 @@ use strict;
 use warnings;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use Test::More;
 use Test::Differences;
 use Test::X1;
 use Test::HTCT::Parser;
@@ -15,14 +16,17 @@ use Web::DOM::AtomElement;
 sub test_files (@) {
   my @FILES = @_;
 
-  for_each_test ($_, {
-    data => {is_prefixed => 1},
-    errors => {is_list => 1},
-  }, \&_test) for @FILES;
+  for my $file_name (@FILES) {
+    for_each_test ($file_name, {
+      data => {is_prefixed => 1},
+      errors => {is_list => 1},
+    }, sub { _test ($file_name, $_[0]) });
+  }
 } # test_files
 
-sub _test ($) {
-  my $test = shift;
+sub _test ($$) {
+  my ($file_name, $test) = @_;
+  $file_name = $1 if $file_name =~ m{([^/]+\.dat)};
   test {
     my $c = shift;
     $test->{parse_as} = 'xml';
@@ -77,10 +81,14 @@ sub _test ($) {
 
     my $actual = join ("\n", sort {$a cmp $b} @error);
     my $expected = join ("\n", sort {$a cmp $b} @{$test->{errors}->[0]});
+    if ($actual eq $expected) {
+      is $actual, $expected;
+    } else {
 #line 1 "content-checker-test-ok"
-    eq_or_diff $actual, $expected;
+      eq_or_diff $actual, $expected, $test->{data}->[0];
+    }
     done $c;
-  } n => 1, name => substr $test->{data}->[0], 0, 20;
+  } n => 1, name => [$file_name, substr $test->{data}->[0], 0, 20];
 } # test
 
 sub get_node_path ($) {

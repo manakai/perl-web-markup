@@ -410,12 +410,11 @@ $Element->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{RDF} = {
     my ($self, $item, $element_state) = @_;
     my $triple = [];
     push @{$self->{return}->{rdf}}, [$item->{node}, $triple];
-    require Whatpm::RDFXML;
-    my $rdf = Whatpm::RDFXML->new;
+    require Web::RDF::XML::Parser;
+    my $rdf = Web::RDF::XML::Parser->new;
     ## TODO: Should we make bnodeid unique in a document?
-    $rdf->{onerror} = $self->{onerror};
-    $rdf->{level} = $self->{level};
-    $rdf->{ontriple} = sub {
+    $rdf->onerror ($self->{onerror});
+    $rdf->ontriple (sub {
       my %opt = @_;
       push @$triple,
           [$opt{node}, $opt{subject}, $opt{predicate}, $opt{object}];
@@ -441,7 +440,7 @@ $Element->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{RDF} = {
              {uri => q<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>},
              {uri => q<http://www.w3.org/1999/02/22-rdf-syntax-ns#Statement>}];
       }
-    };
+    });
     $rdf->convert_rdf_element ($item->{node});
   },
 };
@@ -466,11 +465,6 @@ my $default_error_level = {
   xml_error => 'm', ## TODO: correct?
   xml_id_error => 'm', ## TODO: ?
   nc => 'm', ## XML Namespace Constraints ## TODO: correct?
-
-  ## |Whatpm::RDFXML|
-  rdf_fact => 'm',
-  rdf_grammer => 'm',
-  rdf_lc_must => 'm',
 
   ## |Message::Charset::Info| and |Whatpm::Charset::DecodeHandle|
   charset_variant => 'm',
