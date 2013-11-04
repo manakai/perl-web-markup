@@ -56,14 +56,13 @@ our $MIMETypeChecker = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
 
-  require Message::MIME::Type;
+  require Web::MIME::Type;
   my $onerror = sub {
     $self->{onerror}->(@_, node => $attr);
   };
 
   ## Syntax-level validation
-  my $type = Message::MIME::Type->parse_web_mime_type
-      ($value, $onerror, $self->{level});
+  my $type = Web::MIME::Type->parse_web_mime_type ($value, $onerror);
 
   ## Vocabulary-level validation
   if ($type) {
@@ -467,13 +466,6 @@ my $default_error_level = {
   xml_error => 'm', ## TODO: correct?
   xml_id_error => 'm', ## TODO: ?
   nc => 'm', ## XML Namespace Constraints ## TODO: correct?
-
-  ## |Message::MIME::Type|
-  mime_must => 'm', # lowercase "must"
-  mime_fact => 'm',
-  mime_strongly_discouraged => 'w',
-  mime_discouraged => 'w',
-  http_fact => 'm',
 
   ## |Whatpm::RDFXML|
   rdf_fact => 'm',
@@ -1776,14 +1768,13 @@ my $AcceptAttrChecker = sub {
     if ($v eq 'audio/*' or $v eq 'video/*' or $v eq 'image/*') {
       #
     } else {
-      require Message::MIME::Type;
+      require Web::MIME::Type;
       my $onerror = sub {
         $self->{onerror}->(value => $v, @_, node => $attr);
       };
       
       ## Syntax-level validation
-      my $type = Message::MIME::Type->parse_web_mime_type
-          ($v, $onerror, $self->{level});
+      my $type = Web::MIME::Type->parse_web_mime_type ($v, $onerror);
 
       if ($type) {
         if (@{$type->attrs}) {
@@ -2022,10 +2013,10 @@ my $HTMLColorAttrChecker = sub {
   if ($attr->value =~ /\A\x23[0-9A-Fa-f]{6}\z/) {
     #
   } else {
-    require Whatpm::CSS::Colors;
+    require Web::CSS::Colors;
 
     $value =~ tr/A-Z/a-z/;
-    if ($Whatpm::CSS::Colors::X11Colors->{$value}) {
+    if ($Web::CSS::Colors::X11Colors->{$value}) {
       #
     } else {
       $self->{onerror}->(node => $attr,

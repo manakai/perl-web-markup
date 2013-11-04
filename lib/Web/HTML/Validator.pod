@@ -157,8 +157,10 @@ being checked.
 
 In addition to the dependency documented in the README
 <https://github.com/manakai/perl-web-markup/blob/master/README.pod#dependency>,
-following modules are required: perl-web-langtag
-<https://github.com/manakai/perl-web-langtag>, perl-web-url
+following modules are required: perl-web-css
+<https://github.com/manakai/perl-web-css>, perl-web-langtag
+<https://github.com/manakai/perl-web-langtag>, perl-web-resource
+<https://github.com/manakai/perl-web-resource>, perl-web-url
 <https://github.com/manakai/perl-web-url>.  Also, see
 L<Web::RDF::XML::Parser>'s dependency section.
 

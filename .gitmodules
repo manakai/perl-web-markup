@@ -22,3 +22,9 @@
 [submodule "t_deps/modules/web-langtag"]
 	path = t_deps/modules/web-langtag
 	url = git://github.com/manakai/perl-web-langtag
+[submodule "t_deps/modules/web-resource"]
+	path = t_deps/modules/web-resource
+	url = git://github.com/manakai/perl-web-resource
+[submodule "t_deps/modules/web-css"]
+	path = t_deps/modules/web-css
+	url = git://github.com/manakai/perl-web-css
