@@ -1,0 +1,31 @@
+=head1 NAME
+
+Web::HTML::Table - HTML table model
+
+=head1 SYNOPSIS
+
+  use Web::HTML::Table;
+  $impl = Web::HTML::Table->new;
+  $table = $impl->form_table ($table_el);
+
+=head1 DESCRIPTION
+
+The C<Web::HTML::Table> module is an implementation of HTML table
+model.
+
+=head1 METHODS
+
+XXX
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>
+
+This library is free software; you can redistribute it
+and/or modify it under the same terms as Perl itself.
+
+=cut

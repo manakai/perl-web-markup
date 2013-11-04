@@ -16,6 +16,10 @@ An HTML parser.
 
 An HTML serializer.
 
+=item L<Web::HTML::Table>
+
+An implementation of HTML table model.
+
 =item L<Web::HTML::Validator>
 
 A DOM conformance checker (for HTML and XML).

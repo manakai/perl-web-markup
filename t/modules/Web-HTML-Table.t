@@ -1,24 +1,13 @@
-#!/usr/bin/perl
-package test::Whatpm::HTML::Table;
 use strict;
 use warnings;
 use Path::Class;
-use lib file (__FILE__)->dir->parent->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->stringify;
-use base qw(Test::Class);
+use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use Test::More;
 use Test::Differences;
-use Whatpm::HTML::Table;
-
-my $dom;
-my $domimpl = $ENV{MANAKAI_DOMIMPL} || '';
-if ($domimpl eq 'nanodom') {
-  require Whatpm::NanoDOM;
-  $dom = Whatpm::NanoDOM::DOMImplementation->new;
-} else {
-  require Message::DOM::DOMImplementation;
-  $dom = Message::DOM::DOMImplementation->new;
-}
+use Test::X1;
+use NanoDOM;
+use Web::HTML::Table;
 
 sub serialize_node ($);
 sub serialize_node ($) {
@@ -29,8 +18,7 @@ sub serialize_node ($) {
     return [map { serialize_node $_ } @$obj];
   } elsif (ref $obj eq 'HASH') {
     return {map { serialize_node $_ } %$obj};
-  } elsif ($obj->isa ('Message::DOM::Node') or
-           $obj->isa ('Whatpm::NanoDOM::Node')) {
+  } elsif ($obj->isa ('NanoDOM::Node')) {
     return $obj->manakai_local_name . ' ' . $obj->text_content;
   } else {
     return $obj;
@@ -99,8 +87,8 @@ sub remove_tbody ($) {
   $table_el->remove_child ($table_el->first_child); # tbody
 } # remove_tbody
 
-sub _form_table : Test(5) {
-  for (
+{
+  for my $test (
     {
       input => q[<tr><td>1<td>2<tr><th>3<th>4],
       result => {
@@ -176,44 +164,48 @@ sub _form_table : Test(5) {
       },
     },
   ) {
-    my $doc = $dom->create_document;
-    $doc->manakai_is_html (1);
+    test {
+      my $c = shift;
+      my $doc = NanoDOM::Document->new;
+      $doc->manakai_is_html (1);
 
-    my $table_el;
-    if ($_->{body}) {
-      $doc->append_child
-          ($doc->create_element_ns
-               ('http://www.w3.org/1999/xhtml', [undef, 'html']))
-          ->inner_html (q[<head><body>]);
-      my $body = $doc->last_child->last_child;
-      my $body_inner = $_->{body};
-      $body_inner =~ s[%s][<table></table>]g;
-      $body->inner_html ($body_inner);
-      my @node = ($body);
-      while (@node) {
-        my $node = shift @node;
-        next unless $node->node_type == 1;
-        if ($node->manakai_local_name eq 'table') {
-          $table_el = $node;
-          last;
-        } else {
-          push @node, @{$node->child_nodes};
+      my $table_el;
+      if ($test->{body}) {
+        $doc->append_child
+            ($doc->create_element_ns
+                 ('http://www.w3.org/1999/xhtml', [undef, 'html']))
+            ->inner_html (q[<head><body>]);
+        my $body = $doc->last_child->last_child;
+        my $body_inner = $test->{body};
+        $body_inner =~ s[%s][<table></table>]g;
+        $body->inner_html ($body_inner);
+        my @node = ($body);
+        while (@node) {
+          my $node = shift @node;
+          next unless $node->node_type == 1;
+          if ($node->manakai_local_name eq 'table') {
+            $table_el = $node;
+            last;
+          } else {
+            push @node, @{$node->child_nodes};
+          }
         }
+      } else {
+        $table_el = $doc->create_element_ns
+            ('http://www.w3.org/1999/xhtml', [undef, 'table']);
       }
-    } else {
-      $table_el = $doc->create_element_ns
-          ('http://www.w3.org/1999/xhtml', [undef, 'table']);
-    }
-    $table_el->inner_html ($_->{input});
-    remove_tbody $table_el if $_->{without_tbody};
+      $table_el->inner_html ($test->{input});
+      remove_tbody $table_el if $test->{without_tbody};
 
-    my $table = Whatpm::HTML::Table->form_table ($table_el);
-    eq_or_diff serialize_node $table, $_->{result};
+      my $table = Web::HTML::Table->new->form_table ($table_el);
+      eq_or_diff serialize_node $table, $test->{result};
+      done $c;
+    } n => 1, name => 'form_table';
   }
-} # _form_table
+}
 
-sub _get_assigned_headers : Test(140) {
-  for (
+{
+  for my $test (
     {
       input => q[<tr><th>1<th>2<tr><td>3<td>4],
       results => [
@@ -464,34 +456,37 @@ sub _get_assigned_headers : Test(140) {
       ],
     },
   ) {
-    my $doc = $dom->create_document;
-    $doc->manakai_is_html (1);
-  
-    my $table_el = $doc->create_element_ns (undef, [undef, 'table']);
-    $table_el->inner_html ($_->{input});
-    if ($_->{in_doc}) {
-      $doc->inner_html ('<!DOCTYPE html>');
-      $doc->last_child->last_child->append_child ($table_el);
-    }
-    my $table = Whatpm::HTML::Table->form_table ($table_el);
-    
-    for (@{$_->{results}}) {
-      my $headers = Whatpm::HTML::Table->get_assigned_headers
-          ($table, $_->[0], $_->[1]);
-      $headers = [sort {$a->{x} <=> $b->{x} || $a->{y} <=> $b->{y}} @$headers];
-      $_->[2] = [sort {$a->{x} <=> $b->{x} || $a->{y} <=> $b->{y}} @{$_->[2]}];
-      eq_or_diff serialize_node $headers, $_->[2];
-    }
+    test {
+      my $c = shift;
+      my $doc = NanoDOM::Document->new;
+      $doc->manakai_is_html (1);
+      
+      my $table_el = $doc->create_element_ns
+          ('http://www.w3.org/1999/xhtml', [undef, 'table']);
+      $table_el->inner_html ($test->{input});
+      if ($test->{in_doc}) {
+        $doc->inner_html ('<!DOCTYPE html>');
+        $doc->last_child->last_child->append_child ($table_el);
+      }
+      my $table = Web::HTML::Table->new->form_table ($table_el);
+      
+      for (@{$test->{results}}) {
+        my $headers = Web::HTML::Table->new->get_assigned_headers
+            ($table, $_->[0], $_->[1]);
+        $headers = [sort {$a->{x} <=> $b->{x} || $a->{y} <=> $b->{y}} @$headers];
+        $_->[2] = [sort {$a->{x} <=> $b->{x} || $a->{y} <=> $b->{y}} @{$_->[2]}];
+        eq_or_diff serialize_node $headers, $_->[2];
+      }
+      done $c;
+    } n => 0+@{$test->{results}}, name => 'get_assigned_headers';
   }
-} # _get_assigned_headers
+}
 
-__PACKAGE__->runtests;
-
-1;
+run_tests;
 
 =head1 LICENSE
 
-Copyright 2010 Wakaba <w@suika.fam.cx>
+Copyright 2010-2013 Wakaba <wakaba@suikawiki.org>
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

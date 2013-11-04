@@ -7896,10 +7896,10 @@ $Element->{+HTML_NS}->{table} = {
 
     ## Table model errors
 
-    require Whatpm::HTML::Table;
-    my $table = Whatpm::HTML::Table->form_table ($item->{node}, sub {
-      $self->{onerror}->(@_);
-    }, $self->{level});
+    require Web::HTML::Table;
+    my $tbl = Web::HTML::Table->new;
+    $tbl->onerror ($self->{onerror});
+    my $table = $tbl->form_table ($item->{node});
 
     my @headers_cell;
     for my $x (0..$#{$table->{cell}}) {
