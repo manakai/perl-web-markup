@@ -387,6 +387,10 @@ our $IsInHTMLInteractiveContent = sub {
     } elsif ($ln eq 'img' or $ln eq 'object') {
       return $el->has_attribute_ns (undef, 'usemap');
     } elsif ($ln eq 'video' or $ln eq 'audio') {
+      ## No media element is allowed as a descendant of a media
+      ## element.
+      return 1 if $self->{flag}->{in_media};
+
       return $el->has_attribute_ns (undef, 'controls');
     } elsif ($ln eq 'menu') {
       my $value = $el->get_attribute_ns (undef, 'type') || '';
@@ -1232,8 +1236,6 @@ my $FAECheckAttrs2 = sub {
     }
   } # CHK
 }; # $FAECheckAttrs2
-
-our $IsInHTMLInteractiveContent; # See Web::HTML::Validator.
 
 ## -- Common attribute syntacx checkers
 
@@ -7166,6 +7168,9 @@ $Element->{+HTML_NS}->{video} = {
     $element_state->{has_source} ||= $element_state->{allow_source} * -1;
       ## NOTE: It might be set true by |check_element|.
 
+    $element_state->{in_media_orig} = $self->{flag}->{in_media};
+    $self->{flag}->{in_media} = 1;
+
     $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
     $element_state->{uri_info}->{poster}->{type}->{embedded} = 1;
 
@@ -7219,6 +7224,8 @@ $Element->{+HTML_NS}->{video} = {
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     $self->_remove_minus_elements ($element_state);
+
+    delete $self->{flag}->{in_media} unless $element_state->{in_media_orig};
     
     if ($element_state->{has_source} == -1) { 
       $self->{onerror}->(node => $item->{node},

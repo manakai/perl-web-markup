@@ -30,7 +30,7 @@ standards such as HTML.
 
 This module contains two class methods:
 
-XXX API is not stable yet
+XXX API is not stable.  Don't use this module yet!
 
 =over 4
 
