@@ -11155,7 +11155,7 @@ my %AtomDateConstruct = (
     ## MUST: RFC 3339 |date-time| with uppercase |T| and |Z|
     if ($element_state->{value} =~ /\A([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?>\.[0-9]+)?(?>Z|[+-]([0-9]{2}):([0-9]{2}))\z/) {
       my ($y, $M, $d, $h, $m, $s, $zh, $zm)
-          = ($1, $2, $3, $4, $5, $6, $7, $8);
+          = ($1, $2, $3, $4, $5, $6, $7 || 0, $8 || 0);
       my $node = $item->{node};
 
       ## Check additional constraints described or referenced in
@@ -11499,7 +11499,7 @@ $Element->{+ATOM_NS}->{content} = {
 
       ## NOTE: There MUST NOT be any white space.
       require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_strng ($attr->value);
+      my $chk = Web::URL::Checker->new_from_string ($attr->value);
       $chk->onerror (sub {
         $self->{onerror}->(@_, node => $item->{node});
       });

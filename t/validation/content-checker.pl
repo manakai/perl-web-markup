@@ -80,7 +80,7 @@ sub _test ($) {
 #line 1 "content-checker-test-ok"
     eq_or_diff $actual, $expected;
     done $c;
-  } n => 1, name => $test->{data}->[0];
+  } n => 1, name => substr $test->{data}->[0], 0, 20;
 } # test
 
 sub get_node_path ($) {
