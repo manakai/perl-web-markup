@@ -1,7 +1,26 @@
 package Web::HTML::Validator;
 use strict;
 use warnings;
-our $VERSION = '113.0';
+our $VERSION = '114.0';
+
+sub new ($) {
+  return bless {}, $_[0];
+} # new
+
+sub onerror ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onerror} = $_[1];
+  }
+  return $_[0]->{onerror} ||= sub {
+    my %args = @_;
+    warn sprintf "%s%s%s%s (%s)\n",
+        defined $args{node} ? $args{node}->node_name . ': ' : '',
+        $args{type},
+        defined $args{text} ? ' ' . $args{text} : '',
+        defined $args{value} ? ' "' . $args{value} . '"' : '',
+        $args{level};
+  };
+} # onerror
 
 ## ISSUE: How XML and XML Namespaces conformance can (or cannot)
 ## be applied to an in-memory representation (i.e. DOM)?
@@ -204,19 +223,10 @@ our $AttrChecker = {
   },
 };
 
-## ISSUE: Should we really allow these attributes?
-$AttrChecker->{''}->{'xml:space'} = $AttrChecker->{+XML_NS}->{space};
-$AttrChecker->{''}->{'xml:lang'} = $AttrChecker->{+XML_NS}->{lang};
-    ## NOTE: Checker for (null, "xml:lang") attribute is shadowed for
-    ## HTML elements in Web::HTML::Validator::HTML.
-$AttrChecker->{''}->{'xml:base'} = $AttrChecker->{+XML_NS}->{base};
-$AttrChecker->{''}->{'xml:id'} = $AttrChecker->{+XML_NS}->{id};
-
 our $AttrStatus;
 
 for (qw/space lang base id/) {
   $AttrStatus->{+XML_NS}->{$_} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
-  $AttrStatus->{''}->{"xml:$_"} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
   ## XML 1.0: FEATURE_STATUS_CR
   ## XML 1.1: FEATURE_STATUS_REC
   ## XML Namespaces 1.0: FEATURE_STATUS_CR
@@ -452,7 +462,7 @@ my $default_error_level = {
 sub check_document ($$$;$) {
   my ($self, $doc, $onerror, $onsubdoc) = @_;
   $self = bless {}, $self unless ref $self;
-  $self->{onerror} = $onerror;
+  $self->{onerror} = $onerror || $self->onerror;
   $self->{onsubdoc} = $onsubdoc || sub {
     warn "A subdocument is not conformance-checked";
   };
@@ -567,7 +577,7 @@ sub check_document ($$$;$) {
 sub check_element ($$$;$) {
   my ($self, $el, $onerror, $onsubdoc) = @_;
   $self = bless {}, $self unless ref $self;
-  $self->{onerror} = $onerror;
+  $self->{onerror} = $onerror || $self->onerror;
   $self->{onsubdoc} = $onsubdoc || sub {
     warn "A subdocument is not conformance-checked";
   };

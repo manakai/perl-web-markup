@@ -80,20 +80,6 @@ is detected.
 
 =back
 
-=head1 SUPPORTED STANDARDS
-
-XML 1.0, XML 1.1, XML Namespaces 1.0, XML Namespaces 1.1, C<xml:base>,
-C<xml:id>.
-
-Web Applications 1.0 (including HTML Living Standard and HTML5),
-manakai's Conformance Checking Guideline for Obsolete HTML Elements
-and Attributes.
-
-Atom 1.0, Atom Threading Extension.
-
-For more information, see
-<http://suika.suikawiki.org/gate/2007/html/standards>.
-
 =head1 BUGS
 
 This conformance checker is work in progress; it I<might> not be able
@@ -174,6 +160,60 @@ following modules are required:
 =back
 
 Also, see L<Web::RDF::XML::Parser>'s dependency section.
+
+=head1 SPECIFICATIONS
+
+=over 4
+
+=item XML
+
+Extensible Markup Language (XML) 1.0 <http://www.w3.org/TR/xml/>.
+
+XML 1.0 Fifth Edition Specification Errata
+<http://www.w3.org/XML/xml-V10-5e-errata>.
+
+Extensible Markup Language (XML) 1.1 <http://www.w3.org/TR/xml11/>.
+
+XML 1.1 Second Edition Specification Errata
+<http://www.w3.org/XML/xml-V11-2e-errata>.
+
+The C<xml:lang> attribute MUST be interpreted as the C<lang> attribute
+in the XML namespace.  The C<xml:space> attribute MUST be interpreted
+as the C<space> attribute in the XML namespace.  In other words, the
+C<xml:lang> or C<xml:space> attribute in no namespace is different
+from the attributes defined in the XML specification.
+
+=item XMLNS
+
+Namespaces in XML 1.0 <http://www.w3.org/TR/xml-names/>.
+
+Namespaces in XML 1.0 (Third Edition) Errata
+<http://www.w3.org/XML/2009/xml-names-errata>.
+
+Namespaces in XML 1.1 <http://www.w3.org/TR/xml-names11/>.
+
+Namespaces in XML 1.1 (Second Edition) Errata
+<http://www.w3.org/XML/2006/xml-names11-errata>.
+
+=item XMLBASE
+
+XML Base <http://www.w3.org/TR/xmlbase/>.
+
+XML Base Specification Errata
+<http://www.w3.org/2009/01/xmlbase-errata>.
+
+=back
+
+C<xml:id>.
+
+Web Applications 1.0 (including HTML Living Standard and HTML5),
+manakai's Conformance Checking Guideline for Obsolete HTML Elements
+and Attributes.
+
+Atom 1.0, Atom Threading Extension.
+
+For more information, see
+<http://suika.suikawiki.org/gate/2007/html/standards>.
 
 =head1 SEE ALSO
 
