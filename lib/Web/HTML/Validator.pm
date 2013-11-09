@@ -139,33 +139,6 @@ our $AttrChecker = {
       ## NOTE: Conformance to URI standard is not checked since there is
       ## no author requirement on conformance in the XML Base specification.
     },
-    id => sub {
-      my ($self, $attr, $item, $element_state) = @_;
-      my $value = $attr->value;
-      $value =~ s/[\x09\x0A\x0D\x20]+/ /g;
-      $value =~ s/^\x20//;
-      $value =~ s/\x20$//;
-      ## TODO: NCName in XML 1.0 or 1.1
-      ## TODO: declared type is ID?
-      if ($self->{id}->{$value}) {
-        $self->{onerror}->(node => $attr,
-                           type => 'duplicate ID',
-                           level => $self->{level}->{xml_id_error});
-        push @{$self->{id}->{$value}}, $attr;
-      } elsif ($self->{name}->{$value} and
-               $self->{name}->{$value}->[-1]->owner_element ne $item->{node}) {
-        $self->{onerror}->(node => $attr,
-                           type => 'id name confliction', # XXXdocumentation
-                           value => $value,
-                           level => $self->{level}->{must});
-        $self->{id}->{$value} = [$attr];
-        $self->{id_type}->{$value} = $element_state->{id_type} || '';
-      } else {
-        $self->{id}->{$value} = [$attr];
-        $self->{id_type}->{$value} = $element_state->{id_type} || '';
-      }
-      push @{$element_state->{element_ids} ||= []}, $value;
-    },
   },
   (XMLNS_NS) => {
     '' => sub {
@@ -225,14 +198,13 @@ our $AttrChecker = {
 
 our $AttrStatus;
 
-for (qw/space lang base id/) {
+for (qw/space lang base/) {
   $AttrStatus->{+XML_NS}->{$_} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
   ## XML 1.0: FEATURE_STATUS_CR
   ## XML 1.1: FEATURE_STATUS_REC
   ## XML Namespaces 1.0: FEATURE_STATUS_CR
   ## XML Namespaces 1.1: FEATURE_STATUS_REC
   ## XML Base: FEATURE_STATUS_REC
-  ## xml:id: FEATURE_STATUS_REC
 }
 
 $AttrStatus->{+XMLNS_NS}->{''} = FEATURE_STATUS_REC | FEATURE_ALLOWED;

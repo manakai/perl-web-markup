@@ -204,8 +204,6 @@ XML Base Specification Errata
 
 =back
 
-C<xml:id>.
-
 Web Applications 1.0 (including HTML Living Standard and HTML5),
 manakai's Conformance Checking Guideline for Obsolete HTML Elements
 and Attributes.
@@ -214,6 +212,9 @@ Atom 1.0, Atom Threading Extension.
 
 For more information, see
 <http://suika.suikawiki.org/gate/2007/html/standards>.
+
+Note that the C<xml:id> specification is not an applicable
+specification.
 
 =head1 SEE ALSO
 
