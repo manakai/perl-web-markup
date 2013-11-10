@@ -173,7 +173,6 @@ our $AttrChecker = {
       
       my $prefix = $attr->prefix;
       if (defined $prefix and not $prefix eq 'xml') {
-        ## The XMLNS namespace MUST be bound to |xmlns|.
         $self->{onerror}
             ->(node => $attr,
                type => 'Reserved Prefixes and Namespace Names:Name',
@@ -1009,19 +1008,6 @@ sub check_element ($$$;$) {
       #
     } elsif ($_->[0] eq 'any' and $self->{id}->{$_->[1]}) {
       #
-    } elsif ($_->[0] eq 'repeat-template' and $self->{id}->{$_->[1]}) {
-      my $re = $self->{id}->{$_->[1]}->[0]->owner_element;
-      my $rens = $re->namespace_uri;
-      my $repeat = (defined $rens and $rens eq HTML_NS)
-          ? $re->get_attribute_ns (undef, 'repeat')
-          : $re->get_attribute_ns (HTML_NS, 'repeat');
-      if (defined $repeat and $repeat eq 'template') {
-        #
-      } else {
-        $self->{onerror}->(node => $_->[2],
-                           type => 'no referenced repeat-template', # XXXdocumentation,
-                           level => $self->{level}->{must});
-      }
     } else {
       $self->{onerror}->(node => $_->[2],
                          type => 
@@ -1032,7 +1018,6 @@ sub check_element ($$$;$) {
           menu => 'no referenced menu',
           datalist => 'no referenced datalist', ## TODOC: type
           object => 'no referenced object', # XXXdocumentation
-          'repeat-template' => 'no referenced repeat-template', # XXXdocumentation
         }->{$_->[0]},
                          value => $_->[1],
                          level => $self->{level}->{must});
@@ -2090,35 +2075,6 @@ my $FontSizeChecker = sub {
   }
 }; # $FontSizeChecker
 
-my $HTMLRepeatIndexAttrChecker = sub {
-  my ($self, $attr) = @_;
-
-  # XXX
-  if (defined $attr->namespace_uri) {
-    my $oe = $attr->owner_element;
-    my $oe_nsuri = $oe->namespace_uri;
-    if (defined $oe_nsuri and $oe_nsuri eq HTML_NS) {
-      $self->{onerror}->(node => $attr, type => 'attribute not allowed',
-                         level => $self->{level}->{must});
-    }
-  }
-
-  my $oe = $attr->owner_element;
-  my $oens = $oe->namespace_uri;
-  my $repeat = (defined $oens and $oens eq HTML_NS)
-      ? $oe->get_attribute_ns (undef, 'repeat')
-      : $oe->get_attribute_ns (HTML_NS, 'repeat');
-  if (defined $repeat and $repeat eq 'template') {
-    #
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'attribute not allowed:repeat-*', # XXXdocumentation
-                       level => $self->{level}->{must});
-  }
-  
-  $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 })->(@_);
-}; # $HTMLRepeatIndexAttrChecker
-
 my $PlaceholderAttrChecker = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
@@ -2372,47 +2328,6 @@ $HTMLAttrChecker = {
   }, # language
   property => sub { },
   rel => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->(),
-  repeat => sub {
-    my ($self, $attr) = @_;
-
-    if (defined $attr->namespace_uri) {
-      my $oe = $attr->owner_element;
-      my $oe_nsuri = $oe->namespace_uri;
-      if (defined $oe_nsuri and $oe_nsuri eq HTML_NS) {
-        $self->{onerror}->(node => $attr, type => 'attribute not allowed',
-                           level => $self->{level}->{must});
-      }
-    }
-
-    my $value = $attr->value;
-    if ($value eq 'template') {
-      #
-    } elsif ($value =~ /\A-?[0-9]+\z/) { ## A valid integer.
-      #
-    } else {
-      $self->{onerror}->(node => $attr, type => 'repeat:syntax error',
-                         level => $self->{level}->{must});
-    }
-  },
-  'repeat-min' => $HTMLRepeatIndexAttrChecker,
-  'repeat-max' => $HTMLRepeatIndexAttrChecker,
-  'repeat-start' => $HTMLRepeatIndexAttrChecker,
-  'repeat-template' => sub {
-    my ($self, $attr) = @_;
-
-    ## |repeat-template| and |template|.
-
-    if (defined $attr->namespace_uri) {
-      my $oe = $attr->owner_element;
-      my $oe_nsuri = $oe->namespace_uri;
-      if (defined $oe_nsuri and $oe_nsuri eq HTML_NS) {
-        $self->{onerror}->(node => $attr, type => 'attribute not allowed',
-                           level => $self->{level}->{must});
-      }
-    }
-    
-    push @{$self->{idref}}, ['repeat-template', $attr->value, $attr];
-  },
   resource => $HTMLURIAttrChecker,
   rev => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->(),
   ## TODO: role [HTML5ROLE] ## TODO: global @role [XHTML1ROLE]
@@ -2514,11 +2429,6 @@ my %HTMLAttrStatus = (
   language => FEATURE_OBSVOCAB,
   property => FEATURE_OBSVOCAB,
   rel => FEATURE_OBSVOCAB,
-  repeat => FEATURE_OBSVOCAB,
-  'repeat-max' => FEATURE_OBSVOCAB,
-  'repeat-min' => FEATURE_OBSVOCAB,
-  'repeat-start' => FEATURE_OBSVOCAB,
-  'repeat-template' => FEATURE_OBSVOCAB,
   resource => FEATURE_OBSVOCAB,
   rev => FEATURE_OBSVOCAB,
   role => FEATURE_HTML5_LC,
@@ -2607,27 +2517,6 @@ for (qw(
 )) {
   $HTMLAttrChecker->{$_} = $HTMLEventHandlerAttrChecker;
   $HTMLAttrStatus{$_} = FEATURE_OBSVOCAB;
-}
-
-## ------ Attributes in the HTML namespace ------
-
-## Global attributes whoes namespace URL is the HTML namespace,
-## i.e. <http://www.w3.org/1999/xhtml>, e.g. |html:class|.  They are
-## all non-conforming.
-
-$AttrChecker->{+HTML_NS}->{''} = sub {}; # no syntactical checks
-$AttrStatus->{+HTML_NS}->{''} = 0;
-
-for (qw(
-  class dir id title
-  onclick ondblclick onmousedown onmouseup onmouseover onmousemove
-  onmouseout onkeypress onkeydown onkeyup
-  repeat repeat-max repeat-min repeat-start repeat-template
-  about content datatype property rel resource rev typeof
-  role
-)) {
-  $AttrChecker->{+HTML_NS}->{$_} = $HTMLAttrChecker->{$_};
-  $AttrStatus->{+HTML_NS}->{$_} = FEATURE_OBSVOCAB;
 }
 
 ## ------ ------
@@ -8549,7 +8438,6 @@ $Element->{+HTML_NS}->{input} = {
          step => FEATURE_HTML5_LC,
          tabindex => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
          target => FEATURE_OBSVOCAB,
-         template => FEATURE_OBSVOCAB,
          type => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
          usemap => FEATURE_OBSVOCAB,
          value => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
@@ -8639,7 +8527,6 @@ $Element->{+HTML_NS}->{input} = {
          start => '',
          step => '',
          target => '',
-         template => '',
          type => $GetHTMLEnumeratedAttrChecker->({
            hidden => 1, text => 1, search => 1, url => 1,
            tel => 1, email => 1, password => 1,
@@ -8884,13 +8771,10 @@ $Element->{+HTML_NS}->{input} = {
             ## TODO: alt & src are required.
           } elsif ({
                     reset => 1, button => 1,
-                    remove => 1, 'move-up' => 1, 'move-down' => 1,
-                    add => 1,
                     quote => 1,
                    }->{$state}) {
             $checker = 
             {
-             template => ($state eq 'add' ? $HTMLAttrChecker->{'repeat-template'} : undef),
              value => sub { }, ## NOTE: No restriction.
             }->{$attr_ln} || $checker;
 
@@ -9285,7 +9169,6 @@ $Element->{+HTML_NS}->{button} = {
     name => $FormControlNameAttrChecker,
     replace => $GetHTMLEnumeratedAttrChecker->({document => 1, values => 1}),
     target => $HTMLTargetAttrChecker,
-    template => $HTMLAttrChecker->{'repeat-template'},
     type => $GetHTMLEnumeratedAttrChecker->({
       button => 1, submit => 1, reset => 1,
       add => -1, 'move-up' => -1, 'move-down' => -1, remove => -1,
@@ -9314,7 +9197,6 @@ $Element->{+HTML_NS}->{button} = {
     replace => FEATURE_OBSVOCAB,
     tabindex => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
     target => FEATURE_OBSVOCAB,
-    template => FEATURE_OBSVOCAB,
     type => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
     value => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
   }), # check_attrs
@@ -9354,17 +9236,6 @@ $Element->{+HTML_NS}->{button} = {
         $item->{node}->get_attribute_node_ns (undef, 'method'),
         $item->{node}->get_attribute_node_ns (undef, 'enctype'),
         $item->{node}->get_attribute_node_ns (undef, 'target'),
-      ) {
-        next unless $_;
-        $self->{onerror}->(node => $_,
-                           type => 'attribute not allowed',
-                           level => $self->{level}->{must});
-      }
-    }
-
-    unless ($type eq 'add') {
-      for (
-        $item->{node}->get_attribute_node_ns (undef, 'template'),
       ) {
         next unless $_;
         $self->{onerror}->(node => $_,
@@ -10616,14 +10487,15 @@ $Element->{+HTML_NS}->{noframes} = {
 ## form attributes), */@instanceof, */@irrelevant, */@ismap,
 ## */@layout, */@media, */@nextfocus, */@onbeforeunload,
 ## */@onhashchange, */@onresize, */@onstorage, */@onunload,
-## */@ondataunavailable, */@onmessage, */@prevfocus, */@runat, */@sda*
-## (SDA attributes), */@shape, */@src, */@srctype, */@target,
-## */@usemap, abbr/@full, article/@cite, article/@pubdate,
-## command/@default, dl/@type, font/@pointsize, layer/@*,
-## menu/@autosubmit, multicol/@baseline, multicol/@height,
-## multicol/@width, multicol/@gutter, multicol/@cols, nextid/@n,
-## object/@content-length, option/@name, script/@implements,
-## section/@cite, style/@disabled
+## */@ondataunavailable, */@onmessage, */@prevfocus, */@repeat,
+## */@repeat-*, */@runat, */@sda* (SDA attributes), */@shape, */@src,
+## */@srctype, */@target, */@template, */@usemap, abbr/@full,
+## article/@cite, article/@pubdate, command/@default, dl/@type,
+## font/@pointsize, layer/@*, menu/@autosubmit, multicol/@baseline,
+## multicol/@height, multicol/@width, multicol/@gutter,
+## multicol/@cols, nextid/@n, object/@content-length, option/@name,
+## script/@implements, section/@cite, style/@disabled, attributes in
+## the HTML namespace.
 
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
