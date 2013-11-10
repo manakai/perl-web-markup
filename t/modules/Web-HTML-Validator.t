@@ -23,18 +23,12 @@ for my $attr (qw(xml:lang xml:space xml:base)) {
     });
     $validator->check_element ($el);
     eq_or_diff \@error,
-        [{type => 'status:non-standard:element', # XX this info is not necessary
+        [{type => 'element not defined',
           node => $el,
-          level => 'i'},
-         {type => 'unknown element',
-          node => $el,
-          level => 'u'},
-         {type => 'unknown attribute', # XXX attribute not defined
+          level => 'm'},
+         {type => 'attribute not defined',
           node => $el->attributes->[0],
-          level => 'u'},
-         {type => 'status:non-standard:attr', # XXX this info is not necessary
-          node => $el->attributes->[0],
-          level => 'i'}];
+          level => 'm'}];
     done $c;
   } n => 1, name => [$attr, 'in no namespace'];
 } # $attr
@@ -46,88 +40,100 @@ for my $test (
           ['xmlns', 'hoge'],
           'http://www.w3.org/XML/1998/namespace');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/XML/1998/namespace',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/XML/1998/namespace',
+     level => 'm'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/2000/xmlns/',
           ['xmlns', 'hoge'],
           'http://www.w3.org/2000/xmlns/');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/2000/xmlns/',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/2000/xmlns/',
+     level => 'm'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/2000/xmlns/',
           ['xmlns', 'xml'],
           'hoge');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Prefix',
-    text => 'xml',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Prefix',
+     text => 'xml',
+     level => 'm'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/2000/xmlns/',
           ['xmlns', 'xmlns'],
           'hoge');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Prefix',
-    text => 'xmlns',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Prefix',
+     text => 'xmlns',
+     level => 'm'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/2000/xmlns/',
           ['hoge', 'xmlns'],
           '');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/2000/xmlns/',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/2000/xmlns/',
+     level => 'w'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/2000/xmlns/',
           ['hoge', 'xmlns'],
           'http://fuga/');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/2000/xmlns/',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/2000/xmlns/',
+     level => 'w'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/2000/xmlns/',
           ['hoge', 'fpoo'],
           'http://fuga/');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/2000/xmlns/',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/2000/xmlns/',
+     level => 'w'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/2000/xmlns/',
           [undef, 'xmlns'],
           'http://www.w3.org/2000/xmlns/');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/2000/xmlns/',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/2000/xmlns/',
+     level => 'm'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/XML/1998/namespace',
           ['hoge', 'lang'], 'en');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/XML/1998/namespace',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/XML/1998/namespace',
+     level => 'w'}]],
   [sub {
      $_[0]->set_attribute_ns
          ('http://www.w3.org/XML/1998/namespace',
           ['hoge', 'space'], 'default');
    },
-   {type => 'Reserved Prefixes and Namespace Names:Name',
-    text => 'http://www.w3.org/XML/1998/namespace',
-    level => 'm'}],
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/XML/1998/namespace',
+     level => 'w'}]],
+  [sub {
+     $_[0]->set_attribute_ns ('http://www.w3.org/XML/1998/namespace',
+                              [undef, 'lang'], 'de');
+   },
+   [{type => 'nsattr has no prefix',
+     level => 'w'}]],
+  [sub {
+     $_[0]->set_attribute_ns ('http://www.w3.org/2000/xmlns/',
+                              [undef, 'foo'], 'default');
+   },
+   [{type => 'nsattr has no prefix',
+     level => 'w'}]],
 ) {
   test {
     my $c = shift;
@@ -143,15 +149,12 @@ for my $test (
     });
     $validator->check_element ($el);
     eq_or_diff \@error,
-        [{type => 'status:non-standard:element', # XX this info is not necessary
+        [{type => 'element not defined',
           node => $el,
-          level => 'i'},
-         {type => 'unknown element',
-          node => $el,
-          level => 'u'},
-         {%{$test->[1]}, node => $el->attributes->[0]}];
+          level => 'm'},
+         map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}];
     done $c;
-  } n => 1, name => [$test->[1]->{type}, $test->[1]->{text}];
+  } n => 1, name => [$test->[1]->[0]->{type}, $test->[1]->[0]->{text}];
 }
 
 for my $test (
@@ -206,12 +209,9 @@ test {
   });
   $validator->check_element ($el);
   eq_or_diff \@error,
-      [{type => 'status:non-standard:element', # XX this info is not necessary
+      [{type => 'element not defined',
         node => $el,
-        level => 'i'},
-       {type => 'unknown element',
-        node => $el,
-        level => 'u'},
+        level => 'm'},
        {type => 'Reserved Prefixes and Namespace Names:Prefix',
         text => 'xmlns',
         node => $el->attributes->[0],
@@ -223,37 +223,71 @@ test {
   done $c;
 } n => 1, name => ['xmlns:xmlns'];
 
-test {
-  my $c = shift;
-  my $doc = new Web::DOM::Document;
-  $doc->strict_error_checking (0);
-  my $el = $doc->create_element_ns (undef, 'foo');
-  $el->set_attribute_ns
-      ('http://www.w3.org/XML/1998/namespace',
-       ['hoge', 'fuga'], 'en');
-  my $validator = Web::HTML::Validator->new;
-  my @error;
-  $validator->onerror (sub {
-    my %args = @_;
-    push @error, \%args;
-  });
-  $validator->check_element ($el);
-  eq_or_diff \@error,
-      [{type => 'status:non-standard:element', # XX this info is not necessary
-        node => $el,
-        level => 'i'},
-       {type => 'unknown element',
-        node => $el,
-        level => 'u'},
-       {type => 'Reserved Prefixes and Namespace Names:Name',
-        text => 'http://www.w3.org/XML/1998/namespace',
-        node => $el->attributes->[0],
-        level => 'm'},
-       {type => 'attribute not defined',
-        node => $el->attributes->[0],
-        level => 'm'}];
-  done $c;
-} n => 1, name => ['{xml}hoge:fuga=""'];
+for my $test (
+  [sub {
+     $_[0]->set_attribute_ns
+         ('http://www.w3.org/XML/1998/namespace',
+          ['hoge', 'fuga'], 'en');
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/XML/1998/namespace',
+     level => 'w'}]],
+  [sub {
+     $_[0]->set_attribute_ns ('http://foo/', ['xml', 'space'], 'default');
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Prefix',
+     text => 'xml',
+     level => 'w'}]],
+  [sub {
+     $_[0]->set_attribute_ns ('http://foo/', ['xmlns', 'space'], 'default');
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Prefix',
+     text => 'xmlns',
+     level => 'w'}]],
+  [sub {
+     $_[0]->set_attribute_ns ('http://foo/', [undef, 'space'], 'default');
+   },
+   [{type => 'nsattr has no prefix',
+     level => 'w'}]],
+  [sub {
+     $_[0]->set_attribute_ns ('http://foo/', [undef, 'xmlns'], 'default');
+   },
+   [{type => 'nsattr has no prefix',
+     level => 'w'}]],
+  [sub {
+     $_[0]->set_attribute_ns ('http://foo/', ['hoge', 'xmlns'], 'default');
+   },
+   []],
+  [sub {
+     $_[0]->set_attribute_ns ('http://www.w3.org/XML/1998/namespace',
+                              ['xml', 'xmlns'], 'default');
+   },
+   []],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    my $el = $doc->create_element_ns (undef, 'foo');
+    $test->[0]->($el);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [{type => 'element not defined',
+          node => $el,
+          level => 'm'},
+         (map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}),
+         {type => 'attribute not defined',
+          node => $el->attributes->[0],
+          level => 'm'}];
+    done $c;
+  } n => 1, name => [$test->[1]->[0] ? $test->[1]->[0]->{type} : ()];
+}
 
 for my $version (qw(1.0 1.1 1.2 foo)) {
   test {
@@ -271,12 +305,9 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
     });
     $validator->check_element ($el);
     eq_or_diff \@error,
-        [{type => 'status:non-standard:element', # XX this info is not necessary
+        [{type => 'element not defined',
           node => $el,
-          level => 'i'},
-         {type => 'unknown element',
-          node => $el,
-          level => 'u'}];
+          level => 'm'}];
     done $c;
   } n => 1, name => ['xml=""', $version];
 
@@ -295,18 +326,91 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
     });
     $validator->check_element ($el);
     eq_or_diff \@error,
-        [{type => 'status:non-standard:element', # XX this info is not necessary
+        [{type => 'element not defined',
           node => $el,
-          level => 'i'},
-         {type => 'unknown element',
-          node => $el,
-          level => 'u'},
+          level => 'm'},
          {type => 'xmlns:* empty',
           node => $el->attributes->[0],
           level => 'm'}];
     done $c;
   } n => 1, name => ['xmlns:abc=""', $version];
 } # $version
+
+for my $test (
+  [sub {
+     return $_[0]->create_element_ns
+         ('http://www.w3.org/XML/1998/namespace', [undef, 'space']);
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/XML/1998/namespace',
+     level => 'w'},
+    {type => 'element not defined', level => 'm'}]],
+  [sub {
+     return $_[0]->create_element_ns
+         ('http://www.w3.org/XML/1998/namespace', ['xml', 'space']);
+   },
+   [{type => 'element not defined', level => 'm'}]],
+  [sub {
+     return $_[0]->create_element_ns
+         ('http://www.w3.org/XML/1998/namespace', ['hoge', 'space']);
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/XML/1998/namespace',
+     level => 'w'},
+    {type => 'element not defined', level => 'm'}]],
+  [sub {
+     return $_[0]->create_element_ns
+         ('http://www.w3.org/2000/xmlns/', [undef, 'space']);
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/2000/xmlns/',
+     level => 'w'},
+    {type => 'element not defined', level => 'm'}]],
+  [sub {
+     return $_[0]->create_element_ns
+         ('http://www.w3.org/2000/xmlns/', ['xmlns', 'space']);
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
+     level => 'm'},
+    {type => 'element not defined', level => 'm'}]],
+  [sub {
+     return $_[0]->create_element_ns
+         ('http://www.w3.org/2000/xmlns/', ['hoge', 'space']);
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Name',
+     text => 'http://www.w3.org/2000/xmlns/',
+     level => 'w'},
+    {type => 'element not defined', level => 'm'}]],
+  [sub {
+     return $_[0]->create_element_ns ('http://foo/', ['xml', 'space']);
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:Prefix', text => 'xml',
+     level => 'w'},
+    {type => 'element not defined', level => 'm'}]],
+  [sub {
+     return $_[0]->create_element_ns ('http://foo/', ['xmlns', 'space']);
+   },
+   [{type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
+     level => 'm'},
+    {type => 'element not defined', level => 'm'}]],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    my $el = $test->[0]->($doc);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [map { {%{$_}, node => $el} } @{$test->[1]}];
+    done $c;
+  } n => 1, name => ['element', $test->[1]->[0]->{type}, $test->[1]->[0]->{text}];
+}
 
 run_tests;
 

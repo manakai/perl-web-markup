@@ -42,6 +42,11 @@ sub onerror ($;$) {
 ##   MUST EncName
 ##   SHOULD fully-normalized
 ##   warning suggestion for names
+## XXX local part begining with "xml" is inadvisable [XMLNS]
+## XXX Prefix and local part MUST be NCName [XMLNS].
+## XXX Document type name, entity name, notation name, entity's
+## notation name, element type name, attribute name in attribute
+## definition, element names in element content model, and PI target
 
 ## XXX In HTML documents
 ##   warning doctype name, pubid, sysid
@@ -154,17 +159,8 @@ our $MIMETypeChecker = sub {
   return $type; # or undef
 }; # $MIMETypeChecker
 
-## XXX element's prefix MUST NOT be 'xmlns' [XMLNS]
-## XXX prefix of element or attribute MUST NOT be 'xml' or 'xmlns' [XMLNS]
-## XXX prefix of namespaced attribute MUST NOT be null [???]
-## XXX no element defined in "xml"/"xmlns" namespace
-## XXX local part begining with "xml" is inadvisable [XMLNS]
 ## Prefix MUST be declared [XMLNS].  This is checked by parser.
 ## Attributes MUST be unique [XMLNS].  This is checked by parser.
-## XXX Prefix and local part MUST be NCName [XMLNS].
-## XXX Document type name, entity name, notation name, entity's
-## notation name, element type name, attribute name in attribute
-## definition, element names in element content model, and PI target
 ## MUST be NCName [XMLNS].
 ## Names in DTD and names in name-typed attribute values MUST be
 ## NCName [XMLNS].  This is checked by parser or DTD validator.
@@ -182,7 +178,7 @@ our $AttrChecker = {
             ->(node => $attr,
                type => 'Reserved Prefixes and Namespace Names:Name',
                text => 'http://www.w3.org/XML/1998/namespace',
-               level => 'm');
+               level => 'w');
         ## "$prefix is undef" error is thrown by other place
       }
     },
@@ -192,12 +188,11 @@ our $AttrChecker = {
       
       my $prefix = $attr->prefix;
       if (defined $prefix and not $prefix eq 'xml') {
-        ## The XMLNS namespace MUST be bound to |xmlns|.
         $self->{onerror}
             ->(node => $attr,
                type => 'Reserved Prefixes and Namespace Names:Name',
                text => 'http://www.w3.org/XML/1998/namespace',
-               level => 'm');
+               level => 'w');
         ## "$prefix is undef" error is thrown by other place
       }
 
@@ -225,12 +220,11 @@ our $AttrChecker = {
       
       my $prefix = $attr->prefix;
       if (defined $prefix and not $prefix eq 'xml') {
-        ## The XMLNS namespace MUST be bound to |xmlns|.
         $self->{onerror}
             ->(node => $attr,
                type => 'Reserved Prefixes and Namespace Names:Name',
                text => 'http://www.w3.org/XML/1998/namespace',
-               level => 'm');
+               level => 'w');
         ## "$prefix is undef" error is thrown by other place
       }
 
@@ -293,12 +287,11 @@ our $AttrChecker = {
 
       my $prefix = $attr->prefix;
       if (defined $prefix and not $prefix eq 'xmlns') {
-        ## The XMLNS namespace MUST be bound to |xmlns|.
         $self->{onerror}
             ->(node => $attr,
                type => 'Reserved Prefixes and Namespace Names:Name',
                text => 'http://www.w3.org/2000/xmlns/',
-               level => 'm');
+               level => 'w');
         ## "$prefix is undef" error is thrown by other place
       }
 
@@ -358,12 +351,11 @@ our $AttrChecker = {
                              text => 'xmlns',
                              level => 'm');
         } else {
-          ## The XMLNS namespace MUST be bound to |xmlns|.
           $self->{onerror}
               ->(node => $attr,
                  type => 'Reserved Prefixes and Namespace Names:Name',
                  text => 'http://www.w3.org/2000/xmlns/',
-                 level => 'm');
+                 level => 'w');
         }
       } # $prefix
 
@@ -419,6 +411,32 @@ sub _check_element_attrs ($$$;%) {
     my $attr_ns = $attr->namespace_uri;
     $attr_ns = '' if not defined $attr_ns;
     my $attr_ln = $attr->manakai_local_name;
+
+    my $prefix = $attr->prefix;
+    if (not defined $prefix) {
+      if ($attr_ns ne '' and
+          not ($attr_ns eq XMLNS_NS and $attr_ln eq 'xmlns')) {
+        $self->{onerror}->(node => $attr,
+                           type => 'nsattr has no prefix', # XXX
+                           level => 'w');
+      }
+
+      # XXX xmlns="" in no namespace
+    } elsif ($prefix eq 'xml') {
+      if ($attr_ns ne XML_NS) {
+        $self->{onerror}->(node => $attr,
+                           type => 'Reserved Prefixes and Namespace Names:Prefix',
+                           text => $prefix,
+                           level => 'w');
+      }
+    } elsif ($prefix eq 'xmlns') {
+      if ($attr_ns ne XMLNS_NS) {
+        $self->{onerror}->(node => $attr,
+                           type => 'Reserved Prefixes and Namespace Names:Prefix',
+                           text => $prefix,
+                           level => 'w');
+      }
+    }
     
     my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
         || $AttrChecker->{$attr_ns}->{''};
@@ -540,15 +558,8 @@ our %AnyChecker = (
 
 our $ElementDefault = {
   %AnyChecker,
-  status => FEATURE_ALLOWED,
-      ## NOTE: No "element not defined" error - it is not supported anyway.
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    # XXX use of unknown element is non-conforming
-    $self->{onerror}->(node => $item->{node},
-                       type => 'unknown element',
-                       level => $self->{level}->{uncertain});
-  },
+  status => 0,
+  check_start => sub {},
 };
 
 our $HTMLEmbeddedContent = {
@@ -869,21 +880,29 @@ sub check_element ($$$;$) {
           : $element_state;
 
       my $prefix = $el->prefix;
-      if (defined $prefix and $prefix eq 'xmlns') {
-        $self->{onerror}->(node => $el, 
+      if (defined $prefix and $prefix eq 'xml') {
+        if ($el_nsuri ne XML_NS) {
+          $self->{onerror}->(node => $el,
+                             type => 'Reserved Prefixes and Namespace Names:Prefix',
+                             text => 'xml',
+                             level => 'w');
+        }
+      } elsif (defined $prefix and $prefix eq 'xmlns') {
+        $self->{onerror}->(node => $el,
                            type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
-                           level => $self->{level}->{nc});
+                           level => 'm');
+      } elsif (($el_nsuri eq XML_NS and not (($prefix || '') eq 'xml')) or
+               $el_nsuri eq XMLNS_NS) {
+        $self->{onerror}->(node => $el,
+                           type => 'Reserved Prefixes and Namespace Names:Name',
+                           text => $el_nsuri,
+                           level => 'w');
       }
 
-      unless ($eldef->{status} & FEATURE_STATUS_REC) {
-        my $status = $eldef->{status} & FEATURE_STATUS_CR ? 'cr' :
-            $eldef->{status} & FEATURE_STATUS_LC ? 'lc' :
-            $eldef->{status} & FEATURE_STATUS_WD ? 'wd' : 'non-standard';
-        $self->{onerror}->(node => $el,
-                           type => 'status:'.$status.':element',
-                           level => $self->{level}->{info});
-      }
       if (not ($eldef->{status} & FEATURE_ALLOWED)) {
+        ## "Authors must not use elements, attributes, or attribute
+        ## values that are not permitted by this specification or
+        ## other applicable specifications" [HTML]
         $self->{onerror}->(node => $el,
                            type => 'element not defined',
                            level => $self->{level}->{must});
@@ -891,10 +910,21 @@ sub check_element ($$$;$) {
         $self->{onerror}->(node => $el,
                            type => 'deprecated:element',
                            level => $self->{level}->{should});
-      } elsif ($eldef->{status} & FEATURE_DEPRECATED_INFO) {
-        $self->{onerror}->(node => $el,
-                           type => 'deprecated:element',
-                           level => $self->{level}->{info});
+      } else {
+        if ($eldef->{status} & FEATURE_DEPRECATED_INFO) {
+          $self->{onerror}->(node => $el,
+                             type => 'deprecated:element',
+                             level => $self->{level}->{info});
+        }
+
+        unless ($eldef->{status} & FEATURE_STATUS_REC) {
+          my $status = $eldef->{status} & FEATURE_STATUS_CR ? 'cr' :
+              $eldef->{status} & FEATURE_STATUS_LC ? 'lc' :
+              $eldef->{status} & FEATURE_STATUS_WD ? 'wd' : 'non-standard';
+          $self->{onerror}->(node => $el,
+                             type => 'status:'.$status.':element',
+                             level => $self->{level}->{info});
+        }
       }
 
       my @new_item;
