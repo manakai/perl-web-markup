@@ -172,11 +172,6 @@ Extensible Markup Language (XML) 1.0 <http://www.w3.org/TR/xml/>.
 XML 1.0 Fifth Edition Specification Errata
 <http://www.w3.org/XML/xml-V10-5e-errata>.
 
-Extensible Markup Language (XML) 1.1 <http://www.w3.org/TR/xml11/>.
-
-XML 1.1 Second Edition Specification Errata
-<http://www.w3.org/XML/xml-V11-2e-errata>.
-
 The C<xml:lang> attribute MUST be interpreted as the C<lang> attribute
 in the XML namespace.  The C<xml:space> attribute MUST be interpreted
 as the C<space> attribute in the XML namespace.  In other words, the
@@ -190,10 +185,12 @@ Namespaces in XML 1.0 <http://www.w3.org/TR/xml-names/>.
 Namespaces in XML 1.0 (Third Edition) Errata
 <http://www.w3.org/XML/2009/xml-names-errata>.
 
-Namespaces in XML 1.1 <http://www.w3.org/TR/xml-names11/>.
+Requirements on the namespace name is updated as follows:
 
-Namespaces in XML 1.1 (Second Edition) Errata
-<http://www.w3.org/XML/2006/xml-names11-errata>.
+  A namespace name MUST be a valid non-empty URL
+  <http://www.whatwg.org/specs/web-apps/current-work/#valid-non-empty-url>.
+  It should be an absolute URL
+  <http://url.spec.whatwg.org/#concept-absolute-url>.
 
 =item XMLBASE
 
@@ -213,8 +210,8 @@ Atom 1.0, Atom Threading Extension.
 For more information, see
 <http://suika.suikawiki.org/gate/2007/html/standards>.
 
-Note that the C<xml:id> specification is not an applicable
-specification.
+Note that XML 1.1, Namespaces in XML 1.1, and C<xml:id> are not
+applicable specifications.
 
 =head1 SEE ALSO
 

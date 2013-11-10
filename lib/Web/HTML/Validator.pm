@@ -22,11 +22,39 @@ sub onerror ($;$) {
   };
 } # onerror
 
-## ISSUE: How XML and XML Namespaces conformance can (or cannot)
-## be applied to an in-memory representation (i.e. DOM)?
-
 ## XXX warn for Attr->specified = false
 
+## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
+## XXX warning Document with no child element
+## XXX must (XXX need spec) Document's child must be DocumentType? Element with optional comments and PIs
+## XXX warning public ID chars
+## XXX warning system ID chars
+## XXX warning "xmlns" attribute in no namespace
+## XXX warning attribute name duplication
+## XXX warning Attr.value / CharacterData.data contains non-Char character
+## XXX warning Comment.data =~ /--/ or =~ /-\z/
+## XXX warning PI.target == xml
+## XXX warning PI.data =~ /\?>/ or =~ /^<S>/
+## XXX warning attribute definition's properties
+## XXX must?? system ID has to be URL
+##   warning U+000D
+
+## XXX In HTML documents
+##   warning doctype, html with optional comments
+##   warning PI, element type definition, attribute definition
+##   warning pubid/sysid chars
+##   warning non-ASCII element names
+##   warning uppercase element/attribute names
+##   warning element/attribute names
+##   warning non-builtin prefix/namespaces
+##   warning xmlns=""
+##   warning Attr.value / CharacterData.data contains non-text character
+##   warning http://www.whatwg.org/specs/web-apps/current-work/#comments
+##   warning http://www.whatwg.org/specs/web-apps/current-work/#element-restrictions
+##   warning http://www.whatwg.org/specs/web-apps/current-work/#cdata-rcdata-restrictions
+##   warning U+000D
+
+## XXX root element MUST be ...
 ## TODO: Conformance of an HTML document with non-html root element.
 
 ## Stability
@@ -162,15 +190,6 @@ our $AttrChecker = {
     '' => sub {
       my ($self, $attr) = @_;
 
-      ## XXX
-      ## The value MUST be a URI reference or the empty string.
-
-      ## XXX
-      ## Use of relative URLs are deprecated.
-
-      ## Namespace URL SHOULD be unique and persistent.  But this
-      ## can't be tested.
-
       my $prefix = $attr->prefix;
       if (defined $prefix and not $prefix eq 'xmlns') {
         ## The XMLNS namespace MUST be bound to |xmlns|.
@@ -181,8 +200,29 @@ our $AttrChecker = {
                level => 'm');
       }
 
-      my $ln = $attr->manakai_local_name;
       my $value = $attr->value;
+      ## The value MUST be a URL or the empty string.
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($value);
+      $chk->onerror (sub {
+        $self->{onerror}->(value => $value, @_, node => $attr);
+      });
+      $chk->check_iri_reference;
+
+      ## XXX
+      ## Use of relative URLs are deprecated.
+
+      ## Namespace URL SHOULD be unique and persistent.  But this
+      ## can't be tested.
+
+      if ($value eq '') {
+        ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
+        $self->{onerror}->(node => $attr,
+                           type => 'xmlns:* empty', # XXX
+                           level => 'm');
+      }
+
+      my $ln = $attr->manakai_local_name;
       if ($value eq XML_NS and $ln ne 'xml') {
         $self->{onerror}
           ->(node => $attr,
@@ -203,25 +243,9 @@ our $AttrChecker = {
              text => $ln,
              level => 'm');
       }
-
-      if ($value eq '') {
-        ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
-        $self->{onerror}->(node => $attr,
-                           type => 'xmlns:* empty', # XXX
-                           level => 'm');
-      }
     }, # xmlns:*=""
     xmlns => sub {
       my ($self, $attr) = @_;
-
-      ## XXX
-      ## The value MUST be a URI reference or the empty string.
-
-      ## XXX
-      ## Use of relative URLs are deprecated.
-
-      ## Namespace URL SHOULD be unique and persistent.  But this
-      ## can't be tested.
 
       my $prefix = $attr->prefix;
       if (defined $prefix) {
@@ -242,6 +266,20 @@ our $AttrChecker = {
       } # $prefix
 
       my $value = $attr->value;
+      ## The value MUST be a URL or the empty string.
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($value);
+      $chk->onerror (sub {
+        $self->{onerror}->(value => $value, @_, node => $attr);
+      });
+      $chk->check_iri_reference;
+
+      ## XXX
+      ## Use of relative URLs are deprecated.
+
+      ## Namespace URL SHOULD be unique and persistent.  But this
+      ## can't be tested.
+
       if ($value eq XML_NS) {
         $self->{onerror}
           ->(node => $attr,
@@ -263,11 +301,6 @@ our $AttrStatus;
 
 for (qw/space lang base/) {
   $AttrStatus->{+XML_NS}->{$_} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
-  ## XML 1.0: FEATURE_STATUS_CR
-  ## XML 1.1: FEATURE_STATUS_REC
-  ## XML Namespaces 1.0: FEATURE_STATUS_CR
-  ## XML Namespaces 1.1: FEATURE_STATUS_REC
-  ## XML Base: FEATURE_STATUS_REC
 }
 
 $AttrStatus->{+XMLNS_NS}->{''} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
