@@ -25,6 +25,8 @@ sub onerror ($;$) {
 ## ISSUE: How XML and XML Namespaces conformance can (or cannot)
 ## be applied to an in-memory representation (i.e. DOM)?
 
+## XXX warn for Attr->specified = false
+
 ## TODO: Conformance of an HTML document with non-html root element.
 
 ## Stability
@@ -67,8 +69,24 @@ our $MIMETypeChecker = sub {
   return $type; # or undef
 }; # $MIMETypeChecker
 
+## XXX element's prefix MUST NOT be 'xmlns' [XMLNS]
+## XXX prefix of element or attribute MUST NOT be 'xml' or 'xmlns' [XMLNS]
+## XXX prefix of namespaced attribute MUST NOT be null [???]
+## XXX local part begining with "xml" is inadvisable [XMLNS]
+## Prefix MUST be declared [XMLNS].  This is checked by parser.
+## Attributes MUST be unique [XMLNS].  This is checked by parser.
+## XXX Prefix and local part MUST be NCName [XMLNS].
+## XXX Document type name, entity name, notation name, entity's
+## notation name, element type name, attribute name in attribute
+## definition, element names in element content model, and PI target
+## MUST be NCName [XMLNS].
+## Names in DTD and names in name-typed attribute values MUST be
+## NCName [XMLNS].  This is checked by parser or DTD validator.
+
 our $AttrChecker = {
   (XML_NS) => {
+    ## XXX XML namespace MUST be bound to 'xml' [XMLNS]
+
     space => sub {
       my ($self, $attr) = @_;
       my $value = $attr->value;
@@ -143,6 +161,26 @@ our $AttrChecker = {
   (XMLNS_NS) => {
     '' => sub {
       my ($self, $attr) = @_;
+
+      ## XXX
+      ## The value MUST be a URI reference or the empty string.
+
+      ## XXX
+      ## Use of relative URLs are deprecated.
+
+      ## Namespace URL SHOULD be unique and persistent.  But this
+      ## can't be tested.
+
+      my $prefix = $attr->prefix;
+      if (defined $prefix and not $prefix eq 'xmlns') {
+        ## The XMLNS namespace MUST be bound to |xmlns|.
+        $self->{onerror}
+            ->(node => $attr,
+               type => 'Reserved Prefixes and Namespace Names:Name',
+               text => 'http://www.w3.org/2000/xmlns/',
+               level => 'm');
+      }
+
       my $ln = $attr->manakai_local_name;
       my $value = $attr->value;
       if ($value eq XML_NS and $ln ne 'xml') {
@@ -150,50 +188,75 @@ our $AttrChecker = {
           ->(node => $attr,
              type => 'Reserved Prefixes and Namespace Names:Name',
              text => $value,
-             level => $self->{level}->{nc});
+             level => 'm');
       } elsif ($value eq XMLNS_NS) {
         $self->{onerror}
           ->(node => $attr,
              type => 'Reserved Prefixes and Namespace Names:Name',
              text => $value,
-             level => $self->{level}->{nc});
+             level => 'm');
       }
       if ($ln eq 'xml' and $value ne XML_NS) {
         $self->{onerror}
           ->(node => $attr,
              type => 'Reserved Prefixes and Namespace Names:Prefix',
              text => $ln,
-             level => $self->{level}->{nc});
-      } elsif ($ln eq 'xmlns') {
-        $self->{onerror}
-          ->(node => $attr, 
-             type => 'Reserved Prefixes and Namespace Names:Prefix',
-             text => $ln,
-             level => $self->{level}->{nc});
+             level => 'm');
       }
-      ## TODO: If XML 1.0 and empty
-    },
+
+      if ($value eq '') {
+        ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
+        $self->{onerror}->(node => $attr,
+                           type => 'xmlns:* empty', # XXX
+                           level => 'm');
+      }
+    }, # xmlns:*=""
     xmlns => sub {
       my ($self, $attr) = @_;
-      ## TODO: In XML 1.0, URI reference [RFC 3986] or an empty string
-      ## TODO: In XML 1.1, IRI reference [RFC 3987] or an empty string
-      ## TODO: relative references are deprecated
+
+      ## XXX
+      ## The value MUST be a URI reference or the empty string.
+
+      ## XXX
+      ## Use of relative URLs are deprecated.
+
+      ## Namespace URL SHOULD be unique and persistent.  But this
+      ## can't be tested.
+
+      my $prefix = $attr->prefix;
+      if (defined $prefix) {
+        if ($prefix eq 'xmlns') {
+          ## The prefix |xmlns| MUST NOT be declared.
+          $self->{onerror}->(node => $attr,
+                             type => 'Reserved Prefixes and Namespace Names:Prefix',
+                             text => 'xmlns',
+                             level => 'm');
+        } else {
+          ## The XMLNS namespace MUST be bound to |xmlns|.
+          $self->{onerror}
+              ->(node => $attr,
+                 type => 'Reserved Prefixes and Namespace Names:Name',
+                 text => 'http://www.w3.org/2000/xmlns/',
+                 level => 'm');
+        }
+      } # $prefix
+
       my $value = $attr->value;
       if ($value eq XML_NS) {
         $self->{onerror}
           ->(node => $attr,
              type => 'Reserved Prefixes and Namespace Names:Name',
              text => $value,
-             level => $self->{level}->{nc});
+             level => 'm');
       } elsif ($value eq XMLNS_NS) {
         $self->{onerror}
           ->(node => $attr,
              type => 'Reserved Prefixes and Namespace Names:Name',
              text => $value,
-             level => $self->{level}->{nc});
+             level => 'm');
       }
-    },
-  },
+    }, # xmlns=""
+  }, # XMLNS_NS
 };
 
 our $AttrStatus;
