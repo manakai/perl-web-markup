@@ -77,6 +77,56 @@ sub FEATURE_DEPRECATED_INFO () { 0b1000000 } ## Does not affect conformance
 ## Conformance
 sub FEATURE_ALLOWED () { 0b10000 }
 
+## --- Feature Status ---
+
+sub FEATURE_HTML5_REC () {
+  ## NOTE: Part of HTML5, the implemented status.
+  Web::HTML::Validator::FEATURE_STATUS_REC |
+  Web::HTML::Validator::FEATURE_ALLOWED
+
+      ## Strictly speaking, HTML5's "implemented and widely deployed"
+      ## status does not necessarily satisfy the condition for
+      ## FEATURE_STATUS_REC, since there is no test cases for most of
+      ## features marked as "implemented" in HTML5.  Nevertheless, we
+      ## special-case HTML5's this status as if that had passed the CR
+      ## phase, considering HTML's history.
+}
+
+sub FEATURE_HTML5_CR () {
+  ## NOTE: Part of HTML5, the awaiting implementation feedback status.
+  Web::HTML::Validator::FEATURE_STATUS_CR |
+  Web::HTML::Validator::FEATURE_ALLOWED
+}
+sub FEATURE_HTML5_LC () {
+  ## NOTE: Part of HTML5, the last call of comments status.
+  Web::HTML::Validator::FEATURE_STATUS_LC |
+  Web::HTML::Validator::FEATURE_ALLOWED
+}
+sub FEATURE_HTML5_WD () {
+  ## NOTE: Part of HTML5, the working draft status.
+  Web::HTML::Validator::FEATURE_STATUS_WD |
+  Web::HTML::Validator::FEATURE_ALLOWED
+}
+sub FEATURE_HTML5_FD () {
+  ## NOTE: Part of HTML5, the first draft status.
+  Web::HTML::Validator::FEATURE_STATUS_WD |
+  Web::HTML::Validator::FEATURE_ALLOWED
+}
+sub FEATURE_HTML5_DEFAULT () {
+  ## NOTE: Part of HTML5, but not annotated.
+  Web::HTML::Validator::FEATURE_STATUS_WD |
+  Web::HTML::Validator::FEATURE_ALLOWED
+}
+sub FEATURE_HTML5_DROPPED () {
+  ## NOTE: Was part of HTML5, in a status before the last call of
+  ## comments, but then dropped.
+  Web::HTML::Validator::FEATURE_STATUS_WD
+}
+
+## NOTE: Features that are listed in the "non-conforming features"
+## section.
+use constant FEATURE_HTML5_OBSOLETE => 0;
+
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
@@ -195,13 +245,6 @@ our $AttrChecker = {
         });
         $lang->check_rfc3066_language_tag ($value); # XXX Update langtag spec
       }
-
-      ## NOTE: "The values of the attribute are language identifiers
-      ## as defined by [IETF RFC 3066], Tags for the Identification
-      ## of Languages, or its successor; in addition, the empty string
-      ## may be specified." ("may" in lower case)
-      ## NOTE: Is an RFC 3066-valid (but RFC 4646-invalid) language tag
-      ## allowed today?
 
       ## TODO: test data
 
@@ -364,6 +407,93 @@ for (qw/space lang base/) {
 $AttrStatus->{+XML_NS}->{''} = 0;
 $AttrStatus->{+XMLNS_NS}->{''} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
 
+my $HTMLAttrChecker;
+
+## |data-*| - Any value is allowed.
+my $HTMLDatasetAttrChecker = sub { };
+my $HTMLDatasetAttrStatus = FEATURE_HTML5_CR;
+
+sub _check_element_attrs ($$$;%) {
+  my ($self, $item, $element_state, %args) = @_;
+  for my $attr (@{$item->{node}->attributes}) {
+    my $attr_ns = $attr->namespace_uri;
+    $attr_ns = '' if not defined $attr_ns;
+    my $attr_ln = $attr->manakai_local_name;
+    
+    my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
+        || $AttrChecker->{$attr_ns}->{''};
+    my $status = $AttrStatus->{$attr_ns}->{$attr_ln}
+        || $AttrStatus->{$attr_ns}->{''};
+    if ($attr_ns eq '' and $args{is_html}) { # XXX
+      if ($args{allow_dataset} and
+          $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
+          $attr_ln !~ /[A-Z]/) {
+        ## XML-compatible + no uppercase letter
+        $checker = $HTMLDatasetAttrChecker;
+        $status = $HTMLDatasetAttrStatus;
+      } else {
+        # XXX
+        $checker = $args{element_specific_checker}->{$attr_ln}
+            || $HTMLAttrChecker->{$attr_ln};
+        $status = $args{element_specific_status}->{$attr_ln};
+
+        if ($args{is_embed} and
+            $attr_ln !~ /^xml/ and
+            $attr_ln !~ /[A-Z]/ and
+            $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
+          ## XML-compatible + no uppercase letter
+          $checker ||= sub { };
+          $status = FEATURE_HTML5_LC | FEATURE_ALLOWED; # XXX status of HTML |embed| element
+        }
+      }
+    } elsif ($attr_ns eq '' and $args{is_atom}) {
+      # XXX
+      $checker = $args{element_specific_checker}->{$attr_ln}
+          || $AttrChecker->{$attr_ln};
+      $status = $args{element_specific_status}->{$attr_ln};
+    }
+    $checker->($self, $attr, $item, $element_state) if $checker;
+    
+    {
+      $status ||= 0;
+      if (not ($status & FEATURE_ALLOWED)) {
+        ## "Authors must not use elements, attributes, or attribute
+        ## values that are not permitted by this specification or
+        ## other applicable specifications" [HTML]
+        $self->{onerror}->(node => $attr,
+                           type => 'attribute not defined',
+                           level => $self->{level}->{must});
+      } elsif ($status & FEATURE_DEPRECATED_SHOULD) {
+        $self->{onerror}->(node => $attr,
+                           type => 'deprecated:attr',
+                           level => $self->{level}->{should});
+      } else {
+        if ($status & FEATURE_DEPRECATED_INFO) {
+          $self->{onerror}->(node => $attr,
+                             type => 'deprecated:attr',
+                             level => $self->{level}->{info});
+        }
+
+        if ($status & FEATURE_STATUS_REC) {
+          $status = undef;
+        } elsif ($status & FEATURE_STATUS_CR) {
+          $status = 'cr';
+        } elsif ($status & FEATURE_STATUS_LC) {
+          $status = 'lc';
+        } elsif ($status & FEATURE_STATUS_WD) {
+          $status = 'wd';
+        } else {
+          $status = 'non-standard';
+        }
+        $self->{onerror}->(node => $attr,
+                           type => 'status:'.$status.':attr',
+                           level => $self->{level}->{info})
+            if defined $status;
+      }
+    }
+  }
+} # _check_element_attrs
+
 our %AnyChecker = (
   ## NOTE: |check_start| is invoked before anything on the element's
   ## attributes and contents is checked.
@@ -374,33 +504,7 @@ our %AnyChecker = (
   ## |check_attrs2|.
   check_attrs => sub {
     my ($self, $item, $element_state) = @_;
-    for my $attr (@{$item->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' if not defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      
-      my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
-          || $AttrChecker->{$attr_ns}->{''};
-      my $status = $AttrStatus->{$attr_ns}->{$attr_ln}
-          || $AttrStatus->{$attr_ns}->{''};
-      if (not defined $status) {
-        $status = FEATURE_ALLOWED;
-        ## NOTE: FEATURE_ALLOWED for all attributes, since the element
-        ## is not supported and therefore "attribute not defined" error
-        ## should not raised (too verbose) and global attributes should be
-        ## allowed anyway (if a global attribute has its specified creteria
-        ## for where it may be specified, then it should be checked in it's
-        ## checker function).
-      }
-      if ($checker) {
-        $checker->($self, $attr);
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute',
-                           level => $self->{level}->{uncertain});
-      }
-      $self->_attr_status_info ($attr, $status);
-    }
+    $self->_check_element_attrs ($item, $element_state);
   },
   check_attrs2 => sub { },
   ## NOTE: |check_child_element| is invoked for each occurence of
@@ -440,6 +544,7 @@ our $ElementDefault = {
       ## NOTE: No "element not defined" error - it is not supported anyway.
   check_start => sub {
     my ($self, $item, $element_state) = @_;
+    # XXX use of unknown element is non-conforming
     $self->{onerror}->(node => $item->{node},
                        type => 'unknown element',
                        level => $self->{level}->{uncertain});
@@ -943,97 +1048,7 @@ sub _remove_minus_elements ($$) {
   }
 } # _remove_minus_elements
 
-sub _attr_status_info ($$$) {
-  my ($self, $attr, $status_code) = @_;
-
-  $status_code ||= 0;
-  if (not ($status_code & FEATURE_ALLOWED)) {
-    $self->{onerror}->(node => $attr,
-                       type => 'attribute not defined',
-                       level => $self->{level}->{must});
-    return;
-  } elsif ($status_code & FEATURE_DEPRECATED_SHOULD) {
-    $self->{onerror}->(node => $attr,
-                       type => 'deprecated:attr',
-                       level => $self->{level}->{should});
-    return;
-  } elsif ($status_code & FEATURE_DEPRECATED_INFO) {
-    $self->{onerror}->(node => $attr,
-                       type => 'deprecated:attr',
-                       level => $self->{level}->{info});
-  }
-
-  my $status;
-  if ($status_code & FEATURE_STATUS_REC) {
-    return;
-  } elsif ($status_code & FEATURE_STATUS_CR) {
-    $status = 'cr';
-  } elsif ($status_code & FEATURE_STATUS_LC) {
-    $status = 'lc';
-  } elsif ($status_code & FEATURE_STATUS_WD) {
-    $status = 'wd';
-  } else {
-    $status = 'non-standard';
-  }
-  $self->{onerror}->(node => $attr,
-                     type => 'status:'.$status.':attr',
-                     level => $self->{level}->{info});
-} # _attr_status_info
-
 use Char::Class::XML qw/InXML_NCNameStartChar10 InXMLNCNameChar10/;
-
-sub HTML_NS ();
-#sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
-
-## --- Feature Status ---
-
-sub FEATURE_HTML5_REC () {
-  ## NOTE: Part of HTML5, the implemented status.
-  Web::HTML::Validator::FEATURE_STATUS_REC |
-  Web::HTML::Validator::FEATURE_ALLOWED
-
-      ## Strictly speaking, HTML5's "implemented and widely deployed"
-      ## status does not necessarily satisfy the condition for
-      ## FEATURE_STATUS_REC, since there is no test cases for most of
-      ## features marked as "implemented" in HTML5.  Nevertheless, we
-      ## special-case HTML5's this status as if that had passed the CR
-      ## phase, considering HTML's history.
-}
-
-sub FEATURE_HTML5_CR () {
-  ## NOTE: Part of HTML5, the awaiting implementation feedback status.
-  Web::HTML::Validator::FEATURE_STATUS_CR |
-  Web::HTML::Validator::FEATURE_ALLOWED
-}
-sub FEATURE_HTML5_LC () {
-  ## NOTE: Part of HTML5, the last call of comments status.
-  Web::HTML::Validator::FEATURE_STATUS_LC |
-  Web::HTML::Validator::FEATURE_ALLOWED
-}
-sub FEATURE_HTML5_WD () {
-  ## NOTE: Part of HTML5, the working draft status.
-  Web::HTML::Validator::FEATURE_STATUS_WD |
-  Web::HTML::Validator::FEATURE_ALLOWED
-}
-sub FEATURE_HTML5_FD () {
-  ## NOTE: Part of HTML5, the first draft status.
-  Web::HTML::Validator::FEATURE_STATUS_WD |
-  Web::HTML::Validator::FEATURE_ALLOWED
-}
-sub FEATURE_HTML5_DEFAULT () {
-  ## NOTE: Part of HTML5, but not annotated.
-  Web::HTML::Validator::FEATURE_STATUS_WD |
-  Web::HTML::Validator::FEATURE_ALLOWED
-}
-sub FEATURE_HTML5_DROPPED () {
-  ## NOTE: Was part of HTML5, in a status before the last call of
-  ## comments, but then dropped.
-  Web::HTML::Validator::FEATURE_STATUS_WD
-}
-
-## NOTE: Features that are listed in the "non-conforming features"
-## section.
-use constant FEATURE_HTML5_OBSOLETE => 0;
 
 ## -- Obsolete specifications --
 
@@ -2187,7 +2202,7 @@ my $PrecisionAttrChecker = sub {
   }
 }; # $PrecisionAttrChecker
 
-my $HTMLAttrChecker = {
+$HTMLAttrChecker = {
   about => $HTMLURIAttrChecker,
   accesskey => $AccesskeyChecker,
   atomicselection => $GetHTMLEnumeratedAttrChecker->({true => 1, false => 1}),
@@ -2484,6 +2499,7 @@ my %HTMLAttrStatus = (
   typeof => FEATURE_OBSVOCAB,
   unselectable => FEATURE_OBSVOCAB,
   xmlns => FEATURE_HTML5_LC,
+  'xml:lang' => FEATURE_HTML5_REC,
   'xml:space' => FEATURE_OBSVOCAB,
 );
 
@@ -2585,12 +2601,6 @@ for (qw(
 }
 
 ## ------ ------
-
-my $HTMLDatasetAttrChecker = sub {
-  #
-}; # $HTMLDatasetAttrChecker
-
-my $HTMLDatasetAttrStatus = FEATURE_HTML5_CR;
 
 my $NameAttrChecker = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -2801,42 +2811,15 @@ my $LiTypeChecker = sub {
 my $GetHTMLAttrsChecker = sub {
   my $element_specific_checker = shift;
   my $element_specific_status = shift;
+  my $is_embed = shift;
   return sub {
     my ($self, $item, $element_state) = @_;
-    for my $attr (@{$item->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-      my $status;
-      if ($attr_ns eq '') {
-        if ($attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-            $attr_ln !~ /[A-Z]/) {
-          ## XML-compatible + no uppercase letter
-          $checker = $HTMLDatasetAttrChecker;
-          $status = $HTMLDatasetAttrStatus;
-        } else {
-          $checker = $element_specific_checker->{$attr_ln}
-              || $HTMLAttrChecker->{$attr_ln};
-          $status = $element_specific_status->{$attr_ln};
-        }
-      }
-      $checker ||= $AttrChecker->{$attr_ns}->{$attr_ln}
-          || $AttrChecker->{$attr_ns}->{''};
-      $status ||= $AttrStatus->{$attr_ns}->{$attr_ln}
-          || $AttrStatus->{$attr_ns}->{''};
-      $status = FEATURE_ALLOWED if not defined $status and length $attr_ns;
-      if ($checker) {
-        $checker->($self, $attr, $item, $element_state);
-      } elsif ($attr_ns eq '' and not $element_specific_status->{$attr_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute',
-                           level => $self->{level}->{uncertain});
-      }
-      $self->_attr_status_info ($attr, $status);
-    }
+    $self->_check_element_attrs ($item, $element_state,
+                                 allow_dataset => 1,
+                                 is_html => 1,
+                                 is_embed => $is_embed,
+                                 element_specific_checker => $element_specific_checker,
+                                 element_specific_status => $element_specific_status);
   };
 }; # $GetHTMLAttrsChecker
 
@@ -3316,62 +3299,64 @@ $Element->{+HTML_NS}->{nextid} = {
 $Element->{+HTML_NS}->{link} = {
   status => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
   %HTMLEmptyChecker,
-  check_attrs => sub {
-    my ($self, $item, $element_state) = @_;
-    my $sizes_attr;
-    $GetHTMLAttrsChecker->({
-      charset => sub {
-        my ($self, $attr) = @_;
-        $HTMLCharsetChecker->($attr->value, @_);
-      },
-      href => $HTMLURIAttrChecker,
-      rel => sub { $HTMLLinkTypesAttrChecker->(0, $item, @_) },
-      media => $HTMLMQAttrChecker,
-      methods => sub { },
-      hreflang => $HTMLLanguageTagAttrChecker,
-      sizes => sub {
-        my ($self, $attr) = @_;
-        $sizes_attr = $attr;
-        my %word;
-        for my $word (grep {length $_}
-                      split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-          $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-          unless ($word{$word}) {
-            $word{$word} = 1;
-            if ($word eq 'any' or $word =~ /\A[1-9][0-9]*x[1-9][0-9]*\z/) {
-              #
-            } else {
-              $self->{onerror}->(node => $attr, 
-                                 type => 'sizes:syntax error',
-                                 value => $word,
-                                 level => $self->{level}->{must});
-            }
+  check_attrs => $GetHTMLAttrsChecker->({
+    charset => sub {
+      my ($self, $attr) = @_;
+      $HTMLCharsetChecker->($attr->value, @_);
+    },
+    href => $HTMLURIAttrChecker,
+    rel => sub {}, ## checked in check_attrs2
+    media => $HTMLMQAttrChecker,
+    methods => sub { },
+    hreflang => $HTMLLanguageTagAttrChecker,
+    sizes => sub {
+      my ($self, $attr) = @_;
+      my %word;
+      for my $word (grep {length $_}
+                    split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+        $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+        unless ($word{$word}) {
+          $word{$word} = 1;
+          if ($word eq 'any' or $word =~ /\A[1-9][0-9]*x[1-9][0-9]*\z/) {
+            #
           } else {
-            $self->{onerror}->(node => $attr, type => 'duplicate token',
+            $self->{onerror}->(node => $attr, 
+                               type => 'sizes:syntax error',
                                value => $word,
                                level => $self->{level}->{must});
           }
+        } else {
+          $self->{onerror}->(node => $attr, type => 'duplicate token',
+                             value => $word,
+                             level => $self->{level}->{must});
         }
-      },
-      src => $HTMLURIAttrChecker,
-      target => $HTMLTargetAttrChecker,
-      type => $MIMETypeChecker,
-      urn => $HTMLURIAttrChecker,
-    }, {
-      %HTMLAttrStatus,
-      %HTMLM12NXHTML2CommonAttrStatus,
-      charset => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-      href => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-      hreflang => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-      media => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-      methods => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-      rel => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-      sizes => FEATURE_HTML5_LC,
-      src => FEATURE_OBSVOCAB,
-      target => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-      type => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-      urn => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-    })->($self, $item, $element_state);
+      }
+    },
+    src => $HTMLURIAttrChecker,
+    target => $HTMLTargetAttrChecker,
+    type => $MIMETypeChecker,
+    urn => $HTMLURIAttrChecker,
+  }, {
+    %HTMLAttrStatus,
+    %HTMLM12NXHTML2CommonAttrStatus,
+    charset => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+    href => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    hreflang => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    media => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    methods => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+    rel => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    sizes => FEATURE_HTML5_LC,
+    src => FEATURE_OBSVOCAB,
+    target => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+    type => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    urn => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+  }), # check_attrs
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+
+    my $rel_attr = $item->{node}->get_attribute_node_ns (undef, 'rel');
+    $HTMLLinkTypesAttrChecker->(0, $item, $self, $rel_attr, $item, $element_state)
+        if $rel_attr;
 
     if ($item->{node}->has_attribute_ns (undef, 'href')) {
       $self->{has_hyperlink_element} = 1 if $item->{has_hyperlink_link_type};
@@ -3389,8 +3374,9 @@ $Element->{+HTML_NS}->{link} = {
                          level => $self->{level}->{must});
     }
     
-    if ($sizes_attr and not $element_state->{link_rel}->{icon}) {
-      $self->{onerror}->(node => $sizes_attr,
+    if ($item->{node}->has_attribute_ns (undef, 'sizes') and
+        not $element_state->{link_rel}->{icon}) {
+      $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'sizes'),
                          type => 'attribute not allowed',
                          level => $self->{level}->{must});
     }
@@ -3409,13 +3395,28 @@ $Element->{+HTML_NS}->{link} = {
                            level => $self->{level}->{must});
       }
     }
-  },
+  }, # check_attrs2
 }; # link
 
 $Element->{+HTML_NS}->{meta} = {
   status => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
   %HTMLEmptyChecker,
-  check_attrs => sub {
+  check_attrs => $GetHTMLAttrsChecker->({
+    charset => sub {},
+    content => sub {},
+    'http-equiv' => sub {},
+    name => sub {},
+    scheme => sub {},
+  }, {
+    %HTMLAttrStatus,
+    %XHTML2CommonAttrStatus,
+    charset => FEATURE_HTML5_LC,
+    content => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    'http-equiv' => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    name => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+    scheme => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+  }), # check_attrs
+  check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
 
@@ -3427,62 +3428,17 @@ $Element->{+HTML_NS}->{meta} = {
       my $attr_ns = $attr->namespace_uri;
       $attr_ns = '' unless defined $attr_ns;
       my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-      my $status;
       if ($attr_ns eq '') {
-        $status = {
-          %HTMLAttrStatus,
-          %XHTML2CommonAttrStatus,
-          charset => FEATURE_HTML5_LC,
-          content => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          'http-equiv' => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          name => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          scheme => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-        }->{$attr_ln};
-
         if ($attr_ln eq 'content') {
           $content_attr = $attr;
-          $checker = 1;
         } elsif ($attr_ln eq 'name') {
           $name_attr = $attr;
-          $checker = 1;
         } elsif ($attr_ln eq 'http-equiv') {
           $http_equiv_attr = $attr;
-          $checker = 1;
         } elsif ($attr_ln eq 'charset') {
           $charset_attr = $attr;
-          $checker = 1;
-        } elsif ($attr_ln eq 'scheme') {
-          $checker = sub {};
-        } elsif ($attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-                 $attr_ln !~ /[A-Z]/) {
-          ## XML-compatible + no uppercase letter
-          $checker = $HTMLDatasetAttrChecker;
-          $status = $HTMLDatasetAttrStatus;
-        } else {
-          $checker = $HTMLAttrChecker->{$attr_ln}
-              || $AttrChecker->{$attr_ns}->{$attr_ln}
-              || $AttrChecker->{$attr_ns}->{''};
         }
-      } else {
-        $checker ||= $AttrChecker->{$attr_ns}->{$attr_ln}
-            || $AttrChecker->{$attr_ns}->{''};
-        $status ||= $AttrStatus->{$attr_ns}->{$attr_ln}
-            || $AttrStatus->{$attr_ns}->{''};
-        $status = FEATURE_ALLOWED if not defined $status;
       }
-
-      if ($checker) {
-        $checker->($self, $attr, $item, $element_state) if ref $checker;
-      } elsif ($attr_ns eq '' and not $status) {
-        #
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute',
-                           level => $self->{level}->{uncertain});
-      }
-
-      $self->_attr_status_info ($attr, $status);
     }
     
     if (defined $name_attr) {
@@ -3745,7 +3701,7 @@ $Element->{+HTML_NS}->{meta} = {
                            level => $self->{level}->{must});
       }
     }
-  }, # check_attrs
+  }, # check_attrs2
 }; # meta
 
 $Element->{+HTML_NS}->{style} = {
@@ -5033,70 +4989,12 @@ $Element->{+HTML_NS}->{nolayer} = {
 $Element->{+HTML_NS}->{a} = {
   %TransparentChecker,
   status => FEATURE_HTML5_CR | FEATURE_M12N10_REC,
-  check_attrs => sub {
-    my ($self, $item, $element_state) = @_;
-    my %attr;
-    for my $attr (@{$item->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-      my $status;
-      if ($attr_ns eq '') {
-        $status = {
-          %HTMLAttrStatus,
-          %HTMLM12NXHTML2CommonAttrStatus,
-          charset => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-          coords => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-          cti => FEATURE_OBSVOCAB,
-          datafld => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-          datasrc => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-          directkey => FEATURE_OBSVOCAB,
-          download => FEATURE_HTML5_CR,
-          email => FEATURE_OBSVOCAB,
-          eswf => FEATURE_OBSVOCAB,
-          href => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          hreflang => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          ib => FEATURE_OBSVOCAB,
-          ifb => FEATURE_OBSVOCAB,
-          ijam => FEATURE_OBSVOCAB,
-          ilet => FEATURE_OBSVOCAB,
-          irst => FEATURE_OBSVOCAB,
-          ista => FEATURE_OBSVOCAB,
-          iswf => FEATURE_OBSVOCAB,
-          kana => FEATURE_OBSVOCAB,
-          lang => FEATURE_HTML5_REC,
-          lcs => FEATURE_OBSVOCAB,
-          loop => FEATURE_OBSVOCAB,
-          measure => FEATURE_OBSVOCAB,
-          media => FEATURE_HTML5_LC,
-          memoryname => FEATURE_OBSVOCAB,
-          methods => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-          name => FEATURE_HTML5_LC,
-          onblur => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          onfocus => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          ping => FEATURE_HTML5_LC,
-          rel => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          shape => FEATURE_OBSVOCAB,
-          soundstart => FEATURE_OBSVOCAB,
-          src => FEATURE_OBSVOCAB,
-          tabindex => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          target => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          telbook => FEATURE_OBSVOCAB,
-          type => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-          urn => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
-          utn => FEATURE_OBSVOCAB,
-          viblength => FEATURE_OBSVOCAB,
-          vibration => FEATURE_OBSVOCAB,
-          volume => FEATURE_OBSVOCAB,
-        }->{$attr_ln};
-
-        $checker = {
-          charset => sub {
-            my ($self, $attr) = @_;
-            $HTMLCharsetChecker->($attr->value, @_);
-          },
-          coords => sub { }, ## Checked in $ShapeCoordsChecker.
+  check_attrs => $GetHTMLAttrsChecker->({
+    charset => sub {
+      my ($self, $attr) = @_;
+      $HTMLCharsetChecker->($attr->value, @_);
+    },
+    coords => sub { }, ## Checked in $ShapeCoordsChecker.
           cti => sub {
             my ($self, $attr) = @_;
             my $value = $attr->value;
@@ -5160,7 +5058,7 @@ $Element->{+HTML_NS}->{a} = {
           }, # memoryname
           name => $NameAttrChecker,
           ping => $HTMLSpaceURIsAttrChecker,
-          rel => sub { $HTMLLinkTypesAttrChecker->(1, $item, @_) },
+    rel => sub {}, ## checked in check_attrs2
           shape => $GetHTMLEnumeratedAttrChecker->({
             circ => -1, circle => 1,
             default => 1,
@@ -5185,35 +5083,66 @@ $Element->{+HTML_NS}->{a} = {
           volume => $GetHTMLEnumeratedAttrChecker->({
             high => 1, middle => 1, low => 1,
           }),
-        }->{$attr_ln};
-        if ($checker) {
-          $attr{$attr_ln} = $attr;
-        } elsif ($attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-                 $attr_ln !~ /[A-Z]/) {
-          ## XML-compatible + no uppercase letter
-          $checker = $HTMLDatasetAttrChecker;
-          $status = $HTMLDatasetAttrStatus;
-        } else {
-          $checker = $HTMLAttrChecker->{$attr_ln};
-        }
-      }
-      $checker ||= $AttrChecker->{$attr_ns}->{$attr_ln}
-        || $AttrChecker->{$attr_ns}->{''};
-      $status ||= $AttrStatus->{$attr_ns}->{$attr_ln}
-          || $AttrStatus->{$attr_ns}->{''};
-      $status = FEATURE_ALLOWED if not defined $status and length $attr_ns;
+  }, {
+          %HTMLAttrStatus,
+          %HTMLM12NXHTML2CommonAttrStatus,
+          charset => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+          coords => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+          cti => FEATURE_OBSVOCAB,
+          datafld => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+          datasrc => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+          directkey => FEATURE_OBSVOCAB,
+          download => FEATURE_HTML5_CR,
+          email => FEATURE_OBSVOCAB,
+          eswf => FEATURE_OBSVOCAB,
+          href => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          hreflang => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          ib => FEATURE_OBSVOCAB,
+          ifb => FEATURE_OBSVOCAB,
+          ijam => FEATURE_OBSVOCAB,
+          ilet => FEATURE_OBSVOCAB,
+          irst => FEATURE_OBSVOCAB,
+          ista => FEATURE_OBSVOCAB,
+          iswf => FEATURE_OBSVOCAB,
+          kana => FEATURE_OBSVOCAB,
+          lang => FEATURE_HTML5_REC,
+          lcs => FEATURE_OBSVOCAB,
+          loop => FEATURE_OBSVOCAB,
+          measure => FEATURE_OBSVOCAB,
+          media => FEATURE_HTML5_LC,
+          memoryname => FEATURE_OBSVOCAB,
+          methods => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+          name => FEATURE_HTML5_LC,
+          onblur => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          onfocus => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          ping => FEATURE_HTML5_LC,
+          rel => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          shape => FEATURE_OBSVOCAB,
+          soundstart => FEATURE_OBSVOCAB,
+          src => FEATURE_OBSVOCAB,
+          tabindex => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          target => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          telbook => FEATURE_OBSVOCAB,
+          type => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
+          urn => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
+          utn => FEATURE_OBSVOCAB,
+          viblength => FEATURE_OBSVOCAB,
+          vibration => FEATURE_OBSVOCAB,
+          volume => FEATURE_OBSVOCAB,
+  }), # check_attrs
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
 
-      if ($checker) {
-        $checker->($self, $attr, $item, $element_state) if ref $checker;
-      } elsif ($attr_ns eq '' and not $status) {
-        #
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute',
-                           level => $self->{level}->{uncertain});
-      }
+    my $rel_attr = $item->{node}->get_attribute_node_ns (undef, 'rel');
+    $HTMLLinkTypesAttrChecker->(1, $item, $self, $rel_attr, $item, $element_state)
+        if $rel_attr;
 
-      $self->_attr_status_info ($attr, $status);
+    my %attr;
+    for my $attr (@{$item->{node}->attributes}) {
+      my $attr_ns = $attr->namespace_uri;
+      $attr_ns = '' unless defined $attr_ns;
+      my $attr_ln = $attr->manakai_local_name;
+      $attr{$attr_ln} = $attr if $attr_ns eq '';
     }
 
     $element_state->{in_a_href_original} = $self->{flag}->{in_a_href};
@@ -5261,7 +5190,7 @@ $Element->{+HTML_NS}->{a} = {
 
     $element_state->{uri_info}->{href}->{type}->{hyperlink} = 1;
     $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-  }, # check_attrs
+  }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $self->_add_minus_elements ($element_state, $HTMLInteractiveContent);
@@ -6654,16 +6583,27 @@ $Element->{+HTML_NS}->{iframe} = {
 $Element->{+HTML_NS}->{embed} = {
   %HTMLEmptyChecker,
   status => FEATURE_HTML5_LC,
-  check_attrs => sub {
-    my ($self, $item, $element_state) = @_;
-    my $has_src;
-    for my $attr (@{$item->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-
-      my $status = {
+  check_attrs => $GetHTMLAttrsChecker->({
+    src => $HTMLURIAttrChecker,
+    type => $MIMETypeChecker,
+    width => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
+    height => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
+    hspace => $HTMLLengthAttrChecker,
+    vspace => $HTMLLengthAttrChecker,
+    align => $EmbeddedAlignChecker,
+    name => $NameAttrChecker,
+    pluginpage => $HTMLURIAttrChecker,
+    pluginspage => $HTMLURIAttrChecker,
+    pluginurl => $HTMLURIAttrChecker,
+    code => $NonEmptyURLChecker,
+    border => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
+    palette => $GetHTMLEnumeratedAttrChecker->({
+      foreground => 1, background => 1,
+    }),
+    units => $GetHTMLEnumeratedAttrChecker->({
+      pixels => 1, px => 1, en => 1, em => 1,
+    }),
+  }, {
         %HTMLAttrStatus,
         align => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
         border => FEATURE_OBSVOCAB,
@@ -6680,78 +6620,10 @@ $Element->{+HTML_NS}->{embed} = {
         units => FEATURE_OBSVOCAB,
         vspace => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
         width => FEATURE_HTML5_LC,
-      }->{$attr_ln};
-
-      if ($attr_ns eq '') {
-        if ($attr_ln eq 'src') {
-          $checker = $HTMLURIAttrChecker;
-          $has_src = 1;
-        } elsif ($attr_ln eq 'type') {
-          $checker = $MIMETypeChecker;
-        } elsif ($attr_ln eq 'width' or $attr_ln eq 'height') {
-          $checker = $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 });
-        } elsif ($attr_ln eq 'hspace' or $attr_ln eq 'vspace') {
-          $checker = $HTMLLengthAttrChecker;
-        } elsif ($attr_ln eq 'align') {
-          $checker = $EmbeddedAlignChecker;
-        } elsif ($attr_ln eq 'name') {
-          $checker = $NameAttrChecker;
-        } elsif ({
-          pluginpage => 1,
-          pluginspage => 1,
-          pluginurl => 1,
-        }->{$attr_ln}) {
-          $checker = $HTMLURIAttrChecker;
-        } elsif ($attr_ln eq 'code') {
-          $checker = $NonEmptyURLChecker;
-        } elsif ($attr_ln eq 'border') {
-          $checker = $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 });
-        } elsif ($attr_ln eq 'palette') {
-          $checker = $GetHTMLEnumeratedAttrChecker->({
-            foreground => 1, background => 1,
-          });
-        } elsif ($attr_ln eq 'units') {
-          $checker = $GetHTMLEnumeratedAttrChecker->({
-            pixels => 1, px => 1, en => 1, em => 1,
-          });
-        } elsif ($attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-                 $attr_ln !~ /[A-Z]/) {
-          ## XML-compatible + no uppercase letter
-          $checker = $HTMLDatasetAttrChecker;
-          $status = $HTMLDatasetAttrStatus;
-        } elsif ($attr_ln !~ /^xml/ and
-                 $attr_ln !~ /[A-Z]/ and
-                 $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
-          ## XML-compatible + no uppercase letter
-          $checker = $HTMLAttrChecker->{$attr_ln}
-            || sub { }; ## NOTE: Any local attribute is ok.
-          $status = FEATURE_HTML5_LC | FEATURE_ALLOWED;
-        } else {
-          $checker = $HTMLAttrChecker->{$attr_ln};
-        }
-      }
-      $checker ||= $AttrChecker->{$attr_ns}->{$attr_ln}
-          || $AttrChecker->{$attr_ns}->{''};
-      $status = $AttrStatus->{$attr_ns}->{$attr_ln}
-          || $AttrStatus->{$attr_ns}->{''}
-              unless defined $status;
-      $status = FEATURE_ALLOWED if not defined $status and length $attr_ns;
-
-      if ($checker) {
-        $checker->($self, $attr, $item, $element_state);
-      } elsif ($attr_ns eq '' and not $status) {
-        #
-      } else {
-        $self->{onerror}->(node => $attr, 
-                           type => 'unknown attribute',
-                           level => $self->{level}->{uncertain});
-        ## ISSUE: No conformance createria for global attributes in the spec
-      }
-
-      $self->_attr_status_info ($attr, $status);
-    }
-
-    unless ($has_src) {
+  }, 'is_embed'), # check_attrs
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+    unless ($item->{node}->has_attribute_ns (undef, 'src')) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'src',
@@ -6761,11 +6633,22 @@ $Element->{+HTML_NS}->{embed} = {
       ## is likely an authoring error.
     }
 
+    ## These obsolete attributes are allowed (since every attribute is
+    ## conforming for the |embed| element) but should not be used in
+    ## fact.
+    for (qw(align border hspace vspace name)) {
+      my $attr = $item->{node}->get_attribute_node_ns (undef, $_);
+      $self->{onerror}->(node => $attr,
+                         type => 'attribute not defined',
+                         level => 'w')
+          if $attr;
+    }
+
     ## TODO: external resource check
 
     $element_state->{uri_info}->{code}->{type}->{embedded} = 1;
     $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-  },
+  }, # check_attrs2
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     
@@ -7555,17 +7438,25 @@ $Element->{+HTML_NS}->{map} = {
 $Element->{+HTML_NS}->{area} = {
   %HTMLEmptyChecker,
   status => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-  check_attrs => sub {
-    my ($self, $item, $element_state) = @_;
-    my %attr;
-    for my $attr (@{$item->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-      my $status;
-      if ($attr_ns eq '') {
-        $status = {
+  check_attrs => $GetHTMLAttrsChecker->({
+    alt => sub { }, ## Checked later.
+    coords => sub { }, ## Checked in $ShapeCoordsChecker
+    download => sub { },
+    href => $HTMLURIAttrChecker,
+    hreflang => $HTMLLanguageTagAttrChecker,
+    media => $HTMLMQAttrChecker,
+    nohref => $GetHTMLBooleanAttrChecker->('nohref'),
+    ping => $HTMLSpaceURIsAttrChecker,
+    rel => sub {}, ## Checked in check_attrs2
+    shape => $GetHTMLEnumeratedAttrChecker->({
+      circ => -1, circle => 1,
+      default => 1,
+      poly => 1, polygon => -1,
+      rect => 1, rectangle => -1,
+    }),
+    target => $HTMLTargetAttrChecker,
+    type => $MIMETypeChecker,
+  }, {
           %HTMLAttrStatus,
           %HTMLM12NCommonAttrStatus,
           alt => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
@@ -7580,56 +7471,20 @@ $Element->{+HTML_NS}->{area} = {
           shape => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
           target => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
           type => FEATURE_HTML5_LC,
-        }->{$attr_ln};
+  }), # check_attrs
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
 
-        $checker = {
-          alt => sub { }, ## Checked later.
-          coords => sub { }, ## Checked in $ShapeCoordsChecker
-          download => sub { },
-          href => $HTMLURIAttrChecker,
-          hreflang => $HTMLLanguageTagAttrChecker,
-          media => $HTMLMQAttrChecker,
-          nohref => $GetHTMLBooleanAttrChecker->('nohref'),
-          ping => $HTMLSpaceURIsAttrChecker,
-          rel => sub { $HTMLLinkTypesAttrChecker->(1, $item, @_) },
-          shape => $GetHTMLEnumeratedAttrChecker->({
-            circ => -1, circle => 1,
-            default => 1,
-            poly => 1, polygon => -1,
-            rect => 1, rectangle => -1,
-          }),
-          target => $HTMLTargetAttrChecker,
-          type => $MIMETypeChecker,
-        }->{$attr_ln};
-        if ($checker) {
-          $attr{$attr_ln} = $attr;
-        } elsif ($attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-                 $attr_ln !~ /[A-Z]/) {
-          ## XML-compatible + no uppercase letter
-          $checker = $HTMLDatasetAttrChecker;
-          $status = $HTMLDatasetAttrStatus;
-        } else {
-          $checker = $HTMLAttrChecker->{$attr_ln};
-        }
-      }
-      $checker ||= $AttrChecker->{$attr_ns}->{$attr_ln}
-          || $AttrChecker->{$attr_ns}->{''};
-      $status ||= $AttrStatus->{$attr_ns}->{$attr_ln}
-          || $AttrStatus->{$attr_ns}->{''};
-      $status = FEATURE_ALLOWED if not defined $status and length $attr_ns;
+    my $rel_attr = $item->{node}->get_attribute_node_ns (undef, 'rel');
+    $HTMLLinkTypesAttrChecker->(1, $item, $self, $rel_attr, $item, $element_state)
+        if $rel_attr;
 
-      if ($checker) {
-        $checker->($self, $attr, $item, $element_state) if ref $checker;
-      } elsif ($attr_ns eq '' and not $status) {
-        #
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute',
-                             level => $self->{level}->{uncertain});
-        ## ISSUE: No comformance createria for unknown attributes in the spec
-      }
-
-      $self->_attr_status_info ($attr, $status);
+    my %attr;
+    for my $attr (@{$item->{node}->attributes}) {
+      my $attr_ns = $attr->namespace_uri;
+      $attr_ns = '' unless defined $attr_ns;
+      my $attr_ln = $attr->manakai_local_name;
+      $attr{$attr_ln} = $attr if $attr_ns eq '';
     }
 
     if (defined $attr{href}) {
@@ -7669,7 +7524,7 @@ $Element->{+HTML_NS}->{area} = {
     $ShapeCoordsChecker->($self, $item, \%attr, 'rectangle');
 
     $element_state->{uri_info}->{href}->{type}->{hyperlink} = 1;
-  },
+  }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     unless ($self->{flag}->{in_map} or
@@ -8590,22 +8445,20 @@ $Element->{+HTML_NS}->{label} = {
 $Element->{+HTML_NS}->{input} = {
   %HTMLEmptyChecker,
   status => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
-  check_attrs => sub {
-    my ($self, $item, $element_state) = @_;
-        
-    my $state = $item->{node}->get_attribute_ns (undef, 'type');
-    $state = 'text' unless defined $state;
-    $state =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-
-    for my $attr (@{$item->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-      my $status;
-      if ($attr_ns eq '') {
-        $status =
-        {
+  check_attrs => $GetHTMLAttrsChecker->({
+    map { $_ => sub {} } qw(
+      accept accept-charset action align alt autocapitalize
+      autocomplete autocorrect autofocus autosave border checked
+      datafld dataformatas datasrc directkey dirname disabled dynsrc
+      emptyok enctype form formaction format formenctype formmethod
+      formnovalidate formtarget height hspace incremental inputmode
+      iprof ismap istyle list loop lowsrc max maxlength method min
+      mode multiple name pattern placeholder precision readonly
+      replace required results size soundstart src start step target
+      template type usemap value vcard_name viblength vibration volume
+      vrml vspace width
+    )
+  }, {
          %HTMLAttrStatus,
          %HTMLM12NCommonAttrStatus,
          accept => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
@@ -8677,8 +8530,20 @@ $Element->{+HTML_NS}->{input} = {
          vrml => FEATURE_OBSVOCAB,
          vspace => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
          width => FEATURE_HTML5_LC,
-        }->{$attr_ln};
+  }), # check_attrs
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
 
+    my $state = $item->{node}->get_attribute_ns (undef, 'type');
+    $state = 'text' unless defined $state;
+    $state =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+
+    for my $attr (@{$item->{node}->attributes}) {
+      my $attr_ns = $attr->namespace_uri;
+      $attr_ns = '' unless defined $attr_ns;
+      my $attr_ln = $attr->manakai_local_name;
+      my $checker;
+      if ($attr_ns eq '') {
         $checker =
         {
          ## NOTE: Value of an empty string means that the attribute is only
@@ -9177,32 +9042,10 @@ $Element->{+HTML_NS}->{input} = {
                                  level => $self->{level}->{must});
             };
           }
-        } elsif ($attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-                 $attr_ln !~ /[A-Z]/) {
-          ## XML-compatible + no uppercase letter
-          $checker = $HTMLDatasetAttrChecker;
-          $status = $HTMLDatasetAttrStatus;
-        } else {
-          $checker = $HTMLAttrChecker->{$attr_ln};
         }
       }
-      $checker ||= $AttrChecker->{$attr_ns}->{$attr_ln}
-          || $AttrChecker->{$attr_ns}->{''};
-      $status ||= $AttrStatus->{$attr_ns}->{$attr_ln}
-          || $AttrStatus->{$attr_ns}->{''};
-      $status = FEATURE_ALLOWED if not defined $status and length $attr_ns;
 
-      if ($checker) {
-        $checker->($self, $attr, $item, $element_state) if ref $checker;
-      } elsif ($attr_ns eq '' and not $status) {
-        #
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute',
-                           level => $self->{level}->{uncertain});
-      }
-
-      $self->_attr_status_info ($attr, $status);
+      $checker->($self, $attr, $item, $element_state) if $checker and ref $checker;
     }
 
     ## ISSUE: -0/+0
@@ -9364,15 +9207,13 @@ $Element->{+HTML_NS}->{input} = {
     $element_state->{uri_info}->{formaction}->{type}->{action} = 1;
     $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
     $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-  }, # check_attrs
+
+    $FAECheckAttrs2->($self, $item, $element_state);
+  }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $FAECheckStart->($self, $item, $element_state);
   }, # check_start
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    $FAECheckAttrs2->($self, $item, $element_state);
-  }, # check_attrs2
 }; # input
 
 ## XXXresource: Dimension attributes have requirements on width and
@@ -10784,39 +10625,18 @@ our $AttrChecker;
 ## MIME type" definition here.
 our $MIMETypeChecker; ## See |Web::HTML::Validator|.
 
-## Any element MAY have xml:base, xml:lang
+## Any element MAY have xml:base, xml:lang.  Although Atom spec does
+## not explictly specify that unknown attribute cannot be used, HTML
+## Standard does not allow use of unknown attributes.
 my $GetAtomAttrsChecker = sub {
   my $element_specific_checker = shift;
   my $element_specific_status = shift;
   return sub {
-    my ($self, $todo, $element_state) = @_;
-    for my $attr (@{$todo->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-      if ($attr_ns eq '') {
-        $checker = $element_specific_checker->{$attr_ln};
-      } else {
-        $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
-            || $AttrChecker->{$attr_ns}->{''};
-      }
-      if ($checker) {
-        $checker->($self, $attr, $todo, $element_state);
-      } elsif ($attr_ln eq '') {
-        #
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute',
-                           level => $self->{level}->{uncertain});
-        ## ISSUE: No comformance createria for unknown attributes in the spec
-      }
-
-      if ($attr_ns eq '') {
-        $self->_attr_status_info ($attr, $element_specific_status->{$attr_ln});
-      }
-      ## TODO: global attribute
-    }
+    my ($self, $item, $element_state) = @_;
+    $self->_check_element_attrs ($item, $element_state,
+                                 is_atom => 1,
+                                 element_specific_checker => $element_specific_checker,
+                                 element_specific_status => $element_specific_status);
   };
 }; # $GetAtomAttrsChecker
 
