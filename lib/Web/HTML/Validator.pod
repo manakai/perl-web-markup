@@ -178,6 +178,14 @@ as the C<space> attribute in the XML namespace.  In other words, the
 C<xml:lang> or C<xml:space> attribute in no namespace is different
 from the attributes defined in the XML specification.
 
+The C<xml:space> attribute MUST NOT be in error.
+
+The description for the C<xml:lang> attribute value in the XML
+specification is interpreted as a MUST-level requirement.
+
+Reserved element names, attribute names, and target names MUST NOT be
+used unless allowed by an applicable specification.
+
 =item XMLNS
 
 Namespaces in XML 1.0 <http://www.w3.org/TR/xml-names/>.

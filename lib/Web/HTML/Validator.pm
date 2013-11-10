@@ -38,8 +38,13 @@ sub onerror ($;$) {
 ## XXX warning attribute definition's properties
 ## XXX must?? system ID has to be URL
 ##   warning U+000D
+##   MUST VersionNum http://www.w3.org/TR/xml/#xmldoc
+##   MUST EncName
+##   SHOULD fully-normalized
+##   warning suggestion for names
 
 ## XXX In HTML documents
+##   warning doctype name, pubid, sysid
 ##   warning doctype, html with optional comments
 ##   warning PI, element type definition, attribute definition
 ##   warning pubid/sysid chars
@@ -56,6 +61,8 @@ sub onerror ($;$) {
 
 ## XXX root element MUST be ...
 ## TODO: Conformance of an HTML document with non-html root element.
+
+## XXX xml-stylesheet PI
 
 ## Stability
 sub FEATURE_STATUS_REC () { 0b1 } ## Interoperable standard
@@ -100,6 +107,7 @@ our $MIMETypeChecker = sub {
 ## XXX element's prefix MUST NOT be 'xmlns' [XMLNS]
 ## XXX prefix of element or attribute MUST NOT be 'xml' or 'xmlns' [XMLNS]
 ## XXX prefix of namespaced attribute MUST NOT be null [???]
+## XXX no element defined in "xml"/"xmlns" namespace
 ## XXX local part begining with "xml" is inadvisable [XMLNS]
 ## Prefix MUST be declared [XMLNS].  This is checked by parser.
 ## Attributes MUST be unique [XMLNS].  This is checked by parser.
@@ -113,21 +121,69 @@ our $MIMETypeChecker = sub {
 
 our $AttrChecker = {
   (XML_NS) => {
-    ## XXX XML namespace MUST be bound to 'xml' [XMLNS]
+    '' => sub {
+      my ($self, $attr) = @_;
+      ## "Attribute not defined" error is thrown by other place.
+      
+      my $prefix = $attr->prefix;
+      if (defined $prefix and not $prefix eq 'xml') {
+        ## The XMLNS namespace MUST be bound to |xmlns|.
+        $self->{onerror}
+            ->(node => $attr,
+               type => 'Reserved Prefixes and Namespace Names:Name',
+               text => 'http://www.w3.org/XML/1998/namespace',
+               level => 'm');
+        ## "$prefix is undef" error is thrown by other place
+      }
+    },
 
     space => sub {
       my ($self, $attr) = @_;
+      
+      my $prefix = $attr->prefix;
+      if (defined $prefix and not $prefix eq 'xml') {
+        ## The XMLNS namespace MUST be bound to |xmlns|.
+        $self->{onerror}
+            ->(node => $attr,
+               type => 'Reserved Prefixes and Namespace Names:Name',
+               text => 'http://www.w3.org/XML/1998/namespace',
+               level => 'm');
+        ## "$prefix is undef" error is thrown by other place
+      }
+
+      my $oe = $attr->owner_element;
+      if ($oe and
+          ($oe->namespace_uri || '') eq HTML_NS and
+          $oe->owner_document->manakai_is_html) {
+        $self->{onerror}->(node => $attr, type => 'in HTML:xml:space', # XXX
+                           level => 'w');
+      }
+
       my $value = $attr->value;
       if ($value eq 'default' or $value eq 'preserve') {
         #
       } else {
-        ## NOTE: An XML "error"
-        $self->{onerror}->(node => $attr, level => $self->{level}->{xml_error},
+        ## Note that S before or after value is not allowed, as
+        ## $attr->value is normalized value.  DTD validation should be
+        ## performed before the conformance checking.
+        $self->{onerror}->(node => $attr, level => 'm',
                            type => 'invalid attribute value');
       }
-    },
+    }, # xml:space
     lang => sub {
       my ($self, $attr) = @_;
+      
+      my $prefix = $attr->prefix;
+      if (defined $prefix and not $prefix eq 'xml') {
+        ## The XMLNS namespace MUST be bound to |xmlns|.
+        $self->{onerror}
+            ->(node => $attr,
+               type => 'Reserved Prefixes and Namespace Names:Name',
+               text => 'http://www.w3.org/XML/1998/namespace',
+               level => 'm');
+        ## "$prefix is undef" error is thrown by other place
+      }
+
       my $value = $attr->value;
       if ($value eq '') {
         #
@@ -137,7 +193,7 @@ our $AttrChecker = {
         $lang->onerror (sub {
           $self->{onerror}->(@_, node => $attr);
         });
-        $lang->check_rfc3066_language_tag ($value);
+        $lang->check_rfc3066_language_tag ($value); # XXX Update langtag spec
       }
 
       ## NOTE: "The values of the attribute are language identifiers
@@ -169,12 +225,14 @@ our $AttrChecker = {
         if ($attr->owner_document->manakai_is_html) { # MUST NOT
           $self->{onerror}->(node => $attr, type => 'in HTML:xml:lang',
                              level => $self->{level}->{must});
-## TODO: Test data...
         }
       }
-    },
+    }, # xml:lang
     base => sub {
       my ($self, $attr) = @_;
+
+      ## XXX xml:base support will be likely removed from the Web.
+
       my $value = $attr->value;
       if ($value =~ /[^\x{0000}-\x{10FFFF}]/) { ## ISSUE: Should we disallow noncharacters?
         $self->{onerror}->(node => $attr,
@@ -198,6 +256,7 @@ our $AttrChecker = {
                type => 'Reserved Prefixes and Namespace Names:Name',
                text => 'http://www.w3.org/2000/xmlns/',
                level => 'm');
+        ## "$prefix is undef" error is thrown by other place
       }
 
       my $value = $attr->value;
@@ -302,7 +361,7 @@ our $AttrStatus;
 for (qw/space lang base/) {
   $AttrStatus->{+XML_NS}->{$_} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
 }
-
+$AttrStatus->{+XML_NS}->{''} = 0;
 $AttrStatus->{+XMLNS_NS}->{''} = FEATURE_STATUS_REC | FEATURE_ALLOWED;
 
 our %AnyChecker = (
@@ -892,10 +951,12 @@ sub _attr_status_info ($$$) {
     $self->{onerror}->(node => $attr,
                        type => 'attribute not defined',
                        level => $self->{level}->{must});
+    return;
   } elsif ($status_code & FEATURE_DEPRECATED_SHOULD) {
     $self->{onerror}->(node => $attr,
                        type => 'deprecated:attr',
                        level => $self->{level}->{should});
+    return;
   } elsif ($status_code & FEATURE_DEPRECATED_INFO) {
     $self->{onerror}->(node => $attr,
                        type => 'deprecated:attr',
@@ -2385,10 +2446,6 @@ my $HTMLAttrChecker = {
     push @{$self->{return}->{uri}->{$value} ||= []},
         {node => $attr, type => {namespace => 1}};
   },
-
-  ## The |xml:space| attribute in no namespace, which is different
-  ## from the |space| attribute in the XML namespace.
-  'xml:space' => $GetHTMLEnumeratedAttrChecker->({default => 1, preserve => 1}),
 }; # $HTMLAttrChecker
 
 my %HTMLAttrStatus = (
