@@ -2786,6 +2786,10 @@ $Element->{+HTML_NS}->{title} = {
 
 $Element->{+HTML_NS}->{base} = {
   %HTMLEmptyChecker,
+  check_attrs2 => $GetHTMLAttrsChecker->({
+    href => $HTMLURIAttrChecker,
+    target => $HTMLTargetAttrChecker,
+  }), # check_attrs2
   check_attrs => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -2835,11 +2839,6 @@ $Element->{+HTML_NS}->{base} = {
     }
 
     $element_state->{uri_info}->{href}->{type}->{base} = 1;
-
-    return $GetHTMLAttrsChecker->({
-      href => $HTMLURIAttrChecker,
-      target => $HTMLTargetAttrChecker,
-    })->($self, $item, $element_state);
   }, # check_attrs
 }; # base
 
@@ -5424,9 +5423,7 @@ $Element->{+HTML_NS}->{figcaption} = {
 
 $Element->{+HTML_NS}->{img} = {
   %HTMLEmptyChecker,
-  check_attrs => sub {
-    my ($self, $item, $element_state) = @_;
-    $GetHTMLAttrsChecker->({
+  check_attrs => $GetHTMLAttrsChecker->({
       align => $EmbeddedAlignChecker,
       alt => sub { }, ## NOTE: No syntactical requirement
       border => sub {
@@ -5509,10 +5506,10 @@ $Element->{+HTML_NS}->{img} = {
       vrml => $NonEmptyURLChecker,
       vspace => $HTMLLengthAttrChecker,
       width => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
-    })->($self, $item, $element_state);
-
+  }), # check_attrs
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
-
     unless ($el->has_attribute_ns (undef, 'alt')) {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing',
@@ -5544,7 +5541,7 @@ $Element->{+HTML_NS}->{img} = {
     $element_state->{uri_info}->{oversrc}->{type}->{embedded} = 1;
     $element_state->{uri_info}->{vrml}->{type}->{embedded} = 1;
     $element_state->{uri_info}->{longdesc}->{type}->{cite} = 1;
-  }, # check_attrs
+  }, # check_attrs2
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     
@@ -6243,40 +6240,38 @@ $Element->{+HTML_NS}->{canvas} = {
 
 $Element->{+HTML_NS}->{map} = {
   %TransparentChecker,
-  check_attrs => sub {
-    my ($self, $item, $element_state) = @_;
-    my $has_name;
-    $GetHTMLAttrsChecker->({
-      name => sub {
-        my ($self, $attr) = @_;
-        my $value = $attr->value;
-        my $value_compat = lc $value; ## XXX compatibility caseless match
-        if (length $value) {
-          if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
-            $self->{onerror}->(node => $attr, type => 'space in map name',
-                               level => $self->{level}->{must}); ## XXX documentation
-          }
-          
-          if ($self->{map_compat}->{$value_compat}) {
-            $self->{onerror}->(node => $attr,
-                               type => 'duplicate map name', ## XXX TODOC
-                               value => $value,
-                               level => $self->{level}->{must});
-          }
-        } else {
+  check_attrs => $GetHTMLAttrsChecker->({
+    name => sub {
+      my ($self, $attr) = @_;
+      my $value = $attr->value;
+      my $value_compat = lc $value; ## XXX compatibility caseless match
+      if (length $value) {
+        if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
+          $self->{onerror}->(node => $attr, type => 'space in map name',
+                             level => $self->{level}->{must}); ## XXX documentation
+        }
+        
+        if ($self->{map_compat}->{$value_compat}) {
           $self->{onerror}->(node => $attr,
-                             type => 'empty attribute value',
+                             type => 'duplicate map name', ## XXX TODOC
+                             value => $value,
                              level => $self->{level}->{must});
         }
-        $self->{map_exact}->{$value} ||= $attr;
-        $self->{map_compat}->{$value_compat} ||= $attr;
-        $has_name = [$value, $attr];
-      },
-    })->(@_);
-
-    if ($has_name) {
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'empty attribute value',
+                           level => $self->{level}->{must});
+      }
+      $self->{map_exact}->{$value} ||= $attr;
+      $self->{map_compat}->{$value_compat} ||= $attr;
+    },
+  }), # check_attrs
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+    my $name = $item->{node}->get_attribute_ns (undef, 'name');
+    if (defined $name) {
       my $id = $item->{node}->get_attribute_ns (undef, 'id');
-      if (defined $id and $has_name->[0] ne $id) {
+      if (defined $id and not $name eq $id) {
         $self->{onerror}
             ->(node => $item->{node}->get_attribute_node_ns (undef, 'id'),
                type => 'id ne name',
@@ -6288,7 +6283,7 @@ $Element->{+HTML_NS}->{map} = {
                          text => 'name',
                          level => $self->{level}->{must});
     }
-  },
+  }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{in_map_original} = $self->{flag}->{in_map};
