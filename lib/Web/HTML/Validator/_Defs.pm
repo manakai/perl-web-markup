@@ -499,7 +499,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "conforming" => 1
                                                                                                                },
                                                                                                      "lang" => {
-                                                                                                                 "conforming" => 1
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "value_type" => "language tag or empty"
                                                                                                                },
                                                                                                      "space" => {
                                                                                                                   "conforming" => 1
@@ -563,46 +564,104 @@ $Web::HTML::Validator::_Defs = {
                                                                                     "" => {
                                                                                             "accesskey" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
                                                                                             "class" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "set of space-separated tokens"
                                                                                                        },
                                                                                             "contenteditable" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "enumerated" => {
+                                                                                                                                     "" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "label" => "true"
+                                                                                                                                           },
+                                                                                                                                     "#missing" => {
+                                                                                                                                                     "label" => "inherit"
+                                                                                                                                                   },
+                                                                                                                                     "false" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "label" => "false"
+                                                                                                                                                },
+                                                                                                                                     "true" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "label" => "true"
+                                                                                                                                               }
+                                                                                                                                   },
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "enumerated"
                                                                                                                  },
                                                                                             "contextmenu" => {
-                                                                                                               "conforming" => 1
+                                                                                                               "conforming" => 1,
+                                                                                                               "value_type" => "idref"
                                                                                                              },
                                                                                             "dir" => {
                                                                                                        "conforming" => 1,
-                                                                                                       "status" => "LC"
+                                                                                                       "enumerated" => {
+                                                                                                                         "auto" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "id" => "attr-dir-auto-state",
+                                                                                                                                     "label" => "auto"
+                                                                                                                                   },
+                                                                                                                         "ltr" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "id" => "attr-dir-ltr-state",
+                                                                                                                                    "label" => "ltr"
+                                                                                                                                  },
+                                                                                                                         "rtl" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "id" => "attr-dir-rtl-state",
+                                                                                                                                    "label" => "rtl"
+                                                                                                                                  }
+                                                                                                                       },
+                                                                                                       "status" => "LC",
+                                                                                                       "value_type" => "enumerated"
                                                                                                      },
                                                                                             "draggable" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "enumerated" => {
+                                                                                                                               "#missing" => {
+                                                                                                                                               "label" => "auto"
+                                                                                                                                             },
+                                                                                                                               "false" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "label" => "false"
+                                                                                                                                          },
+                                                                                                                               "true" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "label" => "true"
+                                                                                                                                         }
+                                                                                                                             },
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "enumerated"
                                                                                                            },
                                                                                             "dropzone" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                             "hidden" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "boolean"
                                                                                                         },
                                                                                             "id" => {
                                                                                                       "conforming" => 1,
-                                                                                                      "status" => "LC"
+                                                                                                      "status" => "LC",
+                                                                                                      "value_type" => "id"
                                                                                                     },
                                                                                             "inert" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "boolean"
                                                                                                        },
                                                                                             "itemid" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "CR"
+                                                                                                          "status" => "CR",
+                                                                                                          "value_type" => "URL potentially surrounded by spaces"
                                                                                                         },
                                                                                             "itemprop" => {
                                                                                                             "conforming" => 1,
@@ -610,278 +669,380 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                             "itemref" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "CR"
+                                                                                                           "status" => "CR",
+                                                                                                           "value_type" => "unordered set of unique space-separated tokens"
                                                                                                          },
                                                                                             "itemscope" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "CR"
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "boolean"
                                                                                                            },
                                                                                             "itemtype" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "CR"
+                                                                                                            "status" => "CR",
+                                                                                                            "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                             "lang" => {
                                                                                                         "conforming" => 1,
-                                                                                                        "status" => "LC"
+                                                                                                        "status" => "LC",
+                                                                                                        "value_type" => "language tag or empty"
                                                                                                       },
                                                                                             "onabort" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "onblur" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "event handler"
                                                                                                         },
                                                                                             "oncancel" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "event handler"
                                                                                                           },
                                                                                             "oncanplay" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "oncanplaythrough" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "event handler"
                                                                                                                   },
                                                                                             "onchange" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "event handler"
                                                                                                           },
                                                                                             "onclick" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "onclose" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "oncontextmenu" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "event handler"
                                                                                                                },
                                                                                             "oncuechange" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "ondblclick" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "event handler"
                                                                                                             },
                                                                                             "ondrag" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "event handler"
                                                                                                         },
                                                                                             "ondragend" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "ondragenter" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "ondragexit" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "event handler"
                                                                                                             },
                                                                                             "ondragleave" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "ondragover" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "event handler"
                                                                                                             },
                                                                                             "ondragstart" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "ondrop" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "event handler"
                                                                                                         },
                                                                                             "ondurationchange" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "event handler"
                                                                                                                   },
                                                                                             "onemptied" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "onended" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "onerror" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "onfocus" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "oninput" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "oninvalid" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "onkeydown" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "onkeypress" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "event handler"
                                                                                                             },
                                                                                             "onkeyup" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "onload" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "event handler"
                                                                                                         },
                                                                                             "onloadeddata" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                             "onloadedmetadata" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "event handler"
                                                                                                                   },
                                                                                             "onloadstart" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "onmousedown" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "onmouseenter" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                             "onmouseleave" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                             "onmousemove" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "onmouseout" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "event handler"
                                                                                                             },
                                                                                             "onmouseover" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                             "onmouseup" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "onmousewheel" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                             "onpause" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "onplay" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "event handler"
                                                                                                         },
                                                                                             "onplaying" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "onprogress" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "event handler"
                                                                                                             },
                                                                                             "onratechange" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                             "onreset" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
                                                                                                          },
                                                                                             "onscroll" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "event handler"
                                                                                                           },
                                                                                             "onseeked" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "event handler"
                                                                                                           },
                                                                                             "onseeking" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "onselect" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "event handler"
                                                                                                           },
                                                                                             "onshow" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "event handler"
                                                                                                         },
                                                                                             "onsort" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "event handler"
                                                                                                         },
                                                                                             "onstalled" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "onsubmit" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "event handler"
                                                                                                           },
                                                                                             "onsuspend" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "ontimeupdate" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                             "onvolumechange" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "event handler"
                                                                                                                 },
                                                                                             "onwaiting" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "event handler"
                                                                                                            },
                                                                                             "role" => {
                                                                                                         "conforming" => 1
                                                                                                       },
                                                                                             "spellcheck" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "CR"
+                                                                                                              "enumerated" => {
+                                                                                                                                "" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "label" => "true"
+                                                                                                                                      },
+                                                                                                                                "#missing" => {
+                                                                                                                                                "label" => "default"
+                                                                                                                                              },
+                                                                                                                                "false" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "label" => "false"
+                                                                                                                                           },
+                                                                                                                                "true" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "label" => "true"
+                                                                                                                                          }
+                                                                                                                              },
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "enumerated"
                                                                                                             },
                                                                                             "style" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "CSS styling"
                                                                                                        },
                                                                                             "tabindex" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "integer"
                                                                                                           },
                                                                                             "title" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "text"
                                                                                                        },
                                                                                             "translate" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "enumerated" => {
+                                                                                                                               "" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "label" => "yes"
+                                                                                                                                     },
+                                                                                                                               "#missing" => {
+                                                                                                                                               "label" => "inherit"
+                                                                                                                                             },
+                                                                                                                               "no" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "label" => "no"
+                                                                                                                                       },
+                                                                                                                               "yes" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "label" => "yes"
+                                                                                                                                        }
+                                                                                                                             },
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "enumerated"
                                                                                                            },
                                                                                             "xml:lang" => {
                                                                                                             "conforming" => 1,
@@ -899,15 +1060,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                     "" => {
                                                                                             "download" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "text"
                                                                                                           },
                                                                                             "href" => {
                                                                                                         "conforming" => 1,
-                                                                                                        "status" => "LC"
+                                                                                                        "status" => "LC",
+                                                                                                        "value_type" => "URL potentially surrounded by spaces"
                                                                                                       },
                                                                                             "hreflang" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "language tag"
                                                                                                           },
                                                                                             "name" => {
                                                                                                         "obsolete_but_conforming" => 1,
@@ -915,19 +1079,23 @@ $Web::HTML::Validator::_Defs = {
                                                                                                       },
                                                                                             "ping" => {
                                                                                                         "conforming" => 1,
-                                                                                                        "status" => "LC"
+                                                                                                        "status" => "LC",
+                                                                                                        "value_type" => "set of space-separated tokens"
                                                                                                       },
                                                                                             "rel" => {
                                                                                                        "conforming" => 1,
-                                                                                                       "status" => "LC"
+                                                                                                       "status" => "LC",
+                                                                                                       "value_type" => "set of space-separated tokens"
                                                                                                      },
                                                                                             "target" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "browsing context name or keyword"
                                                                                                         },
                                                                                             "type" => {
                                                                                                         "conforming" => 1,
-                                                                                                        "status" => "LC"
+                                                                                                        "status" => "LC",
+                                                                                                        "value_type" => "MIME type"
                                                                                                       }
                                                                                           }
                                                                                   },
@@ -939,7 +1107,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "title" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "text"
                                                                                                           }
                                                                                              }
                                                                                      },
@@ -963,43 +1132,91 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "alt" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "text"
                                                                                                         },
                                                                                                "coords" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "list of integers"
                                                                                                            },
                                                                                                "download" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "text"
                                                                                                              },
                                                                                                "href" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                "hreflang" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "language tag"
                                                                                                              },
                                                                                                "ping" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "set of space-separated tokens"
                                                                                                          },
                                                                                                "rel" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "set of space-separated tokens"
                                                                                                         },
                                                                                                "shape" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "enumerated" => {
+                                                                                                                              "#missing" => {
+                                                                                                                                              "id" => "attr-area-shape-rect",
+                                                                                                                                              "label" => "rectangle"
+                                                                                                                                            },
+                                                                                                                              "circ" => {
+                                                                                                                                          "id" => "attr-area-shape-circle",
+                                                                                                                                          "label" => "circle"
+                                                                                                                                        },
+                                                                                                                              "circle" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-area-shape-circle",
+                                                                                                                                            "label" => "circle"
+                                                                                                                                          },
+                                                                                                                              "default" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-area-shape-default",
+                                                                                                                                             "label" => "default"
+                                                                                                                                           },
+                                                                                                                              "poly" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-area-shape-poly",
+                                                                                                                                          "label" => "polygon"
+                                                                                                                                        },
+                                                                                                                              "polygon" => {
+                                                                                                                                             "id" => "attr-area-shape-poly",
+                                                                                                                                             "label" => "polygon"
+                                                                                                                                           },
+                                                                                                                              "rect" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-area-shape-rect",
+                                                                                                                                          "label" => "rectangle"
+                                                                                                                                        },
+                                                                                                                              "rectangle" => {
+                                                                                                                                               "id" => "attr-area-shape-rect",
+                                                                                                                                               "label" => "rectangle"
+                                                                                                                                             }
+                                                                                                                            },
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "enumerated"
                                                                                                           },
                                                                                                "target" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "browsing context name or keyword"
                                                                                                            },
                                                                                                "type" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "MIME type"
                                                                                                          }
                                                                                              }
                                                                                      },
@@ -1023,35 +1240,95 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "autoplay" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "controls" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "crossorigin" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "enumerated" => {
+                                                                                                                                     "" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-crossorigin-anonymous",
+                                                                                                                                             "label" => "Anonymous"
+                                                                                                                                           },
+                                                                                                                                     "#invalid" => {
+                                                                                                                                                     "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                     "label" => "Anonymous"
+                                                                                                                                                   },
+                                                                                                                                     "#missing" => {
+                                                                                                                                                     "id" => "attr-crossorigin-none",
+                                                                                                                                                     "label" => "No CORS"
+                                                                                                                                                   },
+                                                                                                                                     "anonymous" => {
+                                                                                                                                                      "canonical" => 1,
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                      "label" => "Anonymous"
+                                                                                                                                                    },
+                                                                                                                                     "use-credentials" => {
+                                                                                                                                                            "conforming" => 1,
+                                                                                                                                                            "id" => "attr-crossorigin-use-credentials",
+                                                                                                                                                            "label" => "Use credentials"
+                                                                                                                                                          }
+                                                                                                                                   },
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "enumerated"
                                                                                                                  },
                                                                                                 "loop" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "boolean"
                                                                                                           },
                                                                                                 "mediagroup" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "any"
                                                                                                                 },
                                                                                                 "muted" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "boolean"
                                                                                                            },
                                                                                                 "preload" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "enumerated" => {
+                                                                                                                                 "" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "id" => "attr-media-preload-auto",
+                                                                                                                                         "label" => "Automatic"
+                                                                                                                                       },
+                                                                                                                                 "#missing" => {
+                                                                                                                                                 "id" => "attr-media-preload-metadata",
+                                                                                                                                                 "label" => "Metadata"
+                                                                                                                                               },
+                                                                                                                                 "auto" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-media-preload-auto",
+                                                                                                                                             "label" => "Automatic"
+                                                                                                                                           },
+                                                                                                                                 "metadata" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "id" => "attr-media-preload-metadata",
+                                                                                                                                                 "label" => "Metadata"
+                                                                                                                                               },
+                                                                                                                                 "none" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-media-preload-none",
+                                                                                                                                             "label" => "None"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "enumerated"
                                                                                                              },
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          }
                                                                                               }
                                                                                       },
@@ -1069,11 +1346,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "href" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                "target" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "browsing context name or keyword"
                                                                                                            }
                                                                                              }
                                                                                      },
@@ -1089,7 +1368,25 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "" => {
                                                                                               "dir" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "enumerated" => {
+                                                                                                                           "auto" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "id" => "attr-dir-auto-state",
+                                                                                                                                       "label" => "auto"
+                                                                                                                                     },
+                                                                                                                           "ltr" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "id" => "attr-dir-ltr-state",
+                                                                                                                                      "label" => "ltr"
+                                                                                                                                    },
+                                                                                                                           "rtl" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "id" => "attr-dir-rtl-state",
+                                                                                                                                      "label" => "rtl"
+                                                                                                                                    }
+                                                                                                                         },
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "enumerated"
                                                                                                        }
                                                                                             }
                                                                                     },
@@ -1102,7 +1399,25 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "" => {
                                                                                               "dir" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "enumerated" => {
+                                                                                                                           "auto" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "id" => "attr-dir-auto-state",
+                                                                                                                                       "label" => "auto"
+                                                                                                                                     },
+                                                                                                                           "ltr" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "id" => "attr-dir-ltr-state",
+                                                                                                                                      "label" => "ltr"
+                                                                                                                                    },
+                                                                                                                           "rtl" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "id" => "attr-dir-rtl-state",
+                                                                                                                                      "label" => "rtl"
+                                                                                                                                    }
+                                                                                                                         },
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "enumerated"
                                                                                                        }
                                                                                             }
                                                                                     },
@@ -1121,7 +1436,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                              "" => {
                                                                                                      "cite" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "URL potentially surrounded by spaces"
                                                                                                                }
                                                                                                    }
                                                                                            },
@@ -1134,55 +1450,68 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "onafterprint" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "event handler"
                                                                                                                  },
                                                                                                "onbeforeprint" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "event handler"
                                                                                                                   },
                                                                                                "onbeforeunload" => {
                                                                                                                      "conforming" => 1,
-                                                                                                                     "status" => "LC"
+                                                                                                                     "status" => "LC",
+                                                                                                                     "value_type" => "event handler"
                                                                                                                    },
                                                                                                "onhashchange" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "event handler"
                                                                                                                  },
                                                                                                "onmessage" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                                "onoffline" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                                "ononline" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                                "onpagehide" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "event handler"
                                                                                                                },
                                                                                                "onpageshow" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "event handler"
                                                                                                                },
                                                                                                "onpopstate" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "event handler"
                                                                                                                },
                                                                                                "onresize" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              },
                                                                                                "onstorage" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "event handler"
                                                                                                               },
                                                                                                "onunload" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "event handler"
                                                                                                              }
                                                                                              }
                                                                                      },
@@ -1201,51 +1530,131 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "autofocus" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "boolean"
                                                                                                                 },
                                                                                                  "disabled" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "idref"
                                                                                                            },
                                                                                                  "formaction" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                  },
                                                                                                  "formenctype" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "enumerated" => {
+                                                                                                                                      "#invalid" => {
+                                                                                                                                                      "id" => "attr-fs-enctype-urlencoded",
+                                                                                                                                                      "label" => "application/x-www-form-urlencoded"
+                                                                                                                                                    },
+                                                                                                                                      "application/x-www-form-urlencoded" => {
+                                                                                                                                                                               "conforming" => 1,
+                                                                                                                                                                               "id" => "attr-fs-enctype-urlencoded",
+                                                                                                                                                                               "label" => "application/x-www-form-urlencoded"
+                                                                                                                                                                             },
+                                                                                                                                      "multipart/form-data" => {
+                                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                                 "id" => "attr-fs-enctype-formdata",
+                                                                                                                                                                 "label" => "multipart/form-data"
+                                                                                                                                                               },
+                                                                                                                                      "text/plain" => {
+                                                                                                                                                        "conforming" => 1,
+                                                                                                                                                        "id" => "attr-fs-enctype-text",
+                                                                                                                                                        "label" => "text/plain"
+                                                                                                                                                      }
+                                                                                                                                    },
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "enumerated"
                                                                                                                   },
                                                                                                  "formmethod" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "enumerated" => {
+                                                                                                                                     "#invalid" => {
+                                                                                                                                                     "id" => "attr-fs-method-GET",
+                                                                                                                                                     "label" => "GET"
+                                                                                                                                                   },
+                                                                                                                                     "dialog" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "id" => "attr-fs-method-dialog",
+                                                                                                                                                   "label" => "dialog"
+                                                                                                                                                 },
+                                                                                                                                     "get" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "id" => "attr-fs-method-GET",
+                                                                                                                                                "label" => "GET"
+                                                                                                                                              },
+                                                                                                                                     "post" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "id" => "attr-fs-method-POST",
+                                                                                                                                                 "label" => "POST"
+                                                                                                                                               }
+                                                                                                                                   },
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "enumerated"
                                                                                                                  },
                                                                                                  "formnovalidate" => {
                                                                                                                        "conforming" => 1,
-                                                                                                                       "status" => "LC"
+                                                                                                                       "status" => "LC",
+                                                                                                                       "value_type" => "boolean"
                                                                                                                      },
                                                                                                  "formtarget" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "browsing context name or keyword"
                                                                                                                  },
                                                                                                  "menu" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "idref"
                                                                                                            },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-empty"
                                                                                                            },
                                                                                                  "type" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "enumerated" => {
+                                                                                                                               "#missing" => {
+                                                                                                                                               "id" => "attr-button-type-submit",
+                                                                                                                                               "label" => "Submit Button"
+                                                                                                                                             },
+                                                                                                                               "button" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-button-type-button",
+                                                                                                                                             "label" => "Button"
+                                                                                                                                           },
+                                                                                                                               "menu" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-button-type-menu",
+                                                                                                                                           "label" => "Menu"
+                                                                                                                                         },
+                                                                                                                               "reset" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-button-type-reset",
+                                                                                                                                            "label" => "Reset Button"
+                                                                                                                                          },
+                                                                                                                               "submit" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-button-type-submit",
+                                                                                                                                             "label" => "Submit Button"
+                                                                                                                                           }
+                                                                                                                             },
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "enumerated"
                                                                                                            },
                                                                                                  "value" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "any"
                                                                                                             }
                                                                                                }
                                                                                        },
@@ -1257,11 +1666,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "height" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "REC"
+                                                                                                               "status" => "REC",
+                                                                                                               "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "width" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "REC"
+                                                                                                              "status" => "REC",
+                                                                                                              "value_type" => "non-negative integer"
                                                                                                             }
                                                                                                }
                                                                                        },
@@ -1293,7 +1704,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "" => {
                                                                                               "span" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "non-negative integer greater than zero"
                                                                                                         }
                                                                                             }
                                                                                     },
@@ -1306,7 +1718,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                            "" => {
                                                                                                    "span" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-negative integer greater than zero"
                                                                                                              }
                                                                                                  }
                                                                                          },
@@ -1342,11 +1755,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "" => {
                                                                                               "cite" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "URL potentially surrounded by spaces"
                                                                                                         },
                                                                                               "datetime" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "date string with optional time"
                                                                                                             }
                                                                                             }
                                                                                     },
@@ -1359,7 +1774,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                           "" => {
                                                                                                   "open" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "boolean"
                                                                                                             }
                                                                                                 }
                                                                                         },
@@ -1371,7 +1787,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "" => {
                                                                                               "title" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "text"
                                                                                                          }
                                                                                             }
                                                                                     },
@@ -1383,7 +1800,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "open" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "boolean"
                                                                                                            }
                                                                                                }
                                                                                        },
@@ -1421,19 +1839,23 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "height" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "CWD"
+                                                                                                           "status" => "CWD",
+                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "type" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "CWD"
+                                                                                                            "status" => "CWD",
+                                                                                                            "value_type" => "MIME type"
                                                                                                           },
                                                                                                 "width" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-negative integer"
                                                                                                            }
                                                                                               }
                                                                                       },
@@ -1446,15 +1868,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                            "" => {
                                                                                                    "disabled" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "boolean"
                                                                                                                  },
                                                                                                    "form" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "idref"
                                                                                                              },
                                                                                                    "name" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-empty"
                                                                                                              }
                                                                                                  }
                                                                                          },
@@ -1485,23 +1910,94 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "accept-charset" => {
                                                                                                                      "conforming" => 1,
-                                                                                                                     "status" => "LC"
+                                                                                                                     "status" => "LC",
+                                                                                                                     "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                    },
                                                                                                "action" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                "autocomplete" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "enumerated" => {
+                                                                                                                                     "#missing" => {
+                                                                                                                                                     "id" => "attr-form-autocomplete-on-state",
+                                                                                                                                                     "label" => "on"
+                                                                                                                                                   },
+                                                                                                                                     "off" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "id" => "attr-form-autocomplete-off-state",
+                                                                                                                                                "label" => "off"
+                                                                                                                                              },
+                                                                                                                                     "on" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "id" => "attr-form-autocomplete-on-state",
+                                                                                                                                               "label" => "on"
+                                                                                                                                             }
+                                                                                                                                   },
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "enumerated"
                                                                                                                  },
                                                                                                "enctype" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "enumerated" => {
+                                                                                                                                "#invalid" => {
+                                                                                                                                                "id" => "attr-fs-enctype-urlencoded",
+                                                                                                                                                "label" => "application/x-www-form-urlencoded"
+                                                                                                                                              },
+                                                                                                                                "#missing" => {
+                                                                                                                                                "id" => "attr-fs-enctype-urlencoded",
+                                                                                                                                                "label" => "application/x-www-form-urlencoded"
+                                                                                                                                              },
+                                                                                                                                "application/x-www-form-urlencoded" => {
+                                                                                                                                                                         "conforming" => 1,
+                                                                                                                                                                         "id" => "attr-fs-enctype-urlencoded",
+                                                                                                                                                                         "label" => "application/x-www-form-urlencoded"
+                                                                                                                                                                       },
+                                                                                                                                "multipart/form-data" => {
+                                                                                                                                                           "conforming" => 1,
+                                                                                                                                                           "id" => "attr-fs-enctype-formdata",
+                                                                                                                                                           "label" => "multipart/form-data"
+                                                                                                                                                         },
+                                                                                                                                "text/plain" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "id" => "attr-fs-enctype-text",
+                                                                                                                                                  "label" => "text/plain"
+                                                                                                                                                }
+                                                                                                                              },
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "enumerated"
                                                                                                             },
                                                                                                "method" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "enumerated" => {
+                                                                                                                               "#invalid" => {
+                                                                                                                                               "id" => "attr-fs-method-GET",
+                                                                                                                                               "label" => "GET"
+                                                                                                                                             },
+                                                                                                                               "#missing" => {
+                                                                                                                                               "id" => "attr-fs-method-GET",
+                                                                                                                                               "label" => "GET"
+                                                                                                                                             },
+                                                                                                                               "dialog" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-fs-method-dialog",
+                                                                                                                                             "label" => "dialog"
+                                                                                                                                           },
+                                                                                                                               "get" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-fs-method-GET",
+                                                                                                                                          "label" => "GET"
+                                                                                                                                        },
+                                                                                                                               "post" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-fs-method-POST",
+                                                                                                                                           "label" => "POST"
+                                                                                                                                         }
+                                                                                                                             },
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "enumerated"
                                                                                                            },
                                                                                                "name" => {
                                                                                                            "conforming" => 1,
@@ -1509,11 +2005,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          },
                                                                                                "novalidate" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                "target" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "browsing context name or keyword"
                                                                                                            }
                                                                                              }
                                                                                      },
@@ -1588,7 +2086,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "manifest" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "REC"
+                                                                                                               "status" => "REC",
+                                                                                                               "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              }
                                                                                              }
                                                                                      },
@@ -1606,27 +2105,33 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "allowfullscreen" => {
                                                                                                                         "conforming" => 1,
-                                                                                                                        "status" => "LC"
+                                                                                                                        "status" => "LC",
+                                                                                                                        "value_type" => "boolean"
                                                                                                                       },
                                                                                                  "height" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "browsing context name"
                                                                                                            },
                                                                                                  "sandbox" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "unordered set of unique space-separated tokens"
                                                                                                               },
                                                                                                  "seamless" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                  "srcdoc" => {
                                                                                                                "conforming" => 1,
@@ -1634,7 +2139,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                                  "width" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "non-negative integer"
                                                                                                             }
                                                                                                }
                                                                                        },
@@ -1646,7 +2152,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "" => {
                                                                                               "alt" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "text"
                                                                                                        },
                                                                                               "border" => {
                                                                                                             "obsolete_but_conforming" => 1,
@@ -1654,19 +2161,49 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                               "crossorigin" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-crossorigin-anonymous",
+                                                                                                                                           "label" => "Anonymous"
+                                                                                                                                         },
+                                                                                                                                   "#invalid" => {
+                                                                                                                                                   "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                   "label" => "Anonymous"
+                                                                                                                                                 },
+                                                                                                                                   "#missing" => {
+                                                                                                                                                   "id" => "attr-crossorigin-none",
+                                                                                                                                                   "label" => "No CORS"
+                                                                                                                                                 },
+                                                                                                                                   "anonymous" => {
+                                                                                                                                                    "canonical" => 1,
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                    "label" => "Anonymous"
+                                                                                                                                                  },
+                                                                                                                                   "use-credentials" => {
+                                                                                                                                                          "conforming" => 1,
+                                                                                                                                                          "id" => "attr-crossorigin-use-credentials",
+                                                                                                                                                          "label" => "Use credentials"
+                                                                                                                                                        }
+                                                                                                                                 },
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "enumerated"
                                                                                                                },
                                                                                               "height" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-negative integer"
                                                                                                           },
                                                                                               "ismap" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "boolean"
                                                                                                          },
                                                                                               "src" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                        },
                                                                                               "srcset" => {
                                                                                                             "conforming" => 1,
@@ -1674,11 +2211,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                               "usemap" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "hash-name reference"
                                                                                                           },
                                                                                               "width" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "non-negative integer"
                                                                                                          }
                                                                                             }
                                                                                     },
@@ -1691,31 +2230,38 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "accept" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "set of comma-separated tokens"
                                                                                                             },
                                                                                                 "alt" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "non-empty text"
                                                                                                          },
                                                                                                 "autocomplete" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "CR"
+                                                                                                                    "status" => "CR",
+                                                                                                                    "value_type" => "set of space-separated tokens"
                                                                                                                   },
                                                                                                 "autofocus" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                 "checked" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "boolean"
                                                                                                              },
                                                                                                 "dirname" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-empty"
                                                                                                              },
                                                                                                 "disabled" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "form" => {
                                                                                                             "conforming" => 1,
@@ -1723,35 +2269,146 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                                 "formaction" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "formenctype" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "enumerated" => {
+                                                                                                                                     "#invalid" => {
+                                                                                                                                                     "id" => "attr-fs-enctype-urlencoded",
+                                                                                                                                                     "label" => "application/x-www-form-urlencoded"
+                                                                                                                                                   },
+                                                                                                                                     "application/x-www-form-urlencoded" => {
+                                                                                                                                                                              "conforming" => 1,
+                                                                                                                                                                              "id" => "attr-fs-enctype-urlencoded",
+                                                                                                                                                                              "label" => "application/x-www-form-urlencoded"
+                                                                                                                                                                            },
+                                                                                                                                     "multipart/form-data" => {
+                                                                                                                                                                "conforming" => 1,
+                                                                                                                                                                "id" => "attr-fs-enctype-formdata",
+                                                                                                                                                                "label" => "multipart/form-data"
+                                                                                                                                                              },
+                                                                                                                                     "text/plain" => {
+                                                                                                                                                       "conforming" => 1,
+                                                                                                                                                       "id" => "attr-fs-enctype-text",
+                                                                                                                                                       "label" => "text/plain"
+                                                                                                                                                     }
+                                                                                                                                   },
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "enumerated"
                                                                                                                  },
                                                                                                 "formmethod" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "enumerated" => {
+                                                                                                                                    "#invalid" => {
+                                                                                                                                                    "id" => "attr-fs-method-GET",
+                                                                                                                                                    "label" => "GET"
+                                                                                                                                                  },
+                                                                                                                                    "dialog" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "id" => "attr-fs-method-dialog",
+                                                                                                                                                  "label" => "dialog"
+                                                                                                                                                },
+                                                                                                                                    "get" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "id" => "attr-fs-method-GET",
+                                                                                                                                               "label" => "GET"
+                                                                                                                                             },
+                                                                                                                                    "post" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "id" => "attr-fs-method-POST",
+                                                                                                                                                "label" => "POST"
+                                                                                                                                              }
+                                                                                                                                  },
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "enumerated"
                                                                                                                 },
                                                                                                 "formnovalidate" => {
                                                                                                                       "conforming" => 1,
-                                                                                                                      "status" => "LC"
+                                                                                                                      "status" => "LC",
+                                                                                                                      "value_type" => "boolean"
                                                                                                                     },
                                                                                                 "formtarget" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "browsing context name or keyword"
                                                                                                                 },
                                                                                                 "height" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "inputmode" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "#missing" => {
+                                                                                                                                                   "id" => "attr-fe-inputmode-state-default",
+                                                                                                                                                   "label" => "Default"
+                                                                                                                                                 },
+                                                                                                                                   "email" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "id" => "attr-fe-inputmode-state-email",
+                                                                                                                                                "label" => "E-mail"
+                                                                                                                                              },
+                                                                                                                                   "full-width-latin" => {
+                                                                                                                                                           "conforming" => 1,
+                                                                                                                                                           "id" => "attr-fe-inputmode-state-full-width-latin",
+                                                                                                                                                           "label" => "Full-width Latin"
+                                                                                                                                                         },
+                                                                                                                                   "kana" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "id" => "attr-fe-inputmode-state-kana",
+                                                                                                                                               "label" => "Kana"
+                                                                                                                                             },
+                                                                                                                                   "katakana" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "id" => "attr-fe-inputmode-state-katakana",
+                                                                                                                                                   "label" => "Katakana"
+                                                                                                                                                 },
+                                                                                                                                   "latin" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "id" => "attr-fe-inputmode-state-latin",
+                                                                                                                                                "label" => "Latin Text"
+                                                                                                                                              },
+                                                                                                                                   "latin-name" => {
+                                                                                                                                                     "conforming" => 1,
+                                                                                                                                                     "id" => "attr-fe-inputmode-state-latin-name",
+                                                                                                                                                     "label" => "Latin Name"
+                                                                                                                                                   },
+                                                                                                                                   "latin-prose" => {
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "id" => "attr-fe-inputmode-state-latin-prose",
+                                                                                                                                                      "label" => "Latin Prose"
+                                                                                                                                                    },
+                                                                                                                                   "numeric" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "id" => "attr-fe-inputmode-state-numeric",
+                                                                                                                                                  "label" => "Numeric"
+                                                                                                                                                },
+                                                                                                                                   "tel" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-fe-inputmode-state-telephone",
+                                                                                                                                              "label" => "Telephone"
+                                                                                                                                            },
+                                                                                                                                   "url" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-fe-inputmode-state-url",
+                                                                                                                                              "label" => "URL"
+                                                                                                                                            },
+                                                                                                                                   "verbatim" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "id" => "attr-fe-inputmode-state-verbatim",
+                                                                                                                                                   "label" => "Latin Verbatim"
+                                                                                                                                                 }
+                                                                                                                                 },
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "enumerated"
                                                                                                                },
                                                                                                 "list" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "idref"
                                                                                                           },
                                                                                                 "max" => {
                                                                                                            "conforming" => 1,
@@ -1759,7 +2416,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          },
                                                                                                 "maxlength" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "non-negative integer"
                                                                                                                },
                                                                                                 "min" => {
                                                                                                            "conforming" => 1,
@@ -1767,39 +2425,48 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          },
                                                                                                 "minlength" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "non-negative integer"
                                                                                                                },
                                                                                                 "multiple" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "name" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-empty"
                                                                                                           },
                                                                                                 "pattern" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "JavaScript Pattern"
                                                                                                              },
                                                                                                 "placeholder" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "one-line text"
                                                                                                                  },
                                                                                                 "readonly" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "required" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "size" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-negative integer greater than zero"
                                                                                                           },
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "step" => {
                                                                                                             "conforming" => 1,
@@ -1807,7 +2474,129 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                                 "type" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "enumerated" => {
+                                                                                                                              "#missing" => {
+                                                                                                                                              "id" => "attr-input-type-text-keyword",
+                                                                                                                                              "label" => "Text"
+                                                                                                                                            },
+                                                                                                                              "button" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-input-type-button-keyword",
+                                                                                                                                            "label" => "Button"
+                                                                                                                                          },
+                                                                                                                              "checkbox" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-input-type-checkbox-keyword",
+                                                                                                                                              "label" => "Checkbox"
+                                                                                                                                            },
+                                                                                                                              "color" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-input-type-color-keyword",
+                                                                                                                                           "label" => "Color"
+                                                                                                                                         },
+                                                                                                                              "date" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-input-type-date-keyword",
+                                                                                                                                          "label" => "Date"
+                                                                                                                                        },
+                                                                                                                              "datetime" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-input-type-datetime-keyword",
+                                                                                                                                              "label" => "Date and Time"
+                                                                                                                                            },
+                                                                                                                              "datetime-local" => {
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "id" => "attr-input-type-datetime-local-keyword",
+                                                                                                                                                    "label" => "Local Date and Time"
+                                                                                                                                                  },
+                                                                                                                              "email" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-input-type-email-keyword",
+                                                                                                                                           "label" => "E-mail"
+                                                                                                                                         },
+                                                                                                                              "file" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-input-type-file-keyword",
+                                                                                                                                          "label" => "File Upload"
+                                                                                                                                        },
+                                                                                                                              "hidden" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-input-type-hidden-keyword",
+                                                                                                                                            "label" => "Hidden"
+                                                                                                                                          },
+                                                                                                                              "image" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-input-type-image-keyword",
+                                                                                                                                           "label" => "Image Button"
+                                                                                                                                         },
+                                                                                                                              "month" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-input-type-month-keyword",
+                                                                                                                                           "label" => "Month"
+                                                                                                                                         },
+                                                                                                                              "number" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-input-type-number-keyword",
+                                                                                                                                            "label" => "Number"
+                                                                                                                                          },
+                                                                                                                              "password" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-input-type-password-keyword",
+                                                                                                                                              "label" => "Password"
+                                                                                                                                            },
+                                                                                                                              "radio" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-input-type-radio-keyword",
+                                                                                                                                           "label" => "Radio Button"
+                                                                                                                                         },
+                                                                                                                              "range" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-input-type-range-keyword",
+                                                                                                                                           "label" => "Range"
+                                                                                                                                         },
+                                                                                                                              "reset" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "id" => "attr-input-type-reset-keyword",
+                                                                                                                                           "label" => "Reset Button"
+                                                                                                                                         },
+                                                                                                                              "search" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-input-type-search-keyword",
+                                                                                                                                            "label" => "Search"
+                                                                                                                                          },
+                                                                                                                              "submit" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-input-type-submit-keyword",
+                                                                                                                                            "label" => "Submit Button"
+                                                                                                                                          },
+                                                                                                                              "tel" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "id" => "attr-input-type-tel-keyword",
+                                                                                                                                         "label" => "Telephone"
+                                                                                                                                       },
+                                                                                                                              "text" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-input-type-text-keyword",
+                                                                                                                                          "label" => "Text"
+                                                                                                                                        },
+                                                                                                                              "time" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-input-type-time-keyword",
+                                                                                                                                          "label" => "Time"
+                                                                                                                                        },
+                                                                                                                              "url" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "id" => "attr-input-type-url-keyword",
+                                                                                                                                         "label" => "URL"
+                                                                                                                                       },
+                                                                                                                              "week" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "attr-input-type-week-keyword",
+                                                                                                                                          "label" => "Week"
+                                                                                                                                        }
+                                                                                                                            },
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "enumerated"
                                                                                                           },
                                                                                                 "value" => {
                                                                                                              "conforming" => 1,
@@ -1815,7 +2604,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                 "width" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-negative integer"
                                                                                                            }
                                                                                               }
                                                                                       },
@@ -1828,11 +2618,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "" => {
                                                                                               "cite" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "URL potentially surrounded by spaces"
                                                                                                         },
                                                                                               "datetime" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "date string with optional time"
                                                                                                             }
                                                                                             }
                                                                                     },
@@ -1851,27 +2643,45 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "autofocus" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "boolean"
                                                                                                                 },
                                                                                                  "challenge" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "any"
                                                                                                                 },
                                                                                                  "disabled" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "idref"
                                                                                                            },
                                                                                                  "keytype" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "enumerated" => {
+                                                                                                                                  "#invalid" => {
+                                                                                                                                                  "label" => "unknown"
+                                                                                                                                                },
+                                                                                                                                  "#missing" => {
+                                                                                                                                                  "label" => "RSA"
+                                                                                                                                                },
+                                                                                                                                  "rsa" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "label" => "RSA"
+                                                                                                                                           }
+                                                                                                                                },
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "enumerated"
                                                                                                               },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-empty"
                                                                                                            }
                                                                                                }
                                                                                        },
@@ -1884,11 +2694,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "for" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "idref"
                                                                                                          },
                                                                                                 "form" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "idref"
                                                                                                           }
                                                                                               }
                                                                                       },
@@ -1906,7 +2718,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                      "" => {
                                                                                              "value" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "REC"
+                                                                                                          "status" => "REC",
+                                                                                                          "value_type" => "integer"
                                                                                                         }
                                                                                            }
                                                                                    },
@@ -1919,35 +2732,69 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "crossorigin" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "enumerated" => {
+                                                                                                                                    "" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-crossorigin-anonymous",
+                                                                                                                                            "label" => "Anonymous"
+                                                                                                                                          },
+                                                                                                                                    "#invalid" => {
+                                                                                                                                                    "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                    "label" => "Anonymous"
+                                                                                                                                                  },
+                                                                                                                                    "#missing" => {
+                                                                                                                                                    "id" => "attr-crossorigin-none",
+                                                                                                                                                    "label" => "No CORS"
+                                                                                                                                                  },
+                                                                                                                                    "anonymous" => {
+                                                                                                                                                     "canonical" => 1,
+                                                                                                                                                     "conforming" => 1,
+                                                                                                                                                     "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                     "label" => "Anonymous"
+                                                                                                                                                   },
+                                                                                                                                    "use-credentials" => {
+                                                                                                                                                           "conforming" => 1,
+                                                                                                                                                           "id" => "attr-crossorigin-use-credentials",
+                                                                                                                                                           "label" => "Use credentials"
+                                                                                                                                                         }
+                                                                                                                                  },
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "enumerated"
                                                                                                                 },
                                                                                                "href" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                "hreflang" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "language tag"
                                                                                                              },
                                                                                                "media" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "media query list"
                                                                                                           },
                                                                                                "rel" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "set of space-separated tokens"
                                                                                                         },
                                                                                                "sizes" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                                "title" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "text"
                                                                                                           },
                                                                                                "type" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "MIME type"
                                                                                                          }
                                                                                              }
                                                                                      },
@@ -1990,11 +2837,25 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "label" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "text"
                                                                                                           },
                                                                                                "type" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "enumerated" => {
+                                                                                                                             "popup" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "id" => "popup-menu-state",
+                                                                                                                                          "label" => "popup menu"
+                                                                                                                                        },
+                                                                                                                             "toolbar" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "toolbar-state",
+                                                                                                                                            "label" => "toolbar"
+                                                                                                                                          }
+                                                                                                                           },
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "enumerated"
                                                                                                          }
                                                                                              }
                                                                                      },
@@ -2005,32 +2866,62 @@ $Web::HTML::Validator::_Defs = {
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "checked" => {
-                                                                                                                  "conforming" => 1
+                                                                                                                  "conforming" => 1,
+                                                                                                                  "value_type" => "boolean"
                                                                                                                 },
                                                                                                    "command" => {
-                                                                                                                  "conforming" => 1
+                                                                                                                  "conforming" => 1,
+                                                                                                                  "value_type" => "idref"
                                                                                                                 },
                                                                                                    "default" => {
-                                                                                                                  "conforming" => 1
+                                                                                                                  "conforming" => 1,
+                                                                                                                  "value_type" => "boolean"
                                                                                                                 },
                                                                                                    "disabled" => {
-                                                                                                                   "conforming" => 1
+                                                                                                                   "conforming" => 1,
+                                                                                                                   "value_type" => "boolean"
                                                                                                                  },
                                                                                                    "icon" => {
-                                                                                                               "conforming" => 1
+                                                                                                               "conforming" => 1,
+                                                                                                               "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                    "label" => {
-                                                                                                                "conforming" => 1
+                                                                                                                "conforming" => 1,
+                                                                                                                "value_type" => "non-empty text"
                                                                                                               },
                                                                                                    "radiogroup" => {
-                                                                                                                     "conforming" => 1
+                                                                                                                     "conforming" => 1,
+                                                                                                                     "value_type" => "non-empty"
                                                                                                                    },
                                                                                                    "title" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "text"
                                                                                                               },
                                                                                                    "type" => {
-                                                                                                               "conforming" => 1
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "#missing" => {
+                                                                                                                                                 "id" => "attr-menuitem-type-state-command",
+                                                                                                                                                 "label" => "Command"
+                                                                                                                                               },
+                                                                                                                                 "checkbox" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "id" => "attr-menuitem-type-state-checkbox",
+                                                                                                                                                 "label" => "Checkbox"
+                                                                                                                                               },
+                                                                                                                                 "command" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "id" => "attr-menuitem-type-state-command",
+                                                                                                                                                "label" => "Command"
+                                                                                                                                              },
+                                                                                                                                 "radio" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-menuitem-type-state-radio",
+                                                                                                                                              "label" => "Radio"
+                                                                                                                                            }
+                                                                                                                               },
+                                                                                                               "value_type" => "enumerated"
                                                                                                              }
                                                                                                  }
                                                                                          },
@@ -2042,7 +2933,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "charset" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "character encoding label"
                                                                                                             },
                                                                                                "content" => {
                                                                                                               "conforming" => 1,
@@ -2067,27 +2959,33 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "high" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "floating-point number"
                                                                                                           },
                                                                                                 "low" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "floating-point number"
                                                                                                          },
                                                                                                 "max" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "floating-point number"
                                                                                                          },
                                                                                                 "min" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "floating-point number"
                                                                                                          },
                                                                                                 "optimum" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "floating-point number"
                                                                                                              },
                                                                                                 "value" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "floating-point number"
                                                                                                            }
                                                                                               }
                                                                                       },
@@ -2118,7 +3016,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "data" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
@@ -2126,27 +3025,33 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                  "height" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "browsing context name"
                                                                                                            },
                                                                                                  "type" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "MIME type"
                                                                                                            },
                                                                                                  "typemustmatch" => {
                                                                                                                       "conforming" => 1,
-                                                                                                                      "status" => "LC"
+                                                                                                                      "status" => "LC",
+                                                                                                                      "value_type" => "boolean"
                                                                                                                     },
                                                                                                  "usemap" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "hash-name reference"
                                                                                                              },
                                                                                                  "width" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "non-negative integer"
                                                                                                             }
                                                                                                }
                                                                                        },
@@ -2158,11 +3063,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                      "" => {
                                                                                              "reversed" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "boolean"
                                                                                                            },
                                                                                              "start" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "integer"
                                                                                                         },
                                                                                              "type" => {
                                                                                                          "conforming" => 1,
@@ -2178,11 +3085,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                            "" => {
                                                                                                    "disabled" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "boolean"
                                                                                                                  },
                                                                                                    "label" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "text"
                                                                                                               }
                                                                                                  }
                                                                                          },
@@ -2194,15 +3103,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "disabled" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "label" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "non-empty text"
                                                                                                             },
                                                                                                  "selected" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "value" => {
                                                                                                               "conforming" => 1,
@@ -2218,15 +3130,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "for" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "idref"
                                                                                                            },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-empty"
                                                                                                            }
                                                                                                }
                                                                                        },
@@ -2245,11 +3160,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "name" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "REC"
+                                                                                                            "status" => "REC",
+                                                                                                            "value_type" => "any"
                                                                                                           },
                                                                                                 "value" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "REC"
+                                                                                                             "status" => "REC",
+                                                                                                             "value_type" => "any"
                                                                                                            }
                                                                                               }
                                                                                       },
@@ -2271,11 +3188,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                            "" => {
                                                                                                    "max" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "CR"
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "floating-point number greater than zero"
                                                                                                             },
                                                                                                    "value" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "CR"
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "floating-point number equal to or greater than zero"
                                                                                                               }
                                                                                                  }
                                                                                          },
@@ -2287,7 +3206,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                     "" => {
                                                                                             "cite" => {
                                                                                                         "conforming" => 1,
-                                                                                                        "status" => "LC"
+                                                                                                        "status" => "LC",
+                                                                                                        "value_type" => "URL potentially surrounded by spaces"
                                                                                                       }
                                                                                           }
                                                                                   },
@@ -2329,19 +3249,49 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "async" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "REC"
+                                                                                                              "status" => "REC",
+                                                                                                              "value_type" => "boolean"
                                                                                                             },
                                                                                                  "charset" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "REC"
+                                                                                                                "status" => "REC",
+                                                                                                                "value_type" => "character encoding label"
                                                                                                               },
                                                                                                  "crossorigin" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "REC"
+                                                                                                                    "enumerated" => {
+                                                                                                                                      "" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-crossorigin-anonymous",
+                                                                                                                                              "label" => "Anonymous"
+                                                                                                                                            },
+                                                                                                                                      "#invalid" => {
+                                                                                                                                                      "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                      "label" => "Anonymous"
+                                                                                                                                                    },
+                                                                                                                                      "#missing" => {
+                                                                                                                                                      "id" => "attr-crossorigin-none",
+                                                                                                                                                      "label" => "No CORS"
+                                                                                                                                                    },
+                                                                                                                                      "anonymous" => {
+                                                                                                                                                       "canonical" => 1,
+                                                                                                                                                       "conforming" => 1,
+                                                                                                                                                       "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                       "label" => "Anonymous"
+                                                                                                                                                     },
+                                                                                                                                      "use-credentials" => {
+                                                                                                                                                             "conforming" => 1,
+                                                                                                                                                             "id" => "attr-crossorigin-use-credentials",
+                                                                                                                                                             "label" => "Use credentials"
+                                                                                                                                                           }
+                                                                                                                                    },
+                                                                                                                    "status" => "REC",
+                                                                                                                    "value_type" => "enumerated"
                                                                                                                   },
                                                                                                  "defer" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "REC"
+                                                                                                              "status" => "REC",
+                                                                                                              "value_type" => "boolean"
                                                                                                             },
                                                                                                  "language" => {
                                                                                                                  "obsolete_but_conforming" => 1,
@@ -2349,11 +3299,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                },
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "REC"
+                                                                                                            "status" => "REC",
+                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                  "type" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "REC"
+                                                                                                             "status" => "REC",
+                                                                                                             "value_type" => "MIME type"
                                                                                                            }
                                                                                                }
                                                                                        },
@@ -2371,31 +3323,38 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "autofocus" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "boolean"
                                                                                                                 },
                                                                                                  "disabled" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "idref"
                                                                                                            },
                                                                                                  "multiple" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-empty"
                                                                                                            },
                                                                                                  "required" => {
                                                                                                                  "conforming" => 1,
-                                                                                                                 "status" => "LC"
+                                                                                                                 "status" => "LC",
+                                                                                                                 "value_type" => "boolean"
                                                                                                                },
                                                                                                  "size" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-negative integer greater than zero"
                                                                                                            }
                                                                                                }
                                                                                        },
@@ -2413,15 +3372,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "media" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "media query list"
                                                                                                             },
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                  "type" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "MIME type"
                                                                                                            }
                                                                                                }
                                                                                        },
@@ -2449,19 +3411,23 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "media" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "media query list"
                                                                                                            },
                                                                                                 "scoped" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "boolean"
                                                                                                             },
                                                                                                 "title" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "text"
                                                                                                            },
                                                                                                 "type" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "MIME type"
                                                                                                           }
                                                                                               }
                                                                                       },
@@ -2490,7 +3456,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "sortable" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               }
                                                                                               }
                                                                                       },
@@ -2507,15 +3474,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                      "" => {
                                                                                              "colspan" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-negative integer greater than zero"
                                                                                                           },
                                                                                              "headers" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                              "rowspan" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-negative integer"
                                                                                                           }
                                                                                            }
                                                                                    },
@@ -2532,63 +3502,155 @@ $Web::HTML::Validator::_Defs = {
                                                                                            "" => {
                                                                                                    "autocomplete" => {
                                                                                                                        "conforming" => 1,
-                                                                                                                       "status" => "CR"
+                                                                                                                       "status" => "CR",
+                                                                                                                       "value_type" => "set of space-separated tokens"
                                                                                                                      },
                                                                                                    "autofocus" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "boolean"
                                                                                                                   },
                                                                                                    "cols" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-negative integer greater than zero"
                                                                                                              },
                                                                                                    "dirname" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "non-empty"
                                                                                                                 },
                                                                                                    "disabled" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "boolean"
                                                                                                                  },
                                                                                                    "form" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "idref"
                                                                                                              },
                                                                                                    "inputmode" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "enumerated" => {
+                                                                                                                                      "#missing" => {
+                                                                                                                                                      "id" => "attr-fe-inputmode-state-default",
+                                                                                                                                                      "label" => "Default"
+                                                                                                                                                    },
+                                                                                                                                      "email" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "id" => "attr-fe-inputmode-state-email",
+                                                                                                                                                   "label" => "E-mail"
+                                                                                                                                                 },
+                                                                                                                                      "full-width-latin" => {
+                                                                                                                                                              "conforming" => 1,
+                                                                                                                                                              "id" => "attr-fe-inputmode-state-full-width-latin",
+                                                                                                                                                              "label" => "Full-width Latin"
+                                                                                                                                                            },
+                                                                                                                                      "kana" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "id" => "attr-fe-inputmode-state-kana",
+                                                                                                                                                  "label" => "Kana"
+                                                                                                                                                },
+                                                                                                                                      "katakana" => {
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "id" => "attr-fe-inputmode-state-katakana",
+                                                                                                                                                      "label" => "Katakana"
+                                                                                                                                                    },
+                                                                                                                                      "latin" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "id" => "attr-fe-inputmode-state-latin",
+                                                                                                                                                   "label" => "Latin Text"
+                                                                                                                                                 },
+                                                                                                                                      "latin-name" => {
+                                                                                                                                                        "conforming" => 1,
+                                                                                                                                                        "id" => "attr-fe-inputmode-state-latin-name",
+                                                                                                                                                        "label" => "Latin Name"
+                                                                                                                                                      },
+                                                                                                                                      "latin-prose" => {
+                                                                                                                                                         "conforming" => 1,
+                                                                                                                                                         "id" => "attr-fe-inputmode-state-latin-prose",
+                                                                                                                                                         "label" => "Latin Prose"
+                                                                                                                                                       },
+                                                                                                                                      "numeric" => {
+                                                                                                                                                     "conforming" => 1,
+                                                                                                                                                     "id" => "attr-fe-inputmode-state-numeric",
+                                                                                                                                                     "label" => "Numeric"
+                                                                                                                                                   },
+                                                                                                                                      "tel" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "id" => "attr-fe-inputmode-state-telephone",
+                                                                                                                                                 "label" => "Telephone"
+                                                                                                                                               },
+                                                                                                                                      "url" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "id" => "attr-fe-inputmode-state-url",
+                                                                                                                                                 "label" => "URL"
+                                                                                                                                               },
+                                                                                                                                      "verbatim" => {
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "id" => "attr-fe-inputmode-state-verbatim",
+                                                                                                                                                      "label" => "Latin Verbatim"
+                                                                                                                                                    }
+                                                                                                                                    },
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "enumerated"
                                                                                                                   },
                                                                                                    "maxlength" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "non-negative integer"
                                                                                                                   },
                                                                                                    "minlength" => {
                                                                                                                     "conforming" => 1,
-                                                                                                                    "status" => "LC"
+                                                                                                                    "status" => "LC",
+                                                                                                                    "value_type" => "non-negative integer"
                                                                                                                   },
                                                                                                    "name" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-empty"
                                                                                                              },
                                                                                                    "placeholder" => {
                                                                                                                       "conforming" => 1,
-                                                                                                                      "status" => "LC"
+                                                                                                                      "status" => "LC",
+                                                                                                                      "value_type" => "text"
                                                                                                                     },
                                                                                                    "readonly" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "boolean"
                                                                                                                  },
                                                                                                    "required" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "boolean"
                                                                                                                  },
                                                                                                    "rows" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "non-negative integer greater than zero"
                                                                                                              },
                                                                                                    "wrap" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "enumerated" => {
+                                                                                                                                 "#missing" => {
+                                                                                                                                                 "id" => "attr-textarea-wrap-soft-state",
+                                                                                                                                                 "label" => "Soft"
+                                                                                                                                               },
+                                                                                                                                 "hard" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-textarea-wrap-hard-state",
+                                                                                                                                             "label" => "Hard"
+                                                                                                                                           },
+                                                                                                                                 "soft" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-textarea-wrap-soft-state",
+                                                                                                                                             "label" => "Soft"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "enumerated"
                                                                                                              }
                                                                                                  }
                                                                                          },
@@ -2606,27 +3668,59 @@ $Web::HTML::Validator::_Defs = {
                                                                                      "" => {
                                                                                              "abbr" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "value_type" => "text"
                                                                                                        },
                                                                                              "colspan" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-negative integer greater than zero"
                                                                                                           },
                                                                                              "headers" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                              "rowspan" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "non-negative integer"
                                                                                                           },
                                                                                              "scope" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "enumerated" => {
+                                                                                                                            "#missing" => {
+                                                                                                                                            "id" => "attr-th-scope-auto",
+                                                                                                                                            "label" => "auto"
+                                                                                                                                          },
+                                                                                                                            "col" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "id" => "attr-th-scope-col",
+                                                                                                                                       "label" => "column"
+                                                                                                                                     },
+                                                                                                                            "colgroup" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-th-scope-colgroup",
+                                                                                                                                            "label" => "column group"
+                                                                                                                                          },
+                                                                                                                            "row" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "id" => "attr-th-scope-row",
+                                                                                                                                       "label" => "row"
+                                                                                                                                     },
+                                                                                                                            "rowgroup" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "id" => "attr-th-scope-rowgroup",
+                                                                                                                                            "label" => "row group"
+                                                                                                                                          }
+                                                                                                                          },
+                                                                                                          "status" => "LC",
+                                                                                                          "value_type" => "enumerated"
                                                                                                         },
                                                                                              "sorted" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "set of space-separated tokens"
                                                                                                          }
                                                                                            }
                                                                                    },
@@ -2666,23 +3760,59 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "default" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "boolean"
                                                                                                              },
                                                                                                 "kind" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "enumerated" => {
+                                                                                                                              "#missing" => {
+                                                                                                                                              "id" => "attr-track-kind-keyword-subtitles",
+                                                                                                                                              "label" => "Subtitles"
+                                                                                                                                            },
+                                                                                                                              "captions" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-track-kind-keyword-captions",
+                                                                                                                                              "label" => "Captions"
+                                                                                                                                            },
+                                                                                                                              "chapters" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-track-kind-keyword-chapters",
+                                                                                                                                              "label" => "Chapters"
+                                                                                                                                            },
+                                                                                                                              "descriptions" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "id" => "attr-track-kind-keyword-descriptions",
+                                                                                                                                                  "label" => "Descriptions"
+                                                                                                                                                },
+                                                                                                                              "metadata" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "id" => "attr-track-kind-keyword-metadata",
+                                                                                                                                              "label" => "Metadata"
+                                                                                                                                            },
+                                                                                                                              "subtitles" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "id" => "attr-track-kind-keyword-subtitles",
+                                                                                                                                               "label" => "Subtitles"
+                                                                                                                                             }
+                                                                                                                            },
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "enumerated"
                                                                                                           },
                                                                                                 "label" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-empty text"
                                                                                                            },
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "srclang" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "language tag"
                                                                                                              }
                                                                                               }
                                                                                       },
@@ -2715,47 +3845,110 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "" => {
                                                                                                 "autoplay" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "controls" => {
                                                                                                                 "conforming" => 1,
-                                                                                                                "status" => "LC"
+                                                                                                                "status" => "LC",
+                                                                                                                "value_type" => "boolean"
                                                                                                               },
                                                                                                 "crossorigin" => {
                                                                                                                    "conforming" => 1,
-                                                                                                                   "status" => "LC"
+                                                                                                                   "enumerated" => {
+                                                                                                                                     "" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-crossorigin-anonymous",
+                                                                                                                                             "label" => "Anonymous"
+                                                                                                                                           },
+                                                                                                                                     "#invalid" => {
+                                                                                                                                                     "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                     "label" => "Anonymous"
+                                                                                                                                                   },
+                                                                                                                                     "#missing" => {
+                                                                                                                                                     "id" => "attr-crossorigin-none",
+                                                                                                                                                     "label" => "No CORS"
+                                                                                                                                                   },
+                                                                                                                                     "anonymous" => {
+                                                                                                                                                      "canonical" => 1,
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "id" => "attr-crossorigin-anonymous",
+                                                                                                                                                      "label" => "Anonymous"
+                                                                                                                                                    },
+                                                                                                                                     "use-credentials" => {
+                                                                                                                                                            "conforming" => 1,
+                                                                                                                                                            "id" => "attr-crossorigin-use-credentials",
+                                                                                                                                                            "label" => "Use credentials"
+                                                                                                                                                          }
+                                                                                                                                   },
+                                                                                                                   "status" => "LC",
+                                                                                                                   "value_type" => "enumerated"
                                                                                                                  },
                                                                                                 "height" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "loop" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "boolean"
                                                                                                           },
                                                                                                 "mediagroup" => {
                                                                                                                   "conforming" => 1,
-                                                                                                                  "status" => "LC"
+                                                                                                                  "status" => "LC",
+                                                                                                                  "value_type" => "any"
                                                                                                                 },
                                                                                                 "muted" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "boolean"
                                                                                                            },
                                                                                                 "poster" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                             },
                                                                                                 "preload" => {
                                                                                                                "conforming" => 1,
-                                                                                                               "status" => "LC"
+                                                                                                               "enumerated" => {
+                                                                                                                                 "" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "id" => "attr-media-preload-auto",
+                                                                                                                                         "label" => "Automatic"
+                                                                                                                                       },
+                                                                                                                                 "#missing" => {
+                                                                                                                                                 "id" => "attr-media-preload-metadata",
+                                                                                                                                                 "label" => "Metadata"
+                                                                                                                                               },
+                                                                                                                                 "auto" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-media-preload-auto",
+                                                                                                                                             "label" => "Automatic"
+                                                                                                                                           },
+                                                                                                                                 "metadata" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "id" => "attr-media-preload-metadata",
+                                                                                                                                                 "label" => "Metadata"
+                                                                                                                                               },
+                                                                                                                                 "none" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "id" => "attr-media-preload-none",
+                                                                                                                                             "label" => "None"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "LC",
+                                                                                                               "value_type" => "enumerated"
                                                                                                              },
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "LC"
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "width" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "non-negative integer"
                                                                                                            }
                                                                                               }
                                                                                       },
