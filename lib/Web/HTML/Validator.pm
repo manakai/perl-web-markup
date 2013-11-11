@@ -1,7 +1,7 @@
 package Web::HTML::Validator;
 use strict;
 use warnings;
-our $VERSION = '115.0';
+our $VERSION = '116.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -481,26 +481,16 @@ our $ElementDefault = {
   check_start => sub {},
 };
 
-our $HTMLEmbeddedContent = {
-  ## NOTE: All embedded content is also phrasing content.
-  (HTML_NS) => {
-    img => 1, iframe => 1, embed => 1, object => 1, video => 1, audio => 1,
-    canvas => 1,
-  },
-  q<http://www.w3.org/1998/Math/MathML> => {math => 1},
-  q<http://www.w3.org/2000/svg> => {svg => 1},
-  ## NOTE: Foreign elements with content (but no metadata) are 
-  ## embedded content.
-};  
+## "Elements that are from namespaces other than the HTML namespace
+## and that convey content but not metadata, are embedded content"
+## [HTML]
 
 our $IsInHTMLInteractiveContent = sub {
   my ($self, $el, $nsuri, $ln) = @_;
 
   ## NOTE: This CODE returns whether an element that is conditionally
   ## categorizzed as an interactive content is currently in that
-  ## condition or not.  See $HTMLInteractiveContent list defined in
-  ## Whatpm::ContentChecler::HTML for the list of all (conditionally
-  ## or permanently) interactive content.
+  ## condition or not.
 
   ## The variable name is not good, since this method also returns
   ## true for non-interactive content as long as the element cannot be
@@ -868,7 +858,7 @@ sub check_element ($$$;$) {
                            real_parent_state => $element_state,
                            parent_state => $content_state};
 
-          if ($HTMLEmbeddedContent->{$child_nsuri}->{$child_ln}) {
+          if ($Web::HTML::Validator::_Defs->{categories}->{'embedded content'}->{elements}->{$child_nsuri}->{$child_ln}) {
             $element_state->{has_significant} = 1;
           }
         } elsif ($child_nt == 3 or # TEXT_NODE
@@ -991,142 +981,7 @@ use Char::Class::XML qw/InXML_NCNameStartChar10 InXMLNCNameChar10/;
 ## implemented but no longer considered part of the HTML language
 ## proper.
 
-## --- Content Model ---
-
-## December 2007 HTML5 Classification
-
-my $HTMLMetadataContent = {
-  (HTML_NS) => {
-    title => 1, base => 1, link => 1, style => 1, script => 1, noscript => 1,
-    command => 1,
-    ## NOTE: A |meta| with no |name| element is not allowed as
-    ## a metadata content other than |head| element.
-    meta => 1,
-  },
-  ## NOTE: RDF is mentioned in the HTML5 spec.
-  ## TODO: Other RDF elements?
-  q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> => {RDF => 1},
-};
-
-my $HTMLFlowContent = {
-  (HTML_NS) => {
-    section => 1, nav => 1, article => 1, blockquote => 1, aside => 1,
-    h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1, hgroup => 1,
-    header => 1,
-    footer => 1, address => 1, p => 1, hr => 1, pre => 1,
-    ol => 1, ul => 1, dl => 1, menu => 1, figure => 1, table => 1,
-    form => 1, fieldset => 1,
-    details => 1,
-    div => 1,
-    ## NOTE: |style| is only allowed if |scoped| attribute is specified.
-    ## Additionally, it must be before any other element or
-    ## non-inter-element-whitespace text node.
-    style => 1,  
-
-    ## These phrasing content are also categorized as flow content.
-    br => 1, q => 1, cite => 1, em => 1, strong => 1, small => 1, mark => 1,
-    dfn => 1, abbr => 1, time => 1, progress => 1, meter => 1, code => 1,
-    var => 1, samp => 1, kbd => 1, sub => 1, sup => 1, span => 1, i => 1,
-    b => 1, bdi => 1, bdo => 1, ruby => 1, s => 1, u => 1,
-    script => 1, noscript => 1,
-    command => 1,
-    input => 1, button => 1, label => 1, select => 1, datalist => 1,
-    textarea => 1, keygen => 1, output => 1, wbr => 1,
-    ## NOTE: |area| is allowed only as a descendant of |map|.
-    area => 1,
-
-    ## Flow/phrasing content whose content model is transparent.
-    a => 1, ins => 1, del => 1, font => 1, map => 1,
-
-    ## These embeded content are also categorized as flow content.
-    img => 1, iframe => 1, embed => 1, object => 1, video => 1, audio => 1,
-    canvas => 1,
-  },
-
-  ## These embedded content are also categorized as flow content.
-  q<http://www.w3.org/1998/Math/MathML> => {math => 1},
-  q<http://www.w3.org/2000/svg> => {svg => 1},
-
-  ## And, non-inter-element-whitespace text nodes.
-}; # $HTMLFlowContent
-
-my $HTMLSectioningContent = {
-  (HTML_NS) => {
-    section => 1, nav => 1, article => 1, aside => 1,
-  },
-}; # $HTMLSectioningContent
-
-my $HTMLSectioningRoot = {
-  (HTML_NS) => {
-    blockquote => 1, figure => 1, td => 1,
-  },
-};
-
-my $HTMLHeadingContent = {
-  (HTML_NS) => {
-    h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1, hgroup => 1,
-  },
-};
-
-my $HTMLPhrasingContent = {
-  ## NOTE: All phrasing content is also flow content.
-  (HTML_NS) => {
-    br => 1, q => 1, cite => 1, em => 1, strong => 1, small => 1, mark => 1,
-    dfn => 1, abbr => 1, time => 1, progress => 1, meter => 1, code => 1,
-    var => 1, samp => 1, kbd => 1, sub => 1, sup => 1, span => 1, i => 1,
-    b => 1, bdi => 1, bdo => 1, ruby => 1, s => 1, u => 1,
-    script => 1, noscript => 1,
-    command => 1,
-    input => 1, button => 1, label => 1, select => 1, datalist => 1,
-    textarea => 1, keygen => 1, output => 1, wbr => 1,
-    ## NOTE: |area| is allowed only as a descendant of |map|.
-    area => 1,
-
-    ## NOTE: Transparent.    
-    a => 1, ins => 1, del => 1, font => 1, map => 1,
-
-    ## These embedded content is also categorized as phrasing content.
-    img => 1, iframe => 1, embed => 1, object => 1, video => 1, audio => 1,
-    canvas => 1,
-  },
-
-  ## These embedded content is also categorized as phrasing content.
-  q<http://www.w3.org/1998/Math/MathML> => {math => 1},
-  q<http://www.w3.org/2000/svg> => {svg => 1},
-
-  ## And, non-inter-element-whitespace text nodes.
-}; # $HTMLPhrasingContent
-
-## $HTMLEmbeddedContent: See Web::HTML::Validator.
-
-my $HTMLInteractiveContent = {
-  (HTML_NS) => {
-    a => 1,
-    label => 1, button => 1, select => 1, textarea => 1,
-    keygen => 1, details => 1,
-    iframe => 1, embed => 1,
-
-    ## NOTE: When the |usemap| attribute is specified.
-    img => 1, object => 1,
-
-    ## NOTE: When "type=hidden" attribute is not specified.
-    input => 1,
-
-    ## NOTE: When "controls" attribute is specified.
-    video => 1, audio => 1,
-
-    ## NOTE: When "type=toolbar" attribute is specified.
-    menu => 1,
-  },
-}; # $HTMLInteractiveContent
-
-## NOTE: Labelable form-associated element.
-my $LabelableFAE = {
-  (HTML_NS) => {
-    input => 1, ## Except for <input type=hidden>
-    button => 1, select => 1, textarea => 1, keygen => 1,
-  },
-};
+## XXX: Non rdf:RDF elements in metadata content?
 
 ## Check whether the labelable form-associated element is allowed to
 ## place there or not and mark the element ID, if any, might be used
@@ -2632,7 +2487,7 @@ my %HTMLFlowContentChecker = (
                            type => 'element not allowed:flow style',
                            level => $self->{level}->{must});
       }
-    } elsif ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
+    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       $element_state->{has_non_style} = 1 unless $child_is_transparent;
     } else {
       $element_state->{has_non_style} = 1;
@@ -2685,7 +2540,7 @@ my %HTMLPhrasingContentChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -2725,7 +2580,7 @@ my %TransparentChecker = (
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($self->{flag}->{in_phrasing}) {
-      if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2737,7 +2592,7 @@ my %TransparentChecker = (
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:flow style',
                            level => $self->{level}->{must});
-      } elsif ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
+      } elsif ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2752,7 +2607,7 @@ my %TransparentChecker = (
                              type => 'element not allowed:flow style',
                              level => $self->{level}->{must});
         }
-      } elsif ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
+      } elsif ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{has_non_style} = 1 unless $child_is_transparent;
       } else {
         $element_state->{has_non_style} = 1;
@@ -2763,11 +2618,6 @@ my %TransparentChecker = (
     }
   }, # check_child_element
 ); # %TransparentChecker
-
-# ------ Elements ------
-
-our $Element;
-our $ElementDefault;
 
 # ---- Default HTML elements ----
 
@@ -2892,7 +2742,7 @@ $Element->{+HTML_NS}->{head} = {
                            type => 'element not allowed:head style',
                            level => $self->{level}->{must});
       }
-    } elsif ($HTMLMetadataContent->{$child_nsuri}->{$child_ln}) {
+    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'metadata content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -4000,7 +3850,8 @@ $Element->{+HTML_NS}->{address} = {
     $self->_add_minus_elements
         ($element_state,
          {(HTML_NS) => {header => 1, footer => 1, address => 1}},
-         $HTMLSectioningContent, $HTMLHeadingContent);
+         $Web::HTML::Validator::_Defs->{categories}->{'sectioning content'}->{elements},
+         $Web::HTML::Validator::_Defs->{categories}->{'heading content'}->{elements});
     $HTMLFlowContentChecker{check_start}->(@_);
   },
   check_end => sub {
@@ -4602,7 +4453,10 @@ $Element->{+HTML_NS}->{a} = {
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, $HTMLInteractiveContent);
+    $self->_add_minus_elements
+        ($element_state,
+         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements},
+         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $element_state->{no_interactive_original}
         = $self->{flag}->{no_interactive};
     $self->{flag}->{no_interactive} = 1;
@@ -5039,7 +4893,7 @@ $Element->{+HTML_NS}->{ruby} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($element_state->{phase} eq 'before-rb') {
-      if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -5058,7 +4912,7 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'in-rb') {
-      if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #$element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         unless ($element_state->{has_significant}) {
@@ -5081,7 +4935,7 @@ $Element->{+HTML_NS}->{ruby} = {
         #$element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rt') {
-      if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         if ($element_state->{has_significant}) {
           $element_state->{has_sig} = 1;
           delete $element_state->{has_significant};
@@ -5125,7 +4979,7 @@ $Element->{+HTML_NS}->{ruby} = {
                            type => 'ps element missing',
                            text => 'rp',
                            level => $self->{level}->{must});
-        unless ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+        unless ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => $self->{level}->{must});
@@ -5153,7 +5007,7 @@ $Element->{+HTML_NS}->{ruby} = {
                            type => 'ps element missing',
                            text => 'rp',
                            level => $self->{level}->{must});
-        unless ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+        unless ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => $self->{level}->{must});
@@ -5165,7 +5019,7 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rp2') {
-      if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         if ($element_state->{has_significant}) {
           $element_state->{has_sig} = 1;
           delete $element_state->{has_significant};
@@ -5498,7 +5352,8 @@ $Element->{+HTML_NS}->{figure} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($element_state->{phase} eq 'flow') {
-      if ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
+      # XXX <style scoped>
+      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
         $element_state->{phase} = 'flow-figcaption';
@@ -5508,7 +5363,8 @@ $Element->{+HTML_NS}->{figure} = {
                            level => $self->{level}->{must});
       }
     } elsif ($element_state->{phase} eq 'figcaption-flow') {
-      if ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
+      # XXX <style scoped>
+      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -5516,7 +5372,8 @@ $Element->{+HTML_NS}->{figure} = {
                            level => $self->{level}->{must});
       }
     } elsif ($element_state->{phase} eq 'figcaption') {
-      if ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
+      # XXX <style scoped>
+      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'figcaption-flow';
       } else {
         $self->{onerror}->(node => $child_el,
@@ -5524,7 +5381,8 @@ $Element->{+HTML_NS}->{figure} = {
                            level => $self->{level}->{must});
       }
     } elsif ($element_state->{phase} eq 'initial') {
-      if ($HTMLFlowContent->{$child_nsuri}->{$child_ln}) {
+      # XXX <style scoped>
+      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'flow';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
         $element_state->{phase} = 'figcaption';
@@ -6367,7 +6225,10 @@ $Element->{+HTML_NS}->{canvas} = {
 
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, $HTMLInteractiveContent);
+    $self->_add_minus_elements
+        ($element_state,
+         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements},
+         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $element_state->{in_canvas_orig} = $self->{flag}->{in_canvas};
     $self->{flag}->{in_canvas} = 1;
     $TransparentChecker{check_start}->(@_);
@@ -8023,7 +7884,10 @@ $Element->{+HTML_NS}->{button} = {
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, $HTMLInteractiveContent);
+    $self->_add_minus_elements
+        ($element_state,
+         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements},
+         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $FAECheckStart->($self, $item, $element_state);
 
     $element_state->{uri_info}->{action}->{type}->{action} = 1;
@@ -8229,7 +8093,7 @@ $Element->{+HTML_NS}->{datalist} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($element_state->{phase} eq 'phrasing') {
-      if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -8245,7 +8109,7 @@ $Element->{+HTML_NS}->{datalist} = {
                            level => $self->{level}->{must});
       }
     } elsif ($element_state->{phase} eq 'any') {
-      if ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'phrasing';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'option') {
         $element_state->{phase} = 'option';
@@ -8927,7 +8791,7 @@ $Element->{+HTML_NS}->{menu} = {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
                            level => $self->{level}->{must});
       }
-    } elsif ($HTMLPhrasingContent->{$child_nsuri}->{$child_ln}) {
+    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       if ($element_state->{phase} eq 'phrasing') {
         #
       } elsif ($element_state->{phase} eq 'li or phrasing') {
@@ -9114,8 +8978,8 @@ $Element->{+HTML_NS}->{noframes} = {
 ## sqrt, tilde, vec [HTML30], pre-html, div1, div2, div3, div4, div5,
 ## div6 [ISOHTMLUG], access [ACCESS], blockcode, standby, nl, l, h,
 ## separator [XHTML2ED], m, x, t, dc, ds, date, datatemplate, rule,
-## nest, calendar, card, switch, eventsource, sidebar, bb, dialog [WA1
-## draft], repeat [WF2 draft], centre, noflames, noframe, textflow,
+## nest, calendar, card, switch, eventsource, sidebar, bb, command,
+## dialog [HTML], repeat [WF2], centre, noflames, noframe, textflow,
 ## app, server, htmlarea, animate, h7, h8, h9, entity, hype, key, tbl,
 ## audioscope, limittext, nosmartquotes, shadow, sound, noimg,
 ## element, attrib, csactionitem, csactions, csaction, csscriptdict,
@@ -9135,8 +8999,8 @@ $Element->{+HTML_NS}->{noframes} = {
 ## font/@pointsize, layer/@*, menu/@autosubmit, multicol/@baseline,
 ## multicol/@height, multicol/@width, multicol/@gutter,
 ## multicol/@cols, nextid/@n, object/@content-length, option/@name,
-## script/@implements, section/@cite, style/@disabled, attributes in
-## the HTML namespace.
+## script/@implements, section/@cite, style/@disabled, time/@pubdate,
+## attributes in the HTML namespace.
 
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
@@ -9145,16 +9009,11 @@ sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 
 ## XXX Comments and PIs are not explicitly allowed in Atom.
 
-our $IsInHTMLInteractiveContent; # See Web::HTML::Validator.
-
-our $AttrChecker;
-
 ## Atom 1.0 [RFC 4287] cites RFC 4288 (Media Type Registration) for
 ## "MIME media type".  However, RFC 4288 only defines syntax of
 ## component such as |type|, |subtype|, and |parameter-name| and does
 ## not define the whole syntax.  We use Web Applications 1.0's "valid
 ## MIME type" definition here.
-our $MIMETypeChecker; ## See |Web::HTML::Validator|.
 
 ## Any element MAY have xml:base, xml:lang.  Although Atom spec does
 ## not explictly specify that unknown attribute cannot be used, HTML
@@ -9357,8 +9216,6 @@ my %AtomPersonConstruct = (
     $AtomChecker{check_end}->(@_);
   },
 ); # %AtomPersonConstruct
-
-our $Element;
 
 $Element->{+ATOM_NS}->{''} = {
   %AtomChecker,
