@@ -1,6 +1,8 @@
 # -*- Makefile -*-
 
-all: generated-pm-files
+all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm
+clean:
+	rm -fr local/elements.json
 
 PERL = ./perl
 PROVE = ./prove
@@ -53,6 +55,38 @@ update-entities: local/bin/pmbp.pl
 	  print "$$pm\n1;\n# © Copyright 2004-2011 Apple Computer, Inc., Mozilla Foundation, and Opera Software ASA.\n# You are granted a license to use, reproduce and create derivative works of this document."; #\
 	' > lib/Web/HTML/_NamedEntityList.pm
 	perl -c lib/Web/HTML/_NamedEntityList.pm
+
+local/elements.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/elements.json
+lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl
+	mkdir -p lib/Web/HTML/Validator
+	perl local/bin/pmbp.pl --install-module JSON
+	$(PERL) -MJSON -MData::Dumper -e ' #\
+	  local $$/ = undef; #\
+	  $$data = JSON->new->decode (scalar <>); #\
+	  $$Data::Dumper::Sortkeys = 1; #\
+	  $$Data::Dumper::Useqq = 1; #\
+	  for $$ns (keys %{$$data->{elements}}) { #\
+	    for $$ln (keys %{$$data->{elements}->{$$ns}}) { #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{id}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{desc}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{start_tag}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{end_tag}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{interface}; #\
+	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\
+	        for $$ln2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}}) { #\
+	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{id}; #\
+	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{desc}; #\
+	        } #\
+	      } #\
+	    } #\
+	  } #\
+	  $$pm = Dumper $$data; #\
+	  $$pm =~ s/VAR1/Web::HTML::Validator::_Defs/; #\
+	  print "$$pm\n"; #\
+	' < local/elements.json > $@
+	perl -c $@
 
 ## ------ Tests ------
 

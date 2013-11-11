@@ -1,7 +1,8 @@
 package Web::HTML::Validator;
 use strict;
 use warnings;
-our $VERSION = '114.0';
+our $VERSION = '115.0';
+use Web::HTML::Validator::_Defs;
 
 sub new ($) {
   return bless {}, $_[0];
@@ -406,6 +407,9 @@ my $HTMLDatasetAttrStatus = FEATURE_HTML5_CR;
 
 sub _check_element_attrs ($$$;%) {
   my ($self, $item, $element_state, %args) = @_;
+  my $el_ns = $item->{node}->namespace_uri;
+  $el_ns = '' unless defined $el_ns;
+  my $el_ln = $item->{node}->local_name;
   for my $attr (@{$item->{node}->attributes}) {
     my $attr_ns = $attr->namespace_uri;
     $attr_ns = '' if not defined $attr_ns;
@@ -439,20 +443,21 @@ sub _check_element_attrs ($$$;%) {
     
     my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
         || $AttrChecker->{$attr_ns}->{''};
-    my $status = $AttrStatus->{$attr_ns}->{$attr_ln}
-        || $AttrStatus->{$attr_ns}->{''};
+    my $attr_def = $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
+        $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
+        $Web::HTML::Validator::_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
+    my $conforming = $attr_def->{conforming};
     if ($attr_ns eq '' and $args{is_html}) { # XXX
       if ($args{allow_dataset} and
           $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
           $attr_ln !~ /[A-Z]/) {
         ## XML-compatible + no uppercase letter
         $checker = $HTMLDatasetAttrChecker;
-        $status = $HTMLDatasetAttrStatus;
+        $conforming = 1;
       } else {
         # XXX
         $checker = $args{element_specific_checker}->{$attr_ln}
             || $HTMLAttrChecker->{$attr_ln};
-        $status = $args{element_specific_status}->{$attr_ln};
 
         if ($args{is_embed} and
             $attr_ln !~ /^xml/ and
@@ -460,53 +465,41 @@ sub _check_element_attrs ($$$;%) {
             $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
           ## XML-compatible + no uppercase letter
           $checker ||= sub { };
-          $status = FEATURE_HTML5_LC | FEATURE_ALLOWED; # XXX status of HTML |embed| element
+          $conforming = 1;
         }
       }
     } elsif ($attr_ns eq '' and $args{is_atom}) {
       # XXX
       $checker = $args{element_specific_checker}->{$attr_ln}
           || $AttrChecker->{$attr_ln};
-      $status = $args{element_specific_status}->{$attr_ln};
+    } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
+      $conforming = 1;
     }
     $checker->($self, $attr, $item, $element_state) if $checker;
-    
-    {
-      $status ||= 0;
-      if (not ($status & FEATURE_ALLOWED)) {
-        ## "Authors must not use elements, attributes, or attribute
-        ## values that are not permitted by this specification or
-        ## other applicable specifications" [HTML]
-        $self->{onerror}->(node => $attr,
-                           type => 'attribute not defined',
-                           level => $self->{level}->{must});
-      } elsif ($status & FEATURE_DEPRECATED_SHOULD) {
-        $self->{onerror}->(node => $attr,
-                           type => 'deprecated:attr',
-                           level => $self->{level}->{should});
-      } else {
-        if ($status & FEATURE_DEPRECATED_INFO) {
-          $self->{onerror}->(node => $attr,
-                             type => 'deprecated:attr',
-                             level => $self->{level}->{info});
-        }
 
-        if ($status & FEATURE_STATUS_REC) {
-          $status = undef;
-        } elsif ($status & FEATURE_STATUS_CR) {
-          $status = 'cr';
-        } elsif ($status & FEATURE_STATUS_LC) {
-          $status = 'lc';
-        } elsif ($status & FEATURE_STATUS_WD) {
-          $status = 'wd';
-        } else {
-          $status = 'non-standard';
-        }
+    if ($conforming or $attr_def->{obsolete_but_conforming}) {
+      unless ($checker) {
+        ## According to the attribute list, this attribute is
+        ## conforming.  However, current version of the validator does
+        ## not support the attribute.  The conformance is unknown.
         $self->{onerror}->(node => $attr,
-                           type => 'status:'.$status.':attr',
-                           level => $self->{level}->{info})
-            if defined $status;
+                           type => 'unknown attribute', level => 'u');
       }
+      my $status = $attr_def->{status} || '';
+      if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
+        #
+      } else {
+        ## The attribute is conforming, but is in earlier stage such
+        ## that it should not be used without caution.
+        $self->{onerror}->(node => $attr,
+                           type => 'status:wd:attr', level => 'i')
+      }
+    } else {
+      ## "Authors must not use elements, attributes, or attribute
+      ## values that are not permitted by this specification or other
+      ## applicable specifications" [HTML]
+      $self->{onerror}->(node => $attr,
+                         type => 'attribute not defined', level => 'm');
     }
   }
 } # _check_element_attrs
@@ -898,32 +891,31 @@ sub check_element ($$$;$) {
                            level => 'w');
       }
 
-      if (not ($eldef->{status} & FEATURE_ALLOWED)) {
+      my $el_def = $Web::HTML::Validator::_Defs->{elements}->{$el_nsuri}->{$el_ln};
+      if ($el_def->{conforming}) {
+        unless ($Element->{$el_nsuri}->{$el_ln}) {
+          ## According to the attribute list, this element is
+          ## conforming.  However, current version of the validator
+          ## does not support the element.  The conformance is
+          ## unknown.
+          $self->{onerror}->(node => $el,
+                             type => 'unknown element', level => 'u');
+        }
+        my $status = $el_def->{status} || '';
+        if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
+          #
+        } else {
+          ## The element is conforming, but is in earlier stage such
+          ## that it should not be used without caution.
+          $self->{onerror}->(node => $el,
+                             type => 'status:wd:element', level => 'i')
+        }
+      } else {
         ## "Authors must not use elements, attributes, or attribute
         ## values that are not permitted by this specification or
         ## other applicable specifications" [HTML]
         $self->{onerror}->(node => $el,
-                           type => 'element not defined',
-                           level => $self->{level}->{must});
-      } elsif ($eldef->{status} & FEATURE_DEPRECATED_SHOULD) {
-        $self->{onerror}->(node => $el,
-                           type => 'deprecated:element',
-                           level => $self->{level}->{should});
-      } else {
-        if ($eldef->{status} & FEATURE_DEPRECATED_INFO) {
-          $self->{onerror}->(node => $el,
-                             type => 'deprecated:element',
-                             level => $self->{level}->{info});
-        }
-
-        unless ($eldef->{status} & FEATURE_STATUS_REC) {
-          my $status = $eldef->{status} & FEATURE_STATUS_CR ? 'cr' :
-              $eldef->{status} & FEATURE_STATUS_LC ? 'lc' :
-              $eldef->{status} & FEATURE_STATUS_WD ? 'wd' : 'non-standard';
-          $self->{onerror}->(node => $el,
-                             type => 'status:'.$status.':element',
-                             level => $self->{level}->{info});
-        }
+                           type => 'element not defined', level => 'm');
       }
 
       my @new_item;
@@ -6448,7 +6440,7 @@ $Element->{+HTML_NS}->{iframe} = {
     security => $GetHTMLEnumeratedAttrChecker->({
       restricted => 1,
     }),
-    seemless => $GetHTMLBooleanAttrChecker->('seemless'),
+    seamless => $GetHTMLBooleanAttrChecker->('seamless'),
     src => $HTMLURIAttrChecker,
     srcdoc => sub {
       my ($self, $attr) = @_;
@@ -6484,7 +6476,7 @@ $Element->{+HTML_NS}->{iframe} = {
     sandbox => FEATURE_HTML5_LC,
     scrolling => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
     security => FEATURE_OBSVOCAB,
-    seemless => FEATURE_HTML5_LC,
+    seamless => FEATURE_HTML5_LC,
     src => FEATURE_HTML5_LC | FEATURE_M12N10_REC,
     srcdoc => FEATURE_HTML5_FD,
     vspace => FEATURE_HTML5_OBSOLETE | FEATURE_OBSVOCAB,
@@ -10187,6 +10179,7 @@ $Element->{+HTML_NS}->{command} = {
     $HTMLEmptyChecker{check_end}->(@_);
   }, # check_end
 }; # command
+delete $Element->{+HTML_NS}->{command}; # XXX
 
 $Element->{+HTML_NS}->{menu} = {
   %HTMLPhrasingContentChecker,
