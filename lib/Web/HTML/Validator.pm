@@ -1,7 +1,7 @@
 package Web::HTML::Validator;
 use strict;
 use warnings;
-our $VERSION = '116.0';
+our $VERSION = '117.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -330,6 +330,22 @@ our $AttrChecker = {
 
 my $HTMLAttrChecker;
 
+my $CheckerByType = {
+  any => sub {},
+  text => sub {},
+};
+
+## Boolean attribute [HTML]
+$CheckerByType->{boolean} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  unless ($value eq '' or $value eq $attr->local_name) {
+    $self->{onerror}->(node => $attr, type => 'boolean:invalid',
+                       level => 'm');
+  }
+}; # boolean
+
 ## |data-*| - Any value is allowed.
 my $HTMLDatasetAttrChecker = sub { };
 
@@ -403,6 +419,8 @@ sub _check_element_attrs ($$$;%) {
     } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
       $conforming = 1;
     }
+    my $value_type = $attr_def->{value_type} || '';
+    $checker ||= $CheckerByType->{$value_type};
     $checker->($self, $attr, $item, $element_state) if $checker;
 
     if ($conforming or $attr_def->{obsolete_but_conforming}) {
@@ -1598,9 +1616,9 @@ my $FormControlNameAttrChecker = sub {
 
 my $AutofocusAttrChecker = sub {
   my ($self, $attr) = @_;
-  
+
   $GetHTMLBooleanAttrChecker->('autofocus')->(@_);
-  
+
   if ($self->{has_autofocus}) {
     $self->{onerror}->(node => $attr,
                        type => 'duplicate autofocus', ## TODOC: type
@@ -1979,7 +1997,6 @@ $HTMLAttrChecker = {
                          level => $self->{level}->{must});
     }
   },
-  title => sub {}, ## NOTE: No conformance creteria
   lang => sub {
     my ($self, $attr) = @_;
     my $value = $attr->value;
@@ -2067,7 +2084,6 @@ $HTMLAttrChecker = {
       }
     }
   }, # dropzone
-  hidden => $GetHTMLBooleanAttrChecker->('hidden'),
   hidefocus => $GetHTMLBooleanAttrChecker->('hidefocus'),
   language => sub {
     my ($self, $attr) = @_;
@@ -3261,7 +3277,6 @@ $Element->{+HTML_NS}->{style} = {
       }
     },
     media => $HTMLMQAttrChecker,
-    scoped => $GetHTMLBooleanAttrChecker->('scoped'),
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -3365,8 +3380,6 @@ $Element->{+HTML_NS}->{script} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     archive => $NonEmptyURLChecker,
-    async => $GetHTMLBooleanAttrChecker->('async'),
-    defer => $GetHTMLBooleanAttrChecker->('defer'),
     charset => sub {
       my ($self, $attr) = @_;
 
@@ -4009,7 +4022,6 @@ $Element->{+HTML_NS}->{ol} = {
       left => 1, center => 1, right => 1, justify => 1,
     }),
     compact => $GetHTMLBooleanAttrChecker->('compact'),
-    reversed => $GetHTMLBooleanAttrChecker->('reversed'),
     start => $HTMLIntegerAttrChecker,
     type => sub {
       my ($self, $attr) = @_;
@@ -4318,7 +4330,6 @@ $Element->{+HTML_NS}->{a} = {
           datafld => sub { },
           datasrc => $NonEmptyURLChecker,
           directkey => $AccesskeyChecker,
-          download => sub { },
           email => sub {
             my ($self, $attr) = @_;
             unless ($attr->value =~ /\A$ValidEmailAddress\z/) {
@@ -5425,7 +5436,6 @@ $Element->{+HTML_NS}->{img} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
       align => $EmbeddedAlignChecker,
-      alt => sub { }, ## NOTE: No syntactical requirement
       border => sub {
         my ($self, $attr) = @_;
 
@@ -5586,7 +5596,6 @@ $Element->{+HTML_NS}->{iframe} = {
     security => $GetHTMLEnumeratedAttrChecker->({
       restricted => 1,
     }),
-    seamless => $GetHTMLBooleanAttrChecker->('seamless'),
     src => $HTMLURIAttrChecker,
     srcdoc => sub {
       my ($self, $attr) = @_;
@@ -5710,7 +5719,6 @@ $Element->{+HTML_NS}->{object} = {
     }),
     standby => sub {}, ## NOTE: %Text; in HTML4
     type => $MIMETypeChecker,
-    typemustmatch => $GetHTMLBooleanAttrChecker->('typemustmatch'),
     usemap => $HTMLUsemapAttrChecker,
     vspace => $HTMLLengthAttrChecker,
     width => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
@@ -5891,9 +5899,7 @@ $Element->{+HTML_NS}->{param} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     datafld => sub { },
-    name => sub { },
     type => $MIMETypeChecker,
-    value => sub { },
     valuetype => $GetHTMLEnumeratedAttrChecker->({
       data => 1, ref => 1, object => 1,
     }),
@@ -5933,7 +5939,6 @@ $Element->{+HTML_NS}->{video} = {
 
       $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
     },
-    controls => $GetHTMLBooleanAttrChecker->('controls'),
     crossorigin => $GetHTMLEnumeratedAttrChecker->({
       anonymous => 1, 'use-credentials' => 1,
     }),
@@ -5942,8 +5947,6 @@ $Element->{+HTML_NS}->{video} = {
     loop => $GetHTMLBooleanAttrChecker->('loop'),
     loopend => $TemporalPositionChecker,
     loopstart => $TemporalPositionChecker,
-    mediagroup => sub { },
-    muted => $GetHTMLBooleanAttrChecker->('muted'),
     playcount => $HTMLIntegerAttrChecker,
     poster => $HTMLURIAttrChecker,
     preload => $GetHTMLEnumeratedAttrChecker->({
@@ -6051,7 +6054,6 @@ $Element->{+HTML_NS}->{audio} = {
 
       $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
     },
-    controls => $GetHTMLBooleanAttrChecker->('controls'),
     crossorigin => $GetHTMLEnumeratedAttrChecker->({
       anonymous => 1, 'use-credentials' => 1,
     }),
@@ -6059,8 +6061,6 @@ $Element->{+HTML_NS}->{audio} = {
     loop => $GetHTMLBooleanAttrChecker->('loop'),
     loopend => $TemporalPositionChecker,
     loopstart => $TemporalPositionChecker,
-    mediagroup => sub { },
-    muted => $GetHTMLBooleanAttrChecker->('muted'),
     playcount => $HTMLIntegerAttrChecker,
     preload => $GetHTMLEnumeratedAttrChecker->({
       'none' => 1, 'metadata' => 1, 'auto' => 1, '' => 1,
@@ -6094,7 +6094,6 @@ $Element->{+HTML_NS}->{source} = {
 $Element->{+HTML_NS}->{track} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    default => $GetHTMLBooleanAttrChecker->('default'),
     kind => $GetHTMLEnumeratedAttrChecker->({
       subtitles => 1, captions => 1, descriptions => 1,
       chapters => 1, metadata => 1,
@@ -6328,7 +6327,6 @@ $Element->{+HTML_NS}->{area} = {
   check_attrs => $GetHTMLAttrsChecker->({
     alt => sub { }, ## Checked later.
     coords => sub { }, ## Checked in $ShapeCoordsChecker
-    download => sub { },
     href => $HTMLURIAttrChecker,
     hreflang => $HTMLLanguageTagAttrChecker,
     media => $HTMLMQAttrChecker,
@@ -6891,7 +6889,6 @@ $Element->{+HTML_NS}->{th} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     %cellalign,
-    abbr => sub {},
     axis => sub {},
     background => $NonEmptyURLChecker,
     bgcolor => $HTMLColorAttrChecker,
@@ -6960,7 +6957,6 @@ $Element->{+HTML_NS}->{form} = {
         }
       }
     },
-    novalidate => $GetHTMLBooleanAttrChecker->('novalidate'),
     onreceived => $HTMLEventHandlerAttrChecker,
     replace => $GetHTMLEnumeratedAttrChecker->({document => 1, values => 1}),
     target => $HTMLTargetAttrChecker,
@@ -7011,7 +7007,6 @@ $Element->{+HTML_NS}->{fieldset} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     datafld => sub { },
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
     form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
@@ -7141,14 +7136,14 @@ $Element->{+HTML_NS}->{input} = {
   check_attrs => $GetHTMLAttrsChecker->({
     map { $_ => sub {} } qw(
       accept accept-charset action align alt autocapitalize
-      autocomplete autocorrect autofocus autosave border checked
-      datafld dataformatas datasrc directkey dirname disabled dynsrc
+      autocomplete autocorrect autofocus autosave border
+      datafld dataformatas datasrc directkey dirname dynsrc
       emptyok enctype form formaction format formenctype formmethod
-      formnovalidate formtarget height hspace incremental inputmode
+      formtarget height hspace incremental inputmode
       iprof ismap istyle list loop lowsrc max maxlength method min
-      mode multiple name pattern placeholder precision readonly
-      replace required results size soundstart src start step target
-      template type usemap value vcard_name viblength vibration volume
+      mode name pattern placeholder precision
+      replace results size soundstart src start step target
+      type usemap value vcard_name viblength vibration volume
       vrml vspace width
     )
   }), # check_attrs
@@ -7188,7 +7183,7 @@ $Element->{+HTML_NS}->{input} = {
          datasrc => $NonEmptyURLChecker,
          directkey => '',
          dirname => '',
-         disabled => $GetHTMLBooleanAttrChecker->('disabled'),
+         disabled => sub {},
              ## NOTE: <input type=hidden disabled> is not disallowed.
          dynsrc => '',
          emptyok => '',
@@ -7293,8 +7288,8 @@ $Element->{+HTML_NS}->{input} = {
              list => $ListAttrChecker,
              min => $GetDateTimeAttrChecker->($v->[0]),
              max => $GetDateTimeAttrChecker->($v->[0]),
-             readonly => $GetHTMLBooleanAttrChecker->('readonly'),
-             required => $GetHTMLBooleanAttrChecker->('required'),
+             readonly => sub {},
+             required => sub {},
              step => $StepAttrChecker,
              value => sub {
                my ($self, $attr) = @_;
@@ -7324,8 +7319,8 @@ $Element->{+HTML_NS}->{input} = {
              min => $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 }),
              placeholder => $PlaceholderAttrChecker,
              precision => $PrecisionAttrChecker,
-             readonly => $GetHTMLBooleanAttrChecker->('readonly'),
-             required => $GetHTMLBooleanAttrChecker->('required'),
+             readonly => sub {},
+             required => sub {},
              step => $StepAttrChecker,
              value => sub {
                my ($self, $attr) = @_;
@@ -7366,9 +7361,8 @@ $Element->{+HTML_NS}->{input} = {
           } elsif ($state eq 'checkbox' or $state eq 'radio') {
             $checker = 
             {
-             checked => $GetHTMLBooleanAttrChecker->('checked'),
-                 ## TODO: tests
-             required => $GetHTMLBooleanAttrChecker->('required'),
+             checked => sub {},
+             required => sub {},
              value => sub { }, ## NOTE: No restriction.
             }->{$attr_ln} || $checker;
             ## TODO: There MUST be another input type=radio with same
@@ -7378,8 +7372,8 @@ $Element->{+HTML_NS}->{input} = {
             $checker =
             {
              accept => $AcceptAttrChecker,
-             multiple => $GetHTMLBooleanAttrChecker->('multiple'),
-             required => $GetHTMLBooleanAttrChecker->('required'),
+             multiple => sub {},
+             required => sub {},
             }->{$attr_ln} || $checker;
           } elsif ($state eq 'submit') {
             $checker =
@@ -7400,7 +7394,7 @@ $Element->{+HTML_NS}->{input} = {
              formmethod => $GetHTMLEnumeratedAttrChecker->({
                get => 1, post => 1,
              }),
-             formnovalidate => $GetHTMLBooleanAttrChecker->('formnovalidate'),
+             formnovalidate => sub {},
              formtarget => $HTMLTargetAttrChecker,
              method => $GetHTMLEnumeratedAttrChecker->({
                get => 1, post => 1,
@@ -7447,7 +7441,7 @@ $Element->{+HTML_NS}->{input} = {
              formmethod => $GetHTMLEnumeratedAttrChecker->({
                get => 1, post => 1,
              }),
-             formnovalidate => $GetHTMLBooleanAttrChecker->('formnovalidate'),
+             formnovalidate => sub {},
              formtarget => $HTMLTargetAttrChecker,
              height => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
              hspace => $HTMLLengthAttrChecker,
@@ -7539,8 +7533,8 @@ $Element->{+HTML_NS}->{input} = {
              }),
              pattern => $PatternAttrChecker,
              placeholder => $PlaceholderAttrChecker,
-             readonly => $GetHTMLBooleanAttrChecker->('readonly'),
-             required => $GetHTMLBooleanAttrChecker->('required'),
+             readonly => sub {},
+             required => sub {},
              size => $GetHTMLNonNegativeIntegerAttrChecker->(sub {shift > 0}),
              value => sub {
                my ($self, $attr, $item, $element_state) = @_;
@@ -7598,8 +7592,7 @@ $Element->{+HTML_NS}->{input} = {
             if ($state eq 'password') {
               $checker = '' if $attr_ln eq 'list';
             } elsif ($state eq 'email') {
-              $checker = $GetHTMLBooleanAttrChecker->('multiple')
-                  if $attr_ln eq 'multiple';
+              $checker = sub {} if $attr_ln eq 'multiple';
             } elsif ($state eq 'search') {
               if ($attr_ln eq 'autosave') {
                 $checker = sub { };
@@ -7847,7 +7840,6 @@ $Element->{+HTML_NS}->{button} = {
       ## See <http://suika.fam.cx/~wakaba/wiki/sw/n/dataformatas>.
     }),
     datasrc => $NonEmptyURLChecker,
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
     enctype => $GetHTMLEnumeratedAttrChecker->({
       'application/x-www-form-urlencoded' => 1,
       'multipart/form-data' => 1,
@@ -7863,7 +7855,6 @@ $Element->{+HTML_NS}->{button} = {
     formmethod => $GetHTMLEnumeratedAttrChecker->({
       get => 1, post => 1,
     }),
-    formnovalidate => $GetHTMLBooleanAttrChecker->('formnovalidate'),
     formtarget => $HTMLTargetAttrChecker,
     method => $GetHTMLEnumeratedAttrChecker->({
       get => 1, post => 1,
@@ -7875,7 +7866,6 @@ $Element->{+HTML_NS}->{button} = {
       button => 1, submit => 1, reset => 1,
       add => -1, 'move-up' => -1, 'move-down' => -1, remove => -1,
     }),
-    value => sub {}, ## NOTE: No restriction.
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -7941,14 +7931,11 @@ $Element->{+HTML_NS}->{select} = {
     dataformatas => $GetHTMLEnumeratedAttrChecker->({
       text => 1, html => 1, 'localized-text' => 1,
     }),
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
     data => $NonEmptyURLChecker, # XXXreference: referenced document MUST ...
     datafld => sub { },
     datasrc => $NonEmptyURLChecker,
     form => $HTMLFormAttrChecker,
-    multiple => $GetHTMLBooleanAttrChecker->('multiple'),
     name => $FormControlNameAttrChecker,
-    required => $GetHTMLBooleanAttrChecker->('required'),
     size => $GetHTMLNonNegativeIntegerAttrChecker->(sub { shift > 0 }),
   }), # check_attrs
   check_start => sub {
@@ -8159,10 +8146,6 @@ $Element->{+HTML_NS}->{datalist} = {
 
 $Element->{+HTML_NS}->{optgroup} = {
   %HTMLChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
-    label => sub {},
-  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     
@@ -8204,9 +8187,7 @@ $Element->{+HTML_NS}->{option} = {
       text => 1, html => 1, 'localized-text' => 1,
     }),
     datasrc => $NonEmptyURLChecker,
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
     label => sub { },
-    selected => $GetHTMLBooleanAttrChecker->('selected'),
     value => sub { },
   }), # check_attrs
   check_attrs2 => sub {
@@ -8264,7 +8245,6 @@ $Element->{+HTML_NS}->{textarea} = {
                            level => $self->{level}->{must});
       }
     }, # dirname
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
     emptyok => $GetHTMLEnumeratedAttrChecker->({
       true => 1, false => 1,
     }),
@@ -8314,9 +8294,7 @@ $Element->{+HTML_NS}->{textarea} = {
     }),
     name => $FormControlNameAttrChecker,
     pattern => $PatternAttrChecker,
-    placeholder => $PlaceholderAttrChecker,
-    readonly => $GetHTMLBooleanAttrChecker->('readonly'),
-    required => $GetHTMLBooleanAttrChecker->('required'),
+    placeholder => $PlaceholderAttrChecker, # XXX wrong
     rows => $GetHTMLNonNegativeIntegerAttrChecker->(sub { shift > 0 }),
     wrap => $GetHTMLEnumeratedAttrChecker->({
       soft => 1, hard => 1,
@@ -8362,8 +8340,6 @@ $Element->{+HTML_NS}->{keygen} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     autofocus => $AutofocusAttrChecker,
-    challenge => sub { },
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
     form => $HTMLFormAttrChecker,
     keyparams => sub { },
     keytype => $GetHTMLEnumeratedAttrChecker->({
@@ -8612,9 +8588,6 @@ $Element->{+HTML_NS}->{isindex} = {
 
 $Element->{+HTML_NS}->{details} = {
   %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    open => $GetHTMLBooleanAttrChecker->('open'),
-  }),
   ## NOTE: summary, Flow
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
@@ -8668,6 +8641,7 @@ $Element->{+HTML_NS}->{summary} = {
   %HTMLPhrasingContentChecker,
 }; # summary
 
+# XXX drop
 $Element->{+HTML_NS}->{datagrid} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -8676,11 +8650,10 @@ $Element->{+HTML_NS}->{datagrid} = {
   }), # check_attrs
 }; # datagrid
 
+# XXX drop
 $Element->{+HTML_NS}->{command} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    checked => $GetHTMLBooleanAttrChecker->('checked'),
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
     icon => $HTMLURIAttrChecker,
     label => sub {
       my ($self, $attr, $item, $element_state) = @_;
@@ -8759,7 +8732,6 @@ $Element->{+HTML_NS}->{menu} = {
     compact => $GetHTMLBooleanAttrChecker->('compact'),
     ## ISSUE: <menu id=""><p contextmenu=""> match?  (In the current
     ## implementation, it does not match.)
-    label => sub { }, ## NOTE: No conformance creteria
     type => $GetHTMLEnumeratedAttrChecker->({context => 1, toolbar => 1}),
   }), # check_attrs
   check_start => sub {
@@ -9960,7 +9932,6 @@ $Element->{+ATOM_NS}->{link} = {
       ## title="" SHOULD be there if multiple rel=license
       ## MUST NOT "unspecified" and other rel=license
     },
-    title => sub { }, # No MUST
     type => $MIMETypeChecker,
   }),
   check_start =>  sub {
