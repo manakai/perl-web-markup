@@ -218,8 +218,8 @@ Atom 1.0, Atom Threading Extension.
 For more information, see
 <http://suika.suikawiki.org/gate/2007/html/standards>.
 
-Note that XML 1.1, Namespaces in XML 1.1, and C<xml:id> are not
-applicable specifications.
+Note that XML 1.1, Namespaces in XML 1.1, C<xml:id>, XHTML
+Modularization, and Ruby Annotation are not applicable specifications.
 
 =head1 SEE ALSO
 
