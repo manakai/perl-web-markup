@@ -48,6 +48,7 @@ sub onerror ($;$) {
 ## XXX Document type name, entity name, notation name, entity's
 ## notation name, element type name, attribute name in attribute
 ## definition, element names in element content model, and PI target
+## MUST be NCName [XMLNS].
 
 ## XXX In HTML documents
 ##   warning doctype name, pubid, sysid
@@ -97,11 +98,21 @@ our $MIMETypeChecker = sub {
   return $type; # or undef
 }; # $MIMETypeChecker
 
-## Prefix MUST be declared [XMLNS].  This is checked by parser.
-## Attributes MUST be unique [XMLNS].  This is checked by parser.
-## MUST be NCName [XMLNS].
-## Names in DTD and names in name-typed attribute values MUST be
-## NCName [XMLNS].  This is checked by parser or DTD validator.
+## XML Namespaces
+##
+## These requirements from XML Namespaces specification are only
+## syntactical or only relevant to DTDs so they are checked by parser
+## and/or DTD validator, not by this validator:
+##
+##   - Prefix MUST be declared.
+##   - Attributes MUST be unique.
+##   - Names in DTD and names in some typed attribute values MUST be NCName.
+##
+## Use of reserved namespace name/prefix by $node->prefix and/or
+## $node->namespace_uri are only warnings, not errors, as there are no
+## conformance requirement for DOM representation in any
+## specification.  (In fact most combinations of them are not even
+## exist in standard DOM world.)
 
 our $AttrChecker = {
   (XML_NS) => {
@@ -346,6 +357,51 @@ $CheckerByType->{boolean} = sub {
   }
 }; # boolean
 
+## Enumerated attribute [HTML]
+$CheckerByType->{enumerated} = sub {
+  my ($self, $attr, undef, undef, $def) = @_;
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  if ($def->{enumerated}->{$value} and not $value =~ /^#/) {
+    if ($def->{enumerated}->{$value}->{conforming}) {
+      return;
+    } elsif (defined $def->{enumerated}->{$value}->{label}) {
+      ## If the name of the mapped state is specified, the $value is a
+      ## known keyword but non-conforming.
+      $self->{onerror}->(node => $attr, type => 'enumerated:non-conforming',
+                         level => 'm');
+      return;
+    }
+  }
+  $self->{onerror}->(node => $attr, type => 'enumerated:invalid',
+                     level => 'm');
+}; # enumerated
+
+## CSS styling attribute [HTML] [CSSSTYLEATTR]
+$CheckerByType->{'CSS styling'} = sub {
+  my ($self, $attr) = @_;
+  $self->{onsubdoc}->({s => $attr->value,
+                       container_node => $attr,
+                       media_type => 'text/x-css-inline',
+                       is_char_string => 1});
+  
+  ## NOTE: "... MUST still be comprehensible and usable if those
+  ## attributes were removed" is a semantic requirement, it cannot be
+  ## tested.
+}; # CSS styling
+
+## Language tag [HTML] [BCP47]
+$CheckerByType->{'language tag'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  require Web::LangTag;
+  my $lang = Web::LangTag->new;
+  $lang->onerror (sub {
+    $self->{onerror}->(@_, node => $attr);
+  });
+  $lang->check_rfc3066_language_tag ($value); # XXX use latest version
+}; # language tag
+
 ## |data-*| - Any value is allowed.
 my $HTMLDatasetAttrChecker = sub { };
 
@@ -421,7 +477,7 @@ sub _check_element_attrs ($$$;%) {
     }
     my $value_type = $attr_def->{value_type} || '';
     $checker ||= $CheckerByType->{$value_type};
-    $checker->($self, $attr, $item, $element_state) if $checker;
+    $checker->($self, $attr, $item, $element_state, $attr_def) if $checker;
 
     if ($conforming or $attr_def->{obsolete_but_conforming}) {
       unless ($checker) {
@@ -1480,22 +1536,6 @@ my $MultiLengthListChecker = sub {
 
 our $MIMETypeChecker; ## See |Web::HTML::Validator|.
 
-my $HTMLLanguageTagAttrChecker = sub {
-  ## NOTE: See also $AtomLanguageTagAttrChecker in Atom.pm.
-
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  require Web::LangTag;
-  my $lang = Web::LangTag->new;
-  $lang->onerror (sub {
-    $self->{onerror}->(@_, node => $attr);
-  });
-  $lang->check_rfc3066_language_tag ($value);
-  ## ISSUE: RFC 4646 (3066bis)?
-
-  ## TODO: testdata
-}; # $HTMLLanguageTagAttrChecker
-
 ## "A valid media query [MQ]"
 my $HTMLMQAttrChecker = sub {
   my ($self, $attr) = @_;
@@ -2038,9 +2078,6 @@ $HTMLAttrChecker = {
     }
   },
   content => sub { },
-  contenteditable => $GetHTMLEnumeratedAttrChecker->({
-    true => 1, false => 1, '' => 1,
-  }),
   contextmenu => sub {
     my ($self, $attr) = @_;
     my $value = $attr->value;
@@ -2100,21 +2137,6 @@ $HTMLAttrChecker = {
   resource => $HTMLURIAttrChecker,
   rev => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->(),
   ## TODO: role [HTML5ROLE] ## TODO: global @role [XHTML1ROLE]
-  spellcheck => $GetHTMLEnumeratedAttrChecker->({
-    true => 1, false => 1, '' => 1,
-  }),
-  style => sub {
-    my ($self, $attr) = @_;
-
-    $self->{onsubdoc}->({s => $attr->value,
-                         container_node => $attr,
-                         media_type => 'text/x-css-inline',
-                         is_char_string => 1});
-
-    ## NOTE: "... MUST still be comprehensible and usable if those
-    ## attributes were removed" is a semantic requirement, it cannot
-    ## be tested.
-  },
   tabindex => $HTMLIntegerAttrChecker,
   typeof => sub { },
   unselectable => $GetHTMLEnumeratedAttrChecker->({on => 1, off => 1}),
@@ -2882,7 +2904,6 @@ $Element->{+HTML_NS}->{link} = {
     rel => sub {}, ## checked in check_attrs2
     media => $HTMLMQAttrChecker,
     methods => sub { },
-    hreflang => $HTMLLanguageTagAttrChecker,
     sizes => sub {
       my ($self, $attr) = @_;
       my %word;
@@ -4340,7 +4361,6 @@ $Element->{+HTML_NS}->{a} = {
           }, # email
           eswf => $ObjectHashIDRefChecker,
           href => $HTMLURIAttrChecker,
-          hreflang => $HTMLLanguageTagAttrChecker,
           ib => $HTMLURIAttrChecker,
           ifb => $HTMLURIAttrChecker,
           ijam => $ObjectOptionalHashIDRefChecker,
@@ -5461,9 +5481,6 @@ $Element->{+HTML_NS}->{img} = {
       copyright => $GetHTMLEnumeratedAttrChecker->({
         yes => 1, no => 1,
       }),
-      crossorigin => $GetHTMLEnumeratedAttrChecker->({
-        anonymous => 1, 'use-credentials' => 1,
-      }),
       datafld => sub { },
       datasrc => $NonEmptyURLChecker,
       dynsrc => $NonEmptyURLChecker,
@@ -5939,9 +5956,6 @@ $Element->{+HTML_NS}->{video} = {
 
       $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
     },
-    crossorigin => $GetHTMLEnumeratedAttrChecker->({
-      anonymous => 1, 'use-credentials' => 1,
-    }),
     end => $TemporalPositionChecker,
     height => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
     loop => $GetHTMLBooleanAttrChecker->('loop'),
@@ -5949,9 +5963,6 @@ $Element->{+HTML_NS}->{video} = {
     loopstart => $TemporalPositionChecker,
     playcount => $HTMLIntegerAttrChecker,
     poster => $HTMLURIAttrChecker,
-    preload => $GetHTMLEnumeratedAttrChecker->({
-      'none' => 1, 'metadata' => 1, 'auto' => 1, '' => 1,
-    }),
     src => $HTMLURIAttrChecker,
     start => $TemporalPositionChecker,
     width => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
@@ -6054,17 +6065,11 @@ $Element->{+HTML_NS}->{audio} = {
 
       $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
     },
-    crossorigin => $GetHTMLEnumeratedAttrChecker->({
-      anonymous => 1, 'use-credentials' => 1,
-    }),
     end => $TemporalPositionChecker,
     loop => $GetHTMLBooleanAttrChecker->('loop'),
     loopend => $TemporalPositionChecker,
     loopstart => $TemporalPositionChecker,
     playcount => $HTMLIntegerAttrChecker,
-    preload => $GetHTMLEnumeratedAttrChecker->({
-      'none' => 1, 'metadata' => 1, 'auto' => 1, '' => 1,
-    }),
     src => $HTMLURIAttrChecker,
     start => $TemporalPositionChecker,
   }), # check_attrs
@@ -6094,10 +6099,6 @@ $Element->{+HTML_NS}->{source} = {
 $Element->{+HTML_NS}->{track} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    kind => $GetHTMLEnumeratedAttrChecker->({
-      subtitles => 1, captions => 1, descriptions => 1,
-      chapters => 1, metadata => 1,
-    }), # kind
     label => sub {
       my ($self, $attr) = @_;
       if ($attr->value eq '') {
@@ -6107,7 +6108,6 @@ $Element->{+HTML_NS}->{track} = {
       }
     }, # label
     src => $HTMLURIAttrChecker,
-    srclang => $HTMLLanguageTagAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -6328,17 +6328,10 @@ $Element->{+HTML_NS}->{area} = {
     alt => sub { }, ## Checked later.
     coords => sub { }, ## Checked in $ShapeCoordsChecker
     href => $HTMLURIAttrChecker,
-    hreflang => $HTMLLanguageTagAttrChecker,
     media => $HTMLMQAttrChecker,
     nohref => $GetHTMLBooleanAttrChecker->('nohref'),
     ping => $HTMLSpaceURIsAttrChecker,
     rel => sub {}, ## Checked in check_attrs2
-    shape => $GetHTMLEnumeratedAttrChecker->({
-      circ => -1, circle => 1,
-      default => 1,
-      poly => 1, polygon => -1,
-      rect => 1, rectangle => -1,
-    }),
     target => $HTMLTargetAttrChecker,
     type => $MIMETypeChecker,
   }), # check_attrs
@@ -6905,8 +6898,6 @@ $Element->{+HTML_NS}->{th} = {
     height => $HTMLLengthAttrChecker,
     nowrap => $GetHTMLBooleanAttrChecker->('nowrap'),
     rowspan => $GetHTMLNonNegativeIntegerAttrChecker->(sub { shift > 0 }),
-    scope => $GetHTMLEnumeratedAttrChecker
-        ->({row => 1, col => 1, rowgroup => 1, colgroup => 1}),
     width => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_start => sub {
@@ -6924,20 +6915,9 @@ $Element->{+HTML_NS}->{form} = {
     accept => $AcceptAttrChecker,
     'accept-charset' => $HTMLCharsetsAttrChecker,
     action => $HTMLURIAttrChecker, ## TODO: Warn if submission is not defined for the scheme
-    autocomplete => $GetHTMLEnumeratedAttrChecker->({
-      on => 1, off => 1,
-    }),
     data => $NonEmptyURLChecker, ## XXXreference: MUST point |formdata|
-    enctype => $GetHTMLEnumeratedAttrChecker->({
-      'application/x-www-form-urlencoded' => 1,
-      'multipart/form-data' => 1,
-      'text/plain' => 1,
-    }),
     lcs => $GetHTMLBooleanAttrChecker->('lcs'),
     measure => $GetHTMLEnumeratedAttrChecker->({cid => 1, auto => 1}),
-    method => $GetHTMLEnumeratedAttrChecker->({
-      get => 1, post => 1,
-    }),
     name => sub {
       my ($self, $attr) = @_;
       
@@ -7847,14 +7827,6 @@ $Element->{+HTML_NS}->{button} = {
     }),
     form => $HTMLFormAttrChecker,
     formaction => $HTMLURIAttrChecker,
-    formenctype => $GetHTMLEnumeratedAttrChecker->({
-      'application/x-www-form-urlencoded' => 1,
-      'multipart/form-data' => 1,
-      'text/plain' => 1,
-    }),
-    formmethod => $GetHTMLEnumeratedAttrChecker->({
-      get => 1, post => 1,
-    }),
     formtarget => $HTMLTargetAttrChecker,
     method => $GetHTMLEnumeratedAttrChecker->({
       get => 1, post => 1,
