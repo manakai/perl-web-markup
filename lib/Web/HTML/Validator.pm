@@ -485,6 +485,38 @@ $CheckerByType->{'media query list'} = sub {
                      level => 'u');
 }; # media query list
 
+## URL potentially surrounded by spaces [HTML]
+$CheckerByType->{'URL potentially surrounded by spaces'} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  # XXX update checker
+  my $value = $attr->value;
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($value);
+  $chk->onerror (sub {
+    $self->{onerror}->(@_, node => $attr);
+  });
+  $chk->check_iri_reference;
+  $self->{has_uri_attr} = 1; ## TODO: <html manifest>
+
+  my $attr_name = $attr->name;
+  $element_state->{uri_info}->{$attr_name}->{node} = $attr;
+  ## TODO: absolute
+  push @{$self->{return}->{uri}->{$value} ||= []},
+      $element_state->{uri_info}->{$attr_name};
+}; # URL potentially surrounded by spaces
+
+## Non-empty URL potentially surrounded by spaces [HTML]
+$CheckerByType->{'non-empty URL potentially surrounded by spaces'} = sub {
+  my ($self, $attr) = @_;
+  if ($attr->value eq '') {
+    $self->{onerror}->(type => 'url:empty', # XXX documentation
+                       node => $attr,
+                       level => $self->{level}->{must});
+  } else {
+    $CheckerByType->{'URL potentially surrounded by spaces'}->(@_);
+  }
+}; # non-empty URL potentially surrounded by spaces [HTML]
+
 ## Event handler content attribute [HTML]
 $CheckerByType->{'event handler'} = sub {
   my ($self, $attr) = @_;
@@ -2404,11 +2436,6 @@ my $ShapeCoordsChecker = sub ($$$$) {
   }
 }; # $ShapeCoordsChecker
 
-my $EmbeddedAlignChecker = $GetHTMLEnumeratedAttrChecker->({
-  bottom => 1, middle => 1, top => 1, left => 1, right => 1, center => -1,
-  baseline => -1, texttop => -1, abscenter => -1, absmiddle => -1,
-});
-
 my $LegacyLoopChecker = sub {
   my ($self, $attr) = @_;
   
@@ -2668,13 +2695,7 @@ $Element->{+HTML_NS}->{''} = {
 
 $Element->{+HTML_NS}->{html} = {
   is_root => 1,
-  check_attrs => $GetHTMLAttrsChecker->({
-    manifest => $HTMLURIAttrChecker,
-    scroll => $GetHTMLEnumeratedAttrChecker->({
-      yes => 1, no => 1, auto => 1,
-    }),
-    version => sub { },
-  }), # check_attrs
+  check_attrs => $GetHTMLAttrsChecker->(),
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before head';
@@ -2826,7 +2847,6 @@ $Element->{+HTML_NS}->{title} = {
 $Element->{+HTML_NS}->{base} = {
   %HTMLEmptyChecker,
   check_attrs2 => $GetHTMLAttrsChecker->({
-    href => $HTMLURIAttrChecker,
     target => $HTMLTargetAttrChecker,
   }), # check_attrs2
   check_attrs => sub {
@@ -2894,7 +2914,6 @@ $Element->{+HTML_NS}->{link} = {
     },
     href => $HTMLURIAttrChecker,
     rel => sub {}, ## checked in check_attrs2
-    methods => sub { },
     sizes => sub {
       my ($self, $attr) = @_;
       my %word;
@@ -2918,10 +2937,8 @@ $Element->{+HTML_NS}->{link} = {
         }
       }
     },
-    src => $HTMLURIAttrChecker,
     target => $HTMLTargetAttrChecker,
     type => $MIMETypeChecker,
-    urn => $HTMLURIAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -3390,7 +3407,6 @@ $Element->{+HTML_NS}->{style} = {
 $Element->{+HTML_NS}->{script} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    archive => $NonEmptyURLChecker,
     charset => sub {
       my ($self, $attr) = @_;
 
@@ -3399,7 +3415,6 @@ $Element->{+HTML_NS}->{script} = {
 
       $HTMLCharsetChecker->($attr->value, @_);
     },
-    event => sub { },
     for => sub {
       my ($self, $attr) = @_;
 
@@ -3650,25 +3665,10 @@ $Element->{+HTML_NS}->{noscript} = {
   }, # check_end
 }; # noscript
 
-$Element->{+HTML_NS}->{'event-source'} = {
-  %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    src => $NonEmptyURLChecker,
-  }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-
-    $element_state->{uri_info}->{src}->{type}->{resource} = 1;
-  }, # check_start
-}; # event-source
-
 # ---- Sections ----
 
 $Element->{+HTML_NS}->{body} = {
   %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    background => $NonEmptyURLChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -3679,9 +3679,6 @@ $Element->{+HTML_NS}->{body} = {
 
 $Element->{+HTML_NS}->{section} = {
   %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    #
-  }), # check_attrs
 }; # section
 
 $Element->{+HTML_NS}->{nav} = {
@@ -3715,14 +3712,6 @@ $Element->{+HTML_NS}->{aside} = {
 
 $Element->{+HTML_NS}->{h1} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    align => $GetHTMLEnumeratedAttrChecker->({
-      left => 1, center => 1, right => 1, justify => 1,
-    }),
-    clear => $GetHTMLEnumeratedAttrChecker->({
-      left => 1, all => 1, right => 1, none => 1, both => -1,
-    }),
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $self->{flag}->{has_hn} = 1;
@@ -3893,9 +3882,6 @@ $Element->{+HTML_NS}->{plaintext} = {
 
 $Element->{+HTML_NS}->{blockquote} = {
   %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    cite => $HTMLURIAttrChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
@@ -4102,7 +4088,6 @@ $Element->{+HTML_NS}->{center} = {
 $Element->{+HTML_NS}->{marquee} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    datasrc => $NonEmptyURLChecker,
     hspace => $HTMLLengthAttrChecker,
     loop => $LegacyLoopChecker,
     vspace => $HTMLLengthAttrChecker,
@@ -4158,8 +4143,6 @@ $Element->{+HTML_NS}->{a} = {
                                  level => $self->{level}->{must});
             }
           }, # cti
-          datafld => sub { },
-          datasrc => $NonEmptyURLChecker,
           directkey => $AccesskeyChecker,
           email => sub {
             my ($self, $attr) = @_;
@@ -4170,14 +4153,10 @@ $Element->{+HTML_NS}->{a} = {
             }
           }, # email
           eswf => $ObjectHashIDRefChecker,
-          href => $HTMLURIAttrChecker,
-          ib => $HTMLURIAttrChecker,
-          ifb => $HTMLURIAttrChecker,
           ijam => $ObjectOptionalHashIDRefChecker,
           ilet => $ObjectHashIDRefChecker,
           irst => $ObjectHashIDRefChecker,
           iswf => $ObjectHashIDRefChecker,
-          kana => sub { },
           loop => sub {
             my ($self, $attr) = @_;
             if ($attr->value =~ /\A(?:[0-9]+|infinite)\z/) {
@@ -4188,7 +4167,6 @@ $Element->{+HTML_NS}->{a} = {
                                  level => $self->{level}->{must});
             }
           }, # loop
-          methods => sub { },
           memoryname => sub {
             my ($self, $attr) = @_;
             if ($attr->value =~ /.-./s) {
@@ -4202,29 +4180,10 @@ $Element->{+HTML_NS}->{a} = {
           name => $NameAttrChecker,
           ping => $HTMLSpaceURIsAttrChecker,
     rel => sub {}, ## checked in check_attrs2
-          shape => $GetHTMLEnumeratedAttrChecker->({
-            circ => -1, circle => 1,
-            default => 1,
-            poly => 1, polygon => -1,
-            rect => 1, rectangle => -1,
-          }),
-          soundstart => $GetHTMLEnumeratedAttrChecker->({
-            select => 1, focus => 1,
-          }),
-          src => $NonEmptyURLChecker,
           target => $HTMLTargetAttrChecker,
-          telbook => sub { },
           type => $MIMETypeChecker,
-          urn => $HTMLURIAttrChecker,
-          utn => $GetHTMLBooleanAttrChecker->('utn'),
           viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
             1 <= $_[0] and $_[0] <= 9;
-          }),
-          vibration => $GetHTMLEnumeratedAttrChecker->({
-            select => 1, focus => 1,
-          }),
-          volume => $GetHTMLEnumeratedAttrChecker->({
-            high => 1, middle => 1, low => 1,
           }),
   }), # check_attrs
   check_attrs2 => sub {
@@ -4281,10 +4240,6 @@ $Element->{+HTML_NS}->{a} = {
 
     $ShapeCoordsChecker->($self, $item, \%attr, 'missing');
 
-    # XXX @email -> href=tel:/tel-av:
-    # XXX @telbook, @kana -> href=tel:/tel-av:/mailto:
-    # XXX @memoryname -> href=tel:/mailto:
-
     $element_state->{uri_info}->{href}->{type}->{hyperlink} = 1;
     $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
   }, # check_attrs2
@@ -4334,9 +4289,6 @@ $Element->{+HTML_NS}->{cite} = {
 
 $Element->{+HTML_NS}->{q} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    cite => $HTMLURIAttrChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -4996,19 +4948,12 @@ $Element->{+HTML_NS}->{bdo} = {
 
 $Element->{+HTML_NS}->{span} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    datasrc => $NonEmptyURLChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
     $HTMLPhrasingContentChecker{check_start}->(@_);
   }, # check_start
 }; # span
-
-$Element->{+HTML_NS}->{comment} = {
-  %HTMLTextChecker,
-}; # comment
 
 # ---- Edits ----
 
@@ -5038,7 +4983,6 @@ $Element->{+HTML_NS}->{comment} = {
 $Element->{+HTML_NS}->{ins} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    cite => $HTMLURIAttrChecker,
     datetime => $GetDateTimeAttrChecker->('date_string_with_optional_time'),
   }), # check_attrs
   check_start => sub {
@@ -5051,7 +4995,6 @@ $Element->{+HTML_NS}->{ins} = {
 $Element->{+HTML_NS}->{del} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    cite => $HTMLURIAttrChecker,
     datetime => $GetDateTimeAttrChecker->('date_string_with_optional_time'),
   }), # check_attrs
   check_start => sub {
@@ -5175,7 +5118,6 @@ $Element->{+HTML_NS}->{figcaption} = {
 $Element->{+HTML_NS}->{img} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-      align => $EmbeddedAlignChecker,
       border => sub {
         my ($self, $attr) = @_;
 
@@ -5195,8 +5137,6 @@ $Element->{+HTML_NS}->{img} = {
           }
         }
       }, # border
-      datasrc => $NonEmptyURLChecker,
-      dynsrc => $NonEmptyURLChecker,
       hspace => $HTMLLengthAttrChecker,
       ismap => sub {
         my ($self, $attr, $parent_item) = @_;
@@ -5222,13 +5162,9 @@ $Element->{+HTML_NS}->{img} = {
                              level => $self->{level}->{must});
         }
       },
-      longdesc => $HTMLURIAttrChecker,
-      lowsrc => $NonEmptyURLChecker,
       name => $NameAttrChecker,
-      oversrc => $NonEmptyURLChecker,
       src => $HTMLURIAttrChecker,
       usemap => $HTMLUsemapAttrChecker,
-      vrml => $NonEmptyURLChecker,
       vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
@@ -5277,10 +5213,7 @@ $Element->{+HTML_NS}->{img} = {
 $Element->{+HTML_NS}->{iframe} = {
   %HTMLTextChecker, # XXX content model restriction
   check_attrs => $GetHTMLAttrsChecker->({
-    align => $EmbeddedAlignChecker,
-    datasrc => $NonEmptyURLChecker,
     hspace => $HTMLLengthAttrChecker,
-    longdesc => $HTMLURIAttrChecker,
     name => $HTMLBrowsingContextNameAttrChecker,
     sandbox => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->({
       'allow-same-origin' => 1, 'allow-forms' => 1, 'allow-scripts' => 1,
@@ -5315,12 +5248,7 @@ $Element->{+HTML_NS}->{embed} = {
     type => $MIMETypeChecker,
     hspace => $HTMLLengthAttrChecker,
     vspace => $HTMLLengthAttrChecker,
-    align => $EmbeddedAlignChecker,
     name => $NameAttrChecker,
-    pluginpage => $HTMLURIAttrChecker,
-    pluginspage => $HTMLURIAttrChecker,
-    pluginurl => $HTMLURIAttrChecker,
-    code => $NonEmptyURLChecker,
   }, 'is_embed'), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5365,15 +5293,12 @@ $Element->{+HTML_NS}->{noembed} = {
 $Element->{+HTML_NS}->{object} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    align => $EmbeddedAlignChecker,
     archive => $HTMLSpaceURIsAttrChecker,
         ## TODO: Relative to @codebase
-    classid => $HTMLURIAttrChecker, # XXX MUST be non-empty, absolute
-    code => $NonEmptyURLChecker,
-    codebase => $NonEmptyURLChecker,
+    # XXX classid="" MUST be absolute
+    classid => $HTMLURIAttrChecker,
     codetype => $MIMETypeChecker,
     data => $HTMLURIAttrChecker,
-    datasrc => $NonEmptyURLChecker,
     form => $HTMLFormAttrChecker,
     hspace => $HTMLLengthAttrChecker,
     name => $HTMLBrowsingContextNameAttrChecker,
@@ -5471,8 +5396,6 @@ $Element->{+HTML_NS}->{object} = {
 $Element->{+HTML_NS}->{applet} = {
   %{$Element->{+HTML_NS}->{object}},
   check_attrs => $GetHTMLAttrsChecker->({
-    align => $EmbeddedAlignChecker,
-    alt => sub { },
     archive => sub {
       my ($self, $attr) = @_;
 
@@ -5505,12 +5428,8 @@ $Element->{+HTML_NS}->{applet} = {
 
       $self->{has_uri_attr} = 1;
     }, # archive
-    code => $NonEmptyURLChecker,
-    codebase => $NonEmptyURLChecker,
-    datasrc => $NonEmptyURLChecker,
     hspace => $HTMLLengthAttrChecker,
     name => $NameAttrChecker,
-    object => $NonEmptyURLChecker,
     vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
@@ -5945,7 +5864,6 @@ $Element->{+HTML_NS}->{area} = {
   check_attrs => $GetHTMLAttrsChecker->({
     alt => sub { }, ## Checked later.
     coords => sub { }, ## Checked in $ShapeCoordsChecker
-    href => $HTMLURIAttrChecker,
     ping => $HTMLSpaceURIsAttrChecker,
     rel => sub {}, ## Checked in check_attrs2
     target => $HTMLTargetAttrChecker,
@@ -6912,7 +6830,10 @@ $Element->{+HTML_NS}->{input} = {
             $checker =
             {
              action => $HTMLURIAttrChecker,
-             align => $EmbeddedAlignChecker,
+             align => $GetHTMLEnumeratedAttrChecker->({
+               bottom => 1, middle => 1, top => 1, left => 1, right => 1, center => -1,
+               baseline => -1, texttop => -1, abscenter => -1, absmiddle => -1,
+             }),
              alt => sub {
                my ($self, $attr) = @_;
                my $value = $attr->value;
@@ -8286,10 +8207,7 @@ $Element->{+HTML_NS}->{frameset} = {
 $Element->{+HTML_NS}->{frame} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    datasrc => $NonEmptyURLChecker,
-    longdesc => $HTMLURIAttrChecker,
     name => $HTMLBrowsingContextNameAttrChecker,
-    src => $NonEmptyURLChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;

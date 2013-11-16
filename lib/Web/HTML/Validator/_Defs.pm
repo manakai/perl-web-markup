@@ -1492,9 +1492,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                "focus" => {
                                                                                                                                             "conforming" => 1
                                                                                                                                           },
-                                                                                                                               "selected" => {
-                                                                                                                                               "conforming" => 1
-                                                                                                                                             }
+                                                                                                                               "select" => {
+                                                                                                                                             "conforming" => 1
+                                                                                                                                           }
                                                                                                                              },
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
@@ -1600,7 +1600,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                               },
-                                                                                                              "value_type" => "enmerated"
+                                                                                                              "value_type" => "enumerated"
                                                                                                             },
                                                                                                  "alt" => {
                                                                                                             "value_type" => "text"
@@ -2858,7 +2858,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         }
                                                                                                                              },
                                                                                                              "status" => "LC",
-                                                                                                             "value_type" => "enmerated"
+                                                                                                             "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "border" => {
                                                                                                               "value_type" => "non-negative integer"
@@ -3772,7 +3772,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          }
                                                                                                                               },
                                                                                                               "status" => "LC",
-                                                                                                              "value_type" => "enmerated"
+                                                                                                              "value_type" => "enumerated"
                                                                                                             },
                                                                                                  "allowfullscreen" => {
                                                                                                                         "conforming" => 1,
@@ -3969,7 +3969,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                       }
                                                                                                                            },
                                                                                                            "status" => "LC",
-                                                                                                           "value_type" => "enmerated"
+                                                                                                           "value_type" => "enumerated"
                                                                                                          },
                                                                                               "alt" => {
                                                                                                          "conforming" => 1,
@@ -4189,7 +4189,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         }
                                                                                                                              },
                                                                                                              "status" => "LC",
-                                                                                                             "value_type" => "enmerated"
+                                                                                                             "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "alt" => {
                                                                                                            "conforming" => 1,
@@ -4923,9 +4923,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                    "focus" => {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               },
-                                                                                                                                   "selected" => {
-                                                                                                                                                   "conforming" => 1
-                                                                                                                                                 }
+                                                                                                                                   "select" => {
+                                                                                                                                                 "conforming" => 1
+                                                                                                                                               }
                                                                                                                                  },
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
@@ -5690,7 +5690,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          }
                                                                                                                               },
                                                                                                               "status" => "LC",
-                                                                                                              "value_type" => "enmerated"
+                                                                                                              "value_type" => "enumerated"
                                                                                                             },
                                                                                                  "archive" => {
                                                                                                                 "status" => "LC",
