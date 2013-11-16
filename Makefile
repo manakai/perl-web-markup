@@ -59,7 +59,7 @@ update-entities: local/bin/pmbp.pl
 local/elements.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/elements.json
-lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl
+lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl Makefile
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module JSON
 	$(PERL) -MJSON -MData::Dumper -e ' #\
@@ -69,6 +69,7 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl
 	  $$Data::Dumper::Useqq = 1; #\
 	  for $$ns (keys %{$$data->{elements}}) { #\
 	    for $$ln (keys %{$$data->{elements}->{$$ns}}) { #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{spec}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{id}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{desc}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{start_tag}; #\
@@ -76,6 +77,7 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{interface}; #\
 	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\
 	        for $$ln2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}}) { #\
+	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{spec}; #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{id}; #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{desc}; #\
 	        } #\
