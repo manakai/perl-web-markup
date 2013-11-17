@@ -430,6 +430,69 @@ $CheckerByType->{'non-negative integer greater than zero'} = sub {
   }
 }; # non-negative integer greater than zero
 
+## Dimension value [OBSVOCAB]
+$CheckerByType->{'dimension value'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  unless ($value =~ /\A[0-9]+%?\z/) {
+    $self->{onerror}->(node => $attr, type => 'length:syntax error',
+                       level => $self->{level}->{must});
+  }
+}; # dimension value
+
+## List of dimensions [OBSVOCAB]
+$CheckerByType->{'list of dimensions'} = sub {
+  my ($self, $attr) = @_;
+  for my $ml (split /,/, $attr->value, -1) {
+    $ml =~ s/\A[\x09\x0A\x0C\x0D\x20]+//;
+    $ml =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
+    unless ($ml =~ /\A(?>[0-9]+[%*]?|\*)\z/) {
+      $self->{onerror}->(node => $attr,
+                         value => $ml,
+                         type => 'multilength:syntax error', # XXXdocumentation
+                         level => 'm');
+    }
+  }
+}; # list of dimensions
+
+## Browsing context name [HTML]
+$CheckerByType->{'browsing context name'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value =~ /^_/) {
+    $self->{onerror}->(node => $attr, type => 'window name:reserved',
+                       level => 'm',
+                       value => $value);
+  } elsif (length $value) {
+    #
+  } else {
+    $self->{onerror}->(node => $attr, type => 'window name:empty',
+                       level => 'm');
+  }
+}; # browsing context name
+
+## Browsing context name or keyword [HTML]
+$CheckerByType->{'browsing context name or keyword'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value =~ /^_/) {
+    $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+    unless ({
+      _blank => 1,_self => 1, _parent => 1, _top => 1,
+    }->{$value}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'window name:reserved',
+                         level => 'm',
+                         value => $value);
+    }
+  } elsif (length $value) {
+    #
+  } else {
+    $self->{onerror}->(node => $attr, type => 'window name:empty',
+                       level => $self->{level}->{must});
+  }
+}; # browsing context name or keyword
+
 ## Legacy color value [OBSVOCAB]
 $CheckerByType->{'legacy color value'} = sub {
   my ($self, $attr) = @_;
@@ -450,6 +513,27 @@ $CheckerByType->{'legacy color value'} = sub {
     }
   }
 }; # legacy color value
+
+## MIME type [HTML]
+$CheckerByType->{'MIME type'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+
+  require Web::MIME::Type;
+  my $onerror = sub {
+    $self->{onerror}->(@_, node => $attr);
+  };
+
+  ## Syntax-level validation
+  my $type = Web::MIME::Type->parse_web_mime_type ($value, $onerror);
+
+  ## Vocabulary-level validation
+  if ($type) {
+    $type->validate ($onerror);
+  }
+
+  return $type; # or undef
+}; # MIME type
 
 ## CSS styling attribute [HTML] [CSSSTYLEATTR]
 $CheckerByType->{'CSS styling'} = sub {
@@ -1632,33 +1716,6 @@ my $HTMLLengthAttrChecker = sub {
   ## of percentage value at all (!).
 }; # $HTMLLengthAttrChecker
 
-## HTML4 %MultiLength;
-my $MultiLengthChecker = sub {
-  my ($self, $attr) = @_;
-  unless ($attr->value =~ /\A(?>[0-9]+[%*]?|\*)\z/) {
-    $self->{onerror}->(node => $attr,
-                       type => 'multilength:syntax error', # XXXdocumentation
-                       level => $self->{level}->{html4_fact});
-  }
-}; # $MultiLengthChecker
-
-my $MultiLengthListChecker = sub {
-  my ($self, $attr) = @_;
-  for my $ml (split /,/, $attr->value, -1) {
-    $ml =~ s/\A[\x09\x0A\x0C\x0D\x20]+//;
-    $ml =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
-    
-    unless ($ml =~ /\A(?>[0-9]+[%*]?|\*)\z/) {
-      $self->{onerror}->(node => $attr,
-                         value => $ml,
-                         type => 'multilength:syntax error', # XXXdocumentation
-                         level => $self->{level}->{must});
-    }
-  }
-}; # $MultiLengthListChecker
-
-our $MIMETypeChecker; ## See |Web::HTML::Validator|.
-
 my $HTMLFormAttrChecker = sub {
   my ($self, $attr) = @_;
 
@@ -1812,22 +1869,6 @@ my $ObjectOptionalHashIDRefChecker = sub {
                        level => $self->{level}->{must});
   }
 }; # $ObjectHashIDRefChecker
-
-## Valid browsing context name
-my $HTMLBrowsingContextNameAttrChecker = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  if ($value =~ /^_/) {
-    $self->{onerror}->(node => $attr, type => 'window name:reserved',
-                       level => $self->{level}->{must},
-                       value => $value);
-  } elsif (length $value) {
-    #
-  } else {
-    $self->{onerror}->(node => $attr, type => 'window name:empty',
-                       level => $self->{level}->{must});
-  }
-}; # $HTMLBrowsingContextNameAttrChecker
 
 ## Valid browsing context name or keyword
 my $HTMLTargetAttrChecker = sub {
@@ -2843,9 +2884,7 @@ $Element->{+HTML_NS}->{title} = {
 
 $Element->{+HTML_NS}->{base} = {
   %HTMLEmptyChecker,
-  check_attrs2 => $GetHTMLAttrsChecker->({
-    target => $HTMLTargetAttrChecker,
-  }), # check_attrs2
+  check_attrs2 => $GetHTMLAttrsChecker->(),
   check_attrs => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -2933,8 +2972,6 @@ $Element->{+HTML_NS}->{link} = {
         }
       }
     },
-    target => $HTMLTargetAttrChecker,
-    type => $MIMETypeChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -3577,7 +3614,6 @@ $Element->{+HTML_NS}->{script} = {
 ## NOTE: When script is disabled.
 $Element->{+HTML_NS}->{noscript} = {
   %TransparentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({}),
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -4081,9 +4117,7 @@ $Element->{+HTML_NS}->{center} = {
 $Element->{+HTML_NS}->{marquee} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    hspace => $HTMLLengthAttrChecker,
     loop => $LegacyLoopChecker,
-    vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -4173,8 +4207,6 @@ $Element->{+HTML_NS}->{a} = {
           name => $NameAttrChecker,
           ping => $HTMLSpaceURIsAttrChecker,
     rel => sub {}, ## checked in check_attrs2
-          target => $HTMLTargetAttrChecker,
-          type => $MIMETypeChecker,
           viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
             1 <= $_[0] and $_[0] <= 9;
           }),
@@ -4367,7 +4399,6 @@ $Element->{+HTML_NS}->{time} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     datetime => sub { 1 }, # checked in |checker|
-    pubdate => $GetHTMLBooleanAttrChecker->('pubdate'),
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -5130,7 +5161,6 @@ $Element->{+HTML_NS}->{img} = {
           }
         }
       }, # border
-      hspace => $HTMLLengthAttrChecker,
       ismap => sub {
         my ($self, $attr, $parent_item) = @_;
         if (not $self->{flag}->{in_a_href}) {
@@ -5157,7 +5187,6 @@ $Element->{+HTML_NS}->{img} = {
       },
       name => $NameAttrChecker,
       usemap => $HTMLUsemapAttrChecker,
-      vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5205,8 +5234,6 @@ $Element->{+HTML_NS}->{img} = {
 $Element->{+HTML_NS}->{iframe} = {
   %HTMLTextChecker, # XXX content model restriction
   check_attrs => $GetHTMLAttrsChecker->({
-    hspace => $HTMLLengthAttrChecker,
-    name => $HTMLBrowsingContextNameAttrChecker,
     sandbox => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->({
       'allow-same-origin' => 1, 'allow-forms' => 1, 'allow-scripts' => 1,
       'allow-top-navigation' => 1,
@@ -5221,7 +5248,6 @@ $Element->{+HTML_NS}->{iframe} = {
                            media_type => $type,
                            is_char_string => 1});
     }, # srcdoc
-    vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -5235,9 +5261,6 @@ $Element->{+HTML_NS}->{iframe} = {
 $Element->{+HTML_NS}->{embed} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    type => $MIMETypeChecker,
-    hspace => $HTMLLengthAttrChecker,
-    vspace => $HTMLLengthAttrChecker,
     name => $NameAttrChecker,
   }, 'is_embed'), # check_attrs
   check_attrs2 => sub {
@@ -5286,17 +5309,8 @@ $Element->{+HTML_NS}->{object} = {
     archive => $HTMLSpaceURIsAttrChecker,
         ## TODO: Relative to @codebase
     # XXX classid="" MUST be absolute
-    codetype => $MIMETypeChecker,
     form => $HTMLFormAttrChecker,
-    hspace => $HTMLLengthAttrChecker,
-    name => $HTMLBrowsingContextNameAttrChecker,
-        ## NOTE: |name| attribute of the |object| element defines
-        ## the name of the browsing context created by the element,
-        ## if any, but is also used as the form control name of the
-        ## form control provided by the plugin, if any.
-    type => $MIMETypeChecker,
     usemap => $HTMLUsemapAttrChecker,
-    vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5416,9 +5430,7 @@ $Element->{+HTML_NS}->{applet} = {
 
       $self->{has_uri_attr} = 1;
     }, # archive
-    hspace => $HTMLLengthAttrChecker,
     name => $NameAttrChecker,
-    vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5462,9 +5474,6 @@ $Element->{+HTML_NS}->{applet} = {
 
 $Element->{+HTML_NS}->{param} = {
   %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => $MIMETypeChecker,
-  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     unless ($item->{node}->has_attribute_ns (undef, 'name')) {
@@ -5602,9 +5611,6 @@ $Element->{+HTML_NS}->{audio} = {
 
 $Element->{+HTML_NS}->{source} = {
   %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => $MIMETypeChecker,
-  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     unless ($item->{node}->has_attribute_ns (undef, 'src')) {
@@ -5832,8 +5838,6 @@ $Element->{+HTML_NS}->{area} = {
     coords => sub { }, ## Checked in $ShapeCoordsChecker
     ping => $HTMLSpaceURIsAttrChecker,
     rel => sub {}, ## Checked in check_attrs2
-    target => $HTMLTargetAttrChecker,
-    type => $MIMETypeChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5924,10 +5928,6 @@ $Element->{+HTML_NS}->{table} = {
         }
       }
     }, # border
-    height => $HTMLLengthAttrChecker,
-    hspace => $HTMLLengthAttrChecker,
-    vspace => $HTMLLengthAttrChecker,
-    width => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -6161,16 +6161,18 @@ $Element->{+HTML_NS}->{caption} = {
   },
 }; # caption
 
-my %cellalign = (
-  char => $CharChecker,
-  charoff => $HTMLLengthAttrChecker,
-); # %cellalign
-
 $Element->{+HTML_NS}->{colgroup} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    %cellalign,
-    width => $MultiLengthChecker,
+    char => $CharChecker,
+    width => sub {
+      my ($self, $attr) = @_;
+      unless ($attr->value =~ /\A(?>[0-9]+[%*]?|\*)\z/) {
+        $self->{onerror}->(node => $attr,
+                           type => 'multilength:syntax error', # XXXdocumentation
+                           level => 'm');
+      }
+    },
   }), # check_attrs
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
@@ -6205,14 +6207,14 @@ $Element->{+HTML_NS}->{colgroup} = {
 $Element->{+HTML_NS}->{col} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    %cellalign,
+    char => $CharChecker,
   }), # check_attrs
 }; # col
 
 $Element->{+HTML_NS}->{tbody} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    %cellalign,
+    char => $CharChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -6259,8 +6261,7 @@ $Element->{+HTML_NS}->{tfoot} = {
 $Element->{+HTML_NS}->{tr} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    %cellalign,
-    height => $HTMLLengthAttrChecker,
+    char => $CharChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -6295,15 +6296,13 @@ $Element->{+HTML_NS}->{tr} = {
 $Element->{+HTML_NS}->{td} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    %cellalign,
+    char => $CharChecker,
     headers => sub {
       ## NOTE: Will be checked as part of |table| element checker.
       ## Although the conformance of |headers| attribute is not
       ## checked if the element does not form a part of a table, the
       ## element is non-conforming in that case anyway.
     },
-    height => $HTMLLengthAttrChecker,
-    width => $HTMLLengthAttrChecker,
   }),
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -6315,15 +6314,13 @@ $Element->{+HTML_NS}->{td} = {
 $Element->{+HTML_NS}->{th} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    %cellalign,
+    char => $CharChecker,
     headers => sub {
       ## NOTE: Will be checked as part of |table| element checker.
       ## Although the conformance of |headers| attribute is not
       ## checked if the element does not form a part of a table, the
       ## element is non-conforming in that case anyway.
     },
-    height => $HTMLLengthAttrChecker,
-    width => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -6359,7 +6356,6 @@ $Element->{+HTML_NS}->{form} = {
         }
       }
     },
-    target => $HTMLTargetAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -7204,9 +7200,7 @@ $Element->{+HTML_NS}->{button} = {
   check_attrs => $GetHTMLAttrsChecker->({
     autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
-    formtarget => $HTMLTargetAttrChecker,
     name => $FormControlNameAttrChecker,
-    target => $HTMLTargetAttrChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -8038,10 +8032,6 @@ $Element->{+HTML_NS}->{menu} = {
 
 $Element->{+HTML_NS}->{frameset} = {
   %HTMLChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    cols => $MultiLengthListChecker,
-    rows => $MultiLengthListChecker,
-  }), # check_attrs
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -8098,9 +8088,6 @@ $Element->{+HTML_NS}->{frameset} = {
 
 $Element->{+HTML_NS}->{frame} = {
   %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    name => $HTMLBrowsingContextNameAttrChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
