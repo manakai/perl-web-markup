@@ -77,274 +77,113 @@ sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 
 ## ------ Attribute conformance checkers ------
 
-## Web Applications 1.0 "Valid MIME type"
-our $MIMETypeChecker = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
+my $CheckerByType = {};
+my $AttrChecker = {};
+my $HTMLAttrChecker = {}; # XXX
 
-  require Web::MIME::Type;
-  my $onerror = sub {
-    $self->{onerror}->(@_, node => $attr);
-  };
+sub _check_element_attrs ($$$;%) {
+  my ($self, $item, $element_state, %args) = @_;
+  my $el_ns = $item->{node}->namespace_uri;
+  $el_ns = '' unless defined $el_ns;
+  my $el_ln = $item->{node}->local_name;
+  for my $attr (@{$item->{node}->attributes}) {
+    my $attr_ns = $attr->namespace_uri;
+    $attr_ns = '' if not defined $attr_ns;
+    my $attr_ln = $attr->manakai_local_name;
 
-  ## Syntax-level validation
-  my $type = Web::MIME::Type->parse_web_mime_type ($value, $onerror);
-
-  ## Vocabulary-level validation
-  if ($type) {
-    $type->validate ($onerror);
-  }
-
-  return $type; # or undef
-}; # $MIMETypeChecker
-
-## XML Namespaces
-##
-## These requirements from XML Namespaces specification are only
-## syntactical or only relevant to DTDs so they are checked by parser
-## and/or DTD validator, not by this validator:
-##
-##   - Prefix MUST be declared.
-##   - Attributes MUST be unique.
-##   - Names in DTD and names in some typed attribute values MUST be NCName.
-##
-## Use of reserved namespace name/prefix by $node->prefix and/or
-## $node->namespace_uri are only warnings, not errors, as there are no
-## conformance requirement for DOM representation in any
-## specification.  (In fact most combinations of them are not even
-## exist in standard DOM world.)
-
-our $AttrChecker = {
-  (XML_NS) => {
-    '' => sub {
-      my ($self, $attr) = @_;
-      ## "Attribute not defined" error is thrown by other place.
-      
-      my $prefix = $attr->prefix;
-      if (defined $prefix and not $prefix eq 'xml') {
-        $self->{onerror}
-            ->(node => $attr,
-               type => 'Reserved Prefixes and Namespace Names:Name',
-               text => 'http://www.w3.org/XML/1998/namespace',
-               level => 'w');
-        ## "$prefix is undef" error is thrown by other place
-      }
-    },
-
-    space => sub {
-      my ($self, $attr) = @_;
-      
-      my $prefix = $attr->prefix;
-      if (defined $prefix and not $prefix eq 'xml') {
-        $self->{onerror}
-            ->(node => $attr,
-               type => 'Reserved Prefixes and Namespace Names:Name',
-               text => 'http://www.w3.org/XML/1998/namespace',
-               level => 'w');
-        ## "$prefix is undef" error is thrown by other place
-      }
-
-      my $oe = $attr->owner_element;
-      if ($oe and
-          ($oe->namespace_uri || '') eq HTML_NS and
-          $oe->owner_document->manakai_is_html) {
-        $self->{onerror}->(node => $attr, type => 'in HTML:xml:space', # XXX
+    my $prefix = $attr->prefix;
+    if (not defined $prefix) {
+      if ($attr_ns ne '' and
+          not ($attr_ns eq XMLNS_NS and $attr_ln eq 'xmlns')) {
+        $self->{onerror}->(node => $attr,
+                           type => 'nsattr has no prefix', # XXX
                            level => 'w');
       }
 
-      my $value = $attr->value;
-      if ($value eq 'default' or $value eq 'preserve') {
+      # XXX xmlns="" in no namespace
+    } elsif ($prefix eq 'xml') {
+      if ($attr_ns ne XML_NS) {
+        $self->{onerror}->(node => $attr,
+                           type => 'Reserved Prefixes and Namespace Names:Prefix',
+                           text => $prefix,
+                           level => 'w');
+      }
+    } elsif ($prefix eq 'xmlns') {
+      if ($attr_ns ne XMLNS_NS) {
+        $self->{onerror}->(node => $attr,
+                           type => 'Reserved Prefixes and Namespace Names:Prefix',
+                           text => $prefix,
+                           level => 'w');
+      }
+    }
+    
+    my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
+        || $AttrChecker->{$attr_ns}->{''};
+    my $attr_def = $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
+        $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
+        $Web::HTML::Validator::_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
+    my $conforming = $attr_def->{conforming};
+    if ($attr_ns eq '' and $args{is_html}) { # XXX
+      if ($args{allow_dataset} and
+          $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
+          $attr_ln !~ /[A-Z]/) {
+        ## XML-compatible + no uppercase letter
+        $checker = $CheckerByType->{any};
+        $conforming = 1;
+      } else {
+        # XXX
+        $checker = $args{element_specific_checker}->{$attr_ln}
+            || $HTMLAttrChecker->{$attr_ln};
+      }
+    } elsif ($attr_ns eq '' and $args{is_atom}) {
+      # XXX
+      $checker = $args{element_specific_checker}->{$attr_ln}
+          || $AttrChecker->{$attr_ln};
+    } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
+      $conforming = 1;
+    }
+    my $value_type = $attr_def->{value_type} || '';
+    $checker ||= $CheckerByType->{$value_type};
+    if ($args{is_embed} and
+        $attr_ns eq '' and
+        $attr_ln !~ /^xml/ and
+        $attr_ln !~ /[A-Z]/ and
+        $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
+      ## XML-compatible + no uppercase letter
+      $checker ||= sub { };
+      $conforming = 1;
+    }
+    $checker->($self, $attr, $item, $element_state, $attr_def) if $checker;
+
+    if ($conforming or $attr_def->{obsolete_but_conforming}) {
+      unless ($checker) {
+        ## According to the attribute list, this attribute is
+        ## conforming.  However, current version of the validator does
+        ## not support the attribute.  The conformance is unknown.
+        $self->{onerror}->(node => $attr,
+                           type => 'unknown attribute', level => 'u');
+      }
+      my $status = $attr_def->{status} || '';
+      if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
         #
       } else {
-        ## Note that S before or after value is not allowed, as
-        ## $attr->value is normalized value.  DTD validation should be
-        ## performed before the conformance checking.
-        $self->{onerror}->(node => $attr, level => 'm',
-                           type => 'invalid attribute value');
-      }
-    }, # xml:space
-    lang => sub {
-      my ($self, $attr) = @_;
-      
-      my $prefix = $attr->prefix;
-      if (defined $prefix and not $prefix eq 'xml') {
-        $self->{onerror}
-            ->(node => $attr,
-               type => 'Reserved Prefixes and Namespace Names:Name',
-               text => 'http://www.w3.org/XML/1998/namespace',
-               level => 'w');
-        ## "$prefix is undef" error is thrown by other place
-      }
-
-      my $value = $attr->value;
-      if ($value eq '') {
-        #
-      } else {
-        require Web::LangTag;
-        my $lang = Web::LangTag->new;
-        $lang->onerror (sub {
-          $self->{onerror}->(@_, node => $attr);
-        });
-        $lang->check_rfc3066_language_tag ($value); # XXX Update langtag spec
-      }
-
-      ## TODO: test data
-
-      my $nsuri = $attr->owner_element->namespace_uri;
-      if (defined $nsuri and $nsuri eq HTML_NS) {
-        my $lang_attr = $attr->owner_element->get_attribute_node_ns
-            (undef, 'lang');
-        if ($lang_attr) {
-          my $lang_attr_value = $lang_attr->value;
-          $lang_attr_value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-          my $value = $value;
-          $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-          if ($lang_attr_value ne $value) {
-            ## NOTE: HTML5 Section "The |lang| and |xml:lang| attributes"
-            $self->{onerror}->(node => $attr,
-                               type => 'xml:lang ne lang',
-                               level => $self->{level}->{must});
-          }
-        }
-
-        if ($attr->owner_document->manakai_is_html) { # MUST NOT
-          $self->{onerror}->(node => $attr, type => 'in HTML:xml:lang',
-                             level => $self->{level}->{must});
-        }
-      }
-    }, # xml:lang
-    base => sub {
-      my ($self, $attr) = @_;
-
-      ## XXX xml:base support will be likely removed from the Web.
-
-      my $value = $attr->value;
-      if ($value =~ /[^\x{0000}-\x{10FFFF}]/) { ## ISSUE: Should we disallow noncharacters?
+        ## The attribute is conforming, but is in earlier stage such
+        ## that it should not be used without caution.
         $self->{onerror}->(node => $attr,
-                           type => 'invalid attribute value',
-                           level => $self->{level}->{fact}, ## TODO: correct?
-                          );
+                           type => 'status:wd:attr', level => 'i')
       }
-      ## NOTE: Conformance to URI standard is not checked since there is
-      ## no author requirement on conformance in the XML Base specification.
-    },
-  },
-  (XMLNS_NS) => {
-    '' => sub {
-      my ($self, $attr) = @_;
+    } else {
+      ## "Authors must not use elements, attributes, or attribute
+      ## values that are not permitted by this specification or other
+      ## applicable specifications" [HTML]
+      $self->{onerror}->(node => $attr,
+                         type => 'attribute not defined', level => 'm');
+    }
+  }
+} # _check_element_attrs
 
-      my $prefix = $attr->prefix;
-      if (defined $prefix and not $prefix eq 'xmlns') {
-        $self->{onerror}
-            ->(node => $attr,
-               type => 'Reserved Prefixes and Namespace Names:Name',
-               text => 'http://www.w3.org/2000/xmlns/',
-               level => 'w');
-        ## "$prefix is undef" error is thrown by other place
-      }
-
-      my $value = $attr->value;
-      ## The value MUST be a URL or the empty string.
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($value);
-      $chk->onerror (sub {
-        $self->{onerror}->(value => $value, @_, node => $attr);
-      });
-      $chk->check_iri_reference;
-
-      ## XXX
-      ## Use of relative URLs are deprecated.
-
-      ## Namespace URL SHOULD be unique and persistent.  But this
-      ## can't be tested.
-
-      if ($value eq '') {
-        ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
-        $self->{onerror}->(node => $attr,
-                           type => 'xmlns:* empty', # XXX
-                           level => 'm');
-      }
-
-      my $ln = $attr->manakai_local_name;
-      if ($value eq XML_NS and $ln ne 'xml') {
-        $self->{onerror}
-          ->(node => $attr,
-             type => 'Reserved Prefixes and Namespace Names:Name',
-             text => $value,
-             level => 'm');
-      } elsif ($value eq XMLNS_NS) {
-        $self->{onerror}
-          ->(node => $attr,
-             type => 'Reserved Prefixes and Namespace Names:Name',
-             text => $value,
-             level => 'm');
-      }
-      if ($ln eq 'xml' and $value ne XML_NS) {
-        $self->{onerror}
-          ->(node => $attr,
-             type => 'Reserved Prefixes and Namespace Names:Prefix',
-             text => $ln,
-             level => 'm');
-      }
-    }, # xmlns:*=""
-    xmlns => sub {
-      my ($self, $attr) = @_;
-
-      my $prefix = $attr->prefix;
-      if (defined $prefix) {
-        if ($prefix eq 'xmlns') {
-          ## The prefix |xmlns| MUST NOT be declared.
-          $self->{onerror}->(node => $attr,
-                             type => 'Reserved Prefixes and Namespace Names:Prefix',
-                             text => 'xmlns',
-                             level => 'm');
-        } else {
-          $self->{onerror}
-              ->(node => $attr,
-                 type => 'Reserved Prefixes and Namespace Names:Name',
-                 text => 'http://www.w3.org/2000/xmlns/',
-                 level => 'w');
-        }
-      } # $prefix
-
-      my $value = $attr->value;
-      ## The value MUST be a URL or the empty string.
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($value);
-      $chk->onerror (sub {
-        $self->{onerror}->(value => $value, @_, node => $attr);
-      });
-      $chk->check_iri_reference;
-
-      ## XXX
-      ## Use of relative URLs are deprecated.
-
-      ## Namespace URL SHOULD be unique and persistent.  But this
-      ## can't be tested.
-
-      if ($value eq XML_NS) {
-        $self->{onerror}
-          ->(node => $attr,
-             type => 'Reserved Prefixes and Namespace Names:Name',
-             text => $value,
-             level => 'm');
-      } elsif ($value eq XMLNS_NS) {
-        $self->{onerror}
-          ->(node => $attr,
-             type => 'Reserved Prefixes and Namespace Names:Name',
-             text => $value,
-             level => 'm');
-      }
-    }, # xmlns=""
-  }, # XMLNS_NS
-};
-
-my $HTMLAttrChecker;
-
-my $CheckerByType = {
-  any => sub {},
-  text => sub {},
-};
+$CheckerByType->{any} = sub {};
+$CheckerByType->{text} = sub {};
 
 ## Non-empty text
 $CheckerByType->{'non-empty'} =
@@ -609,109 +448,261 @@ $CheckerByType->{'event handler'} = sub {
                      level => 'u');
 }; # event handler
 
-## |data-*| - Any value is allowed.
-my $HTMLDatasetAttrChecker = sub { };
 
-sub _check_element_attrs ($$$;%) {
-  my ($self, $item, $element_state, %args) = @_;
-  my $el_ns = $item->{node}->namespace_uri;
-  $el_ns = '' unless defined $el_ns;
-  my $el_ln = $item->{node}->local_name;
-  for my $attr (@{$item->{node}->attributes}) {
-    my $attr_ns = $attr->namespace_uri;
-    $attr_ns = '' if not defined $attr_ns;
-    my $attr_ln = $attr->manakai_local_name;
+## Web Applications 1.0 "Valid MIME type"
+our $MIMETypeChecker = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
 
-    my $prefix = $attr->prefix;
-    if (not defined $prefix) {
-      if ($attr_ns ne '' and
-          not ($attr_ns eq XMLNS_NS and $attr_ln eq 'xmlns')) {
-        $self->{onerror}->(node => $attr,
-                           type => 'nsattr has no prefix', # XXX
-                           level => 'w');
-      }
+  require Web::MIME::Type;
+  my $onerror = sub {
+    $self->{onerror}->(@_, node => $attr);
+  };
 
-      # XXX xmlns="" in no namespace
-    } elsif ($prefix eq 'xml') {
-      if ($attr_ns ne XML_NS) {
+  ## Syntax-level validation
+  my $type = Web::MIME::Type->parse_web_mime_type ($value, $onerror);
+
+  ## Vocabulary-level validation
+  if ($type) {
+    $type->validate ($onerror);
+  }
+
+  return $type; # or undef
+}; # $MIMETypeChecker
+
+## ------ XML and XML Namespaces ------
+
+## XML Namespaces
+##
+## These requirements from XML Namespaces specification are only
+## syntactical or only relevant to DTDs so they are checked by parser
+## and/or DTD validator, not by this validator:
+##
+##   - Prefix MUST be declared.
+##   - Attributes MUST be unique.
+##   - Names in DTD and names in some typed attribute values MUST be NCName.
+##
+## Use of reserved namespace name/prefix by $node->prefix and/or
+## $node->namespace_uri are only warnings, not errors, as there are no
+## conformance requirement for DOM representation in any
+## specification.  (In fact most combinations of them are not even
+## exist in standard DOM world.)
+
+$AttrChecker->{(XML_NS)}->{''} = sub {
+  my ($self, $attr) = @_;
+  ## "Attribute not defined" error is thrown by other place.
+  
+  my $prefix = $attr->prefix;
+  if (defined $prefix and not $prefix eq 'xml') {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => 'http://www.w3.org/XML/1998/namespace',
+                       level => 'w');
+    ## "$prefix is undef" error is thrown by other place
+  }
+}; # xml:*=""
+
+$AttrChecker->{(XML_NS)}->{space} = sub {
+  my ($self, $attr) = @_;
+  
+  my $prefix = $attr->prefix;
+  if (defined $prefix and not $prefix eq 'xml') {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => 'http://www.w3.org/XML/1998/namespace',
+                       level => 'w');
+    ## "$prefix is undef" error is thrown by other place
+  }
+
+  my $oe = $attr->owner_element;
+  if ($oe and
+      ($oe->namespace_uri || '') eq HTML_NS and
+      $oe->owner_document->manakai_is_html) {
+    $self->{onerror}->(node => $attr, type => 'in HTML:xml:space', # XXX
+                       level => 'w');
+  }
+
+  my $value = $attr->value;
+  if ($value eq 'default' or $value eq 'preserve') {
+    #
+  } else {
+    ## Note that S before or after value is not allowed, as
+    ## $attr->value is normalized value.  DTD validation should be
+    ## performed before the conformance checking.
+    $self->{onerror}->(node => $attr, level => 'm',
+                       type => 'invalid attribute value');
+  }
+}; # xml:space
+
+$AttrChecker->{(XML_NS)}->{lang} = sub {
+  my ($self, $attr) = @_;
+  
+  my $prefix = $attr->prefix;
+  if (defined $prefix and not $prefix eq 'xml') {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => 'http://www.w3.org/XML/1998/namespace',
+                       level => 'w');
+    ## "$prefix is undef" error is thrown by other place
+  }
+
+  my $value = $attr->value;
+  if ($value eq '') {
+    #
+  } else {
+    require Web::LangTag;
+    my $lang = Web::LangTag->new;
+    $lang->onerror (sub {
+      $self->{onerror}->(@_, node => $attr);
+    });
+    $lang->check_rfc3066_language_tag ($value); # XXX Update langtag spec
+  }
+
+  ## TODO: test data
+
+  my $nsuri = $attr->owner_element->namespace_uri;
+  if (defined $nsuri and $nsuri eq HTML_NS) {
+    my $lang_attr = $attr->owner_element->get_attribute_node_ns
+        (undef, 'lang');
+    if ($lang_attr) {
+      my $lang_attr_value = $lang_attr->value;
+      $lang_attr_value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+      my $value = $value;
+      $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+      if ($lang_attr_value ne $value) {
+        ## NOTE: HTML5 Section "The |lang| and |xml:lang| attributes"
         $self->{onerror}->(node => $attr,
-                           type => 'Reserved Prefixes and Namespace Names:Prefix',
-                           text => $prefix,
-                           level => 'w');
-      }
-    } elsif ($prefix eq 'xmlns') {
-      if ($attr_ns ne XMLNS_NS) {
-        $self->{onerror}->(node => $attr,
-                           type => 'Reserved Prefixes and Namespace Names:Prefix',
-                           text => $prefix,
-                           level => 'w');
+                           type => 'xml:lang ne lang',
+                           level => 'm');
       }
     }
-    
-    my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
-        || $AttrChecker->{$attr_ns}->{''};
-    my $attr_def = $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
-        $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
-        $Web::HTML::Validator::_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
-    my $conforming = $attr_def->{conforming};
-    if ($attr_ns eq '' and $args{is_html}) { # XXX
-      if ($args{allow_dataset} and
-          $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-          $attr_ln !~ /[A-Z]/) {
-        ## XML-compatible + no uppercase letter
-        $checker = $HTMLDatasetAttrChecker;
-        $conforming = 1;
-      } else {
-        # XXX
-        $checker = $args{element_specific_checker}->{$attr_ln}
-            || $HTMLAttrChecker->{$attr_ln};
-      }
-    } elsif ($attr_ns eq '' and $args{is_atom}) {
-      # XXX
-      $checker = $args{element_specific_checker}->{$attr_ln}
-          || $AttrChecker->{$attr_ln};
-    } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
-      $conforming = 1;
-    }
-    my $value_type = $attr_def->{value_type} || '';
-    $checker ||= $CheckerByType->{$value_type};
-    if ($args{is_embed} and
-        $attr_ns eq '' and
-        $attr_ln !~ /^xml/ and
-        $attr_ln !~ /[A-Z]/ and
-        $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
-      ## XML-compatible + no uppercase letter
-      $checker ||= sub { };
-      $conforming = 1;
-    }
-    $checker->($self, $attr, $item, $element_state, $attr_def) if $checker;
 
-    if ($conforming or $attr_def->{obsolete_but_conforming}) {
-      unless ($checker) {
-        ## According to the attribute list, this attribute is
-        ## conforming.  However, current version of the validator does
-        ## not support the attribute.  The conformance is unknown.
-        $self->{onerror}->(node => $attr,
-                           type => 'unknown attribute', level => 'u');
-      }
-      my $status = $attr_def->{status} || '';
-      if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
-        #
-      } else {
-        ## The attribute is conforming, but is in earlier stage such
-        ## that it should not be used without caution.
-        $self->{onerror}->(node => $attr,
-                           type => 'status:wd:attr', level => 'i')
-      }
-    } else {
-      ## "Authors must not use elements, attributes, or attribute
-      ## values that are not permitted by this specification or other
-      ## applicable specifications" [HTML]
-      $self->{onerror}->(node => $attr,
-                         type => 'attribute not defined', level => 'm');
+    if ($attr->owner_document->manakai_is_html) { # MUST NOT
+      $self->{onerror}->(node => $attr, type => 'in HTML:xml:lang',
+                         level => 'm');
     }
   }
-} # _check_element_attrs
+}; # xml:lang
+
+$AttrChecker->{(XML_NS)}->{base} = sub {
+  my ($self, $attr) = @_;
+
+  ## XXX xml:base support will be likely removed from the Web.
+
+  my $value = $attr->value;
+  if ($value =~ /[^\x{0000}-\x{10FFFF}]/) { ## ISSUE: Should we disallow noncharacters?
+    $self->{onerror}->(node => $attr,
+                       type => 'invalid attribute value',
+                       level => $self->{level}->{fact}, ## TODO: correct?
+                      );
+  }
+  ## NOTE: Conformance to URI standard is not checked since there is
+  ## no author requirement on conformance in the XML Base
+  ## specification.
+}; # xml:base=""
+
+$AttrChecker->{(XMLNS_NS)}->{''} = sub {
+  my ($self, $attr) = @_;
+
+  my $prefix = $attr->prefix;
+  if (defined $prefix and not $prefix eq 'xmlns') {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => 'http://www.w3.org/2000/xmlns/',
+                       level => 'w');
+    ## "$prefix is undef" error is thrown by other place
+  }
+
+  my $value = $attr->value;
+  ## The value MUST be a URL or the empty string.
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($value);
+  $chk->onerror (sub {
+    $self->{onerror}->(value => $value, @_, node => $attr);
+  });
+  $chk->check_iri_reference;
+
+  ## XXX
+  ## Use of relative URLs are deprecated.
+
+  ## Namespace URL SHOULD be unique and persistent.  But this can't be
+  ## tested.
+
+  if ($value eq '') {
+    ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
+    $self->{onerror}->(node => $attr,
+                       type => 'xmlns:* empty', # XXX
+                       level => 'm');
+  }
+
+  my $ln = $attr->manakai_local_name;
+  if ($value eq XML_NS and $ln ne 'xml') {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => $value,
+                       level => 'm');
+  } elsif ($value eq XMLNS_NS) {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => $value,
+                       level => 'm');
+  }
+  if ($ln eq 'xml' and $value ne XML_NS) {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Prefix',
+                       text => $ln,
+                       level => 'm');
+  }
+}; # xmlns:*=""
+
+$AttrChecker->{(XMLNS_NS)}->{xmlns} = sub {
+  my ($self, $attr) = @_;
+
+  my $prefix = $attr->prefix;
+  if (defined $prefix) {
+    if ($prefix eq 'xmlns') {
+      ## The prefix |xmlns| MUST NOT be declared.
+      $self->{onerror}->(node => $attr,
+                         type => 'Reserved Prefixes and Namespace Names:Prefix',
+                         text => 'xmlns',
+                         level => 'm');
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'Reserved Prefixes and Namespace Names:Name',
+                         text => 'http://www.w3.org/2000/xmlns/',
+                         level => 'w');
+    }
+  } # $prefix
+
+  my $value = $attr->value;
+  ## The value MUST be a URL or the empty string.
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($value);
+  $chk->onerror (sub {
+    $self->{onerror}->(value => $value, @_, node => $attr);
+  });
+  $chk->check_iri_reference;
+
+  ## XXX
+  ## Use of relative URLs are deprecated.
+
+  ## Namespace URL SHOULD be unique and persistent.  But this can't be
+  ## tested.
+
+  if ($value eq XML_NS) {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => $value,
+                       level => 'm');
+  } elsif ($value eq XMLNS_NS) {
+    $self->{onerror}->(node => $attr,
+                       type => 'Reserved Prefixes and Namespace Names:Name',
+                       text => $value,
+                       level => 'm');
+  }
+}; # xmlns=""
+
+## ------ XXXXXX XXXXXX
 
 our %AnyChecker = (
   ## NOTE: |check_start| is invoked before anything on the element's
@@ -861,6 +852,7 @@ $Element->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{RDF} = {
   },
 };
 
+# XXX
 my $default_error_level = {
   must => 'm',
   should => 's',
@@ -877,10 +869,6 @@ my $default_error_level = {
   ## Web Applications 1.0 "obsolete but conforming" (a class of
   ## SHOULD-level requirements).
   obsconforming => 's',
-
-  xml_error => 'm', ## TODO: correct?
-  xml_id_error => 'm', ## TODO: ?
-  nc => 'm', ## XML Namespace Constraints ## TODO: correct?
 
   ## |Message::Charset::Info| and |Whatpm::Charset::DecodeHandle|
   charset_variant => 'm',
@@ -1321,8 +1309,6 @@ my $FAECheckAttrs2 = sub {
 }; # $FAECheckAttrs2
 
 ## -- Common attribute syntacx checkers
-
-our $AttrChecker;
 
 my $GetHTMLEnumeratedAttrChecker = sub {
   my $states = shift; # {value => conforming ? 1 : -1}
@@ -6334,7 +6320,7 @@ $Element->{+HTML_NS}->{th} = {
 $Element->{+HTML_NS}->{form} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    accept => $AcceptAttrChecker,
+    accept => $AcceptAttrChecker, # XXX drop
     'accept-charset' => $HTMLCharsetsAttrChecker,
     ## XXX warning: action="" URL scheme is not submittable
     name => sub {
