@@ -84,6 +84,9 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl Makefile
 	      } #\
 	    } #\
 	  } #\
+	  delete $$data->{input}->{idl_attrs}; #\
+	  delete $$data->{input}->{methods}; #\
+	  delete $$data->{input}->{events}; #\
 	  $$pm = Dumper $$data; #\
 	  $$pm =~ s/VAR1/Web::HTML::Validator::_Defs/; #\
 	  print "$$pm\n"; #\

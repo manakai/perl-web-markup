@@ -88,6 +88,16 @@ sub _check_element_attrs ($$$;%) {
   my $el_ns = $item->{node}->namespace_uri;
   $el_ns = '' unless defined $el_ns;
   my $el_ln = $item->{node}->local_name;
+  my $is_embed = $el_ns eq HTML_NS && $el_ln eq 'embed';
+  my $input_type;
+  if ($el_ns eq HTML_NS && $el_ln eq 'input') {
+    $input_type = $item->{node}->get_attribute_ns (undef, 'type');
+    $input_type = 'text' unless defined $input_type;
+    $input_type =~ tr/A-Z/a-z/;
+    $input_type = 'text' unless $_Defs->{elements}
+        ->{'http://www.w3.org/1999/xhtml'}->{input}->{attrs}
+        ->{''}->{type}->{enumerated}->{$input_type}->{conforming};
+  }
   for my $attr (@{$item->{node}->attributes}) {
     my $attr_ns = $attr->namespace_uri;
     $attr_ns = '' if not defined $attr_ns;
@@ -132,6 +142,15 @@ sub _check_element_attrs ($$$;%) {
         ## XML-compatible + no uppercase letter
         $checker = $CheckerByType->{any};
         $conforming = 1;
+      } elsif ($input_type and
+               keys %{$_Defs->{input}->{attrs}->{$attr_ln} or {}} and
+               not $_Defs->{input}->{attrs}->{$attr_ln}->{$input_type}) {
+        $checker = sub {
+          $self->{onerror}->(node => $_[1],
+                             type => 'input attr not applicable',
+                             text => $input_type,
+                             level => 'm');
+        };
       } else {
         # XXX
         $checker = $args{element_specific_checker}->{$attr_ln}
@@ -146,7 +165,7 @@ sub _check_element_attrs ($$$;%) {
     }
     my $value_type = $attr_def->{value_type} || '';
     $checker ||= $CheckerByType->{$value_type};
-    if ($args{is_embed} and
+    if ($is_embed and
         $attr_ns eq '' and
         $attr_ln !~ /^xml/ and
         $attr_ln !~ /[A-Z]/ and
@@ -2476,13 +2495,11 @@ my $LiTypeChecker = sub {
 
 my $GetHTMLAttrsChecker = sub {
   my $element_specific_checker = shift;
-  my $is_embed = shift;
   return sub {
     my ($self, $item, $element_state) = @_;
     $self->_check_element_attrs ($item, $element_state,
                                  allow_dataset => 1,
                                  is_html => 1,
-                                 is_embed => $is_embed,
                                  element_specific_checker => $element_specific_checker);
   };
 }; # $GetHTMLAttrsChecker
@@ -4971,7 +4988,7 @@ $Element->{+HTML_NS}->{embed} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     name => $NameAttrChecker,
-  }, 'is_embed'), # check_attrs
+  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     unless ($item->{node}->has_attribute_ns (undef, 'src')) {
@@ -6133,545 +6150,200 @@ $Element->{+HTML_NS}->{label} = {
   },
 }; # label
 
+# XXX
+$CheckerByType->{'global date and time string'} = $GetDateTimeAttrChecker->('global_date_and_time_string');
+$CheckerByType->{'date string'} = $GetDateTimeAttrChecker->('date_string');
+$CheckerByType->{'month string'} = $GetDateTimeAttrChecker->('month_string');
+$CheckerByType->{'week string'} = $GetDateTimeAttrChecker->('week_string');
+$CheckerByType->{'time string'} = $GetDateTimeAttrChecker->('time_string');
+$CheckerByType->{'local date and time string'} = $GetDateTimeAttrChecker->('local_date_and_time_string');
+$CheckerByType->{'floating-point number'} = $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 });
+$CheckerByType->{'simple color'} = sub {
+  my ($self, $attr) = @_;
+  if (not $attr->value =~ /\A#[0-9A-Fa-f]{6}\z|\A\z/) {
+    $self->{onerror}->(node => $attr,
+                       type => 'scolor:syntax error', ## TODOC: type
+                       level => $self->{level}->{must});
+  }
+};
+$CheckerByType->{'one-line text'} = sub {
+  my ($self, $attr) = @_;
+  if ($attr->value =~ /[\x0D\x0A]/) {
+    $self->{onerror}->(node => $attr,
+                       type => 'newline in value', ## TODO: type
+                       level => $self->{level}->{must});
+  }
+};
+
 $Element->{+HTML_NS}->{input} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    map { $_ => sub {} } qw(
-      accept accept-charset action align alt autocapitalize
-      autocomplete autocorrect autofocus autosave border
-      datafld dataformatas datasrc directkey dirname dynsrc
-      emptyok enctype form formaction format formenctype formmethod
-      formtarget height hspace incremental inputmode
-      iprof ismap istyle list loop lowsrc max maxlength method min
-      mode name pattern placeholder precision
-      results size soundstart src start step target
-      type usemap value vcard_name viblength vibration volume
-      vrml vspace width
-    )
-  }), # check_attrs
+    accept => $AcceptAttrChecker,
+    alt => sub {
+      my ($self, $attr) = @_;
+      my $value = $attr->value;
+      unless (length $value) {
+        $self->{onerror}->(node => $attr,
+                           type => 'empty anchor image alt',
+                           level => 'm');
+      }
+    }, # alt
+    autocomplete => $GetHTMLEnumeratedAttrChecker->({ # XXX
+      on => 1, off => 1,
+    }),
+    autofocus => $AutofocusAttrChecker,
+    directkey => $AccesskeyChecker,
+    form => $HTMLFormAttrChecker,
+    format => $TextFormatAttrChecker,
+    inputmode => $InputmodeAttrChecker, # XXX
+    list => $ListAttrChecker,
+    loop => $LegacyLoopChecker,
+    # XXX <input type=number maxlength size> are obsolete but conforming
+    name => $FormControlNameAttrChecker,
+    pattern => $PatternAttrChecker,
+    placeholder => $PlaceholderAttrChecker,
+    precision => $PrecisionAttrChecker,
+    size => $GetHTMLNonNegativeIntegerAttrChecker->(sub {shift > 0}),
+    ## XXXresource src="" referenced resource type
+    step => $StepAttrChecker,
+    usemap => $HTMLUsemapAttrChecker,
+    value => sub {}, ## check_attrs2
+    viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
+      1 <= $_[0] and $_[0] <= 9;
+    }),
+    vibration => $GetHTMLEnumeratedAttrChecker->({
+      select => 1, focus => 1,
+    }),
+  }),
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
 
-    my $state = $item->{node}->get_attribute_ns (undef, 'type');
-    $state = 'text' unless defined $state;
-    $state =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+    my $input_type = $item->{node}->get_attribute_ns (undef, 'type');
+    $input_type = 'text' unless defined $input_type;
+    $input_type =~ tr/A-Z/a-z/;
+    $input_type = 'text' unless $_Defs->{elements}
+        ->{'http://www.w3.org/1999/xhtml'}->{input}->{attrs}
+        ->{''}->{type}->{enumerated}->{$input_type}->{conforming};
 
-    for my $attr (@{$item->{node}->attributes}) {
-      my $attr_ns = $attr->namespace_uri;
-      $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
-      my $checker;
-      if ($attr_ns eq '') {
-        $checker =
-        {
-         ## NOTE: Value of an empty string means that the attribute is only
-         ## applicable for a specific set of states.
-         accept => '',
-         'accept-charset' => $HTMLCharsetsAttrChecker,
-         action => '',
-         align => '',
-         alt => '',
-         autocapitalize => '',
-         autocomplete => '',
-         autocorrect => '',
-         autofocus => $AutofocusAttrChecker,
-         autosave => '',
-         border => '',
-         checked => '',
-         datafld => sub { },
-         dataformatas => $GetHTMLEnumeratedAttrChecker->({
-           text => 1, html => 1, 'localized-text' => 1,
-         }),
-         datasrc => $NonEmptyURLChecker,
-         directkey => '',
-         dirname => '',
-         disabled => sub {},
-             ## NOTE: <input type=hidden disabled> is not disallowed.
-         dynsrc => '',
-         emptyok => '',
-         enctype => '',
-         form => $HTMLFormAttrChecker,
-         formaction => '',
-         format => '',
-         formenctype => '',
-         formmethod => '',
-         formnovalidate => '',
-         formtarget => '',
-         height => '',
-         hspace => '',
-         incremental => '',
-         inputmode => '',
-         iprof => '',
-         ismap => '', ## NOTE: "MUST" be type=image [HTML4]
-         istyle => '',
-         list => '',
-         loop => '',
-         lowsrc => '',
-         max => '',
-         maxlength => '',
-         method => '',
-         min => '',
-         mode => '',
-         multiple => '',
-         name => $FormControlNameAttrChecker,
-         pattern => '',
-         placeholder => '',
-         precision => '',
-         readonly => '',
-         required => '',
-         results => '',
-         size => '',
-         soundstart => '',
-         src => '',
-         start => '',
-         step => '',
-         target => '',
-         type => $GetHTMLEnumeratedAttrChecker->({
-           hidden => 1, text => 1, search => 1, url => 1,
-           tel => 1, email => 1, password => 1,
-           datetime => 1, date => 1, month => 1, week => 1, time => 1,
-           'datetime-local' => 1, number => 1, range => 1, color => 1,
-           checkbox => 1,
-           radio => 1, file => 1, submit => 1, image => 1, reset => 1,
-           button => 1,
-           add => -1, 'move-up' => -1, 'move-down' => -1, remove => -1,
-           quote => -1,
-         }),
-         usemap => '',
-         value => '',
-         vcard_name => '',
-         viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
-           1 <= $_[0] and $_[0] <= 9;
-         }),
-         vibration => $GetHTMLEnumeratedAttrChecker->({
-           select => 1, focus => 1,
-         }),
-         volume => '',
-         vrml => '',
-         vspace => '',
-         width => '',
-        }->{$attr_ln};
-
-        ## State-dependent checkers
-        unless ($checker) {
-          if ($state eq 'hidden') {
-            $checker =
-            {
-             value => sub {
-               my ($self, $attr, $item, $element_state) = @_;
-               my $name = $item->{node}->get_attribute_ns (undef, 'name');
-               if (defined $name and $name eq '_charset_') { ## case-sensitive
-                 $self->{onerror}->(node => $attr,
-                                    type => '_charset_ value',
-                                    level => $self->{level}->{must});
-               }
-             },
-            }->{$attr_ln} || $checker;
-            ## TODO: Warn if no name attribute?
-            ## TODO: Warn if name!=_charset_ and no value attribute?
-          } elsif ({
-                    datetime => 1, date => 1, month => 1, time => 1,
-                    week => 1, 'datetime-local' => 1,
-                   }->{$state}) {
-            my $v = {
-              datetime => ['global_date_and_time_string'],
-              date => ['date_string'],
-              month => ['month_string'],
-              week => ['week_string'],
-              time => ['time_string'],
-              'datetime-local' => ['local_date_and_time_string'],
-            }->{$state};
-            $checker =
-            {
-             autocomplete => $GetHTMLEnumeratedAttrChecker->({
-               on => 1, off => 1,
-             }),
-             list => $ListAttrChecker,
-             min => $GetDateTimeAttrChecker->($v->[0]),
-             max => $GetDateTimeAttrChecker->($v->[0]),
-             readonly => sub {},
-             required => sub {},
-             step => $StepAttrChecker,
-             value => sub {
-               my ($self, $attr) = @_;
-               $GetDateTimeAttrChecker->($v->[0])->(@_) if $attr->value ne '';
-             }, # value
-            }->{$attr_ln} || $checker;
-
-            ## XXX Maybe it is better to check min <= value <= max
-            ## relation is hold for convinience?
-          } elsif ($state eq 'number') {
-            $checker =
-            {
-             autocomplete => $GetHTMLEnumeratedAttrChecker->({
-               on => 1, off => 1,
-             }),
-             list => $ListAttrChecker,
-             max => $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 }),
-             maxlength => sub {
-               my ($self, $attr, $item, $element_state) = @_;
-
-               $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 })->(@_);
-
-               $self->{onerror}->(node => $attr,
-                                  type => 'attribute not allowed',
-                                  level => $self->{level}->{obsconforming});
-             }, # maxlength
-             min => $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 }),
-             placeholder => $PlaceholderAttrChecker,
-             precision => $PrecisionAttrChecker,
-             readonly => sub {},
-             required => sub {},
-             step => $StepAttrChecker,
-             value => sub {
-               my ($self, $attr) = @_;
-               if ($attr->value ne '') {
-                 $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 })->(@_);
-               }
-             }, # value
-            }->{$attr_ln} || $checker;
-          } elsif ($state eq 'range') {
-            $checker =
-            {
-             autocomplete => $GetHTMLEnumeratedAttrChecker->({
-               on => 1, off => 1,
-             }),
-             list => $ListAttrChecker,
-             max => $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 }),
-             min => $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 }),
-             precision => $PrecisionAttrChecker,
-             step => $StepAttrChecker,
-             value => $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 }),
-            }->{$attr_ln} || $checker;
-          } elsif ($state eq 'color') {
-            $checker =
-            {
-             autocomplete => $GetHTMLEnumeratedAttrChecker->({
-               on => 1, off => 1,
-             }),
-             list => $ListAttrChecker,
-             value => sub {
-               my ($self, $attr) = @_;
-               if (not $attr->value =~ /\A#[0-9A-Fa-f]{6}\z|\A\z/) {
-                 $self->{onerror}->(node => $attr,
-                                    type => 'scolor:syntax error', ## TODOC: type
-                                    level => $self->{level}->{must});
-               }
-             },
-            }->{$attr_ln} || $checker;
-          } elsif ($state eq 'checkbox' or $state eq 'radio') {
-            $checker = 
-            {
-             checked => sub {},
-             required => sub {},
-             value => sub { }, ## NOTE: No restriction.
-            }->{$attr_ln} || $checker;
-            ## TODO: There MUST be another input type=radio with same
-            ## name (Radio state).
-            ## ISSUE: There should be exactly one type=radio with checked?
-          } elsif ($state eq 'file') {
-            $checker =
-            {
-             accept => $AcceptAttrChecker,
-             multiple => sub {},
-             required => sub {},
-            }->{$attr_ln} || $checker;
-          } elsif ($state eq 'submit') {
-            $checker =
-            {
-             action => $HTMLURIAttrChecker,
-             directkey => $AccesskeyChecker,
-             enctype => $GetHTMLEnumeratedAttrChecker->({
-               'application/x-www-form-urlencoded' => 1,
-               'multipart/form-data' => 1,
-               'text/plain' => 1,
-             }),
-             formaction => $HTMLURIAttrChecker,
-             formenctype => $GetHTMLEnumeratedAttrChecker->({
-               'application/x-www-form-urlencoded' => 1,
-               'multipart/form-data' => 1,
-               'text/plain' => 1,
-             }),
-             formmethod => $GetHTMLEnumeratedAttrChecker->({
-               get => 1, post => 1,
-             }),
-             formnovalidate => sub {},
-             formtarget => $HTMLTargetAttrChecker,
-             method => $GetHTMLEnumeratedAttrChecker->({
-               get => 1, post => 1,
-             }),
-             soundstart => $GetHTMLEnumeratedAttrChecker->({
-               select => 1, focus => 1,
-             }),
-             target => $HTMLTargetAttrChecker,
-             value => sub { }, ## NOTE: No restriction.
-             volume => $GetHTMLEnumeratedAttrChecker->({
-               high => 1, middle => 1, low => 1,
-             }),
-            }->{$attr_ln} || $checker;
-          } elsif ($state eq 'image') {
-            $checker =
-            {
-             action => $HTMLURIAttrChecker,
-             align => $GetHTMLEnumeratedAttrChecker->({
-               bottom => 1, middle => 1, top => 1, left => 1, right => 1, center => -1,
-               baseline => -1, texttop => -1, abscenter => -1, absmiddle => -1,
-             }),
-             alt => sub {
-               my ($self, $attr) = @_;
-               my $value = $attr->value;
-               unless (length $value) {
-                 $self->{onerror}->(node => $attr,
-                                    type => 'empty anchor image alt',
-                                    level => $self->{level}->{must});
-               }
-             },
-             border => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
-             dynsrc => $NonEmptyURLChecker,
-             enctype => $GetHTMLEnumeratedAttrChecker->({
-               'application/x-www-form-urlencoded' => 1,
-               'multipart/form-data' => 1,
-               'text/plain' => 1,
-             }),
-             formaction => $HTMLURIAttrChecker,
-             formenctype => $GetHTMLEnumeratedAttrChecker->({
-               'application/x-www-form-urlencoded' => 1,
-               'multipart/form-data' => 1,
-               'text/plain' => 1,
-             }),
-             formmethod => $GetHTMLEnumeratedAttrChecker->({
-               get => 1, post => 1,
-             }),
-             formnovalidate => sub {},
-             formtarget => $HTMLTargetAttrChecker,
-             height => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
-             hspace => $HTMLLengthAttrChecker,
-             ismap => $GetHTMLBooleanAttrChecker->('ismap'),
-             loop => $LegacyLoopChecker,
-             lowsrc => $NonEmptyURLChecker,
-             method => $GetHTMLEnumeratedAttrChecker->({
-               get => 1, post => 1,
-             }),
-             src => $HTMLURIAttrChecker,
-               ## TODO: There is requirements on the referenced resource.
-             start => $GetHTMLEnumeratedAttrChecker->({
-               fileopen => 1, mouseover => 1,
-             }),
-             target => $HTMLTargetAttrChecker,
-             usemap => $HTMLUsemapAttrChecker,
-             vrml => $NonEmptyURLChecker,
-             vspace => $HTMLLengthAttrChecker,
-             width => $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 }),
-            }->{$attr_ln} || $checker;
-            ## TODO: alt & src are required.
-          } elsif ({
-                    reset => 1, button => 1,
-                    quote => 1,
-                   }->{$state}) {
-            $checker = 
-            {
-             value => sub { }, ## NOTE: No restriction.
-            }->{$attr_ln} || $checker;
-
-          } else { # Text, Search, E-mail, URL, Telephone, Password
-            $checker =
-            {
-             autocapitalize => $GetHTMLEnumeratedAttrChecker->({
-               on => 1, off => 1,
-             }),
-             autocomplete => $GetHTMLEnumeratedAttrChecker->({
-               on => 1, off => 1,
-             }),
-             autocorrect => $GetHTMLEnumeratedAttrChecker->({
-               on => 1, off => 1,
-             }),
-             emptyok => $GetHTMLEnumeratedAttrChecker->({
-               true => 1, false => 1,
-             }),
-             format => $TextFormatAttrChecker,
-             inputmode => $InputmodeAttrChecker,
-             iprof => $GetHTMLEnumeratedAttrChecker->({
-               name1 => 1, name2 => 1, name => 1, kana1 => 1, kana2 => 1,
-               kana => 1, tel1 => 1, tel2 => 1, mail1 => 1, mail2 => 1,
-               zip => 1, address1 => 1, address2 => 1, address3 => 1,
-               address4 => 1, address => 1, birthday1 => 1, birthday2 => 1,
-               birthday3 => 1, birthday => 1,
-             }),
-             istyle => $GetHTMLEnumeratedAttrChecker->({
-                 1 => 1, 2 => 1, 3 => 1, 4 => 1,
-             }),
-             list => $ListAttrChecker,
-             maxlength => sub {
-               my ($self, $attr, $item, $element_state) = @_;
-
-               $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 })->(@_);
-
-               if ($attr->value =~ /^[\x09\x0A\x0C\x0D\x20]*([0-9]+)/) {
-                 ## NOTE: Applying the rules for parsing non-negative
-                 ## integers results in a number.
-                 my $max_allowed_value_length = 0+$1;
-
-                 my $value = $item->{node}->get_attribute_ns (undef, 'value');
-                 if (defined $value) {
-                   my $codepoint_length = length $value;
-                   
-                   if ($codepoint_length > $max_allowed_value_length) {
-                     $self->{onerror}
-                         ->(node => $item->{node}
-                              ->get_attribute_node_ns (undef, 'value'),
-                            type => 'value too long',
-                            level => $self->{level}->{must});
-                   }
-                 }
-               }
-             }, # maxlength
-             mode => $GetHTMLEnumeratedAttrChecker->({
-               hiragana => 1, katakana => 1, hankakukana => 1,
-               alphabet => 1, numeric => 1,
-             }),
-             pattern => $PatternAttrChecker,
-             placeholder => $PlaceholderAttrChecker,
-             readonly => sub {},
-             required => sub {},
-             size => $GetHTMLNonNegativeIntegerAttrChecker->(sub {shift > 0}),
-             value => sub {
-               my ($self, $attr, $item, $element_state) = @_;
-               if ($state eq 'url') {
-                 ## XXX MUST be absolute IRI.
-                 $HTMLURIAttrChecker->(@_) if $attr->value ne '';
-               } elsif ($state eq 'email') {
-                 if ($attr->value eq '') {
-                   #
-                 } elsif ($item->{node}->has_attribute_ns (undef, 'multiple')) {
-                   ## A set of comma-separated tokens.
-                   my @addr = split /,/, $attr->value, -1;
-                   @addr = ('') unless @addr;
-                   for (@addr) {
-                     s/\A[\x09\x0A\x0C\x0D\x20]+//;
-                     s/[\x09\x0A\x0C\x0D\x20]\z//;
-
-                     unless (/\A$ValidEmailAddress\z/o) {
-                       $self->{onerror}->(node => $attr,
-                                          type => 'email:syntax error', ## TODO: type
-                                          value => $_,
-                                          level => $self->{level}->{must});
-                     } 
-                   }
-                 } else {
-                   unless ($attr->value =~ /\A$ValidEmailAddress\z/) {
-                     $self->{onerror}->(node => $attr,
-                                        type => 'email:syntax error', ## TODO: type
-                                        level => $self->{level}->{must});
-                   }
-                 }
-               } else {
-                 if ($attr->value =~ /[\x0D\x0A]/) {
-                   $self->{onerror}->(node => $attr,
-                                      type => 'newline in value', ## TODO: type
-                                      level => $self->{level}->{must});
-                 }
-               }
-             }, # value
-             vcard_name => $GetHTMLEnumeratedAttrChecker->({qw(
-               vcard.business.city 1 vcard.business.country 1
-               vcard.business.fax 1 vcard.business.phone 1
-               vcard.business.state 1 vcard.business.streetaddress 1
-               vcard.business.url 1 vcard.business.zipcode 1
-               vcard.cellular 1 vcard.company 1 vcard.department 1
-               vcard.displayname 1 vcard.email 1 vcard.firstname 1
-               vcard.gender 1 vcard.home.city 1 vcard.home.country 1
-               vcard.home.fax 1 vcard.home.phone 1 vcard.home.state 1
-               vcard.home.streetaddress 1 vcard.home.zipcode 1
-               vcard.homepage 1 vcard.jobtitle 1 vcard.lastname 1
-               vcard.middlename 1 vcard.notes 1 vcard.office 1
-               vcard.pager 1
-             )}),
-            }->{$attr_ln} || $checker;
-            if ($state eq 'password') {
-              $checker = '' if $attr_ln eq 'list';
-            } elsif ($state eq 'email') {
-              $checker = sub {} if $attr_ln eq 'multiple';
-            } elsif ($state eq 'search') {
-              if ($attr_ln eq 'autosave') {
-                $checker = sub { };
-              } elsif ($attr_ln eq 'incremental') {
-                $checker = $GetHTMLBooleanAttrChecker->('incremental');
-              } elsif ($attr_ln eq 'results') {
-                $checker = $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 });
-              } elsif ($attr_ln eq 'dirname') {
-                $checker = sub {
-                  my ($self, $attr) = @_;
-                  if ($attr->value eq '') {
-                    $self->{onerror}->(node => $attr,
-                                       type => 'empty attribute value',
-                                       level => $self->{level}->{must});
-                  }
-                }; # dirname
-              }
-            } elsif ($state eq 'url') {
-              #
-            } elsif ($state eq 'tel') {
-              #
-            } else { # text
-              if ($attr_ln eq 'dirname') {
-                $checker = sub {
-                  my ($self, $attr) = @_;
-                  if ($attr->value eq '') {
-                    $self->{onerror}->(node => $attr,
-                                       type => 'empty attribute value',
-                                       level => $self->{level}->{must});
-                  }
-                }; # dirname
-              }
-            }
-
-            if ($item->{node}->has_attribute_ns (undef, 'pattern') and
-                not $item->{node}->has_attribute_ns (undef, 'title')) {
-              $self->{onerror}->(node => $item->{node},
-                                 type => 'attribute missing',
-                                 text => 'title',
-                                 level => $self->{level}->{should});
-            }
-          }
-        } else {
-          if ($state eq 'hidden') {
-            $checker = ''
-                if $attr_ln eq 'viblength' or $attr_ln eq 'vibration';
-          }
+    my $value_type = $_Defs->{input}->{attrs}->{value}->{$input_type};
+    if (defined $value_type) {
+      my $attr = $item->{node}->get_attribute_node_ns (undef, 'value');
+      if (not $attr) {
+        #
+      } elsif ($input_type eq 'hidden') {
+        my $name = $item->{node}->get_attribute_ns (undef, 'name');
+        if (defined $name and $name eq '_charset_') { ## case-sensitive
+          $self->{onerror}->(node => $attr,
+                             type => '_charset_ value',
+                             level => 'm');
         }
+      } else {
+        if ($attr->value ne '') {
+          my $checker = $input_type eq 'email' ? sub {
+            my ($self, $attr, $item) = @_;
+            if ($item->{node}->has_attribute_ns (undef, 'multiple')) {
+              ## A set of comma-separated tokens.
+              my @addr = split /,/, $attr->value, -1;
+              @addr = ('') unless @addr;
+              for (@addr) {
+                s/\A[\x09\x0A\x0C\x0D\x20]+//;
+                s/[\x09\x0A\x0C\x0D\x20]\z//;
 
-        if (defined $checker) {
-          if ($checker eq '') {
-            $checker = sub {
-              my ($self, $attr) = @_;
-              $self->{onerror}->(node => $attr,
-                                 type => 'input attr not applicable',
-                                 text => $state,
-                                 level => $self->{level}->{must});
-            };
+                unless (/\A$ValidEmailAddress\z/o) {
+                  $self->{onerror}->(node => $attr,
+                                     type => 'email:syntax error', ## TODO: type
+                                     value => $_,
+                                     level => $self->{level}->{must});
+                }
+              }
+            } else {
+              unless ($attr->value =~ /\A$ValidEmailAddress\z/) {
+                $self->{onerror}->(node => $attr,
+                                   type => 'email:syntax error', ## TODO: type
+                                   level => $self->{level}->{must});
+              }
+            }
+          } : $CheckerByType->{$value_type} || sub {
+            ## Strictly speaking, this error type is wrong.
+            $self->{onerror}->(node => $attr,
+                               type => 'unknown attribute', level => 'u');
+          };
+          $checker->($self, $attr, $item);
+        }
+      }
+    } # value=""
+    for my $attr_name (qw(min max)) {
+      next unless $_Defs->{input}->{attrs}->{$attr_name}->{$input_type};
+      my $attr = $item->{node}->get_attribute_node_ns (undef, $attr_name)
+          or next;
+      my $checker = $CheckerByType->{$value_type} || sub {
+        ## Strictly speaking, this error type is wrong.
+        $self->{onerror}->(node => $attr,
+                           type => 'unknown attribute', level => 'u');
+      };
+      $checker->($self, $attr, $item);
+    } # min="" max=""
+
+    if ($input_type eq 'number') {
+      for my $attr_name (qw(maxlength size)) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, $attr_name);
+        $self->{onerror}->(node => $attr,
+                           type => 'attribute not allowed',
+                           level => $self->{level}->{obsconforming})
+            if $attr;
+      }
+    } elsif ($_Defs->{input}->{attrs}->{maxlength}->{$input_type}) {
+      my $attr = $item->{node}->get_attribute_node_ns (undef, 'maxlength');
+      if ($attr and $attr->value =~ /^[\x09\x0A\x0C\x0D\x20]*([0-9]+)/) {
+        ## NOTE: Applying the rules for parsing non-negative integers
+        ## results in a number.
+        my $max_allowed_value_length = 0+$1;
+        my $value = $item->{node}->get_attribute_ns (undef, 'value');
+        if (defined $value) {
+          my $codepoint_length = length $value;
+          if ($codepoint_length > $max_allowed_value_length) {
+            $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'value'),
+                               type => 'value too long',
+                               level => 'm');
           }
         }
       }
+    } # maxlength=""
 
-      $checker->($self, $attr, $item, $element_state) if $checker and ref $checker;
-    }
+    if ($_Defs->{input}->{attrs}->{pattern}->{$input_type} and
+        $item->{node}->has_attribute_ns (undef, 'pattern') and
+        not $item->{node}->has_attribute_ns (undef, 'title')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'title',
+                         level => 's');
+    } # pattern=""
 
+    ## XXX warn <input type=hidden disabled>
+    ## XXX warn <input type=hidden> (no name="")
+    ## XXX warn <input type=hidden name=_charset_> (no value="")
+    ## XXX warn unless min <= value <= max
+    ## XXX <input type=color value=""> (empty value="") is ok
+    ## XXX <input type=radio name="">'s name="" MUST be unique
+    ## XXX war if multiple <input type=radio checked>
+    ## XXX <input type=image> requires alt="" and src=""
+    ## XXX <input type=url value> MUST be absolute IRI.
     ## ISSUE: -0/+0
 
     my $el = $item->{node};
 
-    if ($state eq 'button') {
+    if ($input_type eq 'button') {
       unless ($el->get_attribute_node_ns (undef, 'value')) {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'value',
                            level => $self->{level}->{must});
       }
-    } elsif ($state eq 'range') {
+    } elsif ($input_type eq 'range') {
       $element_state->{number_value}->{min} ||= 0;
       $element_state->{number_value}->{max} = 100
           unless defined $element_state->{number_value}->{max};
-    } elsif ($state eq 'submit') {
+    } elsif ($input_type eq 'submit') {
       my $dk_attr = $el->get_attribute_node_ns (undef, 'directkey');
       if ($dk_attr) {
         unless ($el->has_attribute_ns (undef, 'value')) {
@@ -6692,7 +6364,7 @@ $Element->{+HTML_NS}->{input} = {
           }
         }
       }
-    } elsif ($state eq 'image') {
+    } elsif ($input_type eq 'image') {
       if (my $attr = $el->get_attribute_node_ns (undef, 'start')) {
         unless ($el->has_attribute_ns (undef, 'dynsrc')) {
           $self->{onerror}->(node => $attr,

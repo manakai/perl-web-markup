@@ -490,9 +490,29 @@ $Web::HTML::Validator::_Defs = {
                           "*" => {
                                    "*" => {
                                             "attrs" => {
+                                                         "http://www.w3.org/1999/xlink" => {
+                                                                                             "arcrole" => {
+                                                                                                            "url_role" => "id"
+                                                                                                          },
+                                                                                             "href" => {
+                                                                                                         "url_role" => "contextual"
+                                                                                                       },
+                                                                                             "role" => {
+                                                                                                         "url_role" => "id"
+                                                                                                       }
+                                                                                           },
+                                                         "http://www.w3.org/2000/xmlns/" => {
+                                                                                              "*" => {
+                                                                                                       "url_role" => "id"
+                                                                                                     },
+                                                                                              "xmlns" => {
+                                                                                                           "url_role" => "id"
+                                                                                                         }
+                                                                                            },
                                                          "http://www.w3.org/XML/1998/namespace" => {
                                                                                                      "base" => {
-                                                                                                                 "conforming" => 1
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "url_role" => "base"
                                                                                                                },
                                                                                                      "lang" => {
                                                                                                                  "conforming" => 1,
@@ -514,15 +534,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         "" => {
                                                                                                                 "href" => {
                                                                                                                             "conforming" => 1,
-                                                                                                                            "status" => "LC"
+                                                                                                                            "status" => "LC",
+                                                                                                                            "url_role" => "hyperlink"
                                                                                                                           },
                                                                                                                 "ref" => {
                                                                                                                            "conforming" => 1,
-                                                                                                                           "status" => "LC"
+                                                                                                                           "status" => "LC",
+                                                                                                                           "url_role" => "id"
                                                                                                                          },
                                                                                                                 "source" => {
                                                                                                                               "conforming" => 1,
-                                                                                                                              "status" => "LC"
+                                                                                                                              "status" => "LC",
+                                                                                                                              "url_role" => "hyperlink"
                                                                                                                             },
                                                                                                                 "type" => {
                                                                                                                             "conforming" => 1,
@@ -558,6 +581,32 @@ $Web::HTML::Validator::_Defs = {
                                                                            },
                           "http://www.w3.org/1999/xhtml" => {
                                                               "*" => {
+                                                                       "*" => {
+                                                                                "" => {
+                                                                                        "itemid" => {
+                                                                                                      "url_role" => "id"
+                                                                                                    },
+                                                                                        "itemprop" => {
+                                                                                                        "url_role" => "id"
+                                                                                                      },
+                                                                                        "itemtype" => {
+                                                                                                        "url_role" => "id"
+                                                                                                      },
+                                                                                        "xmlns" => {
+                                                                                                     "url_role" => "id"
+                                                                                                   }
+                                                                                      },
+                                                                                "attrs" => {
+                                                                                             "" => {
+                                                                                                     "about" => {
+                                                                                                                  "url_role" => "id"
+                                                                                                                },
+                                                                                                     "resource" => {
+                                                                                                                     "url_role" => "id"
+                                                                                                                   }
+                                                                                                   }
+                                                                                           }
+                                                                              },
                                                                        "attrs" => {
                                                                                     "" => {
                                                                                             "about" => {
@@ -1326,6 +1375,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          },
                                                                                             "datasrc" => {
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "resource",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                             "directkey" => {
@@ -1343,6 +1393,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "href" => {
                                                                                                         "conforming" => 1,
                                                                                                         "status" => "LC",
+                                                                                                        "url_role" => "hyperlink",
                                                                                                         "value_type" => "URL potentially surrounded by spaces"
                                                                                                       },
                                                                                             "hreflang" => {
@@ -1393,6 +1444,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "rel" => {
                                                                                                        "conforming" => 1,
                                                                                                        "status" => "LC",
+                                                                                                       "url_role" => "id",
                                                                                                        "value_type" => "set of space-separated tokens"
                                                                                                      },
                                                                                             "rev" => {
@@ -1606,12 +1658,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "text"
                                                                                                           },
                                                                                                  "archive" => {
+                                                                                                                "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "set of comma-separated tokens"
                                                                                                               },
                                                                                                  "code" => {
+                                                                                                             "status" => "LC",
+                                                                                                             "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                  "codebase" => {
+                                                                                                                 "status" => "LC",
+                                                                                                                 "url_role" => "base",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                  "datafld" => {
@@ -1620,6 +1678,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               },
                                                                                                  "datasrc" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "height" => {
@@ -1635,6 +1694,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "value_type" => "name"
                                                                                                            },
                                                                                                  "object" => {
+                                                                                                               "status" => "LC",
+                                                                                                               "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                  "vspace" => {
@@ -1671,6 +1732,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "href" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "contextual",
                                                                                                            "value_type" => "URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                "hreflang" => {
@@ -1690,6 +1752,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "rel" => {
                                                                                                           "conforming" => 1,
                                                                                                           "status" => "LC",
+                                                                                                          "url_role" => "id",
                                                                                                           "value_type" => "set of space-separated tokens"
                                                                                                         },
                                                                                                "shape" => {
@@ -1876,6 +1939,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          }
                                                                                               }
@@ -1895,6 +1959,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "href" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "base",
                                                                                                            "value_type" => "URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                "target" => {
@@ -1991,6 +2056,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "integer"
                                                                                                             },
                                                                                                   "src" => {
+                                                                                                             "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                   "volume" => {
@@ -2031,6 +2097,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                      "cite" => {
                                                                                                                  "conforming" => 1,
                                                                                                                  "status" => "LC",
+                                                                                                                 "url_role" => "hyperlink-secondary",
                                                                                                                  "value_type" => "URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                      "clear" => {
@@ -2068,6 +2135,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                                "background" => {
                                                                                                                  "status" => "LC",
+                                                                                                                 "url_role" => "embedded",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                "bgcolor" => {
@@ -2244,6 +2312,10 @@ $Web::HTML::Validator::_Defs = {
                                                               "button" => {
                                                                             "attrs" => {
                                                                                          "" => {
+                                                                                                 "action" => {
+                                                                                                               "status" => "LC",
+                                                                                                               "url_role" => "form"
+                                                                                                             },
                                                                                                  "autofocus" => {
                                                                                                                   "conforming" => 1,
                                                                                                                   "status" => "LC",
@@ -2270,6 +2342,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    },
                                                                                                  "datasrc" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "disabled" => {
@@ -2285,6 +2358,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "formaction" => {
                                                                                                                    "conforming" => 1,
                                                                                                                    "status" => "LC",
+                                                                                                                   "url_role" => "form",
                                                                                                                    "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                  },
                                                                                                  "formenctype" => {
@@ -2639,6 +2713,15 @@ $Web::HTML::Validator::_Defs = {
                                                                               "conforming" => 1,
                                                                               "status" => "LC"
                                                                             },
+                                                              "command" => {
+                                                                             "attrs" => {
+                                                                                          "" => {
+                                                                                                  "icon" => {
+                                                                                                              "url_role" => "embedded"
+                                                                                                            }
+                                                                                                }
+                                                                                        }
+                                                                           },
                                                               "data" => {
                                                                           "attrs" => {
                                                                                        "" => {
@@ -2653,7 +2736,14 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "datalist" => {
-                                                                              "attrs" => {},
+                                                                              "attrs" => {
+                                                                                           "" => {
+                                                                                                   "data" => {
+                                                                                                               "status" => "LC",
+                                                                                                               "url_role" => "resource"
+                                                                                                             }
+                                                                                                 }
+                                                                                         },
                                                                               "conforming" => 1,
                                                                               "status" => "LC"
                                                                             },
@@ -2675,6 +2765,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                               "cite" => {
                                                                                                           "conforming" => 1,
                                                                                                           "status" => "LC",
+                                                                                                          "url_role" => "hyperlink-secondary",
                                                                                                           "value_type" => "URL potentially surrounded by spaces"
                                                                                                         },
                                                                                               "datetime" => {
@@ -2781,6 +2872,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 },
                                                                                               "datasrc" => {
                                                                                                              "status" => "LC",
+                                                                                                             "url_role" => "resource",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                               "nowrap" => {
@@ -2864,6 +2956,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "code" => {
+                                                                                                            "status" => "CWD",
+                                                                                                            "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                 "frameborder" => {
@@ -2908,17 +3002,24 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
                                                                                                 "pluginpage" => {
+                                                                                                                  "status" => "CWD",
+                                                                                                                  "url_role" => "hyperlink-secondary",
                                                                                                                   "value_type" => "URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "pluginspage" => {
+                                                                                                                   "status" => "CWD",
+                                                                                                                   "url_role" => "hyperlink-secondary",
                                                                                                                    "value_type" => "URL potentially surrounded by spaces"
                                                                                                                  },
                                                                                                 "pluginurl" => {
+                                                                                                                 "status" => "CWD",
+                                                                                                                 "url_role" => "hyperlink-secondary",
                                                                                                                  "value_type" => "URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "CWD",
+                                                                                                           "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "type" => {
@@ -2958,6 +3059,24 @@ $Web::HTML::Validator::_Defs = {
                                                                            "content_model" => "empty",
                                                                            "status" => "CWD"
                                                                          },
+                                                              "event-source" => {
+                                                                                  "attrs" => {
+                                                                                               "" => {
+                                                                                                       "src" => {
+                                                                                                                  "url_role" => "resource"
+                                                                                                                }
+                                                                                                     }
+                                                                                             }
+                                                                                },
+                                                              "eventsource" => {
+                                                                                 "attrs" => {
+                                                                                              "" => {
+                                                                                                      "src" => {
+                                                                                                                 "url_role" => "resource"
+                                                                                                               }
+                                                                                                    }
+                                                                                            }
+                                                                               },
                                                               "fieldset" => {
                                                                               "attrs" => {
                                                                                            "" => {
@@ -3030,6 +3149,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "action" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
+                                                                                                             "url_role" => "form",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                "autocomplete" => {
@@ -3056,6 +3176,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
+                                                                                               "data" => {
+                                                                                                           "status" => "LC",
+                                                                                                           "url_role" => "resource"
+                                                                                                         },
                                                                                                "enctype" => {
                                                                                                               "conforming" => 1,
                                                                                                               "enumerated" => {
@@ -3185,6 +3309,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                                 "datasrc" => {
                                                                                                                "status" => "LC",
+                                                                                                               "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                 "frameborder" => {
@@ -3208,6 +3333,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                     "value_type" => "non-negative integer"
                                                                                                                   },
                                                                                                 "longdesc" => {
+                                                                                                                "url_role" => "hyperlink-secondary",
                                                                                                                 "value_type" => "URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                 "marginheight" => {
@@ -3257,6 +3383,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 "value_type" => "enumerated"
                                                                                                               },
                                                                                                 "src" => {
+                                                                                                           "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          }
                                                                                               }
@@ -3703,6 +3830,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "manifest" => {
                                                                                                                "conforming" => 1,
                                                                                                                "status" => "REC",
+                                                                                                               "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                "scroll" => {
@@ -3811,6 +3939,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               },
                                                                                                  "datasrc" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "frameborder" => {
@@ -3845,6 +3974,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                                  "longdesc" => {
                                                                                                                  "status" => "LC",
+                                                                                                                 "url_role" => "hyperlink-secondary",
                                                                                                                  "value_type" => "URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                  "marginheight" => {
@@ -3911,6 +4041,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC",
+                                                                                                            "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                  "srcdoc" => {
@@ -4044,9 +4175,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                               "datasrc" => {
                                                                                                              "status" => "LC",
+                                                                                                             "url_role" => "resource",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                               "dynsrc" => {
+                                                                                                            "status" => "LC",
+                                                                                                            "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                               "galleryimg" => {
@@ -4083,13 +4217,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                               "localsrc" => {},
                                                                                               "longdesc" => {
                                                                                                               "status" => "LC",
+                                                                                                              "url_role" => "hyperlink-secondary",
                                                                                                               "value_type" => "URL potentially surrounded by spaces"
                                                                                                             },
                                                                                               "lowsrc" => {
                                                                                                             "status" => "LC",
+                                                                                                            "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
-                                                                                              "mediaout" => {},
                                                                                               "name" => {
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "name"
@@ -4098,12 +4233,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "boolean"
                                                                                                           },
                                                                                               "oversrc" => {
+                                                                                                             "status" => "LC",
+                                                                                                             "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
-                                                                                              "private" => {},
                                                                                               "src" => {
                                                                                                          "conforming" => 1,
                                                                                                          "status" => "LC",
+                                                                                                         "url_role" => "embedded",
                                                                                                          "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                        },
                                                                                               "srcset" => {
@@ -4130,6 +4267,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "hash-name reference"
                                                                                                           },
                                                                                               "vrml" => {
+                                                                                                          "status" => "LC",
+                                                                                                          "url_role" => "embedded",
                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                         },
                                                                                               "vspace" => {
@@ -4154,6 +4293,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "conforming" => 1,
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "set of comma-separated tokens"
+                                                                                                            },
+                                                                                                "action" => {
+                                                                                                              "status" => "LC",
+                                                                                                              "url_role" => "form"
                                                                                                             },
                                                                                                 "align" => {
                                                                                                              "enumerated" => {
@@ -4262,6 +4405,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   },
                                                                                                 "datasrc" => {
                                                                                                                "status" => "LC",
+                                                                                                               "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                 "directkey" => {
@@ -4298,6 +4442,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 "formaction" => {
                                                                                                                   "conforming" => 1,
                                                                                                                   "status" => "LC",
+                                                                                                                  "url_role" => "form",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "formenctype" => {
@@ -4648,6 +4793,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "start" => {
@@ -4821,7 +4967,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             },
                                                                                                 "value" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "url_role" => "contextual"
                                                                                                            },
                                                                                                 "vcard_name" => {
                                                                                                                   "enumerated" => {
@@ -4967,6 +5114,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                               "cite" => {
                                                                                                           "conforming" => 1,
                                                                                                           "status" => "LC",
+                                                                                                          "url_role" => "hyperlink-secondary",
                                                                                                           "value_type" => "URL potentially surrounded by spaces"
                                                                                                         },
                                                                                               "datetime" => {
@@ -5077,6 +5225,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   },
                                                                                                 "datasrc" => {
                                                                                                                "status" => "LC",
+                                                                                                               "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                 "for" => {
@@ -5133,6 +5282,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    },
                                                                                                  "datasrc" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               }
                                                                                                }
@@ -5204,6 +5354,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "href" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "contextual",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                "hreflang" => {
@@ -5222,6 +5373,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "rel" => {
                                                                                                           "conforming" => 1,
                                                                                                           "status" => "LC",
+                                                                                                          "url_role" => "id",
                                                                                                           "value_type" => "set of space-separated tokens"
                                                                                                         },
                                                                                                "rev" => {
@@ -5362,6 +5514,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                     },
                                                                                                   "datasrc" => {
                                                                                                                  "status" => "LC",
+                                                                                                                 "url_role" => "resource",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                   "direction" => {
@@ -5500,6 +5653,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                                    "icon" => {
                                                                                                                "conforming" => 1,
+                                                                                                               "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                    "label" => {
@@ -5563,7 +5717,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "conforming" => 1,
                                                                                                               "directionality_capable" => "contextual",
                                                                                                               "status" => "LC",
-                                                                                                              "translatable" => "contextual"
+                                                                                                              "translatable" => "contextual",
+                                                                                                              "url_role" => "contextual"
                                                                                                             },
                                                                                                "http-equiv" => {
                                                                                                                  "conforming" => 1,
@@ -5694,6 +5849,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             },
                                                                                                  "archive" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "set of space-separated tokens"
                                                                                                               },
                                                                                                  "border" => {
@@ -5702,14 +5858,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                                  "classid" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "embedded",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "code" => {
                                                                                                              "status" => "LC",
+                                                                                                             "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                  "codebase" => {
                                                                                                                  "status" => "LC",
+                                                                                                                 "url_role" => "base",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                  "codetype" => {
@@ -5730,6 +5889,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "data" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
+                                                                                                             "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                  "datafld" => {
@@ -5753,6 +5913,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    },
                                                                                                  "datasrc" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "declare" => {
@@ -5772,13 +5933,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
-                                                                                                 "mediaout" => {},
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "browsing context name"
                                                                                                            },
-                                                                                                 "private" => {},
                                                                                                  "standby" => {
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "text"
@@ -5878,6 +6037,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    },
                                                                                                  "datasrc" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "disabled" => {
@@ -6111,6 +6271,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "cite" => {
                                                                                                         "conforming" => 1,
                                                                                                         "status" => "LC",
+                                                                                                        "url_role" => "hyperlink-secondary",
                                                                                                         "value_type" => "URL potentially surrounded by spaces"
                                                                                                       }
                                                                                           }
@@ -6224,6 +6385,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "REC",
+                                                                                                            "url_role" => "resource",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                  "type" => {
@@ -6250,7 +6412,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "boolean"
                                                                                                                 },
-                                                                                                 "data" => {},
+                                                                                                 "data" => {
+                                                                                                             "status" => "LC",
+                                                                                                             "url_role" => "resource"
+                                                                                                           },
                                                                                                  "datafld" => {
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "any"
@@ -6272,6 +6437,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    },
                                                                                                  "datasrc" => {
                                                                                                                 "status" => "LC",
+                                                                                                                "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "disabled" => {
@@ -6326,6 +6492,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC",
+                                                                                                            "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                  "type" => {
@@ -6367,6 +6534,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                                "datasrc" => {
                                                                                                               "status" => "LC",
+                                                                                                              "url_role" => "resource",
                                                                                                               "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                             }
                                                                                              }
@@ -6460,6 +6628,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                 "background" => {
                                                                                                                   "status" => "LC",
+                                                                                                                  "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
@@ -6511,6 +6680,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   },
                                                                                                 "datasrc" => {
                                                                                                                "status" => "LC",
+                                                                                                               "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                 "frame" => {
@@ -6628,6 +6798,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                 "background" => {
                                                                                                                   "status" => "LC",
+                                                                                                                  "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
@@ -6703,6 +6874,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        },
                                                                                              "background" => {
                                                                                                                "status" => "LC",
+                                                                                                               "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                              "bgcolor" => {
@@ -6855,12 +7027,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "non-negative integer greater than zero"
                                                                                                              },
+                                                                                                   "data" => {
+                                                                                                               "status" => "LC",
+                                                                                                               "url_role" => "resource"
+                                                                                                             },
                                                                                                    "datafld" => {
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "any"
                                                                                                                 },
                                                                                                    "datasrc" => {
                                                                                                                   "status" => "LC",
+                                                                                                                  "url_role" => "resource",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                    "dirname" => {
@@ -7178,6 +7355,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                 "background" => {
                                                                                                                   "status" => "LC",
+                                                                                                                  "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
@@ -7256,6 +7434,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        },
                                                                                              "background" => {
                                                                                                                "status" => "LC",
+                                                                                                               "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                              "bgcolor" => {
@@ -7401,6 +7580,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                 "background" => {
                                                                                                                   "status" => "LC",
+                                                                                                                  "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
@@ -7486,6 +7666,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         },
                                                                                              "background" => {
                                                                                                                "status" => "LC",
+                                                                                                               "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                              "bgcolor" => {
@@ -7594,6 +7775,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "srclang" => {
@@ -7711,6 +7893,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 "poster" => {
                                                                                                               "conforming" => 1,
                                                                                                               "status" => "LC",
+                                                                                                              "url_role" => "embedded",
                                                                                                               "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                             },
                                                                                                 "preload" => {
@@ -7752,6 +7935,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "width" => {
@@ -7769,6 +7953,15 @@ $Web::HTML::Validator::_Defs = {
                                                                          "conforming" => 1,
                                                                          "content_model" => "empty",
                                                                          "status" => "LC"
+                                                                       },
+                                                              "xml" => {
+                                                                         "attrs" => {
+                                                                                      "" => {
+                                                                                              "src" => {
+                                                                                                         "url_role" => "resource"
+                                                                                                       }
+                                                                                            }
+                                                                                    }
                                                                        },
                                                               "xmp" => {
                                                                          "attrs" => {
@@ -8044,7 +8237,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                            "" => {
                                                                                                    "uri" => {
                                                                                                               "conforming" => 1,
-                                                                                                              "status" => "LC"
+                                                                                                              "status" => "LC",
+                                                                                                              "url_role" => "hyperlink-secondary"
                                                                                                             },
                                                                                                    "version" => {
                                                                                                                   "conforming" => 1,
@@ -8059,19 +8253,23 @@ $Web::HTML::Validator::_Defs = {
                                                              "icon" => {
                                                                          "attrs" => {},
                                                                          "conforming" => 1,
-                                                                         "status" => "LC"
+                                                                         "status" => "LC",
+                                                                         "url_role" => "embedded"
                                                                        },
                                                              "id" => {
                                                                        "attrs" => {},
                                                                        "conforming" => 1,
-                                                                       "status" => "LC"
+                                                                       "status" => "LC",
+                                                                       "url_role" => "id"
                                                                      },
                                                              "link" => {
                                                                          "attrs" => {
                                                                                       "" => {
                                                                                               "href" => {
                                                                                                           "conforming" => 1,
-                                                                                                          "status" => "LC"
+                                                                                                          "rel" => "id",
+                                                                                                          "status" => "LC",
+                                                                                                          "url_role" => "contextual"
                                                                                                         },
                                                                                               "hreflang" => {
                                                                                                               "conforming" => 1,
@@ -8112,7 +8310,8 @@ $Web::HTML::Validator::_Defs = {
                                                              "logo" => {
                                                                          "attrs" => {},
                                                                          "conforming" => 1,
-                                                                         "status" => "LC"
+                                                                         "status" => "LC",
+                                                                         "url_role" => "embedded"
                                                                        },
                                                              "name" => {
                                                                          "attrs" => {},
@@ -8192,9 +8391,392 @@ $Web::HTML::Validator::_Defs = {
                                                              "uri" => {
                                                                         "attrs" => {},
                                                                         "conforming" => 1,
-                                                                        "status" => "LC"
+                                                                        "status" => "LC",
+                                                                        "url_role" => "contextual"
                                                                       }
                                                            }
-                        }
+                        },
+          "input" => {
+                       "attrs" => {
+                                    "accept" => {
+                                                  "file" => 1
+                                                },
+                                    "align" => {
+                                                 "image" => 1
+                                               },
+                                    "alt" => {
+                                               "image" => 1
+                                             },
+                                    "autocapitalize" => {
+                                                          "email" => 1,
+                                                          "password" => 1,
+                                                          "search" => 1,
+                                                          "tel" => 1,
+                                                          "text" => 1,
+                                                          "url" => 1
+                                                        },
+                                    "autocomplete" => {
+                                                        "color" => 1,
+                                                        "date" => 1,
+                                                        "datetime" => 1,
+                                                        "datetime-local" => 1,
+                                                        "email" => 1,
+                                                        "month" => 1,
+                                                        "number" => 1,
+                                                        "password" => 1,
+                                                        "range" => 1,
+                                                        "search" => 1,
+                                                        "tel" => 1,
+                                                        "text" => 1,
+                                                        "time" => 1,
+                                                        "url" => 1,
+                                                        "week" => 1
+                                                      },
+                                    "autocorrect" => {
+                                                       "email" => 1,
+                                                       "password" => 1,
+                                                       "search" => 1,
+                                                       "tel" => 1,
+                                                       "text" => 1,
+                                                       "url" => 1
+                                                     },
+                                    "autosave" => {
+                                                    "search" => 1
+                                                  },
+                                    "border" => {
+                                                  "image" => 1
+                                                },
+                                    "checked" => {
+                                                   "checkbox" => 1,
+                                                   "radio" => 1
+                                                 },
+                                    "directkey" => {
+                                                     "submit" => 1
+                                                   },
+                                    "dirname" => {
+                                                   "search" => 1,
+                                                   "text" => 1
+                                                 },
+                                    "dynsrc" => {
+                                                  "image" => 1
+                                                },
+                                    "emptyok" => {
+                                                   "email" => 1,
+                                                   "password" => 1,
+                                                   "search" => 1,
+                                                   "tel" => 1,
+                                                   "text" => 1,
+                                                   "url" => 1
+                                                 },
+                                    "formaction" => {
+                                                      "image" => 1,
+                                                      "submit" => 1
+                                                    },
+                                    "format" => {
+                                                  "email" => 1,
+                                                  "password" => 1,
+                                                  "search" => 1,
+                                                  "tel" => 1,
+                                                  "text" => 1,
+                                                  "url" => 1
+                                                },
+                                    "formenctype" => {
+                                                       "image" => 1,
+                                                       "submit" => 1
+                                                     },
+                                    "formmethod" => {
+                                                      "image" => 1,
+                                                      "submit" => 1
+                                                    },
+                                    "formnovalidate" => {
+                                                          "image" => 1,
+                                                          "submit" => 1
+                                                        },
+                                    "formtarget" => {
+                                                      "image" => 1,
+                                                      "submit" => 1
+                                                    },
+                                    "height" => {
+                                                  "image" => 1
+                                                },
+                                    "hspace" => {
+                                                  "image" => 1
+                                                },
+                                    "incremental" => {
+                                                       "search" => 1
+                                                     },
+                                    "inputmode" => {
+                                                     "password" => 1,
+                                                     "search" => 1,
+                                                     "text" => 1
+                                                   },
+                                    "iprof" => {
+                                                 "email" => 1,
+                                                 "password" => 1,
+                                                 "search" => 1,
+                                                 "tel" => 1,
+                                                 "text" => 1,
+                                                 "url" => 1
+                                               },
+                                    "istyle" => {
+                                                  "email" => 1,
+                                                  "password" => 1,
+                                                  "search" => 1,
+                                                  "tel" => 1,
+                                                  "text" => 1,
+                                                  "url" => 1
+                                                },
+                                    "list" => {
+                                                "color" => 1,
+                                                "date" => 1,
+                                                "datetime" => 1,
+                                                "datetime-local" => 1,
+                                                "email" => 1,
+                                                "month" => 1,
+                                                "number" => 1,
+                                                "range" => 1,
+                                                "search" => 1,
+                                                "tel" => 1,
+                                                "text" => 1,
+                                                "time" => 1,
+                                                "url" => 1,
+                                                "week" => 1
+                                              },
+                                    "loop" => {
+                                                "image" => 1
+                                              },
+                                    "lowsrc" => {
+                                                  "image" => 1
+                                                },
+                                    "max" => {
+                                               "date" => 1,
+                                               "datetime" => 1,
+                                               "datetime-local" => 1,
+                                               "month" => 1,
+                                               "number" => 1,
+                                               "range" => 1,
+                                               "time" => 1,
+                                               "week" => 1
+                                             },
+                                    "maxlength" => {
+                                                     "email" => 1,
+                                                     "number" => "obsolete but conforming",
+                                                     "password" => 1,
+                                                     "search" => 1,
+                                                     "tel" => 1,
+                                                     "text" => 1,
+                                                     "url" => 1
+                                                   },
+                                    "min" => {
+                                               "date" => 1,
+                                               "datetime" => 1,
+                                               "datetime-local" => 1,
+                                               "month" => 1,
+                                               "number" => 1,
+                                               "range" => 1,
+                                               "time" => 1,
+                                               "week" => 1
+                                             },
+                                    "minlength" => {
+                                                     "email" => 1,
+                                                     "password" => 1,
+                                                     "search" => 1,
+                                                     "tel" => 1,
+                                                     "text" => 1,
+                                                     "url" => 1
+                                                   },
+                                    "mode" => {
+                                                "email" => 1,
+                                                "password" => 1,
+                                                "search" => 1,
+                                                "tel" => 1,
+                                                "text" => 1,
+                                                "url" => 1
+                                              },
+                                    "multiple" => {
+                                                    "email" => 1,
+                                                    "file" => 1
+                                                  },
+                                    "pattern" => {
+                                                   "email" => 1,
+                                                   "password" => 1,
+                                                   "search" => 1,
+                                                   "tel" => 1,
+                                                   "text" => 1,
+                                                   "url" => 1
+                                                 },
+                                    "placeholder" => {
+                                                       "email" => 1,
+                                                       "number" => 1,
+                                                       "password" => 1,
+                                                       "search" => 1,
+                                                       "tel" => 1,
+                                                       "text" => 1,
+                                                       "url" => 1
+                                                     },
+                                    "precision" => {
+                                                     "number" => 1,
+                                                     "range" => 1
+                                                   },
+                                    "readonly" => {
+                                                    "date" => 1,
+                                                    "datetime" => 1,
+                                                    "datetime-local" => 1,
+                                                    "email" => 1,
+                                                    "month" => 1,
+                                                    "number" => 1,
+                                                    "password" => 1,
+                                                    "search" => 1,
+                                                    "tel" => 1,
+                                                    "text" => 1,
+                                                    "time" => 1,
+                                                    "url" => 1,
+                                                    "week" => 1
+                                                  },
+                                    "required" => {
+                                                    "checkbox" => 1,
+                                                    "date" => 1,
+                                                    "datetime" => 1,
+                                                    "datetime-local" => 1,
+                                                    "email" => 1,
+                                                    "file" => 1,
+                                                    "month" => 1,
+                                                    "number" => 1,
+                                                    "password" => 1,
+                                                    "radio" => 1,
+                                                    "search" => 1,
+                                                    "tel" => 1,
+                                                    "text" => 1,
+                                                    "time" => 1,
+                                                    "url" => 1,
+                                                    "week" => 1
+                                                  },
+                                    "results" => {
+                                                   "search" => 1
+                                                 },
+                                    "size" => {
+                                                "email" => 1,
+                                                "number" => "obsolete but conforming",
+                                                "password" => 1,
+                                                "search" => 1,
+                                                "tel" => 1,
+                                                "text" => 1,
+                                                "url" => 1
+                                              },
+                                    "soundstart" => {
+                                                      "submit" => 1
+                                                    },
+                                    "src" => {
+                                               "image" => 1
+                                             },
+                                    "start" => {
+                                                 "image" => 1
+                                               },
+                                    "step" => {
+                                                "date" => 1,
+                                                "datetime" => 1,
+                                                "datetime-local" => 1,
+                                                "month" => 1,
+                                                "number" => 1,
+                                                "range" => 1,
+                                                "time" => 1,
+                                                "week" => 1
+                                              },
+                                    "usemap" => {
+                                                  "image" => 1
+                                                },
+                                    "value" => {
+                                                 "button" => "any",
+                                                 "checkbox" => "any",
+                                                 "color" => "simple color",
+                                                 "date" => "date string",
+                                                 "datetime" => "global date and time string",
+                                                 "datetime-local" => "local date and time string",
+                                                 "email" => "e-mail address list",
+                                                 "hidden" => "any",
+                                                 "month" => "month string",
+                                                 "number" => "floating-point number",
+                                                 "password" => "one-line text",
+                                                 "radio" => "any",
+                                                 "range" => "floating-point number",
+                                                 "reset" => "any",
+                                                 "search" => "one-line text",
+                                                 "submit" => "any",
+                                                 "tel" => "one-line text",
+                                                 "text" => "one-line text",
+                                                 "time" => "time string",
+                                                 "url" => "URL potentially surrounded by spaces",
+                                                 "week" => "week string"
+                                               },
+                                    "vcard_name" => {
+                                                      "email" => 1,
+                                                      "password" => 1,
+                                                      "search" => 1,
+                                                      "tel" => 1,
+                                                      "text" => 1,
+                                                      "url" => 1
+                                                    },
+                                    "viblength" => {
+                                                     "button" => 1,
+                                                     "checkbox" => 1,
+                                                     "color" => 1,
+                                                     "date" => 1,
+                                                     "datetime" => 1,
+                                                     "datetime-local" => 1,
+                                                     "email" => 1,
+                                                     "file" => 1,
+                                                     "image" => 1,
+                                                     "month" => 1,
+                                                     "number" => 1,
+                                                     "password" => 1,
+                                                     "radio" => 1,
+                                                     "range" => 1,
+                                                     "reset" => 1,
+                                                     "search" => 1,
+                                                     "submit" => 1,
+                                                     "tel" => 1,
+                                                     "text" => 1,
+                                                     "time" => 1,
+                                                     "url" => 1,
+                                                     "week" => 1
+                                                   },
+                                    "vibration" => {
+                                                     "button" => 1,
+                                                     "checkbox" => 1,
+                                                     "color" => 1,
+                                                     "date" => 1,
+                                                     "datetime" => 1,
+                                                     "datetime-local" => 1,
+                                                     "email" => 1,
+                                                     "file" => 1,
+                                                     "image" => 1,
+                                                     "month" => 1,
+                                                     "number" => 1,
+                                                     "password" => 1,
+                                                     "radio" => 1,
+                                                     "range" => 1,
+                                                     "reset" => 1,
+                                                     "search" => 1,
+                                                     "submit" => 1,
+                                                     "tel" => 1,
+                                                     "text" => 1,
+                                                     "time" => 1,
+                                                     "url" => 1,
+                                                     "week" => 1
+                                                   },
+                                    "volume" => {
+                                                  "submit" => 1
+                                                },
+                                    "vrml" => {
+                                                "image" => 1
+                                              },
+                                    "vspace" => {
+                                                  "image" => 1
+                                                },
+                                    "width" => {
+                                                 "image" => 1
+                                               }
+                                  }
+                     }
         };
 
