@@ -422,12 +422,6 @@ $CheckerByType->{'URL potentially surrounded by spaces'} = sub {
   });
   $chk->check_iri_reference;
   $self->{has_uri_attr} = 1; ## TODO: <html manifest>
-
-  my $attr_name = $attr->name;
-  $element_state->{uri_info}->{$attr_name}->{node} = $attr;
-  ## TODO: absolute
-  push @{$self->{return}->{uri}->{$value} ||= []},
-      $element_state->{uri_info}->{$attr_name};
 }; # URL potentially surrounded by spaces
 
 ## Non-empty URL potentially surrounded by spaces [HTML]
@@ -1501,13 +1495,6 @@ my $HTMLLinkTypesAttrChecker = sub {
   ## then they SHOULD be described in different paragraphs.".
 
   $todo->{has_hyperlink_link_type} = 1 if $is_hyperlink;
-  if ($is_hyperlink or $a_or_area) {
-    $element_state->{uri_info}->{href}->{type}->{hyperlink} = 1;
-  }
-  if ($is_resource and not $a_or_area) {
-    $element_state->{uri_info}->{href}->{type}->{resource} = 1;
-  }
-
   $element_state->{link_rel} = \%word;
 }; # $HTMLLinkTypesAttrChecker
 
@@ -1524,12 +1511,6 @@ my $HTMLURIAttrChecker = sub {
   });
   $chk->check_iri_reference;
   $self->{has_uri_attr} = 1; ## TODO: <html manifest>
-
-  my $attr_name = $attr->name;
-  $element_state->{uri_info}->{$attr_name}->{node} = $attr;
-  ## TODO: absolute
-  push @{$self->{return}->{uri}->{$value} ||= []},
-      $element_state->{uri_info}->{$attr_name};
 }; # $HTMLURIAttrChecker
 
 my $NonEmptyURLChecker = sub {
@@ -2745,8 +2726,6 @@ $Element->{+HTML_NS}->{html} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before head';
-
-    $element_state->{uri_info}->{manifest}->{type}->{resource} = 1;
   },
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
@@ -2940,8 +2919,6 @@ $Element->{+HTML_NS}->{base} = {
                          type => 'attribute missing:href|target',
                          level => $self->{level}->{must});
     }
-
-    $element_state->{uri_info}->{href}->{type}->{base} = 1;
   }, # check_attrs
 }; # base
 
@@ -3250,12 +3227,6 @@ $Element->{+HTML_NS}->{meta} = {
             });
             $chk->check_iri_reference;
             $self->{has_uri_attr} = 1; ## NOTE: One of "attributes with URLs".
-
-            $element_state->{uri_info}->{content}->{node} = $content_attr;
-            $element_state->{uri_info}->{content}->{type}->{hyperlink} = 1;
-            ## XXXTODO: absolute
-            push @{$self->{return}->{uri}->{$content} ||= []},
-                $element_state->{uri_info}->{content};
           } else {
             $self->{onerror}->(node => $content_attr,
                                type => 'refresh:syntax error',
@@ -3546,8 +3517,6 @@ $Element->{+HTML_NS}->{script} = {
       $element_state->{script_type} = $type;
     }
 
-    $element_state->{uri_info}->{src}->{type}->{resource} = 1;
-
     $element_state->{text} = '';
   },
   check_child_element => sub {
@@ -3704,13 +3673,6 @@ $Element->{+HTML_NS}->{noscript} = {
 delete $Element->{+HTML_NS}->{dialog}; # XXX
 
 # ---- Sections ----
-
-$Element->{+HTML_NS}->{body}->{check_start} = sub {
-  my ($self, $item, $element_state) = @_;
-
-  $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
-  $HTMLFlowContentChecker{check_start}->(@_);
-}; # check_start
 
 $Element->{+HTML_NS}->{article} = {
   %HTMLFlowContentChecker,
@@ -3872,12 +3834,6 @@ $Element->{+HTML_NS}->{pre}->{check_end} = sub {
 
   $HTMLPhrasingContentChecker{check_end}->(@_);
 }; # check_end
-
-$Element->{+HTML_NS}->{blockquote}->{check_start} = sub {
-  my ($self, $item, $element_state) = @_;
-  $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
-  $HTMLFlowContentChecker{check_start}->(@_);
-}; # check_start
 
 $Element->{+HTML_NS}->{ol} = {
   %HTMLChecker,
@@ -4055,22 +4011,11 @@ $Element->{+HTML_NS}->{dt} = {
   %HTMLPhrasingContentChecker, # XXX
 }; # dd
 
-$Element->{+HTML_NS}->{div}->{check_start} = sub {
-  my ($self, $item, $element_state) = @_;
-  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-  $HTMLFlowContentChecker{check_start}->(@_);
-}; # check_start
-
 $Element->{+HTML_NS}->{marquee} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     loop => $LegacyLoopChecker,
   }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $HTMLFlowContentChecker{check_start}->(@_);
-  }, # check_start
 }; # marquee
 
 $Element->{+HTML_NS}->{font} = {
@@ -4199,9 +4144,6 @@ $Element->{+HTML_NS}->{a} = {
     }
 
     $ShapeCoordsChecker->($self, $item, \%attr, 'missing');
-
-    $element_state->{uri_info}->{href}->{type}->{hyperlink} = 1;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -4227,17 +4169,11 @@ $Element->{+HTML_NS}->{a} = {
   }, # check_end
 }; # a
 
-$Element->{+HTML_NS}->{q}->{check_start} = sub {
-  my ($self, $item, $element_state) = @_;
-
-  $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
-  $HTMLPhrasingContentChecker{check_start}->(@_);
-}; # check_start
-## TODO: "Quotation punctuation (such as quotation marks), if any, must be
-## placed inside the <code>q</code> element."  Though we cannot test the
-## element against this requirement since it incluides a semantic bit,
-## it might be possible to inform of the existence of quotation marks OUTSIDE
-## the |q| element.
+## XXX |q|: "Quotation punctuation (such as quotation marks), if any,
+## must be placed inside the <code>q</code> element."  Though we
+## cannot test the element against this requirement since it incluides
+## a semantic bit, it might be possible to inform of the existence of
+## quotation marks OUTSIDE the |q| element.
 
 $Element->{+HTML_NS}->{dfn} = {
   %HTMLPhrasingContentChecker,
@@ -4802,12 +4738,6 @@ $Element->{+HTML_NS}->{bdo}->{check_attrs2} = sub {
   }
 }; # check_attrs2
 
-$Element->{+HTML_NS}->{span}->{check_start} = sub {
-  my ($self, $item, $element_state) = @_;
-  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-  $HTMLPhrasingContentChecker{check_start}->(@_);
-}; # check_start
-
 # ---- Edits ----
 
 # XXX "paragraph" vs ins/del
@@ -4817,11 +4747,6 @@ $Element->{+HTML_NS}->{ins} = {
   check_attrs => $GetHTMLAttrsChecker->({
     datetime => $GetDateTimeAttrChecker->('date_string_with_optional_time'),
   }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
-    $TransparentChecker{check_start}->(@_);
-  }, # check_start
 }; # ins
 
 $Element->{+HTML_NS}->{del} = {
@@ -4829,11 +4754,6 @@ $Element->{+HTML_NS}->{del} = {
   check_attrs => $GetHTMLAttrsChecker->({
     datetime => $GetDateTimeAttrChecker->('date_string_with_optional_time'),
   }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
-    $TransparentChecker{check_start}->(@_);
-  }, # check_start
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     ## Modified copy of |check_end| for |%HTMLFlowContentChecker|.
@@ -5018,14 +4938,6 @@ $Element->{+HTML_NS}->{img} = {
     }
 
     ## XXXresource: external resource check
-
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{lowsrc}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{dynsrc}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{oversrc}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{vrml}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{longdesc}->{type}->{cite} = 1;
   }, # check_attrs2
   check_end => sub {
     my ($self, $item, $element_state) = @_;
@@ -5053,13 +4965,6 @@ $Element->{+HTML_NS}->{iframe} = {
                            is_char_string => 1});
     }, # srcdoc
   }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{longdesc}->{type}->{cite} = 1;
-  }, # check_start
 }; # iframe
 
 $Element->{+HTML_NS}->{embed} = {
@@ -5090,10 +4995,7 @@ $Element->{+HTML_NS}->{embed} = {
           if $attr;
     }
 
-    ## TODO: external resource check
-
-    $element_state->{uri_info}->{code}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
+    ## XXXresource: external resource check
   }, # check_attrs2
   check_end => sub {
     my ($self, $item, $element_state) = @_;
@@ -5157,14 +5059,6 @@ $Element->{+HTML_NS}->{object} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{id_type} = 'object';
-
-    $element_state->{uri_info}->{data}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{classid}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{code}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{codebase}->{type}->{base} = 1;
-    $element_state->{uri_info}->{archive}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-
     $TransparentChecker{check_start}->(@_);
   }, # check_start
   check_child_element => sub {
@@ -5258,17 +5152,6 @@ $Element->{+HTML_NS}->{applet} = {
       }
     }
   }, # check_attrs2
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{data}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{classid}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{code}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{codebase}->{type}->{base} = 1;
-    $element_state->{uri_info}->{object}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{archive}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $Element->{+HTML_NS}->{object}->{check_start}->(@_);
-  }, # check_start
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     $Element->{+HTML_NS}->{object}->{check_end}->(@_);
@@ -5324,9 +5207,6 @@ $Element->{+HTML_NS}->{video} = {
 
     $element_state->{in_media_orig} = $self->{flag}->{in_media};
     $self->{flag}->{in_media} = 1;
-
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{poster}->{type}->{embedded} = 1;
 
     $TransparentChecker{check_start}->(@_);
   }, # check_start
@@ -5418,7 +5298,6 @@ $Element->{+HTML_NS}->{source}->{check_attrs2} = sub {
                        text => 'src',
                        level => $self->{level}->{must});
   }
-  $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
 }; # check_attrs2
 
 $Element->{+HTML_NS}->{track} = {
@@ -5433,7 +5312,6 @@ $Element->{+HTML_NS}->{track} = {
                          text => 'src',
                          level => $self->{level}->{must});
     }
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
 
     my $kind = $el->get_attribute_ns (undef, 'kind') || '';
     $kind =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
@@ -5511,11 +5389,6 @@ $Element->{+HTML_NS}->{bgsound} = {
                          level => $self->{level}->{must});
     }
   }, # check_attrs2
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-    $HTMLEmptyChecker{check_start}->(@_);
-  }, # check_start
 }; # bgsound
 
 $Element->{+HTML_NS}->{canvas} = {
@@ -5686,8 +5559,6 @@ $Element->{+HTML_NS}->{area} = {
     }
 
     $ShapeCoordsChecker->($self, $item, \%attr, 'rectangle');
-
-    $element_state->{uri_info}->{href}->{type}->{hyperlink} = 1;
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -5729,9 +5600,6 @@ $Element->{+HTML_NS}->{table} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before caption';
-
-    $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
   },
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
@@ -6013,10 +5881,6 @@ $Element->{+HTML_NS}->{tbody} = {
   check_attrs => $GetHTMLAttrsChecker->({
     char => $CharChecker,
   }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
-  }, # check_start
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -6046,7 +5910,6 @@ $Element->{+HTML_NS}->{thead} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{in_thead} = 1;
-    $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
     $HTMLChecker{check_start}->(@_);
   }, # check_start
 }; # thead
@@ -6060,10 +5923,6 @@ $Element->{+HTML_NS}->{tr} = {
   check_attrs => $GetHTMLAttrsChecker->({
     char => $CharChecker,
   }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
-  }, # check_start
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -6101,11 +5960,6 @@ $Element->{+HTML_NS}->{td} = {
       ## element is non-conforming in that case anyway.
     },
   }),
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
-    $HTMLFlowContentChecker{check_start}->(@_);
-  }, # check_start
 }; # td
 
 $Element->{+HTML_NS}->{th} = {
@@ -6119,11 +5973,6 @@ $Element->{+HTML_NS}->{th} = {
       ## element is non-conforming in that case anyway.
     },
   }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
 }; # th
 
 # ---- Forms ----
@@ -6172,9 +6021,6 @@ $Element->{+HTML_NS}->{form} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $self->_add_minus_elements ($element_state, {(HTML_NS) => {form => 1}});
-
-    $element_state->{uri_info}->{action}->{type}->{action} = 1;
-    $element_state->{uri_info}->{data}->{type}->{resource} = 1;
     $element_state->{id_type} = 'form';
     $HTMLFlowContentChecker{check_start}->(@_);
   },
@@ -6233,12 +6079,6 @@ $Element->{+HTML_NS}->{fieldset} = {
   }, # check_end
 }; # fieldset
 
-$Element->{+HTML_NS}->{legend}->{check_start} = sub {
-  my ($self, $item, $element_state) = @_;
-  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-  $HTMLPhrasingContentChecker{check_start}->(@_);
-}; # check_start
-
 $Element->{+HTML_NS}->{label} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -6272,8 +6112,6 @@ $Element->{+HTML_NS}->{label} = {
         = $item->{node}->has_attribute_ns (undef, 'for') ? 1 : 0;
     $self->{flag}->{label_for}
         = $item->{node}->get_attribute_ns (undef, 'for');
-
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
 
     $HTMLPhrasingContentChecker{check_start}->(@_);
   }, # check_start
@@ -6973,11 +6811,6 @@ $Element->{+HTML_NS}->{input} = {
     
     ## TODO: Warn unless value = min * x where x is an integer.
  
-    $element_state->{uri_info}->{action}->{type}->{action} = 1;
-    $element_state->{uri_info}->{formaction}->{type}->{action} = 1;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-
     $FAECheckAttrs2->($self, $item, $element_state);
   }, # check_attrs2
   check_start => sub {
@@ -7003,10 +6836,6 @@ $Element->{+HTML_NS}->{button} = {
          $_Defs->{categories}->{'interactive content'}->{elements},
          $_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $FAECheckStart->($self, $item, $element_state);
-
-    $element_state->{uri_info}->{action}->{type}->{action} = 1;
-    $element_state->{uri_info}->{formaction}->{type}->{action} = 1;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
 
     $element_state->{no_interactive_original}
         = $self->{flag}->{no_interactive};
@@ -7063,9 +6892,6 @@ $Element->{+HTML_NS}->{select} = {
         = $self->{flag}->{in_select_single};
     $self->{flag}->{in_select_single}
         = not $item->{node}->has_attribute_ns (undef, 'multiple');
-
-    $element_state->{uri_info}->{data}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
   }, # check_start
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -7169,8 +6995,6 @@ $Element->{+HTML_NS}->{datalist} = {
     my ($self, $item, $element_state) = @_;
 
     $element_state->{phase} = 'any'; # any | phrasing | option
-
-    $element_state->{uri_info}->{data}->{type}->{resource} = 1;
 
     $element_state->{id_type} = 'datalist';
 
@@ -7308,10 +7132,6 @@ $Element->{+HTML_NS}->{option} = {
       $self->{flag}->{has_option_selected} = 1;
     }
   }, # check_attrs2
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-  }, # check_start
 }; # option
 
 $Element->{+HTML_NS}->{textarea} = {
@@ -7363,9 +7183,6 @@ $Element->{+HTML_NS}->{textarea} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $FAECheckStart->($self, $item, $element_state);
-    
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{data}->{type}->{resource} = 1;
   },
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -7728,10 +7545,6 @@ $Element->{+HTML_NS}->{command} = {
       }
     }
   }, # check_attrs2
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{icon}->{type}->{embedded} = 1;
-  }, # check_start
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     
@@ -7875,13 +7688,6 @@ $Element->{+HTML_NS}->{frameset} = {
     $HTMLChecker{check_end}->(@_);
   }, # check_end
 }; # frameset
-
-$Element->{+HTML_NS}->{frame}->{check_start} = sub {
-  my ($self, $item, $element_state) = @_;
-  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-  $element_state->{uri_info}->{longdesc}->{type}->{cite} = 1;
-  $HTMLEmptyChecker{check_start}->(@_);
-}; # check_start
 
 $Element->{+HTML_NS}->{noframes} = {
   %HTMLTextChecker, # XXX content model restriction (same as iframe)
@@ -8885,6 +8691,7 @@ $Element->{+ATOM_NS}->{link} = {
       ## title="" SHOULD be there if multiple rel=license
       ## MUST NOT "unspecified" and other rel=license
     },
+    title => sub {},
     type => $MIMETypeChecker,
   }),
   check_start =>  sub {
