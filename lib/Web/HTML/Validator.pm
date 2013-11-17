@@ -1987,15 +1987,6 @@ my $HTMLCharsetsAttrChecker = sub {
   ## ISSUE: Shift_JIS is ASCII-compatible?  What about ISO-2022-JP?
 }; # $HTMLCharsetsAttrChecker
 
-my $FontSizeChecker = sub {
-  my ($self, $attr) = @_;
-  unless ($attr->value =~ /\A[+-]?[1-7]\z/) {
-    $self->{onerror}->(node => $attr,
-                       type => 'fontsize:syntax error',
-                       level => $self->{level}->{must});
-  }
-}; # $FontSizeChecker
-
 my $PlaceholderAttrChecker = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
@@ -2487,16 +2478,6 @@ my $LegacyLoopChecker = sub {
   }
 }; # $LegacyLoopChecker
 
-my $LiTypeChecker = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  unless ($value =~ /\A(?:[Cc][Ii][Rr][Cc][Ll][Ee]|[Dd][Ii][Ss][Cc]|[Ss][Qq][Uu][Aa][Rr][Ee]|[1aAiI])\z/) {
-    $self->{onerror}->(node => $attr,
-                       type => 'litype:invalid', # XXXdocumentation
-                       level => $self->{level}->{must});
-  }
-}; # $LiTypeChecker
-
 my $GetHTMLAttrsChecker = sub {
   my $element_specific_checker = shift;
   return sub {
@@ -2507,13 +2488,8 @@ my $GetHTMLAttrsChecker = sub {
   };
 }; # $GetHTMLAttrsChecker
 
-my %HTMLChecker = (
-  %Web::HTML::Validator::AnyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({}),
-);
-
 my %HTMLEmptyChecker = (
-  %HTMLChecker,
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -2539,7 +2515,7 @@ my %HTMLEmptyChecker = (
 );
 
 my %HTMLTextChecker = (
-  %HTMLChecker,
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -2556,7 +2532,7 @@ my %HTMLTextChecker = (
 );
 
 my %HTMLFlowContentChecker = (
-  %HTMLChecker,
+  %AnyChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -2616,7 +2592,7 @@ my %HTMLFlowContentChecker = (
 ); # %HTMLFlowContentChecker
 
 my %HTMLPhrasingContentChecker = (
-  %HTMLChecker,
+  %AnyChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -2715,7 +2691,7 @@ my %TransparentChecker = (
 # ---- Default HTML elements ----
 
 $Element->{+HTML_NS}->{''} = {
-  %HTMLChecker,
+  %AnyChecker,
 };
 
 for my $ns (keys %{$_Defs->{elements}}) {
@@ -2741,8 +2717,8 @@ for my $ns (keys %{$_Defs->{elements}}) {
 # ---- The root element ----
 
 $Element->{+HTML_NS}->{html} = {
+  %AnyChecker,
   is_root => 1,
-  check_attrs => $GetHTMLAttrsChecker->(),
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before head';
@@ -2815,7 +2791,7 @@ $Element->{+HTML_NS}->{html} = {
       die "check_end: Bad |html| phase: $element_state->{phase}";
     }
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
 }; # html
 
@@ -2881,7 +2857,7 @@ $Element->{+HTML_NS}->{head} = {
     }
     $self->{flag}->{in_head} = $element_state->{in_head_original};
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
 };
 
@@ -3028,7 +3004,6 @@ $Element->{+HTML_NS}->{meta} = {
     content => sub {},
     'http-equiv' => sub {},
     name => sub {},
-    scheme => sub {},
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -3313,7 +3288,7 @@ $Element->{+HTML_NS}->{meta} = {
 }; # meta
 
 $Element->{+HTML_NS}->{style} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     type => sub {
       my ($self, $attr) = @_;
@@ -3425,7 +3400,7 @@ $Element->{+HTML_NS}->{style} = {
                          level => $self->{level}->{must});
     }
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
 }; # style
 ## ISSUE: Relationship to significant content check?
@@ -3433,7 +3408,7 @@ $Element->{+HTML_NS}->{style} = {
 # ---- Scripting ----
 
 $Element->{+HTML_NS}->{script} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     charset => sub {
       my ($self, $attr) = @_;
@@ -3594,7 +3569,7 @@ $Element->{+HTML_NS}->{script} = {
                            is_char_string => 1});
     }
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
   ## TODO: There MUST be |type| unless the script type is JavaScript. (resource error)
   ## NOTE: "When used to include script data, the script data must be embedded
@@ -3616,7 +3591,7 @@ $Element->{+HTML_NS}->{noscript} = {
     }
 
     if ($self->{flag}->{in_head}) {
-      $HTMLChecker{check_start}->(@_);
+      $AnyChecker{check_start}->(@_);
     } else {
       $self->_add_minus_elements ($element_state,
                                   {(HTML_NS) => {noscript => 1}});
@@ -3683,7 +3658,7 @@ $Element->{+HTML_NS}->{noscript} = {
     my ($self, $item, $element_state) = @_;
     $self->_remove_minus_elements ($element_state);
     if ($self->{flag}->{in_head}) {
-      $HTMLChecker{check_end}->(@_);
+      $AnyChecker{check_end}->(@_);
     } else {
       $TransparentChecker{check_end}->(@_);
     }
@@ -3731,7 +3706,7 @@ $Element->{+HTML_NS}->{$_}->{check_start} = sub {
 ## TODO: Explicit sectioning is "encouraged".
 
 $Element->{+HTML_NS}->{hgroup} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state, $element_state2) = @_;
@@ -3768,7 +3743,7 @@ $Element->{+HTML_NS}->{hgroup} = {
                          level => $self->{level}->{must});
     }
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   }, # check_end
 }; # hgroup
 
@@ -3855,21 +3830,10 @@ $Element->{+HTML_NS}->{pre}->{check_end} = sub {
   $HTMLPhrasingContentChecker{check_end}->(@_);
 }; # check_end
 
-$Element->{+HTML_NS}->{ol} = {
-  %HTMLChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => sub {
-      my ($self, $attr) = @_;
-      my $value = $attr->value;
-      unless ({
-          1 => 1, a => 1, A => 1, i => 1, I => 1,
-      }->{$value}) {
-        $self->{onerror}->(node => $attr,
-                           type => 'oltype:invalid', # XXXdocumentation
-                           level => $self->{level}->{must});
-      }
-    }, # type
-  }), # check_attrs
+$Element->{+HTML_NS}->{ul} =
+$Element->{+HTML_NS}->{ol} =
+$Element->{+HTML_NS}->{dir} = {
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -3892,71 +3856,64 @@ $Element->{+HTML_NS}->{ol} = {
                          level => $self->{level}->{must});
     }
   },
-};
+}; # ul ol dir
 
-$Element->{+HTML_NS}->{ul} = {
-  %{$Element->{+HTML_NS}->{ol}},
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => sub {
-      my ($self, $attr) = @_;
-      my $value = $attr->value;
-      $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      unless ({
-        disc => 1, square => 1, circle => 1,
-      }->{$value}) {
-        $self->{onerror}->(node => $attr,
-                           type => 'enumerated:invalid',
-                           level => 'm');
-      }
-    }, # type
-  }), # check_attrs
-}; # ul
+$ElementAttrChecker->{(HTML_NS)}->{ol}->{''}->{type} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  unless ({
+    1 => 1, a => 1, A => 1, i => 1, I => 1,
+  }->{$value}) {
+    $self->{onerror}->(node => $attr,
+                       type => 'oltype:invalid', # XXXdocumentation
+                       level => 'm');
+  }
+}; # <ol type="">
 
-$Element->{+HTML_NS}->{dir} = {
-  %{$Element->{+HTML_NS}->{ul}},
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => $LiTypeChecker,
-  }), # check_attrs
-}; # dir
+$ElementAttrChecker->{(HTML_NS)}->{ul}->{''}->{type} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  unless ($value eq 'disc' or $value eq 'square' or $value eq 'circle') {
+    $self->{onerror}->(node => $attr,
+                       type => 'enumerated:invalid',
+                       level => 'm');
+  }
+}; # <ul type="">
 
-$Element->{+HTML_NS}->{li} = {
-  %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => $LiTypeChecker,
-    value => sub {
-      my ($self, $attr) = @_;
+$ElementAttrChecker->{(HTML_NS)}->{$_}->{''}->{type} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  unless ($value =~ /\A(?:[Cc][Ii][Rr][Cc][Ll][Ee]|[Dd][Ii][Ss][Cc]|[Ss][Qq][Uu][Aa][Rr][Ee]|[1aAiI])\z/) {
+    $self->{onerror}->(node => $attr,
+                       type => 'litype:invalid', # XXXdocumentation
+                       level => 'm');
+  }
+} for qw(li dir); # <li type=""> <dir type="">
 
-      my $parent_is_ol;
-      my $parent = $attr->owner_element->manakai_parent_element;
-      if (defined $parent) {
-        my $parent_ns = $parent->namespace_uri;
-        $parent_ns = '' unless defined $parent_ns;
-        my $parent_ln = $parent->manakai_local_name;
-        $parent_is_ol = ($parent_ns eq HTML_NS and $parent_ln eq 'ol');
-      }
+$ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
+  my ($self, $attr) = @_;
 
-      unless ($parent_is_ol) {
-        $self->{onerror}->(node => $attr,
-                           type => 'non-ol li value',
-                           level => $self->{level}->{must});
-      }
-      
-      $HTMLIntegerAttrChecker->($self, $attr);
-    },
-  }), # check_attrs
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-    $HTMLFlowContentChecker{check_child_element}->(@_);
-  }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $HTMLFlowContentChecker{check_child_text}->(@_);
-  }, # check_child_text
-}; # li
+  my $parent_is_ol;
+  my $parent = $attr->owner_element->manakai_parent_element;
+  if (defined $parent) {
+    my $parent_ns = $parent->namespace_uri;
+    $parent_ns = '' unless defined $parent_ns;
+    my $parent_ln = $parent->manakai_local_name;
+    $parent_is_ol = ($parent_ns eq HTML_NS and $parent_ln eq 'ol');
+  }
+
+  unless ($parent_is_ol) {
+    $self->{onerror}->(node => $attr,
+                       type => 'non-ol li value',
+                       level => 'm');
+  }
+  
+  $HTMLIntegerAttrChecker->($self, $attr);
+}; # <li value="">
 
 $Element->{+HTML_NS}->{dl} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before dt';
@@ -4020,7 +3977,7 @@ $Element->{+HTML_NS}->{dl} = {
                          level => $self->{level}->{must});
     }
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
 }; # dl
 ## XXX Within a single <code>dl</code> element, there should not be
@@ -4031,19 +3988,16 @@ $Element->{+HTML_NS}->{dt} = {
   %HTMLPhrasingContentChecker, # XXX
 }; # dd
 
-$Element->{+HTML_NS}->{marquee} = {
-  %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    loop => $LegacyLoopChecker,
-  }), # check_attrs
-}; # marquee
+$ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = $LegacyLoopChecker;
 
-$Element->{+HTML_NS}->{font} = {
-  %TransparentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    size => $FontSizeChecker,
-  }), # check_attrs
-}; # font
+$ElementAttrChecker->{(HTML_NS)}->{font}->{''}->{size} = sub {
+  my ($self, $attr) = @_;
+  unless ($attr->value =~ /\A[+-]?[1-7]\z/) {
+    $self->{onerror}->(node => $attr,
+                       type => 'fontsize:syntax error',
+                       level => 'm');
+  }
+}; # <font size="">
 
 # ---- Text-level semantics ----
 
@@ -5593,7 +5547,7 @@ $Element->{+HTML_NS}->{area} = {
 # ---- Tabular data ----
 
 $Element->{+HTML_NS}->{table} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     border => sub {
       my ($self, $attr) = @_;
@@ -5783,7 +5737,7 @@ $Element->{+HTML_NS}->{table} = {
 
     push @{$self->{return}->{table}}, $table;
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   }, # check_end
 }; # table
 
@@ -5896,7 +5850,7 @@ $Element->{+HTML_NS}->{col} = {
 }; # col
 
 $Element->{+HTML_NS}->{tbody} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     char => $CharChecker,
   }), # check_attrs
@@ -5929,7 +5883,7 @@ $Element->{+HTML_NS}->{thead} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{in_thead} = 1;
-    $HTMLChecker{check_start}->(@_);
+    $AnyChecker{check_start}->(@_);
   }, # check_start
 }; # thead
 
@@ -5938,7 +5892,7 @@ $Element->{+HTML_NS}->{tfoot} = {
 }; # tfoot
 
 $Element->{+HTML_NS}->{tr} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     char => $CharChecker,
   }), # check_attrs
@@ -6548,7 +6502,7 @@ $Element->{+HTML_NS}->{button} = {
 }; # button
 
 $Element->{+HTML_NS}->{select} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
@@ -6658,7 +6612,7 @@ $Element->{+HTML_NS}->{select} = {
     delete $self->{flag}->{has_option_selected}
         unless $self->{flag}->{in_select_single};
     
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   }, # check_end
 }; # select
 
@@ -6747,13 +6701,13 @@ $Element->{+HTML_NS}->{datalist} = {
       ## NOTE: As a side-effect, when the |datalist| element only contains
       ## non-conforming content, then the |phase| flag has not changed from
       ## |any|, no "no significant content" error is raised neither.
-      $HTMLChecker{check_end}->(@_);
+      $AnyChecker{check_end}->(@_);
     }
   }, # check_end
 }; # datalist
 
 $Element->{+HTML_NS}->{optgroup} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     
@@ -7297,7 +7251,7 @@ $Element->{+HTML_NS}->{menu} = {
       delete $self->{flag}->{in_phrasing}
           unless $element_state->{in_phrasing_original};
 
-      $HTMLChecker{check_end}->(@_);
+      $AnyChecker{check_end}->(@_);
     } else { # 'phrasing' or 'li or phrasing'
       $HTMLPhrasingContentChecker{check_end}->(@_);
     }
@@ -7307,7 +7261,7 @@ $Element->{+HTML_NS}->{menu} = {
 # ---- Frames ----
 
 $Element->{+HTML_NS}->{frameset} = {
-  %HTMLChecker,
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -7346,7 +7300,7 @@ $Element->{+HTML_NS}->{frameset} = {
     my ($self, $item, $element_state) = @_;
     $self->{flag}->{in_frameset}++;
 
-    $HTMLChecker{check_start}->(@_);
+    $AnyChecker{check_start}->(@_);
   }, # check_start
   check_end => sub {
     my ($self, $item, $element_state) = @_;
@@ -7358,7 +7312,7 @@ $Element->{+HTML_NS}->{frameset} = {
                          level => $self->{level}->{must});
     }
 
-    $HTMLChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   }, # check_end
 }; # frameset
 
@@ -7441,9 +7395,7 @@ my $AtomLanguageTagAttrChecker = sub {
   ## ISSUE: RFC 4646 (3066bis)?
 }; # $AtomLanguageTagAttrChecker
 
-my %AtomChecker = (
-  %Web::HTML::Validator::AnyChecker,
-);
+my %AtomChecker = (%AnyChecker);
 
 my %AtomTextConstruct = (
   %AtomChecker,
