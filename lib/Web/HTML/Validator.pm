@@ -75,6 +75,8 @@ sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 
+our $_Defs;
+
 ## ------ Attribute conformance checkers ------
 
 my $CheckerByType = {};
@@ -119,9 +121,9 @@ sub _check_element_attrs ($$$;%) {
     
     my $checker = $NamespacedAttrChecker->{$attr_ns}->{$attr_ln}
         || $NamespacedAttrChecker->{$attr_ns}->{''};
-    my $attr_def = $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
-        $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
-        $Web::HTML::Validator::_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
+    my $attr_def = $_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
+        $_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
+        $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
     my $conforming = $attr_def->{conforming};
     if ($attr_ns eq '' and $args{is_html}) { # XXX
       if ($args{allow_dataset} and
@@ -1076,7 +1078,7 @@ sub check_element ($$$;$) {
                            level => 'w');
       }
 
-      my $el_def = $Web::HTML::Validator::_Defs->{elements}->{$el_nsuri}->{$el_ln};
+      my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
       if ($el_def->{conforming}) {
         unless ($Element->{$el_nsuri}->{$el_ln}) {
           ## According to the attribute list, this element is
@@ -1127,7 +1129,7 @@ sub check_element ($$$;$) {
                            real_parent_state => $element_state,
                            parent_state => $content_state};
 
-          if ($Web::HTML::Validator::_Defs->{categories}->{'embedded content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+          if ($_Defs->{categories}->{'embedded content'}->{elements}->{$child_nsuri}->{$child_ln}) {
             $element_state->{has_significant} = 1;
           }
         } elsif ($child_nt == 3 or # TEXT_NODE
@@ -2577,7 +2579,7 @@ my %HTMLFlowContentChecker = (
                            type => 'element not allowed:flow style',
                            level => $self->{level}->{must});
       }
-    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+    } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       $element_state->{has_non_style} = 1 unless $child_is_transparent;
     } else {
       $element_state->{has_non_style} = 1;
@@ -2630,7 +2632,7 @@ my %HTMLPhrasingContentChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+    } elsif ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -2670,7 +2672,7 @@ my %TransparentChecker = (
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($self->{flag}->{in_phrasing}) {
-      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2682,7 +2684,7 @@ my %TransparentChecker = (
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:flow style',
                            level => $self->{level}->{must});
-      } elsif ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2697,7 +2699,7 @@ my %TransparentChecker = (
                              type => 'element not allowed:flow style',
                              level => $self->{level}->{must});
         }
-      } elsif ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{has_non_style} = 1 unless $child_is_transparent;
       } else {
         $element_state->{has_non_style} = 1;
@@ -2714,6 +2716,26 @@ my %TransparentChecker = (
 $Element->{+HTML_NS}->{''} = {
   %HTMLChecker,
 };
+
+for my $ns (keys %{$_Defs->{elements}}) {
+  for my $ln (keys %{$_Defs->{elements}->{$ns}}) {
+    my $cm = $_Defs->{elements}->{$ns}->{$ln}->{content_model} or next;
+    if ($cm eq 'phrasing content') {
+      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
+          = $HTMLPhrasingContentChecker{$_}
+          for keys %HTMLPhrasingContentChecker;
+    } elsif ($cm eq 'flow content') {
+      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
+          = $HTMLFlowContentChecker{$_} for keys %HTMLFlowContentChecker;
+    } elsif ($cm eq 'empty') {
+      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
+          = $HTMLEmptyChecker{$_} for keys %HTMLEmptyChecker;
+    } elsif ($cm eq 'text') {
+      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
+          = $HTMLTextChecker{$_} for keys %HTMLTextChecker;
+    }
+  }
+}
 
 # ---- The root element ----
 
@@ -2826,7 +2848,7 @@ $Element->{+HTML_NS}->{head} = {
                            type => 'element not allowed:head style',
                            level => $self->{level}->{must});
       }
-    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'metadata content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+    } elsif ($_Defs->{categories}->{'metadata content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -2865,7 +2887,7 @@ $Element->{+HTML_NS}->{head} = {
 };
 
 $Element->{+HTML_NS}->{title} = {
-  %HTMLTextChecker,
+  %HTMLTextChecker, # XXX
 }; # title
 
 $Element->{+HTML_NS}->{base} = {
@@ -2922,10 +2944,6 @@ $Element->{+HTML_NS}->{base} = {
     $element_state->{uri_info}->{href}->{type}->{base} = 1;
   }, # check_attrs
 }; # base
-
-$Element->{+HTML_NS}->{basefont} = {
-  %HTMLEmptyChecker,
-}; # basefont
 
 $Element->{+HTML_NS}->{link} = {
   %HTMLEmptyChecker,
@@ -3683,25 +3701,16 @@ $Element->{+HTML_NS}->{noscript} = {
   }, # check_end
 }; # noscript
 
+delete $Element->{+HTML_NS}->{dialog}; # XXX
+
 # ---- Sections ----
 
-$Element->{+HTML_NS}->{body} = {
-  %HTMLFlowContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
+$Element->{+HTML_NS}->{body}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
 
-    $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
-    $HTMLFlowContentChecker{check_start}->(@_);
-  }, # check_start
-}; # body
-
-$Element->{+HTML_NS}->{section} = {
-  %HTMLFlowContentChecker,
-}; # section
-
-$Element->{+HTML_NS}->{nav} = {
-  %HTMLFlowContentChecker,
-};
+  $element_state->{uri_info}->{background}->{type}->{embedded} = 1;
+  $HTMLFlowContentChecker{check_start}->(@_);
+}; # check_start
 
 $Element->{+HTML_NS}->{article} = {
   %HTMLFlowContentChecker,
@@ -3724,28 +3733,18 @@ $Element->{+HTML_NS}->{article} = {
   }, # check_end
 }; # article
 
+$Element->{+HTML_NS}->{nav} = {
+  %HTMLFlowContentChecker, # XXX
+};
 $Element->{+HTML_NS}->{aside} = {
-  %HTMLFlowContentChecker,
+  %HTMLFlowContentChecker, # XXX
 };
 
-$Element->{+HTML_NS}->{h1} = {
-  %HTMLPhrasingContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->{flag}->{has_hn} = 1;
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
-}; # h1
-
-$Element->{+HTML_NS}->{h2} = {%{$Element->{+HTML_NS}->{h1}}};
-
-$Element->{+HTML_NS}->{h3} = {%{$Element->{+HTML_NS}->{h1}}};
-
-$Element->{+HTML_NS}->{h4} = {%{$Element->{+HTML_NS}->{h1}}};
-
-$Element->{+HTML_NS}->{h5} = {%{$Element->{+HTML_NS}->{h1}}};
-
-$Element->{+HTML_NS}->{h6} = {%{$Element->{+HTML_NS}->{h1}}};
+$Element->{+HTML_NS}->{$_}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+  $self->{flag}->{has_hn} = 1;
+  $HTMLPhrasingContentChecker{check_start}->(@_);
+} for qw(h1 h2 h3 h4 h5 h6); # check_start
 
 ## TODO: Explicit sectioning is "encouraged".
 
@@ -3838,8 +3837,8 @@ $Element->{+HTML_NS}->{address} = {
     $self->_add_minus_elements
         ($element_state,
          {(HTML_NS) => {header => 1, footer => 1, address => 1}},
-         $Web::HTML::Validator::_Defs->{categories}->{'sectioning content'}->{elements},
-         $Web::HTML::Validator::_Defs->{categories}->{'heading content'}->{elements});
+         $_Defs->{categories}->{'sectioning content'}->{elements},
+         $_Defs->{categories}->{'heading content'}->{elements});
     $HTMLFlowContentChecker{check_start}->(@_);
   },
   check_end => sub {
@@ -3852,60 +3851,33 @@ $Element->{+HTML_NS}->{address} = {
 
 # ---- Grouping content ----
 
-$Element->{+HTML_NS}->{p} = {
-  %HTMLPhrasingContentChecker,
-}; # p
-
-$Element->{+HTML_NS}->{hr} = {
-  %HTMLEmptyChecker,
-}; # hr
-
-$Element->{+HTML_NS}->{br} = {
-  %HTMLEmptyChecker,
-}; # br
-
-$Element->{+HTML_NS}->{pre} = {
-  %HTMLPhrasingContentChecker,
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
+$Element->{+HTML_NS}->{pre}->{check_end} = sub {
+  my ($self, $item, $element_state) = @_;
   
-    ## TODO: Flag to enable/disable IDL checking?
-    my $class = $item->{node}->get_attribute_ns (undef, 'class');
-    if (defined $class and
-        $class =~ /\bidl(?>-code)?\b/) { ## TODO: use classList.has
-      ## NOTE: pre.idl: WHATWG, XHR, Selectors API, CSSOM specs
-      ## NOTE: pre.code > code.idl-code: WebIDL spec
-      ## NOTE: pre.idl-code: DOM1 spec
-      ## NOTE: div.idl-code > pre: DOM, ProgressEvent specs
-      ## NOTE: pre.schema: ReSpec-generated specs
-      $self->{onsubdoc}->({s => $item->{node}->text_content,
-                           container_node => $item->{node},
-                           media_type => 'text/x-webidl',
-                           is_char_string => 1});
-    }
+  # XXX pre-content checking should be external hook rather than
+  # hardcoded like this:
+  my $class = $item->{node}->get_attribute_ns (undef, 'class');
+  if (defined $class and
+      $class =~ /\bidl(?>-code)?\b/) { ## TODO: use classList.has
+    ## NOTE: pre.idl: WHATWG, XHR, Selectors API, CSSOM specs
+    ## NOTE: pre.code > code.idl-code: WebIDL spec
+    ## NOTE: pre.idl-code: DOM1 spec
+    ## NOTE: div.idl-code > pre: DOM, ProgressEvent specs
+    ## NOTE: pre.schema: ReSpec-generated specs
+    $self->{onsubdoc}->({s => $item->{node}->text_content,
+                         container_node => $item->{node},
+                         media_type => 'text/x-webidl',
+                         is_char_string => 1});
+  }
 
-    $HTMLPhrasingContentChecker{check_end}->(@_);
-  }, # check_end
-}; # pre
+  $HTMLPhrasingContentChecker{check_end}->(@_);
+}; # check_end
 
-$Element->{+HTML_NS}->{xmp} = {
-  %HTMLTextChecker,
-}; # xmp
-
-$Element->{+HTML_NS}->{listing} = $Element->{+HTML_NS}->{xmp};
-
-$Element->{+HTML_NS}->{plaintext} = {
-  %HTMLTextChecker,
-}; # plaintext
-
-$Element->{+HTML_NS}->{blockquote} = {
-  %HTMLFlowContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
-    $HTMLFlowContentChecker{check_start}->(@_);
-  }, # check_start
-};
+$Element->{+HTML_NS}->{blockquote}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
+  $HTMLFlowContentChecker{check_start}->(@_);
+}; # check_start
 
 $Element->{+HTML_NS}->{ol} = {
   %HTMLChecker,
@@ -4080,25 +4052,14 @@ $Element->{+HTML_NS}->{dl} = {
 ## revision 3859)
 
 $Element->{+HTML_NS}->{dt} = {
-  %HTMLPhrasingContentChecker,
-}; # dt
-
-$Element->{+HTML_NS}->{dd} = {
-  %HTMLFlowContentChecker,
+  %HTMLPhrasingContentChecker, # XXX
 }; # dd
 
-$Element->{+HTML_NS}->{div} = {
-  %HTMLFlowContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $HTMLFlowContentChecker{check_start}->(@_);
-  }, # check_start
-}; # div
-
-$Element->{+HTML_NS}->{center} = {
-  %HTMLFlowContentChecker,
-}; # center
+$Element->{+HTML_NS}->{div}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
+  $HTMLFlowContentChecker{check_start}->(@_);
+}; # check_start
 
 $Element->{+HTML_NS}->{marquee} = {
   %HTMLFlowContentChecker,
@@ -4112,24 +4073,12 @@ $Element->{+HTML_NS}->{marquee} = {
   }, # check_start
 }; # marquee
 
-$Element->{+HTML_NS}->{multicol} = {
-  %HTMLFlowContentChecker,
-}; # multicol
-
 $Element->{+HTML_NS}->{font} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     size => $FontSizeChecker,
   }), # check_attrs
 }; # font
-
-$Element->{+HTML_NS}->{layer} = {
-  %HTMLFlowContentChecker,
-}; # layer
-
-$Element->{+HTML_NS}->{nolayer} = {
-  %HTMLFlowContentChecker,
-}; # nolayer
 
 # ---- Text-level semantics ----
 
@@ -4258,8 +4207,8 @@ $Element->{+HTML_NS}->{a} = {
     my ($self, $item, $element_state) = @_;
     $self->_add_minus_elements
         ($element_state,
-         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements},
-         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
+         $_Defs->{categories}->{'interactive content'}->{elements},
+         $_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $element_state->{no_interactive_original}
         = $self->{flag}->{no_interactive};
     $self->{flag}->{no_interactive} = 1;
@@ -4278,35 +4227,12 @@ $Element->{+HTML_NS}->{a} = {
   }, # check_end
 }; # a
 
-$Element->{+HTML_NS}->{em} = {
-  %HTMLPhrasingContentChecker,
-}; # em
+$Element->{+HTML_NS}->{q}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
 
-$Element->{+HTML_NS}->{strong} = {
-  %HTMLPhrasingContentChecker,
-}; # strong
-
-$Element->{+HTML_NS}->{small} = {
-  %HTMLPhrasingContentChecker,
-}; # small
-
-$Element->{+HTML_NS}->{big} = {
-  %HTMLPhrasingContentChecker,
-}; # big
-
-$Element->{+HTML_NS}->{cite} = {
-  %HTMLPhrasingContentChecker,
-}; # cite
-
-$Element->{+HTML_NS}->{q} = {
-  %HTMLPhrasingContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-
-    $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
-};
+  $element_state->{uri_info}->{cite}->{type}->{cite} = 1;
+  $HTMLPhrasingContentChecker{check_start}->(@_);
+}; # check_start
 ## TODO: "Quotation punctuation (such as quotation marks), if any, must be
 ## placed inside the <code>q</code> element."  Though we cannot test the
 ## element against this requirement since it incluides a semantic bit,
@@ -4367,19 +4293,11 @@ $Element->{+HTML_NS}->{dfn} = {
   }, # check_end
 }; # dfn
 
-$Element->{+HTML_NS}->{abbr} = {
-  %HTMLPhrasingContentChecker,
-  ## NOTE: "If an abbreviation is pluralised, the expansion's grammatical
-  ## number (plural vs singular) must match the grammatical number of the
-  ## contents of the element."  Though this can be checked by machine,
-  ## it requires language-specific knowledge and dictionary, such that
-  ## we don't support the check of the requirement.
-  ## ISSUE: Is <abbr title="Cascading Style Sheets">CSS</abbr> conforming?
-}; # abbr
-
-$Element->{+HTML_NS}->{acronym} = {
-  %HTMLPhrasingContentChecker,
-}; # acronym
+## NOTE: |abbr|: "If an abbreviation is pluralised, the expansion's
+## grammatical number (plural vs singular) must match the grammatical
+## number of the contents of the element."  Though this can be checked
+## by machine, it requires language-specific knowledge and dictionary,
+## such that we don't support the check of the requirement.
 
 $Element->{+HTML_NS}->{time} = {
   %HTMLPhrasingContentChecker,
@@ -4588,90 +4506,33 @@ $Element->{+HTML_NS}->{time} = {
   }, # check_end
 }; # time
 
-$Element->{+HTML_NS}->{code} = {
-  %HTMLPhrasingContentChecker,
-}; # code
+$Element->{+HTML_NS}->{$_}->{check_end} = sub {
+  my ($self, $item, $element_state) = @_;
+  my $el = $item->{node}; # <i> or <b>
 
-$Element->{+HTML_NS}->{var} = {
-  %HTMLPhrasingContentChecker,
-}; # var
+  if ($el->manakai_local_name eq 'b') {
+    $self->{onerror}->(type => 'last resort', # XXXtype
+                       node => $el,
+                       level => $self->{level}->{should});
+  }
 
-$Element->{+HTML_NS}->{samp} = {
-  %HTMLPhrasingContentChecker,
-}; # samp
-
-$Element->{+HTML_NS}->{kbd} = {
-  %HTMLPhrasingContentChecker,
-}; # kbd
-
-$Element->{+HTML_NS}->{sub} = {
-  %HTMLPhrasingContentChecker,
-}; # sub
-
-$Element->{+HTML_NS}->{sup} = $Element->{+HTML_NS}->{sub};
-
-$Element->{+HTML_NS}->{i} = {
-  %HTMLPhrasingContentChecker,
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    my $el = $item->{node}; # <i> or <b>
-
+  if ($el->has_attribute_ns (undef, 'class')) {
     if ($el->manakai_local_name eq 'b') {
-      $self->{onerror}->(type => 'last resort', # XXXtype
-                         node => $el,
-                         level => $self->{level}->{should});
-    }
-
-    if ($el->has_attribute_ns (undef, 'class')) {
-      if ($el->manakai_local_name eq 'b') {
-        #
-      } else {
-        $self->{onerror}->(type => 'last resort', # XXXtype
-                           node => $el,
-                           level => $self->{level}->{good}); # encouraged
-      }
+      #
     } else {
-      $self->{onerror}->(type => 'attribute missing',
-                         text => 'class',
+      $self->{onerror}->(type => 'last resort', # XXXtype
                          node => $el,
                          level => $self->{level}->{good}); # encouraged
     }
+  } else {
+    $self->{onerror}->(type => 'attribute missing',
+                       text => 'class',
+                       node => $el,
+                       level => $self->{level}->{good}); # encouraged
+  }
 
-    $HTMLPhrasingContentChecker{check_end}->(@_);
-  }, # check_end
-}; # i
-
-$Element->{+HTML_NS}->{b} = $Element->{+HTML_NS}->{i};
-
-$Element->{+HTML_NS}->{tt} = {
-  %HTMLPhrasingContentChecker,
-}; # tt
-
-$Element->{+HTML_NS}->{s} = {
-  %HTMLPhrasingContentChecker,
-}; # s
-
-$Element->{+HTML_NS}->{strike} = {
-  %HTMLPhrasingContentChecker,
-}; # s
-
-$Element->{+HTML_NS}->{u} = $Element->{+HTML_NS}->{s};
-
-$Element->{+HTML_NS}->{blink} = {
-  %HTMLPhrasingContentChecker,
-}; # blink
-
-$Element->{+HTML_NS}->{mark} = {
-  %HTMLPhrasingContentChecker,
-};
-
-$Element->{+HTML_NS}->{nobr} = {
-  %HTMLPhrasingContentChecker,
-}; # nobr
-
-$Element->{+HTML_NS}->{wbr} = {
-  %HTMLEmptyChecker,
-}; # wbr
+  $HTMLPhrasingContentChecker{check_end}->(@_);
+} for qw(b i); # check_end
 
 $Element->{+HTML_NS}->{ruby} = {
   %HTMLPhrasingContentChecker,
@@ -4692,7 +4553,7 @@ $Element->{+HTML_NS}->{ruby} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($element_state->{phase} eq 'before-rb') {
-      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -4711,7 +4572,7 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'in-rb') {
-      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #$element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         unless ($element_state->{has_significant}) {
@@ -4734,7 +4595,7 @@ $Element->{+HTML_NS}->{ruby} = {
         #$element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rt') {
-      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         if ($element_state->{has_significant}) {
           $element_state->{has_sig} = 1;
           delete $element_state->{has_significant};
@@ -4778,7 +4639,7 @@ $Element->{+HTML_NS}->{ruby} = {
                            type => 'ps element missing',
                            text => 'rp',
                            level => $self->{level}->{must});
-        unless ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => $self->{level}->{must});
@@ -4806,7 +4667,7 @@ $Element->{+HTML_NS}->{ruby} = {
                            type => 'ps element missing',
                            text => 'rp',
                            level => $self->{level}->{must});
-        unless ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => $self->{level}->{must});
@@ -4818,7 +4679,7 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rp2') {
-      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         if ($element_state->{has_significant}) {
           $element_state->{has_sig} = 1;
           delete $element_state->{has_significant};
@@ -4931,64 +4792,25 @@ $Element->{+HTML_NS}->{ruby} = {
   }, # check_end
 }; # ruby
 
-$Element->{+HTML_NS}->{rt} = {
-  %HTMLPhrasingContentChecker,
-}; # rt
+$Element->{+HTML_NS}->{bdo}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  unless ($item->{node}->has_attribute_ns (undef, 'dir')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'dir',
+                       level => $self->{level}->{must});
+  }
+}; # check_attrs2
 
-$Element->{+HTML_NS}->{rp} = {
-  %HTMLPhrasingContentChecker,
-}; # rp
-
-$Element->{+HTML_NS}->{bdi} = {
-  %HTMLPhrasingContentChecker,
-}; # bdi
-
-$Element->{+HTML_NS}->{bdo} = {
-  %HTMLPhrasingContentChecker,
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    unless ($item->{node}->has_attribute_ns (undef, 'dir')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'dir',
-                         level => $self->{level}->{must});
-    }
-  },
-}; # bdo
-
-$Element->{+HTML_NS}->{span} = {
-  %HTMLPhrasingContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
-}; # span
+$Element->{+HTML_NS}->{span}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
+  $HTMLPhrasingContentChecker{check_start}->(@_);
+}; # check_start
 
 # ---- Edits ----
 
-=pod
-
-## TODO: 
-
-+
-+  <p>Partly because of the confusion described above, authors are
-+  strongly recommended to always mark up all paragraphs with the
-+  <code>p</code> element, and to not have any <code>ins</code> or
-+  <code>del</code> elements that cross across any <span
-+  title="paragraph">implied paragraphs</span>.</p>
-+
-(An informative note)
-
-<p><code>ins</code> elements should not cross <span
-+  title="paragraph">implied paragraph</span> boundaries.</p>
-(normative)
-
-+  <p><code>del</code> elements should not cross <span
-+  title="paragraph">implied paragraph</span> boundaries.</p>
-(normative)
-
-=cut
+# XXX "paragraph" vs ins/del
 
 $Element->{+HTML_NS}->{ins} = {
   %TransparentChecker,
@@ -5056,7 +4878,7 @@ $Element->{+HTML_NS}->{figure} = {
                          level => $self->{level}->{must});
     } elsif ($element_state->{phase} eq 'flow') {
       # XXX <style scoped>
-      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
         $element_state->{phase} = 'flow-figcaption';
@@ -5067,7 +4889,7 @@ $Element->{+HTML_NS}->{figure} = {
       }
     } elsif ($element_state->{phase} eq 'figcaption-flow') {
       # XXX <style scoped>
-      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -5076,7 +4898,7 @@ $Element->{+HTML_NS}->{figure} = {
       }
     } elsif ($element_state->{phase} eq 'figcaption') {
       # XXX <style scoped>
-      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'figcaption-flow';
       } else {
         $self->{onerror}->(node => $child_el,
@@ -5085,7 +4907,7 @@ $Element->{+HTML_NS}->{figure} = {
       }
     } elsif ($element_state->{phase} eq 'initial') {
       # XXX <style scoped>
-      if ($Web::HTML::Validator::_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'flow';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
         $element_state->{phase} = 'figcaption';
@@ -5120,10 +4942,6 @@ $Element->{+HTML_NS}->{figure} = {
     }
   }, # check_child_text
 }; # figure
-
-$Element->{+HTML_NS}->{figcaption} = {
-  %HTMLFlowContentChecker,
-}; # figcaption
 
 $Element->{+HTML_NS}->{img} = {
   %HTMLEmptyChecker,
@@ -5458,24 +5276,21 @@ $Element->{+HTML_NS}->{applet} = {
   }, # check_end
 }; # applet
 
-$Element->{+HTML_NS}->{param} = {
-  %HTMLEmptyChecker,
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    unless ($item->{node}->has_attribute_ns (undef, 'name')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'name',
-                         level => $self->{level}->{must});
-    }
-    unless ($item->{node}->has_attribute_ns (undef, 'value')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'value',
-                         level => $self->{level}->{must});
-    }
-  }, # check_attrs2
-}; # param
+$Element->{+HTML_NS}->{param}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  unless ($item->{node}->has_attribute_ns (undef, 'name')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'name',
+                       level => $self->{level}->{must});
+  }
+  unless ($item->{node}->has_attribute_ns (undef, 'value')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'value',
+                       level => $self->{level}->{must});
+  }
+}; # check_attrs2
 
 $Element->{+HTML_NS}->{video} = {
   %TransparentChecker,
@@ -5595,20 +5410,16 @@ $Element->{+HTML_NS}->{audio} = {
   }), # check_attrs
 }; # audio
 
-$Element->{+HTML_NS}->{source} = {
-  %HTMLEmptyChecker,
-  check_attrs2 => sub {
-    my ($self, $item, $element_state) = @_;
-    unless ($item->{node}->has_attribute_ns (undef, 'src')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'src',
-                         level => $self->{level}->{must});
-    }
-
-    $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
-  }, # check_attrs2
-}; # source
+$Element->{+HTML_NS}->{source}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  unless ($item->{node}->has_attribute_ns (undef, 'src')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'src',
+                       level => $self->{level}->{must});
+  }
+  $element_state->{uri_info}->{src}->{type}->{embedded} = 1;
+}; # check_attrs2
 
 $Element->{+HTML_NS}->{track} = {
   %HTMLEmptyChecker,
@@ -5718,8 +5529,8 @@ $Element->{+HTML_NS}->{canvas} = {
     my ($self, $item, $element_state) = @_;
     $self->_add_minus_elements
         ($element_state,
-         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements},
-         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
+         $_Defs->{categories}->{'interactive content'}->{elements},
+         $_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $element_state->{in_canvas_orig} = $self->{flag}->{in_canvas};
     $self->{flag}->{in_canvas} = 1;
     $TransparentChecker{check_start}->(@_);
@@ -6422,14 +6233,11 @@ $Element->{+HTML_NS}->{fieldset} = {
   }, # check_end
 }; # fieldset
 
-$Element->{+HTML_NS}->{legend} = {
-  %HTMLPhrasingContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
-}; # legend
+$Element->{+HTML_NS}->{legend}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
+  $HTMLPhrasingContentChecker{check_start}->(@_);
+}; # check_start
 
 $Element->{+HTML_NS}->{label} = {
   %HTMLPhrasingContentChecker,
@@ -7192,8 +7000,8 @@ $Element->{+HTML_NS}->{button} = {
     my ($self, $item, $element_state) = @_;
     $self->_add_minus_elements
         ($element_state,
-         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements},
-         $Web::HTML::Validator::_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
+         $_Defs->{categories}->{'interactive content'}->{elements},
+         $_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $FAECheckStart->($self, $item, $element_state);
 
     $element_state->{uri_info}->{action}->{type}->{action} = 1;
@@ -7378,7 +7186,7 @@ $Element->{+HTML_NS}->{datalist} = {
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($element_state->{phase} eq 'phrasing') {
-      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -7394,7 +7202,7 @@ $Element->{+HTML_NS}->{datalist} = {
                            level => $self->{level}->{must});
       }
     } elsif ($element_state->{phase} eq 'any') {
-      if ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'phrasing';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'option') {
         $element_state->{phase} = 'option';
@@ -7871,10 +7679,6 @@ $Element->{+HTML_NS}->{details} = {
   }, # check_end
 }; # details
 
-$Element->{+HTML_NS}->{summary} = {
-  %HTMLPhrasingContentChecker,
-}; # summary
-
 # XXX drop
 $Element->{+HTML_NS}->{command} = {
   %HTMLEmptyChecker,
@@ -7972,7 +7776,7 @@ $Element->{+HTML_NS}->{menu} = {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
                            level => $self->{level}->{must});
       }
-    } elsif ($Web::HTML::Validator::_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+    } elsif ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       if ($element_state->{phase} eq 'phrasing') {
         #
       } elsif ($element_state->{phase} eq 'li or phrasing') {
@@ -8072,15 +7876,12 @@ $Element->{+HTML_NS}->{frameset} = {
   }, # check_end
 }; # frameset
 
-$Element->{+HTML_NS}->{frame} = {
-  %HTMLEmptyChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
-    $element_state->{uri_info}->{longdesc}->{type}->{cite} = 1;
-    $HTMLEmptyChecker{check_start}->(@_);
-  }, # check_start
-}; # frame
+$Element->{+HTML_NS}->{frame}->{check_start} = sub {
+  my ($self, $item, $element_state) = @_;
+  $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
+  $element_state->{uri_info}->{longdesc}->{type}->{cite} = 1;
+  $HTMLEmptyChecker{check_start}->(@_);
+}; # check_start
 
 $Element->{+HTML_NS}->{noframes} = {
   %HTMLTextChecker, # XXX content model restriction (same as iframe)
