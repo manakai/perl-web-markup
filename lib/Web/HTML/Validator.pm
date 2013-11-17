@@ -352,7 +352,7 @@ $CheckerByType->{'non-empty text'} = sub {
   my ($self, $attr) = @_;
   if ($attr->value eq '') {
     $self->{onerror}->(node => $attr,
-                       type => 'empty value', # XXXdoc
+                       type => 'empty attribute value',
                        level => 'm');
   }
 }; # non-empty / non-empty text
@@ -512,9 +512,8 @@ $CheckerByType->{'non-empty URL potentially surrounded by spaces'} = sub {
     $self->{onerror}->(type => 'url:empty', # XXX documentation
                        node => $attr,
                        level => $self->{level}->{must});
-  } else {
-    $CheckerByType->{'URL potentially surrounded by spaces'}->(@_);
   }
+  $CheckerByType->{'URL potentially surrounded by spaces'}->(@_);
 }; # non-empty URL potentially surrounded by spaces [HTML]
 
 ## Event handler content attribute [HTML]
@@ -2074,7 +2073,6 @@ my $PrecisionAttrChecker = sub {
 }; # $PrecisionAttrChecker
 
 $HTMLAttrChecker = {
-  about => $HTMLURIAttrChecker,
   accesskey => $AccesskeyChecker,
 
   ## TODO: aria-* ## TODO: svg:*/@aria-* [HTML5ROLE] -> [STATES]
@@ -2191,6 +2189,9 @@ $HTMLAttrChecker = {
       }
     }
   }, # dropzone
+
+  # XXX microdata attributes
+
   language => sub {
     my ($self, $attr) = @_;
     my $value = $attr->value;
@@ -2201,13 +2202,10 @@ $HTMLAttrChecker = {
                          level => $self->{level}->{must});
     }
   }, # language
-  rel => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->(),
-  resource => $HTMLURIAttrChecker,
-  rev => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->(),
   ## TODO: role [HTML5ROLE] ## TODO: global @role [XHTML1ROLE]
-  ## The |xml:lang| attribute in the null namespace, which is
-  ## different from the |lang| attribute in the XML's namespace.
   'xml:lang' => sub {
+    ## The |xml:lang| attribute in the null namespace, which is
+    ## different from the |lang| attribute in the XML's namespace.
     my ($self, $attr) = @_;
     
     if ($attr->owner_document->manakai_is_html) {
@@ -2241,10 +2239,9 @@ $HTMLAttrChecker = {
       ## TODO: We need to add test for <x {xml}:lang {}xml:lang>.
     }
   },
-
-  ## The |xmlns| attribute in the null namespace, which is different
-  ## from the |xmlns| attribute in the XMLNS namespace.
   xmlns => sub {
+    ## The |xmlns| attribute in the null namespace, which is different
+    ## from the |xmlns| attribute in the XMLNS namespace.
     my ($self, $attr) = @_;
     my $value = $attr->value;
     unless ($value eq HTML_NS) {
@@ -2912,7 +2909,6 @@ $Element->{+HTML_NS}->{link} = {
       my ($self, $attr) = @_;
       $HTMLCharsetChecker->($attr->value, @_);
     },
-    href => $HTMLURIAttrChecker,
     rel => sub {}, ## checked in check_attrs2
     sizes => sub {
       my ($self, $attr) = @_;
@@ -3422,7 +3418,7 @@ $Element->{+HTML_NS}->{script} = {
       push @{$self->{idref}}, ['any', $attr->value, $attr];
     },
     language => sub {},
-    src => $HTMLURIAttrChecker, ## TODO: pointed resource MUST be in type of type="" (resource error)
+    ## XXXresource: src="" MUST point a script with Content-Type type=""
     type => sub {
       my ($self, $attr) = @_;
 
@@ -4071,9 +4067,6 @@ $Element->{+HTML_NS}->{dd} = {
 
 $Element->{+HTML_NS}->{div} = {
   %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    datasrc => $NonEmptyURLChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
@@ -5163,7 +5156,6 @@ $Element->{+HTML_NS}->{img} = {
         }
       },
       name => $NameAttrChecker,
-      src => $HTMLURIAttrChecker,
       usemap => $HTMLUsemapAttrChecker,
       vspace => $HTMLLengthAttrChecker,
   }), # check_attrs
@@ -5219,7 +5211,6 @@ $Element->{+HTML_NS}->{iframe} = {
       'allow-same-origin' => 1, 'allow-forms' => 1, 'allow-scripts' => 1,
       'allow-top-navigation' => 1,
     }),
-    src => $HTMLURIAttrChecker,
     srcdoc => sub {
       my ($self, $attr) = @_;
       
@@ -5244,7 +5235,6 @@ $Element->{+HTML_NS}->{iframe} = {
 $Element->{+HTML_NS}->{embed} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    src => $HTMLURIAttrChecker,
     type => $MIMETypeChecker,
     hspace => $HTMLLengthAttrChecker,
     vspace => $HTMLLengthAttrChecker,
@@ -5296,9 +5286,7 @@ $Element->{+HTML_NS}->{object} = {
     archive => $HTMLSpaceURIsAttrChecker,
         ## TODO: Relative to @codebase
     # XXX classid="" MUST be absolute
-    classid => $HTMLURIAttrChecker,
     codetype => $MIMETypeChecker,
-    data => $HTMLURIAttrChecker,
     form => $HTMLFormAttrChecker,
     hspace => $HTMLLengthAttrChecker,
     name => $HTMLBrowsingContextNameAttrChecker,
@@ -5475,11 +5463,7 @@ $Element->{+HTML_NS}->{applet} = {
 $Element->{+HTML_NS}->{param} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    datafld => sub { },
     type => $MIMETypeChecker,
-    valuetype => $GetHTMLEnumeratedAttrChecker->({
-      data => 1, ref => 1, object => 1,
-    }),
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5515,9 +5499,6 @@ $Element->{+HTML_NS}->{video} = {
 
       $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
     },
-    loop => $GetHTMLBooleanAttrChecker->('loop'),
-    poster => $HTMLURIAttrChecker,
-    src => $HTMLURIAttrChecker,
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -5616,15 +5597,12 @@ $Element->{+HTML_NS}->{audio} = {
 
       $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
     },
-    loop => $GetHTMLBooleanAttrChecker->('loop'),
-    src => $HTMLURIAttrChecker,
   }), # check_attrs
 }; # audio
 
 $Element->{+HTML_NS}->{source} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    src => $HTMLURIAttrChecker,
     type => $MIMETypeChecker,
   }), # check_attrs
   check_attrs2 => sub {
@@ -5642,17 +5620,6 @@ $Element->{+HTML_NS}->{source} = {
 
 $Element->{+HTML_NS}->{track} = {
   %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    label => sub {
-      my ($self, $attr) = @_;
-      if ($attr->value eq '') {
-        $self->{onerror}->(node => $attr,
-                           type => 'empty attribute value',
-                           level => $self->{level}->{must});
-      }
-    }, # label
-    src => $HTMLURIAttrChecker,
-  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
@@ -5730,7 +5697,6 @@ $Element->{+HTML_NS}->{bgsound} = {
       }
     }, # balance
     loop => $LegacyLoopChecker,
-    src => $NonEmptyURLChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5938,7 +5904,6 @@ $Element->{+HTML_NS}->{area} = {
 $Element->{+HTML_NS}->{table} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    background => $NonEmptyURLChecker,
     border => sub {
       my ($self, $attr) = @_;
       my $value = $attr->value;
@@ -5959,7 +5924,6 @@ $Element->{+HTML_NS}->{table} = {
         }
       }
     }, # border
-    datasrc => $NonEmptyURLChecker,
     height => $HTMLLengthAttrChecker,
     hspace => $HTMLLengthAttrChecker,
     vspace => $HTMLLengthAttrChecker,
@@ -6248,7 +6212,6 @@ $Element->{+HTML_NS}->{col} = {
 $Element->{+HTML_NS}->{tbody} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    background => $NonEmptyURLChecker,
     %cellalign,
   }), # check_attrs
   check_start => sub {
@@ -6297,7 +6260,6 @@ $Element->{+HTML_NS}->{tr} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     %cellalign,
-    background => $NonEmptyURLChecker,
     height => $HTMLLengthAttrChecker,
   }), # check_attrs
   check_start => sub {
@@ -6333,7 +6295,6 @@ $Element->{+HTML_NS}->{tr} = {
 $Element->{+HTML_NS}->{td} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    background => $NonEmptyURLChecker,
     %cellalign,
     headers => sub {
       ## NOTE: Will be checked as part of |table| element checker.
@@ -6355,7 +6316,6 @@ $Element->{+HTML_NS}->{th} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     %cellalign,
-    background => $NonEmptyURLChecker,
     headers => sub {
       ## NOTE: Will be checked as part of |table| element checker.
       ## Although the conformance of |headers| attribute is not
@@ -6379,8 +6339,7 @@ $Element->{+HTML_NS}->{form} = {
   check_attrs => $GetHTMLAttrsChecker->({
     accept => $AcceptAttrChecker,
     'accept-charset' => $HTMLCharsetsAttrChecker,
-    action => $HTMLURIAttrChecker, ## TODO: Warn if submission is not defined for the scheme
-    data => $NonEmptyURLChecker, ## XXXreference: MUST point |formdata|
+    ## XXX warning: action="" URL scheme is not submittable
     name => sub {
       my ($self, $attr) = @_;
       
@@ -6483,9 +6442,6 @@ $Element->{+HTML_NS}->{fieldset} = {
 
 $Element->{+HTML_NS}->{legend} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    datasrc => $NonEmptyURLChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{uri_info}->{datasrc}->{type}->{resource} = 1;
@@ -6496,7 +6452,6 @@ $Element->{+HTML_NS}->{legend} = {
 $Element->{+HTML_NS}->{label} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    datasrc => $NonEmptyURLChecker,
     for => sub {
       my ($self, $attr) = @_;
       
@@ -7247,26 +7202,11 @@ $Element->{+HTML_NS}->{input} = {
 $Element->{+HTML_NS}->{button} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    action => $HTMLURIAttrChecker,
     autofocus => $AutofocusAttrChecker,
-    datasrc => $NonEmptyURLChecker,
-    enctype => $GetHTMLEnumeratedAttrChecker->({
-      'application/x-www-form-urlencoded' => 1,
-      'multipart/form-data' => 1,
-      'text/plain' => 1,
-    }),
     form => $HTMLFormAttrChecker,
-    formaction => $HTMLURIAttrChecker,
     formtarget => $HTMLTargetAttrChecker,
-    method => $GetHTMLEnumeratedAttrChecker->({
-      get => 1, post => 1,
-    }),
     name => $FormControlNameAttrChecker,
     target => $HTMLTargetAttrChecker,
-    type => $GetHTMLEnumeratedAttrChecker->({
-      button => 1, submit => 1, reset => 1,
-      add => -1, 'move-up' => -1, 'move-down' => -1, remove => -1,
-    }),
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -7292,26 +7232,18 @@ $Element->{+HTML_NS}->{button} = {
 
     my $type = $item->{node}->get_attribute_ns (undef, 'type') || '';
     $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-    if ({
-      button => 1, reset => 1,
-      add => 1, 'move-up' => 1, 'move-down' => 1, remove => 1,
-    }->{$type}) {
+    if ($type eq 'button' or $type eq 'reset') {
       for (
         $item->{node}->get_attribute_node_ns (undef, 'formaction'),
         $item->{node}->get_attribute_node_ns (undef, 'formmethod'),
         $item->{node}->get_attribute_node_ns (undef, 'formnovalidate'),
         $item->{node}->get_attribute_node_ns (undef, 'formenctype'),
         $item->{node}->get_attribute_node_ns (undef, 'formtarget'),
-
-        $item->{node}->get_attribute_node_ns (undef, 'action'),
-        $item->{node}->get_attribute_node_ns (undef, 'method'),
-        $item->{node}->get_attribute_node_ns (undef, 'enctype'),
-        $item->{node}->get_attribute_node_ns (undef, 'target'),
       ) {
         next unless $_;
         $self->{onerror}->(node => $_,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   }, # check_attrs2
@@ -7329,8 +7261,6 @@ $Element->{+HTML_NS}->{select} = {
   %HTMLChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     autofocus => $AutofocusAttrChecker,
-    data => $NonEmptyURLChecker, # XXXreference: referenced document MUST ...
-    datasrc => $NonEmptyURLChecker,
     form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
@@ -7447,9 +7377,6 @@ $Element->{+HTML_NS}->{select} = {
 
 $Element->{+HTML_NS}->{datalist} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    data => $NonEmptyURLChecker, # XXXreference: referenced document MUST ...
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
@@ -7578,9 +7505,6 @@ $Element->{+HTML_NS}->{optgroup} = {
 
 $Element->{+HTML_NS}->{option} = {
   %HTMLTextChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    datasrc => $NonEmptyURLChecker,
-  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
@@ -7605,21 +7529,7 @@ $Element->{+HTML_NS}->{option} = {
 $Element->{+HTML_NS}->{textarea} = {
   %HTMLTextChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    accept => sub {
-      my ($self, $attr) = @_;
-
-      my $type = $MIMETypeChecker->(@_);
-      if ($type) {
-        unless ($type->is_text_based) {
-          $self->{onerror}->(node => $attr,
-                             type => 'IMT:not text-based', # XXXdocumentation
-                             level => $self->{level}->{must});
-        }
-      }
-    }, # accept
-    'accept-charset' => $HTMLCharsetsAttrChecker,
     autofocus => $AutofocusAttrChecker,
-    datasrc => $NonEmptyURLChecker,
     dirname => sub {
       my ($self, $attr) = @_;
       if ($attr->value eq '') {
@@ -7986,19 +7896,9 @@ $Element->{+HTML_NS}->{summary} = {
 }; # summary
 
 # XXX drop
-$Element->{+HTML_NS}->{datagrid} = {
-  %HTMLFlowContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    disabled => $GetHTMLBooleanAttrChecker->('disabled'),
-    multiple => $GetHTMLBooleanAttrChecker->('multiple'),
-  }), # check_attrs
-}; # datagrid
-
-# XXX drop
 $Element->{+HTML_NS}->{command} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    icon => $HTMLURIAttrChecker,
     label => sub {
       my ($self, $attr, $item, $element_state) = @_;
       unless (length $attr->value) {
@@ -8008,10 +7908,6 @@ $Element->{+HTML_NS}->{command} = {
       }
       $element_state->{has_label} = 1;
     },
-    radiogroup => sub { }, ## NOTE: No requirement for the value
-    type => $GetHTMLEnumeratedAttrChecker->({
-      command => 1, checkbox => 1, radio => 1,
-    }),
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -8070,7 +7966,7 @@ delete $Element->{+HTML_NS}->{command}; # XXX
 $Element->{+HTML_NS}->{menu} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    type => $GetHTMLEnumeratedAttrChecker->({context => 1, toolbar => 1}),
+    type => $GetHTMLEnumeratedAttrChecker->({context => 1, toolbar => 1}), # XXX
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -8137,10 +8033,6 @@ $Element->{+HTML_NS}->{menu} = {
     }
   }, # check_end
 }; # menu
-
-# ---- Microdata ----
-
-# XXXX
 
 # ---- Frames ----
 
