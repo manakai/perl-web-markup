@@ -81,7 +81,7 @@ our $_Defs;
 
 my $CheckerByType = {};
 my $NamespacedAttrChecker = {};
-my $HTMLAttrChecker = {}; # XXX
+my $ElementAttrChecker = {};
 
 sub _check_element_attrs ($$$;%) {
   my ($self, $item, $element_state, %args) = @_;
@@ -112,7 +112,7 @@ sub _check_element_attrs ($$$;%) {
                            level => 'w');
       }
 
-      # XXX xmlns="" in no namespace
+      # XXX warn xmlns="" in no namespace
     } elsif ($prefix eq 'xml') {
       if ($attr_ns ne XML_NS) {
         $self->{onerror}->(node => $attr,
@@ -128,38 +128,37 @@ sub _check_element_attrs ($$$;%) {
                            level => 'w');
       }
     }
-    
-    my $checker = $NamespacedAttrChecker->{$attr_ns}->{$attr_ln}
-        || $NamespacedAttrChecker->{$attr_ns}->{''};
+
+    ## $el_ns and $el_ln can be |*| but no problem.
+    my $checker =
+        $ElementAttrChecker->{$el_ns}->{$el_ln}->{$attr_ns}->{$attr_ln} ||
+        $ElementAttrChecker->{$el_ns}->{'*'}->{$attr_ns}->{$attr_ln} ||
+        $NamespacedAttrChecker->{$attr_ns}->{$attr_ln} ||
+        $NamespacedAttrChecker->{$attr_ns}->{''};
     my $attr_def = $_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
         $_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
         $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
     my $conforming = $attr_def->{conforming};
-    if ($attr_ns eq '' and $args{is_html}) { # XXX
-      if ($args{allow_dataset} and
-          $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
-          $attr_ln !~ /[A-Z]/) {
-        ## XML-compatible + no uppercase letter
-        $checker = $CheckerByType->{any};
-        $conforming = 1;
-      } elsif ($input_type and
-               keys %{$_Defs->{input}->{attrs}->{$attr_ln} or {}} and
-               not $_Defs->{input}->{attrs}->{$attr_ln}->{$input_type}) {
-        $checker = sub {
-          $self->{onerror}->(node => $_[1],
-                             type => 'input attr not applicable',
-                             text => $input_type,
-                             level => 'm');
-        };
-      } else {
-        # XXX
-        $checker = $args{element_specific_checker}->{$attr_ln}
-            || $HTMLAttrChecker->{$attr_ln};
-      }
-    } elsif ($attr_ns eq '' and $args{is_atom}) {
+    if ($args{allow_dataset} and
+        $attr_ns eq '' and
+        $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
+        $attr_ln !~ /[A-Z]/) {
+      ## XML-compatible + no uppercase letter
+      $checker = $CheckerByType->{any};
+      $conforming = 1;
+    } elsif (defined $input_type and
+             $attr_ns eq '' and
+             keys %{$_Defs->{input}->{attrs}->{$attr_ln} or {}} and
+             not $_Defs->{input}->{attrs}->{$attr_ln}->{$input_type}) {
+      $checker = sub {
+        $self->{onerror}->(node => $_[1],
+                           type => 'input attr not applicable',
+                           text => $input_type,
+                           level => 'm');
+      };
+    } elsif ($attr_ns eq '') {
       # XXX
-      $checker = $args{element_specific_checker}->{$attr_ln}
-          || $NamespacedAttrChecker->{$attr_ln};
+      $checker = $args{element_specific_checker}->{$attr_ln} || $checker;
     } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
       $conforming = 1;
     }
@@ -171,7 +170,7 @@ sub _check_element_attrs ($$$;%) {
         $attr_ln !~ /[A-Z]/ and
         $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
       ## XML-compatible + no uppercase letter
-      $checker ||= sub { };
+      $checker ||= $CheckerByType->{any};
       $conforming = 1;
     }
     $checker->($self, $attr, $item, $element_state, $attr_def) if $checker;
@@ -2011,30 +2010,6 @@ my $PlaceholderAttrChecker = sub {
   }
 }; # $PlaceholderAttrChecker
 
-my $AccesskeyChecker = sub {
-  my ($self, $attr) = @_;
-  
-  ## "Ordered set of unique space-separated tokens"
-  
-  my %keys;
-  my @keys = grep {length} split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value;
-  
-  for my $key (@keys) {
-    unless ($keys{$key}) {
-      $keys{$key} = 1;
-      if (length $key != 1) {
-        $self->{onerror}->(node => $attr, type => 'char:syntax error',
-                           value => $key,
-                           level => $self->{level}->{must});
-      }
-    } else {
-      $self->{onerror}->(node => $attr, type => 'duplicate token',
-                         value => $key,
-                         level => $self->{level}->{must});
-    }
-  }
-}; # $AccesskeyChecker
-
 my $CharChecker = sub {
   my ($self, $attr) = @_;
   
@@ -2101,43 +2076,70 @@ my $PrecisionAttrChecker = sub {
   }
 }; # $PrecisionAttrChecker
 
-$HTMLAttrChecker = {
-  accesskey => $AccesskeyChecker,
-
-  ## TODO: aria-* ## TODO: svg:*/@aria-* [HTML5ROLE] -> [STATES]
-  id => sub {
-    my ($self, $attr, $item, $element_state) = @_;
-    my $value = $attr->value;
-    if (length $value > 0) {
-      if ($self->{id}->{$value}) {
-        $self->{onerror}->(node => $attr, type => 'duplicate ID',
-                           level => $self->{level}->{must});
-        push @{$self->{id}->{$value}}, $attr;
-      } elsif ($self->{name}->{$value} and
-               $self->{name}->{$value}->[-1]->owner_element ne $item->{node}) {
-       $self->{onerror}->(node => $attr,
-                           type => 'id name confliction', # XXXdocumentation
-                           value => $value,
-                           level => $self->{level}->{must});
-        $self->{id}->{$value} = [$attr];
-        $self->{id_type}->{$value} = $element_state->{id_type} || '';
-      } else {
-        $self->{id}->{$value} = [$attr];
-        $self->{id_type}->{$value} = $element_state->{id_type} || '';
-      }
-      push @{$element_state->{element_ids} ||= []}, $value;
-
-      if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
-        $self->{onerror}->(node => $attr, type => 'space in ID',
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
+  my ($self, $attr) = @_;
+  
+  ## "Ordered set of unique space-separated tokens"
+  
+  my %keys;
+  my @keys = grep {length} split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value;
+  
+  for my $key (@keys) {
+    unless ($keys{$key}) {
+      $keys{$key} = 1;
+      if (length $key != 1) {
+        $self->{onerror}->(node => $attr, type => 'char:syntax error',
+                           value => $key,
                            level => $self->{level}->{must});
       }
     } else {
-      ## NOTE: MUST contain at least one character
-      $self->{onerror}->(node => $attr, type => 'empty attribute value',
+      $self->{onerror}->(node => $attr, type => 'duplicate token',
+                         value => $key,
                          level => $self->{level}->{must});
     }
-  },
-  lang => sub {
+  }
+}; # accesskey=""
+$ElementAttrChecker->{(HTML_NS)}->{a}->{''}->{directkey}
+    = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
+$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{directkey}
+    = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
+
+## XXX aria-*
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  if (length $value > 0) {
+    if ($self->{id}->{$value}) {
+      $self->{onerror}->(node => $attr, type => 'duplicate ID',
+                         level => $self->{level}->{must});
+      push @{$self->{id}->{$value}}, $attr;
+    } elsif ($self->{name}->{$value} and
+             $self->{name}->{$value}->[-1]->owner_element ne $item->{node}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'id name confliction', # XXXdocumentation
+                         value => $value,
+                         level => $self->{level}->{must});
+      $self->{id}->{$value} = [$attr];
+      $self->{id_type}->{$value} = $element_state->{id_type} || '';
+    } else {
+      $self->{id}->{$value} = [$attr];
+      $self->{id_type}->{$value} = $element_state->{id_type} || '';
+    }
+    push @{$element_state->{element_ids} ||= []}, $value;
+    
+    if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
+      $self->{onerror}->(node => $attr, type => 'space in ID',
+                         level => $self->{level}->{must});
+    }
+  } else {
+    ## NOTE: MUST contain at least one character
+    $self->{onerror}->(node => $attr, type => 'empty attribute value',
+                       level => $self->{level}->{must});
+  }
+}; # id=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{lang} = sub {
     my ($self, $attr) = @_;
     my $value = $attr->value;
     if ($value eq '') {
@@ -2157,14 +2159,16 @@ $HTMLAttrChecker = {
     ## NOTE: Inconsistency between |lang| and |xml:lang| attributes are
     ## non-conforming.  Such errors are detected by the checkers of
     ## |{}xml:lang| and |{xml}:lang| attributes.
-  },
-  dir => $GetHTMLEnumeratedAttrChecker->({
-    ltr => 1,
-    rtl => 1,
-    auto => 'last resort:good',
-  }), # dir
-  class => sub {
-    my ($self, $attr) = @_;
+}; # lang=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dir} = $GetHTMLEnumeratedAttrChecker->({
+  ltr => 1,
+  rtl => 1,
+  auto => 'last resort:good',
+}); # dir=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{class} = sub {
+  my ($self, $attr) = @_;
     
     ## NOTE: "set of unique space-separated tokens".
 
@@ -2176,8 +2180,9 @@ $HTMLAttrChecker = {
         push @{$self->{return}->{class}->{$word}||=[]}, $attr;
       }
     }
-  },
-  contextmenu => sub {
+}; # class=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{contextmenu} = sub {
     my ($self, $attr) = @_;
     my $value = $attr->value;
     push @{$self->{idref}}, ['menu', $value => $attr];
@@ -2185,9 +2190,10 @@ $HTMLAttrChecker = {
     ## What is "in the DOM"?  A menu Element node that is not part
     ## of the Document tree is in the DOM?  A menu Element node that
     ## belong to another Document tree is in the DOM?
-  },
-  dropzone => sub {
-    ## Unordered set of space-separated tokens, ASCII case-insensitive.
+}; # contextmenu=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
+  ## Unordered set of space-separated tokens, ASCII case-insensitive.
     my ($self, $attr) = @_;
     my $has_feedback;
     my %word;
@@ -2217,26 +2223,28 @@ $HTMLAttrChecker = {
                              level => $self->{level}->{must});
       }
     }
-  }, # dropzone
+}; # dropzone=""
 
-  # XXX microdata attributes
+# XXX microdata attributes
 
-  language => sub {
-    my ($self, $attr) = @_;
-    my $value = $attr->value;
-    $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-    unless ($value eq 'javascript') {
-      $self->{onerror}->(type => 'script language', # XXXdocumentation
-                         node => $attr,
-                         level => $self->{level}->{must});
-    }
-  }, # language
-  ## TODO: role [HTML5ROLE] ## TODO: global @role [XHTML1ROLE]
-  'xml:lang' => sub {
-    ## The |xml:lang| attribute in the null namespace, which is
-    ## different from the |lang| attribute in the XML's namespace.
-    my ($self, $attr) = @_;
-    
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{language} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  unless ($value eq 'javascript') {
+    $self->{onerror}->(type => 'script language', # XXXdocumentation
+                       node => $attr,
+                       level => $self->{level}->{must});
+  }
+}; # language=""
+
+# XXX role=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'xml:lang'} = sub {
+  ## The |xml:lang| attribute in the null namespace, which is
+  ## different from the |lang| attribute in the XML's namespace.
+  my ($self, $attr) = @_;
+  
     if ($attr->owner_document->manakai_is_html) {
       $self->{onerror}->(type => 'in HTML:xml:lang',
                          level => $self->{level}->{info},
@@ -2267,10 +2275,11 @@ $HTMLAttrChecker = {
                          node => $attr);
       ## TODO: We need to add test for <x {xml}:lang {}xml:lang>.
     }
-  },
-  xmlns => sub {
-    ## The |xmlns| attribute in the null namespace, which is different
-    ## from the |xmlns| attribute in the XMLNS namespace.
+}; # xml:lang=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{xmlns} = sub {
+  ## The |xmlns| attribute in the null namespace, which is different
+  ## from the |xmlns| attribute in the XMLNS namespace.
     my ($self, $attr) = @_;
     my $value = $attr->value;
     unless ($value eq HTML_NS) {
@@ -2283,12 +2292,7 @@ $HTMLAttrChecker = {
                          level => $self->{level}->{must});
       ## TODO: Test
     }
-    
-    ## TODO: Should be resolved?
-    push @{$self->{return}->{uri}->{$value} ||= []},
-        {node => $attr, type => {namespace => 1}};
-  },
-}; # $HTMLAttrChecker
+}; # xmlns=""
 
 ## ------ ------
 
@@ -2499,7 +2503,6 @@ my $GetHTMLAttrsChecker = sub {
     my ($self, $item, $element_state) = @_;
     $self->_check_element_attrs ($item, $element_state,
                                  allow_dataset => 1,
-                                 is_html => 1,
                                  element_specific_checker => $element_specific_checker);
   };
 }; # $GetHTMLAttrsChecker
@@ -4067,7 +4070,6 @@ $Element->{+HTML_NS}->{a} = {
                                  level => $self->{level}->{must});
             }
           }, # cti
-          directkey => $AccesskeyChecker,
           email => sub {
             my ($self, $attr) = @_;
             unless ($attr->value =~ /\A$ValidEmailAddress\z/) {
@@ -6192,7 +6194,6 @@ $Element->{+HTML_NS}->{input} = {
       on => 1, off => 1,
     }),
     autofocus => $AutofocusAttrChecker,
-    directkey => $AccesskeyChecker,
     form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
     inputmode => $InputmodeAttrChecker, # XXX
@@ -6482,7 +6483,10 @@ $Element->{+HTML_NS}->{input} = {
     }
     
     ## TODO: Warn unless value = min * x where x is an integer.
- 
+
+    ## XXXresource: Dimension attributes have requirements on width
+    ## and height of referenced resource.
+
     $FAECheckAttrs2->($self, $item, $element_state);
   }, # check_attrs2
   check_start => sub {
@@ -6490,9 +6494,6 @@ $Element->{+HTML_NS}->{input} = {
     $FAECheckStart->($self, $item, $element_state);
   }, # check_start
 }; # input
-
-## XXXresource: Dimension attributes have requirements on width and
-## height of referenced resource.
 
 $Element->{+HTML_NS}->{button} = {
   %HTMLPhrasingContentChecker,
