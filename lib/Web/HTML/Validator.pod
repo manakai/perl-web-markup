@@ -207,11 +207,17 @@ XML Base <http://www.w3.org/TR/xmlbase/>.
 XML Base Specification Errata
 <http://www.w3.org/2009/01/xmlbase-errata>.
 
-=back
+=item HTML
 
-Web Applications 1.0 (including HTML Living Standard and HTML5),
+HTML Standard <http://c.whatwg.org/>.
+
+=item OBSVOCAB
+
 manakai's Conformance Checking Guideline for Obsolete HTML Elements
-and Attributes.
+and Attributes
+<http://suika.suikawiki.org/www/markup/html/exts/manakai-obsvocab>.
+
+=back
 
 Atom 1.0, Atom Threading Extension.
 
@@ -220,6 +226,9 @@ For more information, see
 
 Note that XML 1.1, Namespaces in XML 1.1, C<xml:id>, XLink, XHTML
 Modularization, and Ruby Annotation are not applicable specifications.
+Also, the module does not support historical HTML features no longer
+part of the language, except for those explicitly listed in the
+OBSVOCAB specification.  See the specification for details.
 
 =head1 SEE ALSO
 

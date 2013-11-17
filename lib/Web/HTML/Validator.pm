@@ -7322,39 +7322,6 @@ $Element->{+HTML_NS}->{noframes} = {
 
 ## ------ Elements not supported by this module ------
 
-## Following elements are explicitly not supported: abstract, arg,
-## changed, cmd, epilogue, footnote, hide, htmlplus, margin, message,
-## prologue, quote, removed, render, rev [HTML+], note, fn, banner,
-## lh, bodytext, abbrev, au, bq, bt, credit, fig, figtext, person,
-## lang, tab, math, above, added, array, atop, bar, below, box, ddot,
-## dot, hat, left, of, over, overlay, range, right, root, row, spot,
-## sqrt, tilde, vec [HTML30], pre-html, div1, div2, div3, div4, div5,
-## div6 [ISOHTMLUG], access [ACCESS], blockcode, standby, nl, l, h,
-## separator [XHTML2ED], m, x, t, dc, ds, date, datatemplate, rule,
-## nest, calendar, card, switch, eventsource, sidebar, bb, command,
-## dialog [HTML], repeat [WF2], centre, noflames, noframe, textflow,
-## app, server, htmlarea, animate, h7, h8, h9, entity, hype, key, tbl,
-## audioscope, limittext, nosmartquotes, shadow, sound, noimg,
-## element, attrib, csactionitem, csactions, csaction, csscriptdict,
-## csactiondict, csobj, madebywz, x-sas-window, yomi, fn-contents,
-## module, ilayer, RFC 2659 vocabulary
-
-## Following attributes are explicitly not supported: */@active,
-## */@cite, */@coords, */@datetime, */@edit, */@encoding, */@href,
-## */@hreflang, */@hrefmedia, */@hreftype, */@ht* (XHTML architectural
-## form attributes), */@instanceof, */@irrelevant, */@ismap,
-## */@layout, */@media, */@nextfocus, */@onbeforeunload,
-## */@onhashchange, */@onresize, */@onstorage, */@onunload,
-## */@ondataunavailable, */@onmessage, */@prevfocus, */@repeat,
-## */@repeat-*, */@runat, */@sda* (SDA attributes), */@shape, */@src,
-## */@srctype, */@target, */@template, */@usemap, abbr/@full,
-## article/@cite, article/@pubdate, command/@default, dl/@type,
-## font/@pointsize, layer/@*, menu/@autosubmit, multicol/@baseline,
-## multicol/@height, multicol/@width, multicol/@gutter,
-## multicol/@cols, nextid/@n, object/@content-length, option/@name,
-## script/@implements, section/@cite, style/@disabled, time/@pubdate,
-## attributes in the HTML namespace.
-
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
 sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
