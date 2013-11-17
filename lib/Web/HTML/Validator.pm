@@ -78,7 +78,7 @@ sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 ## ------ Attribute conformance checkers ------
 
 my $CheckerByType = {};
-my $AttrChecker = {};
+my $NamespacedAttrChecker = {};
 my $HTMLAttrChecker = {}; # XXX
 
 sub _check_element_attrs ($$$;%) {
@@ -117,8 +117,8 @@ sub _check_element_attrs ($$$;%) {
       }
     }
     
-    my $checker = $AttrChecker->{$attr_ns}->{$attr_ln}
-        || $AttrChecker->{$attr_ns}->{''};
+    my $checker = $NamespacedAttrChecker->{$attr_ns}->{$attr_ln}
+        || $NamespacedAttrChecker->{$attr_ns}->{''};
     my $attr_def = $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{$el_ln}->{attrs}->{$attr_ns}->{$attr_ln} ||
         $Web::HTML::Validator::_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
         $Web::HTML::Validator::_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
@@ -138,7 +138,7 @@ sub _check_element_attrs ($$$;%) {
     } elsif ($attr_ns eq '' and $args{is_atom}) {
       # XXX
       $checker = $args{element_specific_checker}->{$attr_ln}
-          || $AttrChecker->{$attr_ln};
+          || $NamespacedAttrChecker->{$attr_ln};
     } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
       $conforming = 1;
     }
@@ -488,7 +488,7 @@ our $MIMETypeChecker = sub {
 ## specification.  (In fact most combinations of them are not even
 ## exist in standard DOM world.)
 
-$AttrChecker->{(XML_NS)}->{''} = sub {
+$NamespacedAttrChecker->{(XML_NS)}->{''} = sub {
   my ($self, $attr) = @_;
   ## "Attribute not defined" error is thrown by other place.
   
@@ -502,7 +502,7 @@ $AttrChecker->{(XML_NS)}->{''} = sub {
   }
 }; # xml:*=""
 
-$AttrChecker->{(XML_NS)}->{space} = sub {
+$NamespacedAttrChecker->{(XML_NS)}->{space} = sub {
   my ($self, $attr) = @_;
   
   my $prefix = $attr->prefix;
@@ -534,7 +534,7 @@ $AttrChecker->{(XML_NS)}->{space} = sub {
   }
 }; # xml:space
 
-$AttrChecker->{(XML_NS)}->{lang} = sub {
+$NamespacedAttrChecker->{(XML_NS)}->{lang} = sub {
   my ($self, $attr) = @_;
   
   my $prefix = $attr->prefix;
@@ -584,7 +584,7 @@ $AttrChecker->{(XML_NS)}->{lang} = sub {
   }
 }; # xml:lang
 
-$AttrChecker->{(XML_NS)}->{base} = sub {
+$NamespacedAttrChecker->{(XML_NS)}->{base} = sub {
   my ($self, $attr) = @_;
 
   ## XXX xml:base support will be likely removed from the Web.
@@ -601,7 +601,7 @@ $AttrChecker->{(XML_NS)}->{base} = sub {
   ## specification.
 }; # xml:base=""
 
-$AttrChecker->{(XMLNS_NS)}->{''} = sub {
+$NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
   my ($self, $attr) = @_;
 
   my $prefix = $attr->prefix;
@@ -655,7 +655,7 @@ $AttrChecker->{(XMLNS_NS)}->{''} = sub {
   }
 }; # xmlns:*=""
 
-$AttrChecker->{(XMLNS_NS)}->{xmlns} = sub {
+$NamespacedAttrChecker->{(XMLNS_NS)}->{xmlns} = sub {
   my ($self, $attr) = @_;
 
   my $prefix = $attr->prefix;
