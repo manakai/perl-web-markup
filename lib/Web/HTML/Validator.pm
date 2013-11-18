@@ -3974,10 +3974,6 @@ $Element->{+HTML_NS}->{dl} = {
 ## more than one <code>dt</code> element for each name.</p> (HTML5
 ## revision 3859)
 
-$Element->{+HTML_NS}->{dt} = {
-  %HTMLPhrasingContentChecker, # XXX
-}; # dd
-
 $ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = $LegacyLoopChecker;
 
 $ElementAttrChecker->{(HTML_NS)}->{font}->{''}->{size} = sub {
@@ -5862,18 +5858,13 @@ $Element->{+HTML_NS}->{td} = {
   }),
 }; # td
 
-$Element->{+HTML_NS}->{th} = {
-  %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    char => $CharChecker,
-    headers => sub {
-      ## NOTE: Will be checked as part of |table| element checker.
-      ## Although the conformance of |headers| attribute is not
-      ## checked if the element does not form a part of a table, the
-      ## element is non-conforming in that case anyway.
-    },
-  }), # check_attrs
-}; # th
+$ElementAttrChecker->{(HTML_NS)}->{th}->{''}->{char} = $CharChecker;
+
+$ElementAttrChecker->{(HTML_NS)}->{th}->{''}->{headers} = sub {};
+## NOTE: Will be checked as part of |table| element checker.  Although
+## the conformance of |headers| attribute is not checked if the
+## element does not form a part of a table, the element is
+## non-conforming in that case anyway.
 
 # ---- Forms ----
 

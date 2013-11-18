@@ -7878,6 +7878,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "content_model" => "flow content",
                                                                         "disallowed_descendants" => {
                                                                                                       "categories" => {
+                                                                                                                        "heading content" => 1,
                                                                                                                         "sectioning content" => 1
                                                                                                                       },
                                                                                                       "elements" => {
