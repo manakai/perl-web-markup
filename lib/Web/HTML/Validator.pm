@@ -88,6 +88,7 @@ sub _check_element_attrs ($$$;%) {
   my $el_ns = $item->{node}->namespace_uri;
   $el_ns = '' unless defined $el_ns;
   my $el_ln = $item->{node}->local_name;
+  my $allow_dataset = $el_ns eq HTML_NS;
   my $is_embed = $el_ns eq HTML_NS && $el_ln eq 'embed';
   my $input_type;
   if ($el_ns eq HTML_NS && $el_ln eq 'input') {
@@ -140,11 +141,11 @@ sub _check_element_attrs ($$$;%) {
         $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
     my $conforming = $attr_def->{conforming};
     my $status = $attr_def->{status} || '';
-    if ($args{allow_dataset} and
+    if ($allow_dataset and
         $attr_ns eq '' and
         $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
         $attr_ln !~ /[A-Z]/) {
-      ## XML-compatible + no uppercase letter
+      ## |data-*=""| - XML-compatible + no uppercase letter
       $checker = $CheckerByType->{any};
       $conforming = 1;
       $status = 'REC';
@@ -801,6 +802,41 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
   }
 }; # xmlns="", xmlns:*=""
 
+## ------ Element content model ------
+
+my $ElementDisallowedDescendants = {};
+
+for my $ns (keys %{$_Defs->{elements}}) {
+  for my $ln (keys %{$_Defs->{elements}->{$ns}}) {
+    my $list = $_Defs->{elements}->{$ns}->{$ln}->{disallowed_descendants}
+        or next;
+    my $new_list = $ElementDisallowedDescendants->{$ns}->{$ln} ||= {};
+    for my $el_ns (keys %{$list->{elements} or {}}) {
+      for my $el_ln (keys %{$list->{elements}->{$el_ns}}) {
+        $new_list->{$el_ns}->{$el_ln} = 1
+            if $list->{elements}->{$el_ns}->{$el_ln};
+      }
+    }
+    for my $cat (keys %{$list->{categories} or {}}) {
+      for my $el_ns (keys %{$_Defs->{categories}->{$cat}->{elements} or {}}) {
+        for my $el_ln (keys %{$_Defs->{categories}->{$cat}->{elements}->{$el_ns}}) {
+          $new_list->{$el_ns}->{$el_ln} = 1
+              if $_Defs->{categories}->{$cat}->{elements}->{$el_ns}->{$el_ln};
+        }
+      }
+      for my $el_ns (keys %{$_Defs->{categories}->{$cat}->{elements_with_exceptions} or {}}) {
+        for my $el_ln (keys %{$_Defs->{categories}->{$cat}->{elements_with_exceptions}->{$el_ns}}) {
+          $new_list->{$el_ns}->{$el_ln} = 1
+              if $_Defs->{categories}->{$cat}->{elements_with_exceptions}->{$el_ns}->{$el_ln};
+        }
+      }
+    }
+  }
+}
+
+## Note that there might be exceptions, which is checked by
+## |$IsInHTMLInteractiveContent|.
+
 ## ------ XXXXXX XXXXXX
 
 our %AnyChecker = (
@@ -1203,6 +1239,11 @@ sub check_element ($$$;$) {
       }
 
       my @new_item;
+      my $disallowed = $ElementDisallowedDescendants->{$el_nsuri}->{$el_ln};
+      push @new_item, {type => '_add_minus_elements',
+                       element_state => $element_state,
+                       disallowed => $disallowed}
+          if $disallowed;
       push @new_item, [$eldef->{check_start}, $self, $item, $element_state];
       push @new_item, [$eldef->{check_attrs}, $self, $item, $element_state];
       push @new_item, [$eldef->{check_attrs2}, $self, $item, $element_state];
@@ -1244,8 +1285,15 @@ sub check_element ($$$;$) {
       }
       
       push @new_item, [$eldef->{check_end}, $self, $item, $element_state];
+      push @new_item, {type => '_remove_minus_elements',
+                       element_state => $element_state}
+          if $disallowed;
       
       unshift @item, @new_item;
+    } elsif ($item->{type} eq '_add_minus_elements') {
+      $self->_add_minus_elements ($item->{element_state}, $item->{disallowed});
+    } elsif ($item->{type} eq '_remove_minus_elements') {
+      $self->_remove_minus_elements ($item->{element_state});
     } else {
       die "$0: Internal error: Unsupported checking action type |$item->{type}|";
     }
@@ -2471,12 +2519,12 @@ my $LegacyLoopChecker = sub {
   }
 }; # $LegacyLoopChecker
 
+# XXX
 my $GetHTMLAttrsChecker = sub {
   my $element_specific_checker = shift;
   return sub {
     my ($self, $item, $element_state) = @_;
     $self->_check_element_attrs ($item, $element_state,
-                                 allow_dataset => 1,
                                  element_specific_checker => $element_specific_checker);
   };
 }; # $GetHTMLAttrsChecker
@@ -3731,15 +3779,12 @@ $Element->{+HTML_NS}->{header} = {
   %HTMLFlowContentChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state,
-                                {(HTML_NS) => {qw/header 1 footer 1/}});
     $element_state->{has_hn_original} = $self->{flag}->{has_hn};
     $self->{flag}->{has_hn} = 0;
     $HTMLFlowContentChecker{check_start}->(@_);
   }, # check_start
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
     unless ($self->{flag}->{has_hn}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing:hn',
@@ -3750,41 +3795,6 @@ $Element->{+HTML_NS}->{header} = {
     $HTMLFlowContentChecker{check_end}->(@_);
   }, # check_end
 }; # header
-
-$Element->{+HTML_NS}->{footer} = {
-  %HTMLFlowContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state,
-                                {(HTML_NS) => {header => 1, footer => 1}});
-    $HTMLFlowContentChecker{check_start}->(@_);
-  }, # check_start
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
-    $HTMLFlowContentChecker{check_end}->(@_);
-  }, # check_end
-}; # footer
-
-$Element->{+HTML_NS}->{address} = {
-  %HTMLFlowContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements
-        ($element_state,
-         {(HTML_NS) => {header => 1, footer => 1, address => 1}},
-         $_Defs->{categories}->{'sectioning content'}->{elements},
-         $_Defs->{categories}->{'heading content'}->{elements});
-    $HTMLFlowContentChecker{check_start}->(@_);
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
-    $HTMLFlowContentChecker{check_end}->(@_);
-  },
-};
 
 # ---- Grouping content ----
 
@@ -4099,10 +4109,6 @@ $Element->{+HTML_NS}->{a} = {
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements
-        ($element_state,
-         $_Defs->{categories}->{'interactive content'}->{elements},
-         $_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $element_state->{no_interactive_original}
         = $self->{flag}->{no_interactive};
     $self->{flag}->{no_interactive} = 1;
@@ -4110,7 +4116,6 @@ $Element->{+HTML_NS}->{a} = {
   }, # check_start
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
     delete $self->{flag}->{in_a_href}
         unless $element_state->{in_a_href_original};
     delete $self->{flag}->{no_interactive}
@@ -4131,8 +4136,6 @@ $Element->{+HTML_NS}->{dfn} = {
   %HTMLPhrasingContentChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {dfn => 1}});
-
     my $node = $item->{node};
     my $term = $node->get_attribute_ns (undef, 'title');
     unless (defined $term) {
@@ -4173,12 +4176,6 @@ $Element->{+HTML_NS}->{dfn} = {
 
     $HTMLPhrasingContentChecker{check_start}->(@_);
   }, # check_start
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
-    $HTMLPhrasingContentChecker{check_end}->(@_);
-  }, # check_end
 }; # dfn
 
 ## NOTE: |abbr|: "If an abbreviation is pluralised, the expansion's
@@ -4194,7 +4191,7 @@ $Element->{+HTML_NS}->{time} = {
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {time => 1}});
+    $self->_add_minus_elements ($element_state, {(HTML_NS) => {time => 1}}); # XXX
 
     $HTMLPhrasingContentChecker{check_start}->(@_);
   }, # check_start
@@ -5113,10 +5110,6 @@ $Element->{+HTML_NS}->{video} = {
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {
-      video => 1, audio => 1,
-    }});
-
     $element_state->{allow_source}
         = not $item->{node}->has_attribute_ns (undef, 'src');
     $element_state->{allow_track} = 1;
@@ -5173,8 +5166,6 @@ $Element->{+HTML_NS}->{video} = {
   }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
     delete $self->{flag}->{in_media} unless $element_state->{in_media_orig};
     
     if ($element_state->{has_source} == -1) { 
@@ -5687,16 +5678,8 @@ $Element->{+HTML_NS}->{table} = {
 
 $Element->{+HTML_NS}->{caption} = {
   %HTMLFlowContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {table => 1}});
-
-    $HTMLFlowContentChecker{check_start}->(@_);
-  },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
     FIGURE: {
       my $caption = $item->{node};
       
@@ -5937,15 +5920,8 @@ $Element->{+HTML_NS}->{form} = {
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {form => 1}});
     $element_state->{id_type} = 'form';
     $HTMLFlowContentChecker{check_start}->(@_);
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
-    $HTMLFlowContentChecker{check_end}->(@_);
   },
 }; # form
 
@@ -6097,12 +6073,10 @@ $Element->{+HTML_NS}->{input} = {
     inputmode => $InputmodeAttrChecker, # XXX
     list => $ListAttrChecker,
     loop => $LegacyLoopChecker,
-    # XXX <input type=number maxlength size> are obsolete but conforming
     name => $FormControlNameAttrChecker,
     pattern => $PatternAttrChecker,
     placeholder => $PlaceholderAttrChecker,
     precision => $PrecisionAttrChecker,
-    size => $GetHTMLNonNegativeIntegerAttrChecker->(sub {shift > 0}),
     ## XXXresource src="" referenced resource type
     step => $StepAttrChecker,
     usemap => $HTMLUsemapAttrChecker,
@@ -6402,10 +6376,6 @@ $Element->{+HTML_NS}->{button} = {
   }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements
-        ($element_state,
-         $_Defs->{categories}->{'interactive content'}->{elements},
-         $_Defs->{categories}->{'interactive content'}->{elements_with_exceptions});
     $FAECheckStart->($self, $item, $element_state);
 
     $element_state->{no_interactive_original}
@@ -6437,7 +6407,6 @@ $Element->{+HTML_NS}->{button} = {
   }, # check_attrs2
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
     delete $self->{flag}->{no_interactive}
         unless $element_state->{no_interactive_orig};
 
@@ -6908,18 +6877,6 @@ $Element->{+HTML_NS}->{progress} = {
       })->($self, $value_attr);
     }
   }, # check_attrs2
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {progress => 1}});
-
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
-    $HTMLPhrasingContentChecker{check_end}->(@_);
-  }, # check_end
 
   ## XXX "Authors are encouraged ... text inside the element" - Add a
   ## note in significant text warning's documentation.
@@ -6997,18 +6954,6 @@ $Element->{+HTML_NS}->{meter} = {
       }
     }
   }, # check_attrs2
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {meter => 1}});
-
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
-    $HTMLPhrasingContentChecker{check_end}->(@_);
-  }, # check_end
 
   ## XXX "Authors are encouraged ... textual representation" - Add a
   ## note in significant text warning's documentation.
@@ -7284,6 +7229,8 @@ sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 ## Any element MAY have xml:base, xml:lang.  Although Atom spec does
 ## not explictly specify that unknown attribute cannot be used, HTML
 ## Standard does not allow use of unknown attributes.
+
+# XXX
 my $GetAtomAttrsChecker = sub {
   my $element_specific_checker = shift;
   return sub {

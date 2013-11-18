@@ -597,21 +597,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "xmlns" => {
                                                                                                      "url_role" => "id"
                                                                                                    }
-                                                                                      },
-                                                                                "attrs" => {
-                                                                                             "" => {
-                                                                                                     "about" => {
-                                                                                                                  "url_role" => "id"
-                                                                                                                },
-                                                                                                     "resource" => {
-                                                                                                                     "url_role" => "id"
-                                                                                                                   }
-                                                                                                   }
-                                                                                           }
+                                                                                      }
                                                                               },
                                                                        "attrs" => {
                                                                                     "" => {
                                                                                             "about" => {
+                                                                                                         "url_role" => "id",
                                                                                                          "value_type" => "any"
                                                                                                        },
                                                                                             "accesskey" => {
@@ -1235,6 +1226,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        "value_type" => "any"
                                                                                                      },
                                                                                             "resource" => {
+                                                                                                            "url_role" => "id",
                                                                                                             "value_type" => "any"
                                                                                                           },
                                                                                             "results" => {},
@@ -1441,6 +1433,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "ping" => {
                                                                                                         "conforming" => 1,
                                                                                                         "status" => "LC",
+                                                                                                        "url_role" => "submission",
                                                                                                         "value_type" => "set of space-separated tokens"
                                                                                                       },
                                                                                             "rel" => {
@@ -1569,6 +1562,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                           }
                                                                                   },
                                                                        "conforming" => 1,
+                                                                       "content_model" => "transparent",
+                                                                       "disallowed_descendants" => {
+                                                                                                     "categories" => {
+                                                                                                                       "interactive content" => 1
+                                                                                                                     }
+                                                                                                   },
                                                                        "status" => "LC"
                                                                      },
                                                               "abbr" => {
@@ -1616,6 +1615,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 }
                                                                                         },
                                                                              "conforming" => 1,
+                                                                             "content_model" => "flow content",
+                                                                             "disallowed_descendants" => {
+                                                                                                           "categories" => {
+                                                                                                                             "heading content" => 1,
+                                                                                                                             "sectioning content" => 1
+                                                                                                                           },
+                                                                                                           "elements" => {
+                                                                                                                           "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                               "address" => 1,
+                                                                                                                                                               "footer" => 1,
+                                                                                                                                                               "header" => 1
+                                                                                                                                                             }
+                                                                                                                         }
+                                                                                                         },
                                                                              "status" => "REC"
                                                                            },
                                                               "applet" => {
@@ -1708,6 +1721,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             }
                                                                                                }
                                                                                        },
+                                                                            "complex_content_model" => [
+                                                                                                         {
+                                                                                                           "elements" => {
+                                                                                                                           "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                               "param" => 1
+                                                                                                                                                             }
+                                                                                                                         },
+                                                                                                           "min" => 0
+                                                                                                         },
+                                                                                                         {
+                                                                                                           "transparent" => 1
+                                                                                                         }
+                                                                                                       ],
                                                                             "status" => "LC"
                                                                           },
                                                               "area" => {
@@ -1749,6 +1775,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "ping" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
+                                                                                                           "url_role" => "submission",
                                                                                                            "value_type" => "set of space-separated tokens"
                                                                                                          },
                                                                                                "rel" => {
@@ -1836,6 +1863,14 @@ $Web::HTML::Validator::_Defs = {
                                                               "aside" => {
                                                                            "attrs" => {},
                                                                            "conforming" => 1,
+                                                                           "content_model" => "flow content",
+                                                                           "disallowed_descendants" => {
+                                                                                                         "elements" => {
+                                                                                                                         "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                             "main" => 1
+                                                                                                                                                           }
+                                                                                                                       }
+                                                                                                       },
                                                                            "status" => "CR"
                                                                          },
                                                               "audio" => {
@@ -1947,6 +1982,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                               }
                                                                                       },
                                                                            "conforming" => 1,
+                                                                           "disallowed_descendants" => {
+                                                                                                         "categories" => {
+                                                                                                                           "media element" => 1
+                                                                                                                         }
+                                                                                                       },
+                                                                           "has_additional_content_constraints" => 1,
                                                                            "status" => "LC"
                                                                          },
                                                               "b" => {
@@ -2316,7 +2357,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "action" => {
                                                                                                                "status" => "LC",
-                                                                                                               "url_role" => "form"
+                                                                                                               "url_role" => "submission"
                                                                                                              },
                                                                                                  "autofocus" => {
                                                                                                                   "conforming" => 1,
@@ -2360,7 +2401,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "formaction" => {
                                                                                                                    "conforming" => 1,
                                                                                                                    "status" => "LC",
-                                                                                                                   "url_role" => "form",
+                                                                                                                   "url_role" => "submission",
                                                                                                                    "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                  },
                                                                                                  "formenctype" => {
@@ -2487,6 +2528,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                }
                                                                                        },
                                                                             "conforming" => 1,
+                                                                            "content_model" => "phrasing content",
+                                                                            "disallowed_descendants" => {
+                                                                                                          "categories" => {
+                                                                                                                            "interactive content" => 1
+                                                                                                                          }
+                                                                                                        },
                                                                             "status" => "LC"
                                                                           },
                                                               "canvas" => {
@@ -2505,6 +2552,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                }
                                                                                        },
                                                                             "conforming" => 1,
+                                                                            "content_model" => "transparent",
+                                                                            "has_additional_content_constraints" => 1,
                                                                             "status" => "REC"
                                                                           },
                                                               "caption" => {
@@ -2542,6 +2591,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 }
                                                                                         },
                                                                              "conforming" => 1,
+                                                                             "content_model" => "flow content",
+                                                                             "disallowed_descendants" => {
+                                                                                                           "elements" => {
+                                                                                                                           "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                               "table" => 1
+                                                                                                                                                             }
+                                                                                                                         }
+                                                                                                         },
                                                                              "status" => "REC"
                                                                            },
                                                               "center" => {
@@ -2713,6 +2770,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  }
                                                                                          },
                                                                               "conforming" => 1,
+                                                                              "has_additional_content_constraints" => 1,
                                                                               "status" => "LC"
                                                                             },
                                                               "command" => {
@@ -2747,6 +2805,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  }
                                                                                          },
                                                                               "conforming" => 1,
+                                                                              "has_additional_content_constraints" => 1,
                                                                               "status" => "LC"
                                                                             },
                                                               "dd" => {
@@ -2791,6 +2850,22 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             }
                                                                                                 }
                                                                                         },
+                                                                             "complex_content_model" => [
+                                                                                                          {
+                                                                                                            "elements" => {
+                                                                                                                            "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                                "summary" => 1
+                                                                                                                                                              }
+                                                                                                                          },
+                                                                                                            "max" => 1,
+                                                                                                            "min" => 1
+                                                                                                          },
+                                                                                                          {
+                                                                                                            "categories" => {
+                                                                                                                              "flow content" => 1
+                                                                                                                            }
+                                                                                                          }
+                                                                                                        ],
                                                                              "conforming" => 1,
                                                                              "status" => "LC"
                                                                            },
@@ -2805,6 +2880,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                             }
                                                                                     },
                                                                          "conforming" => 1,
+                                                                         "content_model" => "flow content",
+                                                                         "disallowed_descendants" => {
+                                                                                                       "elements" => {
+                                                                                                                       "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                           "dfn" => 1
+                                                                                                                                                         }
+                                                                                                                     }
+                                                                                                     },
                                                                          "status" => "REC"
                                                                        },
                                                               "dialog" => {
@@ -2830,6 +2913,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                               "type" => {}
                                                                                             }
                                                                                     },
+                                                                         "complex_content_model" => [
+                                                                                                      {
+                                                                                                        "categories" => {
+                                                                                                                          "script-supporting elements" => 1
+                                                                                                                        },
+                                                                                                        "elements" => {
+                                                                                                                        "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                            "li" => 1
+                                                                                                                                                          }
+                                                                                                                      },
+                                                                                                        "min" => 0
+                                                                                                      }
+                                                                                                    ],
                                                                          "status" => "LC"
                                                                        },
                                                               "div" => {
@@ -2896,6 +2992,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
+                                                                        "has_additional_content_constraints" => 1,
                                                                         "status" => "REC"
                                                                       },
                                                               "dt" => {
@@ -2907,6 +3004,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
+                                                                        "content_model" => "flow content",
+                                                                        "disallowed_descendants" => {
+                                                                                                      "categories" => {
+                                                                                                                        "heading content" => 1,
+                                                                                                                        "sectioning content" => 1
+                                                                                                                      },
+                                                                                                      "elements" => {
+                                                                                                                      "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                          "footer" => 1,
+                                                                                                                                                          "header" => 1
+                                                                                                                                                        }
+                                                                                                                    }
+                                                                                                    },
                                                                         "status" => "REC"
                                                                       },
                                                               "em" => {
@@ -3103,6 +3213,22 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              }
                                                                                                  }
                                                                                          },
+                                                                              "complex_content_model" => [
+                                                                                                           {
+                                                                                                             "elements" => {
+                                                                                                                             "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                                 "legend" => 1
+                                                                                                                                                               }
+                                                                                                                           },
+                                                                                                             "max" => 1,
+                                                                                                             "min" => 1
+                                                                                                           },
+                                                                                                           {
+                                                                                                             "categories" => {
+                                                                                                                               "flow content" => 1
+                                                                                                                             }
+                                                                                                           }
+                                                                                                         ],
                                                                               "conforming" => 1,
                                                                               "status" => "LC"
                                                                             },
@@ -3115,6 +3241,7 @@ $Web::HTML::Validator::_Defs = {
                                                               "figure" => {
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
+                                                                            "has_additional_content_constraints" => 1,
                                                                             "status" => "CR"
                                                                           },
                                                               "font" => {
@@ -3135,6 +3262,16 @@ $Web::HTML::Validator::_Defs = {
                                                               "footer" => {
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
+                                                                            "content_model" => "flow content",
+                                                                            "disallowed_descendants" => {
+                                                                                                          "elements" => {
+                                                                                                                          "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                              "footer" => 1,
+                                                                                                                                                              "header" => 1,
+                                                                                                                                                              "main" => 1
+                                                                                                                                                            }
+                                                                                                                        }
+                                                                                                        },
                                                                             "status" => "CR"
                                                                           },
                                                               "form" => {
@@ -3151,7 +3288,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                "action" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
-                                                                                                             "url_role" => "form",
+                                                                                                             "url_role" => "submission",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                "autocomplete" => {
@@ -3275,6 +3412,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                              }
                                                                                      },
                                                                           "conforming" => 1,
+                                                                          "content_model" => "flow content",
+                                                                          "disallowed_descendants" => {
+                                                                                                        "elements" => {
+                                                                                                                        "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                            "form" => 1
+                                                                                                                                                          }
+                                                                                                                      }
+                                                                                                      },
                                                                           "status" => "LC"
                                                                         },
                                                               "frame" => {
@@ -3480,7 +3625,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "list of dimensions"
                                                                                                              }
                                                                                                  }
-                                                                                         }
+                                                                                         },
+                                                                              "has_additional_content_constraints" => 1
                                                                             },
                                                               "h1" => {
                                                                         "attrs" => {
@@ -3769,20 +3915,51 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "profile" => {
                                                                                                               "status" => "LC",
+                                                                                                              "url_role" => "id",
                                                                                                               "value_type" => "set of space-separated tokens"
                                                                                                             }
                                                                                              }
                                                                                      },
                                                                           "conforming" => 1,
+                                                                          "content_model" => "metadata content",
+                                                                          "has_additional_content_constraints" => 1,
                                                                           "status" => "LC"
                                                                         },
                                                               "header" => {
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
+                                                                            "content_model" => "flow content",
+                                                                            "disallowed_descendants" => {
+                                                                                                          "elements" => {
+                                                                                                                          "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                              "footer" => 1,
+                                                                                                                                                              "header" => 1,
+                                                                                                                                                              "main" => 1
+                                                                                                                                                            }
+                                                                                                                        }
+                                                                                                        },
                                                                             "status" => "CR"
                                                                           },
                                                               "hgroup" => {
                                                                             "attrs" => {},
+                                                                            "complex_content_model" => [
+                                                                                                         {
+                                                                                                           "categories" => {
+                                                                                                                             "script-supporting elements" => 1
+                                                                                                                           },
+                                                                                                           "elements" => {
+                                                                                                                           "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                               "h1" => 1,
+                                                                                                                                                               "h2" => 1,
+                                                                                                                                                               "h3" => 1,
+                                                                                                                                                               "h4" => 1,
+                                                                                                                                                               "h5" => 1,
+                                                                                                                                                               "h6" => 1
+                                                                                                                                                             }
+                                                                                                                         },
+                                                                                                           "min" => 1
+                                                                                                         }
+                                                                                                       ],
                                                                             "conforming" => 1,
                                                                             "status" => "CR"
                                                                           },
@@ -3855,6 +4032,26 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             }
                                                                                              }
                                                                                      },
+                                                                          "complex_content_model" => [
+                                                                                                       {
+                                                                                                         "elements" => {
+                                                                                                                         "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                             "head" => 1
+                                                                                                                                                           }
+                                                                                                                       },
+                                                                                                         "max" => 1,
+                                                                                                         "min" => 1
+                                                                                                       },
+                                                                                                       {
+                                                                                                         "elements" => {
+                                                                                                                         "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                             "body" => 1
+                                                                                                                                                           }
+                                                                                                                       },
+                                                                                                         "max" => 1,
+                                                                                                         "min" => 1
+                                                                                                       }
+                                                                                                     ],
                                                                           "conforming" => 1,
                                                                           "root" => 1,
                                                                           "status" => "REC"
@@ -4063,6 +4260,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                }
                                                                                        },
                                                                             "conforming" => 1,
+                                                                            "has_additional_content_constraints" => 1,
                                                                             "status" => "LC"
                                                                           },
                                                               "img" => {
@@ -4298,7 +4496,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             },
                                                                                                 "action" => {
                                                                                                               "status" => "LC",
-                                                                                                              "url_role" => "form"
+                                                                                                              "url_role" => "submission"
                                                                                                             },
                                                                                                 "align" => {
                                                                                                              "enumerated" => {
@@ -4444,7 +4642,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 "formaction" => {
                                                                                                                   "conforming" => 1,
                                                                                                                   "status" => "LC",
-                                                                                                                  "url_role" => "form",
+                                                                                                                  "url_role" => "submission",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "formenctype" => {
@@ -5131,7 +5329,13 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "LC"
                                                                        },
                                                               "isindex" => {
-                                                                             "attrs" => {},
+                                                                             "attrs" => {
+                                                                                          "" => {
+                                                                                                  "action" => {
+                                                                                                                "url_role" => "submission"
+                                                                                                              }
+                                                                                                }
+                                                                                        },
                                                                              "status" => "LC"
                                                                            },
                                                               "kbd" => {
@@ -5243,6 +5447,15 @@ $Web::HTML::Validator::_Defs = {
                                                                                               }
                                                                                       },
                                                                            "conforming" => 1,
+                                                                           "content_model" => "phrasing content",
+                                                                           "disallowed_descendants" => {
+                                                                                                         "elements" => {
+                                                                                                                         "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                             "label" => 1
+                                                                                                                                                           }
+                                                                                                                       }
+                                                                                                       },
+                                                                           "has_additional_content_constraints" => 1,
                                                                            "status" => "LC"
                                                                          },
                                                               "legend" => {
@@ -5632,6 +5845,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                              }
                                                                                      },
                                                                           "conforming" => 1,
+                                                                          "has_additional_content_constraints" => 1,
                                                                           "status" => "LC"
                                                                         },
                                                               "menuitem" => {
@@ -5776,6 +5990,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                               }
                                                                                       },
                                                                            "conforming" => 1,
+                                                                           "content_model" => "phrasing content",
+                                                                           "disallowed_descendants" => {
+                                                                                                         "elements" => {
+                                                                                                                         "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                             "meter" => 1
+                                                                                                                                                           }
+                                                                                                                       }
+                                                                                                       },
                                                                            "status" => "LC"
                                                                          },
                                                               "multicol" => {
@@ -5786,6 +6008,14 @@ $Web::HTML::Validator::_Defs = {
                                                               "nav" => {
                                                                          "attrs" => {},
                                                                          "conforming" => 1,
+                                                                         "content_model" => "flow content",
+                                                                         "disallowed_descendants" => {
+                                                                                                       "elements" => {
+                                                                                                                       "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                           "main" => 1
+                                                                                                                                                         }
+                                                                                                                     }
+                                                                                                     },
                                                                          "status" => "CR"
                                                                        },
                                                               "nextid" => {
@@ -5799,15 +6029,18 @@ $Web::HTML::Validator::_Defs = {
                                                                         },
                                                               "noembed" => {
                                                                              "attrs" => {},
+                                                                             "has_additional_content_constraints" => 1,
                                                                              "status" => "LC"
                                                                            },
                                                               "noframes" => {
                                                                               "attrs" => {},
+                                                                              "has_additional_content_constraints" => 1,
                                                                               "status" => "LC"
                                                                             },
                                                               "noscript" => {
                                                                               "attrs" => {},
                                                                               "conforming" => 1,
+                                                                              "has_additional_content_constraints" => 1,
                                                                               "status" => "LC"
                                                                             },
                                                               "object" => {
@@ -5970,6 +6203,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             }
                                                                                                }
                                                                                        },
+                                                                            "complex_content_model" => [
+                                                                                                         {
+                                                                                                           "elements" => {
+                                                                                                                           "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                               "param" => 1
+                                                                                                                                                             }
+                                                                                                                         },
+                                                                                                           "min" => 0
+                                                                                                         },
+                                                                                                         {
+                                                                                                           "transparent" => 1
+                                                                                                         }
+                                                                                                       ],
                                                                             "conforming" => 1,
                                                                             "status" => "LC"
                                                                           },
@@ -5996,6 +6242,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        }
                                                                                            }
                                                                                    },
+                                                                        "complex_content_model" => [
+                                                                                                     {
+                                                                                                       "categories" => {
+                                                                                                                         "script-supporting elements" => 1
+                                                                                                                       },
+                                                                                                       "elements" => {
+                                                                                                                       "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                           "li" => 1
+                                                                                                                                                         }
+                                                                                                                     },
+                                                                                                       "min" => 0
+                                                                                                     }
+                                                                                                   ],
                                                                         "conforming" => 1,
                                                                         "status" => "LC"
                                                                       },
@@ -6016,6 +6275,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               }
                                                                                                  }
                                                                                          },
+                                                                              "complex_content_model" => [
+                                                                                                           {
+                                                                                                             "categories" => {
+                                                                                                                               "script-supporting elements" => 1
+                                                                                                                             },
+                                                                                                             "elements" => {
+                                                                                                                             "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                                 "option" => 1
+                                                                                                                                                               }
+                                                                                                                           },
+                                                                                                             "min" => 0
+                                                                                                           }
+                                                                                                         ],
                                                                               "conforming" => 1,
                                                                               "status" => "LC"
                                                                             },
@@ -6070,6 +6342,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                }
                                                                                        },
                                                                             "conforming" => 1,
+                                                                            "content_model" => "text",
+                                                                            "has_additional_content_constraints" => 1,
                                                                             "status" => "LC"
                                                                           },
                                                               "output" => {
@@ -6265,6 +6539,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  }
                                                                                          },
                                                                               "conforming" => 1,
+                                                                              "content_model" => "phrasing content",
+                                                                              "disallowed_descendants" => {
+                                                                                                            "elements" => {
+                                                                                                                            "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                                "progress" => 1
+                                                                                                                                                              }
+                                                                                                                          }
+                                                                                                          },
                                                                               "status" => "CR"
                                                                             },
                                                               "q" => {
@@ -6301,6 +6583,7 @@ $Web::HTML::Validator::_Defs = {
                                                               "ruby" => {
                                                                           "attrs" => {},
                                                                           "conforming" => 1,
+                                                                          "has_additional_content_constraints" => 1,
                                                                           "status" => "LC"
                                                                         },
                                                               "s" => {
@@ -6398,6 +6681,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                }
                                                                                        },
                                                                             "conforming" => 1,
+                                                                            "has_additional_content_constraints" => 1,
                                                                             "status" => "REC"
                                                                           },
                                                               "section" => {
@@ -6474,6 +6758,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            }
                                                                                                }
                                                                                        },
+                                                                            "complex_content_model" => [
+                                                                                                         {
+                                                                                                           "categories" => {
+                                                                                                                             "script-supporting elements" => 1
+                                                                                                                           },
+                                                                                                           "elements" => {
+                                                                                                                           "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                               "optgroup" => 1,
+                                                                                                                                                               "option" => 1
+                                                                                                                                                             }
+                                                                                                                         },
+                                                                                                           "min" => 0
+                                                                                                         }
+                                                                                                       ],
                                                                             "conforming" => 1,
                                                                             "status" => "LC"
                                                                           },
@@ -6582,6 +6880,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                               }
                                                                                       },
                                                                            "conforming" => 1,
+                                                                           "has_additional_content_constraints" => 1,
                                                                            "status" => "LC"
                                                                          },
                                                               "sub" => {
@@ -6766,6 +7065,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                               }
                                                                                       },
                                                                            "conforming" => 1,
+                                                                           "has_additional_content_constraints" => 1,
                                                                            "status" => "LC"
                                                                          },
                                                               "tbody" => {
@@ -6833,6 +7133,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             }
                                                                                               }
                                                                                       },
+                                                                           "complex_content_model" => [
+                                                                                                        {
+                                                                                                          "categories" => {
+                                                                                                                            "script-supporting elements" => 1
+                                                                                                                          },
+                                                                                                          "elements" => {
+                                                                                                                          "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                              "tr" => 1
+                                                                                                                                                            }
+                                                                                                                        },
+                                                                                                          "min" => 0
+                                                                                                        }
+                                                                                                      ],
                                                                            "conforming" => 1,
                                                                            "status" => "LC"
                                                                          },
@@ -6987,7 +7300,8 @@ $Web::HTML::Validator::_Defs = {
                                                                       },
                                                               "template" => {
                                                                               "attrs" => {},
-                                                                              "conforming" => 1
+                                                                              "conforming" => 1,
+                                                                              "has_additional_content_constraints" => 1
                                                                             },
                                                               "textarea" => {
                                                                               "attrs" => {
@@ -7390,6 +7704,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             }
                                                                                               }
                                                                                       },
+                                                                           "complex_content_model" => [
+                                                                                                        {
+                                                                                                          "categories" => {
+                                                                                                                            "script-supporting elements" => 1
+                                                                                                                          },
+                                                                                                          "elements" => {
+                                                                                                                          "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                              "tr" => 1
+                                                                                                                                                            }
+                                                                                                                        },
+                                                                                                          "min" => 0
+                                                                                                        }
+                                                                                                      ],
                                                                            "conforming" => 1,
                                                                            "status" => "LC"
                                                                          },
@@ -7548,6 +7875,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
+                                                                        "content_model" => "flow content",
+                                                                        "disallowed_descendants" => {
+                                                                                                      "categories" => {
+                                                                                                                        "sectioning content" => 1
+                                                                                                                      },
+                                                                                                      "elements" => {
+                                                                                                                      "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                          "footer" => 1,
+                                                                                                                                                          "header" => 1
+                                                                                                                                                        }
+                                                                                                                    }
+                                                                                                    },
+                                                                        "has_additional_content_constraints" => 1,
                                                                         "status" => "LC"
                                                                       },
                                                               "thead" => {
@@ -7615,6 +7955,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             }
                                                                                               }
                                                                                       },
+                                                                           "complex_content_model" => [
+                                                                                                        {
+                                                                                                          "categories" => {
+                                                                                                                            "script-supporting elements" => 1
+                                                                                                                          },
+                                                                                                          "elements" => {
+                                                                                                                          "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                              "tr" => 1
+                                                                                                                                                            }
+                                                                                                                        },
+                                                                                                          "min" => 0
+                                                                                                        }
+                                                                                                      ],
                                                                            "conforming" => 1,
                                                                            "status" => "LC"
                                                                          },
@@ -7634,6 +7987,8 @@ $Web::HTML::Validator::_Defs = {
                                                               "title" => {
                                                                            "attrs" => {},
                                                                            "conforming" => 1,
+                                                                           "content_model" => "text",
+                                                                           "has_additional_content_constraints" => 1,
                                                                            "status" => "REC"
                                                                          },
                                                               "tr" => {
@@ -7714,6 +8069,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          }
                                                                                            }
                                                                                    },
+                                                                        "complex_content_model" => [
+                                                                                                     {
+                                                                                                       "categories" => {
+                                                                                                                         "script-supporting elements" => 1
+                                                                                                                       },
+                                                                                                       "elements" => {
+                                                                                                                       "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                           "td" => 1,
+                                                                                                                                                           "th" => 1
+                                                                                                                                                         }
+                                                                                                                     },
+                                                                                                       "min" => 0
+                                                                                                     }
+                                                                                                   ],
                                                                         "conforming" => 1,
                                                                         "status" => "LC"
                                                                       },
@@ -7814,6 +8183,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        }
                                                                                            }
                                                                                    },
+                                                                        "complex_content_model" => [
+                                                                                                     {
+                                                                                                       "categories" => {
+                                                                                                                         "script-supporting elements" => 1
+                                                                                                                       },
+                                                                                                       "elements" => {
+                                                                                                                       "http://www.w3.org/1999/xhtml" => {
+                                                                                                                                                           "li" => 1
+                                                                                                                                                         }
+                                                                                                                     },
+                                                                                                       "min" => 0
+                                                                                                     }
+                                                                                                   ],
                                                                         "conforming" => 1,
                                                                         "status" => "REC"
                                                                       },
@@ -7948,6 +8330,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                               }
                                                                                       },
                                                                            "conforming" => 1,
+                                                                           "disallowed_descendants" => {
+                                                                                                         "categories" => {
+                                                                                                                           "media element" => 1
+                                                                                                                         }
+                                                                                                       },
+                                                                           "has_additional_content_constraints" => 1,
                                                                            "status" => "LC"
                                                                          },
                                                               "wbr" => {
