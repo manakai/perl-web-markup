@@ -6529,12 +6529,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                    "max" => {
                                                                                                               "conforming" => 1,
                                                                                                               "status" => "CR",
-                                                                                                              "value_type" => "floating-point number greater than zero"
+                                                                                                              "value_type" => "floating-point number"
                                                                                                             },
                                                                                                    "value" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "CR",
-                                                                                                                "value_type" => "floating-point number equal to or greater than zero"
+                                                                                                                "value_type" => "floating-point number"
                                                                                                               }
                                                                                                  }
                                                                                          },

@@ -318,6 +318,47 @@ $CheckerByType->{'list of dimensions'} = sub {
   }
 }; # list of dimensions
 
+## Floating-point number [HTML]
+$CheckerByType->{'floating-point number'} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  if ($value =~ /\A
+    (-? (?> [0-9]+ (?>(?:\.[0-9]+))? | \.[0-9]+))
+    (?>[Ee] ([+-]?[0-9]+) )?
+  \z/x) {
+    my $num = 0+$1;
+    $num *= 10 ** ($2 + 0) if $2;
+    $element_state->{number_value}->{$attr->name} = $num;
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'float:syntax error',
+                       level => 'm');
+  }
+}; # floating-point number
+
+$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{step} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value =~ /\A
+    (-? (?> [0-9]+ (?>(\.[0-9]+))? | \.[0-9]+))
+    (?>[Ee] ([+-]?[0-9]+) )?
+  \z/x) {
+    my $num = 0+$1;
+    $num *= 10 ** ($2 + 0) if $2;
+    unless ($num > 0) {
+      $self->{onerror}->(node => $attr,
+                         type => 'float:out of range',
+                         level => 'm');
+    }
+  } elsif ($value =~ /\A[Aa][Nn][Yy]\z/) { ## |any| ASCII case-insensitive
+    #
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'float:syntax error',
+                       level => 'm');
+  }
+}; # <input step="">
+
 ## Browsing context name [HTML]
 $CheckerByType->{'browsing context name'} = sub {
   my ($self, $attr) = @_;
@@ -1676,15 +1717,6 @@ my $GetDateTimeAttrChecker = sub ($) {
   };
 }; # $GetDateTimeAttrChecker
 
-my $HTMLIntegerAttrChecker = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  unless ($value =~ /\A-?[0-9]+\z/) {
-    $self->{onerror}->(node => $attr, type => 'integer:syntax error',
-                       level => $self->{level}->{must});
-  }
-}; # $HTMLIntegerAttrChecker
-
 my $GetHTMLNonNegativeIntegerAttrChecker = sub {
   my $range_check = shift;
   return sub {
@@ -1706,53 +1738,6 @@ my $GetHTMLNonNegativeIntegerAttrChecker = sub {
     }
   };
 }; # $GetHTMLNonNegativeIntegerAttrChecker
-
-## "Valid floating point number".
-my $GetHTMLFloatingPointNumberAttrChecker = sub {
-  my $range_check = shift;
-  return sub {
-    my ($self, $attr, $item, $element_state) = @_;
-    my $value = $attr->value;
-    if ($value =~ /
-        \A
-        (-?) # $1
-        ([0-9]+) # $2
-        (?>(\.[0-9]+))? # $3
-        (?>[Ee] ([+-]?[0-9]+) )? # $4
-        \z
-    /x) {
-      my $num = (defined $3 ? $2 . $3 : $2) + 0;
-      $num = -$num if $1;
-      $num *= 10 ** ($4 + 0) if $4; # $4 can be "-0", but no problem.
-      if ($range_check->($num)) {
-        $element_state->{number_value}->{$attr->name} = $num;
-      } else {
-        $self->{onerror}->(node => $attr, type => 'float:out of range',
-                           level => $self->{level}->{must});
-      }
-    } else {
-      $self->{onerror}->(node => $attr,
-                         type => 'float:syntax error',
-                         level => $self->{level}->{must});
-    }
-  };
-}; # $GetHTMLFloatingPointNumberAttrChecker
-
-my $PositiveFloatingPointNumberAttrChecker
-  = $GetHTMLFloatingPointNumberAttrChecker->(sub { $_[0] > 0 });
-
-my $StepAttrChecker = sub {
-  ## NOTE: A valid floating point number (> 0), or ASCII
-  ## case-insensitive "any".
-  
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  if ($value =~ /\A[Aa][Nn][Yy]\z/) {
-    #
-  } else {
-    $PositiveFloatingPointNumberAttrChecker->(@_);
-  }
-}; # $StepAttrChecker
 
 ## HTML4 %Length;
 my $HTMLLengthAttrChecker = sub {
@@ -3899,7 +3884,11 @@ $ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
                        level => 'm');
   }
   
-  $HTMLIntegerAttrChecker->($self, $attr);
+  my $value = $attr->value;
+  unless ($value =~ /\A-?[0-9]+\z/) {
+    $self->{onerror}->(node => $attr, type => 'integer:syntax error',
+                       level => 'm');
+  }
 }; # <li value="">
 
 $Element->{+HTML_NS}->{dl} = {
@@ -6024,7 +6013,6 @@ $CheckerByType->{'month string'} = $GetDateTimeAttrChecker->('month_string');
 $CheckerByType->{'week string'} = $GetDateTimeAttrChecker->('week_string');
 $CheckerByType->{'time string'} = $GetDateTimeAttrChecker->('time_string');
 $CheckerByType->{'local date and time string'} = $GetDateTimeAttrChecker->('local_date_and_time_string');
-$CheckerByType->{'floating-point number'} = $GetHTMLFloatingPointNumberAttrChecker->(sub { 1 });
 $CheckerByType->{'simple color'} = sub {
   my ($self, $attr) = @_;
   if (not $attr->value =~ /\A#[0-9A-Fa-f]{6}\z|\A\z/) {
@@ -6064,12 +6052,14 @@ $Element->{+HTML_NS}->{input} = {
     inputmode => $InputmodeAttrChecker, # XXX
     list => $ListAttrChecker,
     loop => $LegacyLoopChecker,
+    # XXX min="" max="" tests
+    max => sub {}, ## check_attrs2
+    min => sub {}, ## check_attrs2
     name => $FormControlNameAttrChecker,
     pattern => $PatternAttrChecker,
     placeholder => $PlaceholderAttrChecker,
     precision => $PrecisionAttrChecker,
     ## XXXresource src="" referenced resource type
-    step => $StepAttrChecker,
     usemap => $HTMLUsemapAttrChecker,
     value => sub {}, ## check_attrs2
     viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
@@ -6835,37 +6825,33 @@ $Element->{+HTML_NS}->{output} = {
 # XXX labelable
 $Element->{+HTML_NS}->{progress} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    max => sub { }, ## checked in |check_attrs2|
-    value => sub { }, ## checked in |check_attrs2|
-  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
 
-    my $max = 1;
-    my $max_attr = $item->{node}->get_attribute_node_ns (undef, 'max');
-    if ($max_attr) {
-      $GetHTMLFloatingPointNumberAttrChecker->(sub {
-        my $num = $_[0];
-        $max = $num;
-        return $num > 0; ## >, not >=
-      })->($self, $max_attr);
+    my $max = $element_state->{number_value}->{max};
+    if (defined $max) {
+      unless ($max > 0) {
+        $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'max'),
+                           type => 'float:out of range',
+                           level => 'm');
+      }
+    } else {
+      $max = 1.0;
     }
 
-    my $value_attr = $item->{node}->get_attribute_node_ns (undef, 'value');
-    if ($value_attr) {
-      $GetHTMLFloatingPointNumberAttrChecker->(sub {
-        my $num = $_[0];
-
-        unless ($num <= $max) {
-          $self->{onerror}->(node => $value_attr,
-                             type => 'progress value out of range',
-                             value => $max, # XXX document error type
-                             level => $self->{level}->{must});
-        }
-        
-        return $num >= 0; ## >=, not >
-      })->($self, $value_attr);
+    my $value = $element_state->{number_value}->{value};
+    if (defined $value) {
+      unless ($value >= 0) {
+        $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'value'),
+                           type => 'float:out of range',
+                           level => 'm');
+      }
+      unless ($value <= $max) {
+        $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'value'),
+                           type => 'progress value out of range', # XXXdoc
+                           value => "$value <= $max",
+                           level => 'm');
+      }
     }
   }, # check_attrs2
 
@@ -6876,72 +6862,49 @@ $Element->{+HTML_NS}->{progress} = {
 ## XXX labelable element
 $Element->{+HTML_NS}->{meter} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    high => sub { 1 }, ## checked in |check_attrs2|
-    low => sub { 1 }, ## checked in |check_attrs2|
-    max => sub { 1 }, ## checked in |check_attrs2|
-    min => sub { 1 }, ## checked in |check_attrs2|
-    optimum => sub { 1 }, ## checked in |check_attrs2|
-    value => sub { 1 }, ## checked in |check_attrs2|
-  }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
-
-    my %attr;
-    my %value = (
-        min => 0,
-        max => 1,
-        value => 0,
-    );
-    for my $attr_name (qw(high low max min optimum value)) {
-      $attr{$attr_name} = $item->{node}->get_attribute_node_ns
-          (undef, $attr_name);
-      if ($attr{$attr_name}) {
-        $GetHTMLFloatingPointNumberAttrChecker->(sub {
-          $value{$attr_name} = $_[0];
-          return 1;
-        })->($self, $attr{$attr_name});
-      }
-    }
     
-    unless ($attr{value}) {
+    my $value = $element_state->{number_value}->{value};
+    if (not defined $value and
+        not $item->{node}->has_attribute_ns (undef, 'value')) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'value',
-                         level => $self->{level}->{must});
+                         level => 'm');
+      $value = 0;
     }
+    my $min = $element_state->{number_value}->{min} || 0;
+    my $max = $element_state->{number_value}->{max};
+    $max = 1.0 unless defined $max;
 
-    $value{low} = $value{min} unless defined $value{low};
-    $value{high} = $value{max} unless defined $value{high};
-    $value{optimum} = ($value{min} + $value{max}) / 2
-        unless defined $value{optimum};
-    
-    for my $attr_name (qw(value low high optimum)) {
-      next unless $attr{$attr_name};
-
-      unless ($value{min} <= $value{$attr_name}) {
-        $self->{onerror}->(node => $attr{$attr_name},
-                           type => 'meter:out of range:min',
-                           text => $attr_name,
-                           value => $value{min},
-                           level => $self->{level}->{must});
-      }
-      
-      unless ($value{$attr_name} <= $value{max}) {
-        $self->{onerror}->(node => $attr{$attr_name},
-                           type => 'meter:out of range:max',
-                           text => $attr_name,
-                           value => $value{max},
-                           level => $self->{level}->{must});
-      }
+    $self->{onerror}->(node => $item->{node},
+                       type => 'meter:min > max', # XXXdoc
+                       value => "$min <= $max",
+                       level => 'm')
+        unless $min <= $max;
+    for (
+      [value => $value],
+      [low => $element_state->{number_value}->{low}],
+      [high => $element_state->{number_value}->{high}],
+      [optimum => $element_state->{number_value}->{optimum}],
+    ) {
+      next unless defined $_->[1];
+      $self->{onerror}->(node => $item->{node},
+                         type => 'meter:out of range', # XXXdoc
+                         text => $_->[0],
+                         value => "$min <= $_->[1] <= $max",
+                         level => 'm')
+          unless $min <= $_->[1] and $_->[1] <= $max;
     }
-
-    if ($attr{low} and $attr{high}) {
-      unless ($value{low} <= $value{high}) {
-        $self->{onerror}->(node => $attr{low},
-                           type => 'meter:out of range:high',
-                           value => $value{high},
-                           level => $self->{level}->{must});
+    if (defined $element_state->{number_value}->{low} and
+        defined $element_state->{number_value}->{high}) {
+      unless ($element_state->{number_value}->{low} <=
+              $element_state->{number_value}->{high}) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'meter:low > high', # XXXdoc
+                           value => "$element_state->{number_value}->{low} <= $element_state->{number_value}->{high}",
+                           level => 'm');
       }
     }
   }, # check_attrs2
