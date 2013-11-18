@@ -412,6 +412,33 @@ for my $test (
   } n => 1, name => ['element', $test->[1]->[0]->{type}, $test->[1]->[0]->{text}];
 }
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->strict_error_checking (0);
+  my $el = $doc->create_element ('hoge');
+  $el->set_attribute_ns (undef, [undef, 'xml:lang'] => 'abcd');
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_element ($el);
+  eq_or_diff \@error,
+      [{type => 'element not defined',
+        node => $el,
+        level => 'm'},
+       {type => 'in XML:xml:lang',
+        node => $el->attributes->[0],
+        level => 'm'},
+       {type => 'attribute missing',
+        text => 'lang',
+        node => $el->attributes->[0],
+        level => 'm'}];
+  done $c;
+} n => 1, name => ['{}xml:lang="" in XML'];
+
 run_tests;
 
 =head1 LICENSE

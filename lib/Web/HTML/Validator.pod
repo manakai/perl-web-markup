@@ -221,6 +221,9 @@ and Attributes
 
 Atom 1.0, Atom Threading Extension.
 
+For Atom documents, references to RFC 3066 are replaced by references
+to BCP 47.
+
 For more information, see
 <http://suika.suikawiki.org/gate/2007/html/standards>.
 

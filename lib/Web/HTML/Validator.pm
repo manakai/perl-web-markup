@@ -139,6 +139,7 @@ sub _check_element_attrs ($$$;%) {
         $_Defs->{elements}->{$el_ns}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln} ||
         $_Defs->{elements}->{'*'}->{'*'}->{attrs}->{$attr_ns}->{$attr_ln};
     my $conforming = $attr_def->{conforming};
+    my $status = $attr_def->{status} || '';
     if ($args{allow_dataset} and
         $attr_ns eq '' and
         $attr_ln =~ /^data-\p{InXMLNCNameChar10}+\z/ and
@@ -146,6 +147,7 @@ sub _check_element_attrs ($$$;%) {
       ## XML-compatible + no uppercase letter
       $checker = $CheckerByType->{any};
       $conforming = 1;
+      $status = 'REC';
     } elsif (defined $input_type and
              $attr_ns eq '' and
              keys %{$_Defs->{input}->{attrs}->{$attr_ln} or {}} and
@@ -161,6 +163,7 @@ sub _check_element_attrs ($$$;%) {
       $checker = $args{element_specific_checker}->{$attr_ln} || $checker;
     } elsif ($attr_ns eq XMLNS_NS) { # xmlns="", xmlns:*=""
       $conforming = 1;
+      $status = 'REC';
     }
     my $value_type = $attr_def->{value_type} || '';
     $checker ||= $CheckerByType->{$value_type};
@@ -172,6 +175,7 @@ sub _check_element_attrs ($$$;%) {
       ## XML-compatible + no uppercase letter
       $checker ||= $CheckerByType->{any};
       $conforming = 1;
+      $status = 'REC';
     }
     $checker->($self, $attr, $item, $element_state, $attr_def) if $checker;
 
@@ -183,7 +187,6 @@ sub _check_element_attrs ($$$;%) {
         $self->{onerror}->(node => $attr,
                            type => 'unknown attribute', level => 'u');
       }
-      my $status = $attr_def->{status} || '';
       if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
         #
       } else {
@@ -416,8 +419,24 @@ $CheckerByType->{'language tag'} = sub {
   $lang->onerror (sub {
     $self->{onerror}->(@_, node => $attr);
   });
-  $lang->check_rfc3066_language_tag ($value); # XXX use latest version
+  my $parsed = $lang->parse_tag ($value);
+  $lang->check_parsed_tag ($parsed);
 }; # language tag
+
+## BCP 47 language tag or the empty string [HTML] [BCP47]
+$CheckerByType->{'language tag or empty'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value ne '') {
+    require Web::LangTag;
+    my $lang = Web::LangTag->new;
+    $lang->onerror (sub {
+      $self->{onerror}->(@_, node => $attr);
+    });
+    my $parsed = $lang->parse_tag ($value);
+    $lang->check_parsed_tag ($parsed);
+  }
+}; # language tag or empty
 
 ## Media query list [MQ]
 $CheckerByType->{'media query list'} = sub {
@@ -560,19 +579,17 @@ $NamespacedAttrChecker->{(XML_NS)}->{lang} = sub {
     ## "$prefix is undef" error is thrown by other place
   }
 
+  ## BCP 47 language tag or the empty string [XML] [BCP47]
   my $value = $attr->value;
-  if ($value eq '') {
-    #
-  } else {
+  if ($value ne '') {
     require Web::LangTag;
     my $lang = Web::LangTag->new;
     $lang->onerror (sub {
       $self->{onerror}->(@_, node => $attr);
     });
-    $lang->check_rfc3066_language_tag ($value); # XXX Update langtag spec
+    my $parsed = $lang->parse_tag ($value);
+    $lang->check_parsed_tag ($parsed);
   }
-
-  ## TODO: test data
 
   my $nsuri = $attr->owner_element->namespace_uri;
   if (defined $nsuri and $nsuri eq HTML_NS) {
@@ -596,7 +613,7 @@ $NamespacedAttrChecker->{(XML_NS)}->{lang} = sub {
                          level => 'm');
     }
   }
-}; # xml:lang
+}; # xml:lang=""
 
 $NamespacedAttrChecker->{(XML_NS)}->{base} = sub {
   my ($self, $attr) = @_;
@@ -2130,28 +2147,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   }
 }; # id=""
 
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{lang} = sub {
-    my ($self, $attr) = @_;
-    my $value = $attr->value;
-    if ($value eq '') {
-      #
-    } else {
-      require Web::LangTag;
-      my $lang = Web::LangTag->new;
-      $lang->onerror (sub {
-        $self->{onerror}->(@_, node => $attr);
-      });
-      $lang->check_rfc3066_language_tag ($value);
-    }
-    ## ISSUE: RFC 4646 (3066bis)?
-
-    ## TODO: test data
-
-    ## NOTE: Inconsistency between |lang| and |xml:lang| attributes are
-    ## non-conforming.  Such errors are detected by the checkers of
-    ## |{}xml:lang| and |{xml}:lang| attributes.
-}; # lang=""
-
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dir} = $GetHTMLEnumeratedAttrChecker->({
   ltr => 1,
   rtl => 1,
@@ -2236,36 +2231,35 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'xml:lang'} = sub {
   ## different from the |lang| attribute in the XML's namespace.
   my ($self, $attr) = @_;
   
-    if ($attr->owner_document->manakai_is_html) {
-      $self->{onerror}->(type => 'in HTML:xml:lang',
-                         level => $self->{level}->{info},
+  if ($attr->owner_document->manakai_is_html) {
+    ## Allowed by HTML Standard but is ignored.
+    $self->{onerror}->(type => 'in HTML:xml:lang',
+                       level => 'i',
+                       node => $attr);
+  } else {
+    ## Not allowed by any spec.
+    $self->{onerror}->(type => 'in XML:xml:lang',
+                       level => 'm',
+                       node => $attr);
+  }
+  
+  my $lang_attr = $attr->owner_element->get_attribute_node_ns (undef, 'lang');
+  if ($lang_attr) {
+    my $lang_attr_value = $lang_attr->value;
+    $lang_attr_value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+    my $value = $attr->value;
+    $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+    if ($lang_attr_value ne $value) {
+      $self->{onerror}->(type => 'xml:lang ne lang',
+                         level => 'm',
                          node => $attr);
-      ## NOTE: This is not an error, but the attribute will be ignored.
-    } else {
-      $self->{onerror}->(type => 'in XML:xml:lang',
-                         level => $self->{level}->{html5_no_may},
-                         node => $attr);
-      ## TODO: We need to add test for this error.
     }
-    
-    my $lang_attr = $attr->owner_element->get_attribute_node_ns
-        (undef, 'lang');
-    if ($lang_attr) {
-      my $lang_attr_value = $lang_attr->value;
-      $lang_attr_value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-      my $value = $attr->value;
-      $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-      if ($lang_attr_value ne $value) {
-        $self->{onerror}->(type => 'xml:lang ne lang',
-                           level => $self->{level}->{must},
-                           node => $attr);
-      }
-    } else {
-      $self->{onerror}->(type => 'xml:lang not allowed',
-                         level => $self->{level}->{must},
-                         node => $attr);
-      ## TODO: We need to add test for <x {xml}:lang {}xml:lang>.
-    }
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'attribute missing',
+                       text => 'lang',
+                       level => 'm');
+  }
 }; # xml:lang=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{xmlns} = sub {
@@ -3230,26 +3224,25 @@ $Element->{+HTML_NS}->{meta} = {
         }
       } elsif ($keyword eq 'content-language') {
         if ($content_attr) {
-          my $content = $content_attr->value;
+          ## BCP 47 language tag [OBSVOCAB]
+          my $value = $content_attr->value;
           require Web::LangTag;
-          ## XXX In fact what the spec requires is "BCP 47 langauge code".
           my $lang = Web::LangTag->new;
           $lang->onerror (sub {
             $self->{onerror}->(@_, node => $content_attr);
           });
-          $lang->check_rfc3066_language_tag ($content);
+          my $parsed = $lang->parse_tag ($value);
+          $lang->check_parsed_tag ($parsed);
         }
 
         $self->{onerror}->(node => $el,
                            type => 'content-language', # XXX documentation
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif ($keyword eq 'set-cookie') {
-        ## WA1 defines no |content| conformance for authors.
-        ## XXX Check |content| XXXobsvocab
-        
+        ## XXX set-cookie-string [OBSVOCAB]
         $self->{onerror}->(node => $el,
                            type => 'http-equiv:set-cookie', # XXX documentation
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif ($keyword eq 'pics-label') { # [WHATWGWiki]
         ## XXX Check |content|
       } else {
@@ -7348,20 +7341,6 @@ my $GetAtomAttrsChecker = sub {
   };
 }; # $GetAtomAttrsChecker
 
-my $AtomLanguageTagAttrChecker = sub {
-  ## NOTE: See also $HTMLLanguageTagAttrChecker in HTML.pm.
-
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  require Web::LangTag;
-  my $lang = Web::LangTag->new;
-  $lang->onerror (sub {
-    $self->{onerror}->(@_, node => $attr);
-  });
-  $lang->check_rfc3066_language_tag ($value);
-  ## ISSUE: RFC 4646 (3066bis)?
-}; # $AtomLanguageTagAttrChecker
-
 my %AtomChecker = (%AnyChecker);
 
 my %AtomTextConstruct = (
@@ -8258,7 +8237,7 @@ $Element->{+ATOM_NS}->{link} = {
   %AtomChecker,
   check_attrs => $GetAtomAttrsChecker->({
     href => $AtomIRIReferenceAttrChecker,
-    hreflang => $AtomLanguageTagAttrChecker,
+    hreflang => $CheckerByType->{'language tag'},
     length => sub { }, # No MUST; in octets.
     rel => sub { # MUST
       my ($self, $attr) = @_;
