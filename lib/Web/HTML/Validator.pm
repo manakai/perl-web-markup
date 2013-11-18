@@ -450,27 +450,117 @@ $CheckerByType->{'media query list'} = sub {
 ## URL potentially surrounded by spaces [HTML]
 $CheckerByType->{'URL potentially surrounded by spaces'} = sub {
   my ($self, $attr, $item, $element_state) = @_;
-  # XXX update checker
   my $value = $attr->value;
   require Web::URL::Checker;
   my $chk = Web::URL::Checker->new_from_string ($value);
   $chk->onerror (sub {
     $self->{onerror}->(@_, node => $attr);
   });
-  $chk->check_iri_reference;
-  $self->{has_uri_attr} = 1; ## TODO: <html manifest>
+  $chk->check_iri_reference; # XXX URL
+  $self->{has_uri_attr} = 1;
 }; # URL potentially surrounded by spaces
 
 ## Non-empty URL potentially surrounded by spaces [HTML]
 $CheckerByType->{'non-empty URL potentially surrounded by spaces'} = sub {
   my ($self, $attr) = @_;
-  if ($attr->value eq '') {
+  my $value = $attr->value;
+  if ($value eq '') {
     $self->{onerror}->(type => 'url:empty', # XXX documentation
                        node => $attr,
-                       level => $self->{level}->{must});
+                       level => 'm');
+  } else {
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($value);
+    $chk->onerror (sub {
+      $self->{onerror}->(@_, node => $attr);
+    });
+    $chk->check_iri_reference; # XXX URL
   }
-  $CheckerByType->{'URL potentially surrounded by spaces'}->(@_);
+  $self->{has_uri_attr} = 1;
 }; # non-empty URL potentially surrounded by spaces [HTML]
+
+$ElementAttrChecker->{(HTML_NS)}->{html}->{''}->{manifest} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value eq '') {
+    $self->{onerror}->(type => 'url:empty', # XXX documentation
+                       node => $attr,
+                       level => 'm');
+  } else {
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($value);
+    $chk->onerror (sub {
+      $self->{onerror}->(@_, node => $attr);
+    });
+    $chk->check_iri_reference; # XXX URL
+  }
+  ## Same as "non-empty URL potentially surrounded by spaces" checker
+  ## except for:
+  #$self->{has_uri_attr} = 1;
+}; # <html manifest="">
+
+$ElementAttrChecker->{(HTML_NS)}->{a}->{''}->{ping} =
+$ElementAttrChecker->{(HTML_NS)}->{area}->{''}->{ping} =
+$ElementAttrChecker->{(HTML_NS)}->{head}->{''}->{profile} =
+$ElementAttrChecker->{(HTML_NS)}->{object}->{''}->{archive} = sub {
+  my ($self, $attr) = @_;
+
+  ## Set of space-separated tokens [HTML]
+  my %word;
+  for my $word (grep { length $_ }
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'm');
+    }
+  }
+
+  for my $value (keys %word) {
+    ## Non-empty URL [HTML]
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($value);
+    $chk->onerror (sub {
+      $self->{onerror}->(value => $value, @_, node => $attr);
+    });
+    # XXX For <object archive="">, base URL is <object codebase="">
+    $chk->check_iri_reference; # XXX URL
+  }
+
+  $self->{has_uri_attr} = 1 if $attr->local_name ne 'profile';
+}; # <a ping=""> <area ping=""> <head profile=""> <object archive="">
+
+$ElementAttrChecker->{(HTML_NS)}->{applet}->{''}->{archive} = sub {
+  my ($self, $attr) = @_;
+
+  ## A set of comma-separated tokens [HTML]
+  my $value = $attr->value;
+  my @value = length $value ? split /,/, $value, -1 : ();
+
+  require Web::URL::Checker;
+  for my $v (@value) {
+    $v =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
+    $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
+
+    if ($v eq '') {
+      $self->{onerror}->(type => 'url:empty', # XXX documentation
+                         node => $attr,
+                         level => 'm');
+    } else {
+      ## Non-empty URL
+      my $chk = Web::URL::Checker->new_from_string ($v);
+      $chk->onerror (sub {
+        $self->{onerror}->(value => $v, @_, node => $attr);
+      });
+      # XXX base URL is <applet codebase="">
+      $chk->check_iri_reference; # XXX URL
+    }
+  }
+
+  $self->{has_uri_attr} = 1;
+}; # <applet archive="">
 
 ## Event handler content attribute [HTML]
 $CheckerByType->{'event handler'} = sub {
@@ -630,43 +720,68 @@ $NamespacedAttrChecker->{(XML_NS)}->{base} = sub {
   ## NOTE: Conformance to URI standard is not checked since there is
   ## no author requirement on conformance in the XML Base
   ## specification.
+
+  ## XXX If this attribute will not be removed: The attribute value
+  ## must be URL.  It does not defined as URLs for the purpose of
+  ## <base href=""> validation.  (Note that even if the attribute is
+  ## dropped for browsers, we have to continue to support it for
+  ## feeds.)
 }; # xml:base=""
 
 $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
   my ($self, $attr) = @_;
+  my $ln = $attr->local_name;
 
   my $prefix = $attr->prefix;
-  if (defined $prefix and not $prefix eq 'xmlns') {
-    $self->{onerror}->(node => $attr,
-                       type => 'Reserved Prefixes and Namespace Names:Name',
-                       text => 'http://www.w3.org/2000/xmlns/',
-                       level => 'w');
-    ## "$prefix is undef" error is thrown by other place
+  if ($ln eq 'xmlns') { # xmlns=""
+    if (not defined $prefix) {
+      #
+    } elsif ($prefix eq 'xmlns') {
+      ## The prefix |xmlns| MUST NOT be declared.
+      $self->{onerror}->(node => $attr,
+                         type => 'Reserved Prefixes and Namespace Names:Prefix',
+                         text => 'xmlns',
+                         level => 'm');
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'Reserved Prefixes and Namespace Names:Name',
+                         text => 'http://www.w3.org/2000/xmlns/',
+                         level => 'w');
+    }
+  } else { # xmlns:*=""
+    if (defined $prefix and not $prefix eq 'xmlns') {
+      $self->{onerror}->(node => $attr,
+                         type => 'Reserved Prefixes and Namespace Names:Name',
+                         text => 'http://www.w3.org/2000/xmlns/',
+                         level => 'w');
+      ## "$prefix is undef" error is thrown by other place
+    }
   }
 
   my $value = $attr->value;
-  ## The value MUST be a URL or the empty string.
-  require Web::URL::Checker;
-  my $chk = Web::URL::Checker->new_from_string ($value);
-  $chk->onerror (sub {
-    $self->{onerror}->(value => $value, @_, node => $attr);
-  });
-  $chk->check_iri_reference;
-
-  ## XXX
-  ## Use of relative URLs are deprecated.
-
-  ## Namespace URL SHOULD be unique and persistent.  But this can't be
-  ## tested.
-
   if ($value eq '') {
-    ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
-    $self->{onerror}->(node => $attr,
-                       type => 'xmlns:* empty', # XXX
-                       level => 'm');
+    unless ($ln eq 'xmlns') { # xmlns:*="" (empty value)
+      ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
+      $self->{onerror}->(node => $attr,
+                         type => 'xmlns:* empty', # XXX
+                         level => 'm');
+    }
+  } else {
+    ## Non-empty URL [HTML]
+    require Web::URL::Checker;
+    my $chk = Web::URL::Checker->new_from_string ($value);
+    $chk->onerror (sub {
+      $self->{onerror}->(value => $value, @_, node => $attr);
+    });
+    $chk->check_iri_reference; # XXX URL
+
+    ## XXX
+    ## Use of relative URLs are deprecated.
+
+    ## Namespace URL SHOULD be unique and persistent.  But this can't
+    ## be tested.
   }
 
-  my $ln = $attr->manakai_local_name;
   if ($value eq XML_NS and $ln ne 'xml') {
     $self->{onerror}->(node => $attr,
                        type => 'Reserved Prefixes and Namespace Names:Name',
@@ -684,54 +799,7 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
                        text => $ln,
                        level => 'm');
   }
-}; # xmlns:*=""
-
-$NamespacedAttrChecker->{(XMLNS_NS)}->{xmlns} = sub {
-  my ($self, $attr) = @_;
-
-  my $prefix = $attr->prefix;
-  if (defined $prefix) {
-    if ($prefix eq 'xmlns') {
-      ## The prefix |xmlns| MUST NOT be declared.
-      $self->{onerror}->(node => $attr,
-                         type => 'Reserved Prefixes and Namespace Names:Prefix',
-                         text => 'xmlns',
-                         level => 'm');
-    } else {
-      $self->{onerror}->(node => $attr,
-                         type => 'Reserved Prefixes and Namespace Names:Name',
-                         text => 'http://www.w3.org/2000/xmlns/',
-                         level => 'w');
-    }
-  } # $prefix
-
-  my $value = $attr->value;
-  ## The value MUST be a URL or the empty string.
-  require Web::URL::Checker;
-  my $chk = Web::URL::Checker->new_from_string ($value);
-  $chk->onerror (sub {
-    $self->{onerror}->(value => $value, @_, node => $attr);
-  });
-  $chk->check_iri_reference;
-
-  ## XXX
-  ## Use of relative URLs are deprecated.
-
-  ## Namespace URL SHOULD be unique and persistent.  But this can't be
-  ## tested.
-
-  if ($value eq XML_NS) {
-    $self->{onerror}->(node => $attr,
-                       type => 'Reserved Prefixes and Namespace Names:Name',
-                       text => $value,
-                       level => 'm');
-  } elsif ($value eq XMLNS_NS) {
-    $self->{onerror}->(node => $attr,
-                       type => 'Reserved Prefixes and Namespace Names:Name',
-                       text => $value,
-                       level => 'm');
-  }
-}; # xmlns=""
+}; # xmlns="", xmlns:*=""
 
 ## ------ XXXXXX XXXXXX
 
@@ -1499,18 +1567,14 @@ my $HTMLLinkTypesAttrChecker = sub {
                          level => $self->{level}->{uncertain});
     }
 
+    ## XXX For registered link types, this check should be skipped
     if ($word =~ /:/) {
-      ## XXX MUST be an absolute URL (HTML5 revision 4533)
       require Web::URL::Checker;
       my $chk = Web::URL::Checker->new_from_string ($word);
       $chk->onerror (sub {
         $self->{onerror}->(value => $word, @_, node => $attr);
       });
-      $chk->check_iri_reference;
-      
-      ## TODO: absolute
-      push @{$self->{return}->{uri}->{$word} ||= []},
-          {node => $attr, type => {'linktype' => 1}};
+      $chk->check_iri_reference; # XXX absolute URL
     }
   }
   $is_hyperlink = 1 if $word{alternate} and not $word{stylesheet};
@@ -1532,71 +1596,6 @@ my $HTMLLinkTypesAttrChecker = sub {
   $todo->{has_hyperlink_link_type} = 1 if $is_hyperlink;
   $element_state->{link_rel} = \%word;
 }; # $HTMLLinkTypesAttrChecker
-
-# XXX URL
-## URI (or IRI)
-my $HTMLURIAttrChecker = sub {
-  my ($self, $attr, $item, $element_state) = @_;
-  ## ISSUE: Relative references are allowed? (RFC 3987 "IRI" is an absolute reference with optional fragment identifier.)
-  my $value = $attr->value;
-  require Web::URL::Checker;
-  my $chk = Web::URL::Checker->new_from_string ($value);
-  $chk->onerror (sub {
-    $self->{onerror}->(@_, node => $attr);
-  });
-  $chk->check_iri_reference;
-  $self->{has_uri_attr} = 1; ## TODO: <html manifest>
-}; # $HTMLURIAttrChecker
-
-my $NonEmptyURLChecker = sub {
-  my ($self, $attr) = @_;
-  if ($attr->value eq '') {
-    $self->{onerror}->(type => 'url:empty', # XXX documentation
-                       node => $attr,
-                       level => $self->{level}->{must});
-  } else {
-    $HTMLURIAttrChecker->(@_);
-  }
-}; # $NonEmptyURLChecker
-
-## "A set of space-separated tokens, each of which MUST be a valid
-## non-empty URL".
-my $HTMLSpaceURIsAttrChecker = sub {
-  my ($self, $attr) = @_;
-
-  my %word;
-  for my $word (grep {length $_}
-                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-    $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive. # XXX wrong?
-
-    unless ($word{$word}) {
-      $word{$word} = 1;
-    } else {
-      $self->{onerror}->(node => $attr, type => 'duplicate token',
-                         value => $word,
-                         level => $self->{level}->{must});
-    }
-  }
-
-  my $type = {ping => 'action',
-              profile => 'namespace',
-              archive => 'resource'}->{$attr->name};
-
-  for my $value (keys %word) {
-    require Web::URL::Checker;
-    my $chk = Web::URL::Checker->new_from_string ($value);
-    $chk->onerror (sub {
-      $self->{onerror}->(value => $value, @_, node => $attr);
-    });
-    $chk->check_iri_reference;
-
-    ## TODO: absolute
-    push @{$self->{return}->{uri}->{$value} ||= []},
-        {node => $attr, type => {$type => 1}};
-  }
-
-  $self->{has_uri_attr} = 1;
-}; # $HTMLSpaceURIsAttrChecker
 
 my $ValidEmailAddress;
 {
@@ -2716,7 +2715,7 @@ $Element->{+HTML_NS}->{html} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before head';
-  },
+  }, # check_start
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -2792,9 +2791,7 @@ $Element->{+HTML_NS}->{html} = {
 # ---- Document metadata ----
 
 $Element->{+HTML_NS}->{head} = {
-  check_attrs => $GetHTMLAttrsChecker->({
-    profile => $HTMLSpaceURIsAttrChecker,
-  }), # check_attrs
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -2861,8 +2858,21 @@ $Element->{+HTML_NS}->{title} = {
 
 $Element->{+HTML_NS}->{base} = {
   %HTMLEmptyChecker,
-  check_attrs2 => $GetHTMLAttrsChecker->(),
-  check_attrs => sub {
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    if ($self->{has_uri_attr} and
+        $item->{node}->has_attribute_ns (undef, 'href')) {
+      ## XXX warn: <style>@import 'relative';</style><base href>
+      ## This can't be detected: |<script>location.href =
+      ## 'relative';</script><base href>|
+      $self->{onerror}->(node => $item->{node},
+                         type => 'basehref after URL attribute',
+                         level => 'm');
+    }
+
+    $HTMLEmptyChecker{check_start}->(@_);
+  }, # check_start
+  check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
 
     if ($self->{has_base}) {
@@ -2873,38 +2883,15 @@ $Element->{+HTML_NS}->{base} = {
       $self->{has_base} = 1;
     }
 
-    my $has_href = $item->{node}->has_attribute_ns (undef, 'href');
     my $has_target = $item->{node}->has_attribute_ns (undef, 'target');
-
-    if ($self->{has_uri_attr} and $has_href) {
-      ## ISSUE: Are these examples conforming?
-      ## <head profile="a b c"><base href> (except for |profile|'s 
-      ## non-conformance)
-      ## <title xml:base="relative"/><base href/> (maybe it should be)
-      ## <unknown xmlns="relative"/><base href/> (assuming that
-      ## |{relative}:unknown| is allowed before XHTML |base| (unlikely, though))
-      ## <style>@import 'relative';</style><base href>
-      ## <script>location.href = 'relative';</script><base href>
-      ## NOTE: <html manifest=".."><head><base href=""/> is conforming as
-      ## an exception.
-      $self->{onerror}->(node => $item->{node},
-                         type => 'basehref after URL attribute',
-                         level => $self->{level}->{must});
-    }
     if ($self->{has_hyperlink_element} and $has_target) {
-      ## ISSUE: Are these examples conforming?
-      ## <head><title xlink:href=""/><base target="name"/></head>
-      ## <xbl:xbl>...<svg:a href=""/>...</xbl:xbl><base target="name"/>
-      ## (assuming that |xbl:xbl| is allowed before |base|)
-      ## NOTE: These are non-conformant anyway because of |head|'s content model:
-      ## <link href=""/><base target="name"/>
-      ## <link rel=unknown href=""><base target=name>
       $self->{onerror}->(node => $item->{node},
                          type => 'basetarget after hyperlink',
                          level => $self->{level}->{must});
     }
 
-    if (not $has_href and not $has_target) {
+    if (not $has_target and
+        not $item->{node}->has_attribute_ns (undef, 'href')) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing:href|target',
                          level => $self->{level}->{must});
@@ -3208,13 +3195,13 @@ $Element->{+HTML_NS}->{meta} = {
                                  level => $self->{level}->{must});
             }
 
-            ## XXXURL
+            ## URL [URL]
             require Web::URL::Checker;
             my $chk = Web::URL::Checker->new_from_string ($content);
             $chk->onerror (sub {
               $self->{onerror}->(value => $content, @_, node => $content_attr);
             });
-            $chk->check_iri_reference;
+            $chk->check_iri_reference; # XXX
             $self->{has_uri_attr} = 1; ## NOTE: One of "attributes with URLs".
           } else {
             $self->{onerror}->(node => $content_attr,
@@ -4051,7 +4038,6 @@ $Element->{+HTML_NS}->{a} = {
             }
           }, # memoryname
           name => $NameAttrChecker,
-          ping => $HTMLSpaceURIsAttrChecker,
     rel => sub {}, ## checked in check_attrs2
           viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
             1 <= $_[0] and $_[0] <= 9;
@@ -4978,8 +4964,6 @@ $Element->{+HTML_NS}->{noembed} = {
 $Element->{+HTML_NS}->{object} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    archive => $HTMLSpaceURIsAttrChecker,
-        ## TODO: Relative to @codebase
     # XXX classid="" MUST be absolute
     form => $HTMLFormAttrChecker,
     usemap => $HTMLUsemapAttrChecker,
@@ -5062,38 +5046,6 @@ $Element->{+HTML_NS}->{object} = {
 $Element->{+HTML_NS}->{applet} = {
   %{$Element->{+HTML_NS}->{object}},
   check_attrs => $GetHTMLAttrsChecker->({
-    archive => sub {
-      my ($self, $attr) = @_;
-
-      ## A set of comma-separated tokens.
-      my $value = $attr->value;
-      my @value = length $value ? split /,/, $value, -1 : ();
-
-      require Web::URL::Checker;
-      for my $v (@value) {
-        $v =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
-        $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
-
-        if ($v eq '') {
-          $self->{onerror}->(type => 'url:empty', # XXX documentation
-                             node => $attr,
-                             level => $self->{level}->{must});
-        } else {
-          my $chk = Web::URL::Checker->new_from_string ($v);
-          $chk->onerror (sub {
-            $self->{onerror}->(value => $v, @_, node => $attr);
-          });
-          $chk->check_iri_reference;
-        }
-
-        ## TODO: absolute
-        ## TODO: Relative to @codebase
-        push @{$self->{return}->{uri}->{$v} ||= []},
-            {node => $attr, type => {resource => 1}};
-      }
-
-      $self->{has_uri_attr} = 1;
-    }, # archive
     name => $NameAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
@@ -5472,7 +5424,6 @@ $Element->{+HTML_NS}->{area} = {
   check_attrs => $GetHTMLAttrsChecker->({
     alt => sub { }, ## Checked later.
     coords => sub { }, ## Checked in $ShapeCoordsChecker
-    ping => $HTMLSpaceURIsAttrChecker,
     rel => sub {}, ## Checked in check_attrs2
   }), # check_attrs
   check_attrs2 => sub {
@@ -7328,6 +7279,8 @@ sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 ## not define the whole syntax.  We use Web Applications 1.0's "valid
 ## MIME type" definition here.
 
+## XXX Replace IRI by URL Standard
+
 ## Any element MAY have xml:base, xml:lang.  Although Atom spec does
 ## not explictly specify that unknown attribute cannot be used, HTML
 ## Standard does not allow use of unknown attributes.
@@ -7336,7 +7289,6 @@ my $GetAtomAttrsChecker = sub {
   return sub {
     my ($self, $item, $element_state) = @_;
     $self->_check_element_attrs ($item, $element_state,
-                                 is_atom => 1,
                                  element_specific_checker => $element_specific_checker);
   };
 }; # $GetAtomAttrsChecker
@@ -8231,6 +8183,7 @@ my $AtomIRIReferenceAttrChecker = sub {
     $self->{onerror}->(@_, node => $attr);
   });
   $chk->check_iri_reference;
+  $self->{has_uri_attr} = 1;
 }; # $AtomIRIReferenceAttrChecker
 
 $Element->{+ATOM_NS}->{link} = {
@@ -8434,6 +8387,7 @@ $Element->{+THR_NS}->{'in-reply-to'} = {
         $self->{onerror}->(@_, node => $attr);
       });
       $chk->check_iri;
+      $self->{has_uri_attr} = 1;
 
       ## TODO: Check against ID guideline...
     },

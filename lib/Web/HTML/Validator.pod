@@ -198,7 +198,9 @@ Requirements on the namespace name is updated as follows:
   A namespace name MUST be a valid non-empty URL
   <http://www.whatwg.org/specs/web-apps/current-work/#valid-non-empty-url>.
   It should be an absolute URL
-  <http://url.spec.whatwg.org/#concept-absolute-url>.
+  <http://url.spec.whatwg.org/#concept-absolute-url>.  For the purpose
+  of conformance of the HTML |base| element, attributes declaring XML
+  namespaces are not defined as taking URLs.
 
 =item XMLBASE
 
