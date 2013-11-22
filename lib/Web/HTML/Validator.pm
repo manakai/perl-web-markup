@@ -6441,7 +6441,7 @@ $Element->{+HTML_NS}->{select} = {
       my $size = $el->get_attribute_ns (undef, 'size');
       if (not defined $size or
           ## Rules for parsing non-negative integers
-          $size =~ /\A[\x09\x0A\x0C\x0D\x20]*\+?([0-9]+)/) {
+          $size =~ /\A[\x09\x0A\x0C\x0D\x20]*(\+?[0-9]+|-0+)/) {
         $size = $1 || 1;
       } else {
         undef $size;
@@ -6682,7 +6682,7 @@ $Element->{+HTML_NS}->{textarea} = {
       
       $GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 })->(@_);
       
-      if ($attr->value =~ /^[\x09\x0A\x0C\x0D\x20]*([0-9]+)/) {
+      if ($attr->value =~ /^[\x09\x0A\x0C\x0D\x20]*(\+?[0-9]+|-0+)/) {
         ## NOTE: Applying the rules for parsing non-negative integers
         ## results in a number.
         my $max_allowed_value_length = 0+$1;
