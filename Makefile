@@ -75,6 +75,7 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl Makefile
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{start_tag}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{end_tag}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{interface}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{auto_br}; #\
 	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\
 	        for $$ln2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}}) { #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{spec}; #\

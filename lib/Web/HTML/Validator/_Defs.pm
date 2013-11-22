@@ -295,6 +295,9 @@ $Web::HTML::Validator::_Defs = {
                                                   },
                             "palpable content" => {
                                                     "elements" => {
+                                                                    "http://www.w3.org/1998/Math/MathML" => {
+                                                                                                              "math" => 1
+                                                                                                            },
                                                                     "http://www.w3.org/1999/xhtml" => {
                                                                                                         "a" => 1,
                                                                                                         "abbr" => 1,
@@ -361,7 +364,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         "u" => 1,
                                                                                                         "var" => 1,
                                                                                                         "video" => 1
-                                                                                                      }
+                                                                                                      },
+                                                                    "http://www.w3.org/2000/svg" => {
+                                                                                                      "svg" => 1
+                                                                                                    }
                                                                   },
                                                     "elements_with_exceptions" => {
                                                                                     "http://www.w3.org/1999/xhtml" => {
@@ -566,12 +572,30 @@ $Web::HTML::Validator::_Defs = {
                                                                                    }
                                                                       },
                           "http://www.w3.org/1998/Math/MathML" => {
+                                                                    "*" => {
+                                                                             "attrs" => {}
+                                                                           },
                                                                     "math" => {
                                                                                 "attrs" => {},
                                                                                 "conforming" => 1,
                                                                                 "root" => 1,
                                                                                 "status" => "REC"
-                                                                              }
+                                                                              },
+                                                                    "mi" => {
+                                                                              "attrs" => {}
+                                                                            },
+                                                                    "mn" => {
+                                                                              "attrs" => {}
+                                                                            },
+                                                                    "mo" => {
+                                                                              "attrs" => {}
+                                                                            },
+                                                                    "ms" => {
+                                                                              "attrs" => {}
+                                                                            },
+                                                                    "mtext" => {
+                                                                                 "attrs" => {}
+                                                                               }
                                                                   },
                           "http://www.w3.org/1999/02/22-rdf-syntax-ns#" => {
                                                                              "RDF" => {
@@ -1568,7 +1592,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                        "interactive content" => 1
                                                                                                                      }
                                                                                                    },
-                                                                       "status" => "LC"
+                                                                       "status" => "LC",
+                                                                       "transparent" => 1
                                                                      },
                                                               "abbr" => {
                                                                           "attrs" => {
@@ -1734,7 +1759,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "transparent" => 1
                                                                                                          }
                                                                                                        ],
-                                                                            "status" => "LC"
+                                                                            "status" => "LC",
+                                                                            "transparent" => "semi"
                                                                           },
                                                               "area" => {
                                                                           "attrs" => {
@@ -1988,7 +2014,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                          }
                                                                                                        },
                                                                            "has_additional_content_constraints" => 1,
-                                                                           "status" => "LC"
+                                                                           "status" => "LC",
+                                                                           "transparent" => "semi"
                                                                          },
                                                               "b" => {
                                                                        "attrs" => {},
@@ -2554,7 +2581,8 @@ $Web::HTML::Validator::_Defs = {
                                                                             "conforming" => 1,
                                                                             "content_model" => "transparent",
                                                                             "has_additional_content_constraints" => 1,
-                                                                            "status" => "REC"
+                                                                            "status" => "REC",
+                                                                            "transparent" => 1
                                                                           },
                                                               "caption" => {
                                                                              "attrs" => {
@@ -2838,7 +2866,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                     },
                                                                          "conforming" => 1,
                                                                          "content_model" => "transparent",
-                                                                         "status" => "LC"
+                                                                         "status" => "LC",
+                                                                         "trasparent" => 1
                                                                        },
                                                               "details" => {
                                                                              "attrs" => {
@@ -3257,7 +3286,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                              }
                                                                                      },
                                                                           "content_model" => "transparent",
-                                                                          "status" => "LC"
+                                                                          "status" => "LC",
+                                                                          "transparent" => 1
                                                                         },
                                                               "footer" => {
                                                                             "attrs" => {},
@@ -4263,6 +4293,9 @@ $Web::HTML::Validator::_Defs = {
                                                                             "has_additional_content_constraints" => 1,
                                                                             "status" => "LC"
                                                                           },
+                                                              "image" => {
+                                                                           "attrs" => {}
+                                                                         },
                                                               "img" => {
                                                                          "attrs" => {
                                                                                       "" => {
@@ -5326,7 +5359,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                     },
                                                                          "conforming" => 1,
                                                                          "content_model" => "transparent",
-                                                                         "status" => "LC"
+                                                                         "status" => "LC",
+                                                                         "transparent" => 1
                                                                        },
                                                               "isindex" => {
                                                                              "attrs" => {
@@ -5665,7 +5699,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                     },
                                                                          "conforming" => 1,
                                                                          "content_model" => "transparent",
-                                                                         "status" => "LC"
+                                                                         "status" => "LC",
+                                                                         "transparent" => 1
                                                                        },
                                                               "mark" => {
                                                                           "attrs" => {},
@@ -6041,7 +6076,8 @@ $Web::HTML::Validator::_Defs = {
                                                                               "attrs" => {},
                                                                               "conforming" => 1,
                                                                               "has_additional_content_constraints" => 1,
-                                                                              "status" => "LC"
+                                                                              "status" => "LC",
+                                                                              "transparent" => "partial"
                                                                             },
                                                               "object" => {
                                                                             "attrs" => {
@@ -6217,7 +6253,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          }
                                                                                                        ],
                                                                             "conforming" => 1,
-                                                                            "status" => "LC"
+                                                                            "status" => "LC",
+                                                                            "transparent" => "semi"
                                                                           },
                                                               "ol" => {
                                                                         "attrs" => {
@@ -8337,7 +8374,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                          }
                                                                                                        },
                                                                            "has_additional_content_constraints" => 1,
-                                                                           "status" => "LC"
+                                                                           "status" => "LC",
+                                                                           "transparent" => "semi"
                                                                          },
                                                               "wbr" => {
                                                                          "attrs" => {},

@@ -102,7 +102,7 @@ sub _check_element_attrs ($$$;%) {
   for my $attr (@{$item->{node}->attributes}) {
     my $attr_ns = $attr->namespace_uri;
     $attr_ns = '' if not defined $attr_ns;
-    my $attr_ln = $attr->manakai_local_name;
+    my $attr_ln = $attr->local_name;
 
     my $prefix = $attr->prefix;
     if (not defined $prefix) {
@@ -846,6 +846,7 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 ## ------ Element content model ------
 
 my $ElementDisallowedDescendants = {};
+my $IsPalpableContent = {};
 
 for my $ns (keys %{$_Defs->{elements}}) {
   for my $ln (keys %{$_Defs->{elements}->{$ns}}) {
@@ -874,9 +875,40 @@ for my $ns (keys %{$_Defs->{elements}}) {
     }
   }
 }
-
 ## Note that there might be exceptions, which is checked by
 ## |$IsInHTMLInteractiveContent|.
+
+$IsPalpableContent->{(HTML_NS)}->{audio} = sub {
+  return $_[0]->has_attribute_ns (undef, 'controls');
+};
+$IsPalpableContent->{(HTML_NS)}->{input} = sub {
+  ## Not <input type=hidden>
+  return not (($_[0]->get_attribute_ns (undef, 'type') || '') =~ /\A[Hh][Ii][Dd][Dd][Ee][Nn]\z/); # hidden ASCII case-insensitive
+};
+$IsPalpableContent->{(HTML_NS)}->{menu} = sub {
+  return $_[0]->type eq 'toolbar';
+};
+
+$IsPalpableContent->{(HTML_NS)}->{ul} =
+$IsPalpableContent->{(HTML_NS)}->{ol} = sub {
+  for (@{$_[0]->child_nodes}) {
+    return 1 if
+        $_->node_type == 1 and # ELEMENT_NODE
+        $_->local_name eq 'li' and
+        ($_->namespace_uri || '') eq HTML_NS;
+  }
+  return 0;
+};
+
+$IsPalpableContent->{(HTML_NS)}->{dl} = sub {
+  for (@{$_[0]->child_nodes}) {
+    return 1 if
+        $_->node_type == 1 and # ELEMENT_NODE
+        $_->local_name =~ /\Ad[td]\z/ and # dt | dd
+        ($_->namespace_uri || '') eq HTML_NS;
+  }
+  return 0;
+};
 
 ## ------ XXXXXX XXXXXX
 
@@ -915,13 +947,7 @@ our %AnyChecker = (
   check_child_text => sub { },
   ## NOTE: |check_end| is invoked after everything on the element's
   ## attributes and contents are checked.
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    ## NOTE: There is a modified copy of the code below for |html:ruby|.
-    if ($element_state->{has_significant}) {
-      $item->{real_parent_state}->{has_significant} = 1;
-    }    
-  },
+  check_end => sub { },
 );
 
 our $ElementDefault = {
@@ -1067,6 +1093,8 @@ sub check_document ($$$;$) {
 
   ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
 
+  ## XXX DOCUMENT_TYPE_NODE
+
   my $docel = $doc->document_element;
   unless (defined $docel) {
     ## ISSUE: Should we check content of Document node?
@@ -1081,7 +1109,7 @@ sub check_document ($$$;$) {
   
   my $docel_nsuri = $docel->namespace_uri;
   $docel_nsuri = '' if not defined $docel_nsuri;
-  my $docel_def = $Element->{$docel_nsuri}->{$docel->manakai_local_name} ||
+  my $docel_def = $Element->{$docel_nsuri}->{$docel->local_name} ||
     $Element->{$docel_nsuri}->{''} ||
     $ElementDefault;
   if ($docel_def->{is_root}) {
@@ -1168,6 +1196,8 @@ sub check_document ($$$;$) {
   return $return;
 } # check_document
 
+## XXX Check DOCUMENT_FRAGMENT_NODE
+
 ## Check an element.  The element is checked as if it is an orphan node (i.e.
 ## an element without a parent node).
 sub check_element ($$$;$) {
@@ -1203,8 +1233,6 @@ sub check_element ($$$;$) {
     name => $self->{name},
     table => [], # table objects returned by Whatpm::HTMLTable
     term => $self->{term},
-    uri => {}, # URIs other than those in RDF triples
-                     ## TODO: xmlns="", SYSTEM "", atom:* src="", xml:base=""
     rdf => [],
   };
 
@@ -1219,18 +1247,12 @@ sub check_element ($$$;$) {
       my $el = $item->{node};
       my $el_nsuri = $el->namespace_uri;
       $el_nsuri = '' if not defined $el_nsuri;
-      my $el_ln = $el->manakai_local_name;
+      my $el_ln = $el->local_name;
       
       my $element_state = {};
       my $eldef = $Element->{$el_nsuri}->{$el_ln} ||
           $Element->{$el_nsuri}->{''} ||
           $ElementDefault;
-      my $content_def = $item->{transparent}
-          ? $item->{parent_def} || $eldef : $eldef;
-      my $content_state = $item->{transparent}
-          ? $item->{parent_def}
-              ? $item->{parent_state} || $element_state : $element_state
-          : $element_state;
 
       my $prefix = $el->prefix;
       if (defined $prefix and $prefix eq 'xml') {
@@ -1296,45 +1318,61 @@ sub check_element ($$$;$) {
         if ($child_nt == 1) { # ELEMENT_NODE
           my $child_nsuri = $child->namespace_uri;
           $child_nsuri = '' unless defined $child_nsuri;
-          my $child_ln = $child->manakai_local_name;
+          my $child_ln = $child->local_name;
 
-          push @new_item, [$content_def->{check_child_element},
+          if ($element_state->{has_palpable}) {
+            #
+          } elsif ($_Defs->{categories}->{'palpable content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+            $element_state->{has_palpable} = 1
+                if not $child_nsuri eq HTML_NS or
+                   not $child->has_attribute_ns (undef, 'hidden');
+          } elsif ($_Defs->{categories}->{'palpable content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+            $element_state->{has_palpable} = 1
+                if $IsPalpableContent->{$child_nsuri}->{$child_ln}->($child) and
+                   (not $child_nsuri eq HTML_NS or
+                    not $child->has_attribute_ns (undef, 'hidden'));
+          }
+          push @new_item, [$eldef->{check_child_element},
                            $self, $item, $child,
                            $child_nsuri, $child_ln,
                            0,
-                           $content_state, $element_state];
+                           $element_state, $element_state];
           push @new_item, {type => 'element', node => $child,
-                           parent_def => $content_def,
+                           parent_def => $eldef,
                            real_parent_state => $element_state,
-                           parent_state => $content_state};
-
-          if ($_Defs->{categories}->{'embedded content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-            $element_state->{has_significant} = 1;
-          }
-        } elsif ($child_nt == 3 or # TEXT_NODE
-                 $child_nt == 4) { # CDATA_SECTION_NODE
+                           parent_state => $element_state};
+        } elsif ($child_nt == 3) { # TEXT_NODE
           my $has_significant = ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/);
-          push @new_item, [$content_def->{check_child_text},
+          push @new_item, [$eldef->{check_child_text},
                            $self, $item, $child, $has_significant,
-                           $content_state, $element_state];
-          $element_state->{has_significant} ||= $has_significant;
-        } elsif ($child_nt == 5) { # ENTITY_REFERENCE_NODE
-          push @child, @{$child->child_nodes};
+                           $element_state, $element_state];
+          $element_state->{has_palpable} = 1 if $has_significant;
         }
-        ## TODO: PI_NODE
-        ## TODO: Unknown node type
+        ## XXX PROCESSING_INSTRUCTION_NODE
       }
       
       push @new_item, [$eldef->{check_end}, $self, $item, $element_state];
       push @new_item, {type => '_remove_minus_elements',
                        element_state => $element_state}
           if $disallowed;
+      my $cm = $_Defs->{elements}->{$el_nsuri}->{$el_ln}->{content_model} || '';
+      push @new_item, {type => 'check_palpable_content',
+                       node => $el,
+                       element_state => $element_state}
+          if $cm eq 'flow content' or
+             $cm eq 'phrasing content' or
+             $cm eq 'transparent';
       
       unshift @item, @new_item;
     } elsif ($item->{type} eq '_add_minus_elements') {
       $self->_add_minus_elements ($item->{element_state}, $item->{disallowed});
     } elsif ($item->{type} eq '_remove_minus_elements') {
       $self->_remove_minus_elements ($item->{element_state});
+    } elsif ($item->{type} eq 'check_palpable_content') {
+      $self->{onerror}->(node => $item->{node},
+                         level => 's',
+                         type => 'no significant content')
+          unless $item->{element_state}->{has_palpable};
     } else {
       die "$0: Internal error: Unsupported checking action type |$item->{type}|";
     }
@@ -1403,6 +1441,11 @@ sub check_element ($$$;$) {
   return $self->{return};
 } # check_element
 
+## $element_state
+##
+##   has_palpable    Set to true if a palpable content child is found.
+##                   (Handled specially for <ruby>.)
+
 sub _add_minus_elements ($$@) {
   my $self = shift;
   my $element_state = shift;
@@ -1448,7 +1491,7 @@ my $FAECheckStart = sub {
 
   A: {
     my $el = $item->{node};
-    if ($el->manakai_local_name eq 'input') {
+    if ($el->local_name eq 'input') {
       my $nsurl = $el->namespace_uri;
       if (defined $nsurl and $nsurl eq HTML_NS) {
         my $type = $el->get_attribute_ns (undef, 'type') || '';
@@ -2332,7 +2375,7 @@ my $NameAttrChecker = sub {
                          type => 'id name confliction', # XXXdocumentation
                          value => $value,
                          level => $self->{level}->{must});
-    } elsif ($attr->owner_element->manakai_local_name eq 'a') {
+    } elsif ($attr->owner_element->local_name eq 'a') {
       $self->{onerror}->(node => $attr,
                          type => 'anchor name', # XXX documentation
                          level => $self->{level}->{obsconforming});
@@ -2599,19 +2642,6 @@ my %HTMLFlowContentChecker = (
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    ## NOTE: There are modified copies of the code below in
-    ## |%HTMLPhrasingContentChecker| and |del| and |datagrid| element
-    ## checkers.
-    if ($element_state->{has_significant}) {
-      $item->{real_parent_state}->{has_significant} = 1;
-    } elsif ($item->{transparent}) {
-      #
-    } else {
-      $self->{onerror}->(node => $item->{node},
-                         level => $self->{level}->{should},
-                         type => 'no significant content');
-    }
-
     delete $self->{flag}->{in_flow}
         unless $element_state->{in_flow_original};
   }, # check_end
@@ -2645,25 +2675,18 @@ my %HTMLPhrasingContentChecker = (
   }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-
     delete $self->{flag}->{in_phrasing}
         unless $element_state->{in_phrasing_original};
-
-    ## NOTE: There are modified copies of the code below in
-    ## |%HTMLFlowContentChecker| and |datagrid| and |del| element
-    ## checkers.
-    if ($element_state->{has_significant}) {
-      $item->{real_parent_state}->{has_significant} = 1;
-    } elsif ($item->{transparent}) {
-      #
-    } else {
-      $self->{onerror}->(node => $item->{node},
-                         level => $self->{level}->{should},
-                         type => 'no significant content');
-    }
   }, # check_end
 ); # %HTMLPhrasingContentChecker
 
+## All "transparent" elements are only allowed as phrasing content or
+## as flow content.  Therefore, if there is a phrasing content model
+## ancestor, the content of the element is also phrasing content.
+## Otherwise, it is flow content.  We don't take non-conforming
+## placement of transparent elements into account (use flow content
+## model instead).  Note that palpable content check is also performed
+## for transparent elements.
 my %TransparentChecker = (
   %HTMLFlowContentChecker,
   check_child_element => sub {
@@ -2886,7 +2909,14 @@ $Element->{+HTML_NS}->{head} = {
 };
 
 $Element->{+HTML_NS}->{title} = {
-  %HTMLTextChecker, # XXX
+  %HTMLTextChecker,
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    $self->{onerror}->(node => $item->{node},
+                       level => 'm',
+                       type => 'no significant content')
+        unless $element_state->{has_palpable};
+  }, # check_end
 }; # title
 
 $Element->{+HTML_NS}->{base} = {
@@ -3030,7 +3060,7 @@ $Element->{+HTML_NS}->{meta} = {
     for my $attr (@{$el->attributes}) {
       my $attr_ns = $attr->namespace_uri;
       $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
+      my $attr_ln = $attr->local_name;
       if ($attr_ns eq '') {
         if ($attr_ln eq 'content') {
           $content_attr = $attr;
@@ -3416,7 +3446,6 @@ $Element->{+HTML_NS}->{style} = {
     $AnyChecker{check_end}->(@_);
   },
 }; # style
-## ISSUE: Relationship to significant content check?
 
 # ---- Scripting ----
 
@@ -3590,7 +3619,6 @@ $Element->{+HTML_NS}->{script} = {
   ## and the src attribute must not be specified." - not testable.
       ## TODO: It would be possible to err <script type=text/plain src=...>
 }; # script
-## ISSUE: Significant check and text child node
 
 ## NOTE: When script is disabled.
 $Element->{+HTML_NS}->{noscript} = {
@@ -3673,6 +3701,10 @@ $Element->{+HTML_NS}->{noscript} = {
     if ($self->{flag}->{in_head}) {
       $AnyChecker{check_end}->(@_);
     } else {
+      $self->{onerror}->(node => $item->{node},
+                         level => 's',
+                         type => 'no significant content')
+          unless $element_state->{has_palpable};
       $TransparentChecker{check_end}->(@_);
     }
   }, # check_end
@@ -3874,7 +3906,7 @@ $ElementAttrChecker->{(HTML_NS)}->{li}->{''}->{value} = sub {
   if (defined $parent) {
     my $parent_ns = $parent->namespace_uri;
     $parent_ns = '' unless defined $parent_ns;
-    my $parent_ln = $parent->manakai_local_name;
+    my $parent_ln = $parent->local_name;
     $parent_is_ol = ($parent_ns eq HTML_NS and $parent_ln eq 'ol');
   }
 
@@ -4049,7 +4081,7 @@ $Element->{+HTML_NS}->{a} = {
     for my $attr (@{$item->{node}->attributes}) {
       my $attr_ns = $attr->namespace_uri;
       $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
+      my $attr_ln = $attr->local_name;
       $attr{$attr_ln} = $attr if $attr_ns eq '';
     }
 
@@ -4129,7 +4161,7 @@ $Element->{+HTML_NS}->{dfn} = {
           if (defined $term) {
             undef $term;
             last;
-          } elsif ($child->manakai_local_name eq 'abbr') {
+          } elsif ($child->local_name eq 'abbr') {
             my $nsuri = $child->namespace_uri;
             if (defined $nsuri and $nsuri eq HTML_NS) {
               my $attr = $child->get_attribute_node_ns (undef, 'title');
@@ -4380,14 +4412,14 @@ $Element->{+HTML_NS}->{$_}->{check_end} = sub {
   my ($self, $item, $element_state) = @_;
   my $el = $item->{node}; # <i> or <b>
 
-  if ($el->manakai_local_name eq 'b') {
+  if ($el->local_name eq 'b') {
     $self->{onerror}->(type => 'last resort', # XXXtype
                        node => $el,
                        level => $self->{level}->{should});
   }
 
   if ($el->has_attribute_ns (undef, 'class')) {
-    if ($el->manakai_local_name eq 'b') {
+    if ($el->local_name eq 'b') {
       #
     } else {
       $self->{onerror}->(type => 'last resort', # XXXtype
@@ -4404,13 +4436,13 @@ $Element->{+HTML_NS}->{$_}->{check_end} = sub {
   $HTMLPhrasingContentChecker{check_end}->(@_);
 } for qw(b i); # check_end
 
+# XXX
 $Element->{+HTML_NS}->{ruby} = {
   %HTMLPhrasingContentChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
     $element_state->{phase} = 'before-rb';
-    #$element_state->{has_sig}
     #$HTMLPhrasingContentChecker{check_start}->(@_);
   },
   ## NOTE: (phrasing, (rt | (rp, rt, rp)))+
@@ -4445,16 +4477,16 @@ $Element->{+HTML_NS}->{ruby} = {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #$element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
-        unless ($element_state->{has_significant}) {
+        unless (delete $element_state->{has_palpable}) {
           $self->{onerror}->(node => $child_el,
-                             level => $self->{level}->{should},
+                             level => 's',
                              type => 'no significant content before');
         }
         $element_state->{phase} = 'after-rt';
       } elsif ($child_ln eq 'rp' and $child_nsuri eq HTML_NS) {
-        unless ($element_state->{has_significant}) {
+        unless (delete $element_state->{has_palpable}) {
           $self->{onerror}->(node => $child_el,
-                             level => $self->{level}->{should},
+                             level => 's',
                              type => 'no significant content before');
         }
         $element_state->{phase} = 'after-rp1';
@@ -4466,10 +4498,6 @@ $Element->{+HTML_NS}->{ruby} = {
       }
     } elsif ($element_state->{phase} eq 'after-rt') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        if ($element_state->{has_significant}) {
-          $element_state->{has_sig} = 1;
-          delete $element_state->{has_significant};
-        }
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rp' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -4485,10 +4513,6 @@ $Element->{+HTML_NS}->{ruby} = {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:ruby base',
                            level => $self->{level}->{must});
-        if ($element_state->{has_significant}) {
-          $element_state->{has_sig} = 1;
-          delete $element_state->{has_significant};
-        }
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rp1') {
@@ -4514,10 +4538,6 @@ $Element->{+HTML_NS}->{ruby} = {
                              type => 'element not allowed:ruby base',
                              level => $self->{level}->{must});
         }
-        if ($element_state->{has_significant}) {
-          $element_state->{has_sig} = 1;
-          delete $element_state->{has_significant};
-        }
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rp-rt') {
@@ -4542,18 +4562,10 @@ $Element->{+HTML_NS}->{ruby} = {
                              type => 'element not allowed:ruby base',
                              level => $self->{level}->{must});
         }
-        if ($element_state->{has_significant}) {
-          $element_state->{has_sig} = 1;
-          delete $element_state->{has_significant};
-        }
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rp2') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        if ($element_state->{has_significant}) {
-          $element_state->{has_sig} = 1;
-          delete $element_state->{has_significant};
-        }
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -4569,10 +4581,6 @@ $Element->{+HTML_NS}->{ruby} = {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:ruby base',
                            level => $self->{level}->{must});
-        if ($element_state->{has_significant}) {
-          $element_state->{has_sig} = 1;
-          delete $element_state->{has_significant};
-        }
         $element_state->{phase} = 'in-rb';
       }
     } else {
@@ -4623,9 +4631,9 @@ $Element->{+HTML_NS}->{ruby} = {
                          text => 'rt',
                          level => $self->{level}->{must});
     } elsif ($element_state->{phase} eq 'in-rb') {
-      unless ($element_state->{has_significant}) {
+      unless (delete $element_state->{has_palpable}) {
         $self->{onerror}->(node => $item->{node},
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content at the end');
       }
       $self->{onerror}->(node => $item->{node},
@@ -4652,12 +4660,6 @@ $Element->{+HTML_NS}->{ruby} = {
     } else {
       die "check_child_text: Bad |ruby| phase: $element_state->{phase}";
     }
-
-    ## NOTE: A modified version of |check_end| of %AnyChecker.
-    if ($element_state->{has_significant} or $element_state->{has_sig}) {
-      $item->{real_parent_state}->{has_significant} = 1;
-    }    
-
     #$HTMLPhrasingContentChecker{check_end}->(@_);
   }, # check_end
 }; # ruby
@@ -4690,17 +4692,6 @@ $Element->{+HTML_NS}->{del} = {
   }), # check_attrs
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    ## Modified copy of |check_end| for |%HTMLFlowContentChecker|.
-    if ($element_state->{has_significant}) {
-      ## NOTE: Significantness flag does not propagate.
-    } elsif ($item->{transparent}) {
-      #
-    } else {
-      $self->{onerror}->(node => $item->{node},
-                         level => $self->{level}->{should},
-                         type => 'no significant content');
-    }
-
     delete $self->{flag}->{in_flow}
         unless $element_state->{in_flow_original};
     # "in_phrasing" don't have to be restored here, because of the
@@ -4795,6 +4786,14 @@ $Element->{+HTML_NS}->{figure} = {
       }
     }
   }, # check_child_text
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    $self->{onerror}->(node => $item->{node},
+                       level => 's',
+                       type => 'no significant content')
+        unless $element_state->{has_palpable};
+    $HTMLFlowContentChecker{check_end}->(@_);
+  }, # check_end
 }; # figure
 
 $Element->{+HTML_NS}->{img} = {
@@ -5023,6 +5022,14 @@ $Element->{+HTML_NS}->{object} = {
     }
     $TransparentChecker{check_child_text}->(@_);
   }, # check_child_text
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    $self->{onerror}->(node => $item->{node},
+                       level => 's',
+                       type => 'no significant content')
+        unless $element_state->{has_palpable};
+    $TransparentChecker{check_end}->(@_);
+  }, # check_end
 }; # object
 
 $Element->{+HTML_NS}->{applet} = {
@@ -5159,6 +5166,11 @@ $Element->{+HTML_NS}->{video} = {
                          text => 'source',
                          level => $self->{level}->{warn});
     }
+    
+    $self->{onerror}->(node => $item->{node},
+                       level => 's',
+                       type => 'no significant content')
+        unless $element_state->{has_palpable};
 
     $TransparentChecker{check_end}->(@_);
   }, # check_end
@@ -5413,7 +5425,7 @@ $Element->{+HTML_NS}->{area} = {
     for my $attr (@{$item->{node}->attributes}) {
       my $attr_ns = $attr->namespace_uri;
       $attr_ns = '' unless defined $attr_ns;
-      my $attr_ln = $attr->manakai_local_name;
+      my $attr_ln = $attr->local_name;
       $attr{$attr_ln} = $attr if $attr_ns eq '';
     }
 
@@ -5616,7 +5628,7 @@ $Element->{+HTML_NS}->{table} = {
         unless ($word{$word}) {
           my $referenced_cell = $table->{id_cell}->{$word};
           if ($referenced_cell) {
-            if ($referenced_cell->{element}->manakai_local_name eq 'th') {
+            if ($referenced_cell->{element}->local_name eq 'th') {
               push @id, $word;
             } else {
               $self->{onerror}->(node => $headers_attr,
@@ -5659,6 +5671,9 @@ $Element->{+HTML_NS}->{table} = {
 
     $AnyChecker{check_end}->(@_);
   }, # check_end
+
+  # XXXwarn no tbody/tr child
+  # XXXwarn tr child is not serializable as HTML
 }; # table
 
 $Element->{+HTML_NS}->{caption} = {
@@ -5672,19 +5687,19 @@ $Element->{+HTML_NS}->{caption} = {
       last FIGURE if $table->node_type != 1;
       my $nsurl = $table->namespace_uri;
       last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-      last FIGURE if $table->manakai_local_name ne 'table';
+      last FIGURE if $table->local_name ne 'table';
 
       my $dd = $table->parent_node or last FIGURE;
       last FIGURE if $dd->node_type != 1;
       $nsurl = $dd->namespace_uri;
       last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-      last FIGURE if $dd->manakai_local_name ne 'dd';
+      last FIGURE if $dd->local_name ne 'dd';
 
       my $figure = $dd->parent_node or last FIGURE;
       last FIGURE if $figure->node_type != 1;
       $nsurl = $figure->namespace_uri;
       last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-      last FIGURE if $figure->manakai_local_name ne 'figure';
+      last FIGURE if $figure->local_name ne 'figure';
 
       my @table;
       for my $node (@{$dd->child_nodes}) {
@@ -5692,7 +5707,7 @@ $Element->{+HTML_NS}->{caption} = {
         if ($nt == 1) { # Element
           $nsurl = $node->namespace_uri;
           last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-          last FIGURE if $node->manakai_local_name ne 'table';
+          last FIGURE if $node->local_name ne 'table';
 
           push @table, $node;
         } elsif ($nt == 3 or $nt == 4) { # Text / CDATASection
@@ -5945,9 +5960,10 @@ $Element->{+HTML_NS}->{fieldset} = {
   }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-
-    ## ISSUE: |<fieldset><legend>aa</legend></fieldset>| error?
-
+    $self->{onerror}->(node => $item->{node},
+                       level => 's',
+                       type => 'no significant content')
+        unless $element_state->{has_palpable};
     $HTMLFlowContentChecker{check_end}->(@_);
   }, # check_end
 }; # fieldset
@@ -6440,7 +6456,7 @@ $Element->{+HTML_NS}->{select} = {
           my $nsurl = $el->namespace_uri;
           next SELECT unless defined $nsurl;
           next SELECT unless $nsurl eq HTML_NS;
-          my $ln = $el->manakai_local_name;
+          my $ln = $el->local_name;
           if ($ln eq 'option') {
             $opt_el = $el;
             last SELECT;
@@ -6450,7 +6466,7 @@ $Element->{+HTML_NS}->{select} = {
               my $nsurl = $el->namespace_uri;
               next unless defined $nsurl;
               next unless $nsurl eq HTML_NS;
-              if ($el->manakai_local_name eq 'option') {
+              if ($el->local_name eq 'option') {
                 last SELECT;
               }
             }
@@ -6577,15 +6593,6 @@ $Element->{+HTML_NS}->{datalist} = {
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     if ($element_state->{phase} eq 'phrasing') {
-      if ($element_state->{has_significant}) {
-        $item->{real_parent_state}->{has_significant} = 1;
-      } elsif ($item->{transparent}) {
-        #
-      } else {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'no significant content',
-                           level => $self->{level}->{should});
-      }
       #$HTMLPhrasingContentChecker{check_end}->(@_);
     } else {
       ## NOTE: Since the content model explicitly allows a |datalist| element
@@ -6855,8 +6862,8 @@ $Element->{+HTML_NS}->{progress} = {
     }
   }, # check_attrs2
 
-  ## XXX "Authors are encouraged ... text inside the element" - Add a
-  ## note in significant text warning's documentation.
+  ## "Authors are encouraged to include a textual representation" -
+  ## This is not really testable.
 }; # progress
 
 ## XXX labelable element
@@ -6909,8 +6916,8 @@ $Element->{+HTML_NS}->{meter} = {
     }
   }, # check_attrs2
 
-  ## XXX "Authors are encouraged ... textual representation" - Add a
-  ## note in significant text warning's documentation.
+  ## "Authors are encouraged to also include the current value and the
+  ## maximum value inline as text" - This is not really testable.
 }; # meter
 
 # ---- Interactive elements ----
@@ -6959,8 +6966,10 @@ $Element->{+HTML_NS}->{details} = {
                          level => $self->{level}->{must});
     }
 
-    ## XXX |<details><summary>aaa</summary></details> should not raise
-    ## a "no significant content" warnings.
+    $self->{onerror}->(node => $item->{node},
+                       level => 's',
+                       type => 'no significant content')
+        unless $element_state->{has_palpable};
 
     $HTMLFlowContentChecker{check_end}->(@_);
   }, # check_end
@@ -7096,6 +7105,10 @@ $Element->{+HTML_NS}->{menu} = {
 
       $AnyChecker{check_end}->(@_);
     } else { # 'phrasing' or 'li or phrasing'
+      $self->{onerror}->(node => $item->{node},
+                         level => 's',
+                         type => 'no significant content')
+          unless $element_state->{has_palpable};
       $HTMLPhrasingContentChecker{check_end}->(@_);
     }
   }, # check_end
@@ -7587,14 +7600,14 @@ $Element->{+ATOM_NS}->{entry} = {
     } else {
       A: {
         my $root = $item->{node}->owner_document->document_element;
-        if ($root and $root->manakai_local_name eq 'feed') {
+        if ($root and $root->local_name eq 'feed') {
           my $nsuri = $root->namespace_uri;
           if (defined $nsuri and $nsuri eq ATOM_NS) {
             ## NOTE: An Atom Feed Document.
             for my $root_child (@{$root->child_nodes}) {
               ## NOTE: Entity references are not supported.
               next unless $root_child->node_type == 1; # ELEMENT_NODE
-              next unless $root_child->manakai_local_name eq 'author';
+              next unless $root_child->local_name eq 'author';
               my $root_child_nsuri = $root_child->namespace_uri;
               next unless defined $root_child_nsuri;
               next unless $root_child_nsuri eq ATOM_NS;

@@ -848,6 +848,26 @@ sub inner_html ($;$) {
   }
 } # inner_html
 
+# HTMLMenuElement.type
+sub type ($) {
+  my $type = $_[0]->get_attribute_ns (undef, 'type') || '';
+  $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  $type = '' unless $type eq 'popup' or $type eq 'toolbar';
+  if ($type eq '') {
+    my $parent = $_[0]->parent_node;
+    if ($parent and
+        $parent->node_type == 1 and # ELEMENT_NODE
+        ($parent->namespace_uri || '') eq 'http://www.w3.org/1999/xhtml' and
+        $parent->local_name eq 'menu') {
+      return $parent->type;
+    } else {
+      return 'toolbar';
+    }
+  } else {
+    return $type;
+  }
+} # type
+
 package NanoDOM::Attr;
 push our @ISA, 'NanoDOM::Node';
 
