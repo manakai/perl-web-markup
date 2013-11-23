@@ -1495,6 +1495,8 @@ sub check_element ($$$;$) {
 ##
 ##   has_palpable    Set to true if a palpable content child is found.
 ##                   (Handled specially for <ruby>.)
+##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
+##                   is expected to have the |title| attribute.
 
 sub _add_minus_elements ($$@) {
   my $self = shift;
@@ -2268,22 +2270,22 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
           $self->{onerror}->(node => $attr,
                              type => 'dropzone:duplicate feedback', # XXXdoc
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
         $has_feedback = 1;
-      } elsif ($word =~ /^[sf]:./s) {
+      } elsif ($word =~ /^(?:string|file):./s) {
         if ($word{$word}) {
           $self->{onerror}->(node => $attr,
                              type => 'duplicate token',
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
         $word{$word} = 1;
       } else {
           $self->{onerror}->(node => $attr,
                              type => 'word not allowed',
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
       }
     }
 }; # dropzone=""
