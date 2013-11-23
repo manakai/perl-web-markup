@@ -4224,6 +4224,38 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                },
                                                                                                  "sandbox" => {
                                                                                                                 "conforming" => 1,
+                                                                                                                "keywords" => {
+                                                                                                                                "allow-forms" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "id" => "iframe-sandbox-allow-forms",
+                                                                                                                                                   "spec" => "HTML"
+                                                                                                                                                 },
+                                                                                                                                "allow-pointer-lock" => {
+                                                                                                                                                          "conforming" => 1,
+                                                                                                                                                          "id" => "iframe-sandbox-allow-pointer-lock",
+                                                                                                                                                          "spec" => "HTML"
+                                                                                                                                                        },
+                                                                                                                                "allow-popups" => {
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "id" => "iframe-sandbox-allow-popups",
+                                                                                                                                                    "spec" => "HTML"
+                                                                                                                                                  },
+                                                                                                                                "allow-same-origin" => {
+                                                                                                                                                         "conforming" => 1,
+                                                                                                                                                         "id" => "iframe-sandbox-allow-same-origin",
+                                                                                                                                                         "spec" => "HTML"
+                                                                                                                                                       },
+                                                                                                                                "allow-scripts" => {
+                                                                                                                                                     "conforming" => 1,
+                                                                                                                                                     "id" => "iframe-sandbox-allow-scripts",
+                                                                                                                                                     "spec" => "HTML"
+                                                                                                                                                   },
+                                                                                                                                "allow-top-navigation" => {
+                                                                                                                                                            "conforming" => 1,
+                                                                                                                                                            "id" => "iframe-sandbox-allow-top-navigation",
+                                                                                                                                                            "spec" => "HTML"
+                                                                                                                                                          }
+                                                                                                                              },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "unordered set of unique space-separated tokens"
                                                                                                               },
@@ -5044,6 +5076,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC"
                                                                                                           },
+                                                                                                "title" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "status" => "LC"
+                                                                                                           },
                                                                                                 "type" => {
                                                                                                             "conforming" => 1,
                                                                                                             "enumerated" => {

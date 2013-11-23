@@ -4893,23 +4893,26 @@ $Element->{+HTML_NS}->{img} = {
 
 $Element->{+HTML_NS}->{iframe} = {
   %HTMLTextChecker, # XXX content model restriction
-  check_attrs => $GetHTMLAttrsChecker->({
-    sandbox => $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker->({
-      'allow-same-origin' => 1, 'allow-forms' => 1, 'allow-scripts' => 1,
-      'allow-top-navigation' => 1,
-    }),
-    srcdoc => sub {
-      my ($self, $attr) = @_;
-      
-      my $type = $attr->owner_document->manakai_is_html
-          ? 'text/x-html-srcdoc' : 'text/xml';
-      $self->{onsubdoc}->({s => $attr->value,
-                           container_node => $attr,
-                           media_type => $type,
-                           is_char_string => 1});
-    }, # srcdoc
-  }), # check_attrs
 }; # iframe
+
+{
+  my $keywords = $_Defs->{elements}->{(HTML_NS)}->{iframe}->{attrs}->{''}->{sandbox}->{keywords};
+  $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{sandbox}
+      = $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker
+          ->({map { $_ => 1 }
+              grep { $keywords->{$_}->{conforming} }
+              keys %$keywords});
+}
+
+$ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
+  my ($self, $attr) = @_;
+  my $type = $attr->owner_document->manakai_is_html
+      ? 'text/x-html-srcdoc' : 'text/xml';
+  $self->{onsubdoc}->({s => $attr->value,
+                       container_node => $attr,
+                       media_type => $type,
+                       is_char_string => 1});
+}; # <iframe srcdoc="">
 
 $Element->{+HTML_NS}->{embed} = {
   %HTMLEmptyChecker,
