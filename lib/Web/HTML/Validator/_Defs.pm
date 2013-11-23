@@ -5192,6 +5192,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         }
                                                                                                                             },
                                                                                                             "status" => "LC",
+                                                                                                            "translatable" => "contextual",
                                                                                                             "value_type" => "enumerated"
                                                                                                           },
                                                                                                 "usemap" => {
@@ -6974,7 +6975,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "legacy color value"
                                                                                                              },
                                                                                                 "border" => {
-                                                                                                              "status" => "LC"
+                                                                                                              "enumerated" => {
+                                                                                                                                "" => {
+                                                                                                                                        "conforming" => 1
+                                                                                                                                      },
+                                                                                                                                1 => {
+                                                                                                                                       "conforming" => 1
+                                                                                                                                     }
+                                                                                                                              },
+                                                                                                              "status" => "LC",
+                                                                                                              "value_type" => "enumerated"
                                                                                                             },
                                                                                                 "bordercolor" => {
                                                                                                                    "status" => "LC",

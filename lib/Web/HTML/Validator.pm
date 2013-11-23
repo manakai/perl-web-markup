@@ -5465,28 +5465,6 @@ $Element->{+HTML_NS}->{area} = {
 
 $Element->{+HTML_NS}->{table} = {
   %AnyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    border => sub {
-      my ($self, $attr) = @_;
-      my $value = $attr->value;
-      if ($value eq '' or $value eq '1') {
-        $self->{onerror}->(node => $attr,
-                           type => 'attribute not allowed',
-                           level => $self->{level}->{warn});
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'attribute not allowed',
-                           level => $self->{level}->{must});
-
-        ## A valid non-negative integer or the empty string.
-        unless ($value =~ /\A[0-9]*\z/) {
-          $self->{onerror}->(node => $attr,
-                             type => 'tableborder:syntax error', # XXXdocumentation
-                             level => $self->{level}->{must});
-        }
-      }
-    }, # border
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before caption';
