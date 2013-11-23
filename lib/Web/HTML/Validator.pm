@@ -1630,34 +1630,6 @@ my $GetHTMLBooleanAttrChecker = sub {
   };
 }; # $GetHTMLBooleanAttrChecker
 
-## Unordered set of space-separated tokens, ASCII case-insensitive.
-my $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker = sub {
-  my $allowed_words = shift;
-  return sub {
-    my ($self, $attr) = @_;
-    my %word;
-    for my $word (grep {length $_}
-                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-      $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      unless ($word{$word}) {
-        $word{$word} = 1;
-        if (not defined $allowed_words or
-            $allowed_words->{$word}) {
-          #
-        } else {
-          $self->{onerror}->(node => $attr, type => 'word not allowed',
-                             value => $word,
-                             level => $self->{level}->{must});
-        }
-      } else {
-        $self->{onerror}->(node => $attr, type => 'duplicate token',
-                           value => $word,
-                           level => $self->{level}->{must});
-      }
-    }
-  };
-}; # $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker
-
 ## |rel| attribute (set of space separated tokens,
 ## whose allowed values are defined by the section on link types)
 my $HTMLLinkTypesAttrChecker = sub {
@@ -4897,11 +4869,31 @@ $Element->{+HTML_NS}->{iframe} = {
 
 {
   my $keywords = $_Defs->{elements}->{(HTML_NS)}->{iframe}->{attrs}->{''}->{sandbox}->{keywords};
-  $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{sandbox}
-      = $GetHTMLUnorderedUniqueSetOfSpaceSeparatedTokensAttrChecker
-          ->({map { $_ => 1 }
-              grep { $keywords->{$_}->{conforming} }
-              keys %$keywords});
+  $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{sandbox} = sub {
+    ## Unordered set of space-separated tokens, ASCII case-insensitive.
+    my ($self, $attr) = @_;
+    my %word;
+    for my $word (grep {length $_}
+                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+      $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+      unless ($word{$word}) {
+        $word{$word} = 1;
+        $self->{onerror}->(node => $attr,
+                           type => 'word not allowed', value => $word,
+                           level => 'm')
+            unless $keywords->{$word}->{conforming};
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'duplicate token', value => $word,
+                           level => 'm');
+      }
+    }
+    if ($word{'allow-scripts'} and $word{'allow-same-origin'}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'sandbox allow-same-origin allow-scripts', # XXXdoc
+                         level => 'w');
+    }
+  }; # <iframe sandbox="">
 }
 
 $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
