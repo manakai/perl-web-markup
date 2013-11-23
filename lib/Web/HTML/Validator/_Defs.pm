@@ -5078,7 +5078,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                                 "title" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "text"
                                                                                                            },
                                                                                                 "type" => {
                                                                                                             "conforming" => 1,

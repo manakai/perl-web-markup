@@ -1270,7 +1270,6 @@ sub check_element ($$$;$) {
   };
 
   my @item = ({type => 'element', node => $el, parent_state => {}});
-  $item[-1]->{real_parent_state} = $item[-1]->{parent_state};
   while (@item) {
     my $item = shift @item;
     if (ref $item eq 'ARRAY') {
@@ -1372,7 +1371,6 @@ sub check_element ($$$;$) {
                            $element_state, $element_state];
           push @new_item, {type => 'element', node => $child,
                            parent_def => $eldef,
-                           real_parent_state => $element_state,
                            parent_state => $element_state};
         } elsif ($child_nt == 3) { # TEXT_NODE
           my $has_significant = ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/);
@@ -5174,8 +5172,8 @@ $Element->{+HTML_NS}->{video} = {
     }
     
     $self->{onerror}->(node => $item->{node},
-                       level => 's',
-                       type => 'no significant content')
+                       type => 'no significant content',
+                       level => 's')
         unless $element_state->{has_palpable};
 
     $TransparentChecker{check_end}->(@_);
@@ -5254,13 +5252,15 @@ $Element->{+HTML_NS}->{track} = {
       $item->{parent_state}->{has_track_kind}->{$kind}->{$srclang}->{$label} = 1;
     }
 
-    if ($el->has_attribute_ns (undef, 'default')) {
-      if ($item->{parent_state}->{has_default_track}) {
-        $self->{onerror}->(node => $el,
-                           type => 'duplicate default track', ##XXXdoc
-                           level => $self->{level}->{must});
-      } else {
-        $item->{parent_state}->{has_default_track} = 1;
+    unless ($kind eq 'metadata') {
+      if ($el->has_attribute_ns (undef, 'default')) {
+        if ($item->{parent_state}->{has_default_track}->{$kind eq 'captions' ? 'subtitles' : $kind}) {
+          $self->{onerror}->(node => $el,
+                             type => 'duplicate default track', # XXXdoc
+                             level => 'm');
+        } else {
+          $item->{parent_state}->{has_default_track}->{$kind eq 'captions' ? 'subtitles' : $kind} = 1;
+        }
       }
     }
   }, # check_attrs2
