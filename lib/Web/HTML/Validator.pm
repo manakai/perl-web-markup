@@ -1,7 +1,8 @@
 package Web::HTML::Validator;
 use strict;
 use warnings;
-our $VERSION = '117.0';
+no warnings 'utf8';
+our $VERSION = '118.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -76,6 +77,26 @@ sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 
 our $_Defs;
+
+## ------ Text checker ------
+
+## <http://www.whatwg.org/specs/web-apps/current-work/#text-content>
+## <http://chars.suikawiki.org/set?expr=%24html%3AUnicode-characters+-+%5B%5Cu0000%5D+-+%24unicode%3ANoncharacter_Code_Point+-+%24html%3Acontrol-characters%20|%20$html:space-characters>
+my $InvalidChar = qr{[^\x09\x0A\x0C\x0D\x{0020}-~\x{00A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E0000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}]};
+
+sub _check_data ($$) {
+  my ($self, $node, $method) = @_;
+  my $value = $node->$method;
+  while ($value =~ /($InvalidChar)/og) {
+    my $char = ord $1;
+    $self->{onerror}->(node => $node,
+                       type => 'text:bad char', # XXXdoc
+                       value => ($char <= 0x10FFFF ? sprintf 'U+%04X', $char
+                                                   : sprintf 'U-%08X', $char),
+                       index => - - $-[0],
+                       level => 'm');
+  }
+} # _check_data
 
 ## ------ Attribute conformance checkers ------
 
@@ -203,7 +224,9 @@ sub _check_element_attrs ($$$;%) {
       $self->{onerror}->(node => $attr,
                          type => 'attribute not defined', level => 'm');
     }
-  }
+
+    $self->_check_data ($attr, 'value');
+  } # $attr
 } # _check_element_attrs
 
 $CheckerByType->{any} = sub {};
@@ -1346,10 +1369,16 @@ sub check_element ($$$;$) {
           push @new_item, [$eldef->{check_child_text},
                            $self, $item, $child, $has_significant,
                            $element_state, $element_state];
-          $element_state->{has_palpable} = 1 if $has_significant;
-        }
-        ## XXX PROCESSING_INSTRUCTION_NODE
-      }
+          if ($has_significant) {
+            $element_state->{has_palpable} = 1;
+            $self->_check_data ($child, 'data');
+          }
+          ## Adjacent text nodes and empty text nodes are not
+          ## round-trippable, but harmless, so not warned here.
+        } elsif ($child_nt == 7) { # PROCESSING_INSTRUCTION_NODE
+          ## XXX PROCESSING_INSTRUCTION_NODE
+        } # $child_nt
+      } # $child
       
       push @new_item, [$eldef->{check_end}, $self, $item, $element_state];
       push @new_item, {type => '_remove_minus_elements',
@@ -1377,8 +1406,6 @@ sub check_element ($$$;$) {
       die "$0: Internal error: Unsupported checking action type |$item->{type}|";
     }
   }
-
-  ## TODO: Maybe we should have $document->manakai_get_by_fragment or something
 
   ## |usemap| attribute values MUST be valid hash-name references
   ## pointing |map| elements.

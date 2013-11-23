@@ -439,6 +439,73 @@ test {
   done $c;
 } n => 1, name => ['{}xml:lang="" in XML'];
 
+for my $test (
+  ["\x{0010}", [[0, 0x0010]]],
+  ["ab\x{0010}", [[2, 0x0010]]],
+  ["ab\x{0010}\x{FDDF}", [[2, 0x0010], [3, 0xFDDF]]],
+  ["\x{10FFFF}\x{110000}ab\x{0010}", [[0, 0x10FFFF], [1, 0x110000], [4, 0x0010]]],
+  ["\x{DC00}", [[0, 0xDC00]]],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    my $el = $doc->create_element ('hoge');
+    $el->set_attribute_ns (undef, hoge => $test->[0]);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [{type => 'element not defined',
+          node => $el,
+          level => 'm'},
+         {type => 'attribute not defined',
+          node => $el->attributes->[0],
+          level => 'm'},
+         map {
+           +{type => 'text:bad char',
+             index => $_->[0],
+             value => ($_->[1] <= 0x10FFFF ? sprintf 'U+%04X', $_->[1]
+                                           : sprintf 'U-%08X', $_->[1]),
+             node => $el->attributes->[0],
+             level => 'm'};
+         } @{$test->[1]}];
+    done $c;
+  } n => 1, name => 'attr bad char';
+
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    my $el = $doc->create_element ('hoge');
+    $el->text_content ($test->[0]);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [{type => 'element not defined',
+          node => $el,
+          level => 'm'},
+         map {
+           +{type => 'text:bad char',
+             index => $_->[0],
+             value => ($_->[1] <= 0x10FFFF ? sprintf 'U+%04X', $_->[1]
+                                           : sprintf 'U-%08X', $_->[1]),
+             node => $el->first_child,
+             level => 'm'};
+         } @{$test->[1]}];
+    done $c;
+  } n => 1, name => 'text bad char';
+}
+
 run_tests;
 
 =head1 LICENSE
