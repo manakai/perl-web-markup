@@ -2776,6 +2776,18 @@ $Element->{+HTML_NS}->{html} = {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before head';
   }, # check_start
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+    my $parent = $item->{node}->parent_node;
+    if (not $parent or $parent->node_type != 1) { # != ELEMENT_NODE
+      unless ($item->{node}->has_attribute_ns (undef, 'lang')) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'lang',
+                           level => 'w');
+      }
+    }
+  }, # check_attrs2
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
