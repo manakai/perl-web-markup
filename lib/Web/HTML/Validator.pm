@@ -3746,8 +3746,6 @@ $Element->{+HTML_NS}->{noscript} = {
   }, # check_end
 }; # noscript
 
-delete $Element->{+HTML_NS}->{dialog}; # XXX
-
 # ---- Sections ----
 
 $Element->{+HTML_NS}->{article} = {
@@ -5955,6 +5953,9 @@ $Element->{+HTML_NS}->{form} = {
     $HTMLFlowContentChecker{check_start}->(@_);
   },
 }; # form
+
+# XXX warn if there is no ancestor <dialog> of <form method=dialog> or
+# of <form> of <input/button formmethod=dialog>
 
 $Element->{+HTML_NS}->{fieldset} = {
   %HTMLFlowContentChecker,
