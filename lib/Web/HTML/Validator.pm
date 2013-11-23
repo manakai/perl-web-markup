@@ -33,13 +33,11 @@ sub onerror ($;$) {
 ## XXX warning system ID chars
 ## XXX warning "xmlns" attribute in no namespace
 ## XXX warning attribute name duplication
-## XXX warning Attr.value / CharacterData.data contains non-Char character
 ## XXX warning Comment.data =~ /--/ or =~ /-\z/
 ## XXX warning PI.target == xml
 ## XXX warning PI.data =~ /\?>/ or =~ /^<S>/
 ## XXX warning attribute definition's properties
 ## XXX must?? system ID has to be URL
-##   warning U+000D
 ##   MUST VersionNum http://www.w3.org/TR/xml/#xmldoc
 ##   MUST EncName
 ##   SHOULD fully-normalized
@@ -55,17 +53,16 @@ sub onerror ($;$) {
 ##   warning doctype name, pubid, sysid
 ##   warning doctype, html with optional comments
 ##   warning PI, element type definition, attribute definition
+##   warning comment data
 ##   warning pubid/sysid chars
 ##   warning non-ASCII element names
 ##   warning uppercase element/attribute names
 ##   warning element/attribute names
 ##   warning non-builtin prefix/namespaces
 ##   warning xmlns=""
-##   warning Attr.value / CharacterData.data contains non-text character
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#comments
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#element-restrictions
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#cdata-rcdata-restrictions
-##   warning U+000D
 
 ## XXX root element MUST be ...
 ## TODO: Conformance of an HTML document with non-html root element.
@@ -82,19 +79,33 @@ our $_Defs;
 
 ## <http://www.whatwg.org/specs/web-apps/current-work/#text-content>
 ## <http://chars.suikawiki.org/set?expr=%24html%3AUnicode-characters+-+%5B%5Cu0000%5D+-+%24unicode%3ANoncharacter_Code_Point+-+%24html%3Acontrol-characters%20|%20$html:space-characters>
-my $InvalidChar = qr{[^\x09\x0A\x0C\x0D\x{0020}-~\x{00A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E0000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}]};
+## + U+000C, U+000D
+my $InvalidChar = qr{[^\x09\x0A\x{0020}-~\x{00A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FDF0}-\x{FFFD}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E0000}-\x{EFFFD}\x{F0000}-\x{FFFFD}\x{100000}-\x{10FFFD}]};
 
 sub _check_data ($$) {
   my ($self, $node, $method) = @_;
   my $value = $node->$method;
   while ($value =~ /($InvalidChar)/og) {
     my $char = ord $1;
-    $self->{onerror}->(node => $node,
-                       type => 'text:bad char', # XXXdoc
-                       value => ($char <= 0x10FFFF ? sprintf 'U+%04X', $char
-                                                   : sprintf 'U-%08X', $char),
-                       index => - - $-[0],
-                       level => 'm');
+    if ($char == 0x000D) {
+      $self->{onerror}->(node => $node,
+                         type => 'U+000D not serializable', # XXXdoc
+                         index => - - $-[0],
+                         level => 'w');
+    } elsif ($char == 0x000C) {
+      $self->{onerror}->(node => $node,
+                         type => 'U+000C not serializable', # XXXdoc
+                         index => - - $-[0],
+                         level => 'w')
+          unless $node->owner_document->manakai_is_html;
+    } else {
+      $self->{onerror}->(node => $node,
+                         type => 'text:bad char', # XXXdoc
+                         value => ($char <= 0x10FFFF ? sprintf 'U+%04X', $char
+                                                     : sprintf 'U-%08X', $char),
+                         index => - - $-[0],
+                         level => 'm');
+    }
   }
 } # _check_data
 
@@ -1369,10 +1380,8 @@ sub check_element ($$$;$) {
           push @new_item, [$eldef->{check_child_text},
                            $self, $item, $child, $has_significant,
                            $element_state, $element_state];
-          if ($has_significant) {
-            $element_state->{has_palpable} = 1;
-            $self->_check_data ($child, 'data');
-          }
+          $element_state->{has_palpable} = 1 if $has_significant;
+          $self->_check_data ($child, 'data');
           ## Adjacent text nodes and empty text nodes are not
           ## round-trippable, but harmless, so not warned here.
         } elsif ($child_nt == 7) { # PROCESSING_INSTRUCTION_NODE

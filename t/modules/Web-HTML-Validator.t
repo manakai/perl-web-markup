@@ -441,6 +441,7 @@ test {
 
 for my $test (
   ["\x{0010}", [[0, 0x0010]]],
+  ["\x{FDE0}", [[0, 0xFDE0]]],
   ["ab\x{0010}", [[2, 0x0010]]],
   ["ab\x{0010}\x{FDDF}", [[2, 0x0010], [3, 0xFDDF]]],
   ["\x{10FFFF}\x{110000}ab\x{0010}", [[0, 0x10FFFF], [1, 0x110000], [4, 0x0010]]],
@@ -504,6 +505,125 @@ for my $test (
          } @{$test->[1]}];
     done $c;
   } n => 1, name => 'text bad char';
+}
+
+for my $test (
+  ["\x{000C}", [[0, 0x000C]], []],
+  ["\x{000D}", [[0, 0x000D]], [[0, 0x000D]]],
+  ["ab\x{000D}", [[2, 0x000D]], [[2, 0x000D]]],
+  ["ab\x{000C}\x{000D}", [[2, 0x000C], [3, 0x000D]], [[3, 0x000D]]],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    my $el = $doc->create_element ('hoge');
+    $el->set_attribute_ns (undef, hoge => $test->[0]);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [{type => 'element not defined',
+          node => $el,
+          level => 'm'},
+         {type => 'attribute not defined',
+          node => $el->attributes->[0],
+          level => 'm'},
+         map {
+           +{type => $_->[1] == 0x000C ? 'U+000C not serializable' : 'U+000D not serializable',
+             index => $_->[0],
+             node => $el->attributes->[0],
+             level => 'w'};
+         } @{$test->[1]}];
+    done $c;
+  } n => 1, name => 'attr bad char warning';
+
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    $doc->manakai_is_html (1);
+    my $el = $doc->create_element ('hoge');
+    $el->set_attribute_ns (undef, hoge => $test->[0]);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [{type => 'element not defined',
+          node => $el,
+          level => 'm'},
+         {type => 'attribute not defined',
+          node => $el->attributes->[0],
+          level => 'm'},
+         map {
+           +{type => $_->[1] == 0x000C ? 'U+000C not serializable' : 'U+000D not serializable',
+             index => $_->[0],
+             node => $el->attributes->[0],
+             level => 'w'};
+         } @{$test->[2]}];
+    done $c;
+  } n => 1, name => 'HTML attr bad char warning';
+
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    my $el = $doc->create_element ('hoge');
+    $el->text_content ($test->[0]);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [{type => 'element not defined',
+          node => $el,
+          level => 'm'},
+         map {
+           +{type => $_->[1] == 0x000C ? 'U+000C not serializable' : 'U+000D not serializable',
+             index => $_->[0],
+             node => $el->first_child,
+             level => 'w'};
+         } @{$test->[1]}];
+    done $c;
+  } n => 1, name => 'text bad char warnings';
+
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->strict_error_checking (0);
+    $doc->manakai_is_html (1);
+    my $el = $doc->create_element ('hoge');
+    $el->text_content ($test->[0]);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_element ($el);
+    eq_or_diff \@error,
+        [{type => 'element not defined',
+          node => $el,
+          level => 'm'},
+         map {
+           +{type => $_->[1] == 0x000C ? 'U+000C not serializable' : 'U+000D not serializable',
+             index => $_->[0],
+             node => $el->first_child,
+             level => 'w'};
+         } @{$test->[2]}];
+    done $c;
+  } n => 1, name => 'HTML text bad char warnings';
 }
 
 run_tests;
