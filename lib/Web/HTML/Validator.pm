@@ -1392,6 +1392,10 @@ sub check_element ($$$;$) {
       push @new_item, {type => '_remove_minus_elements',
                        element_state => $element_state}
           if $disallowed;
+      push @new_item, {type => 'check_html_attrs',
+                       node => $el,
+                       element_state => $element_state}
+          if $el_nsuri eq HTML_NS;
       my $cm = $_Defs->{elements}->{$el_nsuri}->{$el_ln}->{content_model} || '';
       push @new_item, {type => 'check_palpable_content',
                        node => $el,
@@ -1405,6 +1409,17 @@ sub check_element ($$$;$) {
       $self->_add_minus_elements ($item->{element_state}, $item->{disallowed});
     } elsif ($item->{type} eq '_remove_minus_elements') {
       $self->_remove_minus_elements ($item->{element_state});
+    } elsif ($item->{type} eq 'check_html_attrs') {
+      unless ($item->{node}->has_attribute_ns (undef, 'title')) {
+        if ($item->{element_state}->{require_title} or
+            $item->{node}->has_attribute_ns (undef, 'draggable') or
+            $item->{node}->has_attribute_ns (undef, 'dropzone')) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'attribute missing',
+                             text => 'title',
+                             level => $item->{element_state}->{require_title} || 's');
+        }
+      }
     } elsif ($item->{type} eq 'check_palpable_content') {
       $self->{onerror}->(node => $item->{node},
                          level => 's',
@@ -3015,10 +3030,7 @@ $Element->{+HTML_NS}->{link} = {
         $element_state->{link_rel}->{stylesheet}) {
       my $title_attr = $item->{node}->get_attribute_node_ns (undef, 'title');
       unless ($title_attr) {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'attribute missing',
-                           text => 'title',
-                           level => $self->{level}->{must});
+        $element_state->{require_title} = 'm';
       } elsif ($title_attr->value eq '') {
         $self->{onerror}->(node => $title_attr,
                            type => 'empty style sheet title',
@@ -6145,12 +6157,8 @@ $Element->{+HTML_NS}->{input} = {
     } # maxlength=""
 
     if ($_Defs->{input}->{attrs}->{pattern}->{$input_type} and
-        $item->{node}->has_attribute_ns (undef, 'pattern') and
-        not $item->{node}->has_attribute_ns (undef, 'title')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'title',
-                         level => 's');
+        $item->{node}->has_attribute_ns (undef, 'pattern')) {
+      $element_state->{require_title} ||= 's';
     } # pattern=""
 
     ## XXX warn <input type=hidden disabled>
@@ -6727,12 +6735,8 @@ $Element->{+HTML_NS}->{textarea} = {
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
 
-    if ($item->{node}->has_attribute_ns (undef, 'pattern') and
-        not $item->{node}->has_attribute_ns (undef, 'title')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'title',
-                         level => $self->{level}->{should});
+    if ($item->{node}->has_attribute_ns (undef, 'pattern')) {
+      $element_state->{require_title} ||= 's';
     }
     
     unless ($item->{node}->has_attribute_ns (undef, 'cols')) {
