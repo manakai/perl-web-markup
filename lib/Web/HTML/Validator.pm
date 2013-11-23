@@ -1868,54 +1868,6 @@ my $PatternAttrChecker = sub {
   ## TODO: Warn if @value does not match @pattern.
 }; # $PatternAttrChecker
 
-my $AcceptAttrChecker = sub {
-  my ($self, $attr) = @_;
-  
-  my $value = $attr->value;
-  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-
-  ## A set of comma-separated tokens.
-  my @value = length $value ? split /,/, $value, -1 : ();
-
-  my %has_value;
-  for my $v (@value) {
-    $v =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
-    $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
-
-    if ($has_value{$v}) {
-      $self->{onerror}->(node => $attr,
-                         type => 'duplicate token',
-                         value => $v,
-                         level => $self->{level}->{must});
-      next;
-    } 
-    $has_value{$v} = 1;
-    
-    if ($v eq 'audio/*' or $v eq 'video/*' or $v eq 'image/*') {
-      #
-    } else {
-      require Web::MIME::Type;
-      my $onerror = sub {
-        $self->{onerror}->(value => $v, @_, node => $attr);
-      };
-      
-      ## Syntax-level validation
-      my $type = Web::MIME::Type->parse_web_mime_type ($v, $onerror);
-
-      if ($type) {
-        if (@{$type->attrs}) {
-          $self->{onerror}->(node => $attr,
-                             type => 'IMT:no param allowed',
-                             level => $self->{level}->{must});
-        }
-        
-        ## Vocabulary-level validation
-        $type->validate ($onerror, no_required_param => 1);
-      }
-    }
-  }
-}; # $AcceptAttrChecker
-
 my $FormControlNameAttrChecker = sub {
   my ($self, $attr) = @_;
   
@@ -5909,7 +5861,6 @@ $ElementAttrChecker->{(HTML_NS)}->{th}->{''}->{headers} = sub {};
 $Element->{+HTML_NS}->{form} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    accept => $AcceptAttrChecker, # XXX drop
     'accept-charset' => $HTMLCharsetsAttrChecker,
     ## XXX warning: action="" URL scheme is not submittable
     name => sub {
@@ -6086,7 +6037,6 @@ $CheckerByType->{'one-line text'} = sub {
 $Element->{+HTML_NS}->{input} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    accept => $AcceptAttrChecker,
     alt => sub {
       my ($self, $attr) = @_;
       my $value = $attr->value;
@@ -6400,6 +6350,54 @@ $Element->{+HTML_NS}->{input} = {
     $FAECheckStart->($self, $item, $element_state);
   }, # check_start
 }; # input
+
+$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{accept} = sub {
+  my ($self, $attr) = @_;
+  
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+
+  ## A set of comma-separated tokens.
+  my @value = length $value ? split /,/, $value, -1 : ();
+
+  my %has_value;
+  for my $v (@value) {
+    $v =~ s/^[\x09\x0A\x0C\x0D\x20]+//; # space characters
+    $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//; # space characters
+
+    if ($has_value{$v}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token',
+                         value => $v,
+                         level => 'm');
+      next;
+    }
+    $has_value{$v} = 1;
+    
+    if ($v eq 'audio/*' or $v eq 'video/*' or $v eq 'image/*' or $v =~ /^\./) {
+      #
+    } else {
+      require Web::MIME::Type;
+      my $onerror = sub {
+        $self->{onerror}->(value => $v, @_, node => $attr);
+      };
+      
+      ## Syntax-level validation
+      my $type = Web::MIME::Type->parse_web_mime_type ($v, $onerror);
+
+      if ($type) {
+        if (@{$type->attrs}) {
+          $self->{onerror}->(node => $attr,
+                             type => 'IMT:no param allowed',
+                             level => 'm');
+        }
+        
+        ## Vocabulary-level validation
+        $type->validate ($onerror, no_required_param => 1);
+      }
+    }
+  }
+}; # <input accept="">
 
 $Element->{+HTML_NS}->{button} = {
   %HTMLPhrasingContentChecker,
