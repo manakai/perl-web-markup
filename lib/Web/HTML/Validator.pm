@@ -1181,10 +1181,9 @@ sub check_document ($$$;$) {
                      text => $charset_name);
         }
         
-        if (not $self->{has_charset} and ## TODO: This does not work now.
-            not $charset->{iana_names}->{'us-ascii'}) {
+        if (not $self->{has_charset}) { ## TODO: This does not work now.
           $onerror->(node => $doc,
-                     level => $self->{level}->{must},
+                     level => 'm',
                      type => 'no character encoding declaration',
                      text => $charset_name);
         }
