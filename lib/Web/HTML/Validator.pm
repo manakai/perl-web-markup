@@ -4069,7 +4069,7 @@ $Element->{+HTML_NS}->{a} = {
       $self->{flag}->{in_a_href} = 1;
     } else {
       for (qw(
-        target ping rel media hreflang type
+        target ping rel hreflang type
         ilet iswf irst ib ifb ijam
         email telbook kana memoryname
         lcs
@@ -5457,7 +5457,7 @@ $Element->{+HTML_NS}->{area} = {
                            level => $self->{level}->{must});
       }
     } else {
-      for (qw/target ping rel media hreflang type alt/) {
+      for (qw/target ping rel hreflang type alt/) {
         if (defined $attr{$_}) {
           $self->{onerror}->(node => $attr{$_},
                              type => 'attribute not allowed',
