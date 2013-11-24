@@ -1276,7 +1276,7 @@ sub check_element ($$$;$) {
 
   $self->{minus_elements} = {};
   $self->{id} = {};
-  $self->{id_type} = {}; # 'form' / 'labelable' / 'menu'
+  $self->{id_type} = {};
   $self->{name} = {};
   $self->{form} = {}; # form/@name
   #$self->{has_autofocus};
@@ -1485,26 +1485,39 @@ sub check_element ($$$;$) {
     }
   }
 
+  ## @{$self->{idref}}       Detected ID references to be checked:
+  ##                         [id-type, id-value, id-node]
+  ## @{$self->{id}->{$id}}   Detected ID nodes, in tree order
+  ## $self->{id_type}->{$id} Type of first ID node's element
+  ## ID types:
+  ##   any       Any type is allowed (For |idref| only)
+  ##   command   Master command
+  ##   form      <form>
+  ##   datalist  <datalist>
+  ##   labelable Labelable element
+  ##   object    <object>
+  ## Note that headers=""'s IDs are not checked here.
   for (@{$self->{idref}}) {
     if ($self->{id}->{$_->[1]} and $self->{id_type}->{$_->[1]} eq $_->[0]) {
       #
     } elsif ($_->[0] eq 'any' and $self->{id}->{$_->[1]}) {
       #
     } else {
+      my $error_type = {
+        any => 'no referenced element', ## TODOC: type
+        form => 'no referenced form',
+        labelable => 'no referenced control',
+        datalist => 'no referenced datalist', ## TODOC: type
+        object => 'no referenced object', # XXXdocumentation
+        popup => 'no referenced menu',
+        command => 'no referenced master command', # XXXdoc
+      }->{$_->[0]};
       $self->{onerror}->(node => $_->[2],
-                         type => 
-        {
-          any => 'no referenced element', ## TODOC: type
-          form => 'no referenced form',
-          labelable => 'no referenced control',
-          menu => 'no referenced menu',
-          datalist => 'no referenced datalist', ## TODOC: type
-          object => 'no referenced object', # XXXdocumentation
-        }->{$_->[0]},
+                         type => $error_type,
                          value => $_->[1],
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
-  }
+  } # $self->{idref}
 
   delete $self->{minus_elements};
   delete $self->{onerror};
@@ -1524,6 +1537,8 @@ sub check_element ($$$;$) {
 ##
 ##   has_palpable    Set to true if a palpable content child is found.
 ##                   (Handled specially for <ruby>.)
+##   phase           Content model checker state name.  Possible values
+##                   depend on the element.
 ##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
 ##                   is expected to have the |title| attribute.
 
@@ -2242,13 +2257,8 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{class} = sub {
 }; # class=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{contextmenu} = sub {
-    my ($self, $attr) = @_;
-    my $value = $attr->value;
-    push @{$self->{idref}}, ['menu', $value => $attr];
-    ## ISSUE: "The value must be the ID of a menu element in the DOM."
-    ## What is "in the DOM"?  A menu Element node that is not part
-    ## of the Document tree is in the DOM?  A menu Element node that
-    ## belong to another Document tree is in the DOM?
+  my ($self, $attr) = @_;
+  push @{$self->{idref}}, ['popup', $attr->value => $attr];
 }; # contextmenu=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
@@ -6450,6 +6460,8 @@ $Element->{+HTML_NS}->{select} = {
         = $self->{flag}->{in_select_single};
     $self->{flag}->{in_select_single}
         = not $item->{node}->has_attribute_ns (undef, 'multiple');
+    $element_state->{in_select_orig} = $self->{flag}->{in_select};
+    $self->{flag}->{in_select} = 1;
   }, # check_start
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -6540,6 +6552,7 @@ $Element->{+HTML_NS}->{select} = {
 
     $self->{flag}->{in_select_single}
         = $element_state->{in_select_single_orig};
+    $self->{flag}->{in_select} = $element_state->{in_select_orig};
     delete $self->{flag}->{has_option_selected}
         unless $self->{flag}->{in_select_single};
     
@@ -7009,82 +7022,40 @@ $Element->{+HTML_NS}->{details} = {
   }, # check_end
 }; # details
 
-# XXX drop
-$Element->{+HTML_NS}->{command} = {
-  %HTMLEmptyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    label => sub {
-      my ($self, $attr, $item, $element_state) = @_;
-      unless (length $attr->value) {
-        $self->{onerror}->(node => $attr,
-                           type => 'empty command label', # XXX documentation
-                           level => $self->{level}->{must});
-      }
-      $element_state->{has_label} = 1;
-    },
-  }), # check_attrs
+$Element->{+HTML_NS}->{menu} = {
+  %AnyChecker,
+  ## <menu type=toolbar>: (li | script-supporting)* | flow
+  ## <menu type=popup>: (menuitem | hr | <menu type=popup> | script-supporting)*
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase} = $item->{node}->type; # "toolbar" or "popup"
+      ## $element_state->{phase}
+      ##   toolbar -> toolbar-li | toolbar-flow
+      ##   toolbar-li
+      ##   toolbar-flow
+      ##   popup
+    $element_state->{id_type} = 'popup' if $item->{node}->type eq 'popup';
+    $element_state->{in_flow_original} = $self->{flag}->{in_flow};
+    $self->{flag}->{in_flow} = 1;
+    $AnyChecker{check_start}->(@_);
+  }, # check_start
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
-
-    my $type = $item->{node}->get_attribute_ns (undef, 'type') || '';
-    $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-    $type = 'command' unless $type eq 'radio' or $type eq 'checkbox';
-
-    unless ($type eq 'radio') {
-      my $rg_attr = $item->{node}->get_attribute_node_ns (undef, 'radiogroup');
-      if ($rg_attr) {
-        $self->{onerror}->(node => $rg_attr,
-                           type => 'attribute not allowed:radiogroup',
-                           level => $self->{level}->{must});
-      }
-    }
-
-    unless ($type eq 'checkbox' or $type eq 'radio') {
-      my $cd_attr = $item->{node}->get_attribute_node_ns (undef, 'checked');
-      if ($cd_attr) {
-        $self->{onerror}->(node => $cd_attr,
-                           type => 'attribute not allowed:checked',
-                           level => $self->{level}->{must});
-      }
-    }
-
-    unless ($type eq 'command') {
-      my $def_attr = $item->{node}->get_attribute_node_ns (undef, 'default');
-      if ($def_attr) {
-        ## HTML5 revision 2415
-        $self->{onerror}->(node => $def_attr,
-                           type => 'attribute not allowed:default',
-                           level => $self->{level}->{must});
+    my $label_attr = $item->{node}->get_attribute_node_ns (undef, 'label');
+    if ($label_attr) {
+      my $parent = $item->{node}->parent_node;
+      if ($parent and
+          $parent->node_type == 1 and # ELEMENT_NODE
+          $parent->manakai_element_type_match (HTML_NS, 'menu') and
+          $parent->type eq 'popup') {
+        #
+      } else {
+        $self->{onerror}->(node => $label_attr,
+                           type => 'attribute not allowed',
+                           level => 'm');
       }
     }
   }, # check_attrs2
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    
-    unless ($element_state->{has_label}) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'label',
-                         level => $self->{level}->{must});
-    }
-    
-    $HTMLEmptyChecker{check_end}->(@_);
-  }, # check_end
-}; # command
-delete $Element->{+HTML_NS}->{command}; # XXX
-
-$Element->{+HTML_NS}->{menu} = {
-  %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => $GetHTMLEnumeratedAttrChecker->({context => 1, toolbar => 1}), # XXX
-  }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{phase} = 'li or phrasing';
-    $element_state->{id_type} = 'menu';
-
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -7092,61 +7063,130 @@ $Element->{+HTML_NS}->{menu} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
-    } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
-      if ($element_state->{phase} eq 'li') {
+                         level => 'm');
+    } elsif ($element_state->{phase} eq 'toolbar') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
+        $element_state->{phase} = 'toolbar-li';
+      } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
-      } elsif ($element_state->{phase} eq 'li or phrasing') {
-        $element_state->{phase} = 'li';
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        $element_state->{phase} = 'toolbar-flow';
       } else {
-        $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:menu type=toolbar', # XXXdoc
+                           level => 'm');
       }
-    } elsif ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-      if ($element_state->{phase} eq 'phrasing') {
+    } elsif ($element_state->{phase} eq 'toolbar-li') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
+        $element_state->{phase} = 'toolbar-li';
+      } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
-      } elsif ($element_state->{phase} eq 'li or phrasing') {
-        $element_state->{phase} = 'phrasing';
       } else {
-        $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:menu type=toolbar', # XXXdoc
+                           level => 'm');
+      }
+    } elsif ($element_state->{phase} eq 'toolbar-flow') {
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        #
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:menu type=toolbar', # XXXdoc
+                           level => 'm');
+      }
+    } elsif ($element_state->{phase} eq 'popup') {
+      if (($child_nsuri eq HTML_NS and
+           ($child_ln eq 'menuitem' or
+            $child_ln eq 'hr' or
+            ($child_ln eq 'menu' and
+             not (($child_el->get_attribute_ns (undef, 'type') || '') =~ /\A[Tt][Oo][Oo][Ll][Bb][Aa][Rr]\z/)))) or # type=toolbar
+          $_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        #
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:menu type=popup', # XXXdoc
+                           level => 'm');
       }
     } else {
-      $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+      die "Bad phase: |$element_state->{phase}|";
     }
   }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
-      if ($element_state->{phase} eq 'phrasing') {
+      if ($element_state->{phase} eq 'toolbar') {
+        $element_state->{phase} = 'toolbar-flow';
+      } elsif ($element_state->{phase} eq 'toolbar-flow') {
         #
-      } elsif ($element_state->{phase} eq 'li or phrasing') {
-        $element_state->{phase} = 'phrasing';
       } else {
         $self->{onerror}->(node => $child_node,
                            type => 'character not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    if ($element_state->{phase} eq 'li') {
-      ## Set by |check_start| of |%HTMLPhrasingContentChecker|.
-      delete $self->{flag}->{in_phrasing}
-          unless $element_state->{in_phrasing_original};
-
-      $AnyChecker{check_end}->(@_);
-    } else { # 'phrasing' or 'li or phrasing'
+    delete $self->{flag}->{in_flow} unless $element_state->{in_flow_original};
+    if ($element_state->{phase} eq 'toolbar-flow') {
       $self->{onerror}->(node => $item->{node},
                          level => 's',
                          type => 'no significant content')
           unless $element_state->{has_palpable};
-      $HTMLPhrasingContentChecker{check_end}->(@_);
     }
+    $AnyChecker{check_end}->(@_);
   }, # check_end
 }; # menu
+
+$Element->{+HTML_NS}->{menuitem} = {
+  %HTMLEmptyChecker,
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+    if ($item->{node}->has_attribute_ns (undef, 'command')) {
+      ## Indirect command mode.
+      for (qw(type label icon disabled checked radiogroup)) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, $_) or next;
+        $self->{onerror}->(node => $attr,
+                           type => 'attribute not allowed',
+                           level => 'm');
+      }
+    } else {
+      ## Explicit command mode.
+      unless ($item->{node}->has_attribute_ns (undef, 'label')) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'label',
+                           level => 'm');
+      }
+    }
+
+    my $type = $item->{node}->get_attribute_ns (undef, 'type') || '';
+    $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+
+    unless ($type eq 'checkbox' or $type eq 'radio') {
+      my $cd_attr = $item->{node}->get_attribute_node_ns (undef, 'checked');
+      if ($cd_attr) {
+        $self->{onerror}->(node => $cd_attr,
+                           type => 'attribute not allowed',
+                           level => 'm');
+      }
+    }
+
+    unless ($type eq 'radio') {
+      my $rg_attr = $item->{node}->get_attribute_node_ns (undef, 'radiogroup');
+      if ($rg_attr) {
+        $self->{onerror}->(node => $rg_attr,
+                           type => 'attribute not allowed',
+                           level => 'm');
+      }
+    }
+  }, # check_attrs2
+}; # menuitem
+
+$ElementAttrChecker->{(HTML_NS)}->{menuitem}->{''}->{command} = sub {
+  my ($self, $attr) = @_;
+#  push @{$self->{idref}}, ['command', $attr->value, $attr]; # XXX not implemented yet
+}; # <menuitem command="">
 
 # ---- Frames ----
 
