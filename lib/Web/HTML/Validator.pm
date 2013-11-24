@@ -6686,6 +6686,23 @@ $Element->{+HTML_NS}->{option} = {
       $self->{flag}->{has_option_selected} = 1;
     }
   }, # check_attrs2
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    if ($item->{node}->has_attribute_ns (undef, 'label')) {
+      if ($item->{node}->has_attribute_ns (undef, 'value')) {
+        $self->{onerror}->(node => $item->{node},
+                           type => '<option label value> not empty', # XXXdoc
+                           level => 'm')
+            if $element_state->{has_palpable};
+      }
+    } else {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'no significant content',
+                         level => 'm')
+          unless $element_state->{has_palpable};
+    }
+    $HTMLTextChecker{check_end}->(@_);
+  }, # check_end
 }; # option
 
 $Element->{+HTML_NS}->{textarea} = {
