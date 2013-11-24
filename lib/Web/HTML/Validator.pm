@@ -638,6 +638,38 @@ $ElementAttrChecker->{(HTML_NS)}->{applet}->{''}->{archive} = sub {
   $self->{has_uri_attr} = 1;
 }; # <applet archive="">
 
+my $ValidEmailAddress;
+{
+  my $atext_dot = qr[[A-Za-z0-9!#\$%&'*+/=?^_`{|}~.-]];
+  my $label = qr{[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?};
+  $ValidEmailAddress = qr/$atext_dot+\@$label(?>\.$label)+/o;
+}
+
+## E-mail address [HTML]
+$CheckerByType->{'e-mail address'} = sub {
+  my ($self, $attr) = @_;
+  $self->{onerror}->(node => $attr,
+                     type => 'email:syntax error', ## TODO: type
+                     level => 'm')
+      unless $attr->value =~ qr/\A$ValidEmailAddress\z/o;
+}; # e-mail address
+
+## E-mail address list [HTML]
+$CheckerByType->{'e-mail address list'} = sub {
+  my ($self, $attr) = @_;
+  ## A set of comma-separated tokens.
+  my @addr = split /,/, $attr->value, -1;
+  for (@addr) {
+    s/\A[\x09\x0A\x0C\x0D\x20]+//; # space characters
+    s/[\x09\x0A\x0C\x0D\x20]\z//; # space characters
+    $self->{onerror}->(node => $attr,
+                       type => 'email:syntax error', ## TODO: type
+                       value => $_,
+                       level => 'm')
+        unless /\A$ValidEmailAddress\z/o;
+  }
+}; # e-mail address list
+
 ## Event handler content attribute [HTML]
 $CheckerByType->{'event handler'} = sub {
   my ($self, $attr) = @_;
@@ -646,7 +678,6 @@ $CheckerByType->{'event handler'} = sub {
                      type => 'event handler',
                      level => 'u');
 }; # event handler
-
 
 ## Web Applications 1.0 "Valid MIME type"
 our $MIMETypeChecker = sub {
@@ -1750,13 +1781,6 @@ my $HTMLLinkTypesAttrChecker = sub {
   $todo->{has_hyperlink_link_type} = 1 if $is_hyperlink;
   $element_state->{link_rel} = \%word;
 }; # $HTMLLinkTypesAttrChecker
-
-my $ValidEmailAddress;
-{
-  my $atext_dot = qr[[A-Za-z0-9!#\$%&'*+/=?^_`{|}~.-]];
-  my $ldh_str = qr[[A-Za-z0-9-]+];
-  $ValidEmailAddress = qr/$atext_dot+\@$ldh_str(?>\.$ldh_str)+/o;
-}
 
 ## Valid global date and time.
 my $GetDateTimeAttrChecker = sub ($) {
@@ -4009,14 +4033,6 @@ $Element->{+HTML_NS}->{a} = {
                                  level => $self->{level}->{must});
             }
           }, # cti
-          email => sub {
-            my ($self, $attr) = @_;
-            unless ($attr->value =~ /\A$ValidEmailAddress\z/) {
-              $self->{onerror}->(node => $attr,
-                                 type => 'email:syntax error', ## XXX documentation
-                                 level => $self->{level}->{must});
-            }
-          }, # email
           eswf => $ObjectHashIDRefChecker,
           ijam => $ObjectOptionalHashIDRefChecker,
           ilet => $ObjectHashIDRefChecker,
@@ -6091,35 +6107,14 @@ $Element->{+HTML_NS}->{input} = {
         }
       } else {
         if ($attr->value ne '') {
-          my $checker = $input_type eq 'email' ? sub {
-            my ($self, $attr, $item) = @_;
-            if ($item->{node}->has_attribute_ns (undef, 'multiple')) {
-              ## A set of comma-separated tokens.
-              my @addr = split /,/, $attr->value, -1;
-              @addr = ('') unless @addr;
-              for (@addr) {
-                s/\A[\x09\x0A\x0C\x0D\x20]+//;
-                s/[\x09\x0A\x0C\x0D\x20]\z//;
-
-                unless (/\A$ValidEmailAddress\z/o) {
-                  $self->{onerror}->(node => $attr,
-                                     type => 'email:syntax error', ## TODO: type
-                                     value => $_,
-                                     level => $self->{level}->{must});
-                }
-              }
-            } else {
-              unless ($attr->value =~ /\A$ValidEmailAddress\z/) {
-                $self->{onerror}->(node => $attr,
-                                   type => 'email:syntax error', ## TODO: type
-                                   level => $self->{level}->{must});
-              }
-            }
-          } : $CheckerByType->{$value_type} || sub {
+          my $checker = $CheckerByType->{$value_type} || sub {
             ## Strictly speaking, this error type is wrong.
             $self->{onerror}->(node => $attr,
                                type => 'unknown attribute', level => 'u');
           };
+          $checker = $CheckerByType->{'e-mail address'}
+              if $value_type eq 'email' and
+                 not $item->{node}->has_attribute_ns (undef, 'multiple');
           $checker->($self, $attr, $item);
         }
       }
