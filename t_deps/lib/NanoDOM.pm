@@ -176,7 +176,9 @@ sub text_content ($;$) {
   }
   my $r = '';
   for my $child (@{$self->child_nodes}) {
-    if ($child->can ('data')) {
+    if ($child->node_type == 7 or $child->node_type == 8) {
+      #
+    } elsif ($child->can ('data')) {
       $r .= $child->data;
     } else {
       $r .= $child->text_content;

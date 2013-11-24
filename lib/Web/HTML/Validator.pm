@@ -7460,23 +7460,22 @@ $Element->{+ATOM_NS}->{uri} = {
 
 $Element->{+ATOM_NS}->{email} = {
   %AtomChecker,
-
-  ## NOTE: Strictly speaking, structure and semantics for atom:email
-  ## element outside of Person construct is not defined.
-
-  ## NOTE: Elements are not explicitly disallowed.
-
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    $self->{onerror}->(node => $child_el,
+                       type => 'element not allowed',
+                       level => 'm');
+  }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-
-    ## TODO: addr-spec
     $self->{onerror}->(node => $item->{node},
-                       type => 'addr-spec not supported',
-                       level => $self->{level}->{uncertain});
-
+                       type => 'email:syntax error', ## TODO: type
+                       level => 'm')
+        unless $item->{node}->text_content =~ /\A$ValidEmailAddress\z/o;
     $AtomChecker{check_end}->(@_);
   },
-};
+}; # atom:email
 
 ## MUST NOT be any white space
 my %AtomDateConstruct = (
