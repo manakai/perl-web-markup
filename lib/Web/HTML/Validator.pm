@@ -3021,6 +3021,8 @@ $Element->{+HTML_NS}->{link} = {
                            level => $self->{level}->{must});
       }
     }
+
+    # XXX warn if crossorigin="" is set but external resource link
   }, # check_attrs2
 }; # link
 
@@ -3469,18 +3471,13 @@ $Element->{+HTML_NS}->{script} = {
     my $el = $item->{node};
     
     unless ($el->has_attribute_ns (undef, 'src')) {
-      my $charset_attr = $el->get_attribute_node_ns (undef, 'charset');
-      if ($charset_attr) {
-        $self->{onerror}->(type => 'attribute not allowed',
-                           node => $charset_attr,
-                           level => $self->{level}->{must});
-      }
-
-      if ($el->has_attribute_ns (undef, 'defer')) {
-        $self->{onerror}->(node => $el,
-                           type => 'attribute missing',
-                           text => 'src',
-                           level => $self->{level}->{must});
+      for my $attr_name (qw(charset defer async crossorigin)) {
+        my $attr = $el->get_attribute_node_ns (undef, $attr_name);
+        if ($attr) {
+          $self->{onerror}->(type => 'attribute not allowed',
+                             node => $attr,
+                             level => $attr_name eq 'crossorigin' ? 'w' : 'm');
+        }
       }
     }
 
