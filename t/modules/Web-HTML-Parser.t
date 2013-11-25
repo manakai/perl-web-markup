@@ -79,12 +79,12 @@ sub _html_parser_change_the_encoding_char_string : Test(4) {
   my $doc = NanoDOM::DOMImplementation->new->create_document;
   $parser->parse_char_string ('<meta charset=shift_jis>' => $doc);
   ok !$called;
-  is $doc->input_encoding, undef;
+  is $doc->input_encoding, 'utf-8';
   
   my $doc2 = NanoDOM::DOMImplementation->new->create_document;
   $parser->parse_char_string ('<meta http-equiv=Content-Type content="text/html; charset=shift_jis">' => $doc2);
   ok !$called;
-  is $doc2->input_encoding, undef;
+  is $doc2->input_encoding, 'utf-8';
 } # _html_parser_change_the_encoding_char_string
 
 sub _html_parser_change_the_encoding_fragment : Test(2) {
@@ -332,7 +332,7 @@ sub _parse_char_string : Test(4) {
   $parser->parse_char_string ($input => $doc);
   is scalar @{$doc->child_nodes}, 2;
   eq_or_diff $doc->inner_html, qq{<!DOCTYPE html><html lang="en"><head><title>\x{0500}\x{0200}</title></head><body>\x{0500}</body></html>};
-  is $doc->input_encoding, undef; # XXX Should be UTF-8 for consistency with DOM4?
+  is $doc->input_encoding, 'utf-8';
   is $doc->manakai_is_html, 1;
 } # _parse_char_string
 
@@ -397,7 +397,7 @@ sub _parse_char_string_encoding_decl : Test(2) {
   my $parser = Web::HTML::Parser->new;
   $parser->parse_char_string ($input => $doc);
   eq_or_diff $doc->inner_html, q{<html lang="en"><head><meta charset="euc-jp"></head><body></body></html>};
-  is $doc->input_encoding, undef;
+  is $doc->input_encoding, 'utf-8';
 } # _parse_char_string_encoding_decl
 
 sub _parse_byte_string_latin1 : Test(2) {

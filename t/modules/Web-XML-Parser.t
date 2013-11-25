@@ -37,7 +37,7 @@ sub _parse_char_string : Test(7) {
   $parser->parse_char_string ($s => $doc);
   eq_or_diff $doc->inner_html,
       qq{<foo xmlns="">\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
-  is $doc->input_encoding, undef;
+  is $doc->input_encoding, 'utf-8';
   is $doc->xml_version, '1.0';
   is $doc->xml_encoding, undef;
   ok not $doc->xml_standalone;
