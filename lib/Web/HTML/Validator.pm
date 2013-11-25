@@ -2098,20 +2098,6 @@ my $HTMLCharsetsAttrChecker = sub {
   ## ISSUE: Shift_JIS is ASCII-compatible?  What about ISO-2022-JP?
 }; # $HTMLCharsetsAttrChecker
 
-my $PlaceholderAttrChecker = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  if ($value =~ /[\x0D\x0A]/) {
-    $self->{onerror}->(node => $attr,
-                       type => 'newline in value', ## TODOC: type
-                       level => $self->{level}->{must});
-  } elsif ($value eq '') {
-    $self->{onerror}->(node => $attr,
-                       type => 'empty attribute value',
-                       level => $self->{level}->{warn});
-  }
-}; # $PlaceholderAttrChecker
-
 my $CharChecker = sub {
   my ($self, $attr) = @_;
   
@@ -6018,7 +6004,6 @@ $Element->{+HTML_NS}->{input} = {
     min => sub {}, ## check_attrs2
     name => $FormControlNameAttrChecker,
     pattern => $PatternAttrChecker,
-    placeholder => $PlaceholderAttrChecker,
     precision => $PrecisionAttrChecker,
     ## XXXresource src="" referenced resource type
     usemap => $HTMLUsemapAttrChecker,
@@ -6695,7 +6680,6 @@ $Element->{+HTML_NS}->{textarea} = {
     },
     name => $FormControlNameAttrChecker,
     pattern => $PatternAttrChecker,
-    placeholder => $PlaceholderAttrChecker, # XXX wrong
   }),
   check_start => sub {
     my ($self, $item, $element_state) = @_;
