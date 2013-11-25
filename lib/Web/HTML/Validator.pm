@@ -515,6 +515,25 @@ $CheckerByType->{'language tag or empty'} = sub {
   }
 }; # language tag or empty
 
+$CheckerByType->{'character encoding label'} = sub {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value =~ /\A[Uu][Tt][Ff]-8\z/) { # "utf-8" ASCII case-insensitive.
+    #
+  } else {
+    require Web::Encoding;
+    if (Web::Encoding::is_encoding_label ($value)) {
+      $self->{onerror}->(node => $attr,
+                         type => 'non-utf-8 character encoding',
+                         level => 'm'); # [ENCODING]
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'not encoding label', # XXXdoc
+                         level => 'm');
+    }
+  }
+}; # character encoding label
+
 ## Media query list [MQ]
 $CheckerByType->{'media query list'} = sub {
   my ($self, $attr) = @_;
@@ -2867,10 +2886,6 @@ $Element->{+HTML_NS}->{base} = {
 $Element->{+HTML_NS}->{link} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    charset => sub {
-      my ($self, $attr) = @_;
-      $HTMLCharsetChecker->($attr->value, @_);
-    },
     rel => sub {}, ## checked in check_attrs2
     sizes => sub {
       my ($self, $attr) = @_;
@@ -3375,15 +3390,9 @@ $Element->{+HTML_NS}->{style} = {
 
 $Element->{+HTML_NS}->{script} = {
   %AnyChecker,
+  ## XXXresource: <script charset=""> MUST match the charset of the
+  ## referenced resource (HTML5 revision 2967).
   check_attrs => $GetHTMLAttrsChecker->({
-    charset => sub {
-      my ($self, $attr) = @_;
-
-      ## XXXresource: MUST match the charset of the referenced
-      ## resource (HTML5 revision 2967).
-
-      $HTMLCharsetChecker->($attr->value, @_);
-    },
     for => sub {
       my ($self, $attr) = @_;
 
@@ -3928,10 +3937,6 @@ $ElementAttrChecker->{(HTML_NS)}->{font}->{''}->{size} = sub {
 $Element->{+HTML_NS}->{a} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    charset => sub {
-      my ($self, $attr) = @_;
-      $HTMLCharsetChecker->($attr->value, @_);
-    },
     coords => sub { }, ## Checked in $ShapeCoordsChecker.
           cti => sub {
             my ($self, $attr) = @_;

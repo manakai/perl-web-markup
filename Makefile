@@ -59,7 +59,7 @@ update-entities: local/bin/pmbp.pl
 local/elements.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/elements.json
-lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/bin/pmbp.pl Makefile
+lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module JSON
 	$(PERL) -MJSON -MData::Dumper -e ' #\
