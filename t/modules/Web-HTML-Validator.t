@@ -626,6 +626,228 @@ for my $test (
   } n => 1, name => 'HTML text bad char warnings';
 }
 
+for my $test (
+  ['shift_JIS', 'x-sjis'],
+  ['utf-8', 'UTF8'],
+  ['Windows-1252', 'US-ASCII'],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $$doc->[2]->{encoding} = $test->[0]; # XXX
+    $doc->manakai_is_html (1);
+    my $el = $doc->create_element ('meta');
+    $el->set_attribute (charset => $test->[1]);
+    $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
+    $doc->manakai_head->append_child ($el);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_document ($doc);
+    eq_or_diff \@error,
+        $test->[0] eq 'utf-8' ? [] :
+            [{type => 'non-utf-8 character encoding',
+              node => $doc, level => 's'}];
+    done $c;
+  } n => 1, name => ['charset', @$test];
+
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $$doc->[2]->{encoding} = $test->[0]; # XXX
+    $doc->manakai_is_html (1);
+    my $el = $doc->create_element ('meta');
+    $el->http_equiv ('Content-type');
+    $el->content ('text/html;charset=' . $test->[1]);
+    $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
+    $doc->manakai_head->append_child ($el);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_document ($doc);
+    eq_or_diff \@error,
+        $test->[0] eq 'utf-8' ? [] :
+            [{type => 'non-utf-8 character encoding',
+              node => $doc, level => 's'}];
+    done $c;
+  } n => 1, name => ['charset', @$test];
+}
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->manakai_is_html (1);
+  $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
+  $doc->manakai_has_bom (1);
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
+                        node => $doc, level => 's'}];
+  done $c;
+} n => 1, name => ['UTF-16 BOM'];
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->manakai_is_html (1);
+  $doc->inner_html ('<!DOCTYPE html><html lang=en><meta http-equiv=Content-Type content="text/html; charset=UTF-16"><title>a</title><body>a');
+  $doc->manakai_has_bom (1);
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'mismatched charset name',
+                        node => $doc->get_elements_by_tag_name ('meta')
+                            ->[0]->get_attribute_node_ns (undef, 'content'),
+                        level => 'm'},
+                       {type => 'non ascii superset',
+                        node => $doc, level => 'm'},
+                       {type => 'non-utf-8 character encoding',
+                        node => $doc, level => 's'}];
+  done $c;
+} n => 1, name => ['UTF-16 BOM'];
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->manakai_is_html (1);
+  $doc->manakai_charset ('hogehoge');
+  $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
+                        node => $doc, level => 's'}];
+  done $c;
+} n => 1, name => ['Content-Type charset=""'];
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->manakai_is_html (1);
+  $doc->manakai_is_srcdoc (1);
+  $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
+                        node => $doc, level => 's'}];
+  done $c;
+} n => 1, name => ['iframe srcdoc'];
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'Windows-1251'; # XXX
+  $doc->manakai_is_html (1);
+  $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'no character encoding declaration',
+                        node => $doc, level => 'm'},
+                       {type => 'non-utf-8 character encoding',
+                        node => $doc, level => 's'}];
+  done $c;
+} n => 1, name => ['not labelled'];
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'ISO-2022-CN-EXT'; # XXX
+  $doc->manakai_is_html (1);
+  $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'non ascii superset',
+                        node => $doc, level => 'm'},
+                       {type => 'no character encoding declaration',
+                        node => $doc, level => 'm'},
+                       {type => 'non-utf-8 character encoding',
+                        node => $doc, level => 's'}];
+  done $c;
+} n => 1, name => ['not labelled / replacement'];
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'shift_jis'; # XXX
+  $doc->xml_encoding ('shift_jis');
+  my $el = $doc->create_element ('meta');
+  $el->set_attribute (charset => 'x-sjis');
+  $doc->append_child ($el);
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'element not allowed:root',
+                        node => $el, level => 'm'},
+                       {type => 'in XML:charset',
+                        node => $el->attributes->[0], level => 'm'}];
+  done $c;
+} n => 1, name => ['XML <?xml encoding?> and <meta charset>'];
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $$doc->[2]->{encoding} = 'shift_jis'; # XXX
+  my $el = $doc->create_element ('meta');
+  $el->set_attribute (charset => 'x-sjis');
+  $doc->append_child ($el);
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_document ($doc);
+  eq_or_diff \@error, [{type => 'element not allowed:root',
+                        node => $el, level => 'm'},
+                       {type => 'in XML:charset',
+                        node => $el->attributes->[0], level => 'm'},
+                       {type => 'no xml encoding',
+                        node => $doc, level => 's'}];
+  done $c;
+} n => 1, name => ['no XML <?xml encoding?> but <meta charset>'];
+
 run_tests;
 
 =head1 LICENSE

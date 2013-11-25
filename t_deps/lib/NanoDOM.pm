@@ -410,7 +410,7 @@ sub all_declarations_processed ($;$) {
 
 sub input_encoding ($;$) {
   $_[0]->{input_encoding} = $_[1] if @_ > 1;
-  return $_[0]->{input_encoding};
+  return $_[0]->{input_encoding} || 'utf-8';
 }
 
 sub manakai_charset ($;$) {

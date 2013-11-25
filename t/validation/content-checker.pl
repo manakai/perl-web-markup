@@ -63,7 +63,7 @@ sub _test ($$) {
     }
 
     my @error;
-    Web::HTML::Validator->check_element
+    Web::HTML::Validator->new->check_element
         ($doc->document_element, sub {
           my %opt = @_;
           if ($opt{type} =~ /^status:/ and $opt{level} eq 'i') {
