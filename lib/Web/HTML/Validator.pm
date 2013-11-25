@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '118.0';
+our $VERSION = '119.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -334,7 +334,7 @@ $CheckerByType->{'dimension value'} = sub {
   my $value = $attr->value;
   unless ($value =~ /\A[0-9]+%?\z/) {
     $self->{onerror}->(node => $attr, type => 'length:syntax error',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # dimension value
 
@@ -428,7 +428,7 @@ $CheckerByType->{'browsing context name or keyword'} = sub {
     #
   } else {
     $self->{onerror}->(node => $attr, type => 'window name:empty',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # browsing context name or keyword
 
@@ -822,7 +822,7 @@ $NamespacedAttrChecker->{(XML_NS)}->{base} = sub {
   if ($value =~ /[^\x{0000}-\x{10FFFF}]/) { ## ISSUE: Should we disallow noncharacters?
     $self->{onerror}->(node => $attr,
                        type => 'invalid attribute value',
-                       level => $self->{level}->{fact}, ## TODO: correct?
+                       level => 'm', # fact
                       );
   }
   ## NOTE: Conformance to URI standard is not checked since there is
@@ -1001,7 +1001,7 @@ our %AnyChecker = (
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln}) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       #
     }
@@ -1120,33 +1120,6 @@ $Element->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{RDF} = {
   },
 };
 
-# XXX
-my $default_error_level = {
-  must => 'm',
-  should => 's',
-  warn => 'w',
-  good => 'w',
-  undefined => 'w',
-  info => 'i',
-
-  uncertain => 'u',
-
-  html4_fact => 'm',
-  html5_no_may => 'm', # XXX
-
-  ## Web Applications 1.0 "obsolete but conforming" (a class of
-  ## SHOULD-level requirements).
-  obsconforming => 's',
-
-  ## |Message::Charset::Info| and |Whatpm::Charset::DecodeHandle|
-  charset_variant => 'm',
-    ## An error caused by use of a variant charset that is not conforming
-    ## to the original charset (e.g. use of 0x80 in an ISO-8859-1 document
-    ## which is interpreted as a Windows-1252 document instead).
-  charset_fact => 'm',
-  iso_shall => 'm',
-};
-
 sub check_document ($$$;$) {
   my ($self, $doc, $onerror, $onsubdoc) = @_;
   $self = bless {}, $self unless ref $self;
@@ -1154,8 +1127,6 @@ sub check_document ($$$;$) {
   $self->{onsubdoc} = $onsubdoc || sub {
     warn "A subdocument is not conformance-checked";
   };
-
-  $self->{level} ||= $default_error_level;
 
   ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
 
@@ -1165,7 +1136,7 @@ sub check_document ($$$;$) {
   unless (defined $docel) {
     ## ISSUE: Should we check content of Document node?
     $onerror->(node => $doc, type => 'no document element',
-               level => $self->{level}->{must});
+               level => 'm');
     ## ISSUE: Is this non-conforming (to what spec)?  Or just a warning?
     return {
             class => {},
@@ -1185,11 +1156,11 @@ sub check_document ($$$;$) {
       #
     } else {
       $onerror->(node => $docel, type => 'element not allowed:root:xml',
-                 level => $self->{level}->{must});
+                 level => 'm');
     }
   } else {
     $onerror->(node => $docel, type => 'element not allowed:root',
-               level => $self->{level}->{must});
+               level => 'm');
   }
 
   ## TODO: Check for other items other than document element
@@ -1209,7 +1180,7 @@ sub check_document ($$$;$) {
         unless ($charset->{category}
                   & Web::HTML::Validator::Charset::Info::CHARSET_CATEGORY_ASCII_COMPAT ()) {
           $onerror->(node => $doc,
-                     level => $self->{level}->{must},
+                     level => 'm',
                      type => 'non ascii superset',
                      text => $charset_name);
         }
@@ -1231,7 +1202,7 @@ sub check_document ($$$;$) {
         $onerror->(node => $doc,
                    type => 'bad character encoding',
                    text => $charset_name,
-                   level => $self->{level}->{should},
+                   level => 's',
                    layer => 'encode');
       } elsif ($charset->{iana_names}->{'cesu-8'} or
                $charset->{iana_names}->{'utf-7'} or ## ISSUE: UNICODE-1-1-UTF-7?
@@ -1240,13 +1211,13 @@ sub check_document ($$$;$) {
         $onerror->(node => $doc,
                    type => 'disallowed character encoding',
                    text => $charset_name,
-                   level => $self->{level}->{must},
+                   level => 'm',
                    layer => 'encode');
       } else {
         $onerror->(node => $doc,
                    type => 'non-utf-8 character encoding',
                    text => $charset_name,
-                   level => $self->{level}->{good},
+                   level => 'w',
                    layer => 'encode');
       }
     }
@@ -1255,7 +1226,7 @@ sub check_document ($$$;$) {
     ## since the document has no input charset encoding information.
     $onerror->(node => $doc,
                type => 'character encoding unchecked',
-               level => $self->{level}->{info},
+               level => 'i',
                layer => 'encode');
   }
 
@@ -1273,8 +1244,6 @@ sub check_element ($$$;$) {
   $self->{onsubdoc} = $onsubdoc || sub {
     warn "A subdocument is not conformance-checked";
   };
-
-  $self->{level} ||= $default_error_level;
 
   $self->{minus_elements} = {};
   $self->{id} = {};
@@ -1477,12 +1446,12 @@ sub check_element ($$$;$) {
         ## in different case combination.
         $self->{onerror}->(node => $_->[1],
                            type => 'hashref:wrong case', ## XXX document
-                           level => $self->{level}->{must});
+                           level => 'm');
       } else {
         ## There is no |map| element with the specified name at all.
         $self->{onerror}->(node => $_->[1],
                            type => 'no referenced map',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   }
@@ -1636,7 +1605,7 @@ my $FAECheckAttrs2 = sub {
       
       $self->{onerror}->(node => $item->{node},
                          type => 'multiple labelable fae',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       $self->{flag}->{has_labelable} = 2;
     }
@@ -1655,16 +1624,16 @@ my $GetHTMLEnumeratedAttrChecker = sub {
       if ($states->{$value} eq 'last resort:good') {
         $self->{onerror}->(node => $attr,
                            type => 'last resort',
-                           level => $self->{level}->{good}); # urged
+                           level => 'w'); # urged
       } elsif ($states->{$value} > 0) {
         #
       } else {
         $self->{onerror}->(node => $attr, type => 'enumerated:non-conforming',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       $self->{onerror}->(node => $attr, type => 'enumerated:invalid',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   };
 }; # $GetHTMLEnumeratedAttrChecker
@@ -1677,7 +1646,7 @@ my $GetHTMLBooleanAttrChecker = sub {
     $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
     unless ($value eq $local_name or $value eq '') {
       $self->{onerror}->(node => $attr, type => 'boolean:invalid',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   };
 }; # $GetHTMLBooleanAttrChecker
@@ -1702,7 +1671,7 @@ my $HTMLLinkTypesAttrChecker = sub {
     } else {
       $self->{onerror}->(node => $attr, type => 'duplicate token',
                          value => $word,
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }
 
@@ -1725,26 +1694,26 @@ my $HTMLLinkTypesAttrChecker = sub {
           $self->{onerror}->(node => $attr,
                              type => 'link type:bad context',
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } elsif ($def->{status} eq 'proposal') {
         $self->{onerror}->(node => $attr,
                            type => 'link type:proposed',
                            value => $word,
-                           level => $self->{level}->{should});
+                           level => 's');
         if (defined $def->{effect}->[$a_or_area]) {
           #
         } else {
           $self->{onerror}->(node => $attr,
                              type => 'link type:bad context',
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else { # rejected or synonym
         $self->{onerror}->(node => $attr,
                            type => 'link type:non-conforming',
                            value => $word,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       if (defined $def->{effect}->[$a_or_area]) {
         if ($word eq 'alternate') {
@@ -1760,7 +1729,7 @@ my $HTMLLinkTypesAttrChecker = sub {
           $self->{onerror}->(node => $attr,
                              type => 'link type:duplicate',
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
 
@@ -1774,7 +1743,7 @@ my $HTMLLinkTypesAttrChecker = sub {
       $self->{onerror}->(node => $attr,
                          type => 'unknown link type',
                          value => $word,
-                         level => $self->{level}->{uncertain});
+                         level => 'u');
     }
 
     ## XXX For registered link types, this check should be skipped
@@ -1841,13 +1810,13 @@ my $GetHTMLNonNegativeIntegerAttrChecker = sub {
         return 1;
       } else {
         $self->{onerror}->(node => $attr, type => 'nninteger:out of range',
-                           level => $self->{level}->{must});
+                           level => 'm');
         return 0;
       }
     } else {
       $self->{onerror}->(node => $attr,
                          type => 'nninteger:syntax error',
-                         level => $self->{level}->{must});
+                         level => 'm');
       return 0;
     }
   };
@@ -1859,7 +1828,7 @@ my $HTMLLengthAttrChecker = sub {
   my $value = $attr->value;
   unless ($value =~ /\A[0-9]+%?\z/) {
     $self->{onerror}->(node => $attr, type => 'length:syntax error',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 
   ## NOTE: HTML4 definition is too vague - it does not define the syntax
@@ -1909,7 +1878,7 @@ my $FormControlNameAttrChecker = sub {
   unless (length $attr->value) {
     $self->{onerror}->(node => $attr,
                        type => 'empty control name', ## TODOC: type
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
   
   ## NOTE: No uniqueness constraint.
@@ -1923,7 +1892,7 @@ my $AutofocusAttrChecker = sub {
   if ($self->{has_autofocus}) {
     $self->{onerror}->(node => $attr,
                        type => 'duplicate autofocus', ## TODOC: type
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
   $self->{has_autofocus} = 1;
 }; # $AutofocusAttrChekcer
@@ -1940,7 +1909,7 @@ my $HTMLUsemapAttrChecker = sub {
     push @{$self->{usemap}}, [$value => $attr];
   } else {
     $self->{onerror}->(node => $attr, type => 'hashref:syntax error',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
   ## NOTE: Space characters in hash-name references are conforming.
   ## ISSUE: UA algorithm for matching is case-insensitive; IDs only different in cases should be reported
@@ -1955,7 +1924,7 @@ my $ObjectHashIDRefChecker = sub {
   } else {
     $self->{onerror}->(node => $attr,
                        type => 'hashref:syntax error',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # $ObjectHashIDRefChecker
 
@@ -1968,31 +1937,9 @@ my $ObjectOptionalHashIDRefChecker = sub {
   } else {
     $self->{onerror}->(node => $attr,
                        type => 'hashref:syntax error',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # $ObjectHashIDRefChecker
-
-## Valid browsing context name or keyword
-my $HTMLTargetAttrChecker = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  if ($value =~ /^_/) {
-    $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-    unless ({
-             _blank => 1,_self => 1, _parent => 1, _top => 1,
-            }->{$value}) {
-      $self->{onerror}->(node => $attr,
-                         type => 'window name:reserved',
-                         level => $self->{level}->{must},
-                         value => $value);
-    }
-  } elsif (length $value) {
-    #
-  } else {
-    $self->{onerror}->(node => $attr, type => 'window name:empty',
-                       level => $self->{level}->{must});
-  }
-}; # $HTMLTargetAttrChecker
 
 my $HTMLCharsetChecker = sub ($$$;$) {
   my ($charset_value, $self, $attr, $ascii_compat) = @_;
@@ -2016,7 +1963,7 @@ my $HTMLCharsetChecker = sub ($$$;$) {
     $self->{onerror}->(node => $attr,
                        type => 'charset:syntax error',
                        value => $charset_value,
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
   
   if ($charset) {
@@ -2029,7 +1976,7 @@ my $HTMLCharsetChecker = sub ($$$;$) {
       $self->{onerror}->(node => $attr,
                          type => 'charset:not preferred',
                          value => $charset_value,
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     if (($charset_status &
@@ -2039,12 +1986,12 @@ my $HTMLCharsetChecker = sub ($$$;$) {
         $self->{onerror}->(node => $attr,
                            type => 'charset:private',
                            value => $charset_value,
-                           level => $self->{level}->{good});
+                           level => 'w');
       } else {
         $self->{onerror}->(node => $attr,
                            type => 'charset:not registered',
                            value => $charset_value,
-                           level => $self->{level}->{good});
+                           level => 'w');
       }
     }
     
@@ -2056,7 +2003,7 @@ my $HTMLCharsetChecker = sub ($$$;$) {
         $self->{onerror}->(node => $attr,
                            type => 'charset:not ascii compat',
                            value => $charset_value,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -2065,7 +2012,7 @@ my $HTMLCharsetChecker = sub ($$$;$) {
     $self->{onerror}->(node => $attr,
                        type => 'charset:private',
                        value => $charset_value,
-                       level => $self->{level}->{good});
+                       level => 'w');
 
     ## NOTE: Whether this is an ASCII-compatible character encoding or
     ## not is unknown.
@@ -2073,7 +2020,7 @@ my $HTMLCharsetChecker = sub ($$$;$) {
     $self->{onerror}->(node => $attr,
                        type => 'charset:not registered',
                        value => $charset_value,
-                       level => $self->{level}->{good});
+                       level => 'w');
 
     ## NOTE: Whether this is an ASCII-compatible character encoding or
     ## not is unknown.
@@ -2111,7 +2058,7 @@ my $CharChecker = sub {
   if (length $value != 1) {
     $self->{onerror}->(node => $attr,
                        type => 'char:syntax error',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # $CharChecker
 
@@ -2120,7 +2067,7 @@ my $TextFormatAttrChecker = sub {
   unless ($attr->value =~ /\A(?>(?>\*|[0-9]*)[AaNnXxMm]|\\.)+\z/s) {
     $self->{onerror}->(node => $attr,
                        type => 'format:syntax error', # XXXdocumentation
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # $TextFormatAttrChecker
 
@@ -2129,7 +2076,7 @@ my $PrecisionAttrChecker = sub {
   unless ($attr->value =~ /\A(?>[0-9]+(?>dp|sf)|integer|float)\z/) {
     $self->{onerror}->(node => $attr,
                        type => 'precision:syntax error', # XXXdocumentation
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # $PrecisionAttrChecker
 
@@ -2147,12 +2094,12 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
       if (length $key != 1) {
         $self->{onerror}->(node => $attr, type => 'char:syntax error',
                            value => $key,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       $self->{onerror}->(node => $attr, type => 'duplicate token',
                          value => $key,
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }
 }; # accesskey=""
@@ -2169,14 +2116,14 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   if (length $value > 0) {
     if ($self->{id}->{$value}) {
       $self->{onerror}->(node => $attr, type => 'duplicate ID',
-                         level => $self->{level}->{must});
+                         level => 'm');
       push @{$self->{id}->{$value}}, $attr;
     } elsif ($self->{name}->{$value} and
              $self->{name}->{$value}->[-1]->owner_element ne $item->{node}) {
       $self->{onerror}->(node => $attr,
                          type => 'id name confliction', # XXXdocumentation
                          value => $value,
-                         level => $self->{level}->{must});
+                         level => 'm');
       $self->{id}->{$value} = [$attr];
       $self->{id_type}->{$value} = $element_state->{id_type} || '';
     } else {
@@ -2187,12 +2134,12 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
     
     if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
       $self->{onerror}->(node => $attr, type => 'space in ID',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   } else {
     ## NOTE: MUST contain at least one character
     $self->{onerror}->(node => $attr, type => 'empty attribute value',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # id=""
 
@@ -2264,7 +2211,7 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{language} = sub {
   unless ($value eq 'javascript') {
     $self->{onerror}->(type => 'script language', # XXXdocumentation
                        node => $attr,
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # language=""
 
@@ -2313,12 +2260,12 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{xmlns} = sub {
     my $value = $attr->value;
     unless ($value eq HTML_NS) {
       $self->{onerror}->(node => $attr, type => 'invalid attribute value',
-                         level => $self->{level}->{must});
+                         level => 'm');
       ## TODO: Should be new "bad namespace" error?
     }
     unless ($attr->owner_document->manakai_is_html) {
       $self->{onerror}->(node => $attr, type => 'in XML:xmlns',
-                         level => $self->{level}->{must});
+                         level => 'm');
       ## TODO: Test
     }
 }; # xmlns=""
@@ -2331,23 +2278,23 @@ my $NameAttrChecker = sub {
   if ($value eq '') {
     $self->{onerror}->(node => $attr,
                        type => 'anchor name:empty', # XXXdocumentation
-                       level => $self->{level}->{must});
+                       level => 'm');
   } else {
     if ($self->{name}->{$value}) {
       $self->{onerror}->(node => $attr,
                          type => 'duplicate anchor name', # XXXdocumentation
                          value => $value,
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($self->{id}->{$value} and
              $self->{id}->{$value}->[-1]->owner_element ne $item->{node}) {
       $self->{onerror}->(node => $attr,
                          type => 'id name confliction', # XXXdocumentation
                          value => $value,
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($attr->owner_element->local_name eq 'a') {
       $self->{onerror}->(node => $attr,
                          type => 'anchor name', # XXX documentation
-                         level => $self->{level}->{obsconforming});
+                         level => 's'); # obsolete but conforming
     }
 
     push @{$self->{name}->{$value} ||= []}, $attr;
@@ -2371,7 +2318,7 @@ my $NameAttrCheckEnd = sub {
     if ($has_id) {
       $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'name'),
                          type => 'id name mismatch', # XXXdocumentation
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }
 }; # $NameAttrCheckEnd
@@ -2387,7 +2334,7 @@ my $ShapeCoordsChecker = sub ($$$$) {
     } else {
       $self->{onerror}->(node => $attrs->{coords},
                          type => 'coords:syntax error',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }
 
@@ -2411,13 +2358,13 @@ my $ShapeCoordsChecker = sub ($$$$) {
                                type => 'coords:out of range',
                                index => 2,
                                value => $coords->[2],
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         } else {
           $self->{onerror}->(node => $attrs->{coords},
                              type => 'coords:number not 3',
                              text => 0+@$coords,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         ## NOTE: A syntax error has been reported.
@@ -2426,13 +2373,13 @@ my $ShapeCoordsChecker = sub ($$$$) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'coords',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   } elsif ($shape eq 'default') {
     if (defined $attrs->{coords}) {
       $self->{onerror}->(node => $attrs->{coords},
                          type => 'attribute not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   } elsif ($shape eq 'polygon') {
     if (defined $attrs->{coords}) {
@@ -2442,13 +2389,13 @@ my $ShapeCoordsChecker = sub ($$$$) {
             $self->{onerror}->(node => $attrs->{coords},
                                type => 'coords:number not even',
                                text => 0+@$coords,
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         } else {
           $self->{onerror}->(node => $attrs->{coords},
                              type => 'coords:number lt 6',
                              text => 0+@$coords,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         ## NOTE: A syntax error has been reported.
@@ -2457,7 +2404,7 @@ my $ShapeCoordsChecker = sub ($$$$) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'coords',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   } elsif ($shape eq 'rectangle') {
     if (defined $attrs->{coords}) {
@@ -2468,20 +2415,20 @@ my $ShapeCoordsChecker = sub ($$$$) {
                                type => 'coords:out of range',
                                index => 0,
                                value => $coords->[0],
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
           unless ($coords->[1] < $coords->[3]) {
             $self->{onerror}->(node => $attrs->{coords},
                                type => 'coords:out of range',
                                index => 1,
                                value => $coords->[1],
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         } else {
           $self->{onerror}->(node => $attrs->{coords},
                              type => 'coords:number not 4',
                              text => 0+@$coords,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         ## NOTE: A syntax error has been reported.
@@ -2490,7 +2437,7 @@ my $ShapeCoordsChecker = sub ($$$$) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'coords',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }
 }; # $ShapeCoordsChecker
@@ -2507,12 +2454,12 @@ my $LegacyLoopChecker = sub {
     } else {
       $self->{onerror}->(node => $attr,
                          type => 'integer:out of range',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   } else {
     $self->{onerror}->(node => $attr,
                        type => 'integer:syntax error',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # $LegacyLoopChecker
 
@@ -2535,11 +2482,11 @@ my %HTMLEmptyChecker = (
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:empty',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
@@ -2547,7 +2494,7 @@ my %HTMLEmptyChecker = (
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
                          type => 'character not allowed:empty',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 );
@@ -2561,10 +2508,10 @@ my %HTMLTextChecker = (
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed:text',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 );
@@ -2578,7 +2525,7 @@ my %HTMLFlowContentChecker = (
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
       if ($element_state->{has_non_style}) {
         $self->{onerror}->(node => $child_el,
@@ -2618,13 +2565,13 @@ my %HTMLPhrasingContentChecker = (
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:phrasing',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_child_element
   check_end => sub {
@@ -2650,14 +2597,14 @@ my %TransparentChecker = (
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($self->{flag}->{in_phrasing}) { # phrasing content
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:phrasing',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else { # flow content
       if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
@@ -2738,7 +2685,7 @@ $Element->{+HTML_NS}->{html} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'before head') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'head') {
         $element_state->{phase} = 'after head';            
@@ -2746,12 +2693,12 @@ $Element->{+HTML_NS}->{html} = {
         $self->{onerror}->(node => $child_el,
                            type => 'ps element missing',
                            text => 'head',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $element_state->{phase} = 'after body';
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed',
-                           level => $self->{level}->{must});      
+                           level => 'm');      
       }
     } elsif ($element_state->{phase} eq 'after head') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'body') {
@@ -2759,12 +2706,12 @@ $Element->{+HTML_NS}->{html} = {
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed',
-                           level => $self->{level}->{must});      
+                           level => 'm');      
       }
     } elsif ($element_state->{phase} eq 'after body') {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed',
-                         level => $self->{level}->{must});      
+                         level => 'm');      
     } else {
       die "check_child_element: Bad |html| phase: $element_state->{phase}";
     }
@@ -2774,7 +2721,7 @@ $Element->{+HTML_NS}->{html} = {
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
                          type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_end => sub {
@@ -2785,16 +2732,16 @@ $Element->{+HTML_NS}->{html} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing',
                          text => 'head',
-                         level => $self->{level}->{must});
+                         level => 'm');
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing',
                          text => 'body',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'after head') {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing',
                          text => 'body',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       die "check_end: Bad |html| phase: $element_state->{phase}";
     }
@@ -2814,14 +2761,14 @@ $Element->{+HTML_NS}->{head} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'title') {
       unless ($element_state->{has_title}) {
         $element_state->{has_title} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:head title',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
       #
@@ -2830,7 +2777,7 @@ $Element->{+HTML_NS}->{head} = {
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:metadata',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     $element_state->{in_head_original} = $self->{flag}->{in_head};
     $self->{flag}->{in_head} = 1;
@@ -2839,7 +2786,7 @@ $Element->{+HTML_NS}->{head} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_end => sub {
@@ -2854,7 +2801,7 @@ $Element->{+HTML_NS}->{head} = {
         $self->{onerror}->(node => $el,
                            type => 'child element missing',
                            text => 'title',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
     $self->{flag}->{in_head} = $element_state->{in_head_original};
@@ -2896,7 +2843,7 @@ $Element->{+HTML_NS}->{base} = {
     if ($self->{has_base}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element not allowed:base',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       $self->{has_base} = 1;
     }
@@ -2905,14 +2852,14 @@ $Element->{+HTML_NS}->{base} = {
     if ($self->{has_hyperlink_element} and $has_target) {
       $self->{onerror}->(node => $item->{node},
                          type => 'basetarget after hyperlink',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     if (not $has_target and
         not $item->{node}->has_attribute_ns (undef, 'href')) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing:href|target',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_attrs
 }; # base
@@ -2939,12 +2886,12 @@ $Element->{+HTML_NS}->{link} = {
             $self->{onerror}->(node => $attr, 
                                type => 'sizes:syntax error',
                                value => $word,
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         } else {
           $self->{onerror}->(node => $attr, type => 'duplicate token',
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     },
@@ -2962,21 +2909,21 @@ $Element->{+HTML_NS}->{link} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'href',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     unless ($item->{node}->has_attribute_ns (undef, 'rel')) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'rel',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     
     if ($item->{node}->has_attribute_ns (undef, 'sizes') and
         not $element_state->{link_rel}->{icon}) {
       $self->{onerror}->(node => $item->{node}->get_attribute_node_ns (undef, 'sizes'),
                          type => 'attribute not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     if ($element_state->{link_rel}->{alternate} and
@@ -2987,7 +2934,7 @@ $Element->{+HTML_NS}->{link} = {
       } elsif ($title_attr->value eq '') {
         $self->{onerror}->(node => $title_attr,
                            type => 'empty style sheet title',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -3032,11 +2979,11 @@ $Element->{+HTML_NS}->{meta} = {
       if (defined $http_equiv_attr) {
         $self->{onerror}->(node => $http_equiv_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif (defined $charset_attr) {
         $self->{onerror}->(node => $charset_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       my $metadata_name = $name_attr->value;
       my $metadata_value;
@@ -3046,39 +2993,39 @@ $Element->{+HTML_NS}->{meta} = {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'content',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $metadata_value = '';
       }
     } elsif (defined $http_equiv_attr) {
       if (defined $charset_attr) {
         $self->{onerror}->(node => $charset_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       unless (defined $content_attr) {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'content',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif (defined $charset_attr) {
       if (defined $content_attr) {
         $self->{onerror}->(node => $content_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       if (defined $content_attr) {
         $self->{onerror}->(node => $content_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $self->{onerror}->(node => $el,
                            type => 'attribute missing:name|http-equiv',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } else {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing:name|http-equiv|charset',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -3092,7 +3039,7 @@ $Element->{+HTML_NS}->{meta} = {
             ## NOTE: Not the first child element.
             $self->{onerror}->(node => $el,
                                type => 'element not allowed:meta charset',
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
           last;
           ## NOTE: Entity references are not supported.
@@ -3100,7 +3047,7 @@ $Element->{+HTML_NS}->{meta} = {
       } else {
         $self->{onerror}->(node => $el,
                            type => 'element not allowed:meta charset',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }; # $check_charset_decl
 
@@ -3120,7 +3067,7 @@ $Element->{+HTML_NS}->{meta} = {
                              type => 'mismatched charset name',
                              text => $ic,
                              value => $charset_value,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         ## NOTE: MUST, but not checkable, since the document is not originally
@@ -3129,13 +3076,13 @@ $Element->{+HTML_NS}->{meta} = {
         $self->{onerror}->(node => $attr,
                            type => 'mismatched charset name not checked',
                            value => $charset_value,
-                           level => $self->{level}->{uncertain});
+                           level => 'u');
       }
 
       if ($attr->get_user_data ('manakai_has_reference')) {
         $self->{onerror}->(node => $attr,
                            type => 'charref in charset',
-                           level => $self->{level}->{must},
+                           level => 'm',
                            layer => 'syntax');
       }
     }; # $check_charset
@@ -3164,7 +3111,7 @@ $Element->{+HTML_NS}->{meta} = {
       if ($self->{has_http_equiv}->{$keyword}) {
         $self->{onerror}->(type => 'duplicate http-equiv', value => $keyword,
                            node => $http_equiv_attr,
-                           level => $self->{level}->{must});
+                           level => 'm');
       } else {
         $self->{has_http_equiv}->{$keyword} = 1;
       }
@@ -3177,11 +3124,11 @@ $Element->{+HTML_NS}->{meta} = {
         if (not $doc->manakai_is_html) {
           $self->{onerror}->(node => $el,
                              type => 'in XML:charset',
-                             level => $self->{level}->{must});
+                             level => 'm');
         } elsif ($doc->manakai_is_srcdoc) {
           $self->{onerror}->(node => $el,
                              type => 'srcdoc:charset', # XXXdocumentation
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
 
         if ($content_attr) {
@@ -3193,7 +3140,7 @@ $Element->{+HTML_NS}->{meta} = {
           } else {
             $self->{onerror}->(node => $content_attr,
                                type => 'meta content-type syntax error',
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         }
       } elsif ($keyword eq 'default-style') {
@@ -3210,7 +3157,7 @@ $Element->{+HTML_NS}->{meta} = {
               $self->{onerror}->(node => $content_attr,
                                  value => $content, 
                                  type => 'refresh:bad url', # XXXdoc
-                                 level => $self->{level}->{must});
+                                 level => 'm');
             }
 
             ## URL [URL]
@@ -3224,7 +3171,7 @@ $Element->{+HTML_NS}->{meta} = {
           } else {
             $self->{onerror}->(node => $content_attr,
                                type => 'refresh:syntax error',
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         }
       } elsif ($keyword eq 'content-language') {
@@ -3262,7 +3209,7 @@ $Element->{+HTML_NS}->{meta} = {
 
         $self->{onerror}->(node => $http_equiv_attr,
                            type => 'enumerated:invalid',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -3275,11 +3222,11 @@ $Element->{+HTML_NS}->{meta} = {
       if (not $doc->manakai_is_html and not $value =~ /\A[Uu][Tt][Ff]-8\z/) {
         $self->{onerror}->(node => $el,
                            type => 'in XML:charset',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif ($doc->manakai_is_srcdoc) {
         $self->{onerror}->(node => $el,
                            type => 'srcdoc:charset', # XXXdocumentation
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -3298,13 +3245,13 @@ $Element->{+HTML_NS}->{style} = {
         unless ($type->is_styling_lang) {
           $self->{onerror}->(node => $attr,
                              type => 'IMT:not styling lang', # XXXdocumentation
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
 
         if (defined $type->param ('charset')) {
           $self->{onerror}->(node => $attr,
                              type => 'IMT:parameter not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     },
@@ -3373,12 +3320,12 @@ $Element->{+HTML_NS}->{style} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{allow_element}) {
       #
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
@@ -3403,7 +3350,7 @@ $Element->{+HTML_NS}->{style} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'XML style lang',
                          text => $element_state->{style_type},
-                         level => $self->{level}->{uncertain});
+                         level => 'u');
     } else {
       $self->{onsubdoc}->({s => $element_state->{text},
                            container_node => $item->{node},
@@ -3417,7 +3364,7 @@ $Element->{+HTML_NS}->{style} = {
     if ($tc =~ /<!--/) {
       $self->{onerror}->(node => $item->{node},
                          type => 'style:unclosed cdo', ## XXX documentation
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AnyChecker{check_end}->(@_);
@@ -3453,7 +3400,7 @@ $Element->{+HTML_NS}->{script} = {
         if (defined $type->param ('charset')) {
           $self->{onerror}->(node => $attr,
                              type => 'IMT:parameter not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     }, # type
@@ -3483,16 +3430,16 @@ $Element->{+HTML_NS}->{script} = {
         if (not defined $type or $type eq 'text/javascript') {
           $self->{onerror}->(node => $lang_attr,
                              type => 'script language', # XXXdocumentatoion
-                             level => $self->{level}->{obsconforming});
+                             level => 's'); # obsolete but conforming
         } else {
           $self->{onerror}->(node => $lang_attr,
                              type => 'script language:ne type', # XXXdocmentation
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         $self->{onerror}->(node => $lang_attr,
                            type => 'script language:not js', # XXXdocmentation
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   }, # check_attrs2
@@ -3535,12 +3482,12 @@ $Element->{+HTML_NS}->{script} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       if ($element_state->{inline_documentation_only}) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:empty',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   },
@@ -3564,10 +3511,10 @@ $Element->{+HTML_NS}->{script} = {
         $self->{onerror}->(node => $item->{node},
                            type => 'XML script lang',
                            text => $element_state->{script_type},
-                           level => $self->{level}->{uncertain});
+                           level => 'u');
         ## ISSUE: Should we raise some kind of error for
         ## <script type="text/xml">aaaaa</script>?
-        ## NOTE: ^^^ This is why we throw an "uncertain" error.
+        ## NOTE: ^^^ This is why we throw an "u" error.
       } else {
         $self->{onsubdoc}->({s => $element_state->{text},
                              container_node => $item->{node},
@@ -3602,7 +3549,7 @@ $Element->{+HTML_NS}->{noscript} = {
 
     unless ($item->{node}->owner_document->manakai_is_html) {
       $self->{onerror}->(node => $item->{node}, type => 'in XML:noscript',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     if ($self->{flag}->{in_head}) {
@@ -3621,7 +3568,7 @@ $Element->{+HTML_NS}->{noscript} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:minus',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'link') {
         #
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
@@ -3635,19 +3582,19 @@ $Element->{+HTML_NS}->{noscript} = {
           if ($value eq 'content-type') {
             $self->{onerror}->(node => $child_el,
                                type => 'element not allowed:head noscript',
-                               level => $self->{level}->{must});
+                               level => 'm');
           } else {
             #
           }
         } else {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:head noscript',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:head noscript',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       $TransparentChecker{check_child_element}->(@_);
@@ -3659,7 +3606,7 @@ $Element->{+HTML_NS}->{noscript} = {
       if ($has_significant) {
         $self->{onerror}->(node => $child_node,
                            type => 'character not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       $TransparentChecker{check_child_text}->(@_);
@@ -3729,7 +3676,7 @@ $Element->{+HTML_NS}->{hgroup} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
       if ($child_nsuri eq HTML_NS and $child_ln =~ /\Ah[1-6]\z/) {
         $element_state2->{has_hn} = 1;
       }
@@ -3740,14 +3687,14 @@ $Element->{+HTML_NS}->{hgroup} = {
       $element_state2->{has_hn} = 1;
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_child_text
   check_end => sub {
@@ -3755,7 +3702,7 @@ $Element->{+HTML_NS}->{hgroup} = {
     unless ($element_state->{has_hn}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing:hn',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AnyChecker{check_end}->(@_);
@@ -3775,7 +3722,7 @@ $Element->{+HTML_NS}->{header} = {
     unless ($self->{flag}->{has_hn}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing:hn',
-                         level => $self->{level}->{warn});
+                         level => 'w');
     }
     $self->{flag}->{has_hn} ||= $element_state->{has_hn_original};
 
@@ -3818,19 +3765,19 @@ $Element->{+HTML_NS}->{dir} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
       #
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 }; # ul ol dir
@@ -3906,7 +3853,7 @@ $Element->{+HTML_NS}->{dl} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'in dds') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
         #$element_state->{phase} = 'in dds';
@@ -3914,7 +3861,7 @@ $Element->{+HTML_NS}->{dl} = {
         $element_state->{phase} = 'in dts';
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'in dts') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
@@ -3923,7 +3870,7 @@ $Element->{+HTML_NS}->{dl} = {
         $element_state->{phase} = 'in dds';
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'before dt') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
@@ -3932,11 +3879,11 @@ $Element->{+HTML_NS}->{dl} = {
         $self->{onerror}
              ->(node => $child_el, type => 'ps element missing',
                 text => 'dt',
-                level => $self->{level}->{must});
+                level => 'm');
         $element_state->{phase} = 'in dds';
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       die "check_child_element: Bad |dl| phase: $element_state->{phase}";
@@ -3946,7 +3893,7 @@ $Element->{+HTML_NS}->{dl} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_end => sub {
@@ -3955,7 +3902,7 @@ $Element->{+HTML_NS}->{dl} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing',
                          text => 'dd',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AnyChecker{check_end}->(@_);
@@ -3993,12 +3940,12 @@ $Element->{+HTML_NS}->{a} = {
               if ($value =~ m[//]) {
                 $self->{onerror}->(node => $attr,
                                    type => 'cti:syntax error', # XXXdocumentation
-                                   level => $self->{level}->{must});
+                                   level => 'm');
               }
             } else {
               $self->{onerror}->(node => $attr,
                                  type => 'cti:syntax error', # XXXdocumentation
-                                 level => $self->{level}->{must});
+                                 level => 'm');
             }
           }, # cti
           eswf => $ObjectHashIDRefChecker,
@@ -4013,7 +3960,7 @@ $Element->{+HTML_NS}->{a} = {
             } else {
               $self->{onerror}->(node => $attr,
                                  type => 'nninteger:syntax error', # XXXdocumentation
-                                 level => $self->{level}->{must});
+                                 level => 'm');
             }
           }, # loop
           memoryname => sub {
@@ -4023,7 +3970,7 @@ $Element->{+HTML_NS}->{a} = {
             } else {
               $self->{onerror}->(node => $attr,
                                  type => 'memoryname:syntax error', # XXXdocumentation
-                                 level => $self->{level}->{must});
+                                 level => 'm');
             }
           }, # memoryname
           name => $NameAttrChecker,
@@ -4062,7 +4009,7 @@ $Element->{+HTML_NS}->{a} = {
         if (defined $attr{$_}) {
           $self->{onerror}->(node => $attr{$_},
                              type => 'attribute not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     }
@@ -4072,7 +4019,7 @@ $Element->{+HTML_NS}->{a} = {
         if ($attr{$_}) {
           $self->{onerror}->(node => $attr{target},
                              type => 'attribute not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
           last;
         }
       }
@@ -4081,7 +4028,7 @@ $Element->{+HTML_NS}->{a} = {
     if ($attr{viblength} and not $attr{vibration}) {
       $self->{onerror}->(node => $attr{viblength},
                          type => 'attribute not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $ShapeCoordsChecker->($self, $item, \%attr, 'missing');
@@ -4197,7 +4144,7 @@ $Element->{+HTML_NS}->{time} = {
         
         $self->{onerror}->(node => $item->{node},
                            type => 'element not allowed:pubdate', ## XXX TODOC
-                           level => $self->{level}->{must});
+                           level => 'm');
       } else {
         $self->{flag}->{has_time_pubdate} = 1;
       }
@@ -4267,27 +4214,27 @@ $Element->{+HTML_NS}->{time} = {
             (defined $5 and length $5 != 2)) {
           $self->{onerror}->(node => $input_node,
                              type => 'dateortime:syntax error',
-                             level => $self->{level}->{must});
+                             level => 'm');
           $has_syntax_error = 1;
         }
 
         if (1 <= $2 and $2 <= 12) {
           $self->{onerror}->(node => $input_node, type => 'datetime:bad day',
-                             level => $self->{level}->{must})
+                             level => 'm')
               if $3 < 1 or
                   $3 > [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]->[$2];
           $self->{onerror}->(node => $input_node, type => 'datetime:bad day',
-                             level => $self->{level}->{must})
+                             level => 'm')
               if $2 == 2 and $3 == 29 and
                   not ($1 % 400 == 0 or ($1 % 4 == 0 and $1 % 100 != 0));
         } else {
           $self->{onerror}->(node => $input_node,
                              type => 'datetime:bad month',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
         $self->{onerror}->(node => $input_node,
                            type => 'datetime:bad year',
-                           level => $self->{level}->{must})
+                           level => 'm')
           if $1 == 0;
 
         ($hour, $minute, $second) = ($4, $5, $6);
@@ -4296,29 +4243,29 @@ $Element->{+HTML_NS}->{time} = {
           if (length $8 != 2 or length $9 != 2) {
             $self->{onerror}->(node => $input_node,
                                type => 'dateortime:syntax error',
-                               level => $self->{level}->{must});
+                               level => 'm');
             $has_syntax_error = 1;
           }
 
           $self->{onerror}->(node => $input_node,
                              type => 'datetime:bad timezone hour',
-                             level => $self->{level}->{must})
+                             level => 'm')
               if $8 > 23;
           $self->{onerror}->(node => $input_node,
                              type => 'datetime:bad timezone minute',
-                             level => $self->{level}->{must})
+                             level => 'm')
               if $9 > 59;
           if ($7 eq '-' and $8 == 0 and $9 == 0) {
             $self->{onerror}->(node => $input_node,
                                type => 'datetime:-00:00', # XXXtype
-                               level => $self->{level}->{must}); # don't return
+                               level => 'm'); # don't return
           }
         }
       } else { ## hh:mm
         if (length $1 != 2 or length $10 != 2) {
           $self->{onerror}->(node => $input_node,
                              type => qq'dateortime:syntax error',
-                             level => $self->{level}->{must});
+                             level => 'm');
           $has_syntax_error = 1;
         }
 
@@ -4327,15 +4274,15 @@ $Element->{+HTML_NS}->{time} = {
         if ($need_a_date) {
           $self->{onerror}->(node => $input_node,
                              type => 'dateortime:date missing', ## XXX TODOC
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
 
       $self->{onerror}->(node => $input_node, type => 'datetime:bad hour',
-                         level => $self->{level}->{must})
+                         level => 'm')
           if defined $hour and $hour > 23;
       $self->{onerror}->(node => $input_node, type => 'datetime:bad minute',
-                         level => $self->{level}->{must})
+                         level => 'm')
           if defined $minute and $minute > 59;
 
       if (defined $second) { ## s
@@ -4344,12 +4291,12 @@ $Element->{+HTML_NS}->{time} = {
         if (substr ($second, 0, 1) eq '.') {
           $self->{onerror}->(node => $input_node,
                              type => 'dateortime:syntax error',
-                             level => $self->{level}->{must});
+                             level => 'm');
           $has_syntax_error = 1;
         }
           
         $self->{onerror}->(node => $input_node, type => 'datetime:bad second',
-                           level => $self->{level}->{must}) if $second >= 60;
+                           level => 'm') if $second >= 60;
       }
 
       unless ($has_syntax_error) {
@@ -4358,13 +4305,13 @@ $Element->{+HTML_NS}->{time} = {
         if ($input =~ /$reg_sp+/) {
           $self->{onerror}->(node => $input_node,
                              type => 'dateortime:syntax error',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     } else {
       $self->{onerror}->(node => $input_node,
                          type => 'dateortime:syntax error',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $HTMLPhrasingContentChecker{check_end}->(@_);
@@ -4378,7 +4325,7 @@ $Element->{+HTML_NS}->{$_}->{check_end} = sub {
   if ($el->local_name eq 'b') {
     $self->{onerror}->(type => 'last resort', # XXXtype
                        node => $el,
-                       level => $self->{level}->{should});
+                       level => 's');
   }
 
   if ($el->has_attribute_ns (undef, 'class')) {
@@ -4387,13 +4334,13 @@ $Element->{+HTML_NS}->{$_}->{check_end} = sub {
     } else {
       $self->{onerror}->(type => 'last resort', # XXXtype
                          node => $el,
-                         level => $self->{level}->{good}); # encouraged
+                         level => 'w'); # encouraged
     }
   } else {
     $self->{onerror}->(type => 'attribute missing',
                        text => 'class',
                        node => $el,
-                       level => $self->{level}->{good}); # encouraged
+                       level => 'w'); # encouraged
   }
 
   $HTMLPhrasingContentChecker{check_end}->(@_);
@@ -4416,24 +4363,24 @@ $Element->{+HTML_NS}->{ruby} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'before-rb') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content before');
         $element_state->{phase} = 'after-rt';
       } elsif ($child_ln eq 'rp' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content before');
         $element_state->{phase} = 'after-rp1';
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:ruby base',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'in-rb') {
@@ -4456,7 +4403,7 @@ $Element->{+HTML_NS}->{ruby} = {
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:ruby base',
-                           level => $self->{level}->{must});
+                           level => 'm');
         #$element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rt') {
@@ -4464,18 +4411,18 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rp' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content before');
         $element_state->{phase} = 'after-rp1';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content before');
         #$element_state->{phase} = 'after-rt';
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:ruby base',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rp1') {
@@ -4485,21 +4432,21 @@ $Element->{+HTML_NS}->{ruby} = {
         $self->{onerror}->(node => $child_el, 
                            type => 'ps element missing',
                            text => 'rt',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $element_state->{phase} = 'after-rp2';
       } else {
         $self->{onerror}->(node => $child_el, 
                            type => 'ps element missing',
                            text => 'rt',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $self->{onerror}->(node => $child_el, 
                            type => 'ps element missing',
                            text => 'rp',
-                           level => $self->{level}->{must});
+                           level => 'm');
         unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
         $element_state->{phase} = 'in-rb';
       }
@@ -4510,20 +4457,20 @@ $Element->{+HTML_NS}->{ruby} = {
         $self->{onerror}->(node => $child_el, 
                            type => 'ps element missing',
                            text => 'rp',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $self->{onerror}->(node => $child_el,
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content before');
         $element_state->{phase} = 'after-rt';
       } else {
         $self->{onerror}->(node => $child_el, 
                            type => 'ps element missing',
                            text => 'rp',
-                           level => $self->{level}->{must});
+                           level => 'm');
         unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
         $element_state->{phase} = 'in-rb';
       }
@@ -4532,18 +4479,18 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content before');
         $element_state->{phase} = 'after-rt';
       } elsif ($child_ln eq 'rp' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
-                           level => $self->{level}->{should},
+                           level => 's',
                            type => 'no significant content before');
         $element_state->{phase} = 'after-rp1';
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:ruby base',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $element_state->{phase} = 'in-rb';
       }
     } else {
@@ -4564,17 +4511,17 @@ $Element->{+HTML_NS}->{ruby} = {
         $self->{onerror}->(node => $child_node, 
                            type => 'ps element missing',
                            text => 'rt',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $self->{onerror}->(node => $child_node, 
                            type => 'ps element missing',
                            text => 'rp',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $element_state->{phase} = 'in-rb';
       } elsif ($element_state->{phase} eq 'after-rp-rt') {
         $self->{onerror}->(node => $child_node, 
                            type => 'ps element missing',
                            text => 'rp',
-                           level => $self->{level}->{must});
+                           level => 'm');
         $element_state->{phase} = 'in-rb';
       } else {
         die "check_child_text: Bad |ruby| phase: $element_state->{phase}";
@@ -4587,12 +4534,12 @@ $Element->{+HTML_NS}->{ruby} = {
 
     if ($element_state->{phase} eq 'before-rb') {
       $self->{onerror}->(node => $item->{node},
-                         level => $self->{level}->{should},
+                         level => 's',
                          type => 'no significant content');
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing',
                          text => 'rt',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'in-rb') {
       unless (delete $element_state->{has_palpable}) {
         $self->{onerror}->(node => $item->{node},
@@ -4602,7 +4549,7 @@ $Element->{+HTML_NS}->{ruby} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing',
                          text => 'rt',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'after-rt' or
              $element_state->{phase} eq 'after-rp2') {
       #
@@ -4610,16 +4557,16 @@ $Element->{+HTML_NS}->{ruby} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing',
                          text => 'rt',
-                         level => $self->{level}->{must});
+                         level => 'm');
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing',
                          text => 'rp',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'after-rp-rt') {
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing',
                          text => 'rp',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       die "check_child_text: Bad |ruby| phase: $element_state->{phase}";
     }
@@ -4633,7 +4580,7 @@ $Element->{+HTML_NS}->{bdo}->{check_attrs2} = sub {
     $self->{onerror}->(node => $item->{node},
                        type => 'attribute missing',
                        text => 'dir',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # check_attrs2
 
@@ -4737,13 +4684,13 @@ $Element->{+HTML_NS}->{img} = {
         if ($value eq '0') {
           $self->{onerror}->(node => $attr,
                              type => 'img border:0', # XXXdocumentation
-                             level => $self->{level}->{obsconforming});
+                             level => 's'); # obsolete but conforming
         } else {
           if ($GetHTMLNonNegativeIntegerAttrChecker->(sub { 1 })->(@_)) {
             ## A non-negative integer.
             $self->{onerror}->(node => $attr,
                                type => 'img border:nninteger', # XXX documentation
-                               level => $self->{level}->{must});
+                               level => 'm');
           } else {
             ## Not a non-negative integer.
           }
@@ -4754,7 +4701,7 @@ $Element->{+HTML_NS}->{img} = {
         if (not $self->{flag}->{in_a_href}) {
           $self->{onerror}->(node => $attr,
                              type => 'attribute not allowed:ismap',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
         $GetHTMLBooleanAttrChecker->('ismap')->($self, $attr, $parent_item);
       },
@@ -4766,11 +4713,11 @@ $Element->{+HTML_NS}->{img} = {
         } elsif ($value =~ /\A[0-9A-Za-z]+\z/) {
           $self->{onerror}->(node => $attr,
                              type => 'localsrc:deprecated', # XXXdocumentation
-                             level => $self->{level}->{should});
+                             level => 's');
         } else {
           $self->{onerror}->(node => $attr,
                              type => 'localsrc:invalid', # XXXdocumentation
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       },
       name => $NameAttrChecker,
@@ -4783,21 +4730,21 @@ $Element->{+HTML_NS}->{img} = {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing',
                          text => 'alt',
-                         level => $self->{level}->{should});
+                         level => 's');
       ## TODO: ...
     }
     unless ($el->has_attribute_ns (undef, 'src')) {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing',
                          text => 'src',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     if (my $attr = $el->get_attribute_node_ns (undef, 'start')) {
       unless ($el->has_attribute_ns (undef, 'dynsrc')) {
         $self->{onerror}->(node => $attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -4868,7 +4815,7 @@ $Element->{+HTML_NS}->{embed} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'src',
-                         level => $self->{level}->{info});
+                         level => 'i');
       ## NOTE: <embed> without src="" is allowed since revision 1929.
       ## We issues an informational message since <embed> w/o src=""
       ## is likely an authoring error.
@@ -4915,7 +4862,7 @@ $Element->{+HTML_NS}->{object} = {
     if (not $has_data and not $has_type) {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing:data|type',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     if ($has_data and $has_type) {
       unless ($el->has_attribute_ns (undef, 'typemustmatch')) {
@@ -4924,14 +4871,14 @@ $Element->{+HTML_NS}->{object} = {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'typemustmatch',
-                           level => $self->{level}->{warn});
+                           level => 'w');
       }
     } else {
       my $tmm = $el->get_attribute_node_ns (undef, 'typemustmatch');
       if ($tmm) {
         $self->{onerror}->(node => $tmm,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -4940,7 +4887,7 @@ $Element->{+HTML_NS}->{object} = {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'codetype',
-                           level => $self->{level}->{should});
+                           level => 's');
       }
     }
   }, # check_attrs2
@@ -4956,7 +4903,7 @@ $Element->{+HTML_NS}->{object} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
       $element_state->{has_non_legend} = 1;
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'param') {
       if ($element_state->{has_non_param}) {
@@ -4965,7 +4912,7 @@ $Element->{+HTML_NS}->{object} = {
             : 'element not allowed:flow';
         $self->{onerror}->(node => $child_el, 
                            type => $type,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       $element_state->{has_non_param} = 1;
@@ -5002,7 +4949,7 @@ $Element->{+HTML_NS}->{applet} = {
       unless ($el->has_attribute_ns (undef, 'object')) {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing:code|object', # XXX documentation
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
     
@@ -5012,7 +4959,7 @@ $Element->{+HTML_NS}->{applet} = {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => $attr_name,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   }, # check_attrs2
@@ -5029,13 +4976,13 @@ $Element->{+HTML_NS}->{param}->{check_attrs2} = sub {
     $self->{onerror}->(node => $item->{node},
                        type => 'attribute missing',
                        text => 'name',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
   unless ($item->{node}->has_attribute_ns (undef, 'value')) {
     $self->{onerror}->(node => $item->{node},
                        type => 'attribute missing',
                        text => 'value',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # check_attrs2
 
@@ -5049,7 +4996,7 @@ $Element->{+HTML_NS}->{video} = {
       ## automatic playback behavior at all" according to HTML5.
       $self->{onerror}->(node => $attr,
                          type => 'attribute not allowed',
-                         level => $self->{level}->{warn});
+                         level => 'w');
 
       ## In addition, the |preload| attribute is ignored if the
       ## |autoplay| attribute is specified.
@@ -5077,7 +5024,7 @@ $Element->{+HTML_NS}->{video} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
       delete $element_state->{allow_source};
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'source') {
       unless ($element_state->{allow_source}) {
@@ -5086,7 +5033,7 @@ $Element->{+HTML_NS}->{video} = {
             : 'element not allowed:flow';
         $self->{onerror}->(node => $child_el,
                            type => $type,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       $element_state->{has_source} = 1;
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'track') {
@@ -5096,7 +5043,7 @@ $Element->{+HTML_NS}->{video} = {
             : 'element not allowed:flow';
         $self->{onerror}->(node => $child_el,
                            type => $type,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       delete $element_state->{allow_source};
     } else {
@@ -5121,7 +5068,7 @@ $Element->{+HTML_NS}->{video} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing',
                          text => 'source',
-                         level => $self->{level}->{warn});
+                         level => 'w');
     }
     
     $self->{onerror}->(node => $item->{node},
@@ -5143,7 +5090,7 @@ $Element->{+HTML_NS}->{audio} = {
       ## automatic playback behavior at all" according to HTML5.
       $self->{onerror}->(node => $attr,
                          type => 'attribute not allowed',
-                         level => $self->{level}->{warn});
+                         level => 'w');
 
       ## In addition, the |preload| attribute is ignored if the
       ## |autoplay| attribute is specified.
@@ -5159,7 +5106,7 @@ $Element->{+HTML_NS}->{source}->{check_attrs2} = sub {
     $self->{onerror}->(node => $item->{node},
                        type => 'attribute missing',
                        text => 'src',
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 }; # check_attrs2
 
@@ -5173,7 +5120,7 @@ $Element->{+HTML_NS}->{track} = {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing',
                          text => 'src',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     my $kind = $el->get_attribute_ns (undef, 'kind') || '';
@@ -5185,7 +5132,7 @@ $Element->{+HTML_NS}->{track} = {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'srclang',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       $kind = 'subtitles';
     }
@@ -5200,7 +5147,7 @@ $Element->{+HTML_NS}->{track} = {
     if ($item->{parent_state}->{has_track_kind}->{$kind}->{$srclang}->{$label}) {
       $self->{onerror}->(node => $el,
                          type => 'duplicate track', # XXXdoc
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       $item->{parent_state}->{has_track_kind}->{$kind}->{$srclang}->{$label} = 1;
     }
@@ -5234,12 +5181,12 @@ $Element->{+HTML_NS}->{bgsound} = {
         } else {
           $self->{onerror}->(node => $attr,
                              type => 'integer:out of range',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         $self->{onerror}->(node => $attr,
                            type => 'integer:syntax error',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }, # balance
     loop => $LegacyLoopChecker,
@@ -5251,7 +5198,7 @@ $Element->{+HTML_NS}->{bgsound} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'src',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_attrs2
 }; # bgsound
@@ -5291,19 +5238,19 @@ $Element->{+HTML_NS}->{map} = {
       if (length $value) {
         if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
           $self->{onerror}->(node => $attr, type => 'space in map name',
-                             level => $self->{level}->{must}); ## XXX documentation
+                             level => 'm'); ## XXX documentation
         }
         
         if ($self->{map_compat}->{$value_compat}) {
           $self->{onerror}->(node => $attr,
                              type => 'duplicate map name', ## XXX TODOC
                              value => $value,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         $self->{onerror}->(node => $attr,
                            type => 'empty attribute value',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       $self->{map_exact}->{$value} ||= $attr;
       $self->{map_compat}->{$value_compat} ||= $attr;
@@ -5318,13 +5265,13 @@ $Element->{+HTML_NS}->{map} = {
         $self->{onerror}
             ->(node => $item->{node}->get_attribute_node_ns (undef, 'id'),
                type => 'id ne name',
-               level => $self->{level}->{must});
+               level => 'm');
       }
     } else {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'name',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_attrs2
   check_start => sub {
@@ -5356,7 +5303,7 @@ $Element->{+HTML_NS}->{map} = {
       for (@$nodes) {
         $self->{onerror}->(type => 'empty area alt',
                            node => $_,
-                           level => $self->{level}->{html5_no_may});
+                           level => 'm'); # MAY be left blank if...
       }
     }
     
@@ -5410,14 +5357,14 @@ $Element->{+HTML_NS}->{area} = {
         $self->{onerror}->(node => $item->{node},
                            type => 'attribute missing',
                            text => 'alt',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       for (qw/target ping rel hreflang type alt/) {
         if (defined $attr{$_}) {
           $self->{onerror}->(node => $attr{$_},
                              type => 'attribute not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     }
@@ -5430,7 +5377,7 @@ $Element->{+HTML_NS}->{area} = {
             not $item->{node}->manakai_parent_element) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element not allowed:area',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 }; # area
@@ -5450,7 +5397,7 @@ $Element->{+HTML_NS}->{table} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'in tbodys') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'tbody') {
         #$element_state->{phase} = 'in tbodys';
@@ -5460,7 +5407,7 @@ $Element->{+HTML_NS}->{table} = {
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'in trs') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'tr') {
@@ -5471,7 +5418,7 @@ $Element->{+HTML_NS}->{table} = {
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'after thead') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'tbody') {
@@ -5483,7 +5430,7 @@ $Element->{+HTML_NS}->{table} = {
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'in colgroup') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'colgroup') {
@@ -5499,7 +5446,7 @@ $Element->{+HTML_NS}->{table} = {
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'before caption') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'caption') {
@@ -5518,11 +5465,11 @@ $Element->{+HTML_NS}->{table} = {
         $element_state->{has_tfoot} = 1;
       } else {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'after tfoot') {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       die "check_child_element: Bad |table| phase: $element_state->{phase}";
     }
@@ -5531,7 +5478,7 @@ $Element->{+HTML_NS}->{table} = {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_end => sub {
@@ -5571,20 +5518,20 @@ $Element->{+HTML_NS}->{table} = {
               $self->{onerror}->(node => $headers_attr,
                                  value => $word,
                                  type => 'not th', # XXXdocumentation
-                                 level => $self->{level}->{must});
+                                 level => 'm');
             }
           } else {
             $self->{onerror}->(node => $headers_attr,
                                value => $word,
                                type => 'no referenced header cell', # XXXdocumentation
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
           $word{$word} = 1;
         } else {
           $self->{onerror}->(node => $headers_attr,
                              value => $word,
                              type => 'duplicate token',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
 
@@ -5596,7 +5543,7 @@ $Element->{+HTML_NS}->{table} = {
         if ($referenced_cell->{element} eq $headers_cell->{element}) {
           $self->{onerror}->(node => $headers_attr,
                              type => 'self targeted', # XXXdocumentation
-                             level => $self->{level}->{must});
+                             level => 'm');
           last;
         }
         push @id, @{$referenced_cell->{header_ids} or []};
@@ -5685,17 +5632,17 @@ $Element->{+HTML_NS}->{colgroup} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'col') {
       if ($item->{node}->has_attribute_ns (undef, 'span')) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:colgroup', # XXXdocumentation
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:colgroup', # XXXdocumentation
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
@@ -5703,7 +5650,7 @@ $Element->{+HTML_NS}->{colgroup} = {
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
                          type => 'character not allowed:colgroup', # XXXdocumentation
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 }; # colgroup
@@ -5727,19 +5674,19 @@ $Element->{+HTML_NS}->{tbody} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tr') {
       #
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 }; # tbody
@@ -5769,21 +5716,21 @@ $Element->{+HTML_NS}->{tr} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'td') {
       #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'th') {
       #
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 }; # tr
@@ -5823,13 +5770,13 @@ $Element->{+HTML_NS}->{form} = {
       if ($value eq '') {
         $self->{onerror}->(type => 'empty form name',
                            node => $attr,
-                           level => $self->{level}->{must});
+                           level => 'm');
       } else {
         if ($self->{form}->{$value}) {
           $self->{onerror}->(type => 'duplicate form name',
                              node => $attr,
                              value => $value,
-                             level => $self->{level}->{must});
+                             level => 'm');
         } else {
           $self->{form}->{$value} = 1;
         }
@@ -5846,7 +5793,7 @@ $Element->{+HTML_NS}->{form} = {
         if ($el->has_attribute_ns (undef, $_)) {
           $self->{onerror}->(node => $target_attr,
                              type => 'attribute not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     }
@@ -5984,7 +5931,7 @@ $CheckerByType->{'simple color'} = sub {
   if (not $attr->value =~ /\A#[0-9A-Fa-f]{6}\z|\A\z/) {
     $self->{onerror}->(node => $attr,
                        type => 'scolor:syntax error', ## TODOC: type
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 };
 $CheckerByType->{'one-line text'} = sub {
@@ -5992,7 +5939,7 @@ $CheckerByType->{'one-line text'} = sub {
   if ($attr->value =~ /[\x0D\x0A]/) {
     $self->{onerror}->(node => $attr,
                        type => 'newline in value', ## TODO: type
-                       level => $self->{level}->{must});
+                       level => 'm');
   }
 };
 
@@ -6026,9 +5973,6 @@ $Element->{+HTML_NS}->{input} = {
     value => sub {}, ## check_attrs2
     viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
       1 <= $_[0] and $_[0] <= 9;
-    }),
-    vibration => $GetHTMLEnumeratedAttrChecker->({
-      select => 1, focus => 1,
     }),
   }),
   check_attrs2 => sub {
@@ -6084,7 +6028,7 @@ $Element->{+HTML_NS}->{input} = {
         my $attr = $item->{node}->get_attribute_node_ns (undef, $attr_name);
         $self->{onerror}->(node => $attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{obsconforming})
+                           level => 's') # obsolete but conforming
             if $attr;
       }
     } elsif ($_Defs->{input}->{attrs}->{maxlength}->{$input_type}) {
@@ -6129,7 +6073,7 @@ $Element->{+HTML_NS}->{input} = {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'value',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($input_type eq 'range') {
       $element_state->{number_value}->{min} ||= 0;
@@ -6142,7 +6086,7 @@ $Element->{+HTML_NS}->{input} = {
           $self->{onerror}->(node => $dk_attr,
                              type => 'attribute missing',
                              text => 'value',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
 
@@ -6152,7 +6096,7 @@ $Element->{+HTML_NS}->{input} = {
           if ($attr) {
             $self->{onerror}->(node => $attr,
                                type => 'attribute not allowed',
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         }
       }
@@ -6161,7 +6105,7 @@ $Element->{+HTML_NS}->{input} = {
         unless ($el->has_attribute_ns (undef, 'dynsrc')) {
           $self->{onerror}->(node => $attr,
                              type => 'attribute not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     }
@@ -6171,7 +6115,7 @@ $Element->{+HTML_NS}->{input} = {
       unless ($el->has_attribute_ns (undef, 'vibration')) {
         $self->{onerror}->(node => $vl_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -6187,7 +6131,7 @@ $Element->{+HTML_NS}->{input} = {
         $self->{onerror}->(node => $min,
                            type => 'date value not supported', ## TODOC: type
                            value => $min->value,
-                           level => $self->{level}->{unsupported});
+                           level => 'u');
         undef $min_value;
       }
       if (defined $max_value and $max_value eq '' and
@@ -6196,7 +6140,7 @@ $Element->{+HTML_NS}->{input} = {
         $self->{onerror}->(node => $max,
                            type => 'date value not supported', ## TODOC: type
                            value => $max->value,
-                           level => $self->{level}->{unsupported});
+                           level => 'u');
         undef $max_value;
       }
       if (defined $value_value and $value_value eq '' and
@@ -6205,7 +6149,7 @@ $Element->{+HTML_NS}->{input} = {
         $self->{onerror}->(node => $value,
                            type => 'date value not supported', ## TODOC: type
                            value => $value->value,
-                           level => $self->{level}->{unsupported});
+                           level => 'u');
         undef $value_value;
       }
 
@@ -6214,7 +6158,7 @@ $Element->{+HTML_NS}->{input} = {
           my $max = $item->{node}->get_attribute_node_ns (undef, 'max');
           $self->{onerror}->(node => $max,
                              type => 'max lt min', ## TODOC: type
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
       
@@ -6223,7 +6167,7 @@ $Element->{+HTML_NS}->{input} = {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value lt min', ## TODOC: type
-                             level => $self->{level}->{warn});
+                             level => 'w');
           ## NOTE: Not an error.
         }
       }
@@ -6233,7 +6177,7 @@ $Element->{+HTML_NS}->{input} = {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value gt max', ## TODOC: type
-                             level => $self->{level}->{warn});
+                             level => 'w');
           ## NOTE: Not an error.
         }
       }
@@ -6249,7 +6193,7 @@ $Element->{+HTML_NS}->{input} = {
               || $item->{node}->get_attribute_node_ns (undef, 'min');
           $self->{onerror}->(node => $attr,
                              type => 'max lt min', ## TODOC: type
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
       
@@ -6258,7 +6202,7 @@ $Element->{+HTML_NS}->{input} = {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value lt min', ## TODOC: type
-                             level => $self->{level}->{warn});
+                             level => 'w');
           ## NOTE: Not an error.
         }
       }
@@ -6268,7 +6212,7 @@ $Element->{+HTML_NS}->{input} = {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value gt max', ## TODOC: type
-                             level => $self->{level}->{warn});
+                             level => 'w');
           ## NOTE: Not an error.
         }
       }
@@ -6457,7 +6401,7 @@ $Element->{+HTML_NS}->{select} = {
         } else {
           $self->{onerror}->(node => $el,
                              type => 'no placeholder label option', # XXXdoctype
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     }
@@ -6471,7 +6415,7 @@ $Element->{+HTML_NS}->{select} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and
              {
                option => 1, optgroup => 1,
@@ -6479,14 +6423,14 @@ $Element->{+HTML_NS}->{select} = {
       #
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_child_text
   check_end => sub {
@@ -6521,14 +6465,14 @@ $Element->{+HTML_NS}->{datalist} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($element_state->{phase} eq 'phrasing') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:phrasing',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'option') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'option') {
@@ -6536,7 +6480,7 @@ $Element->{+HTML_NS}->{datalist} = {
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{phase} eq 'any') {
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
@@ -6546,7 +6490,7 @@ $Element->{+HTML_NS}->{datalist} = {
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed',
-                           level => $self->{level}->{must});        
+                           level => 'm');        
       }
     } else {
       die "check_child_element: Bad |datalist| phase: $element_state->{phase}";
@@ -6562,7 +6506,7 @@ $Element->{+HTML_NS}->{datalist} = {
       } else {
         $self->{onerror}->(node => $child_node,
                            type => 'character not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   },
@@ -6592,7 +6536,7 @@ $Element->{+HTML_NS}->{optgroup} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'label',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_element => sub {
@@ -6602,19 +6546,19 @@ $Element->{+HTML_NS}->{optgroup} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'option') {
       #
     } else {
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 };
@@ -6631,7 +6575,7 @@ $Element->{+HTML_NS}->{option} = {
           $self->{flag}->{has_option_selected}) {
         $self->{onerror}->(type => 'multiple selected in select1', # XXXtype
                            node => $selected_node,
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       $self->{flag}->{has_option_selected} = 1;
     }
@@ -6664,7 +6608,7 @@ $Element->{+HTML_NS}->{textarea} = {
       if ($attr->value eq '') {
         $self->{onerror}->(node => $attr,
                            type => 'empty attribute value',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }, # dirname
     form => $HTMLFormAttrChecker,
@@ -6691,7 +6635,7 @@ $Element->{+HTML_NS}->{textarea} = {
           if ($codepoint_length > $max_allowed_value_length) {
             $self->{onerror}->(node => $item->{node},
                                type => 'value too long',
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
         }
       }
@@ -6718,7 +6662,7 @@ $Element->{+HTML_NS}->{textarea} = {
           $self->{onerror}->(node => $item->{node},
                              type => 'attribute missing',
                              text => 'cols',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     }
@@ -6751,13 +6695,13 @@ $Element->{+HTML_NS}->{keygen} = {
         if ($pqg_attr) {
           $self->{onerror}->(node => $pqg_attr,
                              type => 'attribute not allowed',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         unless ($el->has_attribute_ns (undef, 'pqg')) {
           $self->{onerror}->(node => $el,
                              type => 'attribute missing:keyparams|pqg', # XXXdocumentation
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     } elsif ($keytype eq 'ec') {
@@ -6765,26 +6709,26 @@ $Element->{+HTML_NS}->{keygen} = {
         $self->{onerror}->(node => $el,
                            type => 'attribute missing',
                            text => 'keyparams',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
       if ($pqg_attr) {
         $self->{onerror}->(node => $pqg_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       my $keyparams_attr = $el->get_attribute_node_ns (undef, 'keyparams');
       if ($keyparams_attr) {
         $self->{onerror}->(node => $keyparams_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       my $pqg_attr = $el->get_attribute_node_ns (undef, 'pqg');
       if ($pqg_attr) {
         $self->{onerror}->(node => $pqg_attr,
                            type => 'attribute not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
   }, # check_attrs2
@@ -6807,7 +6751,7 @@ $Element->{+HTML_NS}->{output} = {
         } else {
           $self->{onerror}->(node => $attr, type => 'duplicate token',
                              value => $word,
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       }
     },
@@ -7142,7 +7086,7 @@ $Element->{+HTML_NS}->{frameset} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and
              ($child_ln eq 'frameset' or $child_ln eq 'frame')) {
       $item->{has_frame_or_frameset} = 1;
@@ -7151,14 +7095,14 @@ $Element->{+HTML_NS}->{frameset} = {
           ($self->{flag}->{in_frameset} || 0) > 1) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } else {
         $item->{has_noframes} = 1;
       }
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:frameset', # XXXdocumentation
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_child_element
   check_child_text => sub {
@@ -7166,7 +7110,7 @@ $Element->{+HTML_NS}->{frameset} = {
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
                          type => 'character not allowed:frameset', # XXXdocumentation
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   }, # check_child_text
   check_start => sub {
@@ -7182,7 +7126,7 @@ $Element->{+HTML_NS}->{frameset} = {
     unless ($item->{has_frame_or_frameset}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:frame|frameset', # XXXdocumentation
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AnyChecker{check_end}->(@_);
@@ -7245,7 +7189,7 @@ my %AtomTextConstruct = (
         ## NOTE: IMT MUST NOT be used here.
         $self->{onerror}->(node => $attr,
                            type => 'invalid attribute value',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }, # checked in |checker|
   }),
@@ -7256,13 +7200,13 @@ my %AtomTextConstruct = (
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       if ($element_state->{type} eq 'text' or
           $element_state->{type} eq 'html') { # MUST NOT
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:atom|TextConstruct',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif ($element_state->{type} eq 'xhtml') {
         if ($child_nsuri eq q<http://www.w3.org/1999/xhtml> and
             $child_ln eq 'div') { # MUST
@@ -7270,7 +7214,7 @@ my %AtomTextConstruct = (
             $self->{onerror}
                 ->(node => $child_el,
                    type => 'element not allowed:atom|TextConstruct',
-                   level => $self->{level}->{must});
+                   level => 'm');
           } else {
             $element_state->{has_div} = 1;
             ## TODO: SHOULD be suitable for handling as HTML [XHTML10]
@@ -7278,7 +7222,7 @@ my %AtomTextConstruct = (
         } else {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:atom|TextConstruct',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         die "atom:TextConstruct type error: $element_state->{type}";
@@ -7296,7 +7240,7 @@ my %AtomTextConstruct = (
       if ($has_significant) {
         $self->{onerror}->(node => $child_node,
                            type => 'character not allowed:atom|TextConstruct',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       die "atom:TextConstruct type error: $element_state->{type}";
@@ -7309,7 +7253,7 @@ my %AtomTextConstruct = (
         $self->{onerror}->(node => $item->{node},
                            type => 'child element missing',
                            text => 'div',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{type} eq 'html') {
       ## TODO: SHOULD be suitable for handling as HTML [HTML4]
@@ -7334,14 +7278,14 @@ my %AtomPersonConstruct = (
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq ATOM_NS) {
       if ($child_ln eq 'name') {
         if ($element_state->{has_name}) {
           $self->{onerror}
               ->(node => $child_el,
                  type => 'element not allowed:atom|PersonConstruct',
-                 level => $self->{level}->{must});
+                 level => 'm');
         } else {
           $element_state->{has_name} = 1;
         }
@@ -7350,7 +7294,7 @@ my %AtomPersonConstruct = (
           $self->{onerror}
               ->(node => $child_el,
                  type => 'element not allowed:atom|PersonConstruct',
-                 level => $self->{level}->{must});
+                 level => 'm');
         } else {
           $element_state->{has_uri} = 1;
         }
@@ -7359,7 +7303,7 @@ my %AtomPersonConstruct = (
           $self->{onerror}
               ->(node => $child_el,
                  type => 'element not allowed:atom|PersonConstruct',
-                 level => $self->{level}->{must});
+                 level => 'm');
         } else {
           $element_state->{has_email} = 1;
         }
@@ -7367,13 +7311,13 @@ my %AtomPersonConstruct = (
         $self->{onerror}
             ->(node => $child_el,
                type => 'element not allowed:atom|PersonConstruct',
-               level => $self->{level}->{must});
+               level => 'm');
       }
     } else {
       $self->{onerror}
           ->(node => $child_el,
              type => 'element not allowed:atom|PersonConstruct',
-             level => $self->{level}->{must});
+             level => 'm');
     }
     ## TODO: extension element
   },
@@ -7382,7 +7326,7 @@ my %AtomPersonConstruct = (
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
                          type => 'character not allowed:atom|PersonConstruct',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_end => sub {
@@ -7392,7 +7336,7 @@ my %AtomPersonConstruct = (
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'name',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AtomChecker{check_end}->(@_);
@@ -7489,32 +7433,32 @@ my %AtomDateConstruct = (
       ## comments of ABNF rules for |date-time|.
       if (0 < $M and $M < 13) {      
         $self->{onerror}->(node => $node, type => 'datetime:bad day',
-                           level => $self->{level}->{must})
+                           level => 'm')
             if $d < 1 or
                 $d > [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]->[$M];
         $self->{onerror}->(node => $node, type => 'datetime:bad day',
-                           level => $self->{level}->{must})
+                           level => 'm')
             if $M == 2 and $d == 29 and
                 not ($y % 400 == 0 or ($y % 4 == 0 and $y % 100 != 0));
       } else {
         $self->{onerror}->(node => $node, type => 'datetime:bad month',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
       $self->{onerror}->(node => $node, type => 'datetime:bad hour',
-                         level => $self->{level}->{must}) if $h > 23;
+                         level => 'm') if $h > 23;
       $self->{onerror}->(node => $node, type => 'datetime:bad minute',
-                         level => $self->{level}->{must}) if $m > 59;
+                         level => 'm') if $m > 59;
       $self->{onerror}->(node => $node, type => 'datetime:bad second',
-                         level => $self->{level}->{must})
+                         level => 'm')
           if $s > 60; ## NOTE: Validness of leap seconds are not checked.
       $self->{onerror}->(node => $node, type => 'datetime:bad timezone hour',
-                         level => $self->{level}->{must}) if $zh > 23;
+                         level => 'm') if $zh > 23;
       $self->{onerror}->(node => $node, type => 'datetime:bad timezone minute',
-                         level => $self->{level}->{must}) if $zm > 59;
+                         level => 'm') if $zm > 59;
     } else {
       $self->{onerror}->(node => $item->{node},
                          type => 'datetime:syntax error',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     ## NOTE: SHOULD be accurate as possible (cannot be checked)
 
@@ -7535,7 +7479,7 @@ $Element->{+ATOM_NS}->{entry} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq ATOM_NS) {
       my $not_allowed;
       if ({ # MUST (0, 1)
@@ -7586,7 +7530,7 @@ $Element->{+ATOM_NS}->{entry} = {
       }
       if ($not_allowed) {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($child_nsuri eq THR_NS and $child_ln eq 'in-reply-to') {
       ## ISSUE: Where |thr:in-reply-to| is allowed is not explicit;y
@@ -7597,14 +7541,14 @@ $Element->{+ATOM_NS}->{entry} = {
     } else {
       ## TODO: extension element
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_end => sub {
@@ -7637,7 +7581,7 @@ $Element->{+ATOM_NS}->{entry} = {
         $self->{onerror}->(node => $item->{node},
                            type => 'child element missing:atom',
                            text => 'author',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } # A
     }
 
@@ -7651,25 +7595,25 @@ $Element->{+ATOM_NS}->{entry} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'id',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     unless ($element_state->{has_element}->{title}) { # MUST
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'title',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     unless ($element_state->{has_element}->{updated}) { # MUST
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'updated',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     if (not $element_state->{has_element}->{content} and
         not $element_state->{has_element}->{'link.alternate'}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom:link:alternate',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     if ($element_state->{require_summary} and
@@ -7677,7 +7621,7 @@ $Element->{+ATOM_NS}->{entry} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'summary',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 };
@@ -7695,7 +7639,7 @@ $Element->{+ATOM_NS}->{feed} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq ATOM_NS) {
       my $not_allowed;
       if ($child_ln eq 'entry') {
@@ -7748,19 +7692,19 @@ $Element->{+ATOM_NS}->{feed} = {
         $not_allowed = 1;
       }
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must})
+                         level => 'm')
           if $not_allowed;
     } else {
       ## TODO: extension element
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_end => sub {
@@ -7771,7 +7715,7 @@ $Element->{+ATOM_NS}->{feed} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'author',
-                         level => $self->{level}->{must});
+                         level => 'm');
       ## ISSUE: If there is no |atom:entry| element,
       ## there should be an |atom:author| element?
     }
@@ -7782,24 +7726,24 @@ $Element->{+ATOM_NS}->{feed} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'id',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     unless ($element_state->{has_element}->{title}) { # MUST
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'title',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     unless ($element_state->{has_element}->{updated}) { # MUST
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing:atom',
                          text => 'updated',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
     unless ($element_state->{has_element}->{'link.self'}) {
       $self->{onerror}->(node => $item->{node}, 
                          type => 'child element missing:atom:link:self',
-                         level => $self->{level}->{should});
+                         level => 's');
     }
 
     $AtomChecker{check_end}->(@_);
@@ -7841,7 +7785,7 @@ $Element->{+ATOM_NS}->{content} = {
         if ($type) {
           if ($type->is_composite_type) {
             $self->{onerror}->(node => $attr, type => 'IMT:composite',
-                               level => $self->{level}->{must});
+                               level => 'm');
           }
 
           if ($type->is_xml_mime_type) {
@@ -7867,7 +7811,7 @@ $Element->{+ATOM_NS}->{content} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       if ($element_state->{type} eq 'text' or
           $element_state->{type} eq 'html' or
@@ -7875,12 +7819,12 @@ $Element->{+ATOM_NS}->{content} = {
         # MUST NOT
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:atom|content',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif ($element_state->{type} eq 'xhtml') {
         if ($element_state->{has_div}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:atom|content',
-                             level => $self->{level}->{must});
+                             level => 'm');
         } else {
           ## TODO: SHOULD be suitable for handling as HTML [XHTML10]
           $element_state->{has_div} = 1;
@@ -7890,7 +7834,7 @@ $Element->{+ATOM_NS}->{content} = {
         if ($element_state->{has_src}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:atom|content',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } else {
         ## NOTE: Elements are not explicitly disallowed.
@@ -7908,12 +7852,12 @@ $Element->{+ATOM_NS}->{content} = {
       if ($element_state->{has_src}) {
         $self->{onerror}->(node => $child_node,
                            type => 'character not allowed:empty',
-                           level => $self->{level}->{must});
+                           level => 'm');
       } elsif ($element_state->{type} eq 'xhtml' or
                $element_state->{type} eq 'xml') {
         $self->{onerror}->(node => $child_node,
                            type => 'character not allowed:atom|content',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     }
 
@@ -7930,13 +7874,13 @@ $Element->{+ATOM_NS}->{content} = {
         $self->{onerror}->(node => $item->{node},
                            type => 'attribute missing',
                            text => 'type',
-                           level => $self->{level}->{should});
+                           level => 's');
       } elsif ($element_state->{type} eq 'text' or
                $element_state->{type} eq 'html' or
                $element_state->{type} eq 'xhtml') {
         $self->{onerror}
             ->(node => $item->{node}->get_attribute_node_ns (undef, 'type'),
-               type => 'not IMT', level => $self->{level}->{must});
+               type => 'not IMT', level => 'm');
       }
     }
 
@@ -7945,7 +7889,7 @@ $Element->{+ATOM_NS}->{content} = {
         $self->{onerror}->(node => $item->{node},
                            type => 'child element missing',
                            text => 'div',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($element_state->{type} eq 'html') {
       ## TODO: SHOULD be suitable for handling as HTML [HTML4]
@@ -7963,7 +7907,7 @@ $Element->{+ATOM_NS}->{content} = {
                          type => 'atom|content not supported',
                          text => $item->{node}->get_attribute_ns
                              (undef, 'type'),
-                         level => $self->{level}->{uncertain});
+                         level => 'u');
     } elsif ($element_state->{type} eq 'text' or
              $element_state->{type} eq 'mime-text') {
       #
@@ -7977,7 +7921,7 @@ $Element->{+ATOM_NS}->{content} = {
                          type => 'atom|content not supported',
                          text => $item->{node}->get_attribute_ns
                              (undef, 'type'),
-                         level => $self->{level}->{uncertain});
+                         level => 'u');
     }
 
     $AtomChecker{check_end}->(@_);
@@ -8014,7 +7958,7 @@ $Element->{+ATOM_NS}->{category} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'term',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AtomChecker{check_end}->(@_);
@@ -8157,7 +8101,7 @@ $Element->{+ATOM_NS}->{link} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'href',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     if ($item->{node}->rel eq LINK_REL . 'enclosure' and
@@ -8165,7 +8109,7 @@ $Element->{+ATOM_NS}->{link} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'length',
-                         level => $self->{level}->{should});
+                         level => 's');
     }
   },
 };
@@ -8214,7 +8158,7 @@ $Element->{+ATOM_NS}->{source} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } elsif ($child_nsuri eq ATOM_NS) {
       my $not_allowed;
       if ($child_ln eq 'entry') {
@@ -8263,19 +8207,19 @@ $Element->{+ATOM_NS}->{source} = {
       }
       if ($not_allowed) {
         $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } else {
       ## TODO: extension element
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
 };
@@ -8335,7 +8279,7 @@ $Element->{+THR_NS}->{'in-reply-to'} = {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
                          text => 'ref',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AtomChecker{check_end}->(@_);
@@ -8357,11 +8301,11 @@ $Element->{+THR_NS}->{total} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
+                         level => 'm');
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
   },
   check_child_text => sub {
@@ -8375,7 +8319,7 @@ $Element->{+THR_NS}->{total} = {
     unless ($element_state->{value} =~ /\A(?>[0-9]+|-0+)\z/) {
       $self->{onerror}->(node => $item->{node},
                          type => 'invalid attribute value', 
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
 
     $AtomChecker{check_end}->(@_);
@@ -8459,17 +8403,17 @@ sub check ($@) {
     $args{checker}->{onerror}->(type => 'metadata:proposed', # XXX TODOC
                                 text => $args{name},
                                 node => $args{name_attr},
-                                level => $args{checker}->{level}->{warn});
+                                level => 'w');
   } elsif ($def->{status} == STATUS_DISCONTINUED) {
     $args{checker}->{onerror}->(type => 'metadata:discontinued', # XXX TODOC
                                 text => $args{name},
                                 node => $args{name_attr},
-                                level => $args{checker}->{level}->{should});
+                                level => 's');
   } else {
     $args{checker}->{onerror}->(type => 'metadata:not registered', # XXX TODOC
                                 text => $args{name},
                                 node => $args{name_attr},
-                                level => $args{checker}->{level}->{must});
+                                level => 'm');
   }
 
   ## --- Metadata uniqueness ---
@@ -8481,7 +8425,7 @@ sub check ($@) {
       $args{checker}->{onerror}->(type => 'metadata:duplicate', # XXX TODOC
                                   text => $args{name},
                                   node => $args{name_attr},
-                                  level => $args{checker}->{level}->{must});
+                                  level => 'm');
     }
   }
 
@@ -10526,7 +10470,7 @@ sub get_decode_handle ($$;%) {
     byte_buffer => $opt{byte_buffer} ? ${$opt{byte_buffer}} : '', ## TODO: ref, instead of value, should be used
     onerror => $opt{onerror} || sub {},
     #onerror_set
-    level => $opt{level} || {
+    level => {
       must => 'm',
       charset_variant => 'm',
       charset_fact => 'm',
