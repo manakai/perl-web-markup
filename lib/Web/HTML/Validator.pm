@@ -2134,41 +2134,6 @@ my $TextFormatAttrChecker = sub {
   }
 }; # $TextFormatAttrChecker
 
-my $InputmodeAttrChecker = sub {
-  my ($self, $attr) = @_;
-
-  my %word;
-  for my $word (grep {length $_}
-                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-    unless ($word{$word}) {
-      $word{$word} = 1;
-    } else {
-      $self->{onerror}->(node => $attr, type => 'duplicate token',
-                         value => $word,
-                         level => $self->{level}->{must});
-    }
-  }
-
-  for my $value (keys %word) {
-    if ($value =~ /\A[0-9A-Za-z]+\z/) {
-      #
-    } else {
-      # XXX Valid non-empty URL that is an absolute URL
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($value);
-      $chk->onerror (sub {
-        $self->{onerror}->(value => $value, @_, node => $attr);
-      });
-      $chk->check_iri_reference;
-      
-      push @{$self->{return}->{uri}->{$value} ||= []},
-          {node => $attr, type => {namespace => 1}};
-      
-      $self->{has_uri_attr} = 1;
-    }
-  }
-}; # $InputmodeAttrChecker
-
 my $PrecisionAttrChecker = sub {
   my ($self, $attr) = @_;
   unless ($attr->value =~ /\A(?>[0-9]+(?>dp|sf)|integer|float)\z/) {
@@ -6046,7 +6011,6 @@ $Element->{+HTML_NS}->{input} = {
     autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
-    inputmode => $InputmodeAttrChecker, # XXX
     list => $ListAttrChecker,
     loop => $LegacyLoopChecker,
     # XXX min="" max="" tests
@@ -6367,6 +6331,8 @@ $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{accept} = sub {
     }
   }
 }; # <input accept="">
+
+# XXX warning for inputmode="tel|email|url"
 
 $Element->{+HTML_NS}->{button} = {
   %HTMLPhrasingContentChecker,
@@ -6700,7 +6666,6 @@ $Element->{+HTML_NS}->{textarea} = {
     }, # dirname
     form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
-    inputmode => $InputmodeAttrChecker,
     maxlength => sub {
       my ($self, $attr, $item, $element_state) = @_;
       
