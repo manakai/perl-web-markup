@@ -107,6 +107,8 @@ sub _check_data ($$) {
                          level => 'm');
     }
   }
+
+  # XXX bidi char tests
 } # _check_data
 
 ## ------ Attribute conformance checkers ------
@@ -1195,6 +1197,7 @@ sub check_document ($$$;$) {
 
   my $return = $self->check_element ($docel, $onerror, $onsubdoc);
 
+  # XXX This section need to be updated
   ## TODO: Test for these checks are necessary.
   my $charset_name = $doc->input_encoding;
   if (defined $charset_name) {
@@ -1706,6 +1709,8 @@ my $HTMLLinkTypesAttrChecker = sub {
   ## NOTE: Though there is no explicit "MUST NOT" for undefined values,
   ## "MAY"s and "only ... MAY" restrict non-standard non-registered
   ## values to be used conformingly.
+
+  # XXX This need to be updated.
 
   my $is_hyperlink;
   my $is_resource;
@@ -3139,7 +3144,8 @@ $Element->{+HTML_NS}->{meta} = {
     if (defined $name_attr) {
       my $name = $name_attr->value;
       $name =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      
+
+      # XXX need to be updated
       Web::HTML::Validator::HTML::Metadata->check
           (name => $name,
            name_attr => $name_attr,
@@ -3276,6 +3282,8 @@ $Element->{+HTML_NS}->{meta} = {
                            level => $self->{level}->{must});
       }
     }
+
+    # XXX check charset1024 req
   }, # check_attrs2
 }; # meta
 
@@ -3582,6 +3590,8 @@ $Element->{+HTML_NS}->{script} = {
   ## inline, the format of the data must be given using the type attribute,
   ## and the src attribute must not be specified." - not testable.
       ## TODO: It would be possible to err <script type=text/plain src=...>
+
+  # XXX Content model check need to be updated
 }; # script
 
 ## NOTE: When script is disabled.
@@ -3669,6 +3679,8 @@ $Element->{+HTML_NS}->{noscript} = {
     }
   }, # check_end
 }; # noscript
+
+# XXX <template>
 
 # ---- Sections ----
 
@@ -4151,6 +4163,7 @@ $Element->{+HTML_NS}->{dfn} = {
 ## by machine, it requires language-specific knowledge and dictionary,
 ## such that we don't support the check of the requirement.
 
+# XXX content model need to be updated
 $Element->{+HTML_NS}->{time} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -4386,7 +4399,7 @@ $Element->{+HTML_NS}->{$_}->{check_end} = sub {
   $HTMLPhrasingContentChecker{check_end}->(@_);
 } for qw(b i); # check_end
 
-# XXX
+# XXX broken
 $Element->{+HTML_NS}->{ruby} = {
   %HTMLPhrasingContentChecker,
   check_start => sub {
@@ -4797,6 +4810,9 @@ $Element->{+HTML_NS}->{img} = {
     $HTMLEmptyChecker{check_end}->(@_);
   }, # check_end
 }; # img
+
+# XXX <img alt> context
+# XXX <img srcset>
 
 $Element->{+HTML_NS}->{iframe} = {
   %HTMLTextChecker, # XXX content model restriction
@@ -5597,6 +5613,8 @@ $Element->{+HTML_NS}->{table} = {
   # XXXwarn tr child is not serializable as HTML
 }; # table
 
+# XXX sortable table
+
 $Element->{+HTML_NS}->{caption} = {
   %HTMLFlowContentChecker,
   check_end => sub {
@@ -5990,7 +6008,7 @@ $Element->{+HTML_NS}->{input} = {
                            level => 'm');
       }
     }, # alt
-    autocomplete => $GetHTMLEnumeratedAttrChecker->({ # XXX
+    autocomplete => $GetHTMLEnumeratedAttrChecker->({ # XXX old
       on => 1, off => 1,
     }),
     autofocus => $AutofocusAttrChecker,
@@ -6101,6 +6119,7 @@ $Element->{+HTML_NS}->{input} = {
     ## XXX war if multiple <input type=radio checked>
     ## XXX <input type=image> requires alt="" and src=""
     ## XXX <input type=url value> MUST be absolute IRI.
+    ## XXX warn <input type=file> without enctype="multipart/form-data"
     ## ISSUE: -0/+0
 
     my $el = $item->{node};
@@ -7182,6 +7201,8 @@ sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
 sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 
 ## XXX Comments and PIs are not explicitly allowed in Atom.
+
+# XXX Update checks to align with HTML Standard's reqs and quality
 
 ## Atom 1.0 [RFC 4287] cites RFC 4288 (Media Type Registration) for
 ## "MIME media type".  However, RFC 4288 only defines syntax of

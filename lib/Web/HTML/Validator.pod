@@ -98,6 +98,8 @@ development only.
 
 =head2 The C<< $self->{flag} >> Structure
 
+XXX
+
 =over 4
 
 =item C<< $self->{flag}->{has_label} >>
@@ -122,6 +124,8 @@ $self->{flag}->{has_labelable} >> flag is I<undefined>.
 =back
 
 =head2 The C<$element_state> Structure
+
+XXX
 
 =over 4
 
@@ -221,6 +225,8 @@ and Attributes
 
 =back
 
+XXX
+
 Atom 1.0, Atom Threading Extension.
 
 For Atom documents, references to RFC 3066 are replaced by references
@@ -244,9 +250,12 @@ OBSVOCAB specification.  See the specification for details.
 
 <http://suika.suikawiki.org/gate/2005/sw/Whatpm%20Error%20Types>
 
+Issues related to this module are recorded at:
+<http://manakai.g.hatena.ne.jp/task/4/>.
+
 =head1 AUTHOR
 
-Wakaba <wakaba@suikawiki.org>
+Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
