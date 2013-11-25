@@ -534,6 +534,45 @@ $CheckerByType->{'character encoding label'} = sub {
   }
 }; # character encoding label
 
+$ElementAttrChecker->{(HTML_NS)}->{form}->{''}->{'accept-charset'} = sub {
+  my ($self, $attr) = @_;
+
+  ## An ordered set of unique space-separated tokens.
+  my @value = grep { length $_ } split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value, -1;
+  my %word;
+  for my $charset (@value) {
+    $charset =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+    if ($word{$charset}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $charset,
+                         level => 'm');
+    } else {
+      $word{$charset} = 1;
+      require Web::Encoding;
+      my $name = Web::Encoding::encoding_label_to_name ($charset);
+      if (defined $name) {
+        unless (Web::Encoding::is_ascii_compat_encoding_name ($name)) {
+          $self->{onerror}->(node => $attr,
+                             type => 'charset:not ascii compat',
+                             value => $charset,
+                             level => 'm');
+        }
+        if ($name ne 'utf-8') {
+          $self->{onerror}->(node => $attr,
+                             type => 'non-utf-8 character encoding',
+                             value => $charset,
+                             level => 'm'); # [ENCODING]
+        }
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'not encoding label', # XXXdoc
+                           value => $charset,
+                           level => 'm');
+      }
+    }
+  }
+}; # <form accept-charset="">
+
 ## Media query list [MQ]
 $CheckerByType->{'media query list'} = sub {
   my ($self, $attr) = @_;
@@ -2047,26 +2086,6 @@ my $HTMLCharsetChecker = sub ($$$;$) {
   
   return ($charset, $charset_value);
 }; # $HTMLCharsetChecker
-
-## NOTE: "An ordered set of space-separated tokens" where "each token
-## MUST be the preferred name of an ASCII-compatible character
-## encoding".
-my $HTMLCharsetsAttrChecker = sub {
-  my ($self, $attr) = @_;
-
-  ## ISSUE: "ordered set of space-separated tokens" is not defined.
-
-  my @value = grep {length $_} split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value;
-  
-  ## XXX
-  ## ISSUE: Uniqueness is not enforced.
-
-  for my $charset (@value) {
-    $HTMLCharsetChecker->($charset, $self, $attr, 1);
-  }
-
-  ## ISSUE: Shift_JIS is ASCII-compatible?  What about ISO-2022-JP?
-}; # $HTMLCharsetsAttrChecker
 
 my $CharChecker = sub {
   my ($self, $attr) = @_;
@@ -5766,7 +5785,6 @@ $ElementAttrChecker->{(HTML_NS)}->{th}->{''}->{headers} = sub {};
 $Element->{+HTML_NS}->{form} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    'accept-charset' => $HTMLCharsetsAttrChecker,
     ## XXX warning: action="" URL scheme is not submittable
     name => sub {
       my ($self, $attr) = @_;
