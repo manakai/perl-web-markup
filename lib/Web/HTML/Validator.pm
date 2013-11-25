@@ -285,9 +285,11 @@ $CheckerByType->{enumerated} = sub {
 
 ## Integer [HTML]
 $CheckerByType->{integer} = sub {
-  my ($self, $attr) = @_;
+  my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
-  unless ($value =~ /\A-?[0-9]+\z/) {
+  if ($value =~ /\A-?[0-9]+\z/) {
+    #
+  } else {
     $self->{onerror}->(node => $attr, type => 'integer:syntax error',
                        level => 'm');
   }
@@ -295,35 +297,32 @@ $CheckerByType->{integer} = sub {
 
 ## Non-negative integer [HTML]
 $CheckerByType->{'non-negative integer'} = sub {
-  my ($self, $attr) = @_;
+  my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
   if ($value =~ /\A[0-9]+\z/) {
-    return 1;
+    #
   } else {
     $self->{onerror}->(node => $attr,
                        type => 'nninteger:syntax error',
                        level => 'm');
-    return 0;
   }
 }; # non-negative integer
 
 ## Non-negative integer greater than zero [HTML]
 $CheckerByType->{'non-negative integer greater than zero'} = sub {
-  my ($self, $attr) = @_;
+  my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
   if ($value =~ /\A[0-9]+\z/) {
     if ($value > 0) {
-      return 1;
+      #
     } else {
       $self->{onerror}->(node => $attr, type => 'nninteger:out of range',
                          level => 'm');
-      return 0;
     }
   } else {
     $self->{onerror}->(node => $attr,
                        type => 'nninteger:syntax error',
                        level => 'm');
-    return 0;
   }
 }; # non-negative integer greater than zero
 
@@ -5999,7 +5998,6 @@ $Element->{+HTML_NS}->{input} = {
     format => $TextFormatAttrChecker,
     list => $ListAttrChecker,
     loop => $LegacyLoopChecker,
-    # XXX min="" max="" tests
     max => sub {}, ## check_attrs2
     min => sub {}, ## check_attrs2
     name => $FormControlNameAttrChecker,
@@ -6047,7 +6045,7 @@ $Element->{+HTML_NS}->{input} = {
           $checker = $CheckerByType->{'e-mail address'}
               if $value_type eq 'email' and
                  not $item->{node}->has_attribute_ns (undef, 'multiple');
-          $checker->($self, $attr, $item);
+          $checker->($self, $attr, $item, $element_state);
         }
       }
     } # value=""
@@ -6060,7 +6058,7 @@ $Element->{+HTML_NS}->{input} = {
         $self->{onerror}->(node => $attr,
                            type => 'unknown attribute', level => 'u');
       };
-      $checker->($self, $attr, $item);
+      $checker->($self, $attr, $item, $element_state);
     } # min="" max=""
 
     if ($input_type eq 'number') {
@@ -6193,7 +6191,7 @@ $Element->{+HTML_NS}->{input} = {
       }
 
       if (defined $min_value and defined $max_value) {
-        if ($min_value->to_html5_number > $max_value->to_html5_number) {
+        if ($min_value->to_html_number > $max_value->to_html_number) {
           my $max = $item->{node}->get_attribute_node_ns (undef, 'max');
           $self->{onerror}->(node => $max,
                              type => 'max lt min', ## TODOC: type
@@ -6202,7 +6200,7 @@ $Element->{+HTML_NS}->{input} = {
       }
       
       if (defined $min_value and defined $value_value) {
-        if ($min_value->to_html5_number > $value_value->to_html5_number) {
+        if ($min_value->to_html_number > $value_value->to_html_number) {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value lt min', ## TODOC: type
@@ -6212,7 +6210,7 @@ $Element->{+HTML_NS}->{input} = {
       }
       
       if (defined $max_value and defined $value_value) {
-        if ($max_value->to_html5_number < $value_value->to_html5_number) {
+        if ($max_value->to_html_number < $value_value->to_html_number) {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value gt max', ## TODOC: type
@@ -6228,8 +6226,9 @@ $Element->{+HTML_NS}->{input} = {
 
       if (defined $min_value and defined $max_value) {
         if ($min_value > $max_value) {
-          my $max = $item->{node}->get_attribute_node_ns (undef, 'max');
-          $self->{onerror}->(node => $max,
+          my $attr = $item->{node}->get_attribute_node_ns (undef, 'max')
+              || $item->{node}->get_attribute_node_ns (undef, 'min');
+          $self->{onerror}->(node => $attr,
                              type => 'max lt min', ## TODOC: type
                              level => $self->{level}->{must});
         }
