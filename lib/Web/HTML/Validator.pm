@@ -1535,8 +1535,14 @@ sub check_element ($$$;$) {
 
 ## $element_state
 ##
+##   figcaptions     Used by |figure| element checker.
+##   has_non_style   Used by flow content checker to detect misplaced
+##                   |style| elements.
 ##   has_palpable    Set to true if a palpable content child is found.
 ##                   (Handled specially for <ruby>.)
+##   has_summary     Used by |details| element checker.
+##   in_flow_content Set to true while the content model checker is
+##                   in the "flow content" checking mode.
 ##   phase           Content model checker state name.  Possible values
 ##                   depend on the element.
 ##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
@@ -2610,14 +2616,6 @@ my %HTMLTextChecker = (
 
 my %HTMLFlowContentChecker = (
   %AnyChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-
-    ## Will be restored by |check_end| of |%HTMLFlowContentChecker| or
-    ## |del| element.
-    $element_state->{in_flow_original} = $self->{flag}->{in_flow};
-    $self->{flag}->{in_flow} = 1;
-  }, # check_start
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -2627,19 +2625,17 @@ my %HTMLFlowContentChecker = (
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-      if ($element_state->{has_non_style} or
-          not $child_el->has_attribute_ns (undef, 'scoped')) {
+      if ($element_state->{has_non_style}) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:flow style',
-                           level => $self->{level}->{must});
+                           level => 'm');
       }
     } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-      $element_state->{has_non_style} = 1 unless $child_is_transparent;
-    } else {
       $element_state->{has_non_style} = 1;
+    } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:flow',
-                         level => $self->{level}->{must})
+                         level => 'm');
     }
   }, # check_child_element
   check_child_text => sub {
@@ -2648,11 +2644,6 @@ my %HTMLFlowContentChecker = (
       $element_state->{has_non_style} = 1;
     }
   },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    delete $self->{flag}->{in_flow}
-        unless $element_state->{in_flow_original};
-  }, # check_end
 ); # %HTMLFlowContentChecker
 
 my %HTMLPhrasingContentChecker = (
@@ -2705,7 +2696,7 @@ my %TransparentChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => $self->{level}->{must});
-    } elsif ($self->{flag}->{in_phrasing}) {
+    } elsif ($self->{flag}->{in_phrasing}) { # phrasing content
       if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
@@ -2713,33 +2704,26 @@ my %TransparentChecker = (
                            type => 'element not allowed:phrasing',
                            level => $self->{level}->{must});
       }
-    } elsif ($self->{flag}->{in_flow} and $element_state->{in_flow_original}) {
+    } else { # flow content
       if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:flow style',
-                           level => $self->{level}->{must});
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:flow',
-                           level => $self->{level}->{must});
-      }
-    } else {
-      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
+        ## <style scoped> is only allowed as the first child elements
+        ## when the element is used as real flow content (i.e. is a
+        ## root element).
         if ($element_state->{has_non_style} or
-            not $child_el->has_attribute_ns (undef, 'scoped')) {
+            do {
+              my $parent = $item->{node}->parent_node;
+              ($parent and $parent->node_type == 1);
+            }) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:flow style',
-                             level => $self->{level}->{must});
+                             level => 'm');
         }
       } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        $element_state->{has_non_style} = 1 unless $child_is_transparent;
-      } else {
         $element_state->{has_non_style} = 1;
+      } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:flow',
-                           level => $self->{level}->{must})
+                           level => 'm');
       }
     }
   }, # check_child_element
@@ -2885,11 +2869,7 @@ $Element->{+HTML_NS}->{head} = {
                            level => $self->{level}->{must});
       }
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-      if ($child_el->has_attribute_ns (undef, 'scoped')) {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:head style',
-                           level => $self->{level}->{must});
-      }
+      #
     } elsif ($_Defs->{categories}->{'metadata content'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
@@ -3407,7 +3387,27 @@ $Element->{+HTML_NS}->{style} = {
     $element_state->{style_type} = $type;
 
     $element_state->{text} = '';
-  },
+  }, # check_start
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+    if ($self->{flag}->{in_head}) {
+      my $scoped_attr = $item->{node}->get_attribute_node_ns (undef, 'scoped');
+      $self->{onerror}->(node => $scoped_attr,
+                         type => 'attribute not allowed',
+                         level => 'w')
+          if $scoped_attr;
+    } else {
+      my $parent = $item->{node}->parent_node;
+      if ($parent and $parent->node_type == 1) { # ELEMENT_NODE
+        unless ($item->{node}->has_attribute_ns (undef, 'scoped')) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'attribute missing',
+                             text => 'scoped',
+                             level => 'm');
+        }
+      }
+    }
+  }, # check_attrs2
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -3665,11 +3665,7 @@ $Element->{+HTML_NS}->{noscript} = {
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'link') {
         #
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-        if ($child_el->has_attribute_ns (undef, 'scoped')) {
-          $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:head noscript',
-                             level => $self->{level}->{must});
-        }
+        #
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'meta') {
         my $http_equiv_attr
             = $child_el->get_attribute_node_ns (undef, 'http-equiv');
@@ -4696,8 +4692,6 @@ $Element->{+HTML_NS}->{del} = {
   }), # check_attrs
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    delete $self->{flag}->{in_flow}
-        unless $element_state->{in_flow_original};
     # "in_phrasing" don't have to be restored here, because of the
     # "transparent"ness.
 
@@ -4709,14 +4703,7 @@ $Element->{+HTML_NS}->{del} = {
 
 $Element->{+HTML_NS}->{figure} = {
   %HTMLFlowContentChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-
-    $element_state->{in_figure} = 1;
-    $element_state->{phase} = 'initial';
-
-    $HTMLFlowContentChecker{check_start}->(@_);
-  },
+  ## Flow content, optionally either preceded or followed by a |figcaption|
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -4724,74 +4711,51 @@ $Element->{+HTML_NS}->{figure} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
-    } elsif ($element_state->{phase} eq 'flow') {
-      # XXX <style scoped>
-      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
-        $element_state->{phase} = 'flow-figcaption';
+                         level => 'm');
+    } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
+      push @{$element_state->{figcaptions} ||= []}, $child_el;
+    } else { # flow content
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
+        if ($element_state->{has_non_style}) {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:flow style',
+                             level => 'm');
+        }
+        $element_state->{in_flow_content} = 1;
+        push @{$element_state->{figcaptions} ||= []}, 'flow';
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        $element_state->{in_flow_content} = 1;
+        $element_state->{has_non_style} = 1;
+        push @{$element_state->{figcaptions} ||= []}, 'flow';
       } else {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:figure',
-                           level => $self->{level}->{must});
+                           type => 'element not allowed:flow',
+                           level => 'm');
       }
-    } elsif ($element_state->{phase} eq 'figcaption-flow') {
-      # XXX <style scoped>
-      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        #
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:figure',
-                           level => $self->{level}->{must});
-      }
-    } elsif ($element_state->{phase} eq 'figcaption') {
-      # XXX <style scoped>
-      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        $element_state->{phase} = 'figcaption-flow';
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:figure',
-                           level => $self->{level}->{must});
-      }
-    } elsif ($element_state->{phase} eq 'initial') {
-      # XXX <style scoped>
-      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-        $element_state->{phase} = 'flow';
-      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'figcaption') {
-        $element_state->{phase} = 'figcaption';
-      } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:figure', # XXXdocumentation
-                           level => $self->{level}->{must});        
-      }
-    } elsif ($element_state->{phase} eq 'flow-figcaption') {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:figure', # XXXdocumentation
-                         level => $self->{level}->{must});        
-    } else {
-      die "check_child_element: Bad |figure| phase: $element_state->{phase}";
     }
   }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
-      if ($element_state->{phase} eq 'flow' or
-          $element_state->{phase} eq 'figcaption-flow') {
-        #
-      } elsif ($element_state->{phase} eq 'figcaption') {
-        $element_state->{phase} = 'figcaption-flow';
-      } elsif ($element_state->{phase} eq 'initial') {
-        $element_state->{phase} = 'flow';
-      } else {
-        $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed:figure', # XXXdocumentation
-                           level => $self->{level}->{must});
-      }
+      push @{$element_state->{figcaptions} ||= []}, 'flow';
+      $element_state->{has_non_style} = 1;
+      $element_state->{in_flow_content} = 1;
     }
   }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
+    if (@{$element_state->{figcaptions} or []}) {
+      if (ref $element_state->{figcaptions}->[0]) {
+        shift @{$element_state->{figcaptions}};
+      } elsif (ref $element_state->{figcaptions}->[-1]) {
+        pop @{$element_state->{figcaptions}};
+      }
+      for (grep { ref $_ } @{$element_state->{figcaptions}}) {
+        $self->{onerror}->(node => $_,
+                           type => 'element not allowed:flow',
+                           level => 'm');
+      }
+    }
     $self->{onerror}->(node => $item->{node},
                        level => 's',
                        type => 'no significant content')
@@ -5726,7 +5690,7 @@ $Element->{+HTML_NS}->{caption} = {
 
       $self->{onerror}->(node => $caption,
                          type => 'element not allowed:figure table caption', ## XXX documentation
-                         level => $self->{level}->{must});
+                         level => 's');
     } # FIGURE
 
     $HTMLFlowContentChecker{check_end}->(@_);
@@ -5935,7 +5899,7 @@ $Element->{+HTML_NS}->{fieldset} = {
     form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
-  ## NOTE: legend?, Flow
+  ## Optional |legend| element, followed by flow content.
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -5943,28 +5907,37 @@ $Element->{+HTML_NS}->{fieldset} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
-      $element_state->{has_non_legend} = 1;
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'legend') {
-      if ($element_state->{has_non_legend}) {
+      if ($element_state->{in_flow_content}) {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:fieldset legend', # XXXdocumentation
-                           level => $self->{level}->{must});
+                           type => 'element not allowed:flow',
+                           level => 'm');
+      } else {
+        $element_state->{in_flow_content} = 1;
       }
-      $element_state->{has_legend} = 1;
-      $element_state->{has_non_legend} = 1;
-    } else {
-      $HTMLFlowContentChecker{check_child_element}->(@_);
-      $element_state->{has_non_legend} = 1 unless $child_is_transparent;
-      ## TODO:
-      ## |<fieldset><object><legend>xx</legend></object>..</fieldset>|
-      ## should raise an error.
+    } else { # flow content
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:flow style',
+                           level => 'm')
+            if $element_state->{has_non_style};
+        $element_state->{in_flow_content} = 1;
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        $element_state->{has_non_style} = 1;
+        $element_state->{in_flow_content} = 1;
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:flow',
+                           level => 'm');
+      }
     }
   }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
-      $element_state->{has_non_legend} = 1;
+      $element_state->{in_flow_content} = 1;
+      $element_state->{has_non_style} = 1;
     }
   }, # check_child_text
   check_end => sub {
@@ -6971,7 +6944,7 @@ $Element->{+HTML_NS}->{meter} = {
 
 $Element->{+HTML_NS}->{details} = {
   %HTMLFlowContentChecker,
-  ## NOTE: summary, Flow
+  ## The |summary| element followed by flow content.
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -6979,45 +6952,51 @@ $Element->{+HTML_NS}->{details} = {
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
-                         level => $self->{level}->{must});
-      $element_state->{has_non_summary} = 1;
+                         level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'summary') {
-      if ($element_state->{has_non_summary}) {
+      if ($element_state->{in_flow_content}) {
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:details summary', ## XXXdocumentation
-                           level => $self->{level}->{must});
+                           type => 'element not allowed:flow', ## XXXdocumentation
+                           level => 'm');
       }
+      $element_state->{in_flow_content} = 1;
       $element_state->{has_summary} = 1;
-      $element_state->{has_non_summary} = 1;
-    } else {
-      $HTMLFlowContentChecker{check_child_element}->(@_);
-      $element_state->{has_non_summary} = 1 unless $child_is_transparent;
-      ## TODO:
-      ## |<details><object><summary>xx</summary></object>..</details>|
-      ## should raise an error.
+    } else { # flow content
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:flow style',
+                           level => 'm')
+            if $element_state->{has_non_style};
+        $element_state->{in_flow_content} = 1;
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        $element_state->{has_non_style} = 1;
+        $element_state->{in_flow_content} = 1;
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:flow',
+                           level => 'm');
+      }
     }
   }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
-      $element_state->{has_non_summary} = 1;
+      $element_state->{in_flow_content} = 1;
+      $element_state->{has_non_style} = 1;
     }
   }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-
     unless ($element_state->{has_summary}) {
       $self->{onerror}->(node => $item->{node},
                          type => 'child element missing',
                          text => 'summary',
-                         level => $self->{level}->{must});
+                         level => 'm');
     }
-
     $self->{onerror}->(node => $item->{node},
                        level => 's',
                        type => 'no significant content')
         unless $element_state->{has_palpable};
-
     $HTMLFlowContentChecker{check_end}->(@_);
   }, # check_end
 }; # details
@@ -7035,8 +7014,6 @@ $Element->{+HTML_NS}->{menu} = {
       ##   toolbar-flow
       ##   popup
     $element_state->{id_type} = 'popup' if $item->{node}->type eq 'popup';
-    $element_state->{in_flow_original} = $self->{flag}->{in_flow};
-    $self->{flag}->{in_flow} = 1;
     $AnyChecker{check_start}->(@_);
   }, # check_start
   check_attrs2 => sub {
@@ -7127,7 +7104,6 @@ $Element->{+HTML_NS}->{menu} = {
   }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    delete $self->{flag}->{in_flow} unless $element_state->{in_flow_original};
     if ($element_state->{phase} eq 'toolbar-flow') {
       $self->{onerror}->(node => $item->{node},
                          level => 's',

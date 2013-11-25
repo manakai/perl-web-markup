@@ -69,6 +69,7 @@ sub _test ($$) {
           if ($opt{type} =~ /^status:/ and $opt{level} eq 'i') {
             #
           } else {
+            warn $opt{type} unless ref $opt{node};
             push @error, get_node_path ($opt{node}) . ';' . $opt{type} .
                 (defined $opt{text} ? ';' . $opt{text} : '') .
                 (defined $opt{level} ? ';'.$opt{level} : '');
