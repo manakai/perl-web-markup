@@ -34,6 +34,13 @@ sub onsubdoc ($;$) {
   };
 } # onsubdoc
 
+## Variable |$_Defs| (|$Web::HTML::Validator::_Defs|), defined in
+## |Web::HTML::Validator::_Defs| module, is generated from
+## |element.json| in <https://github.com/manakai/data-web-defs/>.  It
+## contains various properties of elements and attributes, described
+## in
+## <https://github.com/manakai/data-web-defs/blob/master/doc/elements.txt>.
+
 ## $self->{flag}->
 ##
 ##   {has_http_equiv}->{$keyword}  Set to true if there is a
@@ -124,8 +131,6 @@ sub _terminate ($) {
   delete $self->{map_compat};
 } # _terminate
 
-## XXX warn for Attr->specified = false
-
 ## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
 ## XXX warning public ID chars
 ## XXX warning system ID chars
@@ -160,9 +165,6 @@ sub _terminate ($) {
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#comments
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#element-restrictions
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#cdata-rcdata-restrictions
-
-## XXX root element MUST be ...
-## TODO: Conformance of an HTML document with non-html root element.
 
 ## XXX xml-stylesheet PI
 
@@ -5596,14 +5598,11 @@ $Element->{+HTML_NS}->{input} = {
     ## XXX warn <input type=hidden disabled>
     ## XXX warn <input type=hidden> (no name="")
     ## XXX warn <input type=hidden name=_charset_> (no value="")
-    ## XXX warn unless min <= value <= max
-    ## XXX <input type=color value=""> (empty value="") is ok
     ## XXX <input type=radio name="">'s name="" MUST be unique
     ## XXX war if multiple <input type=radio checked>
     ## XXX <input type=image> requires alt="" and src=""
     ## XXX <input type=url value> MUST be absolute IRI.
     ## XXX warn <input type=file> without enctype="multipart/form-data"
-    ## ISSUE: -0/+0
 
     my $el = $item->{node};
 
@@ -8275,7 +8274,8 @@ sub check_node ($$) {
 
   # XXX More useful return object
   # XXX Merging subdoc validation result
-  return delete $self->{return}; # XXX
+  #return
+  delete $self->{return}; # XXX
 } # check_node
 
 # XXX

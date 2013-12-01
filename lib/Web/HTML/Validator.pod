@@ -89,13 +89,24 @@ See <http://suika.suikawiki.org/gate/2005/sw/Whatpm%20Error%20Types>.
 
 Validate the specified node.  If the node is not a document node, the
 node is validated as if it were an orphaned node, i.e. a node with no
-parent or owner.  Errors and warnings are reported through the
-C<onerror> handler.  Any subdocument is reported through the
-C<onsubdoc> handler.
+parent or owner.  The node can be an attribute, but element- or
+attribute-specific validation is not performed in that case.
+
+Errors and warnings are reported through the C<onerror> handler.  Any
+subdocument is reported through the C<onsubdoc> handler.
 
 XXX return value
 
 =back
+
+Since the input to the validator is a DOM, not a string, syntax-level
+conformance errors can't be checked.  For detecting any conformance
+error, you have to parse the string using appropriate parser
+(L<Web::HTML::Parser> for HTML, or L<Web::XML::Parser> for XML), and
+then invoke the validator with the result DOM as the input.  For XML,
+you might also want to invoke DTD validator between invocations of
+parser and validator, as this validator does not perform any DTD-based
+validation.
 
 =head1 DEPENDENCY
 
