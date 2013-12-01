@@ -1235,6 +1235,7 @@ sub check_document ($$) {
   my ($self, $doc) = @_;
   $self->onerror;
   $self->onsubdoc;
+  $self->_init;
 
   ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
 
@@ -1277,7 +1278,8 @@ sub check_document ($$) {
   ## TODO: Check for other items other than document element
   ## (second (errorous) element, text nodes, PI nodes, doctype nodes)
 
-  my $return = $self->check_element ($docel);
+  $self->_check_node ({type => 'element', node => $docel, parent_state => {}});
+  $self->_check_refs;
 
   ## Document charset
   if ($doc->manakai_is_html) {
@@ -1324,7 +1326,8 @@ sub check_document ($$) {
     # XXX check <?xml encoding=""?>
   } # XML document
 
-  return $return;
+  $self->_terminate;
+  return delete $self->{return}; # XXX
 } # check_document
 
 ## XXX Check DOCUMENT_FRAGMENT_NODE
@@ -1333,12 +1336,13 @@ sub check_document ($$) {
 ## an element without a parent node).
 sub check_element ($$) {
   my ($self, $el) = @_;
-
+  $self->onerror;
+  $self->onsubdoc;
   $self->_init;
   $self->_check_node ({type => 'element', node => $el, parent_state => {}});
   $self->_check_refs;
   $self->_terminate;
-  return delete $self->{return};
+  return delete $self->{return}; # XXX
 } # check_element
 
 # XXX More useful return object
