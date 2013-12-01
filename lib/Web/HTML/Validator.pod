@@ -5,34 +5,32 @@ Web::HTML::Validator - DOM Conformance Checker
 =head1 SYNOPSIS
 
   use Web::HTML::Validator;
-  
-  Web::HTML::Validator->check_document ($doc, sub {
+  my $val = Web::HTML::Validator->new;
+  $val->onerror (sub {
     my %arg = @_;
     warn get_node_path ($arg{node}), ": ",
         ($arg{level} || "Error"), ": ",
         $arg{type}, "\n";
   });
-  
-  Web::HTML::Validator->check_element ($doc, sub {
-    my %arg = @_;
-    warn get_node_path ($arg{node}), ": ",
-        ($arg{level} || "Error"), ": ",
-        $arg{type}, "\n";
-  });
+  $val->check_node ($doc);
 
 =head1 DESCRIPTION
 
 The Perl module C<Web::HTML::Validator> contains methods for
-validation of entire or part of DOM tree with regard to relevant Web
-standards such as HTML.
+conformance checking (validation) of DOM tree with regard to relevant
+Web standards such as HTML.  Although the module name contains "HTML",
+it can also be used to check the conformance of non-HTML XML
+documents.  See also L</SPECIFICATIONS>.
 
 =head1 METHODS
 
-This module contains two class methods:
-
-XXX API is not stable.  Don't use this module yet!
+This module has following methods:
 
 =over 4
+
+=item $val = Web::HTML::Validator->new
+
+Create a new instance of the validator.
 
 =item $code = $val->onsubdoc
 
@@ -48,18 +46,11 @@ expected to throw any exception.
 
 XXX args
 
-=item Web::HTML::Validator->check_document (I<$document>, I<$onerror>)
+=item $code = $val->onerror
 
-Checks a document, I<$document>, and its descendant for their
-conformance.  If there is an error or a warnign, then the
-I<$onerror> C<CODE> is invoked with named arguments same
-as ones for the method C<check_element>.
+=item $val->onerror ($code)
 
-=item Web::HTML::Validator->check_element (I<$element>, I<$onerror>)
-
-Checks an element, I<$element>, and its descendant for their conformance.
-If there is an error or a warning, then the I<$onerror> C<CODE>
-is invoked with named arguments:
+XXX
 
 =over 4
 
@@ -92,76 +83,25 @@ is detected.
 
 =back
 
-=back
+See <http://suika.suikawiki.org/gate/2005/sw/Whatpm%20Error%20Types>.
 
-=head1 BUGS
+=item $val->check_node ($node)
 
-This conformance checker is work in progress; it I<might> not be able
-to detect all the errors in the DOM tree, and it I<might> detect an
-error for a node that is conforming in fact.
+Validate the specified node.  If the node is not a document node, the
+node is validated as if it were an orphaned node, i.e. a node with no
+parent or owner.  Errors and warnings are reported through the
+C<onerror> handler.  Any subdocument is reported through the
+C<onsubdoc> handler.
 
-=head1 NOTES ON IMPLEMENTATION DETAILS
-
-I<This section is not complete.>
-
-This section describes various internal constructions used in
-L<Web::HTML::Validator> and relevant modules.  These data structures
-are not public interfaces -- they should not be accessed or modified
-by applications.  They are documented here for the convenience of
-development only.
-
-=head2 The C<< $self->{flag} >> Structure
-
-XXX
-
-=over 4
-
-=item C<< $self->{flag}->{has_label} >>
-
-This flag is set to a true value if and only if there is a C<label>
-element ancestor of the current node.
-
-=item C<< $self->{flag}->{has_labelable} >>
-
-This flag is set to C<1> if and only if a nearest ancestor C<label>
-element has the C<for> attribute and there is no labelable
-form-associated element that is a descendant of the C<label> element
-and precedes the current node in tree order.  This flag is set to C<2>
-if and only if there is a labelable form-associated element that is a
-descendant of the nearest ancestor C<label> element of the current
-node and precedes the current node in tree order.  This flag is
-otherwise set to a false value.  B<However>, when there is no ancestor
-C<label> element of the current node, i.e. when C<<
-$self->{flag}->{has_label} >> is false, the value of the C<<
-$self->{flag}->{has_labelable} >> flag is I<undefined>.
-
-=back
-
-=head2 The C<$element_state> Structure
-
-XXX
-
-=over 4
-
-=item C<< $element_state->{has_label_original} >>
-
-Used to preserve the value of C<< $self->{flag}->{has_label} >> at the
-time of invocation of the method C<element_start> for the element
-being checked.
-
-=item C<< $element_state->{has_labelable_original} >>
-
-Used to preserve the value of C<< $self->{flag}->{has_labelable} >> at
-the time of invocation of the method C<element_start> for the element
-being checked.
+XXX return value
 
 =back
 
 =head1 DEPENDENCY
 
-In addition to the dependency documented in the README
+In addition to the dependency described in the README file
 <https://github.com/manakai/perl-web-markup/blob/master/README.pod#dependency>,
-following modules are required:
+following modules are required by this module:
 
 =over 4
 
@@ -234,6 +174,8 @@ HTML Standard <http://c.whatwg.org/>.
 The |html| element in the HTML namespace MAY be used as the root
 element.
 
+A |DocumentFragment| MAY contain any child element and text node.
+
 =item OBSVOCAB
 
 manakai's Conformance Checking Guideline for Obsolete HTML Elements
@@ -260,14 +202,7 @@ RDF Errata
 
 The C<RDF> element in the RDF namespace is metadata content.
 
-=item MANAKAI
-
-manakai DOM Extensions
-<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
-
-=back
-
-XXX
+=item ATOM
 
 Atom 1.0, Atom Threading Extension.
 
@@ -279,8 +214,16 @@ The C<atom:email> element MUST NOT contain child elements.  The
 content of the element MUST be text which is a valid e-mail address
 [HTML].  (This is a willful violation of RFC 5322 and RFC 4287.)
 
-For more information, see
-<http://suika.suikawiki.org/gate/2007/html/standards>.
+=item MANAKAI
+
+manakai DOM Extensions
+<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
+
+=back
+
+The validator also supports much more Web standards (indirectly via
+required modules), including but not limited to CSS, URL Standard,
+IETF BCP 47 language tags, and Encoding Standard.
 
 Note that XML 1.1, Namespaces in XML 1.1, C<xml:id>, XLink, XHTML
 Modularization, Ruby Annotations, and RDFa are not applicable
@@ -288,13 +231,6 @@ specifications.  Also, the module does not support historical HTML
 features no longer part of the language, except for those explicitly
 listed in the OBSVOCAB specification.  See the specification for
 details.
-
-=head1 SEE ALSO
-
-<http://suika.suikawiki.org/gate/2005/sw/Whatpm%20Error%20Types>
-
-Issues related to this module are recorded at:
-<http://manakai.g.hatena.ne.jp/task/4/>.
 
 =head1 AUTHOR
 

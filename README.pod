@@ -92,6 +92,8 @@ repository: <https://github.com/manakai/perl-web-markup>.
 Test results can be reviewed at Travis CI
 <https://travis-ci.org/manakai/perl-web-markup>.
 
+Known issues are recorded at: <http://manakai.g.hatena.ne.jp/task/4/>.
+
 =head1 AUTHOR
 
 Wakaba <wakaba@suikawiki.org>.

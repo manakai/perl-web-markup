@@ -968,6 +968,47 @@ for my $test (
   } n => 1, name => ['check_node', 'document'];
 }
 
+for my $test (
+  [sub {
+     my $doc = $_[0];
+     my $text = $doc->create_text_node ("\x{110000}");
+     return ($text, {text => $text});
+   },
+   [{type => 'text:bad char', value => 'U-00110000', index => 0,
+     level => 'm', node => 'text'}]],
+  [sub {
+     my $doc = $_[0];
+     my $df = $doc->create_document_fragment;
+     my $text = $doc->create_text_node ("\x{110000}");
+     $df->append_child ($text);
+     my $el = $doc->create_element ('foo');
+     $df->append_child ($el);
+     return ($df, {df => $df, text => $text, foo => $el});
+   },
+   [{type => 'text:bad char', value => 'U-00110000', index => 0,
+     level => 'm', node => 'text'},
+    {type => 'element not defined', level => 'm', node => 'foo'}]],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->manakai_is_html (0);
+    my ($node, $map) = $test->[0]->($doc);
+    $map->{doc} = $doc;
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_node ($node);
+    eq_or_diff [sort { $a->{type} cmp $b->{type} } @error],
+        [sort { $a->{type} cmp $b->{type} }
+         map { {%$_, node => $map->{$_->{node}}} } @{$test->[1]}];
+    done $c;
+  } n => 1, name => ['check_node', 'node'];
+}
+
 run_tests;
 
 =head1 LICENSE

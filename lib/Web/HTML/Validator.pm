@@ -38,12 +38,37 @@ sub onsubdoc ($;$) {
 ##
 ##   {has_http_equiv}->{$keyword}  Set to true if there is a
 ##                       <meta http-equiv=$keyword> element.
+##   {has_label}         Set to a true value if and only if there is a
+##                       |label| element ancestor of the current node.
+##   {has_labelable}     Set to |1| if and only if a nearest ancestor |label|
+##                       element has the |for| attribute and there is
+##                       no labelable form-associated element that is
+##                       a descendant of the |label| element and
+##                       precedes the current node in tree order.
+##                       This flag is set to |2| if and only if there
+##                       is a labelable form-associated element that
+##                       is a descendant of the nearest ancestor
+##                       |label| element of the current node and
+##                       precedes the current node in tree order.
+##                       Otherwise, it is set to a false value.
+##                       However, when there is no ancestor |label|
+##                       element of the current node, i.e. when
+##                       |$self->{flag}->{has_label}| is false, the
+##                       value of the |$self->{flag}->{has_labelable}|
+##                       flag is undefined.
 ##   {has_meta_charset}  Set to true if there is a <meta charset=""> or
 ##                       <meta http-equiv=content-type> element.
 
 ## $element_state
 ##
 ##   figcaptions     Used by |figure| element checker.
+##   has_label_original Used to preserve the value of
+##                   |$self->{flag}->{has_label}| at the time of invocation
+##                   of the method |check_start| for the element being checked.
+##   has_labelable_original Used to preserve the value of 
+##                   |$self->{flag}->{has_labelable}| at the time of
+##                   invocation of the method |check_start| for the 
+##                   element being checked.
 ##   has_non_style   Used by flow content checker to detect misplaced
 ##                   |style| elements.
 ##   has_palpable    Set to true if a palpable content child is found.
@@ -7901,7 +7926,7 @@ sub _check_doc_charset ($$) {
 
 sub _check_node ($$) {
   my $self = $_[0];
-  my @item = (@{$_[1]});
+  my @item = ($_[1]);
   while (@item) {
     my $item = shift @item;
     if (ref $item eq 'ARRAY') {
@@ -8143,6 +8168,20 @@ sub _check_node ($$) {
       unshift @item, @new_item;
     } elsif ($item->{type} eq '_check_doc_charset') {
       $self->_check_doc_charset ($item->{node});
+    } elsif ($item->{type} eq 'document_fragment') {
+      my @new_item;
+      my $parent_state = {};
+      for my $node (@{$item->{node}->child_nodes}) {
+        my $nt = $node->node_type;
+        if ($nt == 1) { # ELEMENT_NODE
+          push @new_item, {type => 'element', node => $node,
+                           parent_state => $parent_state};
+        } elsif ($nt == 3) { # TEXT_NODE
+          $self->_check_data ($node, 'data');
+        }
+        # XXX Comment PI
+      } # $node
+      unshift @item, @new_item;
     } else {
       die "$0: Internal error: Unsupported checking action type |$item->{type}|";
     }
@@ -8220,22 +8259,24 @@ sub check_node ($$) {
   my $nt = $node->node_type;
   if ($nt == 1) { # ELEMENT_NODE
     $self->_check_node
-        ([{type => 'element', node => $node, parent_state => {}}]);
+        ({type => 'element', node => $node, parent_state => {}});
   } elsif ($nt == 9) { # DOCUMENT_NODE
-    $self->_check_node ([{type => 'document', node => $node}]);
+    $self->_check_node ({type => 'document', node => $node});
+  } elsif ($nt == 3) { # TEXT_NODE
+    $self->_check_data ($node, 'data');
+  } elsif ($nt == 2) { # ATTRIBUTE_NODE
+    $self->_check_data ($node, 'value');
+  } elsif ($nt == 11) { # DOCUMENT_FRAGMENT_NODE
+    $self->_check_node ({type => 'document_fragment', node => $node});
   }
+  # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
   $self->_check_refs;
   $self->_terminate;
+
+  # XXX More useful return object
+  # XXX Merging subdoc validation result
   return delete $self->{return}; # XXX
 } # check_node
-
-## XXX Check DOCUMENT_FRAGMENT_NODE
-
-## Check an element.  The element is checked as if it is an orphan node (i.e.
-## an element without a parent node).
-
-# XXX More useful return object
-# XXX Merging subdoc validation result
 
 # XXX
 package Web::HTML::Validator::HTML::Metadata;
