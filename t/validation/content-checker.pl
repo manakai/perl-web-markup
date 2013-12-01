@@ -80,7 +80,7 @@ sub _test ($$) {
       push @error, get_node_path ($opt->{container_node}) . ';SUBDOC;'
           . $opt->{media_type};
     });
-    $val->check_element ($doc->document_element);
+    $val->check_node ($doc->document_element);
 
     my $actual = join ("\n", sort {$a cmp $b} @error);
     my $expected = join ("\n", sort {$a cmp $b} @{$test->{errors}->[0]});

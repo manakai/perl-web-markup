@@ -234,6 +234,12 @@ HTML Standard <http://c.whatwg.org/>.
 The |html| element in the HTML namespace MAY be used as the root
 element.
 
+=item OBSVOCAB
+
+manakai's Conformance Checking Guideline for Obsolete HTML Elements
+and Attributes
+<http://suika.suikawiki.org/www/markup/html/exts/manakai-obsvocab>.
+
 =item XSLT
 
 XSL Transformations (XSLT) Version 1.0 <http://www.w3.org/TR/xslt>.
@@ -244,11 +250,15 @@ XSL Transformations (XSLT) Version 1.0 Specification Errata
 Key words "must" and "should" are to be interpreted as described in
 RFC 2119.
 
-=item OBSVOCAB
+=item RDFXML
 
-manakai's Conformance Checking Guideline for Obsolete HTML Elements
-and Attributes
-<http://suika.suikawiki.org/www/markup/html/exts/manakai-obsvocab>.
+RDF/XML Syntax Specification (Revised)
+<http://www.w3.org/TR/rdf-syntax-grammar/>.
+
+RDF Errata
+<http://www.w3.org/2001/sw/RDFCore/errata#rdf-syntax-grammar>.
+
+The C<RDF> element in the RDF namespace is metadata content.
 
 =item MANAKAI
 

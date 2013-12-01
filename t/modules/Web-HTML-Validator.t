@@ -21,7 +21,7 @@ for my $attr (qw(xml:lang xml:space xml:base)) {
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -147,7 +147,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -185,7 +185,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{%{$test->[1]}, node => $el->attributes->[0]}];
     done $c;
@@ -207,7 +207,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_element ($el);
+  $validator->check_node ($el);
   eq_or_diff \@error,
       [{type => 'element not defined',
         node => $el,
@@ -276,7 +276,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -303,7 +303,7 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -324,7 +324,7 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -405,7 +405,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [map { {%{$_}, node => $el} } @{$test->[1]}];
     done $c;
@@ -424,7 +424,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_element ($el);
+  $validator->check_node ($el);
   eq_or_diff \@error,
       [{type => 'element not defined',
         node => $el,
@@ -459,7 +459,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -490,7 +490,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -525,7 +525,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -555,7 +555,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -584,7 +584,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -611,7 +611,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_element ($el);
+    $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'element not defined',
           node => $el,
@@ -646,7 +646,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_document ($doc);
+    $validator->check_node ($doc);
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
@@ -670,7 +670,7 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_document ($doc);
+    $validator->check_node ($doc);
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
@@ -692,7 +692,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
                         node => $doc, level => 's'}];
   done $c;
@@ -711,7 +711,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'mismatched charset name',
                         node => $doc->get_elements_by_tag_name ('meta')
                             ->[0]->get_attribute_node_ns (undef, 'content'),
@@ -736,7 +736,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
                         node => $doc, level => 's'}];
   done $c;
@@ -755,7 +755,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
                         node => $doc, level => 's'}];
   done $c;
@@ -773,7 +773,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'no character encoding declaration',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
@@ -793,7 +793,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non ascii superset',
                         node => $doc, level => 'm'},
                        {type => 'no character encoding declaration',
@@ -817,7 +817,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'element not allowed:root',
                         node => $el, level => 'm'},
                        {type => 'in XML:charset',
@@ -838,7 +838,7 @@ test {
     my %args = @_;
     push @error, \%args;
   });
-  $validator->check_document ($doc);
+  $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'element not allowed:root',
                         node => $el, level => 'm'},
                        {type => 'in XML:charset',
@@ -960,12 +960,12 @@ for my $test (
       my %args = @_;
       push @error, \%args;
     });
-    $validator->check_document ($doc);
+    $validator->check_node ($doc);
     eq_or_diff [sort { $a->{type} cmp $b->{type} } @error],
         [sort { $a->{type} cmp $b->{type} }
          map { {%$_, node => $map->{$_->{node}}} } @{$test->[1]}];
     done $c;
-  } n => 1, name => ['check_document'];
+  } n => 1, name => ['check_node', 'document'];
 }
 
 run_tests;

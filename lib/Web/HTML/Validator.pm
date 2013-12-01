@@ -34,6 +34,28 @@ sub onsubdoc ($;$) {
   };
 } # onsubdoc
 
+## $self->{flag}->
+##
+##   {has_http_equiv}->{$keyword}  Set to true if there is a
+##                       <meta http-equiv=$keyword> element.
+##   {has_meta_charset}  Set to true if there is a <meta charset=""> or
+##                       <meta http-equiv=content-type> element.
+
+## $element_state
+##
+##   figcaptions     Used by |figure| element checker.
+##   has_non_style   Used by flow content checker to detect misplaced
+##                   |style| elements.
+##   has_palpable    Set to true if a palpable content child is found.
+##                   (Handled specially for <ruby>.)
+##   has_summary     Used by |details| element checker.
+##   in_flow_content Set to true while the content model checker is
+##                   in the "flow content" checking mode.
+##   phase           Content model checker state name.  Possible values
+##                   depend on the element.
+##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
+##                   is expected to have the |title| attribute.
+
 sub _init ($) {
   my $self = $_[0];
   $self->{minus_elements} = {};
@@ -1085,6 +1107,31 @@ $IsPalpableContent->{(HTML_NS)}->{dl} = sub {
   return 0;
 };
 
+sub _add_minus_elements ($$@) {
+  my $self = shift;
+  my $element_state = shift;
+  for my $elements (@_) {
+    for my $nsuri (keys %$elements) {
+      for my $ln (keys %{$elements->{$nsuri}}) {
+        unless ($self->{minus_elements}->{$nsuri}->{$ln}) {
+          $element_state->{minus_elements_original}->{$nsuri}->{$ln} = 0;
+          $self->{minus_elements}->{$nsuri}->{$ln} = 1;
+        }
+      }
+    }
+  }
+} # _add_minus_elements
+
+sub _remove_minus_elements ($$) {
+  my $self = shift;
+  my $element_state = shift;
+  for my $nsuri (keys %{$element_state->{minus_elements_original}}) {
+    for my $ln (keys %{$element_state->{minus_elements_original}->{$nsuri}}) {
+      delete $self->{minus_elements}->{$nsuri}->{$ln};
+    }
+  }
+} # _remove_minus_elements
+
 ## ------ XXXXXX XXXXXX
 
 our %AnyChecker = (
@@ -1227,224 +1274,9 @@ $Element->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{RDF} = {
     });
     $rdf->convert_rdf_element ($item->{node});
   },
-};
-
-sub check_document ($$) {
-  my ($self, $doc) = @_;
-  $self->onerror;
-  $self->onsubdoc;
-  $self->_init;
-
-  ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
-
-  ## XXX RSS mode if application/rss+xml or root element is |rss| in
-  ## null namespace
-
-  ## Although not allowed by DOM Standard, manakai DOM implementations
-  ## support multiple element childs, text node childs, and document
-  ## type node following siblings in non-strict mode.
-  my $has_element;
-  my $has_doctype;
-  my $parent_state = {};
-  my @item;
-  for my $node (@{$doc->child_nodes}) {
-    my $nt = $node->node_type;
-    if ($nt == 1) { # ELEMENT_NODE
-      if ($has_element) {
-        $self->{onerror}->(node => $node,
-                           type => 'duplicate document element', # XXX
-                           level => 'm'); # [MANAKAI] [DOM]
-      } else {
-        $has_element = 1;
-
-        my $nsurl = $node->namespace_uri;
-        $nsurl = '' if not defined $nsurl;
-        my $ln = $node->local_name;
-        if ($_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
-          if ($nsurl eq HTML_NS and $ln eq 'html') {
-            #
-          } elsif ($doc->manakai_is_html) {
-            $self->{onerror}->(node => $node,
-                               type => 'document element not serializable', # XXX
-                               level => 'w');
-          } else {
-            #
-          }
-        } else {
-          if ($nsurl ne XSLT_NS and
-              $node->has_attribute_ns (XSLT_NS, 'version')) {
-            $self->{onerror}->(node => $node,
-                               type => 'xslt:root literal result element', # XXX
-                               level => 's');
-            # XXX unless mime type is XSLT
-          } else {
-            # XXX OK if RDF/XML
-            
-            $self->{onerror}->(node => $node,
-                               type => 'element not allowed:root',
-                               level => 'm');
-          }
-        }
-        # XXX root element type
-      }
-      push @item, {type => 'element', node => $node,
-                   parent_state => $parent_state};
-    } elsif ($nt == 10) { # DOCUMENT_TYPE_NODE
-      if ($has_element) {
-        $self->{onerror}->(node => $node,
-                           type => 'doctype after element', # XXX
-                           level => 'm'); # [MANAKAI] [DOM]
-      } elsif ($has_doctype) {
-        $self->{onerror}->(node => $node,
-                           type => 'duplicate doctype', # XXX
-                           level => 'm'); # [MANAKAI] [DOM]
-      } else {
-        $has_doctype = 1;
-      }
-      # XXX check the node
-    } elsif ($nt == 3) { # TEXT_NODE
-      $self->{onerror}->(node => $node,
-                         type => 'root text', # XXX
-                         level => 'm'); # [MANAKAI] [DOM]
-      $self->_check_data ($node, 'data');
-    }
-
-    # XXX PI, Comment validation
-  } # $node
-
-  $self->{onerror}->(node => $doc,
-                     type => 'no document element',
-                     level => 'w')
-      unless $has_element;
-
-  $self->_check_node (\@item);
-  $self->_check_refs;
-
-  ## Document charset
-  if ($doc->manakai_is_html) {
-    if ($self->{flag}->{has_meta_charset}) {
-      require Web::Encoding;
-      my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
-      $self->{onerror}->(node => $doc,
-                         type => 'non ascii superset',
-                         level => 'm')
-          unless Web::Encoding::is_ascii_compat_encoding_name ($name);
-    } else {
-      if ($doc->manakai_has_bom) {
-        #
-      } elsif ($doc->manakai_is_srcdoc) { # iframe srcdoc document
-        #
-      } elsif (defined $doc->manakai_charset) { # Content-Type metadata's charset=""
-        #
-      } else {
-        require Web::Encoding;
-        my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
-        $self->{onerror}->(node => $doc,
-                           type => 'non ascii superset',
-                           level => 'm')
-            unless Web::Encoding::is_ascii_compat_encoding_name ($name);
-        $self->{onerror}->(node => $doc,
-                           type => 'no character encoding declaration',
-                           level => 'm');
-      }
-    }
-
-    unless ($doc->input_encoding eq 'utf-8') {
-      $self->{onerror}->(node => $doc,
-                         type => 'non-utf-8 character encoding',
-                         level => 's');
-    }
-  } else { # XML document
-    if ($self->{flag}->{has_meta_charset} and not defined $doc->xml_encoding) {
-      $self->{onerror}->(node => $doc,
-                         type => 'no xml encoding', # XXX
-                         level => 's');
-    }
-
-    # XXX MUST be UTF-8, ...
-    # XXX check <?xml encoding=""?>
-  } # XML document
-
-  $self->_terminate;
-  return delete $self->{return}; # XXX
-} # check_document
-
-## XXX Check DOCUMENT_FRAGMENT_NODE
-
-## Check an element.  The element is checked as if it is an orphan node (i.e.
-## an element without a parent node).
-sub check_element ($$) {
-  my ($self, $el) = @_;
-  $self->onerror;
-  $self->onsubdoc;
-  $self->_init;
-  $self->_check_node ([{type => 'element', node => $el, parent_state => {}}]);
-  $self->_check_refs;
-  $self->_terminate;
-  return delete $self->{return}; # XXX
-} # check_element
-
-# XXX More useful return object
-# XXX Merging subdoc validation result
-
-## $self->{flag}->
-##
-##   {has_http_equiv}->{$keyword}  Set to true if there is a
-##                       <meta http-equiv=$keyword> element.
-##   {has_meta_charset}  Set to true if there is a <meta charset=""> or
-##                       <meta http-equiv=content-type> element.
-
-## $element_state
-##
-##   figcaptions     Used by |figure| element checker.
-##   has_non_style   Used by flow content checker to detect misplaced
-##                   |style| elements.
-##   has_palpable    Set to true if a palpable content child is found.
-##                   (Handled specially for <ruby>.)
-##   has_summary     Used by |details| element checker.
-##   in_flow_content Set to true while the content model checker is
-##                   in the "flow content" checking mode.
-##   phase           Content model checker state name.  Possible values
-##                   depend on the element.
-##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
-##                   is expected to have the |title| attribute.
-
-sub _add_minus_elements ($$@) {
-  my $self = shift;
-  my $element_state = shift;
-  for my $elements (@_) {
-    for my $nsuri (keys %$elements) {
-      for my $ln (keys %{$elements->{$nsuri}}) {
-        unless ($self->{minus_elements}->{$nsuri}->{$ln}) {
-          $element_state->{minus_elements_original}->{$nsuri}->{$ln} = 0;
-          $self->{minus_elements}->{$nsuri}->{$ln} = 1;
-        }
-      }
-    }
-  }
-} # _add_minus_elements
-
-sub _remove_minus_elements ($$) {
-  my $self = shift;
-  my $element_state = shift;
-  for my $nsuri (keys %{$element_state->{minus_elements_original}}) {
-    for my $ln (keys %{$element_state->{minus_elements_original}->{$nsuri}}) {
-      delete $self->{minus_elements}->{$nsuri}->{$ln};
-    }
-  }
-} # _remove_minus_elements
+}; # rdf:RDF
 
 use Char::Class::XML qw/InXML_NCNameStartChar10 InXMLNCNameChar10/;
-
-## The manakai specification for conformance checking of obsolete HTML
-## vocabulary,
-## <http://suika.suikawiki.org/www/markup/html/exts/manakai-obsvocab>.
-## The document defines conformance checking requirements for numbers
-## of obsolete HTML elements and attributes historically specified or
-## implemented but no longer considered part of the HTML language
-## proper.
-
-## XXX: Non rdf:RDF elements in metadata content?
 
 ## Check whether the labelable form-associated element is allowed to
 ## place there or not and mark the element ID, if any, might be used
@@ -8016,6 +7848,55 @@ $Element->{+THR_NS}->{total} = {
 
 ## TODO: APP [RFC 5023]
 
+## ------ Documents ------
+
+sub _check_doc_charset ($$) {
+  my ($self, $doc) = @_;
+  if ($doc->manakai_is_html) {
+    if ($self->{flag}->{has_meta_charset}) {
+      require Web::Encoding;
+      my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
+      $self->{onerror}->(node => $doc,
+                         type => 'non ascii superset',
+                         level => 'm')
+          unless Web::Encoding::is_ascii_compat_encoding_name ($name);
+    } else {
+      if ($doc->manakai_has_bom) {
+        #
+      } elsif ($doc->manakai_is_srcdoc) { # iframe srcdoc document
+        #
+      } elsif (defined $doc->manakai_charset) { # Content-Type metadata's charset=""
+        #
+      } else {
+        require Web::Encoding;
+        my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
+        $self->{onerror}->(node => $doc,
+                           type => 'non ascii superset',
+                           level => 'm')
+            unless Web::Encoding::is_ascii_compat_encoding_name ($name);
+        $self->{onerror}->(node => $doc,
+                           type => 'no character encoding declaration',
+                           level => 'm');
+      }
+    }
+
+    unless ($doc->input_encoding eq 'utf-8') {
+      $self->{onerror}->(node => $doc,
+                         type => 'non-utf-8 character encoding',
+                         level => 's');
+    }
+  } else { # XML document
+    if ($self->{flag}->{has_meta_charset} and not defined $doc->xml_encoding) {
+      $self->{onerror}->(node => $doc,
+                         type => 'no xml encoding', # XXX
+                         level => 's');
+    }
+
+    # XXX MUST be UTF-8, ...
+    # XXX check <?xml encoding=""?>
+  } # XML document
+} # _check_doc_charset
+
 ## ------ Nodes ------
 
 sub _check_node ($$) {
@@ -8174,6 +8055,94 @@ sub _check_node ($$) {
                          level => 's',
                          type => 'no significant content')
           unless $item->{element_state}->{has_palpable};
+    } elsif ($item->{type} eq 'document') {
+      ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
+
+      ## XXX RSS mode if application/rss+xml or root element is |rss|
+      ## in null namespace
+
+      ## Although not allowed by DOM Standard, manakai DOM
+      ## implementations support multiple element childs, text node
+      ## childs, and document type node following siblings in
+      ## non-strict mode.
+      my $has_element;
+      my $has_doctype;
+      my $parent_state = {};
+      my @new_item;
+      for my $node (@{$item->{node}->child_nodes}) {
+        my $nt = $node->node_type;
+        if ($nt == 1) { # ELEMENT_NODE
+          if ($has_element) {
+            $self->{onerror}->(node => $node,
+                               type => 'duplicate document element', # XXX
+                               level => 'm'); # [MANAKAI] [DOM]
+          } else {
+            $has_element = 1;
+
+            my $nsurl = $node->namespace_uri;
+            $nsurl = '' if not defined $nsurl;
+            my $ln = $node->local_name;
+            if ($_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
+              if ($nsurl eq HTML_NS and $ln eq 'html') {
+                #
+              } elsif ($item->{node}->manakai_is_html) {
+                $self->{onerror}->(node => $node,
+                                   type => 'document element not serializable', # XXX
+                                   level => 'w');
+              } else {
+                #
+              }
+            } else {
+              if ($nsurl ne XSLT_NS and
+                  $node->has_attribute_ns (XSLT_NS, 'version')) {
+                $self->{onerror}->(node => $node,
+                                   type => 'xslt:root literal result element', # XXX
+                                   level => 's');
+                # XXX unless mime type is XSLT
+              } else {
+                # XXX OK if RDF/XML
+                
+                $self->{onerror}->(node => $node,
+                                   type => 'element not allowed:root',
+                                   level => 'm');
+              }
+            }
+            # XXX root element type
+          }
+          push @new_item, {type => 'element', node => $node,
+                           parent_state => $parent_state};
+        } elsif ($nt == 10) { # DOCUMENT_TYPE_NODE
+          if ($has_element) {
+            $self->{onerror}->(node => $node,
+                               type => 'doctype after element', # XXX
+                               level => 'm'); # [MANAKAI] [DOM]
+          } elsif ($has_doctype) {
+            $self->{onerror}->(node => $node,
+                               type => 'duplicate doctype', # XXX
+                               level => 'm'); # [MANAKAI] [DOM]
+          } else {
+            $has_doctype = 1;
+          }
+          # XXX check the node
+        } elsif ($nt == 3) { # TEXT_NODE
+          $self->{onerror}->(node => $node,
+                             type => 'root text', # XXX
+                             level => 'm'); # [MANAKAI] [DOM]
+          $self->_check_data ($node, 'data');
+        }
+        
+        # XXX PI, Comment validation
+      } # $node
+      
+      $self->{onerror}->(node => $item->{node},
+                         type => 'no document element',
+                         level => 'w')
+          unless $has_element;
+
+      push @item, {type => '_check_doc_charset', node => $item->{node}};
+      unshift @item, @new_item;
+    } elsif ($item->{type} eq '_check_doc_charset') {
+      $self->_check_doc_charset ($item->{node});
     } else {
       die "$0: Internal error: Unsupported checking action type |$item->{type}|";
     }
@@ -8242,6 +8211,31 @@ sub _check_refs ($) {
     }
   } # $self->{idref}
 } # _check_refs
+
+sub check_node ($$) {
+  my ($self, $node) = @_;
+  $self->onerror;
+  $self->onsubdoc;
+  $self->_init;
+  my $nt = $node->node_type;
+  if ($nt == 1) { # ELEMENT_NODE
+    $self->_check_node
+        ([{type => 'element', node => $node, parent_state => {}}]);
+  } elsif ($nt == 9) { # DOCUMENT_NODE
+    $self->_check_node ([{type => 'document', node => $node}]);
+  }
+  $self->_check_refs;
+  $self->_terminate;
+  return delete $self->{return}; # XXX
+} # check_node
+
+## XXX Check DOCUMENT_FRAGMENT_NODE
+
+## Check an element.  The element is checked as if it is an orphan node (i.e.
+## an element without a parent node).
+
+# XXX More useful return object
+# XXX Merging subdoc validation result
 
 # XXX
 package Web::HTML::Validator::HTML::Metadata;
