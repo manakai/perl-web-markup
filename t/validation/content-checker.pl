@@ -63,22 +63,24 @@ sub _test ($$) {
     }
 
     my @error;
-    Web::HTML::Validator->new->check_element
-        ($doc->document_element, sub {
-          my %opt = @_;
-          if ($opt{type} =~ /^status:/ and $opt{level} eq 'i') {
-            #
-          } else {
-            warn $opt{type} unless ref $opt{node};
-            push @error, get_node_path ($opt{node}) . ';' . $opt{type} .
-                (defined $opt{text} ? ';' . $opt{text} : '') .
-                (defined $opt{level} ? ';'.$opt{level} : '');
-          }
-        }, sub {
-          my $opt = shift;
-          push @error, get_node_path ($opt->{container_node}) . ';SUBDOC;'
-              . $opt->{media_type};
-        });
+    my $val = Web::HTML::Validator->new;
+    $val->onerror (sub {
+      my %opt = @_;
+      if ($opt{type} =~ /^status:/ and $opt{level} eq 'i') {
+        #
+      } else {
+        warn $opt{type} unless ref $opt{node};
+        push @error, get_node_path ($opt{node}) . ';' . $opt{type} .
+          (defined $opt{text} ? ';' . $opt{text} : '') .
+          (defined $opt{level} ? ';'.$opt{level} : '');
+      }
+    });
+    $val->onsubdoc (sub {
+      my $opt = shift;
+      push @error, get_node_path ($opt->{container_node}) . ';SUBDOC;'
+          . $opt->{media_type};
+    });
+    $val->check_element ($doc->document_element);
 
     my $actual = join ("\n", sort {$a cmp $b} @error);
     my $expected = join ("\n", sort {$a cmp $b} @{$test->{errors}->[0]});
@@ -127,15 +129,13 @@ content-checker.pl - Test engine for document conformance checking
 =head1 DESCRIPTION
 
 The C<content-checker.pl> script implements a test engine for the
-conformance checking modules, directly or indirectly referenced from
-L<Whatpm::ContentChecker>.
+L<Web::HTML::Validator> markup document validator.
 
-This script is C<require>d by various test scripts, including
-C<ContentCheker.t>, C<ContentChecker-Atom.t>, and C<LangTag.t>.
+This script is C<require>d by test scripts in the same directory.
 
 =head1 AUTHOR
 
-Wakaba <w@suika.fam.cx>.
+Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 

@@ -24,6 +24,59 @@ sub onerror ($;$) {
   };
 } # onerror
 
+sub onsubdoc ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onsubdoc} = $_[1];
+  }
+  return $_[0]->{onsubdoc} ||= sub {
+    my %args = @_;
+    warn "A subdocument of type |$args{media_type}| found but no subdocument validator is provided\n";
+  };
+} # onsubdoc
+
+sub _init ($) {
+  my $self = $_[0];
+  $self->{minus_elements} = {};
+  $self->{id} = {};
+  $self->{id_type} = {};
+  $self->{name} = {};
+  $self->{form} = {}; # form/@name
+  #$self->{has_autofocus};
+  $self->{idref} = [];
+  $self->{term} = {};
+  $self->{usemap} = [];
+  $self->{map_exact} = {}; # |map| elements with their original |name|s
+  $self->{map_compat} = {}; # |map| elements with their lowercased |name|s
+  $self->{has_link_type} = {};
+  $self->{flag} = {};
+  #$self->{has_uri_attr};
+  #$self->{has_hyperlink_element};
+  #$self->{has_charset};
+  #$self->{has_base};
+  $self->{return} = {
+    class => {},
+    id => $self->{id},
+    name => $self->{name},
+    table => [], # table objects returned by Web::HTML::Table
+    term => $self->{term},
+    rdf => [],
+  };
+} # _init
+
+sub _terminate ($) {
+  my $self = $_[0];
+  delete $self->{minus_elements};
+  delete $self->{id};
+  delete $self->{id_type};
+  delete $self->{name};
+  delete $self->{form};
+  delete $self->{has_autofocus};
+  delete $self->{idref};
+  delete $self->{usemap};
+  delete $self->{map_exact};
+  delete $self->{map_compat};
+} # _terminate
+
 ## XXX warn for Attr->specified = false
 
 ## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
@@ -1178,12 +1231,10 @@ $Element->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{RDF} = {
   },
 };
 
-sub check_document ($$$;$) {
-  my ($self, $doc, $onerror, $onsubdoc) = @_;
-  $self->{onerror} = $onerror || $self->onerror;
-  $self->{onsubdoc} = $onsubdoc || sub {
-    warn "A subdocument is not conformance-checked";
-  };
+sub check_document ($$) {
+  my ($self, $doc) = @_;
+  $self->onerror;
+  $self->onsubdoc;
 
   ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
 
@@ -1280,270 +1331,18 @@ sub check_document ($$$;$) {
 
 ## Check an element.  The element is checked as if it is an orphan node (i.e.
 ## an element without a parent node).
-sub check_element ($$$;$) {
-  my ($self, $el, $onerror, $onsubdoc) = @_;
-  $self->{onerror} = $onerror || $self->onerror;
-  $self->{onsubdoc} ||= $onsubdoc || sub {
-    warn "A subdocument is not conformance-checked";
-  };
+sub check_element ($$) {
+  my ($self, $el) = @_;
 
-  $self->{minus_elements} = {};
-  $self->{id} = {};
-  $self->{id_type} = {};
-  $self->{name} = {};
-  $self->{form} = {}; # form/@name
-  #$self->{has_autofocus};
-  $self->{idref} = [];
-  $self->{term} = {};
-  $self->{usemap} = [];
-  $self->{map_exact} = {}; # |map| elements with their original |name|s
-  $self->{map_compat} = {}; # |map| elements with their lowercased |name|s
-  $self->{has_link_type} = {};
-  $self->{flag} = {};
-  #$self->{has_uri_attr};
-  #$self->{has_hyperlink_element};
-  #$self->{has_charset};
-  #$self->{has_base};
-  $self->{return} = {
-    class => {},
-    id => $self->{id},
-    name => $self->{name},
-    table => [], # table objects returned by Whatpm::HTMLTable
-    term => $self->{term},
-    rdf => [],
-  };
-
-  my @item = ({type => 'element', node => $el, parent_state => {}});
-  while (@item) {
-    my $item = shift @item;
-    if (ref $item eq 'ARRAY') {
-      my $code = shift @$item;
-      $code->(@$item) if $code;
-    } elsif ($item->{type} eq 'element') {
-      my $el = $item->{node};
-      my $el_nsuri = $el->namespace_uri;
-      $el_nsuri = '' if not defined $el_nsuri;
-      my $el_ln = $el->local_name;
-      
-      my $element_state = {};
-      my $eldef = $Element->{$el_nsuri}->{$el_ln} ||
-          $Element->{$el_nsuri}->{''} ||
-          $ElementDefault;
-
-      my $prefix = $el->prefix;
-      if (defined $prefix and $prefix eq 'xml') {
-        if ($el_nsuri ne XML_NS) {
-          $self->{onerror}->(node => $el,
-                             type => 'Reserved Prefixes and Namespace Names:Prefix',
-                             text => 'xml',
-                             level => 'w');
-        }
-      } elsif (defined $prefix and $prefix eq 'xmlns') {
-        $self->{onerror}->(node => $el,
-                           type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
-                           level => 'm');
-      } elsif (($el_nsuri eq XML_NS and not (($prefix || '') eq 'xml')) or
-               $el_nsuri eq XMLNS_NS) {
-        $self->{onerror}->(node => $el,
-                           type => 'Reserved Prefixes and Namespace Names:Name',
-                           text => $el_nsuri,
-                           level => 'w');
-      }
-
-      my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
-      if ($el_def->{conforming}) {
-        unless ($Element->{$el_nsuri}->{$el_ln}) {
-          ## According to the attribute list, this element is
-          ## conforming.  However, current version of the validator
-          ## does not support the element.  The conformance is
-          ## unknown.
-          $self->{onerror}->(node => $el,
-                             type => 'unknown element', level => 'u');
-        }
-        my $status = $el_def->{status} || '';
-        if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
-          #
-        } else {
-          ## The element is conforming, but is in earlier stage such
-          ## that it should not be used without caution.
-          $self->{onerror}->(node => $el,
-                             type => 'status:wd:element', level => 'i')
-        }
-      } else {
-        ## "Authors must not use elements, attributes, or attribute
-        ## values that are not permitted by this specification or
-        ## other applicable specifications" [HTML]
-        $self->{onerror}->(node => $el,
-                           type => 'element not defined', level => 'm');
-      }
-
-      my @new_item;
-      my $disallowed = $ElementDisallowedDescendants->{$el_nsuri}->{$el_ln};
-      push @new_item, {type => '_add_minus_elements',
-                       element_state => $element_state,
-                       disallowed => $disallowed}
-          if $disallowed;
-      push @new_item, [$eldef->{check_start}, $self, $item, $element_state];
-      push @new_item, [$eldef->{check_attrs}, $self, $item, $element_state];
-      push @new_item, [$eldef->{check_attrs2}, $self, $item, $element_state];
-      
-      my @child = @{$el->child_nodes};
-      while (@child) {
-        my $child = shift @child;
-        my $child_nt = $child->node_type;
-        if ($child_nt == 1) { # ELEMENT_NODE
-          my $child_nsuri = $child->namespace_uri;
-          $child_nsuri = '' unless defined $child_nsuri;
-          my $child_ln = $child->local_name;
-
-          if ($element_state->{has_palpable}) {
-            #
-          } elsif ($_Defs->{categories}->{'palpable content'}->{elements}->{$child_nsuri}->{$child_ln}) {
-            $element_state->{has_palpable} = 1
-                if not $child_nsuri eq HTML_NS or
-                   not $child->has_attribute_ns (undef, 'hidden');
-          } elsif ($_Defs->{categories}->{'palpable content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
-            $element_state->{has_palpable} = 1
-                if $IsPalpableContent->{$child_nsuri}->{$child_ln}->($child) and
-                   (not $child_nsuri eq HTML_NS or
-                    not $child->has_attribute_ns (undef, 'hidden'));
-          }
-          push @new_item, [$eldef->{check_child_element},
-                           $self, $item, $child,
-                           $child_nsuri, $child_ln,
-                           0,
-                           $element_state, $element_state];
-          push @new_item, {type => 'element', node => $child,
-                           parent_def => $eldef,
-                           parent_state => $element_state};
-        } elsif ($child_nt == 3) { # TEXT_NODE
-          my $has_significant = ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/);
-          push @new_item, [$eldef->{check_child_text},
-                           $self, $item, $child, $has_significant,
-                           $element_state, $element_state];
-          $element_state->{has_palpable} = 1 if $has_significant;
-          $self->_check_data ($child, 'data');
-          ## Adjacent text nodes and empty text nodes are not
-          ## round-trippable, but harmless, so not warned here.
-        } elsif ($child_nt == 7) { # PROCESSING_INSTRUCTION_NODE
-          ## XXX PROCESSING_INSTRUCTION_NODE
-        } # $child_nt
-      } # $child
-      
-      push @new_item, [$eldef->{check_end}, $self, $item, $element_state];
-      push @new_item, {type => '_remove_minus_elements',
-                       element_state => $element_state}
-          if $disallowed;
-      push @new_item, {type => 'check_html_attrs',
-                       node => $el,
-                       element_state => $element_state}
-          if $el_nsuri eq HTML_NS;
-      my $cm = $_Defs->{elements}->{$el_nsuri}->{$el_ln}->{content_model} || '';
-      push @new_item, {type => 'check_palpable_content',
-                       node => $el,
-                       element_state => $element_state}
-          if $cm eq 'flow content' or
-             $cm eq 'phrasing content' or
-             $cm eq 'transparent';
-      
-      unshift @item, @new_item;
-    } elsif ($item->{type} eq '_add_minus_elements') {
-      $self->_add_minus_elements ($item->{element_state}, $item->{disallowed});
-    } elsif ($item->{type} eq '_remove_minus_elements') {
-      $self->_remove_minus_elements ($item->{element_state});
-    } elsif ($item->{type} eq 'check_html_attrs') {
-      unless ($item->{node}->has_attribute_ns (undef, 'title')) {
-        if ($item->{element_state}->{require_title} or
-            $item->{node}->has_attribute_ns (undef, 'draggable') or
-            $item->{node}->has_attribute_ns (undef, 'dropzone')) {
-          $self->{onerror}->(node => $item->{node},
-                             type => 'attribute missing',
-                             text => 'title',
-                             level => $item->{element_state}->{require_title} || 's');
-        }
-      }
-    } elsif ($item->{type} eq 'check_palpable_content') {
-      $self->{onerror}->(node => $item->{node},
-                         level => 's',
-                         type => 'no significant content')
-          unless $item->{element_state}->{has_palpable};
-    } else {
-      die "$0: Internal error: Unsupported checking action type |$item->{type}|";
-    }
-  }
-
-  ## |usemap| attribute values MUST be valid hash-name references
-  ## pointing |map| elements.
-  for (@{$self->{usemap}}) {
-    ## $_->[0]: Original |usemap| attribute value without leading '#'.
-    ## $_->[1]: The |usemap| attribute node.
-
-    if ($self->{map_exact}->{$_->[0]}) {
-      ## There is at least one |map| element with the specified name.
-      #
-    } else {
-      my $name_compat = lc $_->[0]; ## XXX compatibility caseless match.
-      if ($self->{map_compat}->{$name_compat}) {
-        ## There is at least one |map| element with the specified name
-        ## in different case combination.
-        $self->{onerror}->(node => $_->[1],
-                           type => 'hashref:wrong case', ## XXX document
-                           level => 'm');
-      } else {
-        ## There is no |map| element with the specified name at all.
-        $self->{onerror}->(node => $_->[1],
-                           type => 'no referenced map',
-                           level => 'm');
-      }
-    }
-  }
-
-  ## @{$self->{idref}}       Detected ID references to be checked:
-  ##                         [id-type, id-value, id-node]
-  ## @{$self->{id}->{$id}}   Detected ID nodes, in tree order
-  ## $self->{id_type}->{$id} Type of first ID node's element
-  ## ID types:
-  ##   any       Any type is allowed (For |idref| only)
-  ##   command   Master command
-  ##   form      <form>
-  ##   datalist  <datalist>
-  ##   labelable Labelable element
-  ##   object    <object>
-  ## Note that headers=""'s IDs are not checked here.
-  for (@{$self->{idref}}) {
-    if ($self->{id}->{$_->[1]} and $self->{id_type}->{$_->[1]} eq $_->[0]) {
-      #
-    } elsif ($_->[0] eq 'any' and $self->{id}->{$_->[1]}) {
-      #
-    } else {
-      my $error_type = {
-        any => 'no referenced element', ## TODOC: type
-        form => 'no referenced form',
-        labelable => 'no referenced control',
-        datalist => 'no referenced datalist', ## TODOC: type
-        object => 'no referenced object', # XXXdocumentation
-        popup => 'no referenced menu',
-        command => 'no referenced master command', # XXXdoc
-      }->{$_->[0]};
-      $self->{onerror}->(node => $_->[2],
-                         type => $error_type,
-                         value => $_->[1],
-                         level => 'm');
-    }
-  } # $self->{idref}
-
-  delete $self->{minus_elements};
-  delete $self->{id};
-  delete $self->{id_type};
-  delete $self->{name};
-  delete $self->{form};
-  delete $self->{has_autofocus};
-  delete $self->{idref};
-  delete $self->{usemap};
-  delete $self->{map_exact};
-  delete $self->{map_compat};
-  return $self->{return};
+  $self->_init;
+  $self->_check_node ({type => 'element', node => $el, parent_state => {}});
+  $self->_check_refs;
+  $self->_terminate;
+  return delete $self->{return};
 } # check_element
+
+# XXX More useful return object
+# XXX Merging subdoc validation result
 
 ## $self->{flag}->
 ##
@@ -8174,6 +7973,234 @@ $Element->{+THR_NS}->{total} = {
 
 ## TODO: APP [RFC 5023]
 
+## ------ Nodes ------
+
+sub _check_node ($$) {
+  my $self = $_[0];
+  my @item = ($_[1]);
+  while (@item) {
+    my $item = shift @item;
+    if (ref $item eq 'ARRAY') {
+      my $code = shift @$item;
+      $code->(@$item) if $code;
+    } elsif ($item->{type} eq 'element') {
+      my $el = $item->{node};
+      my $el_nsuri = $el->namespace_uri;
+      $el_nsuri = '' if not defined $el_nsuri;
+      my $el_ln = $el->local_name;
+      
+      my $element_state = {};
+      my $eldef = $Element->{$el_nsuri}->{$el_ln} ||
+          $Element->{$el_nsuri}->{''} ||
+          $ElementDefault;
+
+      my $prefix = $el->prefix;
+      if (defined $prefix and $prefix eq 'xml') {
+        if ($el_nsuri ne XML_NS) {
+          $self->{onerror}->(node => $el,
+                             type => 'Reserved Prefixes and Namespace Names:Prefix',
+                             text => 'xml',
+                             level => 'w');
+        }
+      } elsif (defined $prefix and $prefix eq 'xmlns') {
+        $self->{onerror}->(node => $el,
+                           type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
+                           level => 'm');
+      } elsif (($el_nsuri eq XML_NS and not (($prefix || '') eq 'xml')) or
+               $el_nsuri eq XMLNS_NS) {
+        $self->{onerror}->(node => $el,
+                           type => 'Reserved Prefixes and Namespace Names:Name',
+                           text => $el_nsuri,
+                           level => 'w');
+      }
+
+      my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
+      if ($el_def->{conforming}) {
+        unless ($Element->{$el_nsuri}->{$el_ln}) {
+          ## According to the attribute list, this element is
+          ## conforming.  However, current version of the validator
+          ## does not support the element.  The conformance is
+          ## unknown.
+          $self->{onerror}->(node => $el,
+                             type => 'unknown element', level => 'u');
+        }
+        my $status = $el_def->{status} || '';
+        if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
+          #
+        } else {
+          ## The element is conforming, but is in earlier stage such
+          ## that it should not be used without caution.
+          $self->{onerror}->(node => $el,
+                             type => 'status:wd:element', level => 'i')
+        }
+      } else {
+        ## "Authors must not use elements, attributes, or attribute
+        ## values that are not permitted by this specification or
+        ## other applicable specifications" [HTML]
+        $self->{onerror}->(node => $el,
+                           type => 'element not defined', level => 'm');
+      }
+
+      my @new_item;
+      my $disallowed = $ElementDisallowedDescendants->{$el_nsuri}->{$el_ln};
+      push @new_item, {type => '_add_minus_elements',
+                       element_state => $element_state,
+                       disallowed => $disallowed}
+          if $disallowed;
+      push @new_item, [$eldef->{check_start}, $self, $item, $element_state];
+      push @new_item, [$eldef->{check_attrs}, $self, $item, $element_state];
+      push @new_item, [$eldef->{check_attrs2}, $self, $item, $element_state];
+      
+      my @child = @{$el->child_nodes};
+      while (@child) {
+        my $child = shift @child;
+        my $child_nt = $child->node_type;
+        if ($child_nt == 1) { # ELEMENT_NODE
+          my $child_nsuri = $child->namespace_uri;
+          $child_nsuri = '' unless defined $child_nsuri;
+          my $child_ln = $child->local_name;
+
+          if ($element_state->{has_palpable}) {
+            #
+          } elsif ($_Defs->{categories}->{'palpable content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+            $element_state->{has_palpable} = 1
+                if not $child_nsuri eq HTML_NS or
+                   not $child->has_attribute_ns (undef, 'hidden');
+          } elsif ($_Defs->{categories}->{'palpable content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+            $element_state->{has_palpable} = 1
+                if $IsPalpableContent->{$child_nsuri}->{$child_ln}->($child) and
+                   (not $child_nsuri eq HTML_NS or
+                    not $child->has_attribute_ns (undef, 'hidden'));
+          }
+          push @new_item, [$eldef->{check_child_element},
+                           $self, $item, $child,
+                           $child_nsuri, $child_ln,
+                           0,
+                           $element_state, $element_state];
+          push @new_item, {type => 'element', node => $child,
+                           parent_def => $eldef,
+                           parent_state => $element_state};
+        } elsif ($child_nt == 3) { # TEXT_NODE
+          my $has_significant = ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/);
+          push @new_item, [$eldef->{check_child_text},
+                           $self, $item, $child, $has_significant,
+                           $element_state, $element_state];
+          $element_state->{has_palpable} = 1 if $has_significant;
+          $self->_check_data ($child, 'data');
+          ## Adjacent text nodes and empty text nodes are not
+          ## round-trippable, but harmless, so not warned here.
+        } elsif ($child_nt == 7) { # PROCESSING_INSTRUCTION_NODE
+          ## XXX PROCESSING_INSTRUCTION_NODE
+        } # $child_nt
+      } # $child
+      
+      push @new_item, [$eldef->{check_end}, $self, $item, $element_state];
+      push @new_item, {type => '_remove_minus_elements',
+                       element_state => $element_state}
+          if $disallowed;
+      push @new_item, {type => 'check_html_attrs',
+                       node => $el,
+                       element_state => $element_state}
+          if $el_nsuri eq HTML_NS;
+      my $cm = $_Defs->{elements}->{$el_nsuri}->{$el_ln}->{content_model} || '';
+      push @new_item, {type => 'check_palpable_content',
+                       node => $el,
+                       element_state => $element_state}
+          if $cm eq 'flow content' or
+             $cm eq 'phrasing content' or
+             $cm eq 'transparent';
+      
+      unshift @item, @new_item;
+    } elsif ($item->{type} eq '_add_minus_elements') {
+      $self->_add_minus_elements ($item->{element_state}, $item->{disallowed});
+    } elsif ($item->{type} eq '_remove_minus_elements') {
+      $self->_remove_minus_elements ($item->{element_state});
+    } elsif ($item->{type} eq 'check_html_attrs') {
+      unless ($item->{node}->has_attribute_ns (undef, 'title')) {
+        if ($item->{element_state}->{require_title} or
+            $item->{node}->has_attribute_ns (undef, 'draggable') or
+            $item->{node}->has_attribute_ns (undef, 'dropzone')) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'attribute missing',
+                             text => 'title',
+                             level => $item->{element_state}->{require_title} || 's');
+        }
+      }
+    } elsif ($item->{type} eq 'check_palpable_content') {
+      $self->{onerror}->(node => $item->{node},
+                         level => 's',
+                         type => 'no significant content')
+          unless $item->{element_state}->{has_palpable};
+    } else {
+      die "$0: Internal error: Unsupported checking action type |$item->{type}|";
+    }
+  } # @item
+} # _check_node
+
+sub _check_refs ($) {
+  my $self = $_[0];
+  ## |usemap| attribute values MUST be valid hash-name references
+  ## pointing |map| elements.
+  for (@{$self->{usemap}}) {
+    ## $_->[0]: Original |usemap| attribute value without leading '#'.
+    ## $_->[1]: The |usemap| attribute node.
+
+    if ($self->{map_exact}->{$_->[0]}) {
+      ## There is at least one |map| element with the specified name.
+      #
+    } else {
+      my $name_compat = lc $_->[0]; ## XXX compatibility caseless match.
+      if ($self->{map_compat}->{$name_compat}) {
+        ## There is at least one |map| element with the specified name
+        ## in different case combination.
+        $self->{onerror}->(node => $_->[1],
+                           type => 'hashref:wrong case', ## XXX document
+                           level => 'm');
+      } else {
+        ## There is no |map| element with the specified name at all.
+        $self->{onerror}->(node => $_->[1],
+                           type => 'no referenced map',
+                           level => 'm');
+      }
+    }
+  }
+
+  ## @{$self->{idref}}       Detected ID references to be checked:
+  ##                         [id-type, id-value, id-node]
+  ## @{$self->{id}->{$id}}   Detected ID nodes, in tree order
+  ## $self->{id_type}->{$id} Type of first ID node's element
+  ## ID types:
+  ##   any       Any type is allowed (For |idref| only)
+  ##   command   Master command
+  ##   form      <form>
+  ##   datalist  <datalist>
+  ##   labelable Labelable element
+  ##   object    <object>
+  ## Note that headers=""'s IDs are not checked here.
+  for (@{$self->{idref}}) {
+    if ($self->{id}->{$_->[1]} and $self->{id_type}->{$_->[1]} eq $_->[0]) {
+      #
+    } elsif ($_->[0] eq 'any' and $self->{id}->{$_->[1]}) {
+      #
+    } else {
+      my $error_type = {
+        any => 'no referenced element', ## TODOC: type
+        form => 'no referenced form',
+        labelable => 'no referenced control',
+        datalist => 'no referenced datalist', ## TODOC: type
+        object => 'no referenced object', # XXXdocumentation
+        popup => 'no referenced menu',
+        command => 'no referenced master command', # XXXdoc
+      }->{$_->[0]};
+      $self->{onerror}->(node => $_->[2],
+                         type => $error_type,
+                         value => $_->[1],
+                         level => 'm');
+    }
+  } # $self->{idref}
+} # _check_refs
+
+# XXX
 package Web::HTML::Validator::HTML::Metadata;
 use strict;
 use warnings;

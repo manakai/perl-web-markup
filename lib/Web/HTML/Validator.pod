@@ -34,6 +34,20 @@ XXX API is not stable.  Don't use this module yet!
 
 =over 4
 
+=item $code = $val->onsubdoc
+
+=item $val->onsubdoc ($code)
+
+Get or set the subdocument validation handler hooks.  Some nested
+constructs in the document, e.g. embedded CSS style sheets, JavaScript
+codes, and C<iframe> C<srcdoc> documents, are considered as
+"subdocument".  The validation itself does not check the conformance
+of the subdocument, but it instead invoke this callback such that
+appropriate validator modules can be dispatched.  The callback is not
+expected to throw any exception.
+
+XXX args
+
 =item Web::HTML::Validator->check_document (I<$document>, I<$onerror>)
 
 Checks a document, I<$document>, and its descendant for their
