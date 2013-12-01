@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '120.0';
+our $VERSION = '121.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -80,8 +80,6 @@ sub _terminate ($) {
 ## XXX warn for Attr->specified = false
 
 ## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
-## XXX warning Document with no child element
-## XXX must (XXX need spec) Document's child must be DocumentType? Element with optional comments and PIs
 ## XXX warning public ID chars
 ## XXX warning system ID chars
 ## XXX warning "xmlns" attribute in no namespace
@@ -104,7 +102,6 @@ sub _terminate ($) {
 
 ## XXX In HTML documents
 ##   warning doctype name, pubid, sysid
-##   warning doctype, html with optional comments
 ##   warning PI, element type definition, attribute definition
 ##   warning comment data
 ##   warning pubid/sysid chars
@@ -125,6 +122,7 @@ sub _terminate ($) {
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
+sub XSLT_NS () { q<http://www.w3.org/1999/XSL/Transform> }
 
 our $_Defs;
 
@@ -1239,46 +1237,87 @@ sub check_document ($$) {
 
   ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
 
-  ## XXX DOCUMENT_TYPE_NODE
+  ## XXX RSS mode if application/rss+xml or root element is |rss| in
+  ## null namespace
 
-  my $docel = $doc->document_element;
-  unless (defined $docel) {
-    ## ISSUE: Should we check content of Document node?
-    $self->{onerror}->(node => $doc, type => 'no document element',
-                       level => 'm');
-    ## ISSUE: Is this non-conforming (to what spec)?  Or just a warning?
-    return {
-            class => {},
-            id => {}, table => [], term => {},
-           };
-  }
-  
-  my $docel_nsuri = $docel->namespace_uri;
-  $docel_nsuri = '' if not defined $docel_nsuri;
-  my $docel_def = $Element->{$docel_nsuri}->{$docel->local_name} ||
-    $Element->{$docel_nsuri}->{''} ||
-    $ElementDefault;
-  
-  # XXX
-  if ($docel_def->{is_root}) {
-    #
-  } elsif ($docel_def->{is_xml_root}) {
-    unless ($doc->manakai_is_html) {
-      #
-    } else {
-      $self->{onerror}->(node => $docel,
-                         type => 'element not allowed:root:xml',
-                         level => 'm');
+  ## Although not allowed by DOM Standard, manakai DOM implementations
+  ## support multiple element childs, text node childs, and document
+  ## type node following siblings in non-strict mode.
+  my $has_element;
+  my $has_doctype;
+  my $parent_state = {};
+  my @item;
+  for my $node (@{$doc->child_nodes}) {
+    my $nt = $node->node_type;
+    if ($nt == 1) { # ELEMENT_NODE
+      if ($has_element) {
+        $self->{onerror}->(node => $node,
+                           type => 'duplicate document element', # XXX
+                           level => 'm'); # [MANAKAI] [DOM]
+      } else {
+        $has_element = 1;
+
+        my $nsurl = $node->namespace_uri;
+        $nsurl = '' if not defined $nsurl;
+        my $ln = $node->local_name;
+        if ($_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
+          if ($nsurl eq HTML_NS and $ln eq 'html') {
+            #
+          } elsif ($doc->manakai_is_html) {
+            $self->{onerror}->(node => $node,
+                               type => 'document element not serializable', # XXX
+                               level => 'w');
+          } else {
+            #
+          }
+        } else {
+          if ($nsurl ne XSLT_NS and
+              $node->has_attribute_ns (XSLT_NS, 'version')) {
+            $self->{onerror}->(node => $node,
+                               type => 'xslt:root literal result element', # XXX
+                               level => 's');
+            # XXX unless mime type is XSLT
+          } else {
+            # XXX OK if RDF/XML
+            
+            $self->{onerror}->(node => $node,
+                               type => 'element not allowed:root',
+                               level => 'm');
+          }
+        }
+        # XXX root element type
+      }
+      push @item, {type => 'element', node => $node,
+                   parent_state => $parent_state};
+    } elsif ($nt == 10) { # DOCUMENT_TYPE_NODE
+      if ($has_element) {
+        $self->{onerror}->(node => $node,
+                           type => 'doctype after element', # XXX
+                           level => 'm'); # [MANAKAI] [DOM]
+      } elsif ($has_doctype) {
+        $self->{onerror}->(node => $node,
+                           type => 'duplicate doctype', # XXX
+                           level => 'm'); # [MANAKAI] [DOM]
+      } else {
+        $has_doctype = 1;
+      }
+      # XXX check the node
+    } elsif ($nt == 3) { # TEXT_NODE
+      $self->{onerror}->(node => $node,
+                         type => 'root text', # XXX
+                         level => 'm'); # [MANAKAI] [DOM]
+      $self->_check_data ($node, 'data');
     }
-  } else {
-    $self->{onerror}->(node => $docel, type => 'element not allowed:root',
-                       level => 'm');
-  }
 
-  ## TODO: Check for other items other than document element
-  ## (second (errorous) element, text nodes, PI nodes, doctype nodes)
+    # XXX PI, Comment validation
+  } # $node
 
-  $self->_check_node ({type => 'element', node => $docel, parent_state => {}});
+  $self->{onerror}->(node => $doc,
+                     type => 'no document element',
+                     level => 'w')
+      unless $has_element;
+
+  $self->_check_node (\@item);
   $self->_check_refs;
 
   ## Document charset
@@ -1339,7 +1378,7 @@ sub check_element ($$) {
   $self->onerror;
   $self->onsubdoc;
   $self->_init;
-  $self->_check_node ({type => 'element', node => $el, parent_state => {}});
+  $self->_check_node ([{type => 'element', node => $el, parent_state => {}}]);
   $self->_check_refs;
   $self->_terminate;
   return delete $self->{return}; # XXX
@@ -7981,7 +8020,7 @@ $Element->{+THR_NS}->{total} = {
 
 sub _check_node ($$) {
   my $self = $_[0];
-  my @item = ($_[1]);
+  my @item = (@{$_[1]});
   while (@item) {
     my $item = shift @item;
     if (ref $item eq 'ARRAY') {

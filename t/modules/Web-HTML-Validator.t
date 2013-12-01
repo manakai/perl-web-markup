@@ -848,6 +848,126 @@ test {
   done $c;
 } n => 1, name => ['no XML <?xml encoding?> but <meta charset>'];
 
+for my $test (
+  [sub { }, [{type => 'no document element', level => 'w', node => 'doc'}]],
+  [sub {
+     my $doc = $_[0];
+     my $p = $doc->append_child ($doc->create_element ('p'));
+     $p->text_content ('b');
+     return {p => $p};
+   }, [{type => 'element not allowed:root', level => 'm', node => 'p'}]],
+  [sub {
+     my $doc = $_[0];
+     $doc->dom_config->{manakai_strict_document_children} = 0;
+     my $p = $doc->append_child ($doc->create_element ('p'));
+     $p->text_content ('b');
+     my $q = $doc->append_child ($doc->create_element ('q'));
+     $q->text_content ('b');
+     my $s = $doc->append_child ($doc->create_element ('s'));
+     $s->text_content ('s');
+     return {p => $p, q => $q, s => $s};
+   },
+   [{type => 'element not allowed:root', level => 'm', node => 'p'},
+    {type => 'duplicate document element', level => 'm', node => 'q'},
+    {type => 'duplicate document element', level => 'm', node => 's'}]],
+  [sub {
+     my $doc = $_[0];
+     $doc->dom_config->{manakai_strict_document_children} = 0;
+     my $p = $doc->append_child ($doc->create_document_type_definition ('q'));
+     my $q = $doc->append_child ($doc->create_element ('q'));
+     $q->text_content ('b');
+     return {p => $p, q => $q};
+   },
+   [{type => 'element not allowed:root', level => 'm', node => 'q'}]],
+  [sub {
+     my $doc = $_[0];
+     $doc->dom_config->{manakai_strict_document_children} = 0;
+     my $q = $doc->append_child ($doc->create_element ('q'));
+     $q->text_content ('b');
+     my $p = $doc->append_child ($doc->create_document_type_definition ('q'));
+     return {p => $p, q => $q};
+   },
+   [{type => 'element not allowed:root', level => 'm', node => 'q'},
+    {type => 'doctype after element', level => 'm', node => 'p'}]],
+  [sub {
+     my $doc = $_[0];
+     $doc->dom_config->{manakai_strict_document_children} = 0;
+     my $p = $doc->append_child ($doc->create_document_type_definition ('q'));
+     my $r = $doc->append_child ($doc->create_document_type_definition ('q'));
+     my $q = $doc->append_child ($doc->create_element ('q'));
+     $q->text_content ('b');
+     return {p => $p, q => $q, r => $r};
+   },
+   [{type => 'element not allowed:root', level => 'm', node => 'q'},
+    {type => 'duplicate doctype', level => 'm', node => 'r'}]],
+  [sub {
+     my $doc = $_[0];
+     $doc->dom_config->{manakai_strict_document_children} = 0;
+     my $p = $doc->append_child ($doc->create_document_type_definition ('q'));
+     my $r = $doc->append_child ($doc->create_document_type_definition ('q'));
+     return {p => $p, r => $r};
+   },
+   [{type => 'duplicate doctype', level => 'm', node => 'r'},
+    {type => 'no document element', level => 'w', node => 'doc'}]],
+  [sub {
+     my $doc = $_[0];
+     $doc->dom_config->{manakai_strict_document_children} = 0;
+     my $p = $doc->append_child ($doc->create_text_node ('q'));
+     return {p => $p};
+   },
+   [{type => 'root text', level => 'm', node => 'p'},
+    {type => 'no document element', level => 'w', node => 'doc'}]],
+  [sub {
+     my $doc = $_[0];
+     my $el = $doc->create_element_ns (undef, 'foo');
+     $el->set_attribute_ns ('http://www.w3.org/1999/XSL/Transform', 'xsl:version', '1.0');
+     $doc->append_child ($el);
+     return {el => $el, attr => $el->attributes->[0]};
+   },
+   [{type => 'element not defined', level => 'm', node => 'el'},
+    {type => 'attribute not defined', level => 'm', node => 'attr'},
+    {type => 'xslt:root literal result element', level => 's', node => 'el'}]],
+  [sub {
+     my $doc = $_[0];
+     my $el = $doc->create_element_ns ('http://www.w3.org/1999/XSL/Transform', 'foo');
+     $el->set_attribute_ns ('http://www.w3.org/1999/XSL/Transform', 'xsl:version', '1.0');
+     $doc->append_child ($el);
+     return {el => $el, attr => $el->attributes->[0]};
+   },
+   [{type => 'element not defined', level => 'm', node => 'el'},
+    {type => 'attribute not defined', level => 'm', node => 'attr'},
+    {type => 'element not allowed:root', level => 'm', node => 'el'}]],
+   [sub {
+      my $doc = $_[0];
+      $doc->manakai_is_html (1);
+      $doc->manakai_charset ('utf-8');
+      my $el = $doc->create_element_ns ('http://www.w3.org/2000/svg', 'svg');
+      $doc->append_child ($el);
+      return {el => $el};
+    },
+    [{type => 'unknown element', level => 'u', node => 'el'},
+     {type => 'document element not serializable', level => 'w', node => 'el'}]],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->manakai_is_html (0);
+    my $map = $test->[0]->($doc);
+    $map->{doc} = $doc;
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->check_document ($doc);
+    eq_or_diff [sort { $a->{type} cmp $b->{type} } @error],
+        [sort { $a->{type} cmp $b->{type} }
+         map { {%$_, node => $map->{$_->{node}}} } @{$test->[1]}];
+    done $c;
+  } n => 1, name => ['check_document'];
+}
+
 run_tests;
 
 =head1 LICENSE

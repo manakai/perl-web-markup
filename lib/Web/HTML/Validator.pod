@@ -231,11 +231,29 @@ XML Base Specification Errata
 
 HTML Standard <http://c.whatwg.org/>.
 
+The |html| element in the HTML namespace MAY be used as the root
+element.
+
+=item XSLT
+
+XSL Transformations (XSLT) Version 1.0 <http://www.w3.org/TR/xslt>.
+
+XSL Transformations (XSLT) Version 1.0 Specification Errata
+<http://www.w3.org/1999/11/REC-xslt-19991116-errata/>.
+
+Key words "must" and "should" are to be interpreted as described in
+RFC 2119.
+
 =item OBSVOCAB
 
 manakai's Conformance Checking Guideline for Obsolete HTML Elements
 and Attributes
 <http://suika.suikawiki.org/www/markup/html/exts/manakai-obsvocab>.
+
+=item MANAKAI
+
+manakai DOM Extensions
+<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
 
 =back
 
@@ -255,10 +273,11 @@ For more information, see
 <http://suika.suikawiki.org/gate/2007/html/standards>.
 
 Note that XML 1.1, Namespaces in XML 1.1, C<xml:id>, XLink, XHTML
-Modularization, and Ruby Annotation are not applicable specifications.
-Also, the module does not support historical HTML features no longer
-part of the language, except for those explicitly listed in the
-OBSVOCAB specification.  See the specification for details.
+Modularization, Ruby Annotations, and RDFa are not applicable
+specifications.  Also, the module does not support historical HTML
+features no longer part of the language, except for those explicitly
+listed in the OBSVOCAB specification.  See the specification for
+details.
 
 =head1 SEE ALSO
 
