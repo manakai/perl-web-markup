@@ -2,7 +2,7 @@ package Web::HTML::InputStream;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '1.0';
+our $VERSION = '2.0';
 use Web::HTML::Defs;
 
 ## ------ Constructor ------
@@ -53,6 +53,12 @@ sub _clear_refs ($) {
   delete $self->{inner_html_node};
   delete $self->{inner_html_tag_name};
   delete $self->{onerror};
+  delete $self->{open_tables};
+  delete $self->{open_elements};
+  delete $self->{head_element};
+  delete $self->{form_element};
+  delete $self->{active_formatting_elements};
+  delete $self->{insert};
 } # _clear_refs
 
 ## ------ Error handling ------
@@ -601,6 +607,7 @@ sub _get_attr ($$) {
     $attr->{name} .= $1;
     $attr->{name} =~ tr/A-Z/a-z/;
   }
+  return undef if $_[1] =~ m{\G\z}gc;
   return $attr if $_[1] =~ m{\G(?=[/>])}gc;
 
   # 6.
@@ -623,6 +630,7 @@ sub _get_attr ($$) {
     $attr->{value} .= $1;
     $attr->{value} =~ tr/A-Z/a-z/;
   }
+  return undef if $_[1] =~ m{\G\z}gc;
   return $attr;
 } # _get_attr
 

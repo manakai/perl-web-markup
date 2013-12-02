@@ -487,13 +487,56 @@ sub _parse_char_string_with_context_doc : Test(1) {
   is $doc->inner_html, '<html><head></head><body>hoge<p>foobar</p></body></html>';
 } # _parse_char_string_with_context_doc
 
+sub _parse_bytes_stream_incomplete : Test(3) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<link fu', start_parsing => 1);
+  $parser->parse_bytes_feed ('ga="">');
+  $parser->parse_bytes_end;
+  
+  ok $doc->manakai_is_html;
+  is $doc->input_encoding, 'windows-1252';
+  is $doc->inner_html, q(<html><head><link fuga=""></head><body></body></html>);
+} # _parse_bytes_stream_incomplete
+
+sub _parse_bytes_stream_incomplete_2 : Test(3) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<link fu=', start_parsing => 1);
+  $parser->parse_bytes_feed ('"">');
+  $parser->parse_bytes_end;
+  
+  ok $doc->manakai_is_html;
+  is $doc->input_encoding, 'windows-1252';
+  is $doc->inner_html, q(<html><head><link fu=""></head><body></body></html>);
+} # _parse_bytes_stream_incomplete_2
+
+sub _parse_bytes_stream_change_encoding_by_main_parser : Test(3) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<meta charset=', start_parsing => 1);
+  $parser->parse_bytes_feed ('"shift_jis"><link><p>');
+  $parser->parse_bytes_feed ("<q>\x81\x40</q>");
+  $parser->parse_bytes_end;
+  
+  ok $doc->manakai_is_html;
+  is $doc->input_encoding, 'shift_jis';
+  is $doc->inner_html, qq(<html><head><meta charset="shift_jis"><link></head><body><p><q>\x{3000}</q></p></body></html>);
+} # _parse_bytes_stream_change_encoding_by_main_parser
+
 __PACKAGE__->runtests;
 
 1;
 
 =head1 LICENSE
 
-Copyright 2009-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2009-2013 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

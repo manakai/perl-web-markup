@@ -29,8 +29,8 @@ sub onsubdoc ($;$) {
     $_[0]->{onsubdoc} = $_[1];
   }
   return $_[0]->{onsubdoc} ||= sub {
-    my %args = @_;
-    warn "A subdocument of type |$args{media_type}| found but no subdocument validator is provided\n";
+    my $args = $_[0];
+    warn "A subdocument of type |$args->{media_type}| found but no subdocument validator is provided\n";
   };
 } # onsubdoc
 
@@ -3108,7 +3108,7 @@ $Element->{+HTML_NS}->{noscript} = {
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    if ($self->{flag}->{in_head}) {
+    if ($self->{flag}->{in_head}) { # XXX buggy??
       if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
         $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
         $self->{onerror}->(node => $child_el,

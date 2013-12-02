@@ -225,10 +225,18 @@ The C<atom:email> element MUST NOT contain child elements.  The
 content of the element MUST be text which is a valid e-mail address
 [HTML].  (This is a willful violation of RFC 5322 and RFC 4287.)
 
+A C<feed> element in the Atom namespace, when it contains no C<entry>
+element in the Atom namespace as child, can but does not have to
+contain a child C<author> element in the Atom namespace.  (Per RFC
+4287 it is unclear whether there has to be an C<author> child element
+or not when the C<feed> element contains no C<entry> element child.)
+
 =item MANAKAI
 
 manakai DOM Extensions
 <http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
+
+Any node MAY be used as orphan node.
 
 =back
 
