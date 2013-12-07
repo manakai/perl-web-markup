@@ -26,9 +26,10 @@ for my $attr (qw(xml:lang xml:space xml:base)) {
         [{type => 'unknown namespace element',
           node => $el,
           level => 'w'},
-         {type => 'attribute not defined',
-          node => $el->attributes->[0],
-          level => 'm'}];
+         #{type => 'attribute not defined',
+         # node => $el->attributes->[0],
+         # level => 'm'}
+        ];
     done $c;
   } n => 1, name => [$attr, 'in no namespace'];
 } # $attr
@@ -282,9 +283,11 @@ for my $test (
           node => $el,
           level => 'w'},
          (map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}),
-         {type => 'attribute not defined',
-          node => $el->attributes->[0],
-          level => 'm'}];
+         (($el->attributes->[0]->namespace_uri || '') eq 'http://www.w3.org/XML/1998/namespace' ?
+          {type => 'attribute not defined',
+           node => $el->attributes->[0],
+           level => 'm'} : ()),
+        ];
     done $c;
   } n => 1, name => [$test->[1]->[0] ? $test->[1]->[0]->{type} : ()];
 }
