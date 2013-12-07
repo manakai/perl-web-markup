@@ -172,6 +172,8 @@ sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 sub XSLT_NS () { q<http://www.w3.org/1999/XSL/Transform> }
+sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
+sub RSS1_NS () { q<http://purl.org/rss/1.0/> }
 
 our $_Defs;
 
@@ -331,11 +333,14 @@ sub _check_element_attrs ($$$;%) {
                            type => 'status:wd:attr', level => 'i')
       }
     } else {
-      ## "Authors must not use elements, attributes, or attribute
-      ## values that are not permitted by this specification or other
-      ## applicable specifications" [HTML]
-      $self->{onerror}->(node => $attr,
-                         type => 'attribute not defined', level => 'm');
+      if ($_Defs->{namespaces}->{$el_ns}->{supported} or
+          $_Defs->{namespaces}->{$attr_ns}->{supported}) {
+        ## "Authors must not use elements, attributes, or attribute
+        ## values that are not permitted by this specification or
+        ## other applicable specifications" [HTML]
+        $self->{onerror}->(node => $attr,
+                           type => 'attribute not defined', level => 'm');
+      }
     }
 
     $self->_check_data ($attr, 'value');
@@ -1261,9 +1266,8 @@ our $IsInHTMLInteractiveContent = sub {
 
 our $Element = {};
 
-$Element->{q<http://www.w3.org/1999/02/22-rdf-syntax-ns#>}->{RDF} = {
+$Element->{(RDF_NS)}->{RDF} = {
   %AnyChecker,
-  is_root => 1, ## ISSUE: Not explicitly allowed for non application/rdf+xml
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     my $triple = [];
@@ -2302,7 +2306,6 @@ for my $ns (keys %{$_Defs->{elements}}) {
 
 $Element->{+HTML_NS}->{html} = {
   %AnyChecker,
-  is_root => 1,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{phase} = 'before head';
@@ -7006,7 +7009,6 @@ my %AtomDateConstruct = (
 
 $Element->{+ATOM_NS}->{entry} = {
   %AtomChecker,
-  is_root => 1,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -7166,7 +7168,6 @@ $Element->{+ATOM_NS}->{entry} = {
 
 $Element->{+ATOM_NS}->{feed} = {
   %AtomChecker,
-  is_root => 1,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -7923,15 +7924,50 @@ sub _check_doc_charset ($$) {
 
 ## ------ Nodes ------
 
+## <http://suika.suikawiki.org/www/markup/xml/validation-langs#determine-the-validation-mode>
+sub _determine_validation_mode ($$$) {
+  my ($self, $el, $parent_mode) = @_;
+  if (($parent_mode eq 'RDF' or $parent_mode eq 'RSS1') and
+      0 and 'is RDF XML literal') {
+    $parent_mode = 'default';
+  }
+  if ((0 and 'XXX is XSLT element') or
+      ($parent_mode eq 'XSLT' and 0 and 'XXX is XSLT literal result element')) {
+    return 'XSLT';
+  }
+  if (($el->namespace_uri || '') eq RDF_NS and $el->local_name eq 'RDF') {
+    my $xmlns = $el->get_attribute_ns (XMLNS_NS, 'xmlns') || '';
+    my $rdfns = $el->get_attribute_ns (XMLNS_NS, 'rdf') || '';
+    if ($xmlns eq RSS1_NS and $rdfns eq RDF_NS) {
+      return 'RSS1';
+    } else {
+      return 'RDF';
+    }
+  }
+  if (($parent_mode eq 'RDF' or $parent_mode eq 'RSS1') and
+      0 and 'XXX is RDF/XML') {
+    return $parent_mode;
+  }
+  return 'default';
+} # _determine_validation_mode
+
 sub _check_node ($$) {
   my $self = $_[0];
   my @item = ($_[1]);
   while (@item) {
     my $item = shift @item;
     if (ref $item eq 'ARRAY') {
+      ## $item
+      ##   0     The code reference
+      ##   1..$# Arguments for the code
       my $code = shift @$item;
       $code->(@$item) if $code;
     } elsif ($item->{type} eq 'element') {
+      ## $item
+      ##   type            |element|
+      ##   node            The element node
+      ##   parent_state    State hashref for the parent of the element node
+      ##   validation_mode Validation mode for the element node
       my $el = $item->{node};
       my $el_nsuri = $el->namespace_uri;
       $el_nsuri = '' if not defined $el_nsuri;
@@ -7962,32 +7998,47 @@ sub _check_node ($$) {
                            level => 'w');
       }
 
-      my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
-      if ($el_def->{conforming}) {
-        unless ($Element->{$el_nsuri}->{$el_ln}) {
-          ## According to the attribute list, this element is
-          ## conforming.  However, current version of the validator
-          ## does not support the element.  The conformance is
-          ## unknown.
-          $self->{onerror}->(node => $el,
-                             type => 'unknown element', level => 'u');
-        }
-        my $status = $el_def->{status} || '';
-        if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
-          #
-        } else {
-          ## The element is conforming, but is in earlier stage such
-          ## that it should not be used without caution.
-          $self->{onerror}->(node => $el,
-                             type => 'status:wd:element', level => 'i')
-        }
+      ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#checking-an-element>.
+      my $mode = $item->{validation_mode};
+      if ($mode eq 'XSLT') {
+        # XXX
+      } elsif ($mode eq 'RDF') {
+        # XXX
       } else {
-        ## "Authors must not use elements, attributes, or attribute
-        ## values that are not permitted by this specification or
-        ## other applicable specifications" [HTML]
-        $self->{onerror}->(node => $el,
-                           type => 'element not defined', level => 'm');
-      }
+        # XXX if $mode eq 'RSS1'
+        # XXX if $self->{rss2}
+
+        my $el_def = $_Defs->{elements}->{$el_nsuri}->{$el_ln};
+        if ($el_def->{conforming}) {
+          unless ($Element->{$el_nsuri}->{$el_ln}) {
+            ## According to the attribute list, this element is
+            ## conforming.  However, current version of the validator
+            ## does not support the element.  The conformance is
+            ## unknown.
+            $self->{onerror}->(node => $el,
+                               type => 'unknown element', level => 'u');
+          }
+          my $status = $el_def->{status} || '';
+          if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
+            #
+          } else {
+            ## The element is conforming, but is in earlier stage such
+            ## that it should not be used without caution.
+            $self->{onerror}->(node => $el,
+                               type => 'status:wd:element', level => 'i')
+          }
+        } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported}) {
+          ## "Authors must not use elements, attributes, or attribute
+          ## values that are not permitted by this specification or
+          ## other applicable specifications" [HTML]
+          $self->{onerror}->(node => $el,
+                             type => 'element not defined', level => 'm');
+        } else {
+          $self->{onerror}->(node => $el,
+                             type => 'unknown namespace element', # XXX
+                             level => 'w');
+        }
+      } # validation mode
 
       my @new_item;
       my $disallowed = $ElementDisallowedDescendants->{$el_nsuri}->{$el_ln};
@@ -8026,8 +8077,9 @@ sub _check_node ($$) {
                            0,
                            $element_state, $element_state];
           push @new_item, {type => 'element', node => $child,
-                           parent_def => $eldef,
-                           parent_state => $element_state};
+                           parent_state => $element_state,
+                           validation_mode => $self->_determine_validation_mode
+                               ($child, $item->{validation_mode})};
         } elsif ($child_nt == 3) { # TEXT_NODE
           my $has_significant = ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/);
           push @new_item, [$eldef->{check_child_text},
@@ -8080,10 +8132,9 @@ sub _check_node ($$) {
                          type => 'no significant content')
           unless $item->{element_state}->{has_palpable};
     } elsif ($item->{type} eq 'document') {
-      ## TODO: If application/rdf+xml, RDF/XML mode should be invoked.
-
-      ## XXX RSS mode if application/rss+xml or root element is |rss|
-      ## in null namespace
+      ## $item
+      ##   type  |document|
+      ##   node  The document node
 
       ## Although not allowed by DOM Standard, manakai DOM
       ## implementations support multiple element childs, text node
@@ -8096,6 +8147,7 @@ sub _check_node ($$) {
       for my $node (@{$item->{node}->child_nodes}) {
         my $nt = $node->node_type;
         if ($nt == 1) { # ELEMENT_NODE
+          my $mode = 'default';
           if ($has_element) {
             $self->{onerror}->(node => $node,
                                type => 'duplicate document element', # XXX
@@ -8103,38 +8155,101 @@ sub _check_node ($$) {
           } else {
             $has_element = 1;
 
+            my $ct = $item->{node}->content_type;
             my $nsurl = $node->namespace_uri;
             $nsurl = '' if not defined $nsurl;
             my $ln = $node->local_name;
-            if ($_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
-              if ($nsurl eq HTML_NS and $ln eq 'html') {
-                #
-              } elsif ($item->{node}->manakai_is_html) {
-                $self->{onerror}->(node => $node,
-                                   type => 'document element not serializable', # XXX
-                                   level => 'w');
+
+            ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#determine-the-validation-mode>.
+            MODE: {
+              if ($ct eq 'application/xml' or $ct eq 'text/xml') {
+                if (0 and 'XXX is XSLT literal result element' and
+                    $node->has_attribute_ns (XSLT_NS, 'version')) {
+                  $mode = 'XSLT';
+                  last MODE;
+                }
+              } elsif ($ct eq 'application/xslt+xml' or $ct eq 'text/xsl') {
+                if (0 and 'XXX is XSLT literal result element') {
+                  $mode = 'XSLT';
+                  last MODE;
+                }
+              } elsif ($ct eq 'application/rdf+xml') {
+                if (0 and 'XXX is RDF nodeElement') {
+                  $mode = 'RDF';
+                  last MODE;
+                }
               } else {
                 #
               }
-            } else {
-              if ($nsurl ne XSLT_NS and
-                  $node->has_attribute_ns (XSLT_NS, 'version')) {
+              $mode = $self->_determine_validation_mode
+                  ($node, $parent_state->{validation_mode} || 'default');
+            } # MODE
+
+            ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#document-element>.
+            if ($mode eq 'XSLT') {
+              if ($nsurl eq XSLT_NS and
+                  $_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
+                #
+              } elsif (0 and 'XXX is XSLT literal result element') {
                 $self->{onerror}->(node => $node,
                                    type => 'xslt:root literal result element', # XXX
-                                   level => 's');
-                # XXX unless mime type is XSLT
+                                   level => 's')
+                    unless $ct eq 'application/xslt+xml' or $ct eq 'text/xsl';
+                $self->{onerror}->(node => $node,
+                                   type => 'attribute missing',
+                                   text => 'xslt:version',
+                                   level => 'm')
+                    unless $node->has_attribute_ns (XSLT_NS, 'version');
               } else {
-                # XXX OK if RDF/XML
-                
                 $self->{onerror}->(node => $node,
                                    type => 'element not allowed:root',
                                    level => 'm');
               }
+            } elsif ($mode eq 'RDF') {
+              if ($nsurl eq RDF_NS and
+                  $_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
+                #
+              } elsif (0 and 'XXX is RDF nodeElement') {
+                #
+              } else {
+                $self->{onerror}->(node => $node,
+                                   type => 'element not allowed:root',
+                                   level => 'm');
+              }
+            } elsif ($mode eq 'RSS1') {
+              if ($nsurl eq RDF_NS and $ln eq 'RDF') {
+                #
+              } else {
+                $self->{onerror}->(node => $node,
+                                   type => 'element not allowed:root',
+                                   level => 'm');
+              }
+            } else { # default
+              if ($_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
+                #
+              } elsif ($nsurl eq '' and $ln eq 'rss') {
+                # XXX $self->{rss2} = 1;
+              } elsif ($_Defs->{namespaces}->{$nsurl}->{supported}) {
+                $self->{onerror}->(node => $node,
+                                   type => 'element not allowed:root',
+                                   level => 'm');
+              } else {
+                #
+              }
+            } # $mode
+
+            unless ($nsurl eq HTML_NS and $ln eq 'html') {
+              if ($item->{node}->manakai_is_html) {
+                $self->{onerror}->(node => $node,
+                                   type => 'document element not serializable', # XXX
+                                   level => 'w');
+              }
             }
-            # XXX root element type
-          }
+            # XXX $doc->content_type vs root element
+          } # first element child
           push @new_item, {type => 'element', node => $node,
-                           parent_state => $parent_state};
+                           parent_state => $parent_state,
+                           validation_mode => $mode};
         } elsif ($nt == 10) { # DOCUMENT_TYPE_NODE
           if ($has_element) {
             $self->{onerror}->(node => $node,
@@ -8166,15 +8281,23 @@ sub _check_node ($$) {
       push @item, {type => '_check_doc_charset', node => $item->{node}};
       unshift @item, @new_item;
     } elsif ($item->{type} eq '_check_doc_charset') {
+      ## $item
+      ##   type   |_check_doc_charset|
+      ##   node   The document node
       $self->_check_doc_charset ($item->{node});
     } elsif ($item->{type} eq 'document_fragment') {
+      ## $item
+      ##   type   |document_fragment|
+      ##   node   The document fragment node
       my @new_item;
       my $parent_state = {};
       for my $node (@{$item->{node}->child_nodes}) {
         my $nt = $node->node_type;
         if ($nt == 1) { # ELEMENT_NODE
           push @new_item, {type => 'element', node => $node,
-                           parent_state => $parent_state};
+                           parent_state => $parent_state,
+                           validation_mode => $self->_determine_validation_mode
+                               ($node, 'default')};
         } elsif ($nt == 3) { # TEXT_NODE
           $self->_check_data ($node, 'data');
         }
@@ -8258,7 +8381,9 @@ sub check_node ($$) {
   my $nt = $node->node_type;
   if ($nt == 1) { # ELEMENT_NODE
     $self->_check_node
-        ({type => 'element', node => $node, parent_state => {}});
+        ({type => 'element', node => $node, parent_state => {},
+          validation_mode => $self->_determine_validation_mode
+              ($node, 'default')});
   } elsif ($nt == 9) { # DOCUMENT_NODE
     $self->_check_node ({type => 'document', node => $node});
   } elsif ($nt == 3) { # TEXT_NODE

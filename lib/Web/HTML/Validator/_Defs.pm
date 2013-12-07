@@ -533,6 +533,14 @@ $Web::HTML::Validator::_Defs = {
                                                        }
                                           }
                                  },
+                          "http://purl.org/atompub/tombstones/1.0" => {
+                                                                        "deleted-entry" => {
+                                                                                             "attrs" => {},
+                                                                                             "conforming" => 1,
+                                                                                             "root" => 1,
+                                                                                             "status" => "LC"
+                                                                                           }
+                                                                      },
                           "http://purl.org/syndication/thread/1.0" => {
                                                                         "*" => {
                                                                                  "attrs" => {}
@@ -605,6 +613,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "status" => "REC"
                                                                                       }
                                                                            },
+                          "http://www.w3.org/1999/XSL/Transform" => {
+                                                                      "stylesheet" => {
+                                                                                        "attrs" => {},
+                                                                                        "conforming" => 1,
+                                                                                        "root" => 1,
+                                                                                        "status" => "REC"
+                                                                                      },
+                                                                      "transform" => {
+                                                                                       "attrs" => {},
+                                                                                       "conforming" => 1,
+                                                                                       "root" => 1,
+                                                                                       "status" => "REC"
+                                                                                     }
+                                                                    },
                           "http://www.w3.org/1999/xhtml" => {
                                                               "*" => {
                                                                        "*" => {
@@ -9253,6 +9275,58 @@ $Web::HTML::Validator::_Defs = {
                                                  "image" => 1
                                                }
                                   }
-                     }
+                     },
+          "namespaces" => {
+                            "http://purl.org/syndication/thread/1.0" => {
+                                                                          "label" => "Atom Threading",
+                                                                          "status" => "LC",
+                                                                          "supported" => 1
+                                                                        },
+                            "http://www.w3.org/1998/Math/MathML" => {
+                                                                      "label" => "MathML",
+                                                                      "status" => "REC",
+                                                                      "supported" => 1
+                                                                    },
+                            "http://www.w3.org/1999/02/22-rdf-syntax-ns#" => {
+                                                                               "label" => "RDF",
+                                                                               "status" => "REC",
+                                                                               "supported" => 1
+                                                                             },
+                            "http://www.w3.org/1999/XSL/Transform" => {
+                                                                        "label" => "XSLT",
+                                                                        "status" => "REC",
+                                                                        "supported" => 1
+                                                                      },
+                            "http://www.w3.org/1999/xhtml" => {
+                                                                "label" => "HTML",
+                                                                "status" => "REC",
+                                                                "supported" => 1
+                                                              },
+                            "http://www.w3.org/1999/xlink" => {
+                                                                "label" => "XLink",
+                                                                "status" => "REC",
+                                                                "supported" => 1
+                                                              },
+                            "http://www.w3.org/2000/svg" => {
+                                                              "label" => "SVG",
+                                                              "status" => "REC",
+                                                              "supported" => 1
+                                                            },
+                            "http://www.w3.org/2000/xmlns/" => {
+                                                                 "label" => "XMLNS",
+                                                                 "status" => "REC",
+                                                                 "supported" => 1
+                                                               },
+                            "http://www.w3.org/2005/Atom" => {
+                                                               "label" => "Atom",
+                                                               "status" => "LC",
+                                                               "supported" => 1
+                                                             },
+                            "http://www.w3.org/XML/1998/namespace" => {
+                                                                        "label" => "XML",
+                                                                        "status" => "REC",
+                                                                        "supported" => 1
+                                                                      }
+                          }
         };
 

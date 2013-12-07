@@ -238,6 +238,11 @@ manakai DOM Extensions
 
 Any node MAY be used as orphan node.
 
+=item VALIDLANGS
+
+Handling of unknown namespaces in conformance checking
+<http://suika.suikawiki.org/www/markup/xml/validation-langs>.
+
 =back
 
 The validator also supports much more Web standards (indirectly via

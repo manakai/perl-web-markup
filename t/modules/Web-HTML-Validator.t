@@ -23,9 +23,9 @@ for my $attr (qw(xml:lang xml:space xml:base)) {
     });
     $validator->check_node ($el);
     eq_or_diff \@error,
-        [{type => 'element not defined',
+        [{type => 'unknown namespace element',
           node => $el,
-          level => 'm'},
+          level => 'w'},
          {type => 'attribute not defined',
           node => $el->attributes->[0],
           level => 'm'}];
@@ -149,9 +149,9 @@ for my $test (
     });
     $validator->check_node ($el);
     eq_or_diff \@error,
-        [{type => 'element not defined',
+        [{type => 'unknown namespace element',
           node => $el,
-          level => 'm'},
+          level => 'w'},
          map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}];
     done $c;
   } n => 1, name => [$test->[1]->[0]->{type}, $test->[1]->[0]->{text}];
@@ -209,9 +209,9 @@ test {
   });
   $validator->check_node ($el);
   eq_or_diff \@error,
-      [{type => 'element not defined',
+      [{type => 'unknown namespace element',
         node => $el,
-        level => 'm'},
+        level => 'w'},
        {type => 'Reserved Prefixes and Namespace Names:Prefix',
         text => 'xmlns',
         node => $el->attributes->[0],
@@ -278,9 +278,9 @@ for my $test (
     });
     $validator->check_node ($el);
     eq_or_diff \@error,
-        [{type => 'element not defined',
+        [{type => 'unknown namespace element',
           node => $el,
-          level => 'm'},
+          level => 'w'},
          (map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}),
          {type => 'attribute not defined',
           node => $el->attributes->[0],
@@ -305,9 +305,9 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
     });
     $validator->check_node ($el);
     eq_or_diff \@error,
-        [{type => 'element not defined',
+        [{type => 'unknown namespace element',
           node => $el,
-          level => 'm'}];
+          level => 'w'}];
     done $c;
   } n => 1, name => ['xml=""', $version];
 
@@ -326,9 +326,9 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
     });
     $validator->check_node ($el);
     eq_or_diff \@error,
-        [{type => 'element not defined',
+        [{type => 'unknown namespace element',
           node => $el,
-          level => 'm'},
+          level => 'w'},
          {type => 'xmlns:* empty',
           node => $el->attributes->[0],
           level => 'm'}];
@@ -386,13 +386,13 @@ for my $test (
    },
    [{type => 'Reserved Prefixes and Namespace Names:Prefix', text => 'xml',
      level => 'w'},
-    {type => 'element not defined', level => 'm'}]],
+    {type => 'unknown namespace element', level => 'w'}]],
   [sub {
      return $_[0]->create_element_ns ('http://foo/', ['xmlns', 'space']);
    },
    [{type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
      level => 'm'},
-    {type => 'element not defined', level => 'm'}]],
+    {type => 'unknown namespace element', level => 'w'}]],
 ) {
   test {
     my $c = shift;
@@ -924,9 +924,10 @@ for my $test (
      $doc->append_child ($el);
      return {el => $el, attr => $el->attributes->[0]};
    },
-   [{type => 'element not defined', level => 'm', node => 'el'},
+   [{type => 'unknown namespace element', level => 'w', node => 'el'},
     {type => 'attribute not defined', level => 'm', node => 'attr'},
-    {type => 'xslt:root literal result element', level => 's', node => 'el'}]],
+    # XXX{type => 'xslt:root literal result element', level => 's', node => 'el'},
+   ]],
   [sub {
      my $doc = $_[0];
      my $el = $doc->create_element_ns ('http://www.w3.org/1999/XSL/Transform', 'foo');
