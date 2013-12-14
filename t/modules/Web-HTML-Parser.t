@@ -530,6 +530,21 @@ sub _parse_bytes_stream_change_encoding_by_main_parser : Test(3) {
   is $doc->inner_html, qq(<html><head><meta charset="shift_jis"><link></head><body><p><q>\x{3000}</q></p></body></html>);
 } # _parse_bytes_stream_change_encoding_by_main_parser
 
+sub _parse_bytes_stream_prescan_tag_like : Test(3) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<%$a<f><*', start_parsing => 1);
+  $parser->parse_bytes_feed ('ab<&a<%aa%?><');
+  $parser->parse_bytes_feed ('#>');
+  $parser->parse_bytes_end;
+  
+  ok $doc->manakai_is_html;
+  is $doc->input_encoding, 'windows-1252';
+  is $doc->inner_html, q(<html><head></head><body>&lt;%$a<f>&lt;*ab&lt;&amp;a&lt;%aa%?&gt;&lt;#&gt;</f></body></html>);
+} # _parse_bytes_stream_prescan_tag_like
+
 __PACKAGE__->runtests;
 
 1;

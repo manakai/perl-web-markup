@@ -584,7 +584,7 @@ sub _prescan_byte_stream ($$) {
     }
 
     # 3. Next byte
-    $_[1] =~ /\G[^<]+/gc;
+    $_[1] =~ /\G[^<]+/gc || $_[1] =~ /\G</gc;
     return undef if pos $_[1] >= length $_[1];
     redo LOOP;
   } # LOOP
