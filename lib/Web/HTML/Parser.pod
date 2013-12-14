@@ -78,15 +78,35 @@ second argument must be an element or C<undef>.
 
 The method returns the result node list.
 
+=item $parser->locale_tag ($string)
+
+=item $string = $parser->locale_tag
+
+Get or set the BCP 47 language tag for the locale used to parse the
+document, e.g. C<en>, C<ja>, C<zh-tw>, and C<zh-cn>.  It is used to
+determine the default character encoding (that is only used when
+character encoding cannot be determined by other means).
+
+If C<undef> is specified (or the C<locale_tag> method is not
+explicitly invoked at all), the default is "none", which results in
+the C<windows-1252> character encoding default.
+
+Except for the C<zh-tw> and C<zh-cn>, only the primary language tag
+(i.e. a language code with no C<-> and subtags) should be specified.
+Tags are compared ASCII case-insensitively.
+
+XXX Future revision of the parser might also use the locale language
+tag to insert localized text for C<isindex> tag.
+
 =item $code = $parser->onerror
 
 =item $parser->onerror ($new_code)
 
 Get or set the error handler for the parser.  Any parse error, as well
-as warning and information, is reported to the handler.  See
-L<Whatpm::Errors>
-<https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
-for more information.
+as warning and additional processing information, is reported to the
+handler.  See
+<https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
+for details of error handling.
 
 =item $parser->throw ($code)
 
@@ -117,7 +137,7 @@ L<Message::DOM::Document>, L<Message::DOM::Element>.
 
 L<Web::HTML::Serializer>.
 
-L<Web::ContentChecker>.
+L<Web::HTML::Validator>.
 
 L<Web::XML::Parser>.
 
@@ -147,7 +167,7 @@ Encoding Standard <http://encoding.spec.whatwg.org/>.
 =item MANAKAI
 
 manakai's DOM Extensions
-<http://suika.fam.cx/~wakaba/wiki/sw/n/manakai++DOM%20Extensions>.
+<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai++DOM%20Extensions>.
 
 =back
 

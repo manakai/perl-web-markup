@@ -303,10 +303,10 @@ sub _html_parser_bom : Test(20) {
     ["\xFE\xFFhogefuga", undef, 'utf-16be'],
     ["\xFE\xFFhogefuga", 'utf-16le', 'utf-16be'],
     ["\xFE\xFFhogefuga", 'utf-16', 'utf-16be'],
-    ["\xFF\xFEhogefuga", undef, 'utf-16'],
-    ["\xFF\xFEhogefuga", 'utf-16le', 'utf-16'],
-    ["\xFF\xFEhogefuga", 'utf-16be', 'utf-16'],
-    ["\xFF\xFEhogefuga", 'utf-8', 'utf-16'],
+    ["\xFF\xFEhogefuga", undef, 'utf-16le'],
+    ["\xFF\xFEhogefuga", 'utf-16le', 'utf-16le'],
+    ["\xFF\xFEhogefuga", 'utf-16be', 'utf-16le'],
+    ["\xFF\xFEhogefuga", 'utf-8', 'utf-16le'],
     ["\xEF\xBB\xBF\xFE\xFEhogefuga", undef, 'utf-8'],
     ["\xEF\xBB\xBF\xFE\xFEhogefuga", 'utf-8', 'utf-8'],
     ["\xEF\xBB\xBF\xFE\xFEhogefuga", 'us-ascii', 'utf-8'],
@@ -544,6 +544,45 @@ sub _parse_bytes_stream_prescan_tag_like : Test(3) {
   is $doc->input_encoding, 'windows-1252';
   is $doc->inner_html, q(<html><head></head><body>&lt;%$a<f>&lt;*ab&lt;&amp;a&lt;%aa%?&gt;&lt;#&gt;</f></body></html>);
 } # _parse_bytes_stream_prescan_tag_like
+
+sub _parse_bytes_stream_locale_default : Test(3) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->locale_tag ('RU');
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<!DOCTYPE html>hoge', start_parsing => 1);
+  $parser->parse_bytes_end;
+  
+  is $doc->input_encoding, 'windows-1251';
+  is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
+} # _parse_bytes_stream_locale_default
+
+sub _parse_bytes_stream_locale_default_2 : Test(3) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->locale_tag ('ja');
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<!DOCTYPE html>hoge', start_parsing => 1);
+  $parser->parse_bytes_end;
+  
+  is $doc->input_encoding, 'shift_jis';
+  is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
+} # _parse_bytes_stream_locale_default_2
+
+sub _parse_bytes_stream_locale_default_3 : Test(3) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->locale_tag ('en');
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<!DOCTYPE html>hoge', start_parsing => 1);
+  $parser->parse_bytes_end;
+  
+  is $doc->input_encoding, 'windows-1252';
+  is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
+} # _parse_bytes_stream_locale_default_3
 
 __PACKAGE__->runtests;
 

@@ -11,8 +11,8 @@ standalone.
 
 =head1 DEPENDENCY
 
-The module requires L<Web::Encoding::UnivCharDet> in the
-<https://github.com/manakai/perl-web-encodings> repository.
+The module requires L<Web::Encoding> and L<Web::Encoding::UnivCharDet>
+in the <https://github.com/manakai/perl-web-encodings> repository.
 
 =head1 SEE ALSO
 
