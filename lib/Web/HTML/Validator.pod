@@ -37,8 +37,8 @@ Create a new instance of the validator.
 =item $val->onsubdoc ($code)
 
 Get or set the subdocument validation handler hooks.  Some nested
-constructs in the document, e.g. embedded CSS style sheets, JavaScript
-codes, and C<iframe> C<srcdoc> documents, are considered as
+constructs in the document, e.g. embedded JavaScript codes, regular
+expressions, and C<iframe> C<srcdoc> documents, are considered as
 "subdocument".  The validation itself does not check the conformance
 of the subdocument, but it instead invoke this callback such that
 appropriate validator modules can be dispatched.  The callback is not
@@ -230,6 +230,13 @@ element in the Atom namespace as child, can but does not have to
 contain a child C<author> element in the Atom namespace.  (Per RFC
 4287 it is unclear whether there has to be an C<author> child element
 or not when the C<feed> element contains no C<entry> element child.)
+
+=item CSSSTYLEATTR
+
+CSS Style Attributes <http://dev.w3.org/csswg/css-style-attr/>.
+
+CSS Syntax
+<http://dev.w3.org/csswg/css-syntax/#parse-a-list-of-declarations>.
 
 =item MANAKAI
 

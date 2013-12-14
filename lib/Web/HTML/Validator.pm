@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '121.0';
+our $VERSION = '122.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -162,9 +162,11 @@ sub _terminate ($) {
 ##   warning element/attribute names
 ##   warning non-builtin prefix/namespaces
 ##   warning xmlns=""
+##   warning prefix
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#comments
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#element-restrictions
 ##   warning http://www.whatwg.org/specs/web-apps/current-work/#cdata-rcdata-restrictions
+##   warning unserializable foreign elements
 
 ## XXX xml-stylesheet PI
 
@@ -578,19 +580,6 @@ $CheckerByType->{'MIME type'} = sub {
 
   return $type; # or undef
 }; # MIME type
-
-## CSS styling attribute [HTML] [CSSSTYLEATTR]
-$CheckerByType->{'CSS styling'} = sub {
-  my ($self, $attr) = @_;
-  $self->{onsubdoc}->({s => $attr->value,
-                       container_node => $attr,
-                       media_type => 'text/x-css-inline',
-                       is_char_string => 1});
-  
-  ## NOTE: "... MUST still be comprehensible and usable if those
-  ## attributes were removed" is a semantic requirement, it cannot be
-  ## tested.
-}; # CSS styling
 
 ## Language tag [HTML] [BCP47]
 $CheckerByType->{'language tag'} = sub {
@@ -2816,6 +2805,7 @@ $Element->{+HTML_NS}->{style} = {
     my $type = $item->{node}->get_attribute_ns (undef, 'type');
     $type = 'text/css' unless defined $type;
 
+    # XXX
     ## NOTE: RFC 2616's definition of "type/subtype".  According to
     ## the Web Applications 1.0 specification, types with unsupported
     ## parameters are considered as unknown types.  Since we don't
@@ -2892,10 +2882,11 @@ $Element->{+HTML_NS}->{style} = {
       ## NOTE: Invalid type=""
       #
     } elsif ($element_state->{style_type} eq 'text/css') {
-      $self->{onsubdoc}->({s => $element_state->{text},
-                           container_node => $item->{node},
-                           media_type => 'text/css', is_char_string => 1});
-    } elsif ($element_state->{style_type} =~ m![+/][Xx][Mm][Ll]\z!) {
+      my $parser = $self->_css_parser ($item->{node}); # XXX
+      # XXX $parser->context->scoped (has_attribute ('scoped'));
+      my $ss = $parser->parse_char_string_as_ss ($element_state->{text});
+      # XXX Web::CSS::Checker->new->check_ss ($ss);
+    } elsif ($element_state->{style_type} =~ m![+/][Xx][Mm][Ll]\z!) { # XXX
       ## NOTE: XML content should be checked by THIS instance of
       ## checker as part of normal tree validation.  However, we don't
       ## know any XML-based styling language that can be used in HTML
@@ -2906,6 +2897,7 @@ $Element->{+HTML_NS}->{style} = {
                          text => $element_state->{style_type},
                          level => 'u');
     } else {
+      # XXX
       $self->{onsubdoc}->({s => $element_state->{text},
                            container_node => $item->{node},
                            media_type => $element_state->{style_type},
@@ -7872,6 +7864,54 @@ $Element->{+THR_NS}->{total} = {
 ## TODO: Check as archive document, page feed document, ...
 
 ## TODO: APP [RFC 5023]
+
+## ------ CSS ------
+
+sub _css_parser ($$) {
+  my ($self, $node) = @_;
+  require Web::CSS::Parser;
+  require Web::CSS::Context;
+  my $parser = Web::CSS::Parser->new;
+  my $context = Web::CSS::Context->new_from_nscallback (sub {
+    return $node->lookup_namespace_uri ($_[0]);
+  });
+  $context->url ($node->owner_document->url);
+  $context->manakai_compat_mode ($node->owner_document->manakai_compat_mode);
+  $context->base_url ($node->base_uri);
+  $parser->context ($context);
+  $parser->media_resolver->set_supported (all => 1);
+  my $onerror = $self->onerror;
+  $parser->onerror (sub {
+    my %args = @_;
+    if (defined $args{line} and defined $args{column}) {
+      # XXX Source Map for attr value -> CSS
+      my $line = $node->get_user_data ('manakai_source_line');
+      my $column = $node->get_user_data ('manakai_source_column');
+      if (defined $line and defined $column) {
+        $line += $args{line} - 1;
+        $column = $args{line} == 1 ? $column + (length $node->node_name) + 2 + $args{column} - 1 : $args{column}; # XXX this is length 'attr="'
+        $onerror->(@_, node => $node, line => $line, column => $column);
+      } else {
+        # XXX can we do something better?
+        delete $args{line};
+        delete $args{column};
+        $onerror->(%args, node => $node);
+      }
+    } else {
+      $onerror->(@_, node => $node);
+    }
+  });
+  #$parser->init_parser;
+  return $parser;
+} # _create_css_parser
+
+## CSS styling attribute [HTML] [CSSSTYLEATTR]
+$CheckerByType->{'CSS styling'} = sub {
+  my ($self, $attr) = @_;
+  my $parser = $self->_css_parser ($attr);
+  my $props = $parser->parse_char_string_as_prop_decls ($attr->value);
+  # XXX Web::CSS::Checker->new->check_props ($props);
+}; # CSS styling
 
 ## ------ Documents ------
 

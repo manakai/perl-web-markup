@@ -9,9 +9,7 @@ use Test::HTCT::Parser;
 use Web::HTML::Validator;
 use Web::HTML::Parser;
 use Web::XML::Parser;
-use NanoDOM;
-use Web::DOM::AtomElement;
-*NanoDOM::Element::rel = \&Web::DOM::AtomLinkElement::rel;
+use Web::DOM::Document;
 
 sub test_files (@) {
   my @FILES = @_;
@@ -43,12 +41,12 @@ sub _test ($$) {
 
     my $doc;
     if ($test->{parse_as} eq 'xml') {
-      $doc = NanoDOM::Document->new;
+      $doc = Web::DOM::Document->new;
       Web::XML::Parser->new->parse_char_string ($test->{data}->[0] => $doc);
       ## NOTE: There should be no well-formedness error; if there is,
       ## then it is an error of the test case itself.
     } else {
-      $doc = NanoDOM::Document->new;
+      $doc = Web::DOM::Document->new;
       Web::HTML::Parser->new->parse_char_string ($test->{data}->[0] => $doc);
     }
     $doc->document_uri (q<thismessage:/>);
@@ -70,7 +68,9 @@ sub _test ($$) {
         #
       } else {
         warn $opt{type} unless ref $opt{node};
-        push @error, get_node_path ($opt{node}) . ';' . $opt{type} .
+        push @error,
+          (defined $opt{line} ? $opt{line} . ';' .$opt{column} . ';' : '') .
+          get_node_path ($opt{node}) . ';' . $opt{type} .
           (defined $opt{text} ? ';' . $opt{text} : '') .
           (defined $opt{level} ? ';'.$opt{level} : '');
       }
