@@ -2,7 +2,7 @@ package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '2.0';
+our $VERSION = '3.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -1134,6 +1134,19 @@ sub _get_next_token ($) {
       if (defined $action->{state}) {
         $self->{state} = $action->{state};
         
+        if ($self->{state} == ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE or
+            $self->{state} == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE) {
+          $self->{ca}->{cl} = 1;
+          $self->{ca}->{cc} = 1;
+          $self->{ca}->{cpos} = 0;
+        } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
+          $self->{ca}->{cl} = 1;
+          $self->{ca}->{cc} = 1;
+          $self->{ca}->{cpos} = 0;
+          $self->{ca}->{pos} = [[$self->{ca}->{cl}, $self->{ca}->{cc}
+                                     => $self->{line}, $self->{column}]];
+        }
+        
         if ($action->{state_set}) {
           for (keys %{$action->{state_set}}) {
             $self->{$_} = $action->{state_set}->{$_};
@@ -1418,15 +1431,6 @@ sub _get_next_token ($) {
     $self->_set_nc;
   
         redo A;
-      } elsif ($self->{is_xml} and 
-               $is_space->{$nc}) {
-        
-        $self->{ca}->{value} .= ' ';
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
       } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed attribute value');
         if ($self->{ct}->{type} == START_TAG_TOKEN or
@@ -1445,23 +1449,36 @@ sub _get_next_token ($) {
         } else {
           die "$0: $self->{ct}->{type}: Unknown token type";
         }
-      } elsif ($nc == 0x0000) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        $self->{ca}->{value} .= "\x{FFFD}";
-        ## Stay in the state
-        
-    $self->_set_nc;
-  
-        redo A;
       } else {
         ## XML5 [ATTLIST]: Not defined yet.
-        if ($self->{is_xml} and $nc == 0x003C) { # <
+
+        if ($self->{is_xml} and $is_space->{$nc}) {
+          
+          $nc = 0x0020;
+        } elsif ($nc == 0x0000) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
+          $nc = 0xFFFD;
+        } elsif ($self->{is_xml} and $nc == 0x003C) { # <
           
           ## XML5: Not a parse error.
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'lt in attr value'); ## TODO: type
         } else {
           
         }
+
+        my $new_cpos = length $self->{ca}->{value};
+        if ($nc == 0x000A) {
+          $self->{ca}->{cl}++;
+          $self->{ca}->{cc} = 0;
+        } else {
+          $self->{ca}->{cc} += $new_cpos - $self->{ca}->{cpos};
+        }
+        $self->{ca}->{cpos} = $new_cpos;
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if $self->{ca}->{cc} != $self->{column};
+
         $self->{ca}->{value} .= chr ($nc);
 
         $self->{ca}->{value} .= $self->_read_chars
@@ -1511,15 +1528,6 @@ sub _get_next_token ($) {
     $self->_set_nc;
   
         redo A;
-      } elsif ($self->{is_xml} and 
-               $is_space->{$nc}) {
-        
-        $self->{ca}->{value} .= ' ';
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
       } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed attribute value');
         if ($self->{ct}->{type} == START_TAG_TOKEN or
@@ -1538,30 +1546,39 @@ sub _get_next_token ($) {
         } else {
           die "$0: $self->{ct}->{type}: Unknown token type";
         }
-      } elsif ($nc == 0x0000) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        $self->{ca}->{value} .= "\x{FFFD}";
-        ## Stay in the state
-        
-    $self->_set_nc;
-  
-        redo A;
       } else {
         ## XML5 [ATTLIST]: Not defined yet.
-        if ($self->{is_xml} and $nc == 0x003C) { # <
+        if ($self->{is_xml} and $is_space->{$nc}) {
+          
+          $nc = 0x0020;
+        } elsif ($nc == 0x0000) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
+          $nc = 0xFFFD;
+        } elsif ($self->{is_xml} and $nc == 0x003C) { # <
           
           ## XML5: Not a parse error.
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'lt in attr value'); ## TODO: type
         } else {
           
         }
+
+        my $new_cpos = length $self->{ca}->{value};
+        if ($nc == 0x000A) {
+          $self->{ca}->{cl}++;
+          $self->{ca}->{cc} = 0;
+        } else {
+          $self->{ca}->{cc} += $new_cpos - $self->{ca}->{cpos};
+        }
+        $self->{ca}->{cpos} = $new_cpos;
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if $self->{ca}->{cc} != $self->{column};
+
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
             ({"\x00" => 1, q<'> => 1, q<&> => 1, "<" => 1,
               "\x09" => 1, "\x0C" => 1, "\x20" => 1});
-        #$self->{read_until}->($self->{ca}->{value},
-        #                      qq[\x00'&<\x09\x0C\x20],
-        #                      length $self->{ca}->{value});
 
         ## Stay in the state
         
@@ -1669,36 +1686,37 @@ sub _get_next_token ($) {
         } else {
           die "$0: $self->{ct}->{type}: Unknown token type";
         }
-      } elsif ($nc == 0x0000) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        $self->{ca}->{value} .= "\x{FFFD}";
-        ## Stay in the state
-        
-    $self->_set_nc;
-  
-        redo A;
       } else {
-        if ({
-             0x0022 => 1, # "
-             0x0027 => 1, # '
-             0x003D => 1, # =
-             0x003C => 1, # <
-             0x0060 => 1, # `
-            }->{$nc}) {
+        if ($nc == 0x0000) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
+          $nc = 0xFFFD;
+        } elsif ({
+          0x0022 => 1, # "
+          0x0027 => 1, # '
+          0x003D => 1, # =
+          0x003C => 1, # <
+          0x0060 => 1, # `
+        }->{$nc}) {
           
           ## XML5: Not a parse error.
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad attribute value');
         } else {
           
         }
+
+        my $new_cpos = length $self->{ca}->{value};
+        $self->{ca}->{cc} += $new_cpos - $self->{ca}->{cpos};
+        $self->{ca}->{cpos} = $new_cpos;
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if $self->{ca}->{cc} != $self->{column};
+
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
             ({"\x00" => 1, q<"> => 1, q<'> => 1, 
               q<=> => 1, q<&> => 1, q<`> => 1, "<" => 1, ">" => 1,
               "\x09" => 1, "\x0C" => 1, "\x20" => 1});
-        #$self->{read_until}->($self->{ca}->{value},
-        #                      qq[\x00"'=&` \x09\x0C<>],
-        #                      length $self->{ca}->{value});
 
         ## Stay in the state
         
@@ -3649,6 +3667,13 @@ sub _get_next_token ($) {
         redo A;
       } else {
         
+        if ($code == 0x000A or $code == 0x000D) {
+          $self->{ca}->{cl}++;
+          $self->{ca}->{cc} = 0;
+          $self->{ca}->{cpos} = length $self->{ca}->{value};
+          push @{$self->{ca}->{pos} ||= []},
+              [$self->{ca}->{cl}, $self->{ca}->{cc} => $l, $c];
+        }
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
         $self->{state} = $self->{prev_state};
@@ -3769,6 +3794,13 @@ sub _get_next_token ($) {
         redo A;
       } else {
         
+        if ($code == 0x000A or $code == 0x000D) {
+          $self->{ca}->{cl}++;
+          $self->{ca}->{cc} = 0;
+          $self->{ca}->{cpos} = length $self->{ca}->{value};
+          push @{$self->{ca}->{pos} ||= []},
+              [$self->{ca}->{cl}, $self->{ca}->{cc} => $l, $c];
+        }
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
         $self->{state} = $self->{prev_state};
@@ -3806,6 +3838,7 @@ sub _get_next_token ($) {
               if ($self->{ge}->{$self->{kwd}}->{only_text}) {
                 
                 $self->{entity__value} = $self->{ge}->{$self->{kwd}}->{value};
+                # XXX entity__pos
               } else {
                 if (defined $self->{ge}->{$self->{kwd}}->{notation}) {
                   
@@ -4876,6 +4909,9 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -4885,6 +4921,9 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -4948,6 +4987,9 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0022) { # "
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -4956,6 +4998,9 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0027) { # '
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -4983,6 +5028,9 @@ sub _get_next_token ($) {
         ## XML5: Switch to the "DOCTYPE bogus comment state".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5150,6 +5198,9 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0022) { # "
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5158,6 +5209,9 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0027) { # '
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5181,6 +5235,10 @@ sub _get_next_token ($) {
         redo A;
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
+        $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5200,6 +5258,9 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0022) { # "
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5207,6 +5268,9 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0027) { # '
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5230,6 +5294,10 @@ sub _get_next_token ($) {
         redo A;
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
+        $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5245,6 +5313,9 @@ sub _get_next_token ($) {
         # XXX parse error?
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5254,6 +5325,9 @@ sub _get_next_token ($) {
         # XXX parse error?
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5296,6 +5370,9 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5305,6 +5382,9 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5346,6 +5426,9 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0022) { # "
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5353,6 +5436,9 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0027) { # '
         $self->{ca}->{value} = '';
+        $self->{ca}->{cl} = 1;
+        $self->{ca}->{cc} = 1;
+        $self->{ca}->{cpos} = 0;
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5379,6 +5465,10 @@ sub _get_next_token ($) {
       } else {
         ## XML5: Not defined yet.
         if ($self->{ca}->{default} eq 'FIXED') {
+          $self->{ca}->{value} = '';
+          $self->{ca}->{cl} = 1;
+          $self->{ca}->{cc} = 1;
+          $self->{ca}->{cpos} = 0;
           $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         } else {
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
@@ -6014,11 +6104,13 @@ sub _get_next_token ($) {
   die "$0: _get_next_token: unexpected case";
 } # _get_next_token
 
+# XXX manakai_pos user data for Text nodes and entities
+
 1;
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

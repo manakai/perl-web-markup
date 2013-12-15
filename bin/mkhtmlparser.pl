@@ -102,6 +102,7 @@ while (<>) {
           \$attr->value (\$attr_t->{value});
           \$attr->set_user_data (manakai_source_line => \$attr_t->{line});
           \$attr->set_user_data (manakai_source_column => \$attr_t->{column});
+          \$attr->set_user_data (manakai_pos => \$attr_t->{pos}) if \$attr_t->{pos};
           $l_var->set_attribute_node_ns (\$attr);
         }
       };

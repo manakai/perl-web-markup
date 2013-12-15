@@ -36,9 +36,9 @@ GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm \
 
 generated-pm-files: $(GENERATED_PM_FILES)
 
-$(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl
+$(GENERATED_PM_FILES):: %: %.src deps bin/mkhtmlparser.pl
 	perl bin/mkhtmlparser.pl $< > $@
-	perl -Ilib -c $@
+	$(PERL) -c $@
 
 CURL = curl
 

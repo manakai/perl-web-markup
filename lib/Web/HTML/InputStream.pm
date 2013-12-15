@@ -2,7 +2,7 @@ package Web::HTML::InputStream;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '3.0';
+our $VERSION = '4.0';
 use Web::Encoding ();
 use Web::HTML::Defs;
 
@@ -566,6 +566,7 @@ sub _read_chars ($$) {
   }
   return '' if $start == $self->{chars_pos};
 
+  delete $self->{chars_was_cr};
   $self->{column} += $self->{chars_pos} - $start;
   return join '', @{$self->{chars}}[$start..($self->{chars_pos}-1)];
 } # _read_chars

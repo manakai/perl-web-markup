@@ -141,6 +141,10 @@ L<Web::HTML::Validator>.
 
 L<Web::XML::Parser>.
 
+See
+<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai++Predefined%20User%20Data%20Names>
+for details of source location annotations using DOM3 user data.
+
 =head1 SPECIFICATIONS
 
 =over 4

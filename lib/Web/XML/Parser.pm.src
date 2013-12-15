@@ -2,7 +2,7 @@ package Web::XML::Parser; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '3.0';
+our $VERSION = '4.0';
 use Web::HTML::Defs;
 use Web::HTML::ParserData;
 use Web::HTML::InputStream;
@@ -465,6 +465,7 @@ sub _tree_before_root_element ($) {
         }
         $attr->set_user_data (manakai_source_line => $attr_t->{line});
         $attr->set_user_data (manakai_source_column => $attr_t->{column});
+        $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
         $el->set_attribute_node_ns ($attr);
         $attr->specified (0) if $attr_t->{not_specified};
       }
@@ -682,6 +683,7 @@ sub _tree_in_element ($) {
         }
         $attr->set_user_data (manakai_source_line => $attr_t->{line});
         $attr->set_user_data (manakai_source_column => $attr_t->{column});
+        $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
         $el->set_attribute_node_ns ($attr);
         $attr->specified (0) if $attr_t->{not_specified};
       }
@@ -944,6 +946,7 @@ sub _tree_in_subset ($) {
                 ($at->{name});
             $node->set_user_data (manakai_source_line => $at->{line});
             $node->set_user_data (manakai_source_column => $at->{column});
+            $node->set_user_data (manakai_pos => $at->{pos}) if $at->{pos};
             
             my $type = defined $at->{type} ? {
               CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,

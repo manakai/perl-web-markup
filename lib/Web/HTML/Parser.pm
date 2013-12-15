@@ -2,7 +2,7 @@ package Web::HTML::Parser; # -*- Perl -*-
 use strict;
 #use warnings;
 no warnings 'utf8';
-our $VERSION = '2.0';
+our $VERSION = '3.0';
 use Encode;
 use Web::HTML::Defs;
 use Web::HTML::Tokenizer;
@@ -329,7 +329,7 @@ sub parse_byte_string ($$$$) {
     $self->{column_prev} = -1;
     $self->{column} = 0;
 
-    $self->{chars} = [split //, decode $self->{input_encoding}, $$inputref];
+    $self->{chars} = [split //, decode $self->{input_encoding}, $$inputref]; # XXX encoding standard
     $self->{chars_pos} = 0;
     $self->{chars_pull_next} = sub { 0 };
     delete $self->{chars_was_cr};
@@ -495,7 +495,7 @@ sub parse_bytes_feed ($$;%) {
     $self->{byte_buffer_orig} .= $_[1];
     $self->{chars}
         = [split //, decode $self->{input_encoding}, $self->{byte_buffer},
-                         Encode::FB_QUIET];
+                         Encode::FB_QUIET]; # XXX encoding standard
     $self->{chars_pos} = 0;
     my $i = 0;
     if (length $self->{byte_buffer} and @{$self->{chars}} == $i) {
@@ -529,7 +529,7 @@ sub parse_bytes_end {
 
   if (length $self->{byte_buffer}) {
     push @{$self->{chars}},
-        split //, decode $self->{input_encoding}, $self->{byte_buffer};
+        split //, decode $self->{input_encoding}, $self->{byte_buffer}; # XXX encoding standard
     $self->{byte_buffer} = '';
   }
   $self->{chars_pull_next} = sub { 0 };
@@ -733,6 +733,7 @@ sub _reset_insertion_mode ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -776,6 +777,7 @@ sub _reset_insertion_mode ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $script_el->set_attribute_node_ns ($attr);
         }
       
@@ -1018,6 +1020,7 @@ sub push_afe ($$) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $new_element->[0]->set_attribute_node_ns ($attr);
         }
       
@@ -1084,6 +1087,7 @@ sub push_afe ($$) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $new_element->[0]->set_attribute_node_ns ($attr);
         }
       
@@ -1514,6 +1518,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $root_element->set_attribute_node_ns ($attr);
         }
       
@@ -1729,6 +1734,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -2136,6 +2142,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $self->{head_element}->set_attribute_node_ns ($attr);
         }
       
@@ -2228,6 +2235,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -2272,6 +2280,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -2310,6 +2319,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -2359,6 +2369,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -2506,6 +2517,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -2597,6 +2609,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -3350,6 +3363,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -3410,6 +3424,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -3589,6 +3604,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -3707,6 +3723,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -3758,6 +3775,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -4116,6 +4134,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -4236,6 +4255,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -4283,6 +4303,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -4689,6 +4710,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -4720,6 +4742,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -4859,6 +4882,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -4890,6 +4914,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5030,6 +5055,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5135,6 +5161,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5304,6 +5331,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5415,6 +5443,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5466,6 +5495,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5541,6 +5571,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5600,6 +5631,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5659,6 +5691,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5795,6 +5828,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5861,6 +5895,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5916,6 +5951,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -5968,6 +6004,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -6028,6 +6065,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
@@ -6073,6 +6111,7 @@ sub _construct_tree ($) {
           $attr->value ($attr_t->{value});
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $el->set_attribute_node_ns ($attr);
         }
       
