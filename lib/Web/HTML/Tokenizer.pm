@@ -1139,6 +1139,7 @@ sub _get_next_token ($) {
           $self->{ca}->{cl} = 1;
           $self->{ca}->{cc} = 1;
           $self->{ca}->{cpos} = 0;
+          $self->{ca}->{pos} = [];
         } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
           $self->{ca}->{cl} = 1;
           $self->{ca}->{cc} = 1;
@@ -4912,6 +4913,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -4924,6 +4926,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -4990,6 +4993,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5001,6 +5005,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5031,6 +5036,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5201,6 +5207,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5212,6 +5219,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5239,6 +5247,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5261,6 +5270,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5271,6 +5281,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5298,6 +5309,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5316,6 +5328,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5328,6 +5341,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5373,6 +5387,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5385,6 +5400,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5429,6 +5445,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5439,6 +5456,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cl} = 1;
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
+        $self->{ca}->{pos} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5469,6 +5487,7 @@ sub _get_next_token ($) {
           $self->{ca}->{cl} = 1;
           $self->{ca}->{cc} = 1;
           $self->{ca}->{cpos} = 0;
+          $self->{ca}->{pos} = [];
           $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         } else {
           push @{$self->{ct}->{attrdefs}}, $self->{ca};

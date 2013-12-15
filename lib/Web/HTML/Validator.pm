@@ -7885,9 +7885,13 @@ sub _css_parser ($$) {
   $parser->onerror (sub {
     my %args = @_;
     delete $args{uri}; # XXX
+warn $args{line};
+warn $args{column};
+    use Data::Dumper;
+warn Dumper $pos;
     if (defined $args{line} and defined $args{column}) {
-      if ($pos and ref $pos eq 'ARRAY' and @$pos) {
-        my $v;
+      if ($pos and ref $pos eq 'ARRAY') {
+        my $v = [1,1 => 1,1];
         for (@$pos) {
           if ($_->[0] < $args{line} or
               ($_->[0] == $args{line} and $_->[1] <= $args{column})) {
