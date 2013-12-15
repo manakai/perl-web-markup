@@ -1013,6 +1013,26 @@ for my $test (
   } n => 1, name => ['check_node', 'node'];
 }
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('br');
+  $el->set_attribute (style => 'hoge: fuga');
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_node ($el);
+  eq_or_diff \@error,
+      [{type => 'css:prop:unknown',
+        value => 'hoge',
+        level => 'm',
+        node => $el->attributes->[0]}];
+  done $c;
+} n => 1, name => ['check_node', 'style="" with no line data'];
+
 run_tests;
 
 =head1 LICENSE

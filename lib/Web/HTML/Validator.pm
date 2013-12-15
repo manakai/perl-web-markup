@@ -7880,26 +7880,43 @@ sub _css_parser ($$) {
   $context->base_url ($node->base_uri);
   $parser->context ($context);
   $parser->media_resolver->set_supported (all => 1);
+  my $pos = $node->get_user_data ('manakai_pos');
   my $onerror = $self->onerror;
   $parser->onerror (sub {
     my %args = @_;
+    delete $args{uri}; # XXX
     if (defined $args{line} and defined $args{column}) {
-      # XXX Source Map for attr value -> CSS
-      my $line = $node->get_user_data ('manakai_source_line');
-      my $column = $node->get_user_data ('manakai_source_column');
-      if (defined $line and defined $column) {
-        $line += $args{line} - 1;
-        $column = $args{line} == 1 ? $column + (length $node->node_name) + 2 + $args{column} - 1 : $args{column}; # XXX this is length 'attr="'
-        $onerror->(@_, node => $node, line => $line, column => $column);
-      } else {
-        # XXX can we do something better?
-        delete $args{line};
-        delete $args{column};
-        $onerror->(%args, node => $node);
+      if ($pos and ref $pos eq 'ARRAY' and @$pos) {
+        my $v;
+        for (@$pos) {
+          if ($_->[0] < $args{line} or
+              ($_->[0] == $args{line} and $_->[1] <= $args{column})) {
+            $v = $_;
+          } else {
+            last;
+          }
+        }
+        if ($v) {
+          if ($v->[0] == $args{line}) {
+            $onerror->(@_, node => $node,
+                       line => $v->[2],
+                       column => $v->[3] + $args{column} - $v->[1]);
+            return;
+          } else {
+            $onerror->(@_, node => $node,
+                       line => $v->[2] + $args{line} - $v->[0],
+                       column => $args{column});
+            return;
+          }
+        }
       }
-    } else {
-      $onerror->(@_, node => $node);
     }
+
+    # XXX can we do something better?
+    delete $args{line};
+    delete $args{column};
+
+    $onerror->(%args, node => $node);
   });
   #$parser->init_parser;
   return $parser;
