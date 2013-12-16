@@ -192,19 +192,20 @@ sub _check_data ($$) {
   while ($value =~ /($InvalidChar)/og) {
     my $char = ord $1;
     if ($char == 0x000D) {
+      # XXX in XML, roundtripable?
       $self->{onerror}->(node => $node,
-                         type => 'U+000D not serializable', # XXXdoc
+                         type => 'U+000D not serializable',
                          index => - - $-[0],
                          level => 'w');
     } elsif ($char == 0x000C) {
       $self->{onerror}->(node => $node,
-                         type => 'U+000C not serializable', # XXXdoc
+                         type => 'U+000C not serializable',
                          index => - - $-[0],
                          level => 'w')
           unless $node->owner_document->manakai_is_html;
     } else {
       $self->{onerror}->(node => $node,
-                         type => 'text:bad char', # XXXdoc
+                         type => 'text:bad char',
                          value => ($char <= 0x10FFFF ? sprintf 'U+%04X', $char
                                                      : sprintf 'U-%08X', $char),
                          index => - - $-[0],
@@ -247,7 +248,7 @@ sub _check_element_attrs ($$$;%) {
       if ($attr_ns ne '' and
           not ($attr_ns eq XMLNS_NS and $attr_ln eq 'xmlns')) {
         $self->{onerror}->(node => $attr,
-                           type => 'nsattr has no prefix', # XXX
+                           type => 'nsattr has no prefix',
                            level => 'w');
       }
 
@@ -7885,10 +7886,6 @@ sub _css_parser ($$) {
   $parser->onerror (sub {
     my %args = @_;
     delete $args{uri}; # XXX
-warn $args{line};
-warn $args{column};
-    use Data::Dumper;
-warn Dumper $pos;
     if (defined $args{line} and defined $args{column}) {
       if ($pos and ref $pos eq 'ARRAY') {
         my $v = [1,1 => 1,1];
