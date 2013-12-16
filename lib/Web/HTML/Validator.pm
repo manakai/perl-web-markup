@@ -426,7 +426,7 @@ $CheckerByType->{'non-negative integer greater than zero'} = sub {
     if ($value > 0) {
       #
     } else {
-      $self->{onerror}->(node => $attr, type => 'nninteger:out of range',
+      $self->{onerror}->(node => $attr, type => 'nninteger:zero',
                          level => 'm');
     }
   } else {
@@ -455,7 +455,7 @@ $CheckerByType->{'list of dimensions'} = sub {
     unless ($ml =~ /\A(?>[0-9]+[%*]?|\*)\z/) {
       $self->{onerror}->(node => $attr,
                          value => $ml,
-                         type => 'multilength:syntax error', # XXXdocumentation
+                         type => 'multilength:syntax error',
                          level => 'm');
     }
   }
@@ -501,6 +501,8 @@ $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{step} = sub {
                        level => 'm');
   }
 }; # <input step="">
+
+# XXXXXX XXXerrortypes
 
 ## Browsing context name [HTML]
 $CheckerByType->{'browsing context name'} = sub {
