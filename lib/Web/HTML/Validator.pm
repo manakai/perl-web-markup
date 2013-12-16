@@ -1528,8 +1528,6 @@ my $HTMLLinkTypesAttrChecker = sub {
   $element_state->{link_rel} = \%word;
 }; # $HTMLLinkTypesAttrChecker
 
-# XXXXXX XXXerrortypes
-
 ## Valid global date and time.
 my $GetDateTimeAttrChecker = sub ($) {
   my $type = shift;
@@ -1563,7 +1561,8 @@ my $GetHTMLNonNegativeIntegerAttrChecker = sub {
       if ($range_check->($value + 0)) {
         return 1;
       } else {
-        $self->{onerror}->(node => $attr, type => 'nninteger:out of range',
+        $self->{onerror}->(node => $attr,
+                           type => 'nninteger:out of range',
                            level => 'm');
         return 0;
       }
@@ -1575,19 +1574,6 @@ my $GetHTMLNonNegativeIntegerAttrChecker = sub {
     }
   };
 }; # $GetHTMLNonNegativeIntegerAttrChecker
-
-## HTML4 %Length;
-my $HTMLLengthAttrChecker = sub {
-  my ($self, $attr) = @_;
-  my $value = $attr->value;
-  unless ($value =~ /\A[0-9]+%?\z/) {
-    $self->{onerror}->(node => $attr, type => 'length:syntax error',
-                       level => 'm');
-  }
-
-  ## NOTE: HTML4 definition is too vague - it does not define the syntax
-  ## of percentage value at all (!).
-}; # $HTMLLengthAttrChecker
 
 my $HTMLFormAttrChecker = sub {
   my ($self, $attr) = @_;
@@ -1631,7 +1617,7 @@ my $FormControlNameAttrChecker = sub {
   
   unless (length $attr->value) {
     $self->{onerror}->(node => $attr,
-                       type => 'empty control name', ## TODOC: type
+                       type => 'empty control name',
                        level => 'm');
   }
   
@@ -1643,9 +1629,10 @@ my $AutofocusAttrChecker = sub {
 
   $GetHTMLBooleanAttrChecker->('autofocus')->(@_);
 
+  # XXX <dialog> scoped
   if ($self->{has_autofocus}) {
     $self->{onerror}->(node => $attr,
-                       type => 'duplicate autofocus', ## TODOC: type
+                       type => 'duplicate autofocus',
                        level => 'm');
   }
   $self->{has_autofocus} = 1;
@@ -1662,7 +1649,8 @@ my $HTMLUsemapAttrChecker = sub {
     ## name) is non-conforming.
     push @{$self->{usemap}}, [$value => $attr];
   } else {
-    $self->{onerror}->(node => $attr, type => 'hashref:syntax error',
+    $self->{onerror}->(node => $attr,
+                       type => 'hashref:syntax error',
                        level => 'm');
   }
   ## NOTE: Space characters in hash-name references are conforming.
@@ -1712,7 +1700,7 @@ my $TextFormatAttrChecker = sub {
   my ($self, $attr) = @_;
   unless ($attr->value =~ /\A(?>(?>\*|[0-9]*)[AaNnXxMm]|\\.)+\z/s) {
     $self->{onerror}->(node => $attr,
-                       type => 'format:syntax error', # XXXdocumentation
+                       type => 'format:syntax error',
                        level => 'm');
   }
 }; # $TextFormatAttrChecker
@@ -1721,7 +1709,7 @@ my $PrecisionAttrChecker = sub {
   my ($self, $attr) = @_;
   unless ($attr->value =~ /\A(?>[0-9]+(?>dp|sf)|integer|float)\z/) {
     $self->{onerror}->(node => $attr,
-                       type => 'precision:syntax error', # XXXdocumentation
+                       type => 'precision:syntax error',
                        level => 'm');
   }
 }; # $PrecisionAttrChecker
@@ -1738,13 +1726,13 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
     unless ($keys{$key}) {
       $keys{$key} = 1;
       if (length $key != 1) {
-        $self->{onerror}->(node => $attr, type => 'char:syntax error',
-                           value => $key,
+        $self->{onerror}->(node => $attr,
+                           type => 'char:syntax error', value => $key,
                            level => 'm');
       }
     } else {
-      $self->{onerror}->(node => $attr, type => 'duplicate token',
-                         value => $key,
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $key,
                          level => 'm');
     }
   }
@@ -1761,13 +1749,14 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   my $value = $attr->value;
   if (length $value > 0) {
     if ($self->{id}->{$value}) {
-      $self->{onerror}->(node => $attr, type => 'duplicate ID',
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate ID',
                          level => 'm');
       push @{$self->{id}->{$value}}, $attr;
     } elsif ($self->{name}->{$value} and
              $self->{name}->{$value}->[-1]->owner_element ne $item->{node}) {
       $self->{onerror}->(node => $attr,
-                         type => 'id name confliction', # XXXdocumentation
+                         type => 'id name confliction',
                          value => $value,
                          level => 'm');
       $self->{id}->{$value} = [$attr];
@@ -1779,12 +1768,14 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
     push @{$element_state->{element_ids} ||= []}, $value;
     
     if ($value =~ /[\x09\x0A\x0C\x0D\x20]/) {
-      $self->{onerror}->(node => $attr, type => 'space in ID',
+      $self->{onerror}->(node => $attr,
+                         type => 'space in ID',
                          level => 'm');
     }
   } else {
     ## NOTE: MUST contain at least one character
-    $self->{onerror}->(node => $attr, type => 'empty attribute value',
+    $self->{onerror}->(node => $attr,
+                       type => 'empty attribute value',
                        level => 'm');
   }
 }; # id=""
@@ -1826,7 +1817,7 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
       if ($word eq 'copy' or $word eq 'move' or $word eq 'link') {
         if ($has_feedback) {
           $self->{onerror}->(node => $attr,
-                             type => 'dropzone:duplicate feedback', # XXXdoc
+                             type => 'dropzone:duplicate feedback',
                              value => $word,
                              level => 'm');
         }
@@ -1855,7 +1846,7 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{language} = sub {
   my $value = $attr->value;
   $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
   unless ($value eq 'javascript') {
-    $self->{onerror}->(type => 'script language', # XXXdocumentation
+    $self->{onerror}->(type => 'script language',
                        node => $attr,
                        level => 'm');
   }
@@ -1905,16 +1896,19 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{xmlns} = sub {
     my ($self, $attr) = @_;
     my $value = $attr->value;
     unless ($value eq HTML_NS) {
-      $self->{onerror}->(node => $attr, type => 'invalid attribute value',
+      $self->{onerror}->(node => $attr,
+                         type => 'invalid attribute value',
                          level => 'm');
-      ## TODO: Should be new "bad namespace" error?
     }
     unless ($attr->owner_document->manakai_is_html) {
-      $self->{onerror}->(node => $attr, type => 'in XML:xmlns',
+      $self->{onerror}->(node => $attr,
+                         type => 'in XML:xmlns',
                          level => 'm');
       ## TODO: Test
     }
 }; # xmlns=""
+
+# XXXXXX XXXerrortypes
 
 ## ------ ------
 
@@ -7952,6 +7946,7 @@ sub _check_doc_charset ($$) {
       my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
       $self->{onerror}->(node => $doc,
                          type => 'non ascii superset',
+                         value => $doc->input_encoding,
                          level => 'm')
           unless Web::Encoding::is_ascii_compat_encoding_name ($name);
     } else {
@@ -7966,6 +7961,7 @@ sub _check_doc_charset ($$) {
         my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
         $self->{onerror}->(node => $doc,
                            type => 'non ascii superset',
+                           value => $doc->input_encoding,
                            level => 'm')
             unless Web::Encoding::is_ascii_compat_encoding_name ($name);
         $self->{onerror}->(node => $doc,
@@ -7977,6 +7973,7 @@ sub _check_doc_charset ($$) {
     unless ($doc->input_encoding eq 'utf-8') {
       $self->{onerror}->(node => $doc,
                          type => 'non-utf-8 character encoding',
+                         value => $doc->input_encoding,
                          level => 's');
     }
   } else { # XML document
