@@ -502,20 +502,19 @@ $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{step} = sub {
   }
 }; # <input step="">
 
-# XXXXXX XXXerrortypes
-
 ## Browsing context name [HTML]
 $CheckerByType->{'browsing context name'} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
   if ($value =~ /^_/) {
-    $self->{onerror}->(node => $attr, type => 'window name:reserved',
-                       level => 'm',
-                       value => $value);
+    $self->{onerror}->(node => $attr,
+                       type => 'window name:reserved',
+                       level => 'm');
   } elsif (length $value) {
     #
   } else {
-    $self->{onerror}->(node => $attr, type => 'window name:empty',
+    $self->{onerror}->(node => $attr,
+                       type => 'window name:empty',
                        level => 'm');
   }
 }; # browsing context name
@@ -531,13 +530,14 @@ $CheckerByType->{'browsing context name or keyword'} = sub {
     }->{$value}) {
       $self->{onerror}->(node => $attr,
                          type => 'window name:reserved',
-                         level => 'm',
-                         value => $value);
+                         value => $value,
+                         level => 'm');
     }
   } elsif (length $value) {
     #
   } else {
-    $self->{onerror}->(node => $attr, type => 'window name:empty',
+    $self->{onerror}->(node => $attr,
+                       type => 'window name:empty',
                        level => 'm');
   }
 }; # browsing context name or keyword
@@ -625,7 +625,7 @@ $CheckerByType->{'character encoding label'} = sub {
                          level => 'm'); # [ENCODING]
     } else {
       $self->{onerror}->(node => $attr,
-                         type => 'not encoding label', # XXXdoc
+                         type => 'not encoding label',
                          level => 'm');
     }
   }
@@ -662,7 +662,7 @@ $ElementAttrChecker->{(HTML_NS)}->{form}->{''}->{'accept-charset'} = sub {
         }
       } else {
         $self->{onerror}->(node => $attr,
-                           type => 'not encoding label', # XXXdoc
+                           type => 'not encoding label',
                            value => $charset,
                            level => 'm');
       }
@@ -697,7 +697,7 @@ $CheckerByType->{'non-empty URL potentially surrounded by spaces'} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
   if ($value eq '') {
-    $self->{onerror}->(type => 'url:empty', # XXX documentation
+    $self->{onerror}->(type => 'url:empty',
                        node => $attr,
                        level => 'm');
   } else {
@@ -715,7 +715,7 @@ $ElementAttrChecker->{(HTML_NS)}->{html}->{''}->{manifest} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
   if ($value eq '') {
-    $self->{onerror}->(type => 'url:empty', # XXX documentation
+    $self->{onerror}->(type => 'url:empty',
                        node => $attr,
                        level => 'm');
   } else {
@@ -777,7 +777,7 @@ $ElementAttrChecker->{(HTML_NS)}->{applet}->{''}->{archive} = sub {
     $v =~ s/[\x09\x0A\x0C\x0D\x20]+\z//;
 
     if ($v eq '') {
-      $self->{onerror}->(type => 'url:empty', # XXX documentation
+      $self->{onerror}->(type => 'url:empty',
                          node => $attr,
                          level => 'm');
     } else {
@@ -805,7 +805,7 @@ my $ValidEmailAddress;
 $CheckerByType->{'e-mail address'} = sub {
   my ($self, $attr) = @_;
   $self->{onerror}->(node => $attr,
-                     type => 'email:syntax error', ## TODO: type
+                     type => 'email:syntax error',
                      level => 'm')
       unless $attr->value =~ qr/\A$ValidEmailAddress\z/o;
 }; # e-mail address
@@ -819,7 +819,7 @@ $CheckerByType->{'e-mail address list'} = sub {
     s/\A[\x09\x0A\x0C\x0D\x20]+//; # space characters
     s/[\x09\x0A\x0C\x0D\x20]\z//; # space characters
     $self->{onerror}->(node => $attr,
-                       type => 'email:syntax error', ## TODO: type
+                       type => 'email:syntax error',
                        value => $_,
                        level => 'm')
         unless /\A$ValidEmailAddress\z/o;
@@ -904,7 +904,8 @@ $NamespacedAttrChecker->{(XML_NS)}->{space} = sub {
   if ($oe and
       ($oe->namespace_uri || '') eq HTML_NS and
       $oe->owner_document->manakai_is_html) {
-    $self->{onerror}->(node => $attr, type => 'in HTML:xml:space', # XXX
+    $self->{onerror}->(node => $attr,
+                       type => 'in HTML:xml:space',
                        level => 'w');
   }
 
@@ -915,8 +916,9 @@ $NamespacedAttrChecker->{(XML_NS)}->{space} = sub {
     ## Note that S before or after value is not allowed, as
     ## $attr->value is normalized value.  DTD validation should be
     ## performed before the conformance checking.
-    $self->{onerror}->(node => $attr, level => 'm',
-                       type => 'invalid attribute value');
+    $self->{onerror}->(node => $attr,
+                       type => 'invalid attribute value',
+                       level => 'm');
   }
 }; # xml:space
 
@@ -962,7 +964,8 @@ $NamespacedAttrChecker->{(XML_NS)}->{lang} = sub {
     }
 
     if ($attr->owner_document->manakai_is_html) { # MUST NOT
-      $self->{onerror}->(node => $attr, type => 'in HTML:xml:lang',
+      $self->{onerror}->(node => $attr,
+                         type => 'in HTML:xml:lang',
                          level => 'm');
     }
   }
@@ -972,6 +975,7 @@ $NamespacedAttrChecker->{(XML_NS)}->{base} = sub {
   my ($self, $attr) = @_;
 
   ## XXX xml:base support will be likely removed from the Web.
+  ## XXX but maybe we can't drop it entirely to not break feed support.
 
   my $value = $attr->value;
   if ($value =~ /[^\x{0000}-\x{10FFFF}]/) { ## ISSUE: Should we disallow noncharacters?
@@ -1026,7 +1030,7 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
     unless ($ln eq 'xmlns') { # xmlns:*="" (empty value)
       ## <http://www.w3.org/TR/xml-names/#nsc-NoPrefixUndecl>.
       $self->{onerror}->(node => $attr,
-                         type => 'xmlns:* empty', # XXX
+                         type => 'xmlns:* empty',
                          level => 'm');
     }
   } else {
@@ -1373,11 +1377,13 @@ my $GetHTMLEnumeratedAttrChecker = sub {
       } elsif ($states->{$value} > 0) {
         #
       } else {
-        $self->{onerror}->(node => $attr, type => 'enumerated:non-conforming',
+        $self->{onerror}->(node => $attr,
+                           type => 'enumerated:non-conforming',
                            level => 'm');
       }
     } else {
-      $self->{onerror}->(node => $attr, type => 'enumerated:invalid',
+      $self->{onerror}->(node => $attr,
+                         type => 'enumerated:invalid',
                          level => 'm');
     }
   };
@@ -1390,7 +1396,8 @@ my $GetHTMLBooleanAttrChecker = sub {
     my $value = $attr->value;
     $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
     unless ($value eq $local_name or $value eq '') {
-      $self->{onerror}->(node => $attr, type => 'boolean:invalid',
+      $self->{onerror}->(node => $attr,
+                         type => 'boolean:invalid',
                          level => 'm');
     }
   };
@@ -1414,8 +1421,8 @@ my $HTMLLinkTypesAttrChecker = sub {
     } elsif ($word eq 'up') {
       #
     } else {
-      $self->{onerror}->(node => $attr, type => 'duplicate token',
-                         value => $word,
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
                          level => 'm');
     }
   }
@@ -1520,6 +1527,8 @@ my $HTMLLinkTypesAttrChecker = sub {
   $todo->{has_hyperlink_link_type} = 1 if $is_hyperlink;
   $element_state->{link_rel} = \%word;
 }; # $HTMLLinkTypesAttrChecker
+
+# XXXXXX XXXerrortypes
 
 ## Valid global date and time.
 my $GetDateTimeAttrChecker = sub ($) {
