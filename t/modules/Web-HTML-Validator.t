@@ -630,14 +630,14 @@ for my $test (
 }
 
 for my $test (
-  ['shift_JIS', 'x-sjis'],
+  ['shift_jis', 'x-sjis'],
   ['utf-8', 'UTF8'],
-  ['Windows-1252', 'US-ASCII'],
+  ['windows-1252', 'US-ASCII'],
 ) {
   test {
     my $c = shift;
     my $doc = new Web::DOM::Document;
-    $$doc->[2]->{encoding} = $test->[0]; # XXX
+    $doc->input_encoding ($test->[0]);
     $doc->manakai_is_html (1);
     my $el = $doc->create_element ('meta');
     $el->set_attribute (charset => $test->[1]);
@@ -653,6 +653,7 @@ for my $test (
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
+              value => $test->[0],
               node => $doc, level => 's'}];
     done $c;
   } n => 1, name => ['charset', @$test];
@@ -660,7 +661,7 @@ for my $test (
   test {
     my $c = shift;
     my $doc = new Web::DOM::Document;
-    $$doc->[2]->{encoding} = $test->[0]; # XXX
+    $doc->input_encoding ($test->[0]);
     $doc->manakai_is_html (1);
     my $el = $doc->create_element ('meta');
     $el->http_equiv ('Content-type');
@@ -677,6 +678,7 @@ for my $test (
     eq_or_diff \@error,
         $test->[0] eq 'utf-8' ? [] :
             [{type => 'non-utf-8 character encoding',
+              value => $test->[0],
               node => $doc, level => 's'}];
     done $c;
   } n => 1, name => ['charset', @$test];
@@ -685,7 +687,7 @@ for my $test (
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->input_encoding ('utf-16be');
   $doc->manakai_is_html (1);
   $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
   $doc->manakai_has_bom (1);
@@ -697,6 +699,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
+                        value => 'utf-16be',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
@@ -704,7 +707,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->input_encoding ('utf-16be');
   $doc->manakai_is_html (1);
   $doc->inner_html ('<!DOCTYPE html><html lang=en><meta http-equiv=Content-Type content="text/html; charset=UTF-16"><title>a</title><body>a');
   $doc->manakai_has_bom (1);
@@ -720,8 +723,10 @@ test {
                             ->[0]->get_attribute_node_ns (undef, 'content'),
                         level => 'm'},
                        {type => 'non ascii superset',
+                        value => 'utf-16be',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
+                        value => 'utf-16be',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['UTF-16 BOM'];
@@ -729,7 +734,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->input_encoding ('utf-16be');
   $doc->manakai_is_html (1);
   $doc->manakai_charset ('hogehoge');
   $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
@@ -741,6 +746,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
+                        value => 'utf-16be',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['Content-Type charset=""'];
@@ -748,7 +754,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  $$doc->[2]->{encoding} = 'utf-16be'; # XXX
+  $doc->input_encoding ('utf-16be');
   $doc->manakai_is_html (1);
   $doc->manakai_is_srcdoc (1);
   $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
@@ -760,6 +766,7 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non-utf-8 character encoding',
+                        value => 'utf-16be',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['iframe srcdoc'];
@@ -767,7 +774,7 @@ test {
 test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
-  $$doc->[2]->{encoding} = 'Windows-1251'; # XXX
+  $doc->input_encoding ('windows-1251');
   $doc->manakai_is_html (1);
   $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
   my $validator = Web::HTML::Validator->new;
@@ -780,6 +787,7 @@ test {
   eq_or_diff \@error, [{type => 'no character encoding declaration',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
+                        value => 'windows-1251',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['not labelled'];
@@ -788,6 +796,7 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   $$doc->[2]->{encoding} = 'ISO-2022-CN-EXT'; # XXX
+  #$doc->input_encoding ('ISO-2022-CN-EXT');
   $doc->manakai_is_html (1);
   $doc->inner_html ('<!DOCTYPE html><html lang=en><title>a</title><body>a');
   my $validator = Web::HTML::Validator->new;
@@ -798,10 +807,12 @@ test {
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'non ascii superset',
+                        value => 'ISO-2022-CN-EXT',
                         node => $doc, level => 'm'},
                        {type => 'no character encoding declaration',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
+                        value => 'ISO-2022-CN-EXT',
                         node => $doc, level => 's'}];
   done $c;
 } n => 1, name => ['not labelled / replacement'];
