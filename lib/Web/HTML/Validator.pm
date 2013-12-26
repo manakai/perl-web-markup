@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '122.0';
+our $VERSION = '123.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -70,8 +70,9 @@ sub onsubdoc ($;$) {
 ##
 ##   figcaptions     Used by |figure| element checker.
 ##   has_label_original Used to preserve the value of
-##                   |$self->{flag}->{has_label}| at the time of invocation
-##                   of the method |check_start| for the element being checked.
+##                   |$self->{flag}->{has_label}| at the time of
+##                   invocation of the method |check_start| for the
+##                   element being checked.
 ##   has_labelable_original Used to preserve the value of 
 ##                   |$self->{flag}->{has_labelable}| at the time of
 ##                   invocation of the method |check_start| for the 
@@ -87,6 +88,8 @@ sub onsubdoc ($;$) {
 ##                   depend on the element.
 ##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
 ##                   is expected to have the |title| attribute.
+##   style_type      The styling language's MIME type object.
+##   text            Text data in the element.
 
 sub _init ($) {
   my $self = $_[0];
@@ -583,6 +586,51 @@ $CheckerByType->{'MIME type'} = sub {
 
   return $type; # or undef
 }; # MIME type
+
+$ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+
+  require Web::MIME::Type;
+  my $onerror = sub { $self->{onerror}->(@_, node => $attr) };
+  my $type = Web::MIME::Type->parse_web_mime_type
+      ($attr->value, $onerror);
+
+  if ($type) {
+    $type->validate ($onerror);
+
+    $self->{onerror}->(node => $attr,
+                       type => 'IMT:not styling lang',
+                       level => 'm')
+        unless $type->is_styling_lang;
+
+    $self->{onerror}->(node => $attr,
+                       value => 'charset',
+                       type => 'IMT:parameter not allowed',
+                       level => 'm')
+        if defined $type->param ('charset');
+  }
+  $element_state->{content_type} = $type;
+}; # <style type="">
+
+$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{type} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+
+  require Web::MIME::Type;
+  my $onerror = sub { $self->{onerror}->(@_, node => $attr) };
+  my $type = Web::MIME::Type->parse_web_mime_type
+      ($attr->value, $onerror);
+
+  if ($type) {
+    $type->validate ($onerror);
+
+    $self->{onerror}->(node => $attr,
+                       value => 'charset',
+                       type => 'IMT:parameter not allowed',
+                       level => 'm')
+        if defined $type->param ('charset');
+  }
+  $element_state->{content_type} = $type;
+}; # <script type="">
 
 ## Language tag [HTML] [BCP47]
 $CheckerByType->{'language tag'} = sub {
@@ -2788,64 +2836,13 @@ $Element->{+HTML_NS}->{meta} = {
 
 $Element->{+HTML_NS}->{style} = {
   %AnyChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    type => sub {
-      my ($self, $attr) = @_;
-
-      my $type = $MIMETypeChecker->(@_);
-      if ($type) {
-        unless ($type->is_styling_lang) {
-          $self->{onerror}->(node => $attr,
-                             type => 'IMT:not styling lang',
-                             level => 'm');
-        }
-
-        if (defined $type->param ('charset')) {
-          $self->{onerror}->(node => $attr,
-                             value => 'charset',
-                             type => 'IMT:parameter not allowed',
-                             level => 'm');
-        }
-      }
-    },
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-
-    my $type = $item->{node}->get_attribute_ns (undef, 'type');
-    $type = 'text/css' unless defined $type;
-
-    # XXX
-    ## NOTE: RFC 2616's definition of "type/subtype".  According to
-    ## the Web Applications 1.0 specification, types with unsupported
-    ## parameters are considered as unknown types.  Since we don't
-    ## support any media type with parameters (and the spec requires
-    ## the impl to treate |charset| parameter as if it is an unknown
-    ## parameter), we can safely ignore any type specification with
-    ## explicit parameters entirely.
-    if ($type =~ m[\A(?>(?>\x0D\x0A)?[\x09\x20])*([\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x41-\x5A\x5E-\x7A\x7C\x7E]+)/([\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x41-\x5A\x5E-\x7A\x7C\x7E]+)(?>(?>\x0D\x0A)?[\x09\x20])*\z]) {
-      $type = "$1/$2";
-      $type =~ tr/A-Z/a-z/; ## NOTE: ASCII case-insensitive
-    } else {
-      undef $type;
-    }
-
-    ## Conformance of the content depends on the styling language in
-    ## use, which is detected by the |type=""| attribute value
-    ## (i.e. $type).
-    if (not defined $type) {
-      $element_state->{allow_element} = 1; # invalid type=""
-    } elsif ($type eq 'text/css') {
-      $element_state->{allow_element} = 0;
-    #} elsif ($type =~ m![/+][Xx][Mm][Ll]\z!) {
-    #  ## NOTE: There is no definition for "XML-based styling language" in HTML5
-    #  $element_state->{allow_element} = 1;
-    } else {
-      $element_state->{allow_element} = 1; # unknown
-    }
-    $element_state->{style_type} = $type;
-
     $element_state->{text} = '';
+    $element_state->{content_type} = do {
+      require Web::MIME::Type;
+      Web::MIME::Type->parse_web_mime_type ('text/css');
+    }; # overridden by type="" checker, if specified
   }, # check_start
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -2866,6 +2863,10 @@ $Element->{+HTML_NS}->{style} = {
         }
       }
     }
+
+    $element_state->{element_allowed} = 1
+        if $element_state->{content_type} and
+           $element_state->{content_type}->is_xml_mime_type;
   }, # check_attrs2
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
@@ -2875,53 +2876,42 @@ $Element->{+HTML_NS}->{style} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
-    } elsif ($element_state->{allow_element}) {
+    } elsif ($element_state->{element_allowed}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed',
                          level => 'm');
     }
-  },
+  }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     $element_state->{text} .= $child_node->data;
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    if (not defined $element_state->{style_type}) {
-      ## NOTE: Invalid type=""
-      #
-    } elsif ($element_state->{style_type} eq 'text/css') {
-      my $parser = $self->_css_parser ($item->{node}); # XXX
-      # XXX $parser->context->scoped (has_attribute ('scoped'));
-      my $ss = $parser->parse_char_string_as_ss ($element_state->{text});
-      # XXX Web::CSS::Checker->new->check_ss ($ss);
-    } elsif ($element_state->{style_type} =~ m![+/][Xx][Mm][Ll]\z!) { # XXX
-      ## NOTE: XML content should be checked by THIS instance of
-      ## checker as part of normal tree validation.  However, we don't
-      ## know any XML-based styling language that can be used in HTML
-      ## <style> element at the moment, so it throws a "style language
-      ## not supported" error here.
-      $self->{onerror}->(node => $item->{node},
-                         type => 'XML style lang',
-                         text => $element_state->{style_type},
-                         level => 'u');
-    } else {
-      # XXX
-      $self->{onsubdoc}->({s => $element_state->{text},
-                           container_node => $item->{node},
-                           media_type => $element_state->{style_type},
-                           is_char_string => 1});
-    }
 
-    ## |style| element content restrictions
     my $tc = $item->{node}->text_content;
-    $tc =~ s/.*<!--.*-->//gs;
+    $tc =~ s/.*<!--.*?-->//gs;
     if ($tc =~ /<!--/) {
       $self->{onerror}->(node => $item->{node},
                          type => 'style:unclosed cdo',
                          level => 'm');
+    }
+
+    my $type = $element_state->{content_type}
+        ? $element_state->{content_type}->as_valid_mime_type_with_no_params
+        : undef;
+    if (defined $type and $type eq 'text/css') {
+      my $parser = $self->_css_parser ($item->{node}); # XXX
+      # XXX $parser->context->scoped (has_attribute ('scoped'));
+      my $ss = $parser->parse_char_string_as_ss ($element_state->{text});
+      # XXX Web::CSS::Checker->new->check_ss ($ss);
+    } elsif (defined $type) {
+      $self->{onerror}->(node => $item->{node},
+                         value => $type,
+                         type => 'unknown style lang',
+                         level => 'u');
     }
 
     $AnyChecker{check_end}->(@_);
@@ -2932,100 +2922,44 @@ $Element->{+HTML_NS}->{style} = {
 
 $Element->{+HTML_NS}->{script} = {
   %AnyChecker,
-  ## XXXresource: <script charset=""> MUST match the charset of the
-  ## referenced resource (HTML5 revision 2967).
-  check_attrs => $GetHTMLAttrsChecker->({
-    for => sub {
-      my ($self, $attr) = @_;
-
-      ## NOTE: MUST be an ID of an element.
-      push @{$self->{idref}}, ['any', $attr->value, $attr];
-    },
-    language => sub {},
-    ## XXXresource: src="" MUST point a script with Content-Type type=""
-    type => sub {
-      my ($self, $attr) = @_;
-
-      my $type = $MIMETypeChecker->(@_);
-      if ($type) {
-        if (defined $type->param ('charset')) {
-          $self->{onerror}->(node => $attr,
-                             type => 'IMT:parameter not allowed',
-                             level => 'm');
-        }
-      }
-    }, # type
-  }), # check_attrs
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{text} = '';
+  }, # check_start
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
-    
     unless ($el->has_attribute_ns (undef, 'src')) {
       for my $attr_name (qw(charset defer async crossorigin)) {
         my $attr = $el->get_attribute_node_ns (undef, $attr_name);
-        if ($attr) {
-          $self->{onerror}->(type => 'attribute not allowed',
-                             node => $attr,
-                             level => $attr_name eq 'crossorigin' ? 'w' : 'm');
-        }
+        $self->{onerror}->(type => 'attribute not allowed',
+                           node => $attr,
+                           level => $attr_name eq 'crossorigin' ? 'w' : 'm')
+            if $attr;
       }
     }
 
-    my $lang_attr = $el->get_attribute_node_ns (undef, 'language');
-    if ($lang_attr) {
-      my $lang = $lang_attr->value;
-      $lang =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      if ($lang eq 'javascript') {
-        my $type = $el->get_attribute_ns (undef, 'type');
-        $type =~ tr/A-Z/a-z/ if defined $type; ## ASCII case-insensitive.
-        if (not defined $type or $type eq 'text/javascript') {
-          $self->{onerror}->(node => $lang_attr,
-                             type => 'script language',
-                             level => 's'); # obsolete but conforming
-        } else {
-          $self->{onerror}->(node => $lang_attr,
-                             type => 'script language:ne type',
-                             level => 'm');
-        }
-      } else {
-        $self->{onerror}->(node => $lang_attr,
-                           type => 'script language:not js',
-                           level => 'm');
-      }
+    my $type = $item->{node}->get_attribute_ns (undef, 'type');
+    my $language = $item->{node}->get_attribute_ns (undef, 'language');
+    if ((defined $type and $type eq '') or
+        (not defined $type and defined $language and $language eq '') or
+        (not defined $type and not defined $language)) {
+      $element_state->{content_type} = do {
+        require Web::MIME::Type;
+        Web::MIME::Type->parse_web_mime_type ('text/javascript');
+      };
+    } elsif (defined $language) {
+      $element_state->{content_type} ||= do {
+        require Web::MIME::Type;
+        Web::MIME::Type->parse_web_mime_type ('text/' . $language, sub { });
+      };
     }
+
+    $element_state->{element_allowed} = 1
+        if $element_state->{content_type} and
+           $element_state->{content_type}->is_xml_mime_type and
+           not $el->has_attribute_ns (undef, 'src');
   }, # check_attrs2
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-
-    if ($item->{node}->has_attribute_ns (undef, 'src')) {
-      $element_state->{inline_documentation_only} = 1;
-    } else {
-      ## NOTE: No content model conformance in HTML5 spec.
-      my $type = $item->{node}->get_attribute_ns (undef, 'type');
-      my $language = $item->{node}->get_attribute_ns (undef, 'language');
-      if ((defined $type and $type eq '') or
-          (defined $language and $language eq '')) {
-        $type = 'text/javascript';
-      } elsif (defined $type) {
-        #
-      } elsif (defined $language) {
-        $type = 'text/' . $language;
-      } else {
-        $type = 'text/javascript';
-      }
-
-      if ($type =~ m[\A(?>(?>\x0D\x0A)?[\x09\x20])*([\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x41-\x5A\x5E-\x7E]+)(?>(?>\x0D\x0A)?[\x09\x20])*/(?>(?>\x0D\x0A)?[\x09\x20])*([\x21\x23-\x27\x2A\x2B\x2D\x2E\x30-\x39\x41-\x5A\x5E-\x7E]+)(?>(?>\x0D\x0A)?[\x09\x20])*(?>;|\z)]) {
-        $type = "$1/$2";
-        $type =~ tr/A-Z/a-z/; ## NOTE: ASCII case-insensitive
-        ## TODO: Though we strip prameter here, it should not be ignored for the purpose of conformance checking...
-      }
-
-      # XXX this is wrong - unknown parameters MUST be ignored.
-      $element_state->{script_type} = $type;
-    }
-
-    $element_state->{text} = '';
-  },
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -3034,65 +2968,102 @@ $Element->{+HTML_NS}->{script} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
+    } elsif ($element_state->{element_allowed}) {
+      #
     } else {
-      if ($element_state->{inline_documentation_only}) {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:empty',
-                           level => 'm');
-      }
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed',
+                         level => 'm');
     }
-  },
+  }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     $element_state->{text} .= $child_node->data;
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    if ($element_state->{inline_documentation_only}) {
-      if (length $element_state->{text}) {
-        # XXX
-        $self->{onsubdoc}->({s => $element_state->{text},
-                             container_node => $item->{node},
-                             media_type => 'text/x-script-inline-documentation',
-                             is_char_string => 1});
-      }
-    } else {
-      if ($element_state->{script_type} =~ m![+/][Xx][Mm][Ll]\z!) {
-        ## NOTE: XML content should be checked by THIS instance of checker
-        ## as part of normal tree validation.
+
+    my $tc = $item->{node}->text_content;
+    $tc =~ s{.*<!--(.*?)-->}{
+      if ($1 =~ /<[Ss][Cc][Rr][Ii][Pp][Tt][\x09\x0A\x0C\x0D\x20\x2F>]/) {
         $self->{onerror}->(node => $item->{node},
-                           type => 'XML script lang',
-                           text => $element_state->{script_type},
-                           level => 'u');
-        ## ISSUE: Should we raise some kind of error for
-        ## <script type="text/xml">aaaaa</script>?
-        ## NOTE: ^^^ This is why we throw an "u" error.
-      } else {
-        $self->{onsubdoc}->({s => $element_state->{text},
-                             container_node => $item->{node},
-                             media_type => $element_state->{script_type},
-                             is_char_string => 1});
+                           type => 'script:nested <script>',
+                           level => 'm');
       }
+      '';
+    }gse;
+    if ($tc =~ /<!--/) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'style:unclosed cdo',
+                         level => 'm');
     }
 
-    if (length $element_state->{text}) {
-      # XXX
-      $self->{onsubdoc}->({s => $element_state->{text},
-                           container_node => $item->{node},
-                           media_type => 'text/x-script-element-text',
-                           is_char_string => 1});
+    if ($item->{node}->has_attribute_ns (undef, 'src')) {
+      if (defined $element_state->{content_type} and
+          $element_state->{content_type}->is_scripting_lang) {
+        #
+      } else {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'script:external data block',
+                           level => 'm');
+      }
+      unless ($element_state->{text} =~ m{\A(?>(?>[\x20\x09]|/\*(?>[^*]|\*[^/])*\*+/)*(?>//[^\x0A]*)?\x0A)*\z}) {
+        ## Non-Unicode character error is detected by other place.
+        $self->{onerror}->(node => $item->{node},
+                           type => 'script:inline doc:invalid',
+                           level => 'm');
+      }
+    } elsif (defined $element_state->{content_type} and
+             $element_state->{content_type}->is_javascript) {
+      # XXX validate $element_state->{text} as JavaScript
+      $self->{onerror}->(node => $item->{node},
+                         value => $element_state->{content_type},
+                         type => 'unknown script lang',
+                         level => 'u');
+    } elsif (defined $element_state->{content_type}) {
+      $self->{onerror}->(node => $item->{node},
+                         value => $element_state->{content_type},
+                         type => 'unknown script lang',
+                         level => 'u');
     }
 
     $AnyChecker{check_end}->(@_);
-  },
-  ## TODO: There MUST be |type| unless the script type is JavaScript. (resource error)
-  ## NOTE: "When used to include script data, the script data must be embedded
-  ## inline, the format of the data must be given using the type attribute,
-  ## and the src attribute must not be specified." - not testable.
-      ## TODO: It would be possible to err <script type=text/plain src=...>
+  }, # check_end
 
-  # XXX Content model check need to be updated
+  ## XXXresource: <script type=""> must match the MIME type of the
+  ## referenced resource.  <script type=""> must be specified if the
+  ## referenced resource is not JavaScript.  <script charset=""> must
+  ## match the charset="" of the referenced resource.
 }; # script
+
+$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{language} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $lang = $attr->value;
+  $lang =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  if ($lang eq 'javascript') {
+    my $type = $item->{node}->get_attribute_ns (undef, 'type');
+    $type =~ tr/A-Z/a-z/ if defined $type; ## ASCII case-insensitive.
+    if (not defined $type or $type eq 'text/javascript') {
+      $self->{onerror}->(node => $attr,
+                         type => 'script language',
+                         level => 's'); # obsolete but conforming
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'script language:ne type',
+                         level => 'm');
+    }
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'script language:not js',
+                       level => 'm');
+  }
+}; # <script language="">
+
+$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{for} = sub {
+  my ($self, $attr) = @_;
+  ## NOTE: MUST be an ID of an element.
+  push @{$self->{idref}}, ['any', $attr->value, $attr];
+}; # <script for="">
 
 ## NOTE: When script is disabled.
 $Element->{+HTML_NS}->{noscript} = {

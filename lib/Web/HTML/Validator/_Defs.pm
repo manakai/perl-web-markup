@@ -629,22 +629,6 @@ $Web::HTML::Validator::_Defs = {
                                                                     },
                           "http://www.w3.org/1999/xhtml" => {
                                                               "*" => {
-                                                                       "*" => {
-                                                                                "" => {
-                                                                                        "itemid" => {
-                                                                                                      "url_role" => "id"
-                                                                                                    },
-                                                                                        "itemprop" => {
-                                                                                                        "url_role" => "id"
-                                                                                                      },
-                                                                                        "itemtype" => {
-                                                                                                        "url_role" => "id"
-                                                                                                      },
-                                                                                        "xmlns" => {
-                                                                                                     "url_role" => "id"
-                                                                                                   }
-                                                                                      }
-                                                                              },
                                                                        "attrs" => {
                                                                                     "" => {
                                                                                             "about" => {
@@ -795,11 +779,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "itemid" => {
                                                                                                           "conforming" => 1,
                                                                                                           "status" => "CR",
+                                                                                                          "url_role" => "id",
                                                                                                           "value_type" => "URL potentially surrounded by spaces"
                                                                                                         },
                                                                                             "itemprop" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "CR"
+                                                                                                            "status" => "CR",
+                                                                                                            "url_role" => "id"
                                                                                                           },
                                                                                             "itemref" => {
                                                                                                            "conforming" => 1,
@@ -814,6 +800,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "itemtype" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "CR",
+                                                                                                            "url_role" => "id",
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                             "lang" => {
@@ -1160,6 +1147,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "event handler"
                                                                                                          },
+                                                                                            "onresize" => {
+                                                                                                            "conforming" => 1,
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "event handler"
+                                                                                                          },
                                                                                             "onresizeend" => {
                                                                                                                "value_type" => "event handler"
                                                                                                              },
@@ -1390,7 +1382,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                             "xmlns" => {
                                                                                                          "conforming" => 1,
-                                                                                                         "status" => "LC"
+                                                                                                         "status" => "LC",
+                                                                                                         "url_role" => "id"
                                                                                                        }
                                                                                           }
                                                                                   }
@@ -2322,11 +2315,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "status" => "LC",
                                                                                                                  "value_type" => "event handler"
                                                                                                                },
-                                                                                               "onresize" => {
-                                                                                                               "conforming" => 1,
-                                                                                                               "status" => "LC",
-                                                                                                               "value_type" => "event handler"
-                                                                                                             },
                                                                                                "onstorage" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "LC",
@@ -3119,7 +3107,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "code" => {
-                                                                                                            "status" => "CWD",
+                                                                                                            "status" => "CR",
                                                                                                             "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
@@ -3165,29 +3153,29 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
                                                                                                 "pluginpage" => {
-                                                                                                                  "status" => "CWD",
+                                                                                                                  "status" => "CR",
                                                                                                                   "url_role" => "hyperlink-secondary",
                                                                                                                   "value_type" => "URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "pluginspage" => {
-                                                                                                                   "status" => "CWD",
+                                                                                                                   "status" => "CR",
                                                                                                                    "url_role" => "hyperlink-secondary",
                                                                                                                    "value_type" => "URL potentially surrounded by spaces"
                                                                                                                  },
                                                                                                 "pluginurl" => {
-                                                                                                                 "status" => "CWD",
+                                                                                                                 "status" => "CR",
                                                                                                                  "url_role" => "hyperlink-secondary",
                                                                                                                  "value_type" => "URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                 "src" => {
                                                                                                            "conforming" => 1,
-                                                                                                           "status" => "CWD",
+                                                                                                           "status" => "CR",
                                                                                                            "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                                 "type" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "CWD",
+                                                                                                            "status" => "CR",
                                                                                                             "value_type" => "MIME type"
                                                                                                           },
                                                                                                 "units" => {
@@ -3220,7 +3208,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                       },
                                                                            "conforming" => 1,
                                                                            "content_model" => "empty",
-                                                                           "status" => "CWD"
+                                                                           "status" => "CR"
                                                                          },
                                                               "event-source" => {
                                                                                   "attrs" => {
@@ -3661,10 +3649,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "event handler"
                                                                                                                    },
-                                                                                                   "onresize" => {
-                                                                                                                   "status" => "LC",
-                                                                                                                   "value_type" => "event handler"
-                                                                                                                 },
                                                                                                    "onstorage" => {
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "event handler"
