@@ -1638,19 +1638,6 @@ my $ListAttrChecker = sub {
   ## warned.
 }; # $ListAttrChecker
 
-my $PatternAttrChecker = sub {
-  my ($self, $attr) = @_;
-  $self->{onsubdoc}->({s => $attr->value,
-                       container_node => $attr,
-                       media_type => 'text/x-regexp-js',
-                       is_char_string => 1});
-
-  ## ISSUE: "value must match the Pattern production of ECMA 262's
-  ## grammar" - no additional constraints (e.g. {n,m} then n>=m).
-
-  ## TODO: Warn if @value does not match @pattern.
-}; # $PatternAttrChecker
-
 my $FormControlNameAttrChecker = sub {
   my ($self, $attr) = @_;
   
@@ -3249,28 +3236,6 @@ $Element->{+HTML_NS}->{header} = {
 }; # header
 
 # ---- Grouping content ----
-
-$Element->{+HTML_NS}->{pre}->{check_end} = sub {
-  my ($self, $item, $element_state) = @_;
-  
-  # XXX pre-content checking should be external hook rather than
-  # hardcoded like this:
-  my $class = $item->{node}->get_attribute_ns (undef, 'class');
-  if (defined $class and
-      $class =~ /\bidl(?>-code)?\b/) { ## TODO: use classList.has
-    ## NOTE: pre.idl: WHATWG, XHR, Selectors API, CSSOM specs
-    ## NOTE: pre.code > code.idl-code: WebIDL spec
-    ## NOTE: pre.idl-code: DOM1 spec
-    ## NOTE: div.idl-code > pre: DOM, ProgressEvent specs
-    ## NOTE: pre.schema: ReSpec-generated specs
-    $self->{onsubdoc}->({s => $item->{node}->text_content,
-                         container_node => $item->{node},
-                         media_type => 'text/x-webidl',
-                         is_char_string => 1});
-  }
-
-  $HTMLPhrasingContentChecker{check_end}->(@_);
-}; # check_end
 
 $Element->{+HTML_NS}->{ul} =
 $Element->{+HTML_NS}->{ol} =
@@ -5508,7 +5473,6 @@ $Element->{+HTML_NS}->{input} = {
     max => sub {}, ## check_attrs2
     min => sub {}, ## check_attrs2
     name => $FormControlNameAttrChecker,
-    pattern => $PatternAttrChecker,
     precision => $PrecisionAttrChecker,
     ## XXXresource src="" referenced resource type
     usemap => $HTMLUsemapAttrChecker,
@@ -6177,7 +6141,6 @@ $Element->{+HTML_NS}->{textarea} = {
       }
     },
     name => $FormControlNameAttrChecker,
-    pattern => $PatternAttrChecker,
   }),
   check_start => sub {
     my ($self, $item, $element_state) = @_;
@@ -7947,6 +7910,45 @@ $CheckerByType->{'media query list'} = sub {
   $checker->onerror ($parser->onerror);
   $checker->check_mq_list ($mqs);
 }; # media query list
+
+## ------ JavaScript ------
+
+## JavaScript regular expression [HTML] [ES] [JS]
+$CheckerByType->{'JavaScript Pattern'} = sub {
+  my ($self, $attr) = @_;
+  ## NOTE: "value must match the Pattern production" [HTML].  In
+  ## addition, requirements for the Pattern, as defined in ECMA-262
+  ## specification, are also applied (e.g. {n,m} then n>=m must be
+  ## true).
+
+  require Regexp::Parser::JavaScript;
+  my $parser = Regexp::Parser::JavaScript->new;
+  $parser->onerror (sub {
+    my %opt = @_;
+    if ($opt{code} == [$parser->RPe_BADESC]->[0]) {
+      $opt{type} =~ s{%s%s}{
+        '%s' . (defined $opt{args}->[1] ? $opt{args}->[1] : '')
+      }e;
+    } elsif ($opt{code} == [$parser->RPe_FRANGE]->[0] or
+             $opt{code} == [$parser->RPe_IRANGE]->[0]) {
+      $opt{text} = $opt{args}->[0] . '-';
+      $opt{text} .= $opt{args}->[1] if defined $opt{args}->[1];
+    } elsif ($opt{code} == [$parser->RPe_BADFLG]->[0]) {
+      ## NOTE: Not used by JavaScript regexp parser in fact.
+      $opt{text} = $opt{args}->[0] . $opt{args}->[1];
+    } else {
+      $opt{text} = $opt{args}->[0];
+    }
+    delete $opt{args};
+    my $pos_start = delete $opt{pos_start};
+    my $value = substr ${delete $opt{valueref} or \''}, $pos_start, (delete $opt{pos_end}) - $pos_start;
+    $self->onerror->(%opt, value => $value, node => $attr);
+  }); # onerror
+  eval { $parser->parse ($attr->value) };
+  $parser->onerror (undef);
+
+  ## TODO: Warn if @value does not match @pattern.
+}; # JavaScript Pattern
 
 ## ------ Documents ------
 

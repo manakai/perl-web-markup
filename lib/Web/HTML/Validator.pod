@@ -126,6 +126,8 @@ following modules are required by this module:
 
 =item perl-web-url <https://github.com/manakai/perl-web-url>
 
+=item perl-regexp-utils <https://github.com/wakaba/perl-regexp-utils>
+
 =back
 
 Also, see L<Web::RDF::XML::Parser>'s dependency section.

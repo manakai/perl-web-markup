@@ -31,3 +31,6 @@
 [submodule "t_deps/modules/web-datetime"]
 	path = t_deps/modules/web-datetime
 	url = git://github.com/manakai/perl-web-datetime
+[submodule "t_deps/modules/regexp"]
+	path = t_deps/modules/regexp
+	url = git://github.com/wakaba/perl-regexp-utils
