@@ -24,6 +24,7 @@ for my $attr (qw(xml:lang xml:space xml:base)) {
     $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'unknown namespace element',
+          value => '',
           node => $el,
           level => 'w'},
          #{type => 'attribute not defined',
@@ -151,6 +152,7 @@ for my $test (
     $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'unknown namespace element',
+          value => '',
           node => $el,
           level => 'w'},
          map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}];
@@ -211,6 +213,7 @@ test {
   $validator->check_node ($el);
   eq_or_diff \@error,
       [{type => 'unknown namespace element',
+        value => '',
         node => $el,
         level => 'w'},
        {type => 'Reserved Prefixes and Namespace Names:Prefix',
@@ -280,6 +283,7 @@ for my $test (
     $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'unknown namespace element',
+          value => '',
           node => $el,
           level => 'w'},
          (map { {%{$_}, node => $el->attributes->[0]} } @{$test->[1]}),
@@ -309,6 +313,7 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
     $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'unknown namespace element',
+          value => '',
           node => $el,
           level => 'w'}];
     done $c;
@@ -330,6 +335,7 @@ for my $version (qw(1.0 1.1 1.2 foo)) {
     $validator->check_node ($el);
     eq_or_diff \@error,
         [{type => 'unknown namespace element',
+          value => '',
           node => $el,
           level => 'w'},
          {type => 'xmlns:* empty',
@@ -389,13 +395,15 @@ for my $test (
    },
    [{type => 'Reserved Prefixes and Namespace Names:Prefix', text => 'xml',
      level => 'w'},
-    {type => 'unknown namespace element', level => 'w'}]],
+    {type => 'unknown namespace element', level => 'w',
+     value => 'http://foo/'}]],
   [sub {
      return $_[0]->create_element_ns ('http://foo/', ['xmlns', 'space']);
    },
    [{type => 'Reserved Prefixes and Namespace Names:<xmlns:>',
      level => 'm'},
-    {type => 'unknown namespace element', level => 'w'}]],
+    {type => 'unknown namespace element', level => 'w',
+     value => 'http://foo/'}]],
 ) {
   test {
     my $c = shift;
@@ -940,7 +948,8 @@ for my $test (
      $doc->append_child ($el);
      return {el => $el, attr => $el->attributes->[0]};
    },
-   [{type => 'unknown namespace element', level => 'w', node => 'el'},
+   [{type => 'unknown namespace element', level => 'w', node => 'el',
+     value => ''},
     {type => 'attribute not defined', level => 'm', node => 'attr'},
     # XXX{type => 'xslt:root literal result element', level => 's', node => 'el'},
    ]],
