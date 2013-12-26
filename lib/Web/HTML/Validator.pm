@@ -2899,17 +2899,15 @@ $Element->{+HTML_NS}->{style} = {
                          level => 'm');
     }
 
-    my $type = $element_state->{content_type}
-        ? $element_state->{content_type}->as_valid_mime_type_with_no_params
-        : undef;
-    if (defined $type and $type eq 'text/css') {
+    if (defined $element_state->{content_type} and
+        ($element_state->{content_type}->as_valid_mime_type || '') eq 'text/css') {
       my $parser = $self->_css_parser ($item->{node}); # XXX
       # XXX $parser->context->scoped (has_attribute ('scoped'));
       my $ss = $parser->parse_char_string_as_ss ($element_state->{text});
       # XXX Web::CSS::Checker->new->check_ss ($ss);
-    } elsif (defined $type) {
+    } elsif (defined $element_state->{content_type}) {
       $self->{onerror}->(node => $item->{node},
-                         value => $type,
+                         value => $element_state->{content_type}->as_valid_mime_type,
                          type => 'unknown style lang',
                          level => 'u');
     }
@@ -3017,12 +3015,12 @@ $Element->{+HTML_NS}->{script} = {
              $element_state->{content_type}->is_javascript) {
       # XXX validate $element_state->{text} as JavaScript
       $self->{onerror}->(node => $item->{node},
-                         value => $element_state->{content_type},
+                         value => $element_state->{content_type}->as_valid_mime_type,
                          type => 'unknown script lang',
                          level => 'u');
     } elsif (defined $element_state->{content_type}) {
       $self->{onerror}->(node => $item->{node},
-                         value => $element_state->{content_type},
+                         value => $element_state->{content_type}->as_valid_mime_type,
                          type => 'unknown script lang',
                          level => 'u');
     }

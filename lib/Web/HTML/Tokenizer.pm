@@ -6124,6 +6124,7 @@ sub _get_next_token ($) {
 } # _get_next_token
 
 # XXX manakai_pos user data for Text nodes and entities
+# XXX entity refs should also set pos c.f. style="&amp;foo"
 
 1;
 
