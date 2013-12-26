@@ -721,6 +721,8 @@ test {
   eq_or_diff \@error, [{type => 'mismatched charset name',
                         node => $doc->get_elements_by_tag_name ('meta')
                             ->[0]->get_attribute_node_ns (undef, 'content'),
+                        text => 'utf-16be',
+                        value => 'utf-16le',
                         level => 'm'},
                        {type => 'non ascii superset',
                         value => 'utf-16be',
