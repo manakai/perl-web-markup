@@ -718,15 +718,6 @@ $ElementAttrChecker->{(HTML_NS)}->{form}->{''}->{'accept-charset'} = sub {
   }
 }; # <form accept-charset="">
 
-## Media query list [MQ]
-$CheckerByType->{'media query list'} = sub {
-  my ($self, $attr) = @_;
-  # XXX
-  $self->{onerror}->(node => $attr,
-                     type => 'media query',
-                     level => 'u');
-}; # media query list
-
 ## URL potentially surrounded by spaces [HTML]
 $CheckerByType->{'URL potentially surrounded by spaces'} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -7944,6 +7935,18 @@ $CheckerByType->{'CSS styling'} = sub {
   my $props = $parser->parse_char_string_as_prop_decls ($attr->value);
   # XXX Web::CSS::Checker->new->check_props ($props);
 }; # CSS styling
+
+## Media query list [MQ]
+$CheckerByType->{'media query list'} = sub {
+  my ($self, $attr) = @_;
+  my $parser = $self->_css_parser ($attr);
+  my $mqs = $parser->parse_char_string_as_mq_list ($attr->value);
+
+  require Web::CSS::MediaQueries::Checker;
+  my $checker = Web::CSS::MediaQueries::Checker->new;
+  $checker->onerror ($parser->onerror);
+  $checker->check_mq_list ($mqs);
+}; # media query list
 
 ## ------ Documents ------
 
