@@ -7985,7 +7985,7 @@ sub _check_doc_charset ($$) {
       require Web::Encoding;
       my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
       $self->{onerror}->(node => $doc,
-                         type => 'non ascii superset',
+                         type => 'charset:not ascii compat',
                          value => $doc->input_encoding,
                          level => 'm')
           unless Web::Encoding::is_ascii_compat_encoding_name ($name);
@@ -8000,7 +8000,7 @@ sub _check_doc_charset ($$) {
         require Web::Encoding;
         my $name = Web::Encoding::encoding_label_to_name ($doc->input_encoding);
         $self->{onerror}->(node => $doc,
-                           type => 'non ascii superset',
+                           type => 'charset:not ascii compat',
                            value => $doc->input_encoding,
                            level => 'm')
             unless Web::Encoding::is_ascii_compat_encoding_name ($name);
@@ -8019,7 +8019,7 @@ sub _check_doc_charset ($$) {
   } else { # XML document
     if ($self->{flag}->{has_meta_charset} and not defined $doc->xml_encoding) {
       $self->{onerror}->(node => $doc,
-                         type => 'no xml encoding', # XXX
+                         type => 'no xml encoding',
                          level => 's');
     }
 
@@ -8122,7 +8122,8 @@ sub _check_node ($$) {
             ## does not support the element.  The conformance is
             ## unknown.
             $self->{onerror}->(node => $el,
-                               type => 'unknown element', level => 'u');
+                               type => 'unknown element',
+                               level => 'u');
           }
           my $status = $el_def->{status} || '';
           if ($status eq 'REC' or $status eq 'CR' or $status eq 'LC') {
@@ -8131,17 +8132,20 @@ sub _check_node ($$) {
             ## The element is conforming, but is in earlier stage such
             ## that it should not be used without caution.
             $self->{onerror}->(node => $el,
-                               type => 'status:wd:element', level => 'i')
+                               type => 'status:wd:element',
+                               level => 'i')
           }
         } elsif ($_Defs->{namespaces}->{$el_nsuri}->{supported}) {
           ## "Authors must not use elements, attributes, or attribute
           ## values that are not permitted by this specification or
           ## other applicable specifications" [HTML]
           $self->{onerror}->(node => $el,
-                             type => 'element not defined', level => 'm');
+                             type => 'element not defined',
+                             level => 'm');
         } else {
           $self->{onerror}->(node => $el,
-                             type => 'unknown namespace element', # XXX
+                             type => 'unknown namespace element',
+                             value => $el_nsuri,
                              level => 'w');
         }
       } # validation mode
@@ -8256,7 +8260,7 @@ sub _check_node ($$) {
           my $mode = 'default';
           if ($has_element) {
             $self->{onerror}->(node => $node,
-                               type => 'duplicate document element', # XXX
+                               type => 'duplicate document element',
                                level => 'm'); # [MANAKAI] [DOM]
           } else {
             $has_element = 1;
@@ -8347,7 +8351,7 @@ sub _check_node ($$) {
             unless ($nsurl eq HTML_NS and $ln eq 'html') {
               if ($item->{node}->manakai_is_html) {
                 $self->{onerror}->(node => $node,
-                                   type => 'document element not serializable', # XXX
+                                   type => 'document element not serializable',
                                    level => 'w');
               }
             }
@@ -8359,11 +8363,11 @@ sub _check_node ($$) {
         } elsif ($nt == 10) { # DOCUMENT_TYPE_NODE
           if ($has_element) {
             $self->{onerror}->(node => $node,
-                               type => 'doctype after element', # XXX
+                               type => 'doctype after element',
                                level => 'm'); # [MANAKAI] [DOM]
           } elsif ($has_doctype) {
             $self->{onerror}->(node => $node,
-                               type => 'duplicate doctype', # XXX
+                               type => 'duplicate doctype',
                                level => 'm'); # [MANAKAI] [DOM]
           } else {
             $has_doctype = 1;
@@ -8371,7 +8375,7 @@ sub _check_node ($$) {
           # XXX check the node
         } elsif ($nt == 3) { # TEXT_NODE
           $self->{onerror}->(node => $node,
-                             type => 'root text', # XXX
+                             type => 'root text',
                              level => 'm'); # [MANAKAI] [DOM]
           $self->_check_data ($node, 'data');
         }
@@ -8433,7 +8437,7 @@ sub _check_refs ($) {
         ## There is at least one |map| element with the specified name
         ## in different case combination.
         $self->{onerror}->(node => $_->[1],
-                           type => 'hashref:wrong case', ## XXX document
+                           type => 'hashref:wrong case',
                            level => 'm');
       } else {
         ## There is no |map| element with the specified name at all.
@@ -8463,13 +8467,13 @@ sub _check_refs ($) {
       #
     } else {
       my $error_type = {
-        any => 'no referenced element', ## TODOC: type
+        any => 'no referenced element',
         form => 'no referenced form',
         labelable => 'no referenced control',
-        datalist => 'no referenced datalist', ## TODOC: type
-        object => 'no referenced object', # XXXdocumentation
+        datalist => 'no referenced datalist',
+        object => 'no referenced object',
         popup => 'no referenced menu',
-        command => 'no referenced master command', # XXXdoc
+        command => 'no referenced master command',
       }->{$_->[0]};
       $self->{onerror}->(node => $_->[2],
                          type => $error_type,

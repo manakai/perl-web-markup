@@ -724,7 +724,7 @@ test {
                         text => 'utf-16be',
                         value => 'utf-16le',
                         level => 'm'},
-                       {type => 'non ascii superset',
+                       {type => 'charset:not ascii compat',
                         value => 'utf-16be',
                         node => $doc, level => 'm'},
                        {type => 'non-utf-8 character encoding',
@@ -808,7 +808,7 @@ test {
     push @error, \%args;
   });
   $validator->check_node ($doc);
-  eq_or_diff \@error, [{type => 'non ascii superset',
+  eq_or_diff \@error, [{type => 'charset:not ascii compat',
                         value => 'ISO-2022-CN-EXT',
                         node => $doc, level => 'm'},
                        {type => 'no character encoding declaration',
