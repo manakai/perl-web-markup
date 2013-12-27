@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '124.0';
+our $VERSION = '125.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -23,16 +23,6 @@ sub onerror ($;$) {
         $args{level};
   };
 } # onerror
-
-sub onsubdoc ($;$) {
-  if (@_ > 1) {
-    $_[0]->{onsubdoc} = $_[1];
-  }
-  return $_[0]->{onsubdoc} ||= sub {
-    my $args = $_[0];
-    warn "A subdocument of type |$args->{media_type}| found but no subdocument validator is provided\n";
-  };
-} # onsubdoc
 
 ## Variable |$_Defs| (|$Web::HTML::Validator::_Defs|), defined in
 ## |Web::HTML::Validator::_Defs| module, is generated from
@@ -6664,6 +6654,7 @@ my %AtomChecker = (%AnyChecker);
 
 # XXXXXX XXXerrortypes
 
+our $CheckDIVContent; # XXX
 
 my %AtomTextConstruct = (
   %AtomChecker,
@@ -6749,13 +6740,7 @@ my %AtomTextConstruct = (
                            level => 'm');
       }
     } elsif ($element_state->{type} eq 'html') {
-      ## TODO: SHOULD be suitable for handling as HTML [HTML4]
-      # markup MUST be escaped
-      $self->{onsubdoc}->({s => $element_state->{value},
-                           container_node => $item->{node},
-                           media_type => 'text/html',
-                           inner_html_element => 'div',
-                           is_char_string => 1});
+      $CheckDIVContent->($self, $item->{node}, $element_state->{value});
     }
 
     $AtomChecker{check_end}->(@_);
@@ -7383,13 +7368,7 @@ $Element->{+ATOM_NS}->{content} = {
                            level => 'm');
       }
     } elsif ($element_state->{type} eq 'html') {
-      ## TODO: SHOULD be suitable for handling as HTML [HTML4]
-      # markup MUST be escaped
-      $self->{onsubdoc}->({s => $element_state->{value},
-                           container_node => $item->{node},
-                           media_type => 'text/html',
-                           inner_html_element => 'div',
-                           is_char_string => 1});
+      $CheckDIVContent->($self, $item->{node}, $element_state->{value});
     } elsif ($element_state->{type} eq 'xml') {
       ## NOTE: SHOULD be suitable for handling as $value.
       ## If no @src, this would normally mean it contains a 
@@ -7897,6 +7876,28 @@ $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
   $checker->onerror ($onerror);
   $checker->check_node ($doc);
 }; # <iframe srcdoc="">
+
+## For Atom Text construct with type=html and <atom:content type=html>
+## elements
+$CheckDIVContent = sub {
+  my ($self, $node, $value) = @_;
+  require Web::DOM::Document;
+  my $doc = new Web::DOM::Document;
+  my $div = $doc->create_element ('div');
+
+  require Web::HTML::Parser;
+  my $parser = Web::HTML::Parser->new;
+  my $onerror = $GetNestedOnError->($self->onerror, $node);
+  $parser->onerror ($onerror);
+  for (@{$parser->parse_char_string_with_context ($value, $div => $doc)}) {
+    $div->append_child ($_);
+  }
+
+  require Web::HTML::Validator;
+  my $checker = Web::HTML::Validator->new;
+  $checker->onerror ($onerror);
+  $checker->check_node ($div);
+}; # $CheckDIVContent
 
 ## ------ CSS ------
 
@@ -8487,7 +8488,6 @@ sub _check_refs ($) {
 sub check_node ($$) {
   my ($self, $node) = @_;
   $self->onerror;
-  $self->onsubdoc;
   $self->_init;
   my $nt = $node->node_type;
   if ($nt == 1) { # ELEMENT_NODE
@@ -8509,7 +8509,6 @@ sub check_node ($$) {
   $self->_terminate;
 
   # XXX More useful return object
-  # XXX Merging subdoc validation result
   #return
   delete $self->{return}; # XXX
 } # check_node

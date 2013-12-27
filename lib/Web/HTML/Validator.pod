@@ -32,58 +32,15 @@ This module has following methods:
 
 Create a new instance of the validator.
 
-=item $code = $val->onsubdoc
-
-=item $val->onsubdoc ($code)
-
-Get or set the subdocument validation handler hooks.  Some nested
-constructs in the document, e.g. embedded JavaScript codes, regular
-expressions, and C<iframe> C<srcdoc> documents, are considered as
-"subdocument".  The validation itself does not check the conformance
-of the subdocument, but it instead invoke this callback such that
-appropriate validator modules can be dispatched.  The callback is not
-expected to throw any exception.
-
-XXX args
-
 =item $code = $val->onerror
 
 =item $val->onerror ($code)
 
-XXX
-
-=over 4
-
-=item level (Might be C<undef>)
-
-A string which describes the severity of the error or warning.  For
-the list of the severities, see
-<http://suika.suikawiki.org/gate/2005/sw/Whatpm%20Error%20Types>.
-
-=item node (Always specified)
-
-The node with which the error is detected.
-
-=item type (Always specified)
-
-A string which describes the type of the error or warning.  For the
-list of the errors and warnings, see
-<http://suika.suikawiki.org/gate/2005/sw/Whatpm%20Error%20Types>.
-
-=item text (Sometimes specified)
-
-An optional string argumenting the type of the error, e.g. an element
-name.
-
-=item value (Sometimes specified)
-
-An optional string in which the error occurs.  For example, a URL
-extracted from a complex attribute value, in whcih a conformance error
-is detected.
-
-=back
-
-See <http://suika.suikawiki.org/gate/2005/sw/Whatpm%20Error%20Types>.
+Get or set the error handler for the validator.  Any conformance
+error, as well as warning and additional processing information, is
+reported to the handler.  See
+<https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
+for details of error handling.
 
 =item $val->check_node ($node)
 
@@ -92,10 +49,7 @@ node is validated as if it were an orphaned node, i.e. a node with no
 parent or owner.  The node can be an attribute, but element- or
 attribute-specific validation is not performed in that case.
 
-Errors and warnings are reported through the C<onerror> handler.  Any
-subdocument is reported through the C<onsubdoc> handler.
-
-XXX return value
+Errors and warnings are reported through the C<onerror> handler.
 
 =back
 
@@ -232,6 +186,13 @@ element in the Atom namespace as child, can but does not have to
 contain a child C<author> element in the Atom namespace.  (Per RFC
 4287 it is unclear whether there has to be an C<author> child element
 or not when the C<feed> element contains no C<entry> element child.)
+
+When the content of an element is HTML, it MUST conform to the
+relevant specifications, using the rules for the HTML documents.  When
+the content of an element is XHTML, it MUST conform to the relevant
+specifications, using rules for the XHTML documents.  (Per RFC 4287,
+these are SHOULD-level requirements.  Additionally, it references
+obsolete specifications.)
 
 =item CSSSTYLEATTR
 

@@ -75,11 +75,6 @@ sub _test ($$) {
           (defined $opt{level} ? ';'.$opt{level} : '');
       }
     });
-    $val->onsubdoc (sub {
-      my $opt = shift;
-      push @error, get_node_path ($opt->{container_node}) . ';SUBDOC;'
-          . $opt->{media_type};
-    });
     $val->check_node ($doc->document_element);
 
     my $actual = join ("\n", sort {$a cmp $b} @error);
