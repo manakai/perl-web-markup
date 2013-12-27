@@ -1492,7 +1492,8 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if $self->{ca}->{cc} != $self->{column} or
-                   ($self->{ca}->{cl} == 2 and $self->{ca}->{cc} == 0);
+                   (not @{$self->{ca}->{pos} ||= []} and
+                    $self->{ca}->{cc} == 0);
 
         $self->{ca}->{value} .= chr ($nc);
 
@@ -1602,7 +1603,8 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if $self->{ca}->{cc} != $self->{column} or
-                   ($self->{ca}->{cl} == 2 and $self->{ca}->{cc} == 0);
+                   (not @{$self->{ca}->{pos} ||= []} and
+                    $self->{ca}->{cc} == 0);
 
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
