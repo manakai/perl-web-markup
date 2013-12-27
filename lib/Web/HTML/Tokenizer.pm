@@ -1403,6 +1403,12 @@ sub _get_next_token ($) {
       ## ATTLIST attribute value double quoted state".
       
       if ($nc == 0x0022) { # "
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if not @{$self->{ca}->{pos} ||= []} and
+                   $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
           
           ## XML5: "DOCTYPE ATTLIST name after state".
@@ -1420,6 +1426,13 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0026) { # &
         
         ## XML5: Not defined yet.
+
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if not @{$self->{ca}->{pos} ||= []} and
+                   $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
 
         ## NOTE: In the spec, the tokenizer is switched to the 
         ## "entity in attribute value state".  In this implementation, the
@@ -1478,7 +1491,8 @@ sub _get_next_token ($) {
         push @{$self->{ca}->{pos} ||= []},
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
-                if $self->{ca}->{cc} != $self->{column};
+                if $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
 
         $self->{ca}->{value} .= chr ($nc);
 
@@ -1500,6 +1514,12 @@ sub _get_next_token ($) {
       ## ATTLIST attribute value single quoted state".
 
       if ($nc == 0x0027) { # '
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if not @{$self->{ca}->{pos} ||= []} and
+                   $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
           
           ## XML5: "DOCTYPE ATTLIST name after state".
@@ -1517,6 +1537,13 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0026) { # &
         
         ## XML5: Not defined yet.
+
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if not @{$self->{ca}->{pos} ||= []} and
+                   $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
 
         ## NOTE: In the spec, the tokenizer is switched to the 
         ## "entity in attribute value state".  In this implementation, the
@@ -1574,7 +1601,8 @@ sub _get_next_token ($) {
         push @{$self->{ca}->{pos} ||= []},
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
-                if $self->{ca}->{cc} != $self->{column};
+                if $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
 
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
@@ -1608,6 +1636,13 @@ sub _get_next_token ($) {
         
 
         ## XML5: Not defined yet.
+
+        push @{$self->{ca}->{pos} ||= []},
+            [$self->{ca}->{cl}, $self->{ca}->{cc}
+                 => $self->{line}, $self->{column}]
+                if not @{$self->{ca}->{pos} ||= []} and
+                   $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
 
         ## NOTE: In the spec, the tokenizer is switched to the
         ## "character reference in attribute value state".  In this
@@ -1711,7 +1746,8 @@ sub _get_next_token ($) {
         push @{$self->{ca}->{pos} ||= []},
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
-                if $self->{ca}->{cc} != $self->{column};
+                if $self->{ca}->{cc} != $self->{column} or
+                   $self->{ca}->{cc} == 0;
 
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars

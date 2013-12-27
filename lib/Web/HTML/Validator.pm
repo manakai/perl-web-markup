@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '123.0';
+our $VERSION = '124.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -2333,12 +2333,14 @@ $Element->{+HTML_NS}->{html} = {
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $parent = $item->{node}->parent_node;
-    if (not $parent or $parent->node_type != 1) { # != ELEMENT_NODE
-      unless ($item->{node}->has_attribute_ns (undef, 'lang')) {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'attribute missing',
-                           text => 'lang',
-                           level => 'w');
+    unless ($item->{node}->owner_document->manakai_is_srcdoc) {
+      if (not $parent or $parent->node_type != 1) { # != ELEMENT_NODE
+        unless ($item->{node}->has_attribute_ns (undef, 'lang')) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'attribute missing',
+                             text => 'lang',
+                             level => 'w');
+        }
       }
     }
   }, # check_attrs2
@@ -4283,17 +4285,6 @@ $Element->{+HTML_NS}->{iframe} = {
     }
   }; # <iframe sandbox="">
 }
-
-$ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
-  my ($self, $attr) = @_;
-  # XXX
-  my $type = $attr->owner_document->manakai_is_html
-      ? 'text/x-html-srcdoc' : 'text/xml';
-  $self->{onsubdoc}->({s => $attr->value,
-                       container_node => $attr,
-                       media_type => $type,
-                       is_char_string => 1});
-}; # <iframe srcdoc="">
 
 $Element->{+HTML_NS}->{embed} = {
   %HTMLEmptyChecker,
@@ -7834,6 +7825,79 @@ $Element->{+THR_NS}->{total} = {
 
 ## TODO: APP [RFC 5023]
 
+## ------ Nested document ------
+
+my $GetNestedOnError = sub {
+  my ($onerror, $node) = @_;
+  my $pos = $node->get_user_data ('manakai_pos');
+  return sub {
+    my %args = @_;
+    delete $args{uri}; # XXX
+
+    my $line = delete $args{line};
+    my $column = delete $args{column};
+    if (not defined $line and $args{node}) {
+      $line = $args{node}->get_user_data ('manakai_source_line');
+      $column = $args{node}->get_user_data ('manakai_source_column');
+    }
+
+    if (defined $line and defined $column) {
+      $column ||= 1;
+      if ($pos and ref $pos eq 'ARRAY') {
+        my $v = [1,1 => 1,1];
+        for (@$pos) {
+          if ($_->[0] < $line or
+              ($_->[0] == $line and $_->[1] <= $column)) {
+            $v = $_;
+          } else {
+            last;
+          }
+        }
+        if ($v) {
+          if ($v->[0] == $line) {
+            $onerror->(@_, node => $node,
+                       line => $v->[2],
+                       column => $v->[3] + $column - $v->[1]);
+            return;
+          } else {
+            $onerror->(@_, node => $node,
+                       line => $v->[2] + $line - $v->[0],
+                       column => $column);
+            return;
+          }
+        }
+      }
+    }
+
+    # XXX has no line/column; can we do something better?
+
+    $onerror->(%args, node => $node);
+  };
+}; # $GetNestedOnError
+
+$ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
+  my ($self, $attr) = @_;
+  require Web::DOM::Document;
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_srcdoc (1);
+  my $parser;
+  if ($attr->owner_document->manakai_is_html) {
+    $doc->manakai_is_html (1);
+    require Web::HTML::Parser;
+    $parser = Web::HTML::Parser->new;
+  } else {
+    require Web::XML::Parser;
+    $parser = Web::XML::Parser->new;
+  }
+  my $onerror = $GetNestedOnError->($self->onerror, $attr);
+  $parser->onerror ($onerror);
+  $parser->parse_char_string ($attr->value => $doc);
+  
+  my $checker = Web::HTML::Validator->new;
+  $checker->onerror ($onerror);
+  $checker->check_node ($doc);
+}; # <iframe srcdoc="">
+
 ## ------ CSS ------
 
 sub _css_parser ($$) {
@@ -7849,44 +7913,7 @@ sub _css_parser ($$) {
   $context->base_url ($node->base_uri);
   $parser->context ($context);
   $parser->media_resolver->set_supported (all => 1);
-  my $pos = $node->get_user_data ('manakai_pos');
-  my $onerror = $self->onerror;
-  $parser->onerror (sub {
-    my %args = @_;
-    delete $args{uri}; # XXX
-    if (defined $args{line} and defined $args{column}) {
-      if ($pos and ref $pos eq 'ARRAY') {
-        my $v = [1,1 => 1,1];
-        for (@$pos) {
-          if ($_->[0] < $args{line} or
-              ($_->[0] == $args{line} and $_->[1] <= $args{column})) {
-            $v = $_;
-          } else {
-            last;
-          }
-        }
-        if ($v) {
-          if ($v->[0] == $args{line}) {
-            $onerror->(@_, node => $node,
-                       line => $v->[2],
-                       column => $v->[3] + $args{column} - $v->[1]);
-            return;
-          } else {
-            $onerror->(@_, node => $node,
-                       line => $v->[2] + $args{line} - $v->[0],
-                       column => $args{column});
-            return;
-          }
-        }
-      }
-    }
-
-    # XXX can we do something better?
-    delete $args{line};
-    delete $args{column};
-
-    $onerror->(%args, node => $node);
-  });
+  $parser->onerror ($GetNestedOnError->($self->onerror, $node));
   #$parser->init_parser;
   return $parser;
 } # _create_css_parser
