@@ -2,7 +2,7 @@ package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '3.0';
+our $VERSION = '4.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -1407,8 +1407,8 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if not @{$self->{ca}->{pos} ||= []} and
-                   $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cc} != $self->{column} or
+                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
           
           ## XML5: "DOCTYPE ATTLIST name after state".
@@ -1431,8 +1431,8 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if not @{$self->{ca}->{pos} ||= []} and
-                   $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cc} != $self->{column} or
+                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
 
         ## NOTE: In the spec, the tokenizer is switched to the 
         ## "entity in attribute value state".  In this implementation, the
@@ -1492,7 +1492,7 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cl} == 2 and $self->{ca}->{cc} == 0);
 
         $self->{ca}->{value} .= chr ($nc);
 
@@ -1518,8 +1518,8 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if not @{$self->{ca}->{pos} ||= []} and
-                   $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cc} != $self->{column} or
+                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
           
           ## XML5: "DOCTYPE ATTLIST name after state".
@@ -1542,8 +1542,8 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if not @{$self->{ca}->{pos} ||= []} and
-                   $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cc} != $self->{column} or
+                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
 
         ## NOTE: In the spec, the tokenizer is switched to the 
         ## "entity in attribute value state".  In this implementation, the
@@ -1602,7 +1602,7 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cl} == 2 and $self->{ca}->{cc} == 0);
 
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
@@ -1641,8 +1641,8 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if not @{$self->{ca}->{pos} ||= []} and
-                   $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cc} != $self->{column} or
+                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
 
         ## NOTE: In the spec, the tokenizer is switched to the
         ## "character reference in attribute value state".  In this
@@ -1747,7 +1747,7 @@ sub _get_next_token ($) {
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
                 if $self->{ca}->{cc} != $self->{column} or
-                   $self->{ca}->{cc} == 0;
+                   ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0);
 
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
