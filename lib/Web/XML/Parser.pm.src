@@ -2,7 +2,7 @@ package Web::XML::Parser; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '4.0';
+our $VERSION = '5.0';
 use Web::HTML::Defs;
 use Web::HTML::ParserData;
 use Web::HTML::InputStream;
@@ -557,6 +557,10 @@ sub _tree_before_root_element ($) {
   } # B
 } # _tree_before_root_element
 
+sub _insert_point ($) {
+  return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
+} # _insert_point
+
 sub _tree_in_element ($) {
   my $self = shift;
   
@@ -565,7 +569,8 @@ sub _tree_in_element ($) {
       while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
         !!!parse-error (type => 'NULL', token => $self->{t});
       }
-      $self->{open_elements}->[-1]->[0]->manakai_append_text ($self->{t}->{data});
+      (_insert_point $self->{open_elements}->[-1]->[0])
+          ->manakai_append_text ($self->{t}->{data});
       
       ## Stay in the mode.
       !!!next-token;
@@ -688,7 +693,8 @@ sub _tree_in_element ($) {
         $attr->specified (0) if $attr_t->{not_specified};
       }
 
-      $self->{open_elements}->[-1]->[0]->append_child ($el);
+      (_insert_point $self->{open_elements}->[-1]->[0])
+          ->append_child ($el);
 
       if ($self->{self_closing}) {
         !!!ack ('ack');
@@ -747,7 +753,8 @@ sub _tree_in_element ($) {
       }
     } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
       my $comment = $self->{document}->create_comment ($self->{t}->{data});
-      $self->{open_elements}->[-1]->[0]->append_child ($comment);
+      (_insert_point $self->{open_elements}->[-1]->[0])
+          ->append_child ($comment);
       
       ## Stay in the mode.
       !!!next-token;
@@ -755,7 +762,8 @@ sub _tree_in_element ($) {
     } elsif ($self->{t}->{type} == PI_TOKEN) {
       my $pi = $self->{document}->create_processing_instruction
           ($self->{t}->{target}, $self->{t}->{data});
-      $self->{open_elements}->[-1]->[0]->append_child ($pi);
+      (_insert_point $self->{open_elements}->[-1]->[0])
+          ->append_child ($pi);
 
       ## Stay in the mode.
       !!!next-token;
@@ -1154,7 +1162,7 @@ sub _tree_in_subset ($) {
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

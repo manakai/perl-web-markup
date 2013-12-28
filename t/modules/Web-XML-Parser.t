@@ -216,6 +216,57 @@ test {
   done $c;
 } n => 1, name => 'parse_char_string_with_context_ns8';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::XML::Parser;
+  $parser->parse_char_string (q{<template xmlns="http://www.w3.org/1999/xhtml"></template>} => $doc);
+  is $doc->child_nodes->length, 1;
+  my $el = $doc->document_element;
+  is $el->child_nodes->length, 0;
+  is $el->content->child_nodes->length, 0;
+  done $c;
+} n => 3, name => 'template root, empty';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::XML::Parser;
+  $parser->parse_char_string (q{<template xmlns="http://www.w3.org/1999/xhtml"><p>hoge</p><!--abc--><?ab?>aa<![CDATA[dd]]></template>} => $doc);
+  is $doc->child_nodes->length, 1;
+  my $el = $doc->document_element;
+  is $el->child_nodes->length, 0;
+  is $el->content->child_nodes->length, 4;
+  is $el->inner_html, q{<p xmlns="http://www.w3.org/1999/xhtml">hoge</p><!--abc--><?ab ?>aadd};
+  done $c;
+} n => 4, name => 'template root, non-empty';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::XML::Parser;
+  $parser->parse_char_string (q{<a:b xmlns:a="http://www.w3.org/1999/xhtml"><a:template><p>hoge</p><!--abc--><?ab?>aa<![CDATA[dd]]><a:x/></a:template></a:b>} => $doc);
+  is $doc->child_nodes->length, 1;
+  my $el = $doc->document_element->first_child;
+  is $el->child_nodes->length, 0;
+  is $el->content->child_nodes->length, 5;
+  is $el->inner_html, q{<p xmlns="">hoge</p><!--abc--><?ab ?>aadd<a:x xmlns:a="http://www.w3.org/1999/xhtml"></a:x>};
+  done $c;
+} n => 4, name => 'template non-root, non-empty';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = new Web::XML::Parser;
+  $parser->parse_char_string (q{<a:b xmlns:a="http://www.w3.org/1999/xhtml"><a:template><p>hoge</p><!--abc--><?ab?>aa<![CDATA[dd]]><template xmlns="http://www.w3.org/1999/xhtml"><a:x/></template></a:template></a:b>} => $doc);
+  is $doc->child_nodes->length, 1;
+  my $el = $doc->document_element->first_child;
+  is $el->child_nodes->length, 0;
+  is $el->content->child_nodes->length, 5;
+  is $el->inner_html, q{<p xmlns="">hoge</p><!--abc--><?ab ?>aadd<template xmlns="http://www.w3.org/1999/xhtml"><a:x xmlns:a="http://www.w3.org/1999/xhtml"></a:x></template>};
+  done $c;
+} n => 4, name => 'template non-root, non-empty';
+
 run_tests;
 
 =head1 LICENSE
