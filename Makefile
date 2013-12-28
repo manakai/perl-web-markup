@@ -76,6 +76,7 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{end_tag}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{interface}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{auto_br}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_category}; #\
 	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\
 	        for $$ln2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}}) { #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{spec}; #\
@@ -98,7 +99,7 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 
 test: test-deps test-main test-main-webdom
 
-test-deps: deps
+test-deps: deps local/elements.json
 
 test-main:
 	$(PROVE) t/tests/*.t t/modules/*.t t/parsing.t t/parsing/xml.t \

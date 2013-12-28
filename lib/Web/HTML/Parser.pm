@@ -190,7 +190,6 @@ my $el_category = {
   code => FORMATTING_EL,
   col => MISC_SPECIAL_EL,
   colgroup => MISC_SPECIAL_EL,
-  command => MISC_SPECIAL_EL,
   #datagrid => MISC_SPECIAL_EL,
   dd => DTDD_EL,
   details => MISC_SPECIAL_EL,
@@ -230,8 +229,10 @@ my $el_category = {
   li => LI_EL,
   link => MISC_SPECIAL_EL,
   listing => MISC_SPECIAL_EL,
+  # XXX main
   marquee => MISC_SCOPING_EL,
   menu => MISC_SPECIAL_EL,
+  menuitem => MISC_SPECIAL_EL,
   meta => MISC_SPECIAL_EL,
   nav => MISC_SPECIAL_EL,
   nobr => NOBR_EL,
@@ -254,11 +255,13 @@ my $el_category = {
   select => SELECT_EL,
   section => MISC_SPECIAL_EL,
   small => FORMATTING_EL,
+  source => MISC_SPECIAL_EL,
   strike => FORMATTING_EL,
   strong => FORMATTING_EL,
   style => MISC_SPECIAL_EL,
   summary => MISC_SPECIAL_EL,
   table => TABLE_EL,
+  # XXX template
   tbody => TABLE_ROW_GROUP_EL,
   td => TABLE_CELL_EL,
   textarea => MISC_SPECIAL_EL,
@@ -267,12 +270,13 @@ my $el_category = {
   thead => TABLE_ROW_GROUP_EL,
   title => MISC_SPECIAL_EL,
   tr => TABLE_ROW_EL,
+  track => MISC_SPECIAL_EL,
   tt => FORMATTING_EL,
   u => FORMATTING_EL,
   ul => MISC_SPECIAL_EL,
   wbr => MISC_SPECIAL_EL,
   xmp => MISC_SPECIAL_EL,
-};
+}; # $el_category
 
 my $el_category_f = {
   (MML_NS) => {
@@ -291,7 +295,7 @@ my $el_category_f = {
   },
   ## NOTE: In addition, FOREIGN_EL is set to non-HTML elements, MML_EL
   ## is set to MathML elements, and SVG_EL is set to SVG elements.
-};
+}; # $el_category_f
 
 require Web::HTML::ParserData;
 
