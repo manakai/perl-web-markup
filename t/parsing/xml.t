@@ -1,20 +1,19 @@
-package test::Web::XML::Parser;
 use strict;
 use warnings;
 no warnings 'utf8';
 use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'testdataparser', 'lib')->stringify;
+use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
-use Encode;
-sub bytes ($) { encode 'utf8', $_[0] }
+use Test::X1;
+
 my $DEBUG = $ENV{DEBUG};
 
-my $test_dir_name = file (__FILE__)->dir->parent->parent->
-    subdir ('t_deps/tests/xml/parsing/manakai') . '/';
+my @FILES = glob (file (__FILE__)->dir->parent->parent->
+    subdir ('t_deps/tests/xml/parsing/manakai')->file ('*.dat'));
 
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
@@ -51,11 +50,11 @@ if ($DEBUG) {
 use Web::XML::Parser;
 use Web::HTML::Dumper qw/dumptree/;
 
-my $dom_class = $ENV{DOM_IMPL_CLASS} || 'NanoDOM::DOMImplementation';
+my $dom_class = $ENV{DOM_IMPL_CLASS} || 'Web::DOM::Implementation';
 eval qq{ require $dom_class } or die $@;
 my $dom = $dom_class->new;
 
-sub test ($) {
+sub _test ($) {
   my $test = shift;
   my $data = $test->{data}->[0];
 
@@ -129,38 +128,31 @@ sub test ($) {
   
 #line 60 "HTML-tree.t test () skip"
   eq_or_diff join ("\n", @errors), join ("\n", @{$test->{errors}->[0] or []}),
-      bytes 'Parse error: ' . Data::Dumper::qquote ($test->{data}->[0]);
+      'Parse error';
 
   if ($test->{'xml-version'}) {
     is $doc->xml_version,
-        $test->{'xml-version'}->[0],
-        bytes 'XML version: ' . Data::Dumper::qquote ($test->{data}->[0]);
+        $test->{'xml-version'}->[0], 'XML version';
   } else {
-    is $doc->xml_version, '1.0',
-        bytes 'XML version: ' . Data::Dumper::qquote ($test->{data}->[0]);
+    is $doc->xml_version, '1.0', 'XML version';
   }
 
   if ($test->{'xml-encoding'}) {
     if (($test->{'xml-encoding'}->[1]->[0] // '') eq 'null') {
-      is $doc->xml_encoding, undef, 
-          bytes 'XML encoding: ' . Data::Dumper::qquote ($test->{data}->[0]);
+      is $doc->xml_encoding, undef, 'XML encoding';
     } else {
-      is $doc->xml_encoding, $test->{'xml-encoding'}->[0],
-          bytes 'XML encoding: ' . Data::Dumper::qquote ($test->{data}->[0]);
+      is $doc->xml_encoding, $test->{'xml-encoding'}->[0], 'XML encoding';
     }
   } else {
-    is $doc->xml_encoding, undef,
-        bytes 'XML encoding: ' . Data::Dumper::qquote ($test->{data}->[0]);
+    is $doc->xml_encoding, undef, 'XML encoding';
   }
 
   if ($test->{'xml-standalone'}) {
     is $doc->xml_standalone ? 1 : 0,
         ($test->{'xml-standalone'}->[0] || $test->{'xml-standalone'}->[1]->[0])
-            eq 'true' ? 1 : 0,
-        bytes 'XML standalone: ' . Data::Dumper::qquote ($test->{data}->[0]);
+            eq 'true' ? 1 : 0, 'XML standalone';
   } else {
-    is $doc->xml_standalone ? 1 : 0, 0,
-        bytes 'XML standalone: ' . Data::Dumper::qquote ($test->{data}->[0]);
+    is $doc->xml_standalone ? 1 : 0, 0, 'XML standalone';
   }
 
   if ($test->{entities}) {
@@ -191,51 +183,31 @@ sub test ($) {
       $v .= '>';
       push @e, $v;
     }
-    eq_or_diff join ("\x0A", @e), $test->{entities}->[0],
-        bytes 'Entities: ' . Data::Dumper::qquote ($test->{data}->[0]);
+    eq_or_diff join ("\x0A", @e), $test->{entities}->[0], 'Entities';
   }
   
   $test->{document}->[0] .= "\x0A" if length $test->{document}->[0];
-  eq_or_diff $result, $test->{document}->[0],
-      bytes 'Document tree: ' . Data::Dumper::qquote ($test->{data}->[0]);
-} # test
+  eq_or_diff $result, $test->{document}->[0], 'Document tree';
+} # _test
 
-my @FILES = grep {$_} split /\s+/, qq[
-  ${test_dir_name}elements-1.dat
-  ${test_dir_name}attrs-1.dat
-  ${test_dir_name}attrs-2.dat
-  ${test_dir_name}texts-1.dat
-  ${test_dir_name}cdata-1.dat
-  ${test_dir_name}charref-1.dat
-  ${test_dir_name}comments-1.dat
-  ${test_dir_name}comments-2.dat
-  ${test_dir_name}pis-1.dat
-  ${test_dir_name}pis-2.dat
-  ${test_dir_name}xmldecls-1.dat
-  ${test_dir_name}xmldecls-2.dat
-  ${test_dir_name}tree-1.dat
-  ${test_dir_name}ns-elements-1.dat
-  ${test_dir_name}ns-attrs-1.dat
-  ${test_dir_name}doctypes-1.dat
-  ${test_dir_name}doctypes-2.dat
-  ${test_dir_name}eldecls-1.dat
-  ${test_dir_name}attlists-1.dat
-  ${test_dir_name}entities-1.dat
-  ${test_dir_name}entities-2.dat
-  ${test_dir_name}notations-1.dat
-  ${test_dir_name}entrefs-1.dat
-  ${test_dir_name}entrefs-2.dat
-  ${test_dir_name}fragment-1.dat
-];
+for my $file_name (@FILES) {
+  for_each_test ($file_name, {
+    errors => {is_list => 1},
+    document => {is_prefixed => 1},
+    'document-fragment' => {is_prefixed => 1},
+    entities => {is_prefixed => 1},
+  }, sub {
+    my $test = $_[0];
+    test {
+      my $c = shift;
+      _test ($test);
+      done $c;
+    } n => 5, name => [$file_name, $test->{data}->[0]];
+  });
+}
 
-for_each_test ($_, {
-  errors => {is_list => 1},
-  document => {is_prefixed => 1},
-  'document-fragment' => {is_prefixed => 1},
-  entities => {is_prefixed => 1},
-}, \&test) for @FILES;
+run_tests;
 
 undef $dom;
 
-done_testing;
 ## License: Public Domain.
