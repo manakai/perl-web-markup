@@ -2,7 +2,7 @@ package Web::HTML::InputStream;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '4.0';
+our $VERSION = '5.0';
 use Web::Encoding ();
 use Web::HTML::Defs;
 
@@ -88,6 +88,13 @@ sub locale_tag ($;$) {
   return $_[0]->{locale_tag};
 } # locale_tag
 
+sub known_definite_encoding ($;$) {
+  if (@_ > 1) {
+    $_[0]->{known_definite_encoding} = $_[1];
+  }
+  return $_[0]->{known_definite_encoding};
+} # known_definite_encoding
+
 ## Encoding sniffing algorithm
 ## <http://www.whatwg.org/specs/web-apps/current-work/#determining-the-character-encoding>.
 sub _encoding_sniffing ($;%) {
@@ -108,11 +115,12 @@ sub _encoding_sniffing ($;%) {
     }
   }
 
-  ## Step 1. User-specified encoding
-  if ($args{user_encoding_name}) {
-    ## $args{user_encoding_name}, if specified, must be a
-    ## canonicalized encoding name from the Encoding Standard.
-    my $name = Web::Encoding::encoding_label_to_name $args{user_encoding_name};
+  ## A known definite encoding, or Step 1. User-specified encoding
+  for ($self->known_definite_encoding, $args{user_encoding_name}) {
+    next unless defined $_;
+    ## If specified, it must be an encoding label from the Encoding
+    ## Standard.
+    my $name = Web::Encoding::encoding_label_to_name $_;
     if ($name) {
       $self->{input_encoding} = $name;
       $self->{confident} = 1; # certain

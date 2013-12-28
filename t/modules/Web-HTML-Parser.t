@@ -475,6 +475,15 @@ sub _parse_byte_string_onerror_new : Test(2) {
   }];
 } # _parse_byte_string_onerror_new
 
+sub _parse_byte_string_with_a_known_definite_encoding : Test(1) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->known_definite_encoding ('shift_jis');
+  $parser->parse_byte_string ('euc-jp', "<!DOCTYPE html><meta charset=iso-8859-1>\x81\x40" => $doc);
+  is $doc->input_encoding, 'shift_jis';
+} # _parse_byte_string_with_a_known_definite_encoding
+
 sub _parse_char_string_with_context_doc : Test(1) {
   my $dom = NanoDOM::DOMImplementation->new;
   my $doc = $dom->create_document;
@@ -583,6 +592,17 @@ sub _parse_bytes_stream_locale_default_3 : Test(3) {
   is $doc->input_encoding, 'windows-1252';
   is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
 } # _parse_bytes_stream_locale_default_3
+
+sub _parse_bytes_stream_with_a_known_definite_encoding : Test(1) {
+  my $dom = NanoDOM::DOMImplementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->known_definite_encoding ('shift_jis');
+  $parser->parse_bytes_start ('euc-jp', $doc);
+  $parser->parse_bytes_feed ("<!DOCTYPE html><meta charset=iso-8859-1>\x81\x40");
+  $parser->parse_bytes_end;
+  is $doc->input_encoding, 'shift_jis';
+} # _parse_bytes_stream_with_a_known_definite_encoding
 
 __PACKAGE__->runtests;
 

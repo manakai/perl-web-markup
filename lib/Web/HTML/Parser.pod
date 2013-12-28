@@ -57,9 +57,8 @@ removed by the parser.
 
 Parse a string of bytes as HTML and construct the DOM tree.
 
-The first argument to the method must be the label of a (character)
-encoding, as specified by the Encoding Standard.  The C<undef> value
-can be specified if the encoding is not known.
+The first argument to the method is the character encoding of the
+document, if known, or C<undef>.  See also L</SPECIFYING ENCODING>.
 
 The second argument to the method must be a string to parse.  It may
 or may not be a valid HTML document.
@@ -98,6 +97,13 @@ Tags are compared ASCII case-insensitively.
 XXX Future revision of the parser might also use the locale language
 tag to insert localized text for C<isindex> tag.
 
+=item $string = $parser->known_definite_encoding
+
+=item $parser->known_definite_encoding ($string)
+
+Get or set a known character encoding used to parse the document.  See
+also L</SPECIFYING ENCODING>.
+
 =item $code = $parser->onerror
 
 =item $parser->onerror ($new_code)
@@ -130,6 +136,38 @@ Living Standard, it might not implement latest spec changes yet.  See
 list of bugs on the HTML parser
 <http://manakai.g.hatena.ne.jp/task/2/> for the current implementation
 status.
+
+=head1 SPECIFYING ENCODING
+
+The input to the C<parse_char_*> methods are a string of characters.
+It is always interpreted as a Perl string (utf8 or latin1).
+
+The input to the C<parse_byte*> methods are a string of bytes, where
+characters are encoded in some Web-compatible character encoding.  It
+is decoded as specified by HTML and Encoding standards.
+
+The C<parse_byte*> methods accept a character encoding label as one of
+arguments.  It is interpreted as the transport layer character
+encoding metadata.  In HTTP, it is the value of the C<charset>
+parameter in the C<Content-Type> header.  If it is unknown, the
+argument must be set to C<undef>.  Note that in some cases this
+encoding metadata is ignored, as specified in HTML Standard.
+
+The C<known_definite_encoding> method can be used to set a known
+definite encoding.  If its value is not C<undef>, it is used to decode
+the document.  This takes precedence over the transport layer
+character encoding metadata and is always respected.
+
+The character encoding, if specified, must be represented by one of
+its labels, defined by the Encoding Standard.  Unknown labels are
+ignored.  Examples of labels include (but not limited to): C<utf-8>,
+C<windows-1252>, C<shift_jis>, C<euc-jp>, C<iso-2022-jp>, and
+C<gb18030>.  Encoding labels are ASCII case-insensitive.
+
+If none of these character encoding metadata is provided,
+C<parse_byte*> methods try to detect the character encoding in use by
+the steps specified in HTML Standard.  It also takes the locale
+information of the C<locale_tag> method into account.
 
 =head1 SEE ALSO
 
