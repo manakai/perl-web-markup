@@ -18,16 +18,27 @@ sub _no_quirks : Tests {
     data => {is_prefixed => 1},
   }, sub {
     my $test = shift;
+    {
+      my $dom = NanoDOM::DOMImplementation->new;
+      my $doc = $dom->create_document;
 
-    my $dom = NanoDOM::DOMImplementation->new;
-    my $doc = $dom->create_document;
-    $doc->manakai_is_srcdoc (1) if $test->{srcdoc}->[1];
+      my $parser = Web::HTML::Parser->new;
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-    my $parser = Web::HTML::Parser->new;
-    $parser->parse_char_string ($test->{data}->[0] => $doc);
+      is $doc->compat_mode, 'CSS1Compat';
+      is $doc->manakai_compat_mode, 'no quirks';
+    }
+    {
+      my $dom = NanoDOM::DOMImplementation->new;
+      my $doc = $dom->create_document;
+      $doc->manakai_is_srcdoc (1);
 
-    is $doc->compat_mode, 'CSS1Compat';
-    is $doc->manakai_compat_mode, 'no quirks';
+      my $parser = Web::HTML::Parser->new;
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
+
+      is $doc->compat_mode, 'CSS1Compat';
+      is $doc->manakai_compat_mode, 'no quirks';
+    }
   }) for qw(
     doctype-noquirks.dat
   );
@@ -38,16 +49,27 @@ sub _limited_quirks : Tests {
     data => {is_prefixed => 1},
   }, sub {
     my $test = shift;
+    {
+      my $dom = NanoDOM::DOMImplementation->new;
+      my $doc = $dom->create_document;
 
-    my $dom = NanoDOM::DOMImplementation->new;
-    my $doc = $dom->create_document;
-    $doc->manakai_is_srcdoc (1) if $test->{srcdoc}->[1];
+      my $parser = Web::HTML::Parser->new;
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-    my $parser = Web::HTML::Parser->new;
-    $parser->parse_char_string ($test->{data}->[0] => $doc);
+      is $doc->compat_mode, 'CSS1Compat';
+      is $doc->manakai_compat_mode, 'limited quirks';
+    }
+    {
+      my $dom = NanoDOM::DOMImplementation->new;
+      my $doc = $dom->create_document;
+      $doc->manakai_is_srcdoc (1);
 
-    is $doc->compat_mode, 'CSS1Compat';
-    is $doc->manakai_compat_mode, 'limited quirks';
+      my $parser = Web::HTML::Parser->new;
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
+
+      is $doc->compat_mode, 'CSS1Compat';
+      is $doc->manakai_compat_mode, 'no quirks';
+    }
   }) for qw(
     doctype-limitedquirks.dat
   );
@@ -58,16 +80,27 @@ sub _quirks : Tests {
     data => {is_prefixed => 1},
   }, sub {
     my $test = shift;
+    {
+      my $dom = NanoDOM::DOMImplementation->new;
+      my $doc = $dom->create_document;
 
-    my $dom = NanoDOM::DOMImplementation->new;
-    my $doc = $dom->create_document;
-    $doc->manakai_is_srcdoc (1) if $test->{srcdoc}->[1];
+      my $parser = Web::HTML::Parser->new;
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-    my $parser = Web::HTML::Parser->new;
-    $parser->parse_char_string ($test->{data}->[0] => $doc);
+      is $doc->compat_mode, 'BackCompat';
+      is $doc->manakai_compat_mode, 'quirks';
+    }
+    {
+      my $dom = NanoDOM::DOMImplementation->new;
+      my $doc = $dom->create_document;
+      $doc->manakai_is_srcdoc (1);
 
-    is $doc->compat_mode, 'BackCompat';
-    is $doc->manakai_compat_mode, 'quirks';
+      my $parser = Web::HTML::Parser->new;
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
+
+      is $doc->compat_mode, 'CSS1Compat';
+      is $doc->manakai_compat_mode, 'no quirks';
+    }
   }) for qw(
     doctype-quirks.dat
   );

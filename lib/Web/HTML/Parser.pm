@@ -1370,57 +1370,59 @@ sub _construct_tree ($) {
         ## |document.open|).
         $self->{document}->manakai_compat_mode ('no quirks');
         
-        if ($self->{t}->{quirks} or $doctype_name ne 'html') {
-          
-          $self->{document}->manakai_compat_mode ('quirks');
-        } elsif (defined $self->{t}->{pubid}) {
-          my $pubid = $self->{t}->{pubid};
-          $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
-          my $prefix = $Web::HTML::ParserData::QuirkyPublicIDPrefixes;
-          my $match;
-          for (@$prefix) {
-            if (substr ($pubid, 0, length $_) eq $_) {
-              $match = 1;
-              last;
-            }
-          }
-          if ($match or
-              $Web::HTML::ParserData::QuirkyPublicIDs->{$pubid}) {
+        unless ($self->{document}->manakai_is_srcdoc) {
+          if ($self->{t}->{quirks} or $doctype_name ne 'html') {
             
             $self->{document}->manakai_compat_mode ('quirks');
-          } elsif ($pubid =~ m[^-//W3C//DTD HTML 4.01 FRAMESET//] or
-                   $pubid =~ m[^-//W3C//DTD HTML 4.01 TRANSITIONAL//]) {
-            if (not defined $self->{t}->{sysid}) {
+          } elsif (defined $self->{t}->{pubid}) {
+            my $pubid = $self->{t}->{pubid};
+            $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
+            my $prefix = $Web::HTML::ParserData::QuirkyPublicIDPrefixes;
+            my $match;
+            for (@$prefix) {
+              if (substr ($pubid, 0, length $_) eq $_) {
+                $match = 1;
+                last;
+              }
+            }
+            if ($match or
+                $Web::HTML::ParserData::QuirkyPublicIDs->{$pubid}) {
               
               $self->{document}->manakai_compat_mode ('quirks');
-            } else {
+            } elsif ($pubid =~ m[^-//W3C//DTD HTML 4.01 FRAMESET//] or
+                     $pubid =~ m[^-//W3C//DTD HTML 4.01 TRANSITIONAL//]) {
+              if (not defined $self->{t}->{sysid}) {
+                
+                $self->{document}->manakai_compat_mode ('quirks');
+              } else {
+                
+                $self->{document}->manakai_compat_mode ('limited quirks');
+              }
+            } elsif ($pubid =~ m[^-//W3C//DTD XHTML 1.0 FRAMESET//] or
+                     $pubid =~ m[^-//W3C//DTD XHTML 1.0 TRANSITIONAL//]) {
               
               $self->{document}->manakai_compat_mode ('limited quirks');
+            } else {
+              
             }
-          } elsif ($pubid =~ m[^-//W3C//DTD XHTML 1.0 FRAMESET//] or
-                   $pubid =~ m[^-//W3C//DTD XHTML 1.0 TRANSITIONAL//]) {
-            
-            $self->{document}->manakai_compat_mode ('limited quirks');
           } else {
             
           }
-        } else {
-          
-        }
-        if (defined $self->{t}->{sysid}) {
-          my $sysid = $self->{t}->{sysid};
-          $sysid =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-          if ($sysid eq "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd") {
-            ## NOTE: Ensure that |PUBLIC "(limited quirks)"
-            ## "(quirks)"| is signaled as in quirks mode!
-            $self->{document}->manakai_compat_mode ('quirks');
-            
+          if (defined $self->{t}->{sysid}) {
+            my $sysid = $self->{t}->{sysid};
+            $sysid =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+            if ($sysid eq "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd") {
+              ## NOTE: Ensure that |PUBLIC "(limited quirks)"
+              ## "(quirks)"| is signaled as in quirks mode!
+              $self->{document}->manakai_compat_mode ('quirks');
+              
+            } else {
+              
+            }
           } else {
             
           }
-        } else {
-          
-        }
+        } # not iframe srcdoc
         
         $self->{insertion_mode} = BEFORE_HTML_IM;
         $self->{t} = $self->_get_next_token;
