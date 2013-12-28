@@ -2,7 +2,7 @@ package Web::XML::Serializer;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '1.9';
+our $VERSION = '10.0';
 use Web::HTML::ParserData;
 
 sub new ($) {
@@ -150,6 +150,9 @@ sub get_inner_html ($$) {
   ## Produce an XML serialization
   ## <http://domparsing.spec.whatwg.org/#concept-serialize-xml>
 
+  ## XXX HTML requires the serializer to throw if not serializable,
+  ## while DOMPARSING requires not to throw.
+
   ## Step 1
   my $s = '';
   
@@ -159,7 +162,10 @@ sub get_inner_html ($$) {
                     # \undef = none, \$nsurl
                     [[xml => \Web::HTML::ParserData::XML_NS],
                      [xmlns => \Web::HTML::ParserData::XMLNS_NS]]] }
-      ref $node eq 'ARRAY' ? @$node : $node->child_nodes->to_list;
+      ref $node eq 'ARRAY' ? @$node :
+      ($node->node_type == 1 and $node->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template'))
+          ? $node->content->child_nodes->to_list
+          : $node->child_nodes->to_list;
   C: while (@node) {
     ## Step 2.1
     my $c = shift @node;
@@ -175,7 +181,7 @@ sub get_inner_html ($$) {
     my $nt = $child->node_type;
     if ($nt == 1) { # Element
       ## Namespace fixup
-      ## <http://suika.fam.cx/www/markup/xml/nsfixup>
+      ## <http://suika.suikawiki.org/www/markup/xml/nsfixup>.
 
       # 1.-2.
       my $default_ns = $c->[1];
@@ -263,9 +269,10 @@ sub get_inner_html ($$) {
       $s .= '>';
       
       unshift @node,
-          (map { [$_, $default_ns, $nsmap] } $child->child_nodes->to_list),
+          (map { [$_, $default_ns, $nsmap] }
+           ($child->node_type == 1 and $child->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template')) ? $child->content->child_nodes->to_list : $child->child_nodes->to_list),
           (['</' . $tag_name . '>']);
-    } elsif ($nt == 3 or $nt == 4) { # Text or CDATASection
+    } elsif ($nt == 3) { # Text
       my $value = $child->data;
       $value =~ s/&/&amp;/g;
       $value =~ s/\xA0/&nbsp;/g;
@@ -283,8 +290,6 @@ sub get_inner_html ($$) {
       $s .= '<?' . $child->target . ' ' . $child->data . '?>';
     } elsif ($nt == 9 or $nt == 11) { # Document / DocumentFragment
       unshift @node, map { [$_, $c->[1], $c->[2]] } $child->child_nodes->to_list;
-    } elsif ($nt == 5) { # EntityReference
-      push @node, map { [$_, $c->[1], $c->[2]] } $child->child_nodes->to_list;
     } else {
       # XXXerror
       $_[0]->onerror->(type => 'node type not supported', value => $nt);

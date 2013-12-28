@@ -4,7 +4,6 @@ use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
-use base qw(Test::Class);
 use Test::More;
 use Test::Differences;
 use Test::X1;
@@ -507,6 +506,67 @@ test {
   eq_or_diff $$html, qq{<div xmlns="http://www.w3.org/1999/xhtml"><p title="<!&amp;&quot;'>&nbsp;">a b \x{1000}\x{2000}&lt;!&amp;"'&gt;&nbsp;<!--A -- B--><?xml version="1.0?>"?></p></div>};
   done $c;
 } n => 1;
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('template');
+  my $el2 = $doc->create_element ('hoge');
+  my $el3 = $doc->create_element ('fuga');
+  $el->append_child ($el2);
+  $el->content->append_child ($el3);
+  $el->content->append_child ($doc->create_text_node ('abc'));
+  is ${Web::XML::Serializer->new->get_inner_html ($el)},
+      q{<fuga xmlns="http://www.w3.org/1999/xhtml"></fuga>abc};
+  done $c;
+} n => 1, name => 'template';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('template');
+  my $el2 = $doc->create_element ('hoge');
+  my $el3 = $doc->create_element ('br');
+  $el->append_child ($el2);
+  $el->content->append_child ($el3);
+  $el->content->append_child ($doc->create_text_node ('abc'));
+  $el->content->owner_document->manakai_is_html (1);
+  is ${Web::XML::Serializer->new->get_inner_html ($el)},
+      q{<br xmlns="http://www.w3.org/1999/xhtml"></br>abc};
+  done $c;
+} n => 1, name => 'template html/xml';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el0 = $doc->create_element ('foo');
+  my $el = $doc->create_element ('template');
+  $el0->append_child ($el);
+  my $el2 = $doc->create_element ('hoge');
+  my $el3 = $doc->create_element ('fuga');
+  $el->append_child ($el2);
+  $el->content->append_child ($el3);
+  $el->content->append_child ($doc->create_text_node ('abc'));
+  is ${Web::XML::Serializer->new->get_inner_html ($el0)},
+      q{<template xmlns="http://www.w3.org/1999/xhtml"><fuga></fuga>abc</template>};
+  done $c;
+} n => 1, name => 'template parent';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el0 = $doc->create_document_fragment;
+  my $el = $doc->create_element ('template');
+  $el0->append_child ($el);
+  my $el2 = $doc->create_element ('hoge');
+  my $el3 = $doc->create_element ('fuga');
+  $el->append_child ($el2);
+  $el->content->append_child ($el3);
+  $el->content->append_child ($doc->create_text_node ('abc'));
+  is ${Web::XML::Serializer->new->get_inner_html ([$el0])},
+      q{<template xmlns="http://www.w3.org/1999/xhtml"><fuga></fuga>abc</template>};
+  done $c;
+} n => 1, name => 'template parent df';
 
 run_tests;
 

@@ -2,7 +2,8 @@ package Web::HTML::Serializer;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '1.9';
+our $VERSION = '10.0';
+use Web::HTML::ParserData;
 
 sub new ($) {
   return bless {}, $_[0];
@@ -32,7 +33,7 @@ sub _in_cdata ($) {
     noframes => 1,
     plaintext => 1,
   }->{$ln};
-  return $Web::ScriptingEnabled if $ln eq 'noscript';
+  return $Web::ScriptingEnabled if $ln eq 'noscript'; # XXX
 
   return 0;
 } # _in_cdata
@@ -46,7 +47,10 @@ sub get_inner_html ($$) {
   ## Step 2
   my $node_in_cdata = ref $node eq 'ARRAY' ? 0 : _in_cdata ($node);
   my @node = map { [$_, $node_in_cdata] }
-      ref $node eq 'ARRAY' ? @$node : $node->child_nodes->to_list;
+      ref $node eq 'ARRAY' ? @$node :
+      ($node->node_type == 1 and $node->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template'))
+          ? $node->content->child_nodes->to_list
+          : $node->child_nodes->to_list;
   C: while (@node) {
     ## Step 2.1
     my $c = shift @node;
@@ -114,9 +118,9 @@ sub get_inner_html ($$) {
 
       my $child_in_cdata = _in_cdata ($child);
       unshift @node,
-          (map { [$_, $child_in_cdata] } $child->child_nodes->to_list),
+          (map { [$_, $child_in_cdata] } ($child->node_type == 1 and $child->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template')) ? $child->content->child_nodes->to_list : $child->child_nodes->to_list),
           (['</' . $tag_name . '>', 0]);
-    } elsif ($nt == 3 or $nt == 4) { # Text or CDATASection
+    } elsif ($nt == 3) { # Text
       if ($c->[1]) { # in CDATA or RCDATA or PLAINTEXT element
         $s .= $child->data;
       } else {
@@ -136,8 +140,6 @@ sub get_inner_html ($$) {
       $s .= '<?' . $child->target . ' ' . $child->data . '>';
     } elsif ($nt == 9 or $nt == 11) { # Document / DocumentFragment
       unshift @node, map { [$_, $c->[1]] } $child->child_nodes->to_list;
-    } elsif ($nt == 5) { # EntityReference
-      push @node, map { [$_, $c->[1]] } $child->child_nodes->to_list;
     } else {
       # XXXerror
       $_[0]->onerror->(type => 'node type not supported', value => $nt);
