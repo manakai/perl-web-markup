@@ -267,6 +267,38 @@ test {
   done $c;
 } n => 4, name => 'template non-root, non-empty';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('template');
+  my $parser = new Web::XML::Parser;
+  my $result = $parser->parse_char_string_with_context
+      (q{<p>a</p><!--aa-->bb}, $el => $doc);
+
+  isa_ok $result, 'Web::DOM::NodeList';
+  is $result->length, 3;
+  is $result->[0]->outer_html, q{<p xmlns="http://www.w3.org/1999/xhtml">a</p>};
+  is $result->[1]->data, 'aa';
+  is $result->[2]->data, 'bb';
+  done $c;
+} n => 5, name => 'parse_char_string_with_context context is template';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('hoge');
+  my $parser = new Web::XML::Parser;
+  my $result = $parser->parse_char_string_with_context
+      (q{<template><p>a</p><!--aa-->bb</template>}, $el => $doc);
+
+  isa_ok $result, 'Web::DOM::NodeList';
+  is $result->length, 1;
+  is $result->[0]->child_nodes->length, 0;
+  is $result->[0]->content->child_nodes->length, 3;
+  is $result->[0]->outer_html, q{<template xmlns="http://www.w3.org/1999/xhtml"><p>a</p><!--aa-->bb</template>};
+  done $c;
+} n => 5, name => 'parse_char_string_with_context has template';
+
 run_tests;
 
 =head1 LICENSE

@@ -88,7 +88,7 @@ sub parse_char_string_with_context ($$$$) {
   $self->{is_xml} = 1;
 
   $self->_initialize_tokenizer;
-  $self->_initialize_tree_constructor;
+  $self->_initialize_tree_constructor; # strict_error_checking (0)
 
   my $root;
   if (defined $context) {
@@ -133,7 +133,10 @@ sub parse_char_string_with_context ($$$$) {
   $self->_on_terminate;
 
   # 7.
-  return defined $context ? $root->child_nodes : $doc->child_nodes;
+  return defined $context
+      ? $root->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template')
+          ? $root->content->child_nodes : $root->child_nodes
+      : $doc->child_nodes;
 } # parse_char_string_with_context
 
 sub _on_terminate ($) {

@@ -130,6 +130,10 @@ object whose namespace is the XMLNS namespace and name is C<xmlns>.
 HTML Living Standard - Parsing XHTML documents
 <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>.
 
+The XML fragment parsing algorithm must return the children of the
+template content of the root element of the resulting C<Document>, in
+tree order, if the /context/ element is an HTML C<template> element.
+
 =item [XMLCC]
 
 manakai's XML Conformance Checking
