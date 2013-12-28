@@ -3957,6 +3957,10 @@ sub _get_next_token ($) {
             $self->{prev_state} != DATA_STATE and # in attribute
             $self->{prev_state} != RCDATA_STATE) {
           $self->{entity__match} = 0;
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'charref=', ## XXXtype
+                          level => 'm',
+                          line => $self->{line},
+                          column => $self->{column});
         }
       }
 

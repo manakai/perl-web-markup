@@ -5,7 +5,7 @@ no warnings 'utf8';
 use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'testdataparser', 'lib')->stringify;
+use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
@@ -53,7 +53,7 @@ if ($DEBUG) {
 use Web::HTML::Parser;
 use Web::HTML::Dumper qw/dumptree/;
 
-my $dom_class = $ENV{DOM_IMPL_CLASS} || 'NanoDOM::DOMImplementation';
+my $dom_class = $ENV{DOM_IMPL_CLASS} || 'Web::DOM::Implementation';
 eval qq{ require $dom_class } or die $@;
 my $dom = $dom_class->new;
 
@@ -204,6 +204,8 @@ my @FILES = grep {$_} split /\s+/, qq[
                       ${test_dir_name}tree-test-form.dat
                       ${test_dir_name}tree-test-frames.dat
                       ${test_dir_name}tree-test-foreign.dat
+                      ${test_dir_name}scripts-1.dat
+                      ${test_dir_name}templates-1.dat
                      ];
 
 for_each_test ($_, {
