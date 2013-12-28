@@ -2,7 +2,7 @@ package Web::HTML::Parser; # -*- Perl -*-
 use strict;
 #use warnings;
 no warnings 'utf8';
-our $VERSION = '3.0';
+our $VERSION = '4.0';
 use Encode;
 use Web::HTML::Defs;
 use Web::HTML::Tokenizer;
@@ -5090,7 +5090,7 @@ sub _construct_tree ($) {
         ## elements start tags.
 
         address => 1, article => 1, aside => 1, blockquote => 1,
-        center => 1, details => 1, dir => 1, div => 1, dl => 1,
+        center => 1, details => 1, dialog => 1, dir => 1, div => 1, dl => 1,
         fieldset => 1, figcaption => 1, figure => 1, footer => 1,
         header => 1, hgroup => 1, main => 1, menu => 1, nav => 1, ol => 1,
         p => 1, section => 1, ul => 1, summary => 1,
@@ -6264,7 +6264,7 @@ sub _construct_tree ($) {
                 address => 1, article => 1, aside => 1, blockquote => 1,
                 center => 1,
                 #datagrid => 1,
-                details => 1,
+                details => 1, dialog => 1,
                 dir => 1, div => 1, dl => 1, fieldset => 1, figure => 1,
                 footer => 1, header => 1, hgroup => 1,
                 listing => 1, main => 1, menu => 1, nav => 1,
