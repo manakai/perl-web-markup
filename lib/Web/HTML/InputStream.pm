@@ -485,6 +485,7 @@ $ParseErrorNoncharCodePosition->{html}->{$_} = 'must',
 $ParseErrorNoncharCodePosition->{1}->{$_} = 'must',
 $ParseErrorNoncharCodePosition->{1.1}->{$_} = 'must'
     for 0xFFFE, 0xFFFF;
+$ParseErrorNoncharCodePosition->{html}->{$_} = 'must',
 $ParseErrorNoncharCodePosition->{1}->{$_} = 'must',
 $ParseErrorNoncharCodePosition->{1.1}->{$_} = 'must'
     for 0xD800..0xDFFF;
