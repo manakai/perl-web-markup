@@ -23,7 +23,7 @@ The module exports a function:
 =item $dumped = dumptree $doc
 
 Dump the DOM tree.  The argument must be a DOM document object
-(i.e. an instance of L<Message::DOM::Document> class).  The function
+(i.e. an instance of L<Web::DOM::Document> class).  The function
 returns the dump for the document and its subtree.
 
 =back
@@ -32,7 +32,8 @@ returns the dump for the document and its subtree.
 
 The function serializes the DOM tree into the format used in HTML
 parser tests, as described in
-<http://wiki.whatwg.org/wiki/Parser_tests#Tree_Construction_Tests>,
+<http://wiki.whatwg.org/wiki/Parser_tests#Tree_Construction_Tests> and
+<https://github.com/html5lib/html5lib-tests/tree/master/tree-construction>,
 with following exceptions:
 
 =over 4
@@ -120,13 +121,16 @@ namespace designator for the element is C<{}>.
 
 Parser tests - WHATWG Wiki <http://wiki.whatwg.org/wiki/Parser_tests>.
 
+html5lib-tests
+<https://github.com/html5lib/html5lib-tests/tree/master/tree-construction>.
+
 =head1 AUTHOR
 
-Wakaba <w@suika.fam.cx>.
+Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

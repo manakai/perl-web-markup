@@ -1,17 +1,17 @@
-package test::Web::HTML::Dumper;
 use strict;
 use warnings;
 use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use base qw(Test::Class);
+use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
-use NanoDOM;
+use Test::X1;
+use Web::DOM::Document;
 use Web::HTML::Dumper;
 
-sub _dump : Test(1) {
-  my $dom = NanoDOM::DOMImplementation->new;
-  my $doc = $dom->create_document;
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->inner_html (q{<!DOCTYPE html><html><body>ff<p clasS=Abc>xx<img/>});
   
@@ -25,15 +25,49 @@ sub _dump : Test(1) {
       "xx"
       <img>
 };
-} # _dump
+  done $c;
+} n => 1;
 
-__PACKAGE__->runtests;
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('template');
+  my $el1 = $doc->create_element ('p');
+  my $el2 = $doc->create_element ('q');
+  $el->append_child ($el1);
+  $el->content->append_child ($el2);
+  
+  is dumptree $el, q{<p>
+content
+  <q>
+};
+  done $c;
+} n => 1, name => 'dump <template>';
 
-1;
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el0 = $doc->create_element ('hoge');
+  my $el = $doc->create_element ('template');
+  $el0->append_child ($el);
+  my $el1 = $doc->create_element ('p');
+  my $el2 = $doc->create_element ('q');
+  $el->append_child ($el1);
+  $el->content->append_child ($el2);
+  
+  is dumptree $el0, q{<template>
+  <p>
+  content
+    <q>
+};
+  done $c;
+} n => 1, name => 'dump parent of <template>';
+
+run_tests;
 
 =head1 LICENSE
 
-Copyright 2012 Wakaba <w@suika.fam.cx>.
+Copyright 2012-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

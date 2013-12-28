@@ -1,7 +1,7 @@
 package Web::HTML::Dumper;
 use strict;
 use warnings;
-our $VERSION = '1.8';
+our $VERSION = '9.0';
 use Carp;
 
 our @EXPORT = qw(dumptree);
@@ -30,8 +30,18 @@ sub dumptree ($) {
   my $r = '';
 
   my @node = map { [$_, ''] } @{$node->child_nodes};
+  if ($node->node_type == $node->ELEMENT_NODE and
+      $node->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) {
+    push @node,
+        ['content', ''],
+        map { [$_, '  '] } @{$node->content->child_nodes};
+  }
   while (@node) {
     my $child = shift @node;
+    unless (ref $child->[0]) {
+      $r .= $child->[1] . $child->[0] . "\x0A";
+      next;
+    }
     my $nt = $child->[0]->node_type;
     if ($nt == $child->[0]->ELEMENT_NODE) {
       my $ns = $child->[0]->namespace_uri;
@@ -62,6 +72,13 @@ sub dumptree ($) {
         $r .= $attr->[1] . '"' . "\x0A";
       }
       
+      if ($child->[0]->node_type == $node->ELEMENT_NODE and
+          $child->[0]->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) {
+        unshift @node,
+            ['content', $child->[1] . '  '],
+            map { [$_, $child->[1] . '    '] } @{$child->[0]->content->child_nodes};
+      }
+
       unshift @node,
         map { [$_, $child->[1] . '  '] } @{$child->[0]->child_nodes};
     } elsif ($nt == $child->[0]->TEXT_NODE) {
@@ -146,7 +163,7 @@ sub dumptree ($) {
 
 =head1 LICENSE
 
-Copyright 2007-2012 Wakaba <w@suika.fam.cx>.
+Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
