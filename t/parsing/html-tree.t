@@ -220,6 +220,7 @@ my @FILES = grep {$_} split /\s+/, qq[
                      ];
 
 for_each_test ($_, {
+  data => {is_prefixed => 1},
   errors => {is_list => 1},
   shoulds => {is_list => 1},
   document => {is_prefixed => 1},
