@@ -1,6 +1,7 @@
 # -*- Makefile -*-
 
-all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm
+all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
+    lib/Web/HTML/_SyntaxDefs.pm
 clean:
 	rm -fr local/elements.json
 
@@ -59,6 +60,27 @@ update-entities: local/bin/pmbp.pl
 local/elements.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/elements.json
+lib/Web/HTML/_SyntaxDefs.pm: local/elements.json pmbp-install Makefile
+	mkdir -p lib/Web/HTML/Validator
+	perl local/bin/pmbp.pl --install-module JSON
+	$(PERL) -MJSON -MData::Dumper -e ' #\
+	  local $$/ = undef; #\
+	  $$data = JSON->new->decode (scalar <>); #\
+	  $$Data::Dumper::Sortkeys = 1; #\
+	  $$Data::Dumper::Useqq = 1; #\
+	  for $$ns (keys %{$$data->{elements}}) { #\
+	    for $$ln (keys %{$$data->{elements}->{$$ns}}) { #\
+	      my $$category = $$data->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
+	      if ($$category eq "void" or $$category eq "obsolete void") { #\
+	        $$result->{void}->{$$ns}->{$$ln} = 1; #\
+	      } #\
+	    } #\
+	  } #\
+	  $$pm = Dumper $$result; #\
+	  $$pm =~ s/VAR1/Web::HTML::_SyntaxDefs/; #\
+	  print "$$pm\n"; #\
+	' < local/elements.json > $@
+	perl -c $@
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module JSON
@@ -77,6 +99,8 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{interface}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{auto_br}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_category}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{first_newline_ignored}; #\
 	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\
 	        for $$ln2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}}) { #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{spec}; #\

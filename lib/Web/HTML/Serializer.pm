@@ -2,8 +2,8 @@ package Web::HTML::Serializer;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '10.0';
-use Web::HTML::ParserData;
+our $VERSION = '11.0';
+use Web::HTML::_SyntaxDefs;
 
 sub new ($) {
   return bless {}, $_[0];
@@ -48,7 +48,7 @@ sub get_inner_html ($$) {
   my $node_in_cdata = ref $node eq 'ARRAY' ? 0 : _in_cdata ($node);
   my @node = map { [$_, $node_in_cdata] }
       ref $node eq 'ARRAY' ? @$node :
-      ($node->node_type == 1 and $node->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template'))
+      ($node->node_type == 1 and $node->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template'))
           ? $node->content->child_nodes->to_list
           : $node->child_nodes->to_list;
   C: while (@node) {
@@ -104,13 +104,7 @@ sub get_inner_html ($$) {
       }
       $s .= '>';
       
-      next C if {
-        area => 1, base => 1, basefont => 1, bgsound => 1, br => 1,
-        col => 1, command => 1, embed => 1, frame => 1, hr => 1,
-        img => 1, input => 1, keygen => 1, link => 1, meta => 1,
-        param => 1, source => 1, track => 1, wbr => 1,
-        # image, isindex
-      }->{$tag_name} and $child_ns eq q<http://www.w3.org/1999/xhtml>;
+      next C if $Web::HTML::_SyntaxDefs->{void}->{$child_ns}->{$tag_name};
 
       $s .= "\x0A"
           if {pre => 1, textarea => 1, listing => 1}->{$tag_name} and
@@ -118,10 +112,10 @@ sub get_inner_html ($$) {
 
       my $child_in_cdata = _in_cdata ($child);
       unshift @node,
-          (map { [$_, $child_in_cdata] } ($child->node_type == 1 and $child->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template')) ? $child->content->child_nodes->to_list : $child->child_nodes->to_list),
+          (map { [$_, $child_in_cdata] } ($child->node_type == 1 and $child->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) ? $child->content->child_nodes->to_list : $child->child_nodes->to_list),
           (['</' . $tag_name . '>', 0]);
     } elsif ($nt == 3) { # Text
-      if ($c->[1]) { # in CDATA or RCDATA or PLAINTEXT element
+      if ($c->[1]) { # in CDATA or PLAINTEXT element
         $s .= $child->data;
       } else {
         my $value = $child->data;

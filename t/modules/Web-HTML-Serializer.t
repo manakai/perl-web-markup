@@ -243,8 +243,20 @@ test {
 } n => 1, name => 'attr_value';
 
 for my $tag_name (qw(
-  area base basefont bgsound br col command embed frame hr img input
-  keygen link meta param source track wbr
+  html div p command image isindex
+)) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    my $el = $doc->create_element ($tag_name);
+    is ${Web::HTML::Serializer->get_inner_html ([$el])}, qq{<$tag_name></$tag_name>};
+    done $c;
+  } n => 1, name => ['normal_element', $tag_name];
+}
+
+for my $tag_name (qw(
+  area base basefont bgsound br col embed frame hr img input
+  keygen link menuitem meta param source track wbr
 )) {
   test {
     my $c = shift;
