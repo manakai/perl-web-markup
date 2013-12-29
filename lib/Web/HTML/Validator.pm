@@ -5805,6 +5805,17 @@ $Element->{+HTML_NS}->{button} = {
                            level => 'm');
       }
     }
+    my $menu_attr = $item->{node}->get_attribute_node_ns (undef, 'menu');
+    if ($type eq 'menu') {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'menu',
+                         level => 'm') unless $menu_attr;
+    } else {
+      $self->{onerror}->(node => $menu_attr,
+                         type => 'attribute not allowed',
+                         level => 'm') if $menu_attr;
+    }
   }, # check_attrs2
   check_end => sub {
     my ($self, $item, $element_state) = @_;
@@ -5814,6 +5825,11 @@ $Element->{+HTML_NS}->{button} = {
     $HTMLPhrasingContentChecker{check_end}->(@_);
   }, # check_end
 }; # button
+
+$ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{menu} = sub {
+  my ($self, $attr) = @_;
+  push @{$self->{idref}}, ['popup', $attr->value => $attr];
+}; # <button menu="">
 
 $Element->{+HTML_NS}->{select} = {
   %AnyChecker,
@@ -7907,7 +7923,7 @@ sub _css_parser ($$) {
   require Web::CSS::Context;
   my $parser = Web::CSS::Parser->new;
   my $context = Web::CSS::Context->new_from_nscallback (sub {
-    return $node->lookup_namespace_uri ($_[0]);
+    return $node->lookup_namespace_uri ($_[0]); # XXX is this really necessary??
   });
   $context->url ($node->owner_document->url);
   $context->manakai_compat_mode ($node->owner_document->manakai_compat_mode);
