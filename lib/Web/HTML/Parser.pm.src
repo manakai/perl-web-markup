@@ -2059,27 +2059,6 @@ sub _construct_tree ($) {
           !!!ack ('t103.1');
           !!!next-token;
           next B;
-        } elsif ($self->{t}->{tag_name} eq 'command') {
-          if ($self->{insertion_mode} == IN_HEAD_IM) {
-            ## NOTE: If the insertion mode at the time of the emission
-            ## of the token was "before head", $self->{insertion_mode}
-            ## is already changed to |IN_HEAD_IM|.
-
-            ## NOTE: There is a "as if in head" code clone.
-            !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
-            pop @{$self->{open_elements}};
-            pop @{$self->{open_elements}} # <head>
-                if $self->{insertion_mode} == AFTER_HEAD_IM;
-            !!!ack ('t103.2');
-            !!!next-token;
-            next B;
-          } else {
-            ## NOTE: "in head noscript" or "after head" insertion mode
-            ## - in these cases, these tags are treated as same as
-            ## normal in-body tags.
-            !!!cp ('t103.3');
-            #
-          }
         } elsif ($self->{t}->{tag_name} eq 'meta') {
           ## NOTE: There is a "as if in head" code clone.
           if ($self->{insertion_mode} == AFTER_HEAD_IM) {
@@ -4141,7 +4120,7 @@ sub _construct_tree ($) {
         $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
         next B;
       } elsif ({
-        base => 1, command => 1, link => 1, basefont => 1, bgsound => 1,
+        base => 1, link => 1, basefont => 1, bgsound => 1,
       }->{$self->{t}->{tag_name}}) {
         !!!cp ('t334');
         ## NOTE: This is an "as if in head" code clone, only "-t" differs
@@ -4301,7 +4280,7 @@ sub _construct_tree ($) {
         ## A quirk & switching of insertion mode
         table => 1,
 
-        ## Void element
+        ## Flow void element
         hr => 1,
       }->{$self->{t}->{tag_name}}) {
 
@@ -4920,9 +4899,9 @@ sub _construct_tree ($) {
         !!!nack ('t401.1'); ## NOTE: |<col/>| or |<frame/>| here is an error.
         !!!next-token;
         next B;
-      } elsif ($self->{t}->{tag_name} eq 'param' or
-               $self->{t}->{tag_name} eq 'source' or
-               $self->{t}->{tag_name} eq 'track') {
+      } elsif ({
+        param => 1, source => 1, track => 1, menuitem => 1,
+      }->{$self->{t}->{tag_name}}) { ## Void elements only allowed in some elements
         !!!insert-element-t ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
         pop @{$self->{open_elements}};
 
@@ -4988,7 +4967,7 @@ sub _construct_tree ($) {
           !!!ack ('t388.2');
         } elsif ({
           area => 1, br => 1, embed => 1, img => 1, wbr => 1, keygen => 1,
-        }->{$self->{t}->{tag_name}}) {
+        }->{$self->{t}->{tag_name}}) { ## Phrasing void elements
           !!!cp ('t388.1');
 
           pop @{$self->{open_elements}};

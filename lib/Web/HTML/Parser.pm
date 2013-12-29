@@ -2307,52 +2307,6 @@ sub _construct_tree ($) {
           delete $self->{self_closing};
           $self->{t} = $self->_get_next_token;
           next B;
-        } elsif ($self->{t}->{tag_name} eq 'command') {
-          if ($self->{insertion_mode} == IN_HEAD_IM) {
-            ## NOTE: If the insertion mode at the time of the emission
-            ## of the token was "before head", $self->{insertion_mode}
-            ## is already changed to |IN_HEAD_IM|.
-
-            ## NOTE: There is a "as if in head" code clone.
-            
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->append_child ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
-            pop @{$self->{open_elements}};
-            pop @{$self->{open_elements}} # <head>
-                if $self->{insertion_mode} == AFTER_HEAD_IM;
-            delete $self->{self_closing};
-            $self->{t} = $self->_get_next_token;
-            next B;
-          } else {
-            ## NOTE: "in head noscript" or "after head" insertion mode
-            ## - in these cases, these tags are treated as same as
-            ## normal in-body tags.
-            
-            #
-          }
         } elsif ($self->{t}->{tag_name} eq 'meta') {
           ## NOTE: There is a "as if in head" code clone.
           if ($self->{insertion_mode} == AFTER_HEAD_IM) {
@@ -4873,7 +4827,7 @@ sub _construct_tree ($) {
         $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
         next B;
       } elsif ({
-        base => 1, command => 1, link => 1, basefont => 1, bgsound => 1,
+        base => 1, link => 1, basefont => 1, bgsound => 1,
       }->{$self->{t}->{tag_name}}) {
         
         ## NOTE: This is an "as if in head" code clone, only "-t" differs
@@ -5108,7 +5062,7 @@ sub _construct_tree ($) {
         ## A quirk & switching of insertion mode
         table => 1,
 
-        ## Void element
+        ## Flow void element
         hr => 1,
       }->{$self->{t}->{tag_name}}) {
 
@@ -6057,9 +6011,9 @@ sub _construct_tree ($) {
          ## NOTE: |<col/>| or |<frame/>| here is an error.
         $self->{t} = $self->_get_next_token;
         next B;
-      } elsif ($self->{t}->{tag_name} eq 'param' or
-               $self->{t}->{tag_name} eq 'source' or
-               $self->{t}->{tag_name} eq 'track') {
+      } elsif ({
+        param => 1, source => 1, track => 1, menuitem => 1,
+      }->{$self->{t}->{tag_name}}) { ## Void elements only allowed in some elements
         
     {
       my $el;
@@ -6175,7 +6129,7 @@ sub _construct_tree ($) {
           delete $self->{self_closing};
         } elsif ({
           area => 1, br => 1, embed => 1, img => 1, wbr => 1, keygen => 1,
-        }->{$self->{t}->{tag_name}}) {
+        }->{$self->{t}->{tag_name}}) { ## Phrasing void elements
           
 
           pop @{$self->{open_elements}};
