@@ -1855,11 +1855,16 @@ sub _construct_tree ($) {
       C: {
         my $s;
         if ($self->{t}->{type} == CHARACTER_TOKEN) {
-          
-          $self->{pending_chars} ||= [];
-          push @{$self->{pending_chars}}, $self->{t};
-          $self->{t} = $self->_get_next_token;
-          next B;
+          if (($self->{open_elements}->[-1]->[0]->namespace_uri || '') eq HTML_NS and
+              {table => 1, tbody => 1, thead => 1, tfoot => 1, tr => 1}->{$self->{open_elements}->[-1]->[0]->local_name}) {
+            
+            $self->{pending_chars} ||= [];
+            push @{$self->{pending_chars}}, $self->{t};
+            $self->{t} = $self->_get_next_token;
+            next B;
+          } else {
+            last C;
+          }
         } else {
           ## There is an "insert pending chars" code clone.
           if ($self->{pending_chars}) {
@@ -1886,7 +1891,8 @@ sub _construct_tree ($) {
 
         ## "in table" insertion mode, "Anything else".
 
-        ## Foster parenting.
+        ## Foster parenting of the character tokens in the pending
+        ## table character tokens list.
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:#text', token => $self->{t});
 
         ## NOTE: As if in body, but insert into the foster parent element.
@@ -1927,6 +1933,8 @@ sub _construct_tree ($) {
           $self->{open_elements}->[-1]->[0]->manakai_append_text ($s);
         }
       } # C
+
+      ## Continue processing...
     } # TABLE_IMS
 
     if ($self->{t}->{type} == DOCTYPE_TOKEN) {
@@ -2870,7 +2878,7 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         ## "In body" insertion mode, character token.  It is also used
         ## for character tokens "in foreign content" for certain
-        ## cases.
+        ## cases.  This is an "in body text" code clone.
 
         while ($self->{t}->{data} =~ s/\x00//g) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
@@ -3262,7 +3270,50 @@ sub _construct_tree ($) {
       $self->{insert} = $insert = $insert_to_current;
       #
     } elsif ($self->{insertion_mode} & TABLE_IMS) {
-      if ($self->{t}->{type} == START_TAG_TOKEN) {
+      if ($self->{t}->{type} == CHARACTER_TOKEN) {
+        ## A character token, if the current node is /not/ |table|,
+        ## |tbody|, |tfoot|, |thead|, or |tr| element.  (If the
+        ## current node is one of these elements, the token is already
+        ## handled by the code for the "in table text" insertion mode
+        ## above.)
+
+        ## In the spec, the token is handled by the "anything else"
+        ## entry in the "in table" insertion mode.
+
+        ## "In body" insertion mode, character token.  It is also used
+        ## for character tokens "in foreign content" for certain
+        ## cases.
+
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:#text', token => $self->{t});
+
+        ## Process the token using the rules for the "in body"
+        ## insertion mode.  This is an "in body text" code clone,
+        ## except for the line marked by "FOSTER".
+        {
+          while ($self->{t}->{data} =~ s/\x00//g) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
+          }
+          if ($self->{t}->{data} eq '') {
+            $self->{t} = $self->_get_next_token;
+            next B;
+          }
+
+          $reconstruct_active_formatting_elements
+              ->($self, $insert_to_foster, # FOSTER
+                 $active_formatting_elements, $open_tables);
+          
+          $self->{open_elements}->[-1]->[0]->manakai_append_text
+              ($self->{t}->{data});
+
+          if ($self->{frameset_ok} and
+              $self->{t}->{data} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+            delete $self->{frameset_ok};
+          }
+
+          $self->{t} = $self->_get_next_token;
+          next B;
+        } # "in body text" code clone
+      } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ({
              tr => (($self->{insertion_mode} & IM_MASK) != IN_ROW_IM),
              th => 1, td => 1,
