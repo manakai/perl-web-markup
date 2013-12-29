@@ -2,7 +2,7 @@ package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '4.0';
+our $VERSION = '5.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -1869,18 +1869,21 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ((
-                ## Web::XML::Parser
-                $self->{is_xml} or
+        ## Web::XML::Parser
+        $self->{is_xml} or
 
-                ## Temma::Parser
-                $self->{enable_cdata_section} or
+        ## Temma::Parser
+        $self->{enable_cdata_section} or
 
-                ## Web::HTML::Parser
-                (@{$self->{open_elements} || []} and
-                 ($self->{open_elements}->[-1]->[1] & FOREIGN_EL))
-               ) and
-               $nc == 0x005B) { # [
-                        
+        ## Web::HTML::Parser - the adjusted current node is a foreign
+        ## element
+        (@{$self->{open_elements} || []} and
+         ($self->{open_elements}->[-1]->[1] & FOREIGN_EL)) or
+        (@{$self->{open_elements} || []} == 1 and
+         defined $self->{inner_html_node} and
+         $self->{inner_html_node}->[1] & FOREIGN_EL)
+      ) and $nc == 0x005B) { # [
+        
         $self->{state} = MD_CDATA_STATE;
         $self->{kwd} = '[';
         
@@ -1897,9 +1900,8 @@ sub _get_next_token ($) {
       ## Reconsume.
       $self->{state} = BOGUS_COMMENT_STATE;
       $self->{ct} = {type => COMMENT_TOKEN, data => '',
-                                line => $self->{line_prev},
-                                column => $self->{column_prev} - 1,
-                               };
+                     line => $self->{line_prev},
+                     column => $self->{column_prev} - 1};
       redo A;
     } elsif ($state == MD_DOCTYPE_STATE) {
       ## ASCII case-insensitive.
@@ -3957,7 +3959,7 @@ sub _get_next_token ($) {
             $self->{prev_state} != DATA_STATE and # in attribute
             $self->{prev_state} != RCDATA_STATE) {
           $self->{entity__match} = 0;
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'charref=', ## XXXtype
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'charref=',
                           level => 'm',
                           line => $self->{line},
                           column => $self->{column});

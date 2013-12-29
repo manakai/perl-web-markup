@@ -1605,30 +1605,38 @@ sub _construct_tree ($) {
       redo B;
     } # insertion mode
 
-    if (
-      (not @{$self->{open_elements}}) or
-      (not $self->{open_elements}->[-1]->[1] & FOREIGN_EL) or ## HTML element
-      ($self->{open_elements}->[-1]->[1] == MML_TEXT_INTEGRATION_EL and
+    ## The tree construction dispatcher.
+    if (do {
+      my $adjusted_current_node ## The adjusted current node
+          = (@{$self->{open_elements}} == 1 and
+             defined $self->{inner_html_node} and
+             ($self->{inner_html_node}->[1] & FOREIGN_EL))
+              ? $self->{inner_html_node}
+              : @{$self->{open_elements}}
+                  ? $self->{open_elements}->[-1] : undef;
+      not defined $adjusted_current_node or
+      not ($adjusted_current_node->[1] & FOREIGN_EL) or ## HTML element
+      ($adjusted_current_node->[1] == MML_TEXT_INTEGRATION_EL and
        (($self->{t}->{type} == START_TAG_TOKEN and
          $self->{t}->{tag_name} ne 'mglyph' and
          $self->{t}->{tag_name} ne 'malignmark') or
         $self->{t}->{type} == CHARACTER_TOKEN)) or
-      ($self->{open_elements}->[-1]->[1] & MML_AXML_EL and
+      ($adjusted_current_node->[1] & MML_AXML_EL and
        $self->{t}->{type} == START_TAG_TOKEN and
        $self->{t}->{tag_name} eq 'svg') or
       ( ## If the current node is an HTML integration point (other
         ## than |annotation-xml|).
-       $self->{open_elements}->[-1]->[1] == SVG_INTEGRATION_EL and
+       $adjusted_current_node->[1] == SVG_INTEGRATION_EL and
        ($self->{t}->{type} == START_TAG_TOKEN or
         $self->{t}->{type} == CHARACTER_TOKEN)) or
       ( ## If the current node is an |annotation-xml| whose |encoding|
         ## is |text/html| or |application/xhtml+xml| (HTML integration
         ## point).
-       $self->{open_elements}->[-1]->[1] == MML_AXML_EL and
+       $adjusted_current_node->[1] == MML_AXML_EL and
        ($self->{t}->{type} == START_TAG_TOKEN or
         $self->{t}->{type} == CHARACTER_TOKEN) and
        do {
-         my $encoding = $self->{open_elements}->[-1]->[0]->get_attribute_ns (undef, 'encoding') || '';
+         my $encoding = $adjusted_current_node->[0]->get_attribute_ns (undef, 'encoding') || '';
          $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
          if ($encoding eq 'text/html' or 
              $encoding eq 'application/xhtml+xml') {
@@ -1637,7 +1645,8 @@ sub _construct_tree ($) {
            0;
          }
        }) or
-      ($self->{t}->{type} == END_OF_FILE_TOKEN)) {
+      ($self->{t}->{type} == END_OF_FILE_TOKEN);
+    }) {
       
       ## Use the rules for the current insertion mode in HTML content.
       #
@@ -1670,56 +1679,69 @@ sub _construct_tree ($) {
           ## "In foreign content", HTML-only start tag.
           
 
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
-                          text => $self->{open_elements}->[-1]->[0]
-                              ->manakai_local_name,
-                          token => $self->{t});
+          if (defined $self->{inner_html_node}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'HTML start tag in foreign', # XXX
+                            text => $self->{t}->{tag_name},
+                            token => $self->{t});
+            #
+          } else {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+                            text => $self->{open_elements}->[-1]->[0]
+                                ->manakai_local_name,
+                            token => $self->{t});
 
-          pop @{$self->{open_elements}};
-          V: {
-            my $current_node = $self->{open_elements}->[-1];
-            if (
-              ## An HTML element.
-              not $current_node->[1] & FOREIGN_EL or
+            pop @{$self->{open_elements}};
+            V: {
+              my $current_node = $self->{open_elements}->[-1];
+              if (
+                ## An HTML element.
+                not $current_node->[1] & FOREIGN_EL or
 
-              ## An MathML text integration point.
-              $current_node->[1] == MML_TEXT_INTEGRATION_EL or
+                ## An MathML text integration point.
+                $current_node->[1] == MML_TEXT_INTEGRATION_EL or
+
+                ## An HTML integration point.
+                $current_node->[1] == SVG_INTEGRATION_EL or
+                ($current_node->[1] == MML_AXML_EL and
+                 do {
+                   my $encoding = $current_node->[0]->get_attribute_ns (undef, 'encoding') || '';
+                   $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+                   ($encoding eq 'text/html' or
+                    $encoding eq 'application/xhtml+xml');
+                 })
+               ) {
+                last V;
+              }
               
-              ## An HTML integration point.
-              $current_node->[1] == SVG_INTEGRATION_EL or
-              ($current_node->[1] == MML_AXML_EL and
-               do {
-                 my $encoding = $current_node->[0]->get_attribute_ns (undef, 'encoding') || '';
-                 $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-                 ($encoding eq 'text/html' or
-                  $encoding eq 'application/xhtml+xml');
-               })
-            ) {
-              last V;
+              pop @{$self->{open_elements}};
+              redo V;
             }
             
-            pop @{$self->{open_elements}};
-            redo V;
-          }
-          
-          ## Reprocess the token.
-          next B;
+            ## Reprocess the token.
+            next B;
+          } # not innerHTML
+        } # HTML start tag
 
-        } else {
-          ## "In foreign content", foreign start tag.
+        ## "In foreign content", "any other start tag".
 
-          my $nsuri = $self->{open_elements}->[-1]->[0]->namespace_uri;
-          my $tag_name = $self->{t}->{tag_name};
-          if ($nsuri eq SVG_NS) {
-            $tag_name = $Web::HTML::ParserData::SVGElementNameFixup
-                ->{$tag_name} || $tag_name;
-          }
+        ## The adjusted current node's namespace URL
+        my $nsuri = ((@{$self->{open_elements} or []} == 1 and
+                      defined $self->{inner_html_node} and
+                      $self->{inner_html_node}->[1] & FOREIGN_EL)
+            ? $self->{inner_html_node} : $self->{open_elements}->[-1])
+                ->[0]->namespace_uri;
 
-          ## "adjust SVG attributes" (SVG only) - done in insert-element-f
+        my $tag_name = $self->{t}->{tag_name};
+        if ($nsuri eq SVG_NS) {
+          $tag_name = $Web::HTML::ParserData::SVGElementNameFixup
+              ->{$tag_name} || $tag_name;
+        }
 
-          ## "adjust foreign attributes" - done in insert-element-f
+        ## "adjust SVG attributes" (SVG only) - done in insert-element-f
 
-          
+        ## "adjust foreign attributes" - done in insert-element-f
+
+        
     {
       my $el;
       
@@ -1765,16 +1787,15 @@ sub _construct_tree ($) {
     }
   
 
-          if ($self->{self_closing}) {
-            pop @{$self->{open_elements}};
-            delete $self->{self_closing};
-          } else {
-            
-          }
-
-          $self->{t} = $self->_get_next_token;
-          next B;
+        if ($self->{self_closing}) {
+          pop @{$self->{open_elements}};
+          delete $self->{self_closing};
+        } else {
+          
         }
+
+        $self->{t} = $self->_get_next_token;
+        next B;
 
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         ## "In foreign content", end tag.
@@ -1791,7 +1812,7 @@ sub _construct_tree ($) {
           next B;
 
         } else {
-          ## "In foreign content", end tag.
+          ## "In foreign content", "any other end tag".
           
           
           ## 1.
@@ -1804,11 +1825,19 @@ sub _construct_tree ($) {
           if ($tag_name ne $self->{t}->{tag_name}) {
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name},
-                            level => $self->{level}->{must});
+                            token => $self->{t});
           }
 
           ## 3.
           LOOP: {
+            if (@{$self->{open_elements}} == 1) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                              text => $self->{t}->{tag_name},
+                              token => $self->{t}); # </html> ## XXX not in spec
+              $self->{t} = $self->_get_next_token;
+              next B;
+            }
+
             my $tag_name = $node->[0]->manakai_local_name;
             $tag_name =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($tag_name eq $self->{t}->{tag_name}) {
@@ -1863,6 +1892,8 @@ sub _construct_tree ($) {
             $self->{t} = $self->_get_next_token;
             next B;
           } else {
+            ## Will be processed by the "in table" insertion mode's
+            ## "in body text" code clone.
             last C;
           }
         } else {
@@ -3285,6 +3316,10 @@ sub _construct_tree ($) {
         ## cases.
 
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:#text', token => $self->{t});
+        ## Strictly speaking, this parse error must be reported for
+        ## each character per the spec.  In the current implementation
+        ## the number of the parse error here depends on how the
+        ## tokenizer emits character*s* tokens, which is not good...
 
         ## Process the token using the rules for the "in body"
         ## insertion mode.  This is an "in body text" code clone,
@@ -6691,7 +6726,7 @@ sub parse_char_string_with_context ($$$$) {
         $self->{state} = PLAINTEXT_STATE;
       }
       
-      $self->{inner_html_node} = [$context, $el_category->{$node_ln}];
+      $self->{inner_html_node} = [$context, $el_category->{$node_ln} || 0];
     } elsif ($node_ns eq SVG_NS) {
       $self->{inner_html_node} = [$context,
                                   $el_category_f->{$node_ns}->{$node_ln}

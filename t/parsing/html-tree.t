@@ -76,7 +76,15 @@ sub test ($) {
       $test->{document} ||= $test->{'document-fragment'};
     } else {
       ## NOTE: New format.
-      $test->{element} = $test->{'document-fragment'}->[0];
+      my @def = split /\x0D?\x0A/, $test->{'document-fragment'}->[0];
+      $test->{element} = shift @def;
+      for (@def) {
+        if (/^  ([^=]+)="([^"]+)"$/) {
+          push @{$test->{element_attrs} ||= []}, [$1, $2];
+        } else {
+          die "Broken data: |$_|";
+        }
+      }
     }
   }
 
@@ -120,6 +128,9 @@ sub test ($) {
     } else {
       $el = $doc->create_element_ns
           (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
+    }
+    for (@{$test->{element_attrs} or []}) {
+      $el->set_attribute ($_->[0] => $_->[1]);
     }
     my $children = $parser->parse_char_string_with_context
         ($test->{data}->[0], $el, $dom->create_document);

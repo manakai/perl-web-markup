@@ -1821,18 +1821,21 @@ sub _get_next_token ($) {
         !!!next-input-character;
         redo A;
       } elsif ((
-                ## Web::XML::Parser
-                $self->{is_xml} or
+        ## Web::XML::Parser
+        $self->{is_xml} or
 
-                ## Temma::Parser
-                $self->{enable_cdata_section} or
+        ## Temma::Parser
+        $self->{enable_cdata_section} or
 
-                ## Web::HTML::Parser
-                (@{$self->{open_elements} || []} and
-                 ($self->{open_elements}->[-1]->[1] & FOREIGN_EL))
-               ) and
-               $nc == 0x005B) { # [
-        !!!cp (135.4);                
+        ## Web::HTML::Parser - the adjusted current node is a foreign
+        ## element
+        (@{$self->{open_elements} || []} and
+         ($self->{open_elements}->[-1]->[1] & FOREIGN_EL)) or
+        (@{$self->{open_elements} || []} == 1 and
+         defined $self->{inner_html_node} and
+         $self->{inner_html_node}->[1] & FOREIGN_EL)
+      ) and $nc == 0x005B) { # [
+        !!!cp (135.4);
         $self->{state} = MD_CDATA_STATE;
         $self->{kwd} = '[';
         !!!next-input-character;
@@ -1847,9 +1850,8 @@ sub _get_next_token ($) {
       ## Reconsume.
       $self->{state} = BOGUS_COMMENT_STATE;
       $self->{ct} = {type => COMMENT_TOKEN, data => '',
-                                line => $self->{line_prev},
-                                column => $self->{column_prev} - 1,
-                               };
+                     line => $self->{line_prev},
+                     column => $self->{column_prev} - 1};
       redo A;
     } elsif ($state == MD_DOCTYPE_STATE) {
       ## ASCII case-insensitive.
