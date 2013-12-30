@@ -106,6 +106,9 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_table_body_scoping}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_table_row_scoping}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_select_non_scoping}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_implied_end_tag}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_implied_end_tag_at_eof}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_implied_end_tag_at_body}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{first_newline_ignored}; #\
 	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\

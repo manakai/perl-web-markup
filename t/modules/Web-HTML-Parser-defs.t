@@ -78,6 +78,20 @@ for my $nsurl (keys %{$defs->{elements}}) {
          !!$def->{parser_select_non_scoping}, 'in select scope';
       done $c;
     } n => 7, name => [$nsurl, $ln, 'scoping'];
+    test {
+      my $c = shift;
+      my $cat = Web::HTML::Parser::get_el_category ($nsurl, $ln);
+      is !!($cat & Web::HTML::Parser::END_TAG_OPTIONAL_EL ()),
+         !!$def->{parser_implied_end_tag};
+      is !!($cat & Web::HTML::Parser::ALL_END_TAG_OPTIONAL_EL ()),
+         !!$def->{parser_implied_end_tag_at_eof};
+      is !!($cat & Web::HTML::Parser::ALL_END_TAG_OPTIONAL_EL () ||
+            $cat == Web::HTML::Parser::OPTGROUP_EL () ||
+            $cat == Web::HTML::Parser::OPTION_EL () ||
+            $cat == Web::HTML::Parser::RUBY_COMPONENT_EL ()),
+         !!$def->{parser_implied_end_tag_at_body};
+      done $c;
+    } n => 3, name => [$nsurl, $ln, 'implied end tag'];
   }
 }
 
