@@ -55,7 +55,7 @@ while (<>) {
     {
       my \$el;
       !!!create-element (\$el, HTML_NS, $1,, $2);
-      \$self->{open_elements}->[-1]->[0]->append_child (\$el);
+      \$self->{open_elements}->[-1]->[0]->manakai_append_content (\$el);
       push \@{\$self->{open_elements}}, [\$el, \$el_category->{$1} || 0];
     }
   }}ge;
@@ -63,7 +63,7 @@ while (<>) {
     {
       my \$el;
       !!!create-element (\$el, HTML_NS, $1, $2, $3);
-      \$self->{open_elements}->[-1]->[0]->append_child (\$el);
+      \$self->{open_elements}->[-1]->[0]->manakai_append_content (\$el);
       push \@{\$self->{open_elements}}, [\$el, \$el_category->{$1} || 0];
     }
   }}ge;

@@ -44,10 +44,11 @@ test {
 
 for my $nsurl (keys %{$defs->{elements}}) {
   for my $ln (keys %{$defs->{elements}->{$nsurl}}) {
+    my $def = $defs->{elements}->{$nsurl}->{$ln};
     test {
       my $c = shift;
       my $cat = Web::HTML::Parser::get_el_category ($nsurl, $ln);
-      my $expected = $defs->{elements}->{$nsurl}->{$ln}->{parser_category} || 'ordinary';
+      my $expected = $def->{parser_category} || 'ordinary';
       if ($expected eq 'special') {
         ok $cat & SPECIAL;
       } elsif ($expected eq 'formatting') {
@@ -56,9 +57,73 @@ for my $nsurl (keys %{$defs->{elements}}) {
         ok not $cat & (SPECIAL | Web::HTML::Parser::FORMATTING_EL ());
       }
       done $c;
-    } n => 1, name => [$nsurl, $ln];
+    } n => 1, name => [$nsurl, $ln, 'parser_category'];
+    test {
+      my $c = shift;
+      my $cat = Web::HTML::Parser::get_el_category ($nsurl, $ln);
+      is !!($cat & Web::HTML::Parser::SCOPING_EL ()),
+         !!$def->{parser_scoping}, 'in scope';
+      is !!($cat & Web::HTML::Parser::SCOPING_EL () or ($nsurl eq 'http://www.w3.org/1999/xhtml' and ($ln eq 'ul' or $ln eq 'ol'))),
+         !!$def->{parser_li_scoping}, 'in list scope';
+      is !!($cat & Web::HTML::Parser::BUTTON_SCOPING_EL ()),
+         !!$def->{parser_button_scoping}, 'in button scope';
+      is !!($cat & Web::HTML::Parser::TABLE_SCOPING_EL ()),
+         !!$def->{parser_table_scoping}, 'in table scope';
+      is !!($cat & Web::HTML::Parser::TABLE_ROWS_SCOPING_EL ()),
+         !!$def->{parser_table_body_scoping}, 'in table body scope';
+      is !!($cat & Web::HTML::Parser::TABLE_ROW_SCOPING_EL ()),
+         !!$def->{parser_table_row_scoping}, 'in table row scope';
+      is !!($cat == Web::HTML::Parser::OPTGROUP_EL () or
+            $cat == Web::HTML::Parser::OPTION_EL ()),
+         !!$def->{parser_select_non_scoping}, 'in select scope';
+      done $c;
+    } n => 7, name => [$nsurl, $ln, 'scoping'];
   }
 }
+
+test {
+  my $c = shift;
+  my $defined = {};
+  for (
+    Web::HTML::Parser::A_EL (),
+    Web::HTML::Parser::ADDRESS_DIV_EL (),
+    Web::HTML::Parser::MISC_SCOPING_EL (),
+    Web::HTML::Parser::MISC_SPECIAL_EL (),
+    Web::HTML::Parser::FORMATTING_EL (),
+    Web::HTML::Parser::BODY_EL (),
+    Web::HTML::Parser::BUTTON_EL (),
+    Web::HTML::Parser::CAPTION_EL (),
+    Web::HTML::Parser::COLGROUP_EL (),
+    Web::HTML::Parser::DTDD_EL (),
+    Web::HTML::Parser::FORM_EL (),
+    Web::HTML::Parser::FRAMESET_EL (),
+    Web::HTML::Parser::HEADING_EL (),
+    Web::HTML::Parser::HEAD_EL (),
+    Web::HTML::Parser::HTML_EL (),
+    Web::HTML::Parser::LI_EL (),
+    Web::HTML::Parser::NOBR_EL (),
+    Web::HTML::Parser::OPTGROUP_EL (),
+    Web::HTML::Parser::OPTION_EL (),
+    Web::HTML::Parser::P_EL (),
+    Web::HTML::Parser::RUBY_COMPONENT_EL (),
+    Web::HTML::Parser::RUBY_EL (),
+    Web::HTML::Parser::SELECT_EL (),
+    Web::HTML::Parser::TABLE_EL (),
+    Web::HTML::Parser::TEMPLATE_EL (),
+    Web::HTML::Parser::TABLE_ROW_GROUP_EL (),
+    Web::HTML::Parser::TABLE_CELL_EL (),
+    Web::HTML::Parser::TABLE_ROW_GROUP_EL (),
+    Web::HTML::Parser::TABLE_ROW_EL (),
+    Web::HTML::Parser::MML_AXML_EL (),
+    Web::HTML::Parser::MML_TEXT_INTEGRATION_EL (),
+    Web::HTML::Parser::SVG_INTEGRATION_EL (),
+    Web::HTML::Parser::SVG_SCRIPT_EL (),
+  ) {
+    ok 1 if not $defined->{$_};
+    $defined->{$_} = 1;
+  }
+  done $c;
+} name => 'terminals';
 
 run_tests;
 
