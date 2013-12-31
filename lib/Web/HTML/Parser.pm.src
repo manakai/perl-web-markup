@@ -3514,23 +3514,25 @@ sub _construct_tree ($) {
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           next B;
         } elsif ($self->{t}->{tag_name} eq 'input') {
+          ## The "in table" insertion mode, <input>
           if ($self->{t}->{attributes}->{type}) {
             my $type = $self->{t}->{attributes}->{type}->{value};
             $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($type eq 'hidden') {
-              !!!cp ('t227.3');
+              ## <input type=hidden> in table
               !!!parse-error (type => 'in table',
-                              text => $self->{t}->{tag_name}, token => $self->{t});
+                              text => $self->{t}->{tag_name},
+                              token => $self->{t});
 
               !!!insert-element ($self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
               $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
 
               ## TODO: form element pointer
 
-              pop @{$self->{open_elements}};
+              pop @{$self->{open_elements}}; # <input type=hidden>
 
-              !!!next-token;
               !!!ack ('t227.2.1');
+              !!!next-token;
               next B;
             } else {
               !!!cp ('t227.1');

@@ -4101,13 +4101,15 @@ sub _construct_tree ($) {
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           next B;
         } elsif ($self->{t}->{tag_name} eq 'input') {
+          ## The "in table" insertion mode, <input>
           if ($self->{t}->{attributes}->{type}) {
             my $type = $self->{t}->{attributes}->{type}->{value};
             $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($type eq 'hidden') {
-              
+              ## <input type=hidden> in table
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table',
-                              text => $self->{t}->{tag_name}, token => $self->{t});
+                              text => $self->{t}->{tag_name},
+                              token => $self->{t});
 
               
     {
@@ -4139,10 +4141,10 @@ sub _construct_tree ($) {
 
               ## TODO: form element pointer
 
-              pop @{$self->{open_elements}};
+              pop @{$self->{open_elements}}; # <input type=hidden>
 
-              $self->{t} = $self->_get_next_token;
               delete $self->{self_closing};
+              $self->{t} = $self->_get_next_token;
               next B;
             } else {
               
