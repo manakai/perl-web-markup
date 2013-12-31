@@ -26,30 +26,6 @@ while (<>) {
   }ge;
   s{!!!ack\s*(?>\([^)]*\)\s*)?;}{q{delete $self->{self_closing};}}ge;
   s{!!!ack-later\s*(?>\([^)]*\)\s*)?;}{}ge;
-  s{!!!insert-element-t\s*\(([^(),]+),([^(),]+),([^(),]+)\)\s*;}{qq{
-    {
-      my \$el;
-      !!!create-element (\$el, HTML_NS, $1, $2, $3);
-      \$insert->(\$self, \$el, \$open_tables);
-      push \@{\$self->{open_elements}}, [\$el, \$el_category->{$1} || 0];
-    }
-  }}ge;
-  s{!!!insert-element\s*\(([^(),]+),\s*,([^(),]+)\)\s*;}{qq{
-    {
-      my \$el;
-      !!!create-element (\$el, HTML_NS, $1,, $2);
-      \$self->{open_elements}->[-1]->[0]->manakai_append_content (\$el);
-      push \@{\$self->{open_elements}}, [\$el, \$el_category->{$1} || 0];
-    }
-  }}ge;
-  s{!!!insert-element\s*\(([^(),]+),([^(),]+),([^(),]+)\)\s*;}{qq{
-    {
-      my \$el;
-      !!!create-element (\$el, HTML_NS, $1, $2, $3);
-      \$self->{open_elements}->[-1]->[0]->manakai_append_content (\$el);
-      push \@{\$self->{open_elements}}, [\$el, \$el_category->{$1} || 0];
-    }
-  }}ge;
   s{!!!create-element\s*\(([^(),]+),\s*([^(),]+),([^(),]+)(?:,([^(),]*)(?>,([^(),]+))?)?\)\s*;}{
     my ($l_var, $nsuri, $lname, $attrs, $token_var) = ($1, $2, $3, $4, $5);
     $nsuri =~ s/^\s+//;

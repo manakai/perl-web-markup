@@ -764,32 +764,7 @@ sub _reset_insertion_mode ($) {
 
     ## Step 1
     my $start_tag_name = $self->{t}->{tag_name};
-    
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+    $self->_insert_el;
 
     ## Step 2
     if ($parse_refs) {
@@ -1467,39 +1442,16 @@ sub _close_p ($;$) {
                       token => $self->{t});
 
       my ($insert, $open_tables) = @$imply_start_tag;
-      
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'p']);
-    
-        for my $attr_name (keys %{  +{}}) {
-          my $attr_t =   +{}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{'p'} || 0];
-    }
-  
+      $self->_insert_el (undef, 'p', {});
       pop @{$self->{open_elements}}; # <p>
     }
   }
 } # _close_p
 
-sub _insert_el ($$;$) {
-  my ($self, $token, $nsurl) = @_;
+sub _insert_el ($;$$$) {
+  my ($self, $nsurl, $ln, $attrs) = @_;
+  $ln ||= $self->{t}->{tag_name};
+  $attrs ||= $self->{t}->{attributes};
 
   ## Insert an HTML element
   ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-an-html-element>.
@@ -1525,14 +1477,15 @@ sub _insert_el ($$;$) {
         if ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
           ## 1.
           $last_template_i = $_;
+          last OE;
         } elsif ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
           ## 2.
           $last_table_i = $_;
+          last OE;
         }
       } # OE
 
-      if (defined $last_template_i and
-          (not defined $last_table_i or $last_template_i > $last_table_i)) {
+      if (defined $last_template_i) {
         ## 3.
         $adjusted_parent = $self->{open_elements}->[$last_template_i]->[0];
             ## ->content (See the TEMPLATE line below.)
@@ -1578,7 +1531,8 @@ sub _insert_el ($$;$) {
 
     if (defined $nsurl) { ## $nsurl is SVG_NS or MML_NS
       ## Tag name fixup in foreign content, any other start tag
-      my $ln = $nsurl eq SVG_NS ? $Web::HTML::ParserData::SVGElementNameFixup->{$token->{tag_name}} || $token->{tag_name} : $token->{tag_name};
+      $ln = $Web::HTML::ParserData::SVGElementNameFixup->{$ln} || $ln
+          if $nsurl eq SVG_NS;
 
       $el = [
         $od->create_element_ns ($nsurl, [undef, $ln]),
@@ -1587,8 +1541,8 @@ sub _insert_el ($$;$) {
          ($nsurl eq SVG_NS ? SVG_EL : $nsurl eq MML_NS ? MML_EL : 0)),
       ];
 
-      for my $attr_name (keys %{$token->{attributes}}) {
-        my $attr_t = $token->{attributes}->{$attr_name};
+      for my $attr_name (keys %$attrs) {
+        my $attr_t = $attrs->{$attr_name};
 
         ## "adjust SVG attributes" (SVG only)
         ## "adjust MathML attributes" (MathML only)
@@ -1605,13 +1559,12 @@ sub _insert_el ($$;$) {
       } # $attr_name
 
       ## 2.
-      if ($token->{attributes}->{xmlns} and
-          $token->{attributes}->{xmlns}->{value} ne $nsurl) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $token); # XXXdoc
+      if ($attrs->{xmlns} and $attrs->{xmlns}->{value} ne $nsurl) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t}); # XXXdoc
       }
-      if ($token->{attributes}->{'xmlns:xlink'} and
-          $token->{attributes}->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $token);
+      if ($attrs->{'xmlns:xlink'} and
+          $attrs->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t});
       }
 
       ## 3.
@@ -1621,12 +1574,12 @@ sub _insert_el ($$;$) {
       ## Form association - not applicable
     } else { ## HTML namespace
       $el = [
-        $od->create_element ($token->{tag_name}),
-        $el_category->{$token->{tag_name}} || 0,
+        $od->create_element ($ln),
+        $el_category->{$ln} || 0,
       ];
 
-      for my $attr_name (keys %{$token->{attributes}}) {
-        my $attr_t = $token->{attributes}->{$attr_name};
+      for my $attr_name (keys %$attrs) {
+        my $attr_t = $attrs->{$attr_name};
         my $attr = $od->create_attribute ($attr_name);
         $attr->value ($attr_t->{value});
         $attr->set_user_data (manakai_source_line => $attr_t->{line});
@@ -1644,10 +1597,10 @@ sub _insert_el ($$;$) {
       ## 4.
       # XXX if form-associated, associate form
     } # $nsurl
-    $el->[0]->set_user_data (manakai_source_line => $token->{line})
-        if defined $token->{line};
-    $el->[0]->set_user_data (manakai_source_column => $token->{column})
-        if defined $token->{column};
+    $el->[0]->set_user_data (manakai_source_line => $self->{t}->{line})
+        if defined $self->{t}->{line};
+    $el->[0]->set_user_data (manakai_source_column => $self->{t}->{column})
+        if defined $self->{t}->{column};
 
     $od->strict_error_checking (1) if $orig_strict;
 
@@ -2147,7 +2100,7 @@ sub _construct_tree ($) {
         ## Adjusting of tag name, "adjust SVG attributes" (SVG only),
         ## and "adjust foreign attributes" are performed in the
         ## |_insert_el| method.
-        $self->_insert_el ($self->{t}, $nsuri);
+        $self->_insert_el ($nsuri);
 
         if ($self->{self_closing}) {
           pop @{$self->{open_elements}}; # XXX Also, if $tag_name is 'script', run script
@@ -2568,25 +2521,15 @@ sub _construct_tree ($) {
         }
 
         if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          
           ## As if <head>
-          
-      $self->{head_element} = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'head']);
-    
-        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{head_element});
-          push @{$self->{open_elements}},
-              [$self->{head_element}, $el_category->{head}];
+          $self->_insert_el (undef, 'head', {});
+          $self->{head_element} = $self->{open_elements}->[-1]->[0];
 
           ## Reprocess in the "in head" insertion mode...
-          pop @{$self->{open_elements}};
+          pop @{$self->{open_elements}}; # <head>
 
           ## Reprocess in the "after head" insertion mode...
+          #
         } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
           
           ## As if </noscript>
@@ -2609,50 +2552,14 @@ sub _construct_tree ($) {
 
         ## "after head" insertion mode
         ## Fake <body> without resetting frameset-ok
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'body']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
-    }
-  
+        $self->_insert_el (undef, 'body', {});
         $self->{insertion_mode} = IN_BODY_IM;
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'head') {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            
-            
-      $self->{head_element} = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{ $self->{t}->{attributes}}) {
-          my $attr_t =  $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $self->{head_element}->set_attribute_node_ns ($attr);
-        }
-      
-        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-            $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{head_element});
-            push @{$self->{open_elements}},
-                [$self->{head_element}, $el_category->{head}];
+            $self->_insert_el;
+            $self->{head_element} = $self->{open_elements}->[-1]->[0];
             $self->{insertion_mode} = IN_HEAD_IM;
             
             $self->{t} = $self->_get_next_token;
@@ -2674,26 +2581,18 @@ sub _construct_tree ($) {
             $self->{t} = $self->_get_next_token;
             next B;
           }
-        } elsif ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          
-          ## As if <head>
-          
-      $self->{head_element} = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'head']);
-    
-        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{head_element});
-          push @{$self->{open_elements}},
-              [$self->{head_element}, $el_category->{head}];
-
-          $self->{insertion_mode} = IN_HEAD_IM;
-          ## Reprocess in the "in head" insertion mode...
         } else {
-          
+          if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
+            ## The "before head" insertion mode, anything else (start
+            ## tag).
+
+            ## As if <head>
+            $self->_insert_el (undef, 'head', {});
+            $self->{head_element} = $self->{open_elements}->[-1]->[0];
+            $self->{insertion_mode} = IN_HEAD_IM;
+            ## Reprocess in the "in head" insertion mode...
+            #
+          }
         }
 
         if ($self->{t}->{tag_name} eq 'base') {
@@ -2720,32 +2619,7 @@ sub _construct_tree ($) {
           } else {
             
           }
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           pop @{$self->{open_elements}};
           pop @{$self->{open_elements}} # <head>
               if $self->{insertion_mode} == AFTER_HEAD_IM;
@@ -2765,32 +2639,7 @@ sub _construct_tree ($) {
           } else {
             
           }
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           pop @{$self->{open_elements}};
           pop @{$self->{open_elements}} # <head>
               if $self->{insertion_mode} == AFTER_HEAD_IM;
@@ -2808,32 +2657,7 @@ sub _construct_tree ($) {
           } else {
             
           }
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           my $meta_el = pop @{$self->{open_elements}};
 
               unless ($self->{confident}) {
@@ -2956,32 +2780,7 @@ sub _construct_tree ($) {
               if ($self->{insertion_mode} == IN_HEAD_IM) {
                 
                 ## NOTE: and scripting is disalbed
-                
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+                $self->_insert_el;
                 $self->{insertion_mode} = IN_HEAD_NOSCRIPT_IM;
                 
                 $self->{t} = $self->_get_next_token;
@@ -3050,32 +2849,7 @@ sub _construct_tree ($) {
           ## The "in head" insertion mode, <template>
 
           ## This is a variant of "template start tag" code clone.
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           push @$active_formatting_elements, ['#marker', '', undef];
           delete $self->{frameset_ok}; # not ok
 
@@ -3111,32 +2885,7 @@ sub _construct_tree ($) {
           }
 
           ## "after head" insertion mode
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           if ($self->{t}->{tag_name} eq 'body') {
             
             delete $self->{frameset_ok};
@@ -3179,22 +2928,7 @@ sub _construct_tree ($) {
 
         ## "after head" insertion mode
         ## Fake <body> without resetting frameset-ok
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'body']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
-    }
-  
+        $self->_insert_el (undef, 'body', {});
         $self->{insertion_mode} = IN_BODY_IM;
         
         next B;
@@ -3208,20 +2942,11 @@ sub _construct_tree ($) {
 
         if ($self->{t}->{tag_name} eq 'head') {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            
+            ## The "before head" insertion mode, </head>
+
             ## As if <head>
-            
-      $self->{head_element} = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'head']);
-    
-        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-            $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{head_element});
-            push @{$self->{open_elements}},
-                [$self->{head_element}, $el_category->{head}];
+            $self->_insert_el (undef, 'head', {});
+            $self->{head_element} = $self->{open_elements}->[-1]->[0];
 
             ## Reprocess in the "in head" insertion mode...
             pop @{$self->{open_elements}};
@@ -3255,33 +2980,27 @@ sub _construct_tree ($) {
             #
           }
         } elsif ({
-            body => ($self->{insertion_mode} != IN_HEAD_NOSCRIPT_IM),
-            html => ($self->{insertion_mode} != IN_HEAD_NOSCRIPT_IM),
-            br => 1,
+          body => ($self->{insertion_mode} != IN_HEAD_NOSCRIPT_IM),
+          html => ($self->{insertion_mode} != IN_HEAD_NOSCRIPT_IM),
+          br => 1,
         }->{$self->{t}->{tag_name}}) {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            
             ## (before head) as if <head>, (in head) as if </head>
-            
-      $self->{head_element} = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'head']);
-    
-        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-            $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{head_element});
+            $self->_insert_el (undef, 'head', {});
+            $self->{head_element} = $self->{open_elements}->[-1]->[0];
+            pop @{$self->{open_elements}}; # <head>
             $self->{insertion_mode} = AFTER_HEAD_IM;
   
             ## Reprocess in the "after head" insertion mode...
+            #
           } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
             
             ## As if </head>
-            pop @{$self->{open_elements}};
+            pop @{$self->{open_elements}}; # <head>
             $self->{insertion_mode} = AFTER_HEAD_IM;
   
             ## Reprocess in the "after head" insertion mode...
+            #
           } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
             
             ## NOTE: Two parse errors for <head><noscript></br>
@@ -3295,10 +3014,11 @@ sub _construct_tree ($) {
 
             ## Reprocess in the "in head" insertion mode...
             ## As if </head>
-            pop @{$self->{open_elements}};
+            pop @{$self->{open_elements}}; # <head>
             $self->{insertion_mode} = AFTER_HEAD_IM;
 
             ## Reprocess in the "after head" insertion mode...
+            #
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
             
             #
@@ -3308,22 +3028,7 @@ sub _construct_tree ($) {
 
           ## "after head" insertion mode
           ## Fake <body> without resetting frameset-ok
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'body']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
-    }
-  
+          $self->_insert_el (undef, 'body', {});
           $self->{insertion_mode} = IN_BODY_IM;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
@@ -3349,28 +3054,18 @@ sub _construct_tree ($) {
         next B;
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          
+          ## The "before head" insertion mode, EOF
 
-          ## NOTE: As if <head>
-          
-      $self->{head_element} = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'head']);
-    
-        $self->{head_element}->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $self->{head_element}->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{head_element});
-          #push @{$self->{open_elements}},
-          #    [$self->{head_element}, $el_category->{head}];
+          ## As if <head>
+          $self->_insert_el (undef, 'head', {});
+          $self->{head_element} = $self->{open_elements}->[-1]->[0];
           #$self->{insertion_mode} = IN_HEAD_IM;
-          ## NOTE: Reprocess.
+          ## Reprocess the token.
 
-          ## NOTE: As if </head>
-          #pop @{$self->{open_elements}};
+          ## As if </head>
+          pop @{$self->{open_elements}}; # <head>
           #$self->{insertion_mode} = IN_AFTER_HEAD_IM;
-          ## NOTE: Reprocess.
+          ## Reprocess the token.
           
           #
         } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
@@ -3404,22 +3099,7 @@ sub _construct_tree ($) {
         }
 
         ## Fake <body> without resetting frameset-ok
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'body']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{'body'} || 0];
-    }
-  
+        $self->_insert_el (undef, 'body', {});
         $self->{insertion_mode} = IN_BODY_IM;
         next B;
       } else {
@@ -3864,22 +3544,7 @@ sub _construct_tree ($) {
             pop @{$self->{open_elements}}
                 while not ($self->{open_elements}->[-1]->[1] & TABLE_SCOPING_EL);
             
-            
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'tbody']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{'tbody'} || 0];
-    }
-  
+            $self->_insert_el (undef, 'tbody', {});
             $self->{insertion_mode} = IN_TABLE_BODY_IM;
             ## Reprocess the token...
             #
@@ -3898,56 +3563,14 @@ sub _construct_tree ($) {
                 while not ($self->{open_elements}->[-1]->[1] & TABLE_ROWS_SCOPING_EL);
             
             if ($self->{t}->{tag_name} eq 'tr') {
-              
-              
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+              $self->_insert_el;
               $self->{insertion_mode} = IN_ROW_IM;
               $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
               
               $self->{t} = $self->_get_next_token;
               next B;
             } else {
-              
-              
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'tr']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{'tr'} || 0];
-    }
-  
+              $self->_insert_el (undef, 'tr', {});
               $self->{insertion_mode} = IN_ROW_IM;
               ## Reprocess the token...
               #
@@ -3962,33 +3585,8 @@ sub _construct_tree ($) {
                 
                 pop @{$self->{open_elements}};
               }
-              
           
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           $self->{insertion_mode} = IN_CELL_IM;
 
@@ -4081,22 +3679,7 @@ sub _construct_tree ($) {
             pop @{$self->{open_elements}}
                 while not ($self->{open_elements}->[-1]->[1] & TABLE_SCOPING_EL);
 
-            
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'colgroup']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{'colgroup'} || 0];
-    }
-  
+            $self->_insert_el (undef, 'colgroup', {});
             $self->{insertion_mode} = IN_COLUMN_GROUP_IM;
             ## Reprocess the token.
             $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
@@ -4118,32 +3701,7 @@ sub _construct_tree ($) {
             push @$active_formatting_elements, ['#marker', '', undef]
                 if $self->{t}->{tag_name} eq 'caption';
             
-            
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+            $self->_insert_el;
             $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
             $self->{insertion_mode} = {
                                        caption => IN_CAPTION_IM,
@@ -4205,33 +3763,10 @@ sub _construct_tree ($) {
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
+          ## The "in table" insertion mode, <template>
+
           ## This is a "template start tag" code clone.
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           push @$active_formatting_elements, ['#marker', '', undef];
           delete $self->{frameset_ok}; # not ok
           push @{$self->{template_ims}},
@@ -4251,32 +3786,7 @@ sub _construct_tree ($) {
                               text => $self->{t}->{tag_name},
                               token => $self->{t});
 
-              
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+              $self->_insert_el;
               $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
 
               ## TODO: form element pointer
@@ -4303,32 +3813,7 @@ sub _construct_tree ($) {
             
             next B;
           } else {
-            
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+            $self->_insert_el;
             $self->{form_element} = $self->{open_elements}->[-1]->[0];
             
             pop @{$self->{open_elements}};
@@ -4631,33 +4116,7 @@ sub _construct_tree ($) {
         #
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'col') {
-          
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           pop @{$self->{open_elements}};
           delete $self->{self_closing};
           $self->{t} = $self->_get_next_token;
@@ -4666,32 +4125,7 @@ sub _construct_tree ($) {
           ## The "in column group" insertion mode, <template>
 
           ## This is a "template start tag" code clone.
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           push @$active_formatting_elements, ['#marker', '', undef];
           delete $self->{frameset_ok}; # not ok
           push @{$self->{template_ims}},
@@ -4776,33 +4210,7 @@ sub _construct_tree ($) {
         if ($self->{t}->{tag_name} eq 'option') {
           pop @{$self->{open_elements}}
               if $self->{open_elements}->[-1]->[1] == OPTION_EL;
-
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           
           $self->{t} = $self->_get_next_token;
           next B;
@@ -4811,33 +4219,7 @@ sub _construct_tree ($) {
               if $self->{open_elements}->[-1]->[1] == OPTION_EL;
           pop @{$self->{open_elements}}
               if $self->{open_elements}->[-1]->[1] == OPTGROUP_EL;
-
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           
           $self->{t} = $self->_get_next_token;
           next B;
@@ -4904,32 +4286,7 @@ sub _construct_tree ($) {
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
           ## This is a "template start tag" code clone.
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           push @$active_formatting_elements, ['#marker', '', undef];
           delete $self->{frameset_ok}; # not ok
           push @{$self->{template_ims}},
@@ -5206,65 +4563,13 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'frameset' and
             $self->{insertion_mode} == IN_FRAMESET_IM) {
-          
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'frame' and
                  $self->{insertion_mode} == IN_FRAMESET_IM) {
-          
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($el);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
           pop @{$self->{open_elements}};
           delete $self->{self_closing};
           $self->{t} = $self->_get_next_token;
@@ -5362,7 +4667,14 @@ sub _construct_tree ($) {
       die "$0: $self->{insertion_mode}: Unknown insertion mode";
     }
 
-    ## "in body" insertion mode
+    ## The "in body" insertion mode, but also used for other insertion
+    ## modes that is "using the rules for" the "in body" insertion
+    ## mode.
+
+    ## The "foster parenting" flag is set when the insertion mode is
+    ## "in table", "in table body", or "in row".
+    local $self->{foster_parenting} = $self->{insertion_mode} & TABLE_IMS;
+
     if ($self->{t}->{type} == START_TAG_TOKEN) {
       if ($self->{t}->{tag_name} eq 'script') {
         
@@ -5376,32 +4688,7 @@ sub _construct_tree ($) {
         next B;
       } elsif ($self->{t}->{tag_name} eq 'template') {
         ## This is a "template start tag" code clone.
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         push @$active_formatting_elements, ['#marker', '', undef];
         delete $self->{frameset_ok}; # not ok
         push @{$self->{template_ims}},
@@ -5412,65 +4699,15 @@ sub _construct_tree ($) {
         base => 1, link => 1, basefont => 1, bgsound => 1,
       }->{$self->{t}->{tag_name}}) {
         
-        ## NOTE: This is an "as if in head" code clone, only "-t" differs
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        ## NOTE: This is an "as if in head" code clone
+        $self->_insert_el;
         pop @{$self->{open_elements}};
         delete $self->{self_closing};
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'meta') {
-        ## NOTE: This is an "as if in head" code clone, only "-t" differs
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        ## NOTE: This is an "as if in head" code clone
+        $self->_insert_el;
         my $meta_el = pop @{$self->{open_elements}};
 
         unless ($self->{confident}) {
@@ -5596,32 +4833,7 @@ sub _construct_tree ($) {
           splice @{$self->{open_elements}}, 1;
 
           ## 3. Insert.
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+          $self->_insert_el;
 
           ## 4. Switch.
           $self->{insertion_mode} = IN_FRAMESET_IM;
@@ -5686,32 +4898,7 @@ sub _construct_tree ($) {
         }
 
         ## 4. Insertion.
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         if ($self->{t}->{tag_name} eq 'pre' or $self->{t}->{tag_name} eq 'listing') {
           
           $self->{t} = $self->_get_next_token;
@@ -5807,32 +4994,7 @@ sub _construct_tree ($) {
         $self->_close_p;
 
         ## <li> 7. / <dt><dd> 8.
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         
         $self->{t} = $self->_get_next_token;
         next B;
@@ -5843,32 +5005,7 @@ sub _construct_tree ($) {
 
         $self->_close_p;
         
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         
         $self->{state} = PLAINTEXT_STATE;
           
@@ -5908,32 +5045,7 @@ sub _construct_tree ($) {
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
 
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         push_afe [$self->{open_elements}->[-1]->[0],
                   $self->{open_elements}->[-1]->[1],
                   $self->{t}]
@@ -5965,32 +5077,7 @@ sub _construct_tree ($) {
           }
         } # INSCOPE
         
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         push_afe [$self->{open_elements}->[-1]->[0],
                   $self->{open_elements}->[-1]->[1],
                   $self->{t}]
@@ -6026,34 +5113,7 @@ sub _construct_tree ($) {
             ->($self, $insert, $active_formatting_elements, $open_tables);
 
         ## 3.
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
-
-        ## TODO: associate with $self->{form_element} if defined
+        $self->_insert_el;
 
         ## 4.
         delete $self->{frameset_ok};
@@ -6125,91 +5185,16 @@ sub _construct_tree ($) {
           my $prompt_attr = delete $input_attrs->{prompt};
           $input_attrs->{name} = {name => 'name', value => 'isindex'};
 
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'form']);
-    
-        for my $attr_name (keys %{  $form_attrs}) {
-          my $attr_t =   $form_attrs->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{'form'} || 0];
-    }
-  
+          $self->_insert_el (undef, 'form', $form_attrs);
           # XXX If no |template| in $self->{open_elements}, set form element pointer
 
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'hr']);
-    
-        for my $attr_name (keys %{  +{}}) {
-          my $attr_t =   +{}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{'hr'} || 0];
-    }
-  
+          $self->_insert_el (undef, 'hr', {});
           pop @{$self->{open_elements}}; # <hr>
 
           $reconstruct_active_formatting_elements
               ->($self, $insert, $active_formatting_elements, $open_tables);
 
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'label']);
-    
-        for my $attr_name (keys %{  +{}}) {
-          my $attr_t =   +{}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{'label'} || 0];
-    }
-  
+          $self->_insert_el (undef, 'label', {});
 
           if ($prompt_attr) {
             $self->{open_elements}->[-1]->[0]->manakai_append_content
@@ -6220,32 +5205,7 @@ sub _construct_tree ($) {
                 ('This is a searchable index. Enter search keywords: ');
           }
 
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'input']);
-    
-        for my $attr_name (keys %{  $input_attrs}) {
-          my $attr_t =   $input_attrs->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{'input'} || 0];
-    }
-  
+          $self->_insert_el (undef, 'input', $input_attrs);
           pop @{$self->{open_elements}}; # <input>
 
           {
@@ -6256,32 +5216,7 @@ sub _construct_tree ($) {
 
           pop @{$self->{open_elements}}; # <label>
 
-          
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'hr']);
-    
-        for my $attr_name (keys %{  +{}}) {
-          my $attr_t =   +{}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{'hr'} || 0];
-    }
-  
+          $self->_insert_el (undef, 'hr', {});
           pop @{$self->{open_elements}}; # <hr>
 
           pop @{$self->{open_elements}}; # <form> (or some formatting element)
@@ -6292,32 +5227,7 @@ sub _construct_tree ($) {
         }
       } elsif ($self->{t}->{tag_name} eq 'textarea') {
         ## 1. Insert
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         
         ## Step 2 # XXX
         ## TODO: $self->{form_element} if defined
@@ -6348,32 +5258,7 @@ sub _construct_tree ($) {
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
 
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
 
         
         $self->{t} = $self->_get_next_token;
@@ -6404,32 +5289,7 @@ sub _construct_tree ($) {
           }
         } # INSCOPE
 
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
 
         
         $self->{t} = $self->_get_next_token;
@@ -6448,8 +5308,7 @@ sub _construct_tree ($) {
         ## "adjust foreign attributes" are performed in the
         ## |_insert_el| method.
         $self->_insert_el
-            ($self->{t},
-             $self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS);
+            ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS);
         
         if ($self->{self_closing}) {
           pop @{$self->{open_elements}};
@@ -6474,32 +5333,7 @@ sub _construct_tree ($) {
       } elsif ({
         param => 1, source => 1, track => 1, menuitem => 1,
       }->{$self->{t}->{tag_name}}) { ## Void elements only allowed in some elements
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
         pop @{$self->{open_elements}};
 
         delete $self->{self_closing};
@@ -6520,32 +5354,7 @@ sub _construct_tree ($) {
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
         
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (undef, [undef, $attr_name]);
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, $el_category->{$self->{t}->{tag_name}} || 0];
-    }
-  
+        $self->_insert_el;
 
         if ({
              applet => 1, marquee => 1, object => 1,
@@ -6849,7 +5658,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'br') {
-        
+        ## The "in body" insertion mode, </br>
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                         text => 'br', token => $self->{t});
 
@@ -6858,22 +5667,13 @@ sub _construct_tree ($) {
             ? $insert_to_foster : $insert_to_current;
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
-        
-        my $el;
-        
-      $el = $self->{document}->create_element_ns
-        (HTML_NS, [undef,  'br']);
-    
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-        $insert->($self, $el, $open_tables);
 
-        ## Acknowledge the token's self-closing flag - noop
+        $self->_insert_el (undef, 'br', {});
+        pop @{$self->{open_elements}}; # <br>
+        
+        delete $self->{self_closing};
 
-        delete $self->{frameset_ok};
+        delete $self->{frameset_ok}; # not ok
         
         $self->{t} = $self->_get_next_token;
         next B;
