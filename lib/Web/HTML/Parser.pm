@@ -673,8 +673,6 @@ sub _reset_insertion_mode ($) {
       if (defined $self->{inner_html_node}) {
         
         $node = $self->{inner_html_node};
-      } else {
-        die "_reset_insertion_mode: t27";
       }
     }
     
@@ -737,14 +735,11 @@ sub _reset_insertion_mode ($) {
     
     ## Step 15
     if ($node->[1] == HTML_EL) {
-      ## NOTE: Commented out in the spec (HTML5 revision 3894).
-      #unless (defined $self->{head_element}) {
-        
+      unless (defined $self->{head_element}) {
         $self->{insertion_mode} = BEFORE_HEAD_IM;
-      #} else {
-        
-      #  $self->{insertion_mode} = AFTER_HEAD_IM;
-      #}
+      } else {
+        $self->{insertion_mode} = AFTER_HEAD_IM;
+      }
       last LOOP;
     } else {
       
@@ -2834,24 +2829,31 @@ sub _construct_tree ($) {
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
           if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            ## As if </noscript>
+            ## The "in head noscript" insertion mode, anything else
+            ## (<template>)
+
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript', text => 'script',
                             token => $self->{t});
             pop @{$self->{open_elements}}; # <noscript>
           
             $self->{insertion_mode} = IN_HEAD_IM;
             ## Reprocess in the "in head" insertion mode...
+            #
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
+            ## The "after head" insertion mode, <template>
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
                             text => $self->{t}->{tag_name},
                             token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
-          } else {
-            
+            ## Process the token using the rules for the "in head"
+            ## insertion mode.
+            #
           }
 
-          ## This is a "template start tag" code clone.
+          ## The "in head" insertion mode, <template>
+
+          ## This is a variant of "template start tag" code clone.
           
     {
       my $el;
@@ -2880,8 +2882,13 @@ sub _construct_tree ($) {
   
           push @$active_formatting_elements, ['#marker', '', undef];
           delete $self->{frameset_ok}; # not ok
+
+          splice @{$self->{open_elements}}, -2, 1 # <head>
+              if ($self->{insertion_mode} & IM_MASK) == AFTER_HEAD_IM;
+
           push @{$self->{template_ims}},
               $self->{insertion_mode} = IN_TEMPLATE_IM;
+
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'body' or
