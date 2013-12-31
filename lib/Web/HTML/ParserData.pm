@@ -210,6 +210,18 @@ our $SVGElementNameFixup = {
   textpath => 'textPath',  
 }; # $SVGElementNameFixup
 
+our $ForeignAttrNameToArgs = {};
+for (keys %$ForeignAttrNamespaceFixup) {
+  $ForeignAttrNameToArgs->{(SVG_NS)}->{$_} = $ForeignAttrNamespaceFixup->{$_};
+  $ForeignAttrNameToArgs->{(MML_NS)}->{$_} = $ForeignAttrNamespaceFixup->{$_};
+}
+for (keys %$SVGAttrNameFixup) {
+  $ForeignAttrNameToArgs->{(SVG_NS)}->{$_} = [undef, [undef, $SVGAttrNameFixup->{$_}]];
+}
+for (keys %$MathMLAttrNameFixup) {
+  $ForeignAttrNameToArgs->{(MML_NS)}->{$_} = [undef, [undef, $MathMLAttrNameFixup->{$_}]];
+}
+
 ## ------ Character references ------
 
 require Web::HTML::_NamedEntityList;

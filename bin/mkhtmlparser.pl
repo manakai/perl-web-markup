@@ -26,23 +26,6 @@ while (<>) {
   }ge;
   s{!!!ack\s*(?>\([^)]*\)\s*)?;}{q{delete $self->{self_closing};}}ge;
   s{!!!ack-later\s*(?>\([^)]*\)\s*)?;}{}ge;
-  s{!!!insert-element-f\s*\(([^(),]+),([^(),]+),([^(),]+),([^(),]+)\)\s*;}{qq{
-    {
-      my \$el;
-      !!!create-element (\$el, $1, $2, $3, $4);
-      \$insert->(\$self, \$el, \$open_tables);
-      push \@{\$self->{open_elements}}, [\$el, (\$el_category_f->{$1}->{$2} || 0) | FOREIGN_EL | (($1) eq SVG_NS ? SVG_EL : ($1) eq MML_NS ? MML_EL : 0)];
-
-      if ($3\->{xmlns} and $3\->{xmlns}->{value} ne ($1)) {
-        !!!parse-error (type => 'bad namespace', token => $4);
-## TODO: Error type documentation
-      }
-      if ($3\->{'xmlns:xlink'} and
-          $3\->{'xmlns:xlink'}->{value} ne q<http://www.w3.org/1999/xlink>) {
-        !!!parse-error (type => 'bad namespace', token => $4);
-      }
-    }
-  }}ge;
   s{!!!insert-element-t\s*\(([^(),]+),([^(),]+),([^(),]+)\)\s*;}{qq{
     {
       my \$el;

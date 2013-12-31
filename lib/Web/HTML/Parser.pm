@@ -1498,6 +1498,192 @@ sub _close_p ($;$) {
   }
 } # _close_p
 
+sub _insert_el ($$;$) {
+  my ($self, $token, $nsurl) = @_;
+
+  ## Insert an HTML element
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-an-html-element>.
+
+  ## Insert a foreign element
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-a-foreign-element>.
+
+  ## 1. Appropriate place for inserting a node
+  my $adjusted_parent;
+  my $adjusted_ref;
+  {
+    ## The appropriate place for inserting a node
+    ## <http://www.whatwg.org/specs/web-apps/current-work/#appropriate-place-for-inserting-a-node>.
+    
+    ## 1.
+    my $target = $self->{open_elements}->[-1]; ## Current node
+
+    ## 2.
+    if ($self->{foster_parenting} and $target->[1] & TABLE_ROWS_EL) {
+      my $last_template_i;
+      my $last_table_i;
+      OE: for (reverse 0..$#{$self->{open_elements}}) {
+        if ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
+          ## 1.
+          $last_template_i = $_;
+        } elsif ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
+          ## 2.
+          $last_table_i = $_;
+        }
+      } # OE
+
+      if (defined $last_template_i and
+          (not defined $last_table_i or $last_template_i > $last_table_i)) {
+        ## 3.
+        $adjusted_parent = $self->{open_elements}->[$last_template_i]->[0];
+            ## ->content (See the TEMPLATE line below.)
+        $adjusted_ref = undef;
+      } elsif (not defined $last_table_i) {
+        ## 4.
+        $adjusted_parent = $self->{open_elements}->[0]->[0];
+        $adjusted_ref = undef;
+      } else {
+        ## 5.
+        $adjusted_ref = $self->{open_elements}->[$last_table_i]->[0];
+        $adjusted_parent = $adjusted_ref->parent_node; ## "parent element" in the spec, which seems wrong
+
+        unless (defined $adjusted_parent) {
+          ## 6.-7.
+          $adjusted_parent = $self->{open_elements}->[$last_table_i - 1]->[0];
+          $adjusted_ref = undef;
+        }
+      }
+    } else {
+      ## Otherwise
+      $adjusted_parent = $target->[0];
+      $adjusted_ref = undef;
+    }
+
+    ## 3.
+    ## ->content - skipped (see the TEMPLATE line below)
+
+    ## 4.
+    #return ($adjusted_parent, $adjusted_ref);
+  }
+
+  ## 2.
+  my $el;
+  {
+    ## Create an element for a token
+    ## <http://www.whatwg.org/specs/web-apps/current-work/#create-an-element-for-the-token>.
+
+    ## 1.
+    my $od = $adjusted_parent->owner_document; # intended parent
+    my $orig_strict = $od->strict_error_checking;
+    $od->strict_error_checking (0) if $orig_strict;
+
+    if (defined $nsurl) { ## $nsurl is SVG_NS or MML_NS
+      ## Tag name fixup in foreign content, any other start tag
+      my $ln = $nsurl eq SVG_NS ? $Web::HTML::ParserData::SVGElementNameFixup->{$token->{tag_name}} || $token->{tag_name} : $token->{tag_name};
+
+      $el = [
+        $od->create_element_ns ($nsurl, [undef, $ln]),
+        (($el_category_f->{$nsurl}->{$ln} || 0) |
+         FOREIGN_EL |
+         ($nsurl eq SVG_NS ? SVG_EL : $nsurl eq MML_NS ? MML_EL : 0)),
+      ];
+
+      for my $attr_name (keys %{$token->{attributes}}) {
+        my $attr_t = $token->{attributes}->{$attr_name};
+
+        ## "adjust SVG attributes" (SVG only)
+        ## "adjust MathML attributes" (MathML only)
+        ## "adjust foreign attributes"
+        my $args = $Web::HTML::ParserData::ForeignAttrNameToArgs->{$nsurl}->{$attr_name}
+            || [undef, [undef, $attr_name]];
+
+        my $attr = $od->create_attribute_ns (@$args);
+        $attr->value ($attr_t->{value});
+        $attr->set_user_data (manakai_source_line => $attr_t->{line});
+        $attr->set_user_data (manakai_source_column => $attr_t->{column});
+        $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+        $el->[0]->set_attribute_node_ns ($attr);
+      } # $attr_name
+
+      ## 2.
+      if ($token->{attributes}->{xmlns} and
+          $token->{attributes}->{xmlns}->{value} ne $nsurl) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $token); # XXXdoc
+      }
+      if ($token->{attributes}->{'xmlns:xlink'} and
+          $token->{attributes}->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $token);
+      }
+
+      ## 3.
+      ## Reset - not applicable
+
+      ## 4.
+      ## Form association - not applicable
+    } else { ## HTML namespace
+      $el = [
+        $od->create_element ($token->{tag_name}),
+        $el_category->{$token->{tag_name}} || 0,
+      ];
+
+      for my $attr_name (keys %{$token->{attributes}}) {
+        my $attr_t = $token->{attributes}->{$attr_name};
+        my $attr = $od->create_attribute ($attr_name);
+        $attr->value ($attr_t->{value});
+        $attr->set_user_data (manakai_source_line => $attr_t->{line});
+        $attr->set_user_data (manakai_source_column => $attr_t->{column});
+        $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+        $el->[0]->set_attribute_node_ns ($attr);
+      } # $attr_name
+
+      ## 2.
+      ## Namespace attributes - not applicable
+
+      ## 3.
+      # XXX if resettable, reset
+
+      ## 4.
+      # XXX if form-associated, associate form
+    } # $nsurl
+    $el->[0]->set_user_data (manakai_source_line => $token->{line})
+        if defined $token->{line};
+    $el->[0]->set_user_data (manakai_source_column => $token->{column})
+        if defined $token->{column};
+
+    $od->strict_error_checking (1) if $orig_strict;
+
+    ## 5.
+    #return $el;
+  }
+
+  ## 3.
+  ## TEMPLATE - If the element were inserted into an HTML |template|
+  ## element, it is inserted into the template content instead.
+  my $err;
+  if (defined $adjusted_ref) {
+    local $@;
+    $adjusted_parent = $adjusted_parent->content
+        if $adjusted_parent->node_type == 1 and # ELEMENT_NODE
+           $adjusted_parent->manakai_element_type_match (HTML_NS, 'template');
+    eval { $adjusted_parent->insert_before ($el->[0], $adjusted_ref) };
+  } else {
+    local $@;
+    eval { $adjusted_parent->manakai_append_content ($el->[0]) };
+    $err = $@;
+  }
+  ## <table><script>document.replaceChild (document.getElementsByTagName('table')[0], document.documentElement);</script>abc
+  if ($err and
+      not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
+           $err->name eq 'HierarchyRequestError')) {
+    die $err;
+  }
+
+  ## 4.
+  push @{$self->{open_elements}}, $el;
+
+  ## 5.
+  return $el;
+} # _insert_el
+
 sub _construct_tree ($) {
   my $self = $_[0];
 
@@ -1958,61 +2144,10 @@ sub _construct_tree ($) {
             ? $self->{inner_html_node} : $self->{open_elements}->[-1])
                 ->[0]->namespace_uri;
 
-        my $tag_name = $self->{t}->{tag_name};
-        if ($nsuri eq SVG_NS) {
-          $tag_name = $Web::HTML::ParserData::SVGElementNameFixup
-              ->{$tag_name} || $tag_name;
-        }
-
-        ## "adjust SVG attributes" (SVG only) - done in insert-element-f
-
-        ## "adjust foreign attributes" - done in insert-element-f
-
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        ($nsuri, [undef,   $tag_name]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (
-          @{
-            $foreign_attr_xname->{$attr_name} ||
-            [undef, [undef,
-                     ($nsuri) eq SVG_NS ?
-                         ($svg_attr_name->{$attr_name} || $attr_name) :
-                     ($nsuri) eq MML_NS ?
-                         ($mml_attr_name->{$attr_name} || $attr_name) :
-                         $attr_name]]
-          }
-        );
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, ($el_category_f->{$nsuri}->{ $tag_name} || 0) | FOREIGN_EL | (($nsuri) eq SVG_NS ? SVG_EL : ($nsuri) eq MML_NS ? MML_EL : 0)];
-
-      if ( $self->{t}->{attributes}->{xmlns} and  $self->{t}->{attributes}->{xmlns}->{value} ne ($nsuri)) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
-## TODO: Error type documentation
-      }
-      if ( $self->{t}->{attributes}->{'xmlns:xlink'} and
-           $self->{t}->{attributes}->{'xmlns:xlink'}->{value} ne q<http://www.w3.org/1999/xlink>) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
-      }
-    }
-  
+        ## Adjusting of tag name, "adjust SVG attributes" (SVG only),
+        ## and "adjust foreign attributes" are performed in the
+        ## |_insert_el| method.
+        $self->_insert_el ($self->{t}, $nsuri);
 
         if ($self->{self_closing}) {
           pop @{$self->{open_elements}}; # XXX Also, if $tag_name is 'script', run script
@@ -6301,68 +6436,24 @@ sub _construct_tree ($) {
         redo B;
       } elsif ($self->{t}->{tag_name} eq 'math' or
                $self->{t}->{tag_name} eq 'svg') {
+        local $self->{foster_parenting}
+            ||= $self->{insertion_mode} & TABLE_IMS;
+
         my $insert = $self->{insertion_mode} & TABLE_IMS
             ? $insert_to_foster : $insert_to_current;
         $reconstruct_active_formatting_elements
             ->($self, $insert, $active_formatting_elements, $open_tables);
 
-        ## "Adjust MathML attributes" ('math' only) - done in insert-element-f
-
-        ## "adjust SVG attributes" ('svg' only) - done in insert-element-f
-
-        ## "adjust foreign attributes" - done in insert-element-f
-        
-        
-    {
-      my $el;
-      
-      $el = $self->{document}->create_element_ns
-        ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS, [undef,   $self->{t}->{tag_name}]);
-    
-        for my $attr_name (keys %{  $self->{t}->{attributes}}) {
-          my $attr_t =   $self->{t}->{attributes}->{$attr_name};
-          my $attr = $self->{document}->create_attribute_ns (
-          @{
-            $foreign_attr_xname->{$attr_name} ||
-            [undef, [undef,
-                     ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq SVG_NS ?
-                         ($svg_attr_name->{$attr_name} || $attr_name) :
-                     ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq MML_NS ?
-                         ($mml_attr_name->{$attr_name} || $attr_name) :
-                         $attr_name]]
-          }
-        );
-          $attr->value ($attr_t->{value});
-          $attr->set_user_data (manakai_source_line => $attr_t->{line});
-          $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-          $el->set_attribute_node_ns ($attr);
-        }
-      
-        $el->set_user_data (manakai_source_line => $self->{t}->{line})
-            if defined $self->{t}->{line};
-        $el->set_user_data (manakai_source_column => $self->{t}->{column})
-            if defined $self->{t}->{column};
-      
-      $insert->($self, $el, $open_tables);
-      push @{$self->{open_elements}}, [$el, ($el_category_f->{$self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS}->{ $self->{t}->{tag_name}} || 0) | FOREIGN_EL | (($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq SVG_NS ? SVG_EL : ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS) eq MML_NS ? MML_EL : 0)];
-
-      if ( $self->{t}->{attributes}->{xmlns} and  $self->{t}->{attributes}->{xmlns}->{value} ne ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS)) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
-## TODO: Error type documentation
-      }
-      if ( $self->{t}->{attributes}->{'xmlns:xlink'} and
-           $self->{t}->{attributes}->{'xmlns:xlink'}->{value} ne q<http://www.w3.org/1999/xlink>) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token =>  $self->{t});
-      }
-    }
-  
+        ## "adjust MathML attributes", "adjust SVG attributes", and
+        ## "adjust foreign attributes" are performed in the
+        ## |_insert_el| method.
+        $self->_insert_el
+            ($self->{t},
+             $self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS);
         
         if ($self->{self_closing}) {
           pop @{$self->{open_elements}};
           delete $self->{self_closing};
-        } else {
-          
         }
 
         $self->{t} = $self->_get_next_token;
