@@ -20,26 +20,27 @@ sub SVG_NS () { q<http://www.w3.org/2000/svg> }
 
 ## Element categories
 
-## Bits 15-19
-sub BUTTON_SCOPING_EL () { 0b1_0000000000000000000 } ## Special
-sub SPECIAL_EL () { 0b1_000000000000000000 }         ## Special
-sub SCOPING_EL () { 0b1_00000000000000000 }          ## Special
-sub FORMATTING_EL () { 0b1_0000000000000000 }        ## Formatting
-sub PHRASING_EL () { 0b1_000000000000000 }           ## Ordinary
+## Bits 16-20
+sub BUTTON_SCOPING_EL () { 0b1_00000000000000000000 } ## Special
+sub SPECIAL_EL () { 0b1_0000000000000000000 }         ## Special
+sub SCOPING_EL () { 0b1_000000000000000000 }          ## Special
+sub FORMATTING_EL () { 0b1_00000000000000000 }        ## Formatting
+sub PHRASING_EL () { 0b1_0000000000000000 }           ## Ordinary
 
-## Bits 11-14
-sub SVG_EL () { 0b1_00000000000000 }
-sub MML_EL () { 0b1_0000000000000 }
-#sub FOREIGN_EL () { 0b1_000000000000 } # see Web::HTML::Tokenizer
-sub FOREIGN_FLOW_CONTENT_EL () { 0b1_00000000000 }
+## Bits 12-15
+sub SVG_EL () { 0b1_000000000000000 }
+sub MML_EL () { 0b1_00000000000000 }
+#sub FOREIGN_EL () { 0b1_0000000000000 } # see Web::HTML::Defs
+sub FOREIGN_FLOW_CONTENT_EL () { 0b1_000000000000 }
 
-## Bits 7-10
-sub TABLE_SCOPING_EL () { 0b1_0000000000 }
-sub TABLE_ROWS_SCOPING_EL () { 0b1_000000000 }
-sub TABLE_ROW_SCOPING_EL () { 0b1_00000000 }
-sub TABLE_ROWS_EL () { 0b1_0000000 }
+## Bits 8-11
+sub TABLE_SCOPING_EL () { 0b1_00000000000 }
+sub TABLE_ROWS_SCOPING_EL () { 0b1_0000000000 }
+sub TABLE_ROW_SCOPING_EL () { 0b1_000000000 }
+sub TABLE_ROWS_EL () { 0b1_00000000 }
 
-## Bit 6
+## Bit 6-7
+sub LIST_CONTAINER_EL () { 0b1_0000000 }
 sub ADDRESS_DIV_P_EL () { 0b1_000000 }
 
 ## NOTE: Used in </body> and EOF algorithms.
@@ -73,6 +74,11 @@ sub DTDD_EL () {
   END_TAG_OPTIONAL_EL |
   ALL_END_TAG_OPTIONAL_EL |
   0b0010
+}
+sub ULOL_EL () {
+  SPECIAL_EL |
+  LIST_CONTAINER_EL |
+  0b0001
 }
 sub LI_EL () {
   SPECIAL_EL |
@@ -250,7 +256,7 @@ my $el_category = {
   noframes => MISC_SPECIAL_EL,
   noscript => MISC_SPECIAL_EL,
   object => MISC_SCOPING_EL,
-  ol => MISC_SPECIAL_EL,
+  ol => ULOL_EL,
   optgroup => OPTGROUP_EL,
   option => OPTION_EL,
   p => P_EL,
@@ -283,7 +289,7 @@ my $el_category = {
   track => MISC_SPECIAL_EL,
   tt => FORMATTING_EL,
   u => FORMATTING_EL,
-  ul => MISC_SPECIAL_EL,
+  ul => ULOL_EL,
   wbr => MISC_SPECIAL_EL,
   xmp => MISC_SPECIAL_EL,
   ## When an element is added to the "special" category, add a test
@@ -725,7 +731,7 @@ sub _reset_insertion_mode ($) {
         table => IN_TABLE_IM,
         body => IN_BODY_IM,
         frameset => IN_FRAMESET_IM,
-      }->{$node->[0]->manakai_local_name};
+      }->{$node->[0]->local_name};
     }
     $self->{insertion_mode} = $new_mode and last LOOP if defined $new_mode;
     
@@ -1952,7 +1958,7 @@ sub _construct_tree ($) {
   
 
         if ($self->{self_closing}) {
-          pop @{$self->{open_elements}};
+          pop @{$self->{open_elements}}; # XXX Also, if $tag_name is 'script', run script
           delete $self->{self_closing};
         } else {
           
@@ -3251,37 +3257,56 @@ sub _construct_tree ($) {
           td => 1, tfoot => 1, th => 1, thead => 1, tr => 1,
         }->{$self->{t}->{tag_name}}) {
           if (($self->{insertion_mode} & IM_MASK) == IN_CELL_IM) {
-                ## have an element in table scope
-                for (reverse 0..$#{$self->{open_elements}}) {
-                  my $node = $self->{open_elements}->[$_];
-                  if ($node->[1] == TABLE_CELL_EL) {
-                    
+            ## The "in cell" insertion mode, start tag of table
+            ## elements.
 
-                    ## Close the cell
-                    
-      $self->{t}->{self_closing} = $self->{self_closing};
-      unshift @{$self->{token}}, $self->{t};
-      delete $self->{self_closing};
-     # <x>
-                    $self->{t} = {type => END_TAG_TOKEN,
-                              tag_name => $node->[0]->manakai_local_name,
-                              line => $self->{t}->{line},
-                              column => $self->{t}->{column}};
-                    next B;
-                  } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    
-                    ## ISSUE: This case can never be reached, maybe.
-                    last;
-                  }
-                }
+            ## have a |td| or |th| element in table scope
+            my $i;
+            OE: for (reverse 0..$#{$self->{open_elements}}) {
+              if ($self->{open_elements}->[$_]->[1] == TABLE_CELL_EL) {
+                $i = $_;
+                last OE;
+              } elsif ($self->{open_elements}->[$_]->[1] & TABLE_SCOPING_EL) {
+                last OE;
+              }
+            } # OE
+            unless (defined $i) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in cell',
+                              value => $self->{t}->{tag_name},
+                              token => $self->{t});
+              ## Ignore the token
+              
+              $self->{t} = $self->_get_next_token;
+              next B;
+            }
 
-                
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'start tag not allowed',
-                    text => $self->{t}->{tag_name}, token => $self->{t});
-                ## Ignore the token
-                
-                $self->{t} = $self->_get_next_token;
-                next B;
+            ## Close the cell (There are two similar but different
+            ## "close the cell" implementations).
+
+            ## 1.
+            pop @{$self->{open_elements}}
+                while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+
+            ## 2.
+            unless ($self->{open_elements}->[-1]->[1] == TABLE_CELL_EL) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                              text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                              value => $self->{t}->{tag_name}, # actual
+                              token => $self->{t});
+            }
+
+            ## 3.
+            splice @{$self->{open_elements}}, $i;
+
+            ## 4.
+            $clear_up_to_marker->($active_formatting_elements);
+
+            ## 5.
+            $self->{insertion_mode} = IN_ROW_IM;
+
+            ## Reprocess the token.
+            next B;
+
           } elsif (($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
             ## The "in caption" insertion mode, <caption> <col>
             ## <colgroup> <tbody> <td> <tfoot> <th> <thead> <tr>
@@ -3354,7 +3379,7 @@ sub _construct_tree ($) {
 
             unless (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
                     $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name}) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
                               text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                               value => $self->{t}->{tag_name}, # actual
                               token => $self->{t});
@@ -3440,50 +3465,51 @@ sub _construct_tree ($) {
                 
                 #
               }
-            } elsif ({
-                      table => 1, tbody => 1, tfoot => 1, 
-                      thead => 1, tr => 1,
-                     }->{$self->{t}->{tag_name}} and
-                     ($self->{insertion_mode} & IM_MASK) == IN_CELL_IM) {
-              ## have an element in table scope
-              my $i;
-              my $tn;
-              INSCOPE: {
-                for (reverse 0..$#{$self->{open_elements}}) {
-                  my $node = $self->{open_elements}->[$_];
-                  if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-                    
-                    $i = $_;
+        } elsif (($self->{insertion_mode} & IM_MASK) == IN_CELL_IM and {
+          table => 1, tbody => 1, tfoot => 1, thead => 1, tr => 1,
+        }->{$self->{t}->{tag_name}}) {
+          ## The "in cell" insertion mode, table end tags.
 
-                    ## Close the cell
-                    
-      $self->{t}->{self_closing} = $self->{self_closing};
-      unshift @{$self->{token}}, $self->{t};
-      delete $self->{self_closing};
-     # </x>
-                    $self->{t} = {type => END_TAG_TOKEN, tag_name => $tn,
-                              line => $self->{t}->{line},
-                              column => $self->{t}->{column}};
-                    next B;
-                  } elsif ($node->[1] == TABLE_CELL_EL) {
-                    
-                    $tn = $node->[0]->manakai_local_name;
-                    ## NOTE: There is exactly one |td| or |th| element
-                    ## in scope in the stack of open elements by definition.
-                  } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                    ## ISSUE: Can this be reached?
-                    
-                    last;
-                  }
-                }
+          ## have an element in table scope
+          my $i;
+          OE: for (reverse 0..$#{$self->{open_elements}}) {
+            if (not ($self->{open_elements}->[$_]->[1] & FOREIGN_EL) and
+                $self->{open_elements}->[$_]->[0]->local_name eq $self->{t}->{tag_name}) {
+              $i = $_;
+              last OE;
+            } elsif ($self->{open_elements}->[$_]->[1] & TABLE_SCOPING_EL) {
+              last OE;
+            }
+          } # OE
 
-                
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                    text => $self->{t}->{tag_name}, token => $self->{t});
-                ## Ignore the token
-                $self->{t} = $self->_get_next_token;
-                next B;
-              } # INSCOPE
+          ## Close the cell (There are two similar but different
+          ## "close the cell" implementations).
+
+          ## 1.
+          pop @{$self->{open_elements}}
+              while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+
+          ## 2.
+          unless ($self->{open_elements}->[-1]->[1] == TABLE_CELL_EL) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                            text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                            value => $self->{t}->{tag_name}, # actual
+                            token => $self->{t});
+          }
+
+          ## 3.
+          pop @{$self->{open_elements}}
+              while $self->{open_elements}->[-1]->[1] != TABLE_CELL_EL;
+          pop @{$self->{open_elements}}; # <td> or <th>
+
+          ## 4.
+          $clear_up_to_marker->($active_formatting_elements);
+
+          ## 5.
+          $self->{insertion_mode} = IN_ROW_IM;
+
+          ## Reprocess the token.
+          next B;
         } elsif ($self->{t}->{tag_name} eq 'table' and
                  ($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
           ## The "in caption" insertion mode, </table>
@@ -4308,43 +4334,41 @@ sub _construct_tree ($) {
             #
           } # in row
 
-              ## have an element in table scope
-              my $i;
-              INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
-                my $node = $self->{open_elements}->[$_];
-                if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-                  
-                  $i = $_;
-                  last INSCOPE;
-                } elsif ($node->[1] & TABLE_SCOPING_EL) {
-                  
-                  last INSCOPE;
-                }
-              } # INSCOPE
-              unless (defined $i) {
-                
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                                text => $self->{t}->{tag_name}, token => $self->{t});
-                ## Ignore the token
-                
-                $self->{t} = $self->_get_next_token;
-                next B;
-              }
+          ## The "in table body" insertion mode, </tbody> </thead>
+          ## </tfoot>
 
-              ## Clear back to table body context
-              while (not ($self->{open_elements}->[-1]->[1]
-                              & TABLE_ROWS_SCOPING_EL)) {
-                
-## ISSUE: Can this case be reached?
-                pop @{$self->{open_elements}};
-              }
+          ## have an element in table scope
+          my $i;
+          INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
+            my $node = $self->{open_elements}->[$_];
+            if (not ($node->[1] & FOREIGN_EL) and
+                $node->[0]->local_name eq $self->{t}->{tag_name}) {
+              $i = $_;
+              last INSCOPE;
+            } elsif ($node->[1] & TABLE_SCOPING_EL) {
+              last INSCOPE;
+            }
+          } # INSCOPE
+          unless (defined $i) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                            text => $self->{t}->{tag_name},
+                            token => $self->{t});
+            ## Ignore the token.
+            
+            $self->{t} = $self->_get_next_token;
+            next B;
+          }
 
-              pop @{$self->{open_elements}};
-              $self->{insertion_mode} = IN_TABLE_IM;
-              
-              $self->{t} = $self->_get_next_token;
-              next B;
-            } elsif ({
+          ## Clear back to table body context
+          pop @{$self->{open_elements}}
+              while not ($self->{open_elements}->[-1]->[1] & TABLE_ROWS_SCOPING_EL);
+
+          pop @{$self->{open_elements}}; # <tbody> <thead> <tfoot>
+          $self->{insertion_mode} = IN_TABLE_IM;
+          
+          $self->{t} = $self->_get_next_token;
+          next B;
+        } elsif ({
                       body => 1, caption => 1, col => 1, colgroup => 1,
                       html => 1, td => 1, th => 1,
                       tr => 1, # $self->{insertion_mode} == IN_ROW_IM
@@ -5441,7 +5465,7 @@ sub _construct_tree ($) {
              h4 => 1, h5 => 1, h6 => 1}->{$self->{t}->{tag_name}}) {
           if ($self->{open_elements}->[-1]->[1] == HEADING_EL) {
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
-                            text => $self->{open_elements}->[-1]->[0]->manakai_local_name,
+                            text => $self->{open_elements}->[-1]->[0]->local_name,
                             token => $self->{t});
             pop @{$self->{open_elements}};
           }
@@ -6481,9 +6505,6 @@ sub _construct_tree ($) {
         next B;
 
       } elsif ({
-        ## "In body" insertion mode, end tags for non-phrasing flow
-        ## content elements.
-
                 address => 1, article => 1, aside => 1, blockquote => 1,
                 center => 1,
                 #datagrid => 1,
@@ -6498,86 +6519,73 @@ sub _construct_tree ($) {
                 dd => 1, dt => 1, li => 1,
 
                 applet => 1, button => 1, marquee => 1, object => 1,
-               }->{$self->{t}->{tag_name}}) {
-        ## XXXgeneraetetoken
-        ## NOTE: Code for <li> start tags includes "as if </li>" code.
-        ## Code for <dt> or <dd> start tags includes "as if </dt> or
-        ## </dd>" code.
+      }->{$self->{t}->{tag_name}}) {
+        ## The "in body" insertion mode, end tags for non-phrasing
+        ## flow content elements.
 
         ## has an element in scope
+        my $scoping = $self->{t}->{tag_name} eq 'li'
+            ? SCOPING_EL | LIST_CONTAINER_EL : SCOPING_EL;
         my $i;
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
-          if ($node->[0]->manakai_local_name eq $self->{t}->{tag_name}) {
-            
+          if (not ($node->[1] & FOREIGN_EL) and
+              $node->[0]->local_name eq $self->{t}->{tag_name}) {
             $i = $_;
             last INSCOPE;
-          } elsif ($node->[1] & SCOPING_EL) {
-            
-            last INSCOPE;
-          } elsif ($self->{t}->{tag_name} eq 'li' and
-                   {ul => 1, ol => 1}->{$node->[0]->manakai_local_name}) {
-            ## Has an element in list item scope
-            
+          } elsif ($node->[1] & $scoping) {
             last INSCOPE;
           }
         } # INSCOPE
-
-        unless (defined $i) { # has an element in scope
-          
+        unless (defined $i) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                          text => $self->{t}->{tag_name}, token => $self->{t});
-          ## NOTE: Ignore the token.
-        } else {
-          ## Step 1. generate implied end tags
-          while ({
-                  ## END_TAG_OPTIONAL_EL
-                  dd => ($self->{t}->{tag_name} ne 'dd'),
-                  dt => ($self->{t}->{tag_name} ne 'dt'),
-                  li => ($self->{t}->{tag_name} ne 'li'),
-                  option => 1,
-                  optgroup => 1,
-                  p => 1,
-                  rt => 1,
-                  rp => 1,
-                 }->{$self->{open_elements}->[-1]->[0]->manakai_local_name}) {
-            
-            pop @{$self->{open_elements}};
-          }
-
-          ## Step 2.
-          if ($self->{open_elements}->[-1]->[0]->manakai_local_name
-                  ne $self->{t}->{tag_name}) {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
-                            text => $self->{open_elements}->[-1]->[0]
-                                ->manakai_local_name,
-                            token => $self->{t});
-          } else {
-            
-          }
-
-          ## Step 3.
-          splice @{$self->{open_elements}}, $i;
-
-          ## Step 4.
-          $clear_up_to_marker->($active_formatting_elements)
-              if {
-                applet => 1, marquee => 1, object => 1,
-              }->{$self->{t}->{tag_name}};
+                          text => $self->{t}->{tag_name},
+                          token => $self->{t});
+          ## Ignore the token.
+          $self->{t} = $self->_get_next_token;
+          next B;
         }
+
+        ## Step 1. Generate implied end tags
+        pop @{$self->{open_elements}}
+            while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL and
+                  not (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
+                       $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name});
+
+        ## Step 2.
+        unless (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
+                $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+                          text => $self->{open_elements}->[-1]->[0]->local_name,
+                          token => $self->{t});
+        }
+
+        ## Step 3.
+        splice @{$self->{open_elements}}, $i;
+
+        ## Step 4.
+        $clear_up_to_marker->($active_formatting_elements)
+            if {
+              applet => 1, marquee => 1, object => 1,
+            }->{$self->{t}->{tag_name}};
+
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'form') {
-        ## NOTE: As normal, but interacts with the form element pointer
+        ## The "in body" insertion mode, </form>
 
+        # XXX template
+
+        # XXX 1.
+
+        ## 2.
         undef $self->{form_element};
 
-        ## has an element in scope
+        ## 3. has an element in scope
         my $i;
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
-          if ($node->[1] == FORM_EL) {
+          if ($node->[1] == FORM_EL) { # XXX
             
             $i = $_;
             last INSCOPE;
@@ -6586,80 +6594,72 @@ sub _construct_tree ($) {
             last INSCOPE;
           }
         } # INSCOPE
-
-        unless (defined $i) { # has an element in scope
-          
+        unless (defined $i) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                          text => $self->{t}->{tag_name}, token => $self->{t});
-          ## NOTE: Ignore the token.
-        } else {
-          ## Step 1. generate implied end tags
-          while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL) {
-            
-            pop @{$self->{open_elements}};
-          }
-          
-          ## Step 2. 
-          if ($self->{open_elements}->[-1]->[0]->manakai_local_name
-                  ne $self->{t}->{tag_name}) {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
-                            text => $self->{open_elements}->[-1]->[0]
-                                ->manakai_local_name,
-                            token => $self->{t});
-          } else {
-            
-          }  
-          
-          ## Step 3.
-          splice @{$self->{open_elements}}, $i;
+                          text => $self->{t}->{tag_name},
+                          token => $self->{t});
+          ## Ignore the token.
+          $self->{t} = $self->_get_next_token;
+          next B;
         }
+
+        ## 4. generate implied end tags
+        pop @{$self->{open_elements}}
+            while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+        
+        ## 5.
+        if ($self->{open_elements}->[-1]->[0]->manakai_local_name ne $self->{t}->{tag_name}) { # XXX
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                          text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                          value => $self->{t}->{tag_name}, # actual
+                          token => $self->{t});
+        }
+
+        ## 6.
+        splice @{$self->{open_elements}}, $i;
 
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
-                ## NOTE: As normal, except acts as a closer for any ...
-                h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1,
-               }->{$self->{t}->{tag_name}}) {
+        h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1,
+      }->{$self->{t}->{tag_name}}) {
+        ## The "in body" insertion mode, <hn>
+
         ## has an element in scope
         my $i;
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == HEADING_EL) {
-            
             $i = $_;
             last INSCOPE;
           } elsif ($node->[1] & SCOPING_EL) {
-            
             last INSCOPE;
           }
         } # INSCOPE
-
-        unless (defined $i) { # has an element in scope
-          
+        unless (defined $i) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                          text => $self->{t}->{tag_name}, token => $self->{t});
-          ## NOTE: Ignore the token.
-        } else {
-          ## Step 1. generate implied end tags
-          while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL) {
-            
-            pop @{$self->{open_elements}};
-          }
-          
-          ## Step 2.
-          if ($self->{open_elements}->[-1]->[0]->manakai_local_name
-                  ne $self->{t}->{tag_name}) {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                            text => $self->{t}->{tag_name}, token => $self->{t});
-          } else {
-            
-          }
-
-          ## Step 3.
-          splice @{$self->{open_elements}}, $i;
+                          text => $self->{t}->{tag_name},
+                          token => $self->{t});
+          ## Ignore the token.
+          $self->{t} = $self->_get_next_token;
+          next B;
         }
+
+        ## Step 1. generate implied end tags
+        pop @{$self->{open_elements}}
+            while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+        
+        ## Step 2.
+        unless (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
+                $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                          text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                          value => $self->{t}->{tag_name}, # actual
+                          token => $self->{t});
+        }
+
+        ## Step 3.
+        splice @{$self->{open_elements}}, $i;
         
         $self->{t} = $self->_get_next_token;
         next B;
@@ -6715,76 +6715,66 @@ sub _construct_tree ($) {
         next B;
       } else {
         if ($self->{t}->{tag_name} eq 'sarcasm') {
-          sleep 0.001; # take a deep breath
+          ## Take a deep breath
         }
 
-        ## Step 1
+        ## The "in body" insertion mode, any other end tag
+
+        ## 1.
         my $node_i = -1;
         my $node = $self->{open_elements}->[$node_i];
 
-        ## Step 2
+        ## 2. Loop
         LOOP: {
-          my $node_tag_name = $node->[0]->manakai_local_name;
-          $node_tag_name =~ tr/A-Z/a-z/; # for SVG camelCase tag names
-          if ($node_tag_name eq $self->{t}->{tag_name}) {
-            ## Step 1
-            ## generate implied end tags
+          if (not ($node->[1] & FOREIGN_EL) and
+              $node->[0]->local_name eq $self->{t}->{tag_name}) {
+            ## 2.1. Generate implied end tags
             while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL and
-                   $self->{open_elements}->[-1]->[0]->manakai_local_name
-                       ne $self->{t}->{tag_name}) {
-              
+                   not (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
+                        $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name})) {
               ## NOTE: |<ruby><rt></ruby>|.
               pop @{$self->{open_elements}};
               $node_i++;
             }
-        
-            ## Step 2
-            my $current_tag_name
-                = $self->{open_elements}->[-1]->[0]->manakai_local_name;
-            $current_tag_name =~ tr/A-Z/a-z/;
-            if ($current_tag_name ne $self->{t}->{tag_name}) {
-              
+            
+            ## 2.2.
+            unless ($node->[0] eq $self->{open_elements}->[-1]->[0]) {
               ## NOTE: <x><y></x>
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
-                              text => $self->{open_elements}->[-1]->[0]
-                                  ->manakai_local_name,
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                              text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                              value => $self->{t}->{tag_name}, # actual
                               token => $self->{t});
-            } else {
-              
             }
             
-            ## Step 3
+            ## 2.3.
             splice @{$self->{open_elements}}, $node_i if $node_i < 0;
 
             $self->{t} = $self->_get_next_token;
-            last LOOP;
+            next B;
           } else {
-            ## Step 3
+            ## 3.
             if ($node->[1] & SPECIAL_EL or $node->[1] & SCOPING_EL) { ## "Special"
-              
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                              text => $self->{t}->{tag_name}, token => $self->{t});
-              ## Ignore the token
+                              text => $self->{t}->{tag_name},
+                              token => $self->{t});
+              ## Ignore the token.
               $self->{t} = $self->_get_next_token;
-              last LOOP;
+              next B;
 
               ## NOTE: |<span><dd></span>a|: In Safari 3.1.2 and Opera
               ## 9.27, "a" is a child of <dd> (conforming).  In
               ## Firefox 3.0.2, "a" is a child of <body>.  In WinIE 7,
               ## "a" is a child of both <body> and <dd>.
             }
-            
-            
           }
           
-          ## Step 4
+          ## 4.
           $node_i--;
           $node = $self->{open_elements}->[$node_i];
           
-          ## Step 5;
+          ## 5.
           redo LOOP;
         } # LOOP
-	next B;
       }
     }
     next B;

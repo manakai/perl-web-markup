@@ -269,7 +269,7 @@ push @EXPORT, qw(
 
 push @EXPORT, qw(FOREIGN_EL);
 
-sub FOREIGN_EL () { 0b1_00000000000 }
+sub FOREIGN_EL () { 0b1_000000000000 }
 
 1;
 

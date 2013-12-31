@@ -63,8 +63,8 @@ for my $nsurl (keys %{$defs->{elements}}) {
       my $cat = Web::HTML::Parser::get_el_category ($nsurl, $ln);
       is !!($cat & Web::HTML::Parser::SCOPING_EL ()),
          !!$def->{parser_scoping}, 'in scope';
-      is !!($cat & Web::HTML::Parser::SCOPING_EL () or ($nsurl eq 'http://www.w3.org/1999/xhtml' and ($ln eq 'ul' or $ln eq 'ol'))),
-         !!$def->{parser_li_scoping}, 'in list scope';
+      is !!($cat & (Web::HTML::Parser::SCOPING_EL () | Web::HTML::Parser::LIST_CONTAINER_EL ())),
+         !!$def->{parser_li_scoping}, 'in list item scope';
       is !!($cat & Web::HTML::Parser::BUTTON_SCOPING_EL ()),
          !!$def->{parser_button_scoping}, 'in button scope';
       is !!($cat & Web::HTML::Parser::TABLE_SCOPING_EL ()),
@@ -128,6 +128,8 @@ test {
     Web::HTML::Parser::TABLE_CELL_EL (),
     Web::HTML::Parser::TABLE_ROW_GROUP_EL (),
     Web::HTML::Parser::TABLE_ROW_EL (),
+    Web::HTML::Parser::ULOL_EL (),
+    Web::HTML::Parser::FOREIGN_EL (),
     Web::HTML::Parser::MML_AXML_EL (),
     Web::HTML::Parser::MML_TEXT_INTEGRATION_EL (),
     Web::HTML::Parser::SVG_INTEGRATION_EL (),
