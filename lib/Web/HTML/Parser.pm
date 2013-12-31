@@ -893,21 +893,21 @@ sub push_afe ($$) {
   push @$afes, $item;
 } # push_afe
 
-  my $formatting_end_tag = sub {
-    my ($self, $active_formatting_elements, $open_tables, $end_tag_token) = @_;
-    my $tag_name = $end_tag_token->{tag_name};
+## The adoption agency algorithm (AAA)
+my $formatting_end_tag = sub {
+  my ($self, $active_formatting_elements, $open_tables, $end_tag_token) = @_;
+  my $tag_name = $end_tag_token->{tag_name};
 
-    ## NOTE: The adoption agency algorithm (AAA).
+  ## $end_tag_token is an end tag token or <a>/<nobr> (start tag
+  ## token).  Don't edit it as it might be used later to create
+  ## another element.
 
-    ## Step 1
-    my $outer_loop_counter = 0;
+  ## Step 1
+  my $outer_loop_counter = 0;
 
-    ## Step 2
-    OUTER: {
-      if ($outer_loop_counter >= 8) {
-        $self->{t} = $self->_get_next_token;
-        last OUTER;
-      }
+  ## Step 2 Outer loop
+  OUTER: {
+    return if $outer_loop_counter >= 8;
 
       ## Step 3
       $outer_loop_counter++;
@@ -951,8 +951,7 @@ sub push_afe ($$) {
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                             text => $self->{t}->{tag_name},
                             token => $end_tag_token);
-            ## Ignore the token
-            $self->{t} = $self->_get_next_token;
+            ## Ignore the token.
             return;
           }
         } elsif ($node->[1] & SCOPING_EL) {
@@ -966,7 +965,6 @@ sub push_afe ($$) {
                         text => $self->{t}->{tag_name},
                         token => $end_tag_token);
         pop @$active_formatting_elements; # $formatting_element
-        $self->{t} = $self->_get_next_token; ## TODO: ok?
         return;
       }
       if (not $self->{open_elements}->[-1]->[0] eq $formatting_element->[0]) {
@@ -998,7 +996,6 @@ sub push_afe ($$) {
         
         splice @{$self->{open_elements}}, $formatting_element_i_in_open;
         splice @$active_formatting_elements, $formatting_element_i_in_active, 1;
-        $self->{t} = $self->_get_next_token;
         return;
       }
       
@@ -1020,10 +1017,7 @@ sub push_afe ($$) {
 
       INNER: {
         ## Step 9.2
-        if ($inner_loop_counter >= 3) {
-          $self->{t} = $self->_get_next_token;
-          last OUTER;
-        }
+        last INNER if $inner_loop_counter >= 3;
 
         ## Step 9.3
         $inner_loop_counter++;
@@ -1188,7 +1182,7 @@ sub push_afe ($$) {
       ## Step 16
       redo OUTER;
     } # OUTER
-  }; # $formatting_end_tag
+}; # $formatting_end_tag (AAA)
 
   my $reconstruct_active_formatting_elements = sub ($$$$) {
     my ($self, $insert, $active_formatting_elements, $open_tables) = @_;
@@ -5645,32 +5639,22 @@ sub _construct_tree ($) {
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'a') {
+        ## The "in body" insertion mode, <a>
+
         AFE: for my $i (reverse 0..$#$active_formatting_elements) {
           my $node = $active_formatting_elements->[$i];
           if ($node->[1] == A_EL) {
-            
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'in a:a', token => $self->{t});
-            
-            
-      $self->{t}->{self_closing} = $self->{self_closing};
-      unshift @{$self->{token}}, $self->{t};
-      delete $self->{self_closing};
-     # <a>
-            $self->{t} = {type => END_TAG_TOKEN, tag_name => 'a',
-                      line => $self->{t}->{line}, column => $self->{t}->{column}};
             $formatting_end_tag->($self, $active_formatting_elements,
                                   $open_tables, $self->{t});
-            
             AFE2: for (reverse 0..$#$active_formatting_elements) {
               if ($active_formatting_elements->[$_]->[0] eq $node->[0]) {
-                
                 splice @$active_formatting_elements, $_, 1;
                 last AFE2;
               }
             } # AFE2
             OE: for (reverse 0..$#{$self->{open_elements}}) {
               if ($self->{open_elements}->[$_]->[0] eq $node->[0]) {
-                
                 splice @{$self->{open_elements}}, $_, 1;
                 last OE;
               }
@@ -5721,7 +5705,10 @@ sub _construct_tree ($) {
         
         $self->{t} = $self->_get_next_token;
         next B;
+
       } elsif ($self->{t}->{tag_name} eq 'nobr') {
+        ## The "in body" insertion mode, <nobr>
+
         my $insert = $self->{insertion_mode} & TABLE_IMS
             ? $insert_to_foster : $insert_to_current;
         $reconstruct_active_formatting_elements
@@ -5731,18 +5718,13 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == NOBR_EL) {
-            
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'in nobr:nobr', token => $self->{t});
-            
-      $self->{t}->{self_closing} = $self->{self_closing};
-      unshift @{$self->{token}}, $self->{t};
-      delete $self->{self_closing};
-     # <nobr>
-            $self->{t} = {type => END_TAG_TOKEN, tag_name => 'nobr',
-                      line => $self->{t}->{line}, column => $self->{t}->{column}};
-            next B;
+            $formatting_end_tag->($self, $active_formatting_elements,
+                                  $open_tables, $self->{t});
+            $reconstruct_active_formatting_elements
+                ->($self, $insert, $active_formatting_elements, $open_tables);
+            last INSCOPE;
           } elsif ($node->[1] & SCOPING_EL) {
-            
             last INSCOPE;
           }
         } # INSCOPE
@@ -6697,6 +6679,7 @@ sub _construct_tree ($) {
         
         $formatting_end_tag->($self, $active_formatting_elements,
                               $open_tables, $self->{t});
+        $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'br') {
         
