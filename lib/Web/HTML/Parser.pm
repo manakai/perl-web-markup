@@ -897,160 +897,165 @@ sub push_afe ($$) {
 } # push_afe
 
 ## The adoption agency algorithm (AAA)
+## <http://www.whatwg.org/specs/web-apps/current-work/#adoption-agency-algorithm>.
 sub _aaa ($$) {
-  my ($self, $end_tag_token) = @_;
-  my $tag_name = $end_tag_token->{tag_name};
+  my ($self, $token) = @_;
 
   ## $end_tag_token is an end tag token or <a>/<nobr> (start tag
   ## token).  Don't edit it as it might be used later to create
   ## another element.
 
-  ## Step 1
+  ## 1.
+  if (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
+      $self->{open_elements}->[-1]->[0]->local_name eq $token->{tag_name}) {
+    my $el = $self->{open_elements}->[-1]->[0]; ## 1.1.
+    pop @{$self->{open_elements}}; ## 1.2.
+    @{$self->{active_formatting_elements}} ## 1.3.
+        = grep { $_->[0] != $el } @{$self->{active_formatting_elements}};
+    return; ## 1.4.
+  }
+
+  my $oes = [@{$self->{open_elements}}];
+
+  ## 2.
   my $outer_loop_counter = 0;
 
-  ## Step 2 Outer loop
+  ## 3. Outer loop
   OUTER: {
     return if $outer_loop_counter >= 8;
 
-      ## Step 3
-      $outer_loop_counter++;
-      
-      ## Step 4
-      my $formatting_element;
-      my $formatting_element_i_in_active;
+    ## 4.
+    $outer_loop_counter++;
+    
+    ## 5.
+    my $formatting_element;
+    my $formatting_element_i_in_active;
+    AFE: for (reverse 0..$#{$self->{active_formatting_elements}}) {
+      if ($self->{active_formatting_elements}->[$_]->[0] eq '#marker') {
+        last AFE;
+      } elsif ($self->{active_formatting_elements}->[$_]->[0]->local_name eq $token->{tag_name}) {
+        ## NOTE: Non-HTML elements can't be in the list of active
+        ## formatting elements.
+        $formatting_element = $self->{active_formatting_elements}->[$_];
+        $formatting_element_i_in_active = $_;
+        last AFE;
+      }
+    } # AFE
+    unless (defined $formatting_element) {
+      $self->_in_body_any_other_end_tag;
+      return;
+    }
+
+    ## 6.-7.
+    my $formatting_element_i_in_open;
+    my $formatting_element_is_in_scope = 1;
+    OE: for (reverse 0..$#{$self->{open_elements}}) {
+      if ($self->{open_elements}->[$_]->[0] eq $formatting_element->[0]) {
+        $formatting_element_i_in_open = $_;
+        last OE;
+      } elsif ($self->{open_elements}->[$_]->[1] & SCOPING_EL) {
+        $formatting_element_is_in_scope = 0;
+      }
+    } # OE
+    unless (defined $formatting_element_i_in_open) {
+      ## 6.
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'AAA:in afe but not in open elements', # XXXdoc
+                      text => $formatting_element->[0]->local_name,
+                      value => $token->{tag_name},
+                      token => $token);
+      splice @{$self->{active_formatting_elements}},
+          $formatting_element_i_in_active, 1 => ();
+      return;
+    }
+    unless ($formatting_element_is_in_scope) {
+      ## 7.
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'AAA:formatting element not in scope', # XXXdoc
+                      text => $formatting_element->[0]->local_name,
+                      value => $token->{tag_name},
+                      token => $token);
+      return;
+    }
+
+    ## 8.
+    unless ($formatting_element->[0] eq $self->{open_elements}->[-1]->[0]) {
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'AAA:formatting element not current', # XXXdoc
+                      text => $formatting_element->[0]->local_name,
+                      value => $token->{tag_name},
+                      token => $token);
+    }
+
+    ## 9.
+    my $furthest_block;
+    my $furthest_block_i_in_open;
+    OE: for (reverse (($formatting_element_i_in_open + 1)..$#{$self->{open_elements}})) {
+      if ($self->{open_elements}->[$_]->[1] & (SPECIAL_EL | SCOPING_EL)) { ## "Special"
+        $furthest_block = $self->{open_elements}->[$_];
+        $furthest_block_i_in_open = $_;
+        ## NOTE: The topmost (eldest) node.
+        last OE;
+      }
+    } # OE
+    
+    ## 10.
+    unless (defined $furthest_block) {
+      splice @{$self->{open_elements}}, $formatting_element_i_in_open;
+      splice @{$self->{active_formatting_elements}},
+          $formatting_element_i_in_active, 1 => ();
+      return;
+    }
+    
+    ## 11.
+    my $common_ancestor_node = $self->{open_elements}->[$formatting_element_i_in_open - 1];
+    
+    ## 12.
+    my $bookmark_prev_el = $self->{active_formatting_elements}->[$formatting_element_i_in_active - 1]->[0];
+    
+    ## 13.
+    my $node = $furthest_block;
+    my $node_i_in_open = $furthest_block_i_in_open;
+    my $last_node = $furthest_block;
+    my $inner_loop_counter = 0; ## 13.1.
+
+    ## 13.2. Inner loop
+    INNER: {
+      $inner_loop_counter++;
+
+      ## 13.3.
+      $node_i_in_open--;
+      $node = $oes->[$node_i_in_open];
+
+      ## 13.4. Go to 14.
+      last INNER if $node->[0] eq $formatting_element->[0];
+
+      ## 13.5., 13.6.
+      if ($inner_loop_counter > 3) {
+        @{$self->{active_formatting_elements}}
+            = grep { $_->[0] ne $node->[0] } @{$self->{active_formatting_elements}};
+        @{$self->{open_elements}}
+            = grep { $_->[0] ne $node->[0] } @{$self->{open_elements}};
+        redo INNER;
+      }
+
+      ## 13.6.
+      my $node_i_in_active;
       AFE: for (reverse 0..$#{$self->{active_formatting_elements}}) {
-        if ($self->{active_formatting_elements}->[$_]->[0] eq '#marker') {
-          
-          last AFE;
-        } elsif ($self->{active_formatting_elements}->[$_]->[0]->manakai_local_name
-                     eq $tag_name) {
-          ## NOTE: Non-HTML elements can't be in the list of active
-          ## formatting elements.
-          
-          $formatting_element = $self->{active_formatting_elements}->[$_];
-          $formatting_element_i_in_active = $_;
+        if ($self->{active_formatting_elements}->[$_]->[0] eq $node->[0]) {
+          $node_i_in_active = $_;
           last AFE;
         }
       } # AFE
-      unless (defined $formatting_element) {
-        
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag', text => $tag_name, token => $end_tag_token);
-        ## Ignore the token
-        $self->{t} = $self->_get_next_token;
-        return;
+      unless (defined $node_i_in_active) {
+        @{$self->{open_elements}}
+            = grep { $_->[0] ne $node->[0] } @{$self->{open_elements}};
+        redo INNER;
       }
-      ## has an element in scope
-      my $in_scope = 1;
-      my $formatting_element_i_in_open;  
-      INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
-        my $node = $self->{open_elements}->[$_];
-        if ($node->[0] eq $formatting_element->[0]) {
-          if ($in_scope) {
-            
-            $formatting_element_i_in_open = $_;
-            last INSCOPE;
-          } else { # in open elements but not in scope
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                            text => $self->{t}->{tag_name},
-                            token => $end_tag_token);
-            ## Ignore the token.
-            return;
-          }
-        } elsif ($node->[1] & SCOPING_EL) {
-          
-          $in_scope = 0;
-        }
-      } # INSCOPE
-      unless (defined $formatting_element_i_in_open) {
-        
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                        text => $self->{t}->{tag_name},
-                        token => $end_tag_token);
-        pop @{$self->{active_formatting_elements}}; # $formatting_element
-        return;
-      }
-      if (not $self->{open_elements}->[-1]->[0] eq $formatting_element->[0]) {
-        
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
-                        text => $self->{open_elements}->[-1]->[0]
-                            ->manakai_local_name,
-                        token => $end_tag_token);
-      }
-      
-      ## Step 5
-      my $furthest_block;
-      my $furthest_block_i_in_open;
-      OE: for (reverse 0..$#{$self->{open_elements}}) {
-        my $node = $self->{open_elements}->[$_];
-        if ($node->[1] & SPECIAL_EL or $node->[1] & SCOPING_EL) { ## "Special"
-          
-          $furthest_block = $node;
-          $furthest_block_i_in_open = $_;
-	  ## NOTE: The topmost (eldest) node.
-        } elsif ($node->[0] eq $formatting_element->[0]) {
-          
-          last OE;
-        }
-      } # OE
-      
-      ## Step 6
-      unless (defined $furthest_block) { # MUST
-        
-        splice @{$self->{open_elements}}, $formatting_element_i_in_open;
-        splice @{$self->{active_formatting_elements}},
-            $formatting_element_i_in_active, 1;
-        return;
-      }
-      
-      ## Step 7
-      my $common_ancestor_node = $self->{open_elements}->[$formatting_element_i_in_open - 1];
-      
-      ## Step 8
-      my $bookmark_prev_el
-          = $self->{active_formatting_elements}->[$formatting_element_i_in_active - 1]->[0];
-      
-      ## Step 9
-      my $node = $furthest_block;
-      my $node_i_in_open = $furthest_block_i_in_open;
-      my $last_node = $furthest_block;
 
-      ## Step 9.1
-      my $inner_loop_counter = 0;
-
-      INNER: {
-        ## Step 9.2
-        last INNER if $inner_loop_counter >= 3;
-
-        ## Step 9.3
-        $inner_loop_counter++;
-
-        ## Step 9.4
-        $node_i_in_open--;
-        $node = $self->{open_elements}->[$node_i_in_open];
-        
-        ## Step 9.5
-        my $node_i_in_active;
-        my $node_token;
-        S7S2: {
-          for (reverse 0..$#{$self->{active_formatting_elements}}) {
-            if ($self->{active_formatting_elements}->[$_]->[0] eq $node->[0]) {
-              
-              $node_i_in_active = $_;
-              $node_token = $self->{active_formatting_elements}->[$_]->[2];
-              last S7S2;
-            }
-          }
-          splice @{$self->{open_elements}}, $node_i_in_open, 1;
-          redo INNER;
-        } # S7S2
-        
-        ## Step 9.6
-        last INNER if $node->[0] eq $formatting_element->[0];
-        
-        ## Step 9.7
-        my $new_element = [];
-        
+      ## 13.7.
+      ## AFE->[$_]->[2] contains the token that creates $NODE.
+      my $node_token = $self->{active_formatting_elements}->[$node_i_in_active]->[2];
+      my $new_element = [];
+      # XXX intended parent is $common_ancestor
+      
       $new_element->[0] = $self->{document}->create_element_ns
         (HTML_NS, [undef,  $node_token->{tag_name}]);
     
@@ -1069,63 +1074,61 @@ sub _aaa ($$) {
         $new_element->[0]->set_user_data (manakai_source_column => $node_token->{column})
             if defined $node_token->{column};
       
-        $new_element->[1] = $node->[1];
-        $new_element->[2] = $node_token;
-        $self->{active_formatting_elements}->[$node_i_in_active] = $new_element;
-        $self->{open_elements}->[$node_i_in_open] = $new_element;
-        $node = $new_element;
-        
-        ## Step 9.8
-        if ($last_node->[0] eq $furthest_block->[0]) {
-          
-          $bookmark_prev_el = $node->[0];
-        }
-        
-        ## Step 9.9
-        $node->[0]->manakai_append_content ($last_node->[0]);
-        
-        ## Step 9.10
-        $last_node = $node;
-        
-        ## Step 9.11
-        redo INNER;
-      } # INNER
+      $new_element->[1] = $node->[1];
+      $new_element->[2] = $node_token;
+      $self->{active_formatting_elements}->[$node_i_in_active] = $new_element;
+      $self->{open_elements}->[$node_i_in_open] = $new_element;
+      $node = $new_element;
       
-      ## Step 10
-      if ($common_ancestor_node->[1] & TABLE_ROWS_EL) {
-        ## Foster parenting (in AAA).
-        my $foster_parent_element;
-        my $next_sibling;
-        OE: for (reverse 0..$#{$self->{open_elements}}) {
-          if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-            
-            $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0]; # XXX wrong
-            $foster_parent_element = $foster_parent_element->content
-                if $foster_parent_element->manakai_element_type_match (HTML_NS, 'template');
-            $next_sibling = $self->{open_elements}->[$_]->[0];
-            undef $next_sibling
-                unless $next_sibling->parent_node eq $foster_parent_element;
-            last OE;
-          } elsif ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
-            $foster_parent_element = $self->{open_elements}->[$_]->[0]->content;
-            $next_sibling = undef;
-            last OE;
-          }
-        } # OE
-        $foster_parent_element ||= $self->{open_elements}->[0]->[0];
-
-        ## $foster_parent_element is the template content if that were
-        ## the |template| element.
-        $foster_parent_element->insert_before ($last_node->[0], $next_sibling);
-        $self->{open_tables}->[-1]->[1] = 1; # tainted
-      } else {
-        
-        $common_ancestor_node->[0]->manakai_append_content ($last_node->[0]);
+      ## 13.8.
+      if ($last_node->[0] eq $furthest_block->[0]) {
+        $bookmark_prev_el = $node->[0];
       }
       
-      ## Step 11
-      my $new_element = [];
+      ## 13.9.
+      $node->[0]->append_child ($last_node->[0]);
       
+      ## 13.10.
+      $last_node = $node;
+
+      ## 13.11.
+      redo INNER;
+    } # INNER
+
+    ## 14.
+    if ($common_ancestor_node->[1] & TABLE_ROWS_EL) {
+      ## Foster parenting (in AAA).
+      my $foster_parent_element;
+      my $next_sibling;
+      OE: for (reverse 0..$#{$self->{open_elements}}) {
+        if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
+          $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0]; # XXX wrong
+          $foster_parent_element = $foster_parent_element->content
+              if $foster_parent_element->manakai_element_type_match (HTML_NS, 'template');
+          $next_sibling = $self->{open_elements}->[$_]->[0];
+          undef $next_sibling
+              unless $next_sibling->parent_node eq $foster_parent_element;
+          last OE;
+        } elsif ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
+          $foster_parent_element = $self->{open_elements}->[$_]->[0]->content;
+          $next_sibling = undef;
+          last OE;
+        }
+      } # OE
+      $foster_parent_element ||= $self->{open_elements}->[0]->[0];
+
+      ## $foster_parent_element is the template content if that were
+      ## the |template| element.
+      $foster_parent_element->insert_before ($last_node->[0], $next_sibling);
+      $self->{open_tables}->[-1]->[1] = 1; # tainted
+    } else {
+      $common_ancestor_node->[0]->manakai_append_content ($last_node->[0]);
+    }
+    
+    ## 15.
+    my $new_element = [];
+    ## XXX intended parent is $furthest_block
+    
       $new_element->[0] = $self->{document}->create_element_ns
         (HTML_NS, [undef,  $formatting_element->[2]->{tag_name}]);
     
@@ -1144,48 +1147,107 @@ sub _aaa ($$) {
         $new_element->[0]->set_user_data (manakai_source_column => $formatting_element->[2]->{column})
             if defined $formatting_element->[2]->{column};
       
-      $new_element->[1] = $formatting_element->[1];
-      $new_element->[2] = $formatting_element->[2];
-      
-      ## Step 12
-      $new_element->[0]->append_child ($_)
-          for $furthest_block->[0]->child_nodes->to_list;
-      
-      ## Step 13
-      $furthest_block->[0]->append_child ($new_element->[0]);
-      
-      ## Step 14
+    $new_element->[1] = $formatting_element->[1];
+    $new_element->[2] = $formatting_element->[2];
+    
+    ## 16.
+    $new_element->[0]->append_child ($_)
+        for $furthest_block->[0]->child_nodes->to_list;
+    
+    ## 17.
+    $furthest_block->[0]->append_child ($new_element->[0]);
+    
+    ## 18.
+    my $i;
+    AFE: for (reverse 0..$#{$self->{active_formatting_elements}}) {
+      if ($self->{active_formatting_elements}->[$_]->[0] eq $formatting_element->[0]) {
+        splice @{$self->{active_formatting_elements}}, $_, 1;
+        $i-- and last AFE if defined $i;
+      } elsif ($self->{active_formatting_elements}->[$_]->[0] eq $bookmark_prev_el) {
+        $i = $_;
+      }
+    } # AFE
+    splice @{$self->{active_formatting_elements}}, $i + 1, 0 => $new_element;
+    
+    ## 19.
+    {
       my $i;
-      AFE: for (reverse 0..$#{$self->{active_formatting_elements}}) {
-        if ($self->{active_formatting_elements}->[$_]->[0] eq $formatting_element->[0]) {
-          
-          splice @{$self->{active_formatting_elements}}, $_, 1;
-          $i-- and last AFE if defined $i;
-        } elsif ($self->{active_formatting_elements}->[$_]->[0] eq $bookmark_prev_el) {
-          
-          $i = $_;
-        }
-      } # AFE
-      splice @{$self->{active_formatting_elements}}, $i + 1, 0 => $new_element;
-      
-      ## Step 15
-      undef $i;
       OE: for (reverse 0..$#{$self->{open_elements}}) {
         if ($self->{open_elements}->[$_]->[0] eq $formatting_element->[0]) {
-          
           splice @{$self->{open_elements}}, $_, 1;
           $i-- and last OE if defined $i;
         } elsif ($self->{open_elements}->[$_]->[0] eq $furthest_block->[0]) {
-          
           $i = $_;
         }
       } # OE
       splice @{$self->{open_elements}}, $i + 1, 0, $new_element;
-      
-      ## Step 16
-      redo OUTER;
-    } # OUTER
+    }
+    
+    ## 20.
+    redo OUTER;
+  } # OUTER
 } # _aaa
+
+sub _in_body_any_other_end_tag ($) {
+  my ($self) = @_;
+
+  ## The "in body" insertion mode, any other end tag
+
+  ## 1.
+  my $node_i = -1;
+  my $node = $self->{open_elements}->[$node_i];
+
+  ## 2. Loop
+  LOOP: {
+    if (not ($node->[1] & FOREIGN_EL) and
+        $node->[0]->local_name eq $self->{t}->{tag_name}) {
+      ## 2.1. Generate implied end tags
+      while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL and
+             not (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
+                  $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name})) {
+        ## NOTE: |<ruby><rt></ruby>|.
+        pop @{$self->{open_elements}};
+        $node_i++;
+      }
+      
+      ## 2.2.
+      unless ($node->[0] eq $self->{open_elements}->[-1]->[0]) {
+        ## NOTE: <x><y></x>
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                        text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                        value => $self->{t}->{tag_name}, # actual
+                        token => $self->{t});
+      }
+      
+      ## 2.3.
+      splice @{$self->{open_elements}}, $node_i if $node_i < 0;
+
+      return;
+    } else {
+      ## 3.
+      if ($node->[1] & SPECIAL_EL or $node->[1] & SCOPING_EL) { ## "Special"
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                        text => $self->{t}->{tag_name},
+                        token => $self->{t});
+        ## Ignore the token.
+        return;
+
+        ## NOTE: |<span><dd></span>a|: In Safari 3.1.2 and Opera 9.27,
+        ## "a" is a child of <dd> (conforming).  In Firefox 3.0.2, "a"
+        ## is a child of <body>.  In WinIE 7, "a" is a child of both
+        ## <body> and <dd>.
+      }
+    }
+    
+    ## 4.
+    $node_i--;
+    $node = $self->{open_elements}->[$node_i];
+    
+    ## 5.
+    redo LOOP;
+  } # LOOP
+  die;
+} # _in_body_any_other_end_tag
 
   my $reconstruct_active_formatting_elements = sub ($$$$) {
     my ($self, $insert, $active_formatting_elements, $open_tables) = @_;
@@ -6723,67 +6785,13 @@ sub _construct_tree ($) {
         if ($self->{t}->{tag_name} eq 'sarcasm') {
           ## Take a deep breath
         }
-
-        ## The "in body" insertion mode, any other end tag
-
-        ## 1.
-        my $node_i = -1;
-        my $node = $self->{open_elements}->[$node_i];
-
-        ## 2. Loop
-        LOOP: {
-          if (not ($node->[1] & FOREIGN_EL) and
-              $node->[0]->local_name eq $self->{t}->{tag_name}) {
-            ## 2.1. Generate implied end tags
-            while ($self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL and
-                   not (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
-                        $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name})) {
-              ## NOTE: |<ruby><rt></ruby>|.
-              pop @{$self->{open_elements}};
-              $node_i++;
-            }
-            
-            ## 2.2.
-            unless ($node->[0] eq $self->{open_elements}->[-1]->[0]) {
-              ## NOTE: <x><y></x>
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
-                              text => $self->{open_elements}->[-1]->[0]->local_name, # expected
-                              value => $self->{t}->{tag_name}, # actual
-                              token => $self->{t});
-            }
-            
-            ## 2.3.
-            splice @{$self->{open_elements}}, $node_i if $node_i < 0;
-
-            $self->{t} = $self->_get_next_token;
-            next B;
-          } else {
-            ## 3.
-            if ($node->[1] & SPECIAL_EL or $node->[1] & SCOPING_EL) { ## "Special"
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                              text => $self->{t}->{tag_name},
-                              token => $self->{t});
-              ## Ignore the token.
-              $self->{t} = $self->_get_next_token;
-              next B;
-
-              ## NOTE: |<span><dd></span>a|: In Safari 3.1.2 and Opera
-              ## 9.27, "a" is a child of <dd> (conforming).  In
-              ## Firefox 3.0.2, "a" is a child of <body>.  In WinIE 7,
-              ## "a" is a child of both <body> and <dd>.
-            }
-          }
-          
-          ## 4.
-          $node_i--;
-          $node = $self->{open_elements}->[$node_i];
-          
-          ## 5.
-          redo LOOP;
-        } # LOOP
+        $self->_in_body_any_other_end_tag;
+        $self->{t} = $self->_get_next_token;
+        next B;
       }
     }
-    next B;
+    die "Token is not handled";
+    #next B;
   } # B
 
   ## Stop parsing # MUST
