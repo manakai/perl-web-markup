@@ -781,33 +781,28 @@ sub _reset_insertion_mode ($) {
     !!!next-token;
   }; # $parse_rcdata
 
-  my $script_start_tag = sub ($$$) {
-    my ($self, $insert, $open_tables) = @_;
+sub _script_start_tag ($) {
+  my $self = $_[0];
 
-    ## Step 1
-    my $script_el;
-    !!!create-element ($script_el, HTML_NS, 'script', $self->{t}->{attributes}, $self->{t});
+  ## 1., 2., 5., 6.
+  $self->_insert_el (undef, undef, undef, sub {
+    ## 3.
+    # XXX set parser-inserted
+    # XXX unset force-async
 
-    ## Step 2
-    ## TODO: mark as "parser-inserted"
+    ## 4.
+    if (defined $self->{inner_html_node}) {
+      # XXX already-started
+    }
+  });
 
-    ## Step 3
-    ## TODO: Mark as "already executed", if ...
+  ## 7.
+  $self->{state} = SCRIPT_DATA_STATE;
+  delete $self->{escape}; # MUST
 
-    ## Step 4 (HTML5 revision 2702)
-    $insert->($self, $script_el, $open_tables);
-    push @{$self->{open_elements}}, [$script_el, $el_category->{script}];
-
-    ## Step 5
-    $self->{state} = SCRIPT_DATA_STATE;
-    delete $self->{escape}; # MUST
-
-    ## Step 6-7
-    $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
-
-    !!!nack ('t40.2');
-    !!!next-token;
-  }; # $script_start_tag
+  ## 8.-9.
+  $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+} # script_start_tag
 
 sub push_afe ($$) {
   my ($item => $afes) = @_;
@@ -1010,10 +1005,8 @@ sub _aaa ($$) {
       ## 13.7.
       ## AFE->[$_]->[2] contains the token that creates $NODE.
       my $node_token = $self->{active_formatting_elements}->[$node_i_in_active]->[2];
-      my $new_element = [];
-      # XXX intended parent is $common_ancestor
-      !!!create-element ($new_element->[0], HTML_NS, $node_token->{tag_name}, $node_token->{attributes}, $node_token);
-      $new_element->[1] = $node->[1];
+      my $new_element = $self->_create_el ($node_token, undef, $common_ancestor_node->[0]);
+      #$new_element->[1] = $node->[1];
       $new_element->[2] = $node_token;
       $self->{active_formatting_elements}->[$node_i_in_active] = $new_element;
       $self->{open_elements}->[$node_i_in_open] = $new_element;
@@ -1064,10 +1057,8 @@ sub _aaa ($$) {
     }
     
     ## 15.
-    my $new_element = [];
-    ## XXX intended parent is $furthest_block
-    !!!create-element ($new_element->[0], HTML_NS, $formatting_element->[2]->{tag_name}, $formatting_element->[2]->{attributes}, $formatting_element->[2]);
-    $new_element->[1] = $formatting_element->[1];
+    my $new_element = $self->_create_el ($formatting_element->[2], undef, $furthest_block->[0]);
+    #$new_element->[1] = $formatting_element->[1];
     $new_element->[2] = $formatting_element->[2];
     
     ## 16.
@@ -1394,16 +1385,112 @@ sub _close_p ($;$) {
   }
 } # _close_p
 
-sub _insert_el ($;$$$) {
-  my ($self, $nsurl, $ln, $attrs) = @_;
-  $ln ||= $self->{t}->{tag_name};
-  $attrs ||= $self->{t}->{attributes};
+sub _create_el ($$$$) {
+  my ($self, $token, $nsurl, $intended_parent) = @_;
+
+  ## Create an element for a token
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#create-an-element-for-the-token>.
+
+  ## 1.
+  my $od = $intended_parent->owner_document || $intended_parent;
+  my $orig_strict = $od->strict_error_checking;
+  $od->strict_error_checking (0) if $orig_strict;
+
+  my $el;
+  if (defined $nsurl) { ## $nsurl is SVG_NS or MML_NS
+    ## Tag name fixup in foreign content, any other start tag
+    my $ln = $token->{tag_name};
+    $ln = $Web::HTML::ParserData::SVGElementNameFixup->{$ln} || $ln
+        if $nsurl eq SVG_NS;
+
+    $el = [
+      $od->create_element_ns ($nsurl, [undef, $ln]),
+      (($el_category_f->{$nsurl}->{$ln} || 0) |
+       FOREIGN_EL |
+       ($nsurl eq SVG_NS ? SVG_EL : $nsurl eq MML_NS ? MML_EL : 0)),
+    ];
+
+    my $attrs = $token->{attributes};
+    for my $attr_name (keys %$attrs) {
+      my $attr_t = $attrs->{$attr_name};
+
+      ## "adjust SVG attributes" (SVG only), "adjust MathML
+      ## attributes", (MathML only), and "adjust foreign attributes".
+      my $args = $Web::HTML::ParserData::ForeignAttrNameToArgs->{$nsurl}->{$attr_name}
+          || [undef, [undef, $attr_name]];
+
+      my $attr = $od->create_attribute_ns (@$args);
+      $attr->value ($attr_t->{value});
+      $attr->set_user_data (manakai_source_line => $attr_t->{line});
+      $attr->set_user_data (manakai_source_column => $attr_t->{column});
+      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+      $el->[0]->set_attribute_node_ns ($attr);
+    } # $attr_name
+
+    ## 2.
+    if ($attrs->{xmlns} and $attrs->{xmlns}->{value} ne $nsurl) {
+      !!!parse-error (type => 'bad namespace', token => $self->{t}); # XXXdoc
+    }
+    if ($attrs->{'xmlns:xlink'} and
+        $attrs->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
+      !!!parse-error (type => 'bad namespace', token => $self->{t});
+    }
+
+    ## 3.
+    ## Reset - not applicable
+
+    ## 4.
+    ## Form association - not applicable
+  } else { ## HTML namespace
+    $el = [
+      $od->create_element ($token->{tag_name}),
+      $el_category->{$token->{tag_name}} || 0,
+    ];
+
+    my $attrs = $token->{attributes};
+    for my $attr_name (keys %$attrs) {
+      my $attr_t = $attrs->{$attr_name};
+      my $attr = $od->create_attribute ($attr_name);
+      $attr->value ($attr_t->{value});
+      $attr->set_user_data (manakai_source_line => $attr_t->{line});
+      $attr->set_user_data (manakai_source_column => $attr_t->{column});
+      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+      $el->[0]->set_attribute_node_ns ($attr);
+    } # $attr_name
+
+    ## 2.
+    ## Namespace attributes - not applicable
+
+    ## 3.
+    # XXX if resettable, reset
+
+    ## 4.
+    # XXX if form-associated, associate form
+  } # $nsurl
+  $el->[0]->set_user_data (manakai_source_line => $token->{line})
+      if defined $token->{line};
+  $el->[0]->set_user_data (manakai_source_column => $token->{column})
+      if defined $token->{column};
+
+  $od->strict_error_checking (1) if $orig_strict;
+
+  ## 5.
+  return $el;
+} # _create_el
+
+sub _insert_el ($;$$$$) {
+  my ($self, $nsurl, $ln, $attrs, $code) = @_;
 
   ## Insert an HTML element
   ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-an-html-element>.
 
   ## Insert a foreign element
   ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-a-foreign-element>.
+
+  ## Also used in the "before html" insertion mode, <html> and
+  ## "anything else".
+
+  ## Also used for <script>.
 
   ## 1. Appropriate place for inserting a node
   my $adjusted_parent;
@@ -1413,7 +1500,8 @@ sub _insert_el ($;$$$) {
     ## <http://www.whatwg.org/specs/web-apps/current-work/#appropriate-place-for-inserting-a-node>.
     
     ## 1.
-    my $target = $self->{open_elements}->[-1]; ## Current node
+    my $target = $self->{open_elements}->[-1] ## Current node
+        || [$self->{document}, 0]; ## For the "before html" insertion mode.
 
     ## 2.
     if ($self->{foster_parenting} and $target->[1] & TABLE_ROWS_EL) {
@@ -1465,98 +1553,16 @@ sub _insert_el ($;$$$) {
   }
 
   ## 2.
-  my $el;
-  {
-    ## Create an element for a token
-    ## <http://www.whatwg.org/specs/web-apps/current-work/#create-an-element-for-the-token>.
+  my $el = $self->_create_el
+      (defined $ln ? {%{$self->{t}}, tag_name => $ln, attributes => $attrs}
+                   : $self->{t},
+       $nsurl,
+       $adjusted_parent);
 
-    ## 1.
-    my $od = $adjusted_parent->owner_document; # intended parent
-    my $orig_strict = $od->strict_error_checking;
-    $od->strict_error_checking (0) if $orig_strict;
-
-    if (defined $nsurl) { ## $nsurl is SVG_NS or MML_NS
-      ## Tag name fixup in foreign content, any other start tag
-      $ln = $Web::HTML::ParserData::SVGElementNameFixup->{$ln} || $ln
-          if $nsurl eq SVG_NS;
-
-      $el = [
-        $od->create_element_ns ($nsurl, [undef, $ln]),
-        (($el_category_f->{$nsurl}->{$ln} || 0) |
-         FOREIGN_EL |
-         ($nsurl eq SVG_NS ? SVG_EL : $nsurl eq MML_NS ? MML_EL : 0)),
-      ];
-
-      for my $attr_name (keys %$attrs) {
-        my $attr_t = $attrs->{$attr_name};
-
-        ## "adjust SVG attributes" (SVG only)
-        ## "adjust MathML attributes" (MathML only)
-        ## "adjust foreign attributes"
-        my $args = $Web::HTML::ParserData::ForeignAttrNameToArgs->{$nsurl}->{$attr_name}
-            || [undef, [undef, $attr_name]];
-
-        my $attr = $od->create_attribute_ns (@$args);
-        $attr->value ($attr_t->{value});
-        $attr->set_user_data (manakai_source_line => $attr_t->{line});
-        $attr->set_user_data (manakai_source_column => $attr_t->{column});
-        $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-        $el->[0]->set_attribute_node_ns ($attr);
-      } # $attr_name
-
-      ## 2.
-      if ($attrs->{xmlns} and $attrs->{xmlns}->{value} ne $nsurl) {
-        !!!parse-error (type => 'bad namespace', token => $self->{t}); # XXXdoc
-      }
-      if ($attrs->{'xmlns:xlink'} and
-          $attrs->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
-        !!!parse-error (type => 'bad namespace', token => $self->{t});
-      }
-
-      ## 3.
-      ## Reset - not applicable
-
-      ## 4.
-      ## Form association - not applicable
-    } else { ## HTML namespace
-      $el = [
-        $od->create_element ($ln),
-        $el_category->{$ln} || 0,
-      ];
-
-      for my $attr_name (keys %$attrs) {
-        my $attr_t = $attrs->{$attr_name};
-        my $attr = $od->create_attribute ($attr_name);
-        $attr->value ($attr_t->{value});
-        $attr->set_user_data (manakai_source_line => $attr_t->{line});
-        $attr->set_user_data (manakai_source_column => $attr_t->{column});
-        $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-        $el->[0]->set_attribute_node_ns ($attr);
-      } # $attr_name
-
-      ## 2.
-      ## Namespace attributes - not applicable
-
-      ## 3.
-      # XXX if resettable, reset
-
-      ## 4.
-      # XXX if form-associated, associate form
-    } # $nsurl
-    $el->[0]->set_user_data (manakai_source_line => $self->{t}->{line})
-        if defined $self->{t}->{line};
-    $el->[0]->set_user_data (manakai_source_column => $self->{t}->{column})
-        if defined $self->{t}->{column};
-
-    $od->strict_error_checking (1) if $orig_strict;
-
-    ## 5.
-    #return $el;
-  }
+  ## Hook for <script>
+  $code->() if $code;
 
   ## 3.
-  ## TEMPLATE - If the element were inserted into an HTML |template|
-  ## element, it is inserted into the template content instead.
   my $err;
   if (defined $adjusted_ref) {
     local $@;
@@ -1569,12 +1575,14 @@ sub _insert_el ($;$$$) {
     eval { $adjusted_parent->manakai_append_content ($el->[0]) };
     $err = $@;
   }
-  ## <table><script>document.replaceChild (document.getElementsByTagName('table')[0], document.documentElement);</script>abc
+  ## TEMPLATE - If the element were inserted into an HTML |template|
+  ## element, it is inserted into the template content instead.
   if ($err and
       not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
            $err->name eq 'HierarchyRequestError')) {
     die $err;
   }
+  ## <table><script>document.replaceChild (document.getElementsByTagName('table')[0], document.documentElement);</script>abc
 
   ## 4.
   push @{$self->{open_elements}}, $el;
@@ -1827,11 +1835,8 @@ sub _construct_tree ($) {
         #
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'html') {
-          my $root_element;
-          !!!create-element ($root_element, HTML_NS, $self->{t}->{tag_name}, $self->{t}->{attributes}, $self->{t});
-          $self->{document}->append_child ($root_element);
-          push @{$self->{open_elements}},
-              [$root_element, $el_category->{html}];
+          $self->_insert_el;
+          push @$open_tables, [[$self->{open_elements}->[-1]->[0]]];
           
           if ($self->{t}->{attributes}->{manifest}) {
             !!!cp ('t24');
@@ -1847,8 +1852,8 @@ sub _construct_tree ($) {
           
           !!!nack ('t25.1');
           
-          !!!next-token;
           $self->{insertion_mode} = BEFORE_HEAD_IM;
+          !!!next-token;
           next B;
         } else {
           !!!cp ('t25.2');
@@ -1876,18 +1881,16 @@ sub _construct_tree ($) {
         die "$0: $self->{t}->{type}: Unknown token type";
       }
       
-      my $root_element;
-      !!!create-element ($root_element, HTML_NS, 'html',, $self->{t});
-      $self->{document}->append_child ($root_element);
-      push @{$self->{open_elements}},
-          [$root_element, $el_category->{html}];
-      push @$open_tables, [[$root_element]];
+      ## The "before html" insertion mode, anything else.
+      $self->_insert_el (undef, 'html', {});
+      push @$open_tables, [[$self->{open_elements}->[-1]->[0]]];
       
       $self->{application_cache_selection}->(undef);
+
+      $self->{insertion_mode} = BEFORE_HEAD_IM;
       
       ## Reprocess the token.
       !!!ack-later;
-      $self->{insertion_mode} = BEFORE_HEAD_IM;
       redo B;
     } # insertion mode
 
@@ -2737,10 +2740,11 @@ sub _construct_tree ($) {
             !!!cp ('t121');
           }
 
-          ## NOTE: There is a "as if in head" code clone.
-          $script_start_tag->($self, $insert, $open_tables);
+          $self->_script_start_tag;
           splice @{$self->{open_elements}}, -2, 1 # <head>
               if ($self->{insertion_mode} & IM_MASK) == AFTER_HEAD_IM;
+          !!!nack ('t40.2');
+          !!!next-token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
           if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
@@ -3677,10 +3681,10 @@ sub _construct_tree ($) {
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           next B;
         } elsif ($self->{t}->{tag_name} eq 'script') {
-          !!!cp ('t227.6');
-          ## NOTE: This is a "as if in head" code clone.
-          $script_start_tag->($self, $insert, $open_tables);
+          $self->_script_start_tag;
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
+          !!!nack ('t40.2.2');
+          !!!next-token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
           ## The "in table" insertion mode, <template>
@@ -4200,9 +4204,9 @@ sub _construct_tree ($) {
           }
 
         } elsif ($self->{t}->{tag_name} eq 'script') {
-          !!!cp ('t281.3');
-          ## NOTE: This is an "as if in head" code clone
-          $script_start_tag->($self, $insert, $open_tables);
+          $self->_script_start_tag;
+          !!!nack ('t40.2.3');
+          !!!next-token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
           ## This is a "template start tag" code clone.
@@ -4597,9 +4601,9 @@ sub _construct_tree ($) {
 
     if ($self->{t}->{type} == START_TAG_TOKEN) {
       if ($self->{t}->{tag_name} eq 'script') {
-        !!!cp ('t332');
-        ## NOTE: This is an "as if in head" code clone
-        $script_start_tag->($self, $insert, $open_tables);
+        $self->_script_start_tag;
+        !!!nack ('t40.2.4');
+        !!!next-token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'style') {
         !!!cp ('t333');

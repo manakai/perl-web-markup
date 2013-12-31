@@ -26,74 +26,10 @@ while (<>) {
   }ge;
   s{!!!ack\s*(?>\([^)]*\)\s*)?;}{q{delete $self->{self_closing};}}ge;
   s{!!!ack-later\s*(?>\([^)]*\)\s*)?;}{}ge;
-  s{!!!create-element\s*\(([^(),]+),\s*([^(),]+),([^(),]+)(?:,([^(),]*)(?>,([^(),]+))?)?\)\s*;}{
-    my ($l_var, $nsuri, $lname, $attrs, $token_var) = ($1, $2, $3, $4, $5);
-    $nsuri =~ s/^\s+//;
-    $nsuri =~ s/\s+\z//;
-    my $r = qq{
-      $l_var = \$self->{document}->create_element_ns
-        ($nsuri, [undef, $lname]);
-    };
-    if (defined $attrs and length $attrs) {
-      my $attr_xname;
-      if ($nsuri eq q<HTML_NS>) {
-        $attr_xname = q[undef, [undef, $attr_name]];
-      } else {
-        ## NOTE: "Adjust SVG attributes" (SVG only),
-        ## "adjust MathML attributes" (MathML only), and
-        ## "adjust foreign attributes".
-        $attr_xname = qq[
-          \@{
-            \$foreign_attr_xname->{\$attr_name} ||
-            [undef, [undef,
-                     ($nsuri) eq SVG_NS ?
-                         (\$svg_attr_name->{\$attr_name} || \$attr_name) :
-                     ($nsuri) eq MML_NS ?
-                         (\$mml_attr_name->{\$attr_name} || \$attr_name) :
-                         \$attr_name]]
-          }
-        ];
-      }
-      $r .= qq{
-        for my \$attr_name (keys %{$attrs}) {
-          my \$attr_t = $attrs\->{\$attr_name};
-          my \$attr = \$self->{document}->create_attribute_ns ($attr_xname);
-          \$attr->value (\$attr_t->{value});
-          \$attr->set_user_data (manakai_source_line => \$attr_t->{line});
-          \$attr->set_user_data (manakai_source_column => \$attr_t->{column});
-          \$attr->set_user_data (manakai_pos => \$attr_t->{pos}) if \$attr_t->{pos};
-          $l_var->set_attribute_node_ns (\$attr);
-        }
-      };
-    }
-    if (defined $token_var) {
-      $token_var =~ s/^\s+//;
-      $token_var =~ s/\s+$//;
-      $r .= qq{
-        $l_var->set_user_data (manakai_source_line => $token_var\->{line})
-            if defined $token_var\->{line};
-        $l_var->set_user_data (manakai_source_column => $token_var\->{column})
-            if defined $token_var\->{column};
-      };
-      ## TODO: In future version, it should be allowed for an application
-      ## developer to choose whether these information should be kept
-      ## for tracking or not for performance by some means.
-    }
-    $r;
-  }ge; # MUST
-  s{!!!parse-error;}{q{$self->{parse_error}->();}}ge;
   s{!!!parse-error\s*\(}{
     q{$self->{parse_error}->(level => $self->{level}->{must}, }
   }ge;
   s{!!!next-token;}{q{$self->{t} = $self->_get_next_token;}}ge;
-  s{!!!back-token;}{
-    q{
-      $self->{t}->{self_closing} = $self->{self_closing};
-      unshift @{$self->{token}}, $self->{t};
-      delete $self->{self_closing};
-    }
-  }ge;
-  s{!!!back-token\s*\(}{q{unshift @{$self->{token}}, (}}ge;
   s{!!!cp\s*\(\s*(\S+)\s*\)\s*;}{
     $TokenizerDebug ? qq{
       #print STDERR "$1, ";
