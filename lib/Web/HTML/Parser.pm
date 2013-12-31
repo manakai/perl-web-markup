@@ -1120,7 +1120,6 @@ sub _aaa ($$) {
       ## $foster_parent_element is the template content if that were
       ## the |template| element.
       $foster_parent_element->insert_before ($last_node->[0], $next_sibling);
-      $self->{open_tables}->[-1]->[1] = 1; # tainted
     } else {
       $common_ancestor_node->[0]->manakai_append_content ($last_node->[0]);
     }
@@ -1376,7 +1375,6 @@ sub _in_body_any_other_end_tag ($) {
       ## $foster_parent_element is the template content if that were
       ## the |template| element.
       $foster_parent_element->insert_before ($child, $next_sibling);
-      $open_tables->[-1]->[1] = 1; # tainted
     } else {
       
       $self->{open_elements}->[-1]->[0]->manakai_append_content ($child);
@@ -1512,7 +1510,7 @@ sub _construct_tree ($) {
   my $insert = $self->{insert} ||= $insert_to_current;
 
   ## NOTE: $open_tables->[-1]->[0] is the "current table" element node.
-  ## NOTE: $open_tables->[-1]->[1] is the "tainted" flag (OBSOLETE; unused).
+  ## NOTE: $open_tables->[-1]->[1] is unused.
   ## NOTE: $open_tables->[-1]->[2] is set false when non-Text node inserted.
   my $open_tables = $self->{open_tables} ||= [];
 
@@ -2265,7 +2263,6 @@ sub _construct_tree ($) {
           $foster_parent_element->insert_before
               ($self->{document}->create_text_node ($s), $next_sibling);
 
-          $open_tables->[-1]->[1] = 1; # tainted
           $open_tables->[-1]->[2] = 1; # ~node inserted
         } else {
           ## NOTE: Fragment case or in a foster parent'ed element
@@ -3552,6 +3549,14 @@ sub _construct_tree ($) {
               last OE;
             }
           } # OE
+          unless (defined $i) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                            value => $self->{t}->{tag_name},
+                            token => $self->{t});
+            ## Ignore the token.
+            $self->{t} = $self->_get_next_token;
+            next B;
+          }
 
           ## Close the cell (There are two similar but different
           ## "close the cell" implementations).
@@ -4442,15 +4447,16 @@ sub _construct_tree ($) {
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ({
-                      body => 1, caption => 1, col => 1, colgroup => 1,
-                      html => 1, td => 1, th => 1,
-                      tr => 1, # $self->{insertion_mode} == IN_ROW_IM
-                      tbody => 1, tfoot => 1, thead => 1, # $self->{insertion_mode} == IN_TABLE_IM
-                     }->{$self->{t}->{tag_name}}) {
-          
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                          text => $self->{t}->{tag_name}, token => $self->{t});
-          ## Ignore the token
+          body => 1, caption => 1, col => 1, colgroup => 1,
+          html => 1, td => 1, th => 1,
+          tr => 1, # $self->{insertion_mode} == IN_ROW_IM
+          tbody => 1, tfoot => 1, thead => 1, # $self->{insertion_mode} == IN_TABLE_IM
+        }->{$self->{t}->{tag_name}}) {
+          ## The "in table" insertion mode, table end tags
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                          value => $self->{t}->{tag_name},
+                          token => $self->{t});
+          ## Ignore the token.
           
           $self->{t} = $self->_get_next_token;
           next B;
