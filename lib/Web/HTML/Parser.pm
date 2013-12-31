@@ -293,7 +293,7 @@ my $el_category = {
   wbr => MISC_SPECIAL_EL,
   xmp => MISC_SPECIAL_EL,
   ## When an element is added to the "special" category, add a test
-  ## like: "<!DOCTYPE html><span><main>aaa</span>bbbb".
+  ## like: "<!DOCTYPE html><span><main>aab</span>bbbb".
 }; # $el_category
 
 my $el_category_f = {
@@ -856,6 +856,7 @@ sub push_afe ($$) {
   my ($item => $afes) = @_;
   my $item_token = $item->[2];
 
+  ## 1. The Noah's Ark clause.
   my $depth = 0;
   OUTER: for my $i (reverse 0..$#$afes) {
     my $afe = $afes->[$i];
@@ -891,12 +892,13 @@ sub push_afe ($$) {
     }
   } # OUTER
 
+  ## 2.
   push @$afes, $item;
 } # push_afe
 
 ## The adoption agency algorithm (AAA)
-my $formatting_end_tag = sub {
-  my ($self, $active_formatting_elements, $open_tables, $end_tag_token) = @_;
+sub _aaa ($$) {
+  my ($self, $end_tag_token) = @_;
   my $tag_name = $end_tag_token->{tag_name};
 
   ## $end_tag_token is an end tag token or <a>/<nobr> (start tag
@@ -916,16 +918,16 @@ my $formatting_end_tag = sub {
       ## Step 4
       my $formatting_element;
       my $formatting_element_i_in_active;
-      AFE: for (reverse 0..$#$active_formatting_elements) {
-        if ($active_formatting_elements->[$_]->[0] eq '#marker') {
+      AFE: for (reverse 0..$#{$self->{active_formatting_elements}}) {
+        if ($self->{active_formatting_elements}->[$_]->[0] eq '#marker') {
           
           last AFE;
-        } elsif ($active_formatting_elements->[$_]->[0]->manakai_local_name
+        } elsif ($self->{active_formatting_elements}->[$_]->[0]->manakai_local_name
                      eq $tag_name) {
           ## NOTE: Non-HTML elements can't be in the list of active
           ## formatting elements.
           
-          $formatting_element = $active_formatting_elements->[$_];
+          $formatting_element = $self->{active_formatting_elements}->[$_];
           $formatting_element_i_in_active = $_;
           last AFE;
         }
@@ -965,7 +967,7 @@ my $formatting_end_tag = sub {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                         text => $self->{t}->{tag_name},
                         token => $end_tag_token);
-        pop @$active_formatting_elements; # $formatting_element
+        pop @{$self->{active_formatting_elements}}; # $formatting_element
         return;
       }
       if (not $self->{open_elements}->[-1]->[0] eq $formatting_element->[0]) {
@@ -996,7 +998,8 @@ my $formatting_end_tag = sub {
       unless (defined $furthest_block) { # MUST
         
         splice @{$self->{open_elements}}, $formatting_element_i_in_open;
-        splice @$active_formatting_elements, $formatting_element_i_in_active, 1;
+        splice @{$self->{active_formatting_elements}},
+            $formatting_element_i_in_active, 1;
         return;
       }
       
@@ -1005,8 +1008,7 @@ my $formatting_end_tag = sub {
       
       ## Step 8
       my $bookmark_prev_el
-        = $active_formatting_elements->[$formatting_element_i_in_active - 1]
-          ->[0];
+          = $self->{active_formatting_elements}->[$formatting_element_i_in_active - 1]->[0];
       
       ## Step 9
       my $node = $furthest_block;
@@ -1031,11 +1033,11 @@ my $formatting_end_tag = sub {
         my $node_i_in_active;
         my $node_token;
         S7S2: {
-          for (reverse 0..$#$active_formatting_elements) {
-            if ($active_formatting_elements->[$_]->[0] eq $node->[0]) {
+          for (reverse 0..$#{$self->{active_formatting_elements}}) {
+            if ($self->{active_formatting_elements}->[$_]->[0] eq $node->[0]) {
               
               $node_i_in_active = $_;
-              $node_token = $active_formatting_elements->[$_]->[2];
+              $node_token = $self->{active_formatting_elements}->[$_]->[2];
               last S7S2;
             }
           }
@@ -1069,7 +1071,7 @@ my $formatting_end_tag = sub {
       
         $new_element->[1] = $node->[1];
         $new_element->[2] = $node_token;
-        $active_formatting_elements->[$node_i_in_active] = $new_element;
+        $self->{active_formatting_elements}->[$node_i_in_active] = $new_element;
         $self->{open_elements}->[$node_i_in_open] = $new_element;
         $node = $new_element;
         
@@ -1115,7 +1117,7 @@ my $formatting_end_tag = sub {
         ## $foster_parent_element is the template content if that were
         ## the |template| element.
         $foster_parent_element->insert_before ($last_node->[0], $next_sibling);
-        $open_tables->[-1]->[1] = 1; # tainted
+        $self->{open_tables}->[-1]->[1] = 1; # tainted
       } else {
         
         $common_ancestor_node->[0]->manakai_append_content ($last_node->[0]);
@@ -1154,17 +1156,17 @@ my $formatting_end_tag = sub {
       
       ## Step 14
       my $i;
-      AFE: for (reverse 0..$#$active_formatting_elements) {
-        if ($active_formatting_elements->[$_]->[0] eq $formatting_element->[0]) {
+      AFE: for (reverse 0..$#{$self->{active_formatting_elements}}) {
+        if ($self->{active_formatting_elements}->[$_]->[0] eq $formatting_element->[0]) {
           
-          splice @$active_formatting_elements, $_, 1;
+          splice @{$self->{active_formatting_elements}}, $_, 1;
           $i-- and last AFE if defined $i;
-        } elsif ($active_formatting_elements->[$_]->[0] eq $bookmark_prev_el) {
+        } elsif ($self->{active_formatting_elements}->[$_]->[0] eq $bookmark_prev_el) {
           
           $i = $_;
         }
       } # AFE
-      splice @$active_formatting_elements, $i + 1, 0 => $new_element;
+      splice @{$self->{active_formatting_elements}}, $i + 1, 0 => $new_element;
       
       ## Step 15
       undef $i;
@@ -1183,7 +1185,7 @@ my $formatting_end_tag = sub {
       ## Step 16
       redo OUTER;
     } # OUTER
-}; # $formatting_end_tag (AAA)
+} # _aaa
 
   my $reconstruct_active_formatting_elements = sub ($$$$) {
     my ($self, $insert, $active_formatting_elements, $open_tables) = @_;
@@ -5676,8 +5678,7 @@ sub _construct_tree ($) {
           my $node = $active_formatting_elements->[$i];
           if ($node->[1] == A_EL) {
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'in a:a', token => $self->{t});
-            $formatting_end_tag->($self, $active_formatting_elements,
-                                  $open_tables, $self->{t});
+            $self->_aaa ($self->{t});
             AFE2: for (reverse 0..$#$active_formatting_elements) {
               if ($active_formatting_elements->[$_]->[0] eq $node->[0]) {
                 splice @$active_formatting_elements, $_, 1;
@@ -5750,8 +5751,7 @@ sub _construct_tree ($) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == NOBR_EL) {
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'in nobr:nobr', token => $self->{t});
-            $formatting_end_tag->($self, $active_formatting_elements,
-                                  $open_tables, $self->{t});
+            $self->_aaa ($self->{t});
             $reconstruct_active_formatting_elements
                 ->($self, $insert, $active_formatting_elements, $open_tables);
             last INSCOPE;
@@ -6678,14 +6678,13 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
-                a => 1,
-                b => 1, big => 1, code => 1, em => 1, font => 1, i => 1,
-                nobr => 1, s => 1, small => 1, strike => 1,
-                strong => 1, tt => 1, u => 1,
-               }->{$self->{t}->{tag_name}}) {
-        
-        $formatting_end_tag->($self, $active_formatting_elements,
-                              $open_tables, $self->{t});
+        a => 1,
+        b => 1, big => 1, code => 1, em => 1, font => 1, i => 1,
+        nobr => 1, s => 1, small => 1, strike => 1,
+        strong => 1, tt => 1, u => 1,
+      }->{$self->{t}->{tag_name}}) {
+        ## The "in body" insertion mode, formatting end tags.
+        $self->_aaa ($self->{t});
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'br') {
