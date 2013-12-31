@@ -342,7 +342,9 @@ sub _get_attr ($$) {
   $_[1] =~ /\G[\x09\x0A\x0C\x0D\x20\x2F]+/gc;
 
   # 2.
-  return undef if $_[1] =~ /\G(?=>)/gc;
+  return undef if $_[1] =~ /\G>/gc;
+      ## This consumes ">", which is not consumed according to the
+      ## spec, but the result is same.
   
   # 3.
   my $attr = {name => '', value => ''};

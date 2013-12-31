@@ -32,6 +32,7 @@ for my $test (
   [q{<meta content="text/html; charset=utf-8">} => undef],
   [q{<meta charset=us-ascii http-equiv=content-script-type>} => 'windows-1252'],
   [q{<meta content="text/html; charset=tis-620" charset=us-ascii http-equiv=content-script-type>} => 'windows-1252'],
+  [q{<a b>} => undef],
 ) {
   test {
     my $c = shift;
