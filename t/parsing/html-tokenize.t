@@ -81,8 +81,10 @@ sub _tokenize_test ($$) {
   close $file;
 
   print "# $file_name\n";
-  $js =~ s{\\u[Dd]([89A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])
-      \\u[Dd]([89A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])}{
+  $js =~ s{\\(\\u[0-9A-Fa-f]{4})}{$1}g;
+      ## Some characters are double-escaped in the JSON data.
+  $js =~ s{\\?\\u[Dd]([89A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])
+      \\?\\u[Dd]([89A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])}{
     ## NOTE: JSON::Parser does not decode surrogate pair escapes
     ## NOTE: In older version of JSON::Parser, utf8 string will be broken
     ## by parsing.  Use latest version!
