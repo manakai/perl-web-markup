@@ -1443,8 +1443,6 @@ sub _template_end_tag ($) {
     $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
                     text => 'template',
                     token => $self->{t});
-    ## Ignore the token.
-    $self->{t} = $self->_get_next_token;
     return;
   }
 
@@ -1470,8 +1468,6 @@ sub _template_end_tag ($) {
 
   ## 6.
   $self->_reset_insertion_mode;
-
-  $self->{t} = $self->_get_next_token;
 } # _template_end_tag
 
 sub _close_p ($;$) {
@@ -1518,6 +1514,137 @@ sub _close_p ($;$) {
     }
   }
 } # _close_p
+
+
+## ------ Tree construction actions ------
+
+my $Acts;
+
+$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_head} = 1;
+$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript_error} = 'in noscript:#text';
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
+$Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
+$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
+$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
+$Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
+$Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
+$Acts->[AFTER_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
+$Acts->[AFTER_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
+
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'base'}->{end_noscript_error} = 'in noscript';
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'base'}->{end_noscript} = 1;
+$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'base'}->{reopen_head} = 1;
+for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+  $Acts->[$im]->{START_TAG_TOKEN, 'base'}->{insert_void_el} = 1;
+  $Acts->[$im]->{START_TAG_TOKEN, 'base'}->{next_token} = 1;
+}
+
+$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{reopen_head} = 1
+    for qw(link basefont bgsound);
+for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+  $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_void_el} = 1
+      for qw(link basefont bgsound);
+  $Acts->[$im]->{START_TAG_TOKEN, $_}->{next_token} = 1
+      for qw(link basefont bgsound);
+}
+
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_noscript_error} = 'in noscript'
+    for qw(body frameset);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_noscript} = 1
+    for qw(body frameset);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_head} = 1
+    for qw(body frameset);
+$Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_}->{end_head} = 1
+    for qw(body frameset);
+for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+  $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_el} = 1
+      for qw(body frameset);
+  $Acts->[$im]->{START_TAG_TOKEN, $_}->{frameset_not_ok} = 1
+      for qw(body);
+  $Acts->[$im]->{START_TAG_TOKEN, 'body'}->{set_im} = IN_BODY_IM;
+  $Acts->[$im]->{START_TAG_TOKEN, 'frameset'}->{set_im} = IN_FRAMESET_IM;
+  $Acts->[$im]->{START_TAG_TOKEN, $_}->{next_token} = 1
+      for qw(frameset body);
+}
+
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript_error} = 'in noscript';
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1;
+$Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1;
+for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+  $Acts->[$im]->{START_TAG_TOKEN . ':else'}->{start_body} = 1;
+  $Acts->[$im]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1;
+}
+
+$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_head} = 1
+    for qw(head body html br);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{end_noscript_error} = 'in noscript:/'
+    for qw(br);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{end_noscript} = 1
+    for qw(noscript br);
+$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_template} = 1
+    for qw(template);
+$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_template} = 1
+    for qw(template);
+$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1
+    for qw(head body html br);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1
+    for qw(br);
+$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1
+    for qw(head body html br);
+$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
+    for qw(body html br);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
+    for qw(br);
+$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
+    for qw(body html br);
+$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
+    for qw(body html br);
+$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
+    for qw(head);
+$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
+    for qw(head template);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
+    for qw(noscript);
+$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
+    for qw(template);
+$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
+    for qw(body html br);
+$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
+    for qw(body html br);
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
+    for qw(br);
+$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
+    for qw(body html br);
+$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+
+$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_head} = 1;
+$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
+$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript_error} = 'in noscript:#eof';
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript} = 1;
+$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
+$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
+$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
+$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
+$Acts->[AFTER_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
+$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
+$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
+$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
+$Acts->[AFTER_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
 
 sub _construct_tree ($) {
   my $self = $_[0];
@@ -2383,7 +2510,6 @@ sub _construct_tree ($) {
     } # insertion_mode
 
     if ($self->{insertion_mode} & HEAD_IMS) {
-      HEAD: {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           unless ($self->{insertion_mode} == BEFORE_HEAD_IM) {
@@ -2402,41 +2528,7 @@ sub _construct_tree ($) {
 ## TODO: set $self->{t}->{column} appropriately
         }
 
-        if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          ## As if <head>
-          $self->_insert_el (undef, 'head', {});
-          $self->{head_element} = $self->{open_elements}->[-1]->[0];
-
-          ## Reprocess in the "in head" insertion mode...
-          pop @{$self->{open_elements}}; # <head>
-
-          ## Reprocess in the "after head" insertion mode...
-          #
-        } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-          
-          ## As if </noscript>
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript:#text', token => $self->{t});
-          pop @{$self->{open_elements}}; # <noscript>
-          
-          ## Reprocess in the "in head" insertion mode...
-          ## As if </head>
-          pop @{$self->{open_elements}};
-
-          ## Reprocess in the "after head" insertion mode...
-        } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-          
-          pop @{$self->{open_elements}};
-
-          ## Reprocess in the "after head" insertion mode...
-        } else {
-          
-        }
-
-        ## "after head" insertion mode
-        ## Fake <body> without resetting frameset-ok
-        $self->_insert_el (undef, 'body', {});
-        $self->{insertion_mode} = IN_BODY_IM;
-        next B;
+        #
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'head') {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
@@ -2477,58 +2569,7 @@ sub _construct_tree ($) {
           }
         }
 
-        if ($self->{t}->{tag_name} eq 'base') {
-          if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            
-            ## As if </noscript>
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript', text => 'base',
-                            token => $self->{t});
-            pop @{$self->{open_elements}}; # <noscript>
-          
-            $self->{insertion_mode} = IN_HEAD_IM;
-            ## Reprocess in the "in head" insertion mode...
-          } else {
-            
-          }
-
-          ## NOTE: There is a "as if in head" code clone.
-          if ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
-                            text => $self->{t}->{tag_name}, token => $self->{t});
-            push @{$self->{open_elements}},
-                [$self->{head_element}, $el_category->{head}];
-          } else {
-            
-          }
-          $self->_insert_el;
-          pop @{$self->{open_elements}};
-          pop @{$self->{open_elements}} # <head>
-              if $self->{insertion_mode} == AFTER_HEAD_IM;
-          
-          $self->{t} = $self->_get_next_token;
-          next B;
-        } elsif ({
-          link => 1, basefont => 1, bgsound => 1,
-        }->{$self->{t}->{tag_name}}) {
-          ## NOTE: There is a "as if in head" code clone.
-          if ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
-                            text => $self->{t}->{tag_name}, token => $self->{t});
-            push @{$self->{open_elements}},
-                [$self->{head_element}, $el_category->{head}];
-          } else {
-            
-          }
-          $self->_insert_el;
-          pop @{$self->{open_elements}};
-          pop @{$self->{open_elements}} # <head>
-              if $self->{insertion_mode} == AFTER_HEAD_IM;
-          delete $self->{self_closing};
-          $self->{t} = $self->_get_next_token;
-          next B;
-        } elsif ($self->{t}->{tag_name} eq 'meta') {
+        if ($self->{t}->{tag_name} eq 'meta') {
           ## NOTE: There is a "as if in head" code clone.
           if ($self->{insertion_mode} == AFTER_HEAD_IM) {
             
@@ -2755,256 +2796,79 @@ sub _construct_tree ($) {
 
           $self->{t} = $self->_get_next_token;
           next B;
-        } elsif ($self->{t}->{tag_name} eq 'body' or
-                 $self->{t}->{tag_name} eq 'frameset') {
-          if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            
-            ## As if </noscript>
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript',
-                            text => $self->{t}->{tag_name}, token => $self->{t});
-            pop @{$self->{open_elements}}; # <noscript>
-            
-            ## Reprocess in the "in head" insertion mode...
-            ## As if </head>
-            pop @{$self->{open_elements}};
-            
-            ## Reprocess in the "after head" insertion mode...
-          } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-            
-            pop @{$self->{open_elements}};
-            
-            ## Reprocess in the "after head" insertion mode...
-          } else {
-            
-          }
-
-          ## "after head" insertion mode
-          $self->_insert_el;
-          if ($self->{t}->{tag_name} eq 'body') {
-            
-            delete $self->{frameset_ok};
-            $self->{insertion_mode} = IN_BODY_IM;
-          } elsif ($self->{t}->{tag_name} eq 'frameset') {
-            
-            $self->{insertion_mode} = IN_FRAMESET_IM;
-          } else {
-            die "$0: tag name: $self->{tag_name}";
-          }
-          
-          $self->{t} = $self->_get_next_token;
-          next B;
-        } else {
-          
-          #
         }
 
-        if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-          
-          ## As if </noscript>
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript:/',
-                          text => $self->{t}->{tag_name}, token => $self->{t});
-          pop @{$self->{open_elements}}; # <noscript>
-          
-              ## Reprocess in the "in head" insertion mode...
-              ## As if </head>
-              pop @{$self->{open_elements}};
+        #
+      } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
+        #
+      } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
+        #
+      } else {
+        die "$0: $self->{t}->{type}: Unknown token type";
+      }
 
-              ## Reprocess in the "after head" insertion mode...
-            } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-              
-              ## As if </head>
-              pop @{$self->{open_elements}};
+      my $act;
+      if ($self->{t}->{type} == START_TAG_TOKEN or
+          $self->{t}->{type} == END_TAG_TOKEN) {
+        $act = $Acts->[$self->{insertion_mode}]->{$self->{t}->{type}, $self->{t}->{tag_name}} ||
+            $Acts->[$self->{insertion_mode}]->{$self->{t}->{type} . ':else'};
+      } else {
+        $act = $Acts->[$self->{insertion_mode}]->{$self->{t}->{type}};
+      }
 
-              ## Reprocess in the "after head" insertion mode...
-            } else {
-              
-            }
-
-        ## "after head" insertion mode
-        ## Fake <body> without resetting frameset-ok
+      if ($act->{start_head}) {
+        $self->_insert_el (undef, 'head', {});
+        $self->{head_element} = $self->{open_elements}->[-1]->[0];
+      }
+      if ($act->{end_noscript_error}) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => $act->{end_noscript_error},
+                        text => $self->{t}->{tag_name},
+                        token => $self->{t});
+      }
+      if ($act->{end_noscript}) {
+        pop @{$self->{open_elements}}; # <noscript>
+        $self->{insertion_mode} = IN_HEAD_IM;
+      }
+      $self->_template_end_tag if $act->{end_template};
+      if ($act->{end_head}) {
+        pop @{$self->{open_elements}}; # <head>
+        $self->{insertion_mode} = AFTER_HEAD_IM;
+      }
+      if ($act->{reopen_head}) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
+                        text => $self->{t}->{tag_name},
+                        token => $self->{t});
+        push @{$self->{open_elements}},
+            [$self->{head_element}, $el_category->{head}];
+      }
+      if ($act->{start_body}) {
         $self->_insert_el (undef, 'body', {});
         $self->{insertion_mode} = IN_BODY_IM;
+      }
+      if ($act->{insert_el}) {
+        $self->_insert_el;
         
-        next B;
-        } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
-          ## "Before head", "in head", and "after head" insertion
-          ## modes ignore most of end tags.  Exceptions are "body",
-          ## "html", and "br" end tags.  "Before head" and "in head"
-          ## insertion modes also recognize "head" end tag.  "In head
-          ## noscript" insertion modes ignore end tags except for
-          ## "noscript" and "br".
-
-        if ($self->{t}->{tag_name} eq 'head') {
-          if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            ## The "before head" insertion mode, </head>
-
-            ## As if <head>
-            $self->_insert_el (undef, 'head', {});
-            $self->{head_element} = $self->{open_elements}->[-1]->[0];
-
-            ## Reprocess in the "in head" insertion mode...
-            pop @{$self->{open_elements}};
-            $self->{insertion_mode} = AFTER_HEAD_IM;
-            $self->{t} = $self->_get_next_token;
-            next B;
-          } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            
-            #
-          } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-            
-            pop @{$self->{open_elements}};
-            $self->{insertion_mode} = AFTER_HEAD_IM;
-            $self->{t} = $self->_get_next_token;
-            next B;
-          } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            
-            #
-          } else {
-            die "$0: $self->{insertion_mode}: Unknown insertion mode";
-          }
-        } elsif ($self->{t}->{tag_name} eq 'noscript') {
-          if ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            
-            pop @{$self->{open_elements}};
-            $self->{insertion_mode} = IN_HEAD_IM;
-            $self->{t} = $self->_get_next_token;
-            next B;
-          } else {
-            
-            #
-          }
-        } elsif ({
-          body => ($self->{insertion_mode} != IN_HEAD_NOSCRIPT_IM),
-          html => ($self->{insertion_mode} != IN_HEAD_NOSCRIPT_IM),
-          br => 1,
-        }->{$self->{t}->{tag_name}}) {
-          if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            ## (before head) as if <head>, (in head) as if </head>
-            $self->_insert_el (undef, 'head', {});
-            $self->{head_element} = $self->{open_elements}->[-1]->[0];
-            pop @{$self->{open_elements}}; # <head>
-            $self->{insertion_mode} = AFTER_HEAD_IM;
-  
-            ## Reprocess in the "after head" insertion mode...
-            #
-          } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-            
-            ## As if </head>
-            pop @{$self->{open_elements}}; # <head>
-            $self->{insertion_mode} = AFTER_HEAD_IM;
-  
-            ## Reprocess in the "after head" insertion mode...
-            #
-          } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            
-            ## NOTE: Two parse errors for <head><noscript></br>
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                            text => $self->{t}->{tag_name},
-                            token => $self->{t});
-
-            ## As if </noscript>
-            $self->{insertion_mode} = IN_HEAD_IM;
-            pop @{$self->{open_elements}}; # <noscript>
-
-            ## Reprocess in the "in head" insertion mode...
-            ## As if </head>
-            pop @{$self->{open_elements}}; # <head>
-            $self->{insertion_mode} = AFTER_HEAD_IM;
-
-            ## Reprocess in the "after head" insertion mode...
-            #
-          } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
-            
-            #
-          } else {
-            die "$0: $self->{insertion_mode}: Unknown insertion mode";
-          }
-
-          ## "after head" insertion mode
-          ## Fake <body> without resetting frameset-ok
-          $self->_insert_el (undef, 'body', {});
-          $self->{insertion_mode} = IN_BODY_IM;
-          next B;
-        } elsif ($self->{t}->{tag_name} eq 'template') {
-          ## In head insertion modes, </template>
-          if ($self->{insertion_mode} == IN_HEAD_IM or
-              $self->{insertion_mode} == AFTER_HEAD_IM) {
-            $self->_template_end_tag;
-            next B;
-          } elsif ($self->{insertion_mode} == BEFORE_HEAD_IM or
-                   $self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            #
-          } else {
-            die "$0: $self->{insertion_mode}: Unknown insertion mode";
-          }
-        } # tag name
-
-        ## End tags are ignored by default.
-        
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                        text => $self->{t}->{tag_name}, token => $self->{t});
-        ## Ignore the token.
+      }
+      if ($act->{insert_void_el}) {
+        $self->_insert_el;
+        pop @{$self->{open_elements}};
+        delete $self->{self_closing};
+      }
+      pop @{$self->{open_elements}} if $act->{reopen_head}; # <head>
+      delete $self->{frameset_ok} if $act->{frameset_not_ok};
+      $self->{insertion_mode} = $act->{set_im} if defined $act->{set_im};
+      if ($act->{ignore_end_tag_error}) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                        text => $self->{t}->{tag_name},
+                        token => $self->{t});
+      }
+      if ($act->{next_token}) {
         $self->{t} = $self->_get_next_token;
         next B;
-        } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-          if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            ## The "before head" insertion mode, EOF
+      }
+      next B if $act->{reprocess}; ## Reprocess the current token.
 
-          ## As if <head>
-          $self->_insert_el (undef, 'head', {});
-          $self->{head_element} = $self->{open_elements}->[-1]->[0];
-          #$self->{insertion_mode} = IN_HEAD_IM;
-          ## Reprocess the token.
-
-          ## As if </head>
-          pop @{$self->{open_elements}}; # <head>
-          #$self->{insertion_mode} = IN_AFTER_HEAD_IM;
-          ## Reprocess the token.
-          
-          #
-        } elsif ($self->{insertion_mode} == IN_HEAD_IM) {
-          
-
-          ## NOTE: As if </head>
-          pop @{$self->{open_elements}};
-          #$self->{insertion_mode} = IN_AFTER_HEAD_IM;
-          ## NOTE: Reprocess.
-
-          #
-        } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-          
-
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript:#eof', token => $self->{t});
-
-          ## As if </noscript>
-          pop @{$self->{open_elements}};
-          #$self->{insertion_mode} = IN_HEAD_IM;
-          ## NOTE: Reprocess.
-
-          ## NOTE: As if </head>
-          pop @{$self->{open_elements}};
-          #$self->{insertion_mode} = IN_AFTER_HEAD_IM;
-          ## NOTE: Reprocess.
-
-          #
-        } else {
-          
-          #
-        }
-
-          #
-        } else {
-          die "$0: $self->{t}->{type}: Unknown token type";
-        }
-
-        ## The "after head" insertion mode, anything else
-
-        $self->_insert_el (undef, 'body', {});
-        $self->{insertion_mode} = IN_BODY_IM;
-        ## Reprocess the current token.
-        next B;
-      } # HEAD
-
+      die;
     } elsif ($self->{insertion_mode} & BODY_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         ## "In body" insertion mode, character token.  It is also used
@@ -3954,6 +3818,7 @@ sub _construct_tree ($) {
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
           $self->_template_end_tag;
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
           
@@ -4027,6 +3892,7 @@ sub _construct_tree ($) {
           } elsif ($self->{t}->{tag_name} eq 'template') {
             ## The "in column group" insertion mode, </template>
             $self->_template_end_tag;
+            $self->{t} = $self->_get_next_token;
             next B;
           } else {
             #
@@ -4275,6 +4141,7 @@ sub _construct_tree ($) {
 
         } elsif ($self->{t}->{tag_name} eq 'template') {
           $self->_template_end_tag;
+          $self->{t} = $self->_get_next_token;
           next B;
         } else {
           
@@ -5532,6 +5399,7 @@ sub _construct_tree ($) {
         next B;
       } elsif ($self->{t}->{tag_name} eq 'template') {
         $self->_template_end_tag;
+        $self->{t} = $self->_get_next_token;
         next B;
       } else {
         if ($self->{t}->{tag_name} eq 'sarcasm') {

@@ -25,6 +25,7 @@ $Data::Dumper::Useqq = 1;
   no warnings 'redefine';
   sub Data::Dumper::qquote {
     my $s = shift;
+    return undef unless defined $s;
     eval {
       ## Perl 5.8.8/5.10.1 in some environment does not handle utf8
       ## string with surrogate code points well (it breaks the string
