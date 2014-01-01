@@ -623,14 +623,12 @@ sub _initialize_tree_constructor ($) {
   ## NOTE: $self->{document} MUST be specified before this method is called
   $self->{document}->strict_error_checking (0);
   ## TODO: Turn mutation events off # MUST
-  ## TODO: Turn loose Document option (manakai extension) on
   $self->{document}->manakai_is_html (1); # MUST
   $self->{document}->set_user_data (manakai_source_line => 1);
   $self->{document}->set_user_data (manakai_source_column => 1);
 
   $self->{frameset_ok} = 1;
   delete $self->{active_formatting_elements};
-  delete $self->{insert};
   delete $self->{open_tables};
 
   $self->{insertion_mode} = INITIAL_IM;
@@ -759,30 +757,225 @@ sub _reset_insertion_mode ($) {
   ## END
 } # _reset_insertion_mode
 
-sub _script_start_tag ($) {
-  my $self = $_[0];
+sub _create_el ($$$$) {
+  my ($self, $token, $nsurl, $intended_parent) = @_;
 
-  ## 1., 2., 5., 6.
-  $self->_insert_el (undef, undef, undef, sub {
+  ## Create an element for a token
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#create-an-element-for-the-token>.
+
+  ## 1.
+  my $od = $intended_parent->owner_document || $intended_parent;
+  my $orig_strict = $od->strict_error_checking;
+  $od->strict_error_checking (0) if $orig_strict;
+
+  my $el;
+  if (defined $nsurl) { ## $nsurl is SVG_NS or MML_NS
+    ## Tag name fixup in foreign content, any other start tag
+    my $ln = $token->{tag_name};
+    $ln = $Web::HTML::ParserData::SVGElementNameFixup->{$ln} || $ln
+        if $nsurl eq SVG_NS;
+
+    $el = [
+      $od->create_element_ns ($nsurl, [undef, $ln]),
+      (($el_category_f->{$nsurl}->{$ln} || 0) |
+       FOREIGN_EL |
+       ($nsurl eq SVG_NS ? SVG_EL : $nsurl eq MML_NS ? MML_EL : 0)),
+    ];
+
+    my $attrs = $token->{attributes};
+    for my $attr_name (keys %$attrs) {
+      my $attr_t = $attrs->{$attr_name};
+
+      ## "adjust SVG attributes" (SVG only), "adjust MathML
+      ## attributes", (MathML only), and "adjust foreign attributes".
+      my $args = $Web::HTML::ParserData::ForeignAttrNameToArgs->{$nsurl}->{$attr_name}
+          || [undef, [undef, $attr_name]];
+
+      my $attr = $od->create_attribute_ns (@$args);
+      $attr->value ($attr_t->{value});
+      $attr->set_user_data (manakai_source_line => $attr_t->{line});
+      $attr->set_user_data (manakai_source_column => $attr_t->{column});
+      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+      $el->[0]->set_attribute_node_ns ($attr);
+    } # $attr_name
+
+    ## 2.
+    if ($attrs->{xmlns} and $attrs->{xmlns}->{value} ne $nsurl) {
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t}); # XXXdoc
+    }
+    if ($attrs->{'xmlns:xlink'} and
+        $attrs->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t});
+    }
+
     ## 3.
-    # XXX set parser-inserted
-    # XXX unset force-async
+    ## Reset - not applicable
 
     ## 4.
-    if (defined $self->{inner_html_node}) {
-      # XXX already-started
+    ## Form association - not applicable
+  } else { ## HTML namespace
+    $el = [
+      $od->create_element ($token->{tag_name}),
+      $el_category->{$token->{tag_name}} || 0,
+    ];
+
+    my $attrs = $token->{attributes};
+    for my $attr_name (keys %$attrs) {
+      my $attr_t = $attrs->{$attr_name};
+      my $attr = $od->create_attribute ($attr_name);
+      $attr->value ($attr_t->{value});
+      $attr->set_user_data (manakai_source_line => $attr_t->{line});
+      $attr->set_user_data (manakai_source_column => $attr_t->{column});
+      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+      $el->[0]->set_attribute_node_ns ($attr);
+    } # $attr_name
+
+    ## 2.
+    ## Namespace attributes - not applicable
+
+    ## 3.
+    # XXX if resettable, reset
+
+    ## 4.
+    # XXX if form-associated, associate form
+  } # $nsurl
+  $el->[0]->set_user_data (manakai_source_line => $token->{line})
+      if defined $token->{line};
+  $el->[0]->set_user_data (manakai_source_column => $token->{column})
+      if defined $token->{column};
+
+  $od->strict_error_checking (1) if $orig_strict;
+
+  ## 5.
+  return $el;
+} # _create_el
+
+sub _get_insertion_location ($;$) {
+  my $self = $_[0];
+  my ($adjusted_parent, $adjusted_ref);
+
+  ## The appropriate place for inserting a node
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#appropriate-place-for-inserting-a-node>.
+  
+  ## 1.
+  my $target = $_[1] || ## override target
+      $self->{open_elements}->[-1] || ## Current node
+      [$self->{document}, 0]; ## For the "before html" insertion mode.
+
+  ## 2.
+  if ($self->{foster_parenting} and $target->[1] & TABLE_ROWS_EL) {
+    my $last_template_i;
+    my $last_table_i;
+    OE: for (reverse 0..$#{$self->{open_elements}}) {
+      if ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
+        ## 1.
+        $last_template_i = $_;
+        last OE;
+      } elsif ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
+        ## 2.
+        $last_table_i = $_;
+        last OE;
+      }
+    } # OE
+
+    if (defined $last_template_i) {
+      ## 3.
+      $adjusted_parent = $self->{open_elements}->[$last_template_i]->[0];
+          ## ->content (See the TEMPLATE line below.)
+      $adjusted_ref = undef;
+    } elsif (not defined $last_table_i) {
+      ## 4.
+      $adjusted_parent = $self->{open_elements}->[0]->[0];
+      $adjusted_ref = undef;
+    } else {
+      ## 5.
+      $adjusted_ref = $self->{open_elements}->[$last_table_i]->[0];
+      $adjusted_parent = $adjusted_ref->parent_node; ## "parent element" in the spec, which seems wrong
+
+      unless (defined $adjusted_parent) {
+        ## 6.-7.
+        $adjusted_parent = $self->{open_elements}->[$last_table_i - 1]->[0];
+        $adjusted_ref = undef;
+      }
     }
-  });
+  } else {
+    ## Otherwise
+    $adjusted_parent = $target->[0];
+    $adjusted_ref = undef;
+  }
 
-  ## 7.
-  $self->{state} = SCRIPT_DATA_STATE;
+  ## 3.
+  ## ->content - skipped here (see lines marked as TEMPLATECONTENT)
 
-  ## 8.-9.
-  $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
-} # script_start_tag
+  ## 4.
+  return ($adjusted_parent, $adjusted_ref);
+} # _get_insertion_location
 
-sub push_afe ($$) {
-  my ($item => $afes) = @_;
+sub _insert_el ($;$$$$) {
+  my ($self, $nsurl, $ln, $attrs, $code) = @_;
+
+  ## Insert an HTML element
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-an-html-element>.
+
+  ## Insert a foreign element
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-a-foreign-element>.
+
+  ## Also used in the "before html" insertion mode, <html> and
+  ## "anything else".
+
+  ## Also used for <script>.
+
+  ## 1.
+  my ($parent, $ref) = $self->_get_insertion_location;
+      ## /target overrdie/ is the |Document| for the "before html", or nothing
+
+  ## 2.
+  my $el = $self->_create_el
+      (defined $ln ?
+       ref $ln     ? $ln
+                   : {%{$self->{t}}, tag_name => $ln, attributes => $attrs}
+                   : $self->{t},
+       $nsurl,
+       $parent);
+
+  ## Hook for <script>
+  $code->() if $code;
+
+  ## 3.
+  {
+    ## There are code clones for AAA and for table texts.
+    my $err;
+    if (defined $ref) {
+      local $@;
+      $parent = $parent->content
+          if $parent->node_type == 1 and # ELEMENT_NODE
+             $parent->manakai_element_type_match (HTML_NS, 'template');
+      eval { $parent->insert_before ($el->[0], $ref) };
+    } else {
+      local $@;
+      eval { $parent->manakai_append_content ($el->[0]) };
+      $err = $@;
+    }
+        ## TEMPLATECONTENT - If the element were inserted into an HTML
+        ## |template| element, it is inserted into the template
+        ## content instead.
+    if ($err and
+        not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
+             $err->name eq 'HierarchyRequestError')) {
+      die $err;
+    }
+        ## <table><script>document.replaceChild (document.getElementsByTagName('table')[0], document.documentElement);</script><span></span>
+  }
+
+  ## 4.
+  push @{$self->{open_elements}}, $el;
+
+  ## 5.
+  return $el;
+} # _insert_el
+
+sub _push_afe ($$$) {
+  my ($self, $item => $afes) = @_;
   my $item_token = $item->[2];
 
   ## 1. The Noah's Ark clause.
@@ -823,12 +1016,89 @@ sub push_afe ($$) {
 
   ## 2.
   push @$afes, $item;
-} # push_afe
+} # _push_afe
 
-## The adoption agency algorithm (AAA)
-## <http://www.whatwg.org/specs/web-apps/current-work/#adoption-agency-algorithm>.
+sub _reconstruct_afe ($) {
+  my $self = $_[0];
+
+  ## Reconstruct the active formatting elements.
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#reconstruct-the-active-formatting-elements>.
+  my $afe = $self->{active_formatting_elements};
+
+  ## 1.
+  return unless @$afe;
+
+  ## 3.
+  my $i = $#$afe;
+  my $entry = $afe->[$i];
+
+  ## 2.
+  return if $entry->[0] eq '#marker';
+  OE: for (@{$self->{open_elements}}) {
+    return if $entry->[0] eq $_->[0];
+  } # OE
+
+  BEFORE_CREATE: {
+    REWIND: {
+      ## 4. Rewind
+      last BEFORE_CREATE if $i == 0;
+
+      ## 5.
+      $i--;
+      $entry = $afe->[$i];
+
+      ## 6.
+      unless ($entry->[0] eq '#marker') {
+        my $in_open_elements;
+        OE: for (@{$self->{open_elements}}) {
+          if ($entry->[0] eq $_->[0]) {
+            $in_open_elements = 1;
+            last OE;
+          }
+        } # OE
+        redo REWIND unless $in_open_elements;
+            ## <!DOCTYPE HTML><p><b><i><u></p> <p>X
+      }
+    } # REWIND
+
+    ## 7. Advance
+    $i++;
+    $entry = $afe->[$i];
+  } # BEFORE_CREATE
+
+  CREATE: {
+    ## 8. Create
+    my $el = $self->_insert_el (undef, $entry->[2]);
+    $el->[2] = $entry->[2];
+
+    ## 9.
+    $afe->[$i] = $el;
+
+    ## 10.
+    last CREATE if $i == $#$afe;
+
+    ## 7. Advance
+    $i++;
+    $entry = $afe->[$i];
+    redo CREATE;
+  } # CREATE
+} # _reconstruct_afe
+
+sub _clear_up_to_marker ($) {
+  my $active_formatting_elements = $_[0]->{active_formatting_elements};
+  for (reverse 0..$#$active_formatting_elements) {
+    if ($active_formatting_elements->[$_]->[0] eq '#marker') {
+      splice @$active_formatting_elements, $_;
+      return;
+    }
+  }
+} # _clear_up_to_marker
+
 sub _aaa ($$) {
   my ($self, $token) = @_;
+
+  ## The adoption agency algorithm (AAA)
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#adoption-agency-algorithm>.
 
   ## $end_tag_token is an end tag token or <a>/<nobr> (start tag
   ## token).  Don't edit it as it might be used later to create
@@ -1137,127 +1407,29 @@ sub _in_body_any_other_end_tag ($) {
   die;
 } # _in_body_any_other_end_tag
 
-sub _reconstruct_afe ($) {
+sub _script_start_tag ($) {
   my $self = $_[0];
 
-  ## Reconstruct the active formatting elements.
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#reconstruct-the-active-formatting-elements>.
-  my $afe = $self->{active_formatting_elements};
+  ## 1., 2., 5., 6.
+  $self->_insert_el (undef, undef, undef, sub {
+    ## 3.
+    # XXX set parser-inserted
+    # XXX unset force-async
 
-  ## 1.
-  return unless @$afe;
-
-  ## 3.
-  my $i = $#$afe;
-  my $entry = $afe->[$i];
-
-  ## 2.
-  return if $entry->[0] eq '#marker';
-  OE: for (@{$self->{open_elements}}) {
-    return if $entry->[0] eq $_->[0];
-  } # OE
-
-  BEFORE_CREATE: {
-    REWIND: {
-      ## 4. Rewind
-      last BEFORE_CREATE if $i == 0;
-
-      ## 5.
-      $i--;
-      $entry = $afe->[$i];
-
-      ## 6.
-      unless ($entry->[0] eq '#marker') {
-        my $in_open_elements;
-        OE: for (@{$self->{open_elements}}) {
-          if ($entry->[0] eq $_->[0]) {
-            $in_open_elements = 1;
-            last OE;
-          }
-        } # OE
-        redo REWIND unless $in_open_elements;
-            ## <!DOCTYPE HTML><p><b><i><u></p> <p>X
-      }
-    } # REWIND
-
-    ## 7. Advance
-    $i++;
-    $entry = $afe->[$i];
-  } # BEFORE_CREATE
-
-  CREATE: {
-    ## 8. Create
-    my $el = $self->_insert_el (undef, $entry->[2]);
-    $el->[2] = $entry->[2];
-
-    ## 9.
-    $afe->[$i] = $el;
-
-    ## 10.
-    last CREATE if $i == $#$afe;
-
-    ## 7. Advance
-    $i++;
-    $entry = $afe->[$i];
-    redo CREATE;
-  } # CREATE
-} # _reconstruct_afe
-
-  my $clear_up_to_marker = sub ($) {
-    my $active_formatting_elements = $_[0];
-    for (reverse 0..$#$active_formatting_elements) {
-      if ($active_formatting_elements->[$_]->[0] eq '#marker') {
-        
-        splice @$active_formatting_elements, $_;
-        return;
-      }
+    ## 4.
+    if (defined $self->{inner_html_node}) {
+      # XXX already-started
     }
+  });
 
-    
-  }; # $clear_up_to_marker
-  my $insert_to_current = sub {
-    #my ($self, $child, $open_tables) = @_;
-    $_[0]->{open_elements}->[-1]->[0]->manakai_append_content ($_[1]);
-  }; # $insert_to_current
+  ## 7.
+  $self->{state} = SCRIPT_DATA_STATE;
 
-  ## Foster parenting.  Note that there are three "foster parenting"
-  ## code in the parser: for elements (this one), for texts, and for
-  ## elements in the AAA code.
-  my $insert_to_foster = sub {
-    my ($self, $child, $open_tables) = @_;
-    if ($self->{open_elements}->[-1]->[1] & TABLE_ROWS_EL) {
-      # MUST
-      my $foster_parent_element;
-      my $next_sibling;
-      OE: for (reverse 0..$#{$self->{open_elements}}) {
-        if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-          
-          $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0]; # XXX wrong
-          $foster_parent_element = $foster_parent_element->content
-              if $foster_parent_element->manakai_element_type_match (HTML_NS, 'template');
-          $next_sibling = $self->{open_elements}->[$_]->[0];
-          undef $next_sibling
-              unless $next_sibling->parent_node eq $foster_parent_element;
-          last OE;
-        } elsif ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
-          $foster_parent_element = $self->{open_elements}->[$_]->[0]->content;
-          $next_sibling = undef;
-          last OE;
-        }
-      } # OE
-      $foster_parent_element ||= $self->{open_elements}->[0]->[0];
+  ## 8.-9.
+  $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+} # _script_start_tag
 
-      ## $foster_parent_element is the template content if that were
-      ## the |template| element.
-      $foster_parent_element->insert_before ($child, $next_sibling);
-    } else {
-      
-      $self->{open_elements}->[-1]->[0]->manakai_append_content ($child);
-    }
-  }; # $insert_to_foster
-
-
-my $template_end_tag = sub {
+sub _template_end_tag ($) {
   my ($self) = @_;
 
   my $i;
@@ -1291,7 +1463,7 @@ my $template_end_tag = sub {
   splice @{$self->{open_elements}}, $i;
 
   ## 4.
-  $clear_up_to_marker->($self->{active_formatting_elements});
+  $self->_clear_up_to_marker;
 
   ## 5.
   pop @{$self->{template_ims}};
@@ -1300,7 +1472,7 @@ my $template_end_tag = sub {
   $self->_reset_insertion_mode;
 
   $self->{t} = $self->_get_next_token;
-}; # $template_end_tag
+} # _template_end_tag
 
 sub _close_p ($;$) {
   my ($self, $imply_start_tag) = @_;
@@ -1341,229 +1513,11 @@ sub _close_p ($;$) {
                       text => 'p',
                       token => $self->{t});
 
-      my ($insert, $open_tables) = @$imply_start_tag;
       $self->_insert_el (undef, 'p', {});
       pop @{$self->{open_elements}}; # <p>
     }
   }
 } # _close_p
-
-sub _create_el ($$$$) {
-  my ($self, $token, $nsurl, $intended_parent) = @_;
-
-  ## Create an element for a token
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#create-an-element-for-the-token>.
-
-  ## 1.
-  my $od = $intended_parent->owner_document || $intended_parent;
-  my $orig_strict = $od->strict_error_checking;
-  $od->strict_error_checking (0) if $orig_strict;
-
-  my $el;
-  if (defined $nsurl) { ## $nsurl is SVG_NS or MML_NS
-    ## Tag name fixup in foreign content, any other start tag
-    my $ln = $token->{tag_name};
-    $ln = $Web::HTML::ParserData::SVGElementNameFixup->{$ln} || $ln
-        if $nsurl eq SVG_NS;
-
-    $el = [
-      $od->create_element_ns ($nsurl, [undef, $ln]),
-      (($el_category_f->{$nsurl}->{$ln} || 0) |
-       FOREIGN_EL |
-       ($nsurl eq SVG_NS ? SVG_EL : $nsurl eq MML_NS ? MML_EL : 0)),
-    ];
-
-    my $attrs = $token->{attributes};
-    for my $attr_name (keys %$attrs) {
-      my $attr_t = $attrs->{$attr_name};
-
-      ## "adjust SVG attributes" (SVG only), "adjust MathML
-      ## attributes", (MathML only), and "adjust foreign attributes".
-      my $args = $Web::HTML::ParserData::ForeignAttrNameToArgs->{$nsurl}->{$attr_name}
-          || [undef, [undef, $attr_name]];
-
-      my $attr = $od->create_attribute_ns (@$args);
-      $attr->value ($attr_t->{value});
-      $attr->set_user_data (manakai_source_line => $attr_t->{line});
-      $attr->set_user_data (manakai_source_column => $attr_t->{column});
-      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-      $el->[0]->set_attribute_node_ns ($attr);
-    } # $attr_name
-
-    ## 2.
-    if ($attrs->{xmlns} and $attrs->{xmlns}->{value} ne $nsurl) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t}); # XXXdoc
-    }
-    if ($attrs->{'xmlns:xlink'} and
-        $attrs->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t});
-    }
-
-    ## 3.
-    ## Reset - not applicable
-
-    ## 4.
-    ## Form association - not applicable
-  } else { ## HTML namespace
-    $el = [
-      $od->create_element ($token->{tag_name}),
-      $el_category->{$token->{tag_name}} || 0,
-    ];
-
-    my $attrs = $token->{attributes};
-    for my $attr_name (keys %$attrs) {
-      my $attr_t = $attrs->{$attr_name};
-      my $attr = $od->create_attribute ($attr_name);
-      $attr->value ($attr_t->{value});
-      $attr->set_user_data (manakai_source_line => $attr_t->{line});
-      $attr->set_user_data (manakai_source_column => $attr_t->{column});
-      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
-      $el->[0]->set_attribute_node_ns ($attr);
-    } # $attr_name
-
-    ## 2.
-    ## Namespace attributes - not applicable
-
-    ## 3.
-    # XXX if resettable, reset
-
-    ## 4.
-    # XXX if form-associated, associate form
-  } # $nsurl
-  $el->[0]->set_user_data (manakai_source_line => $token->{line})
-      if defined $token->{line};
-  $el->[0]->set_user_data (manakai_source_column => $token->{column})
-      if defined $token->{column};
-
-  $od->strict_error_checking (1) if $orig_strict;
-
-  ## 5.
-  return $el;
-} # _create_el
-
-sub _get_insertion_location ($;$) {
-  my $self = $_[0];
-  my ($adjusted_parent, $adjusted_ref);
-
-  ## The appropriate place for inserting a node
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#appropriate-place-for-inserting-a-node>.
-  
-  ## 1.
-  my $target = $_[1] || ## override target
-      $self->{open_elements}->[-1] || ## Current node
-      [$self->{document}, 0]; ## For the "before html" insertion mode.
-
-  ## 2.
-  if ($self->{foster_parenting} and $target->[1] & TABLE_ROWS_EL) {
-    my $last_template_i;
-    my $last_table_i;
-    OE: for (reverse 0..$#{$self->{open_elements}}) {
-      if ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
-        ## 1.
-        $last_template_i = $_;
-        last OE;
-      } elsif ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-        ## 2.
-        $last_table_i = $_;
-        last OE;
-      }
-    } # OE
-
-    if (defined $last_template_i) {
-      ## 3.
-      $adjusted_parent = $self->{open_elements}->[$last_template_i]->[0];
-          ## ->content (See the TEMPLATE line below.)
-      $adjusted_ref = undef;
-    } elsif (not defined $last_table_i) {
-      ## 4.
-      $adjusted_parent = $self->{open_elements}->[0]->[0];
-      $adjusted_ref = undef;
-    } else {
-      ## 5.
-      $adjusted_ref = $self->{open_elements}->[$last_table_i]->[0];
-      $adjusted_parent = $adjusted_ref->parent_node; ## "parent element" in the spec, which seems wrong
-
-      unless (defined $adjusted_parent) {
-        ## 6.-7.
-        $adjusted_parent = $self->{open_elements}->[$last_table_i - 1]->[0];
-        $adjusted_ref = undef;
-      }
-    }
-  } else {
-    ## Otherwise
-    $adjusted_parent = $target->[0];
-    $adjusted_ref = undef;
-  }
-
-  ## 3.
-  ## ->content - skipped here (see lines marked as TEMPLATECONTENT)
-
-  ## 4.
-  return ($adjusted_parent, $adjusted_ref);
-} # _get_insertion_location
-
-sub _insert_el ($;$$$$) {
-  my ($self, $nsurl, $ln, $attrs, $code) = @_;
-
-  ## Insert an HTML element
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-an-html-element>.
-
-  ## Insert a foreign element
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#insert-a-foreign-element>.
-
-  ## Also used in the "before html" insertion mode, <html> and
-  ## "anything else".
-
-  ## Also used for <script>.
-
-  ## 1.
-  my ($parent, $ref) = $self->_get_insertion_location;
-      ## /target overrdie/ is the |Document| for the "before html", or nothing
-
-  ## 2.
-  my $el = $self->_create_el
-      (defined $ln ?
-       ref $ln     ? $ln
-                   : {%{$self->{t}}, tag_name => $ln, attributes => $attrs}
-                   : $self->{t},
-       $nsurl,
-       $parent);
-
-  ## Hook for <script>
-  $code->() if $code;
-
-  ## 3.
-  {
-    ## There are code clones for AAA and for table texts.
-    my $err;
-    if (defined $ref) {
-      local $@;
-      $parent = $parent->content
-          if $parent->node_type == 1 and # ELEMENT_NODE
-             $parent->manakai_element_type_match (HTML_NS, 'template');
-      eval { $parent->insert_before ($el->[0], $ref) };
-    } else {
-      local $@;
-      eval { $parent->manakai_append_content ($el->[0]) };
-      $err = $@;
-    }
-        ## TEMPLATECONTENT - If the element were inserted into an HTML
-        ## |template| element, it is inserted into the template
-        ## content instead.
-    if ($err and
-        not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
-             $err->name eq 'HierarchyRequestError')) {
-      die $err;
-    }
-        ## <table><script>document.replaceChild (document.getElementsByTagName('table')[0], document.documentElement);</script><span></span>
-  }
-
-  ## 4.
-  push @{$self->{open_elements}}, $el;
-
-  ## 5.
-  return $el;
-} # _insert_el
 
 sub _construct_tree ($) {
   my $self = $_[0];
@@ -1573,8 +1527,6 @@ sub _construct_tree ($) {
   ## the local name of the element; [2] - the token that is used to
   ## create [0].
   my $active_formatting_elements = $self->{active_formatting_elements} ||= [];
-
-  my $insert = $self->{insert} ||= $insert_to_current;
 
   ## NOTE: $open_tables->[-1]->[0] is the "current table" element node.
   ## NOTE: $open_tables->[-1]->[1] is unused.
@@ -2156,7 +2108,7 @@ sub _construct_tree ($) {
 
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
         splice @{$self->{open_elements}}, $i;
-        $clear_up_to_marker->($active_formatting_elements);
+        $self->_clear_up_to_marker;
         pop @{$self->{template_ims}};
         $self->_reset_insertion_mode;
         
@@ -2979,7 +2931,7 @@ sub _construct_tree ($) {
           ## In head insertion modes, </template>
           if ($self->{insertion_mode} == IN_HEAD_IM or
               $self->{insertion_mode} == AFTER_HEAD_IM) {
-            $template_end_tag->($self);
+            $self->_template_end_tag;
             next B;
           } elsif ($self->{insertion_mode} == BEFORE_HEAD_IM or
                    $self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
@@ -3123,7 +3075,7 @@ sub _construct_tree ($) {
             splice @{$self->{open_elements}}, $i;
 
             ## 4.
-            $clear_up_to_marker->($active_formatting_elements);
+            $self->_clear_up_to_marker;
 
             ## 5.
             $self->{insertion_mode} = IN_ROW_IM;
@@ -3155,9 +3107,7 @@ sub _construct_tree ($) {
             }
 
             splice @{$self->{open_elements}}, $i;
-            
-            $clear_up_to_marker->($active_formatting_elements);
-            
+            $self->_clear_up_to_marker;
             $self->{insertion_mode} = IN_TABLE_IM;
             
             ## Reprocess the token.
@@ -3210,9 +3160,7 @@ sub _construct_tree ($) {
             }
             
             splice @{$self->{open_elements}}, $i;
-            
-            $clear_up_to_marker->($active_formatting_elements);
-            
+            $self->_clear_up_to_marker;
             $self->{insertion_mode} = IN_ROW_IM;
             
             $self->{t} = $self->_get_next_token;
@@ -3266,14 +3214,10 @@ sub _construct_tree ($) {
                                   text => $self->{open_elements}->[-1]->[0]
                                       ->manakai_local_name,
                                   token => $self->{t});
-                } else {
-                  
                 }
                 
                 splice @{$self->{open_elements}}, $i;
-                
-                $clear_up_to_marker->($active_formatting_elements);
-                
+                $self->_clear_up_to_marker;
                 $self->{insertion_mode} = IN_TABLE_IM;
                 
                 $self->{t} = $self->_get_next_token;
@@ -3335,7 +3279,7 @@ sub _construct_tree ($) {
           pop @{$self->{open_elements}}; # <td> or <th>
 
           ## 4.
-          $clear_up_to_marker->($active_formatting_elements);
+          $self->_clear_up_to_marker;
 
           ## 5.
           $self->{insertion_mode} = IN_ROW_IM;
@@ -3366,9 +3310,7 @@ sub _construct_tree ($) {
           }
           
           splice @{$self->{open_elements}}, $i;
-
-          $clear_up_to_marker->($active_formatting_elements);
-
+          $self->_clear_up_to_marker;
           $self->{insertion_mode} = IN_TABLE_IM;
 
           ## Reprocess the token.
@@ -3424,7 +3366,6 @@ sub _construct_tree ($) {
         die "$0: $self->{t}->{type}: Unknown token type";
       }
 
-      $self->{insert} = $insert = $insert_to_current;
       #
     } elsif ($self->{insertion_mode} & TABLE_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
@@ -3775,7 +3716,6 @@ sub _construct_tree ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table', text => $self->{t}->{tag_name},
                         token => $self->{t});
 
-        $self->{insert} = $insert = $insert_to_foster;
         #
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'tr' and
@@ -4026,18 +3966,16 @@ sub _construct_tree ($) {
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
-          $template_end_tag->($self);
+          $self->_template_end_tag;
           next B;
         } else {
           
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
 
-          $self->{insert} = $insert = $insert_to_foster;
           #
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        $self->{insert} = $insert = $insert_to_foster;
         ## Process the token using the rules for the "in body"
         ## insertion mode.
         $self->{insertion_mode} = IN_BODY_IM;
@@ -4109,7 +4047,7 @@ sub _construct_tree ($) {
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
           ## The "in column group" insertion mode, </template>
-          $template_end_tag->($self);
+          $self->_template_end_tag;
           next B;
         } else {
           
@@ -4356,7 +4294,7 @@ sub _construct_tree ($) {
           next B;
 
         } elsif ($self->{t}->{tag_name} eq 'template') {
-          $template_end_tag->($self);
+          $self->_template_end_tag;
           next B;
         } else {
           
@@ -5002,12 +4940,11 @@ sub _construct_tree ($) {
         } # AFE
         
         $self->_reconstruct_afe;
-
         $self->_insert_el;
-        push_afe [$self->{open_elements}->[-1]->[0],
-                  $self->{open_elements}->[-1]->[1],
-                  $self->{t}]
-            => $active_formatting_elements;
+        $self->_push_afe ([$self->{open_elements}->[-1]->[0],
+                           $self->{open_elements}->[-1]->[1],
+                           $self->{t}]
+                          => $active_formatting_elements);
 
         
         $self->{t} = $self->_get_next_token;
@@ -5032,10 +4969,10 @@ sub _construct_tree ($) {
         } # INSCOPE
         
         $self->_insert_el;
-        push_afe [$self->{open_elements}->[-1]->[0],
-                  $self->{open_elements}->[-1]->[1],
-                  $self->{t}]
-            => $active_formatting_elements;
+        $self->_push_afe ([$self->{open_elements}->[-1]->[0],
+                           $self->{open_elements}->[-1]->[1],
+                           $self->{t}]
+                          => $active_formatting_elements);
         
         
         $self->{t} = $self->_get_next_token;
@@ -5059,9 +4996,6 @@ sub _construct_tree ($) {
           }
         } # INSCOPE
         
-        my $insert = $self->{insertion_mode} & TABLE_IMS
-            ? $insert_to_foster : $insert_to_current;
-
         ## 2.
         $self->_reconstruct_afe;
 
@@ -5131,8 +5065,6 @@ sub _construct_tree ($) {
 
           $self->_close_p;
 
-          my $insert = $self->{insertion_mode} & TABLE_IMS
-              ? $insert_to_foster : $insert_to_current;
           my $input_attrs = $self->{t}->{attributes};
           my $form_attrs = {};
           $form_attrs->{action} = delete $input_attrs->{action}
@@ -5314,11 +5246,10 @@ sub _construct_tree ($) {
                   s => 1, small => 1, strike => 1,
                   strong => 1, tt => 1, u => 1,
                  }->{$self->{t}->{tag_name}}) {
-          
-          push_afe [$self->{open_elements}->[-1]->[0],
-               $self->{open_elements}->[-1]->[1],
-               $self->{t}]
-              => $active_formatting_elements;
+          $self->_push_afe ([$self->{open_elements}->[-1]->[0],
+                             $self->{open_elements}->[-1]->[1],
+                             $self->{t}]
+                            => $active_formatting_elements);
           
         } elsif ($self->{t}->{tag_name} eq 'input') {
           
@@ -5484,7 +5415,7 @@ sub _construct_tree ($) {
         splice @{$self->{open_elements}}, $i;
 
         ## Step 4.
-        $clear_up_to_marker->($active_formatting_elements)
+        $self->_clear_up_to_marker
             if {
               applet => 1, marquee => 1, object => 1,
             }->{$self->{t}->{tag_name}};
@@ -5587,7 +5518,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{tag_name} eq 'p') {
         ## "In body" insertion mode, "p" start tag. As normal, except
         ## </p> implies <p> and ...
-        $self->_close_p ([$insert, $open_tables]);
+        $self->_close_p ('imply start tag');
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
@@ -5617,7 +5548,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'template') {
-        $template_end_tag->($self);
+        $self->_template_end_tag;
         next B;
       } else {
         if ($self->{t}->{tag_name} eq 'sarcasm') {
