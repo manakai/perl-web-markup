@@ -1028,32 +1028,32 @@ sub _aaa ($$) {
     } # INNER
 
     ## 14.
-    if ($common_ancestor_node->[1] & TABLE_ROWS_EL) {
-      ## Foster parenting (in AAA).
-      my $foster_parent_element;
-      my $next_sibling;
-      OE: for (reverse 0..$#{$self->{open_elements}}) {
-        if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-          $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0]; # XXX wrong
-          $foster_parent_element = $foster_parent_element->content
-              if $foster_parent_element->manakai_element_type_match (HTML_NS, 'template');
-          $next_sibling = $self->{open_elements}->[$_]->[0];
-          undef $next_sibling
-              unless $next_sibling->parent_node eq $foster_parent_element;
-          last OE;
-        } elsif ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
-          $foster_parent_element = $self->{open_elements}->[$_]->[0]->content;
-          $next_sibling = undef;
-          last OE;
-        }
-      } # OE
-      $foster_parent_element ||= $self->{open_elements}->[0]->[0];
+    {
+      my ($parent, $ref) = $self->_get_insertion_location
+          ($common_ancestor_node);
 
-      ## $foster_parent_element is the template content if that were
-      ## the |template| element.
-      $foster_parent_element->insert_before ($last_node->[0], $next_sibling);
-    } else {
-      $common_ancestor_node->[0]->manakai_append_content ($last_node->[0]);
+      ## This is a code clone of 3. of |_insert_el| for AAA (Lines
+      ## marked as CHILD are different).
+      my $err;
+      if (defined $ref) {
+        local $@;
+        $parent = $parent->content
+            if $parent->node_type == 1 and # ELEMENT_NODE
+               $parent->manakai_element_type_match (HTML_NS, 'template');
+        eval { $parent->insert_before ($last_node->[0], $ref) }; # CHILD
+      } else {
+        local $@;
+        eval { $parent->manakai_append_content ($last_node->[0]) }; # CHILD
+        $err = $@;
+      }
+          ## TEMPLATECONTENT - If the element were inserted into an
+          ## HTML |template| element, it is inserted into the template
+          ## content instead.
+      if ($err and
+          not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
+               $err->name eq 'HierarchyRequestError')) {
+        die $err;
+      }
     }
     
     ## 15.
@@ -1478,6 +1478,67 @@ sub _create_el ($$$$) {
   return $el;
 } # _create_el
 
+sub _get_insertion_location ($;$) {
+  my $self = $_[0];
+  my ($adjusted_parent, $adjusted_ref);
+
+  ## The appropriate place for inserting a node
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#appropriate-place-for-inserting-a-node>.
+  
+  ## 1.
+  my $target = $_[1] || ## override target
+      $self->{open_elements}->[-1] || ## Current node
+      [$self->{document}, 0]; ## For the "before html" insertion mode.
+
+  ## 2.
+  if ($self->{foster_parenting} and $target->[1] & TABLE_ROWS_EL) {
+    my $last_template_i;
+    my $last_table_i;
+    OE: for (reverse 0..$#{$self->{open_elements}}) {
+      if ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
+        ## 1.
+        $last_template_i = $_;
+        last OE;
+      } elsif ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
+        ## 2.
+        $last_table_i = $_;
+        last OE;
+      }
+    } # OE
+
+    if (defined $last_template_i) {
+      ## 3.
+      $adjusted_parent = $self->{open_elements}->[$last_template_i]->[0];
+          ## ->content (See the TEMPLATE line below.)
+      $adjusted_ref = undef;
+    } elsif (not defined $last_table_i) {
+      ## 4.
+      $adjusted_parent = $self->{open_elements}->[0]->[0];
+      $adjusted_ref = undef;
+    } else {
+      ## 5.
+      $adjusted_ref = $self->{open_elements}->[$last_table_i]->[0];
+      $adjusted_parent = $adjusted_ref->parent_node; ## "parent element" in the spec, which seems wrong
+
+      unless (defined $adjusted_parent) {
+        ## 6.-7.
+        $adjusted_parent = $self->{open_elements}->[$last_table_i - 1]->[0];
+        $adjusted_ref = undef;
+      }
+    }
+  } else {
+    ## Otherwise
+    $adjusted_parent = $target->[0];
+    $adjusted_ref = undef;
+  }
+
+  ## 3.
+  ## ->content - skipped here (see lines marked as TEMPLATECONTENT)
+
+  ## 4.
+  return ($adjusted_parent, $adjusted_ref);
+} # _get_insertion_location
+
 sub _insert_el ($;$$$$) {
   my ($self, $nsurl, $ln, $attrs, $code) = @_;
 
@@ -1492,97 +1553,45 @@ sub _insert_el ($;$$$$) {
 
   ## Also used for <script>.
 
-  ## 1. Appropriate place for inserting a node
-  my $adjusted_parent;
-  my $adjusted_ref;
-  {
-    ## The appropriate place for inserting a node
-    ## <http://www.whatwg.org/specs/web-apps/current-work/#appropriate-place-for-inserting-a-node>.
-    
-    ## 1.
-    my $target = $self->{open_elements}->[-1] ## Current node
-        || [$self->{document}, 0]; ## For the "before html" insertion mode.
-
-    ## 2.
-    if ($self->{foster_parenting} and $target->[1] & TABLE_ROWS_EL) {
-      my $last_template_i;
-      my $last_table_i;
-      OE: for (reverse 0..$#{$self->{open_elements}}) {
-        if ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
-          ## 1.
-          $last_template_i = $_;
-          last OE;
-        } elsif ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-          ## 2.
-          $last_table_i = $_;
-          last OE;
-        }
-      } # OE
-
-      if (defined $last_template_i) {
-        ## 3.
-        $adjusted_parent = $self->{open_elements}->[$last_template_i]->[0];
-            ## ->content (See the TEMPLATE line below.)
-        $adjusted_ref = undef;
-      } elsif (not defined $last_table_i) {
-        ## 4.
-        $adjusted_parent = $self->{open_elements}->[0]->[0];
-        $adjusted_ref = undef;
-      } else {
-        ## 5.
-        $adjusted_ref = $self->{open_elements}->[$last_table_i]->[0];
-        $adjusted_parent = $adjusted_ref->parent_node; ## "parent element" in the spec, which seems wrong
-
-        unless (defined $adjusted_parent) {
-          ## 6.-7.
-          $adjusted_parent = $self->{open_elements}->[$last_table_i - 1]->[0];
-          $adjusted_ref = undef;
-        }
-      }
-    } else {
-      ## Otherwise
-      $adjusted_parent = $target->[0];
-      $adjusted_ref = undef;
-    }
-
-    ## 3.
-    ## ->content - skipped (see the TEMPLATE line below)
-
-    ## 4.
-    #return ($adjusted_parent, $adjusted_ref);
-  }
+  ## 1.
+  my ($parent, $ref) = $self->_get_insertion_location;
+      ## /target overrdie/ is the |Document| for the "before html", or nothing
 
   ## 2.
   my $el = $self->_create_el
       (defined $ln ? {%{$self->{t}}, tag_name => $ln, attributes => $attrs}
                    : $self->{t},
        $nsurl,
-       $adjusted_parent);
+       $parent);
 
   ## Hook for <script>
   $code->() if $code;
 
   ## 3.
-  my $err;
-  if (defined $adjusted_ref) {
-    local $@;
-    $adjusted_parent = $adjusted_parent->content
-        if $adjusted_parent->node_type == 1 and # ELEMENT_NODE
-           $adjusted_parent->manakai_element_type_match (HTML_NS, 'template');
-    eval { $adjusted_parent->insert_before ($el->[0], $adjusted_ref) };
-  } else {
-    local $@;
-    eval { $adjusted_parent->manakai_append_content ($el->[0]) };
-    $err = $@;
+  {
+    ## There are code clones for AAA and for table texts.
+    my $err;
+    if (defined $ref) {
+      local $@;
+      $parent = $parent->content
+          if $parent->node_type == 1 and # ELEMENT_NODE
+             $parent->manakai_element_type_match (HTML_NS, 'template');
+      eval { $parent->insert_before ($el->[0], $ref) };
+    } else {
+      local $@;
+      eval { $parent->manakai_append_content ($el->[0]) };
+      $err = $@;
+    }
+        ## TEMPLATECONTENT - If the element were inserted into an HTML
+        ## |template| element, it is inserted into the template
+        ## content instead.
+    if ($err and
+        not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
+             $err->name eq 'HierarchyRequestError')) {
+      die $err;
+    }
+        ## <table><script>document.replaceChild (document.getElementsByTagName('table')[0], document.documentElement);</script><span></span>
   }
-  ## TEMPLATE - If the element were inserted into an HTML |template|
-  ## element, it is inserted into the template content instead.
-  if ($err and
-      not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
-           $err->name eq 'HierarchyRequestError')) {
-    die $err;
-  }
-  ## <table><script>document.replaceChild (document.getElementsByTagName('table')[0], document.documentElement);</script>abc
 
   ## 4.
   push @{$self->{open_elements}}, $el;
@@ -2201,7 +2210,8 @@ sub _construct_tree ($) {
         if ($self->{t}->{type} == CHARACTER_TOKEN) {
           if (($self->{open_elements}->[-1]->[0]->namespace_uri || '') eq HTML_NS and
               {table => 1, tbody => 1, thead => 1, tfoot => 1, tr => 1}->{$self->{open_elements}->[-1]->[0]->local_name}) {
-            !!!cp ('t194');
+            ## The "in table text" insertion mode, any other character
+            ## token
             $self->{pending_chars} ||= [];
             push @{$self->{pending_chars}}, $self->{t};
             !!!next-token;
@@ -2212,17 +2222,20 @@ sub _construct_tree ($) {
             last C;
           }
         } else {
+          ## The "in table text" insertion mode, anything else
+
           ## There is an "insert pending chars" code clone.
           if ($self->{pending_chars}) {
             $s = join '', map { $_->{data} } @{$self->{pending_chars}};
             delete $self->{pending_chars};
             while ($s =~ s/\x00//) {
+              ## The "in table text" insertion mode, non U+0000
+              ## character token
               !!!parse-error (type => 'NULL', token => $self->{t});
             }
             if ($s eq '') {
               last C;
             } elsif ($s =~ /[^\x09\x0A\x0C\x0D\x20]/) {
-              !!!cp ('t195');
               #
             } else {
               !!!cp ('t195.1');
@@ -2235,56 +2248,89 @@ sub _construct_tree ($) {
           }
         }
 
-        ## "in table" insertion mode, "Anything else".
+        ## The "in table text" insertion mode, anything else -> the
+        ## "in table" insertion mode, "anything else" (pending table
+        ## character tokens)
 
-        ## Foster parenting of the character tokens in the pending
-        ## table character tokens list.
         !!!parse-error (type => 'in table:#text', token => $self->{t});
 
-        ## NOTE: As if in body, but insert into the foster parent element.
+        ## Process the character tokens in the pending table character
+        ## tokens list using the rules for the "in body" insertion
+        ## mode, with foster parenting enabled.
+        local $self->{foster_parenting} = 1;
+
+        ## The "in body" insertion mode, U+0000 - U+0000 is already
+        ## ignored.
+
         $reconstruct_active_formatting_elements
             ->($self, $insert_to_foster, $active_formatting_elements,
                $open_tables);
-            
-        if ($self->{open_elements}->[-1]->[1] & TABLE_ROWS_EL) {
-          # MUST
-          my $foster_parent_element;
-          my $next_sibling;
-          OE: for (reverse 0..$#{$self->{open_elements}}) {
-            if ($self->{open_elements}->[$_]->[1] == TABLE_EL) {
-              !!!cp ('t197');
-              $foster_parent_element = $self->{open_elements}->[$_ - 1]->[0]; # XXX wrong
-              $foster_parent_element = $foster_parent_element->content
-                  if $foster_parent_element->manakai_element_type_match (HTML_NS, 'template');
-              $next_sibling = $self->{open_elements}->[$_]->[0];
-              undef $next_sibling
-                unless $next_sibling->parent_node eq $foster_parent_element;
-              last OE;
-            } elsif ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
-              $foster_parent_element = $self->{open_elements}->[$_]->[0]->content;
-              $next_sibling = undef;
-              last OE;
+
+        ## Insert the token's character.
+        {
+          ## 1.
+          #$s
+
+          ## 2.
+          my ($parent, $ref) = $self->_get_insertion_location;
+              ## no /target override/
+
+          ## 3.
+          if ($parent->node_type == 9) { # DOCUMENT_NODE) {
+            last;
+          }
+          
+          ## 4.
+          {
+            ## This is a slightly modified code clone of 3. of
+            ## |_insert_el|.
+            my $err;
+            if (defined $ref) {
+              my $prev = $ref->previous_sibling;
+              if (defined $prev and $prev->node_type == 3) { # TEXT_NODE
+                $prev->manakai_append_text ($s);
+                # XXX manakai_pos
+              } else {
+                local $@;
+                $parent = $parent->content
+                    if $parent->node_type == 1 and # ELEMENT_NODE
+                       $parent->manakai_element_type_match (HTML_NS, 'template');
+                my $text = $parent->owner_document->create_text_node ($s);
+                # XXX
+                #$text->set_user_data (manakai_source_line => $token->{line})
+                #    if defined $token->{line};
+                #$text->set_user_data (manakai_source_column => $token->{column})
+                #    if defined $token->{column};
+                #$text->set_user_data (manakai_pos => $attr_t->{pos})
+                #    if defined $token->{pos};
+                eval { $parent->insert_before ($text, $ref) };
+              }
+            } else {
+              local $@;
+              # XXX manakai_pos
+              eval { $parent->manakai_append_content ($s) };
+              $err = $@;
             }
-          } # OE
-          $foster_parent_element ||= $self->{open_elements}->[0]->[0];
+                ## TEMPLATECONTENT - If the element were inserted into
+                ## an HTML |template| element, it is inserted into the
+                ## template content instead.
+            if ($err and
+                not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
+                     $err->name eq 'HierarchyRequestError')) {
+              die $err;
+            }
+          }
+        } # insert
 
-          !!!cp ('t199');
-          ## $foster_parent_element is the template content if that
-          ## were the |template| element.
-          $foster_parent_element->insert_before
-              ($self->{document}->create_text_node ($s), $next_sibling);
+        ## There is always a non-space character in $s.
+        delete $self->{frameset_ok}; # not ok
+            ## Actually this is redundant as <table> sets the flag
+            ## "not ok" before it is switched to the "in table text"
+            ## insertion mode.
 
-          $open_tables->[-1]->[2] = 1; # ~node inserted
-        } else {
-          ## NOTE: Fragment case or in a foster parent'ed element
-          ## (e.g. |<table><span>a|).  In fragment case, whether the
-          ## character is appended to existing node or a new node is
-          ## created is irrelevant, since the foster parent'ed nodes
-          ## are discarded and fragment parsing does not invoke any
-          ## script.
-          !!!cp ('t200');
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($s);
-        }
+        ## Now that the pending characters are inserted, $self->{t},
+        ## i.e. the token next to the characters should be processed
+        ## using the rules for the "in body" insertion mode.
       } # C
 
       ## Continue processing...
@@ -5744,7 +5790,7 @@ sub parse_char_string_with_context ($$$$) {
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
