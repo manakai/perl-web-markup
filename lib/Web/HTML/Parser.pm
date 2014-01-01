@@ -1520,36 +1520,242 @@ sub _close_p ($;$) {
 
 my $Acts;
 
-$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_head} = 1;
-$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript_error} = 'in noscript:#text';
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
-$Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
-$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
-$Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
-$Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
-$Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
-$Acts->[AFTER_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
-$Acts->[AFTER_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
+## The "before head" insertion mode
+{
+  # space
+  # comment
+  # DOCTYPE
+  # <html>
+  # <head>
+
+  ## Any other end tag
+  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+
+  ## Anything else
+  $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_head} = 1;
+  $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1; # in head
+  $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1; # after head
+  $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1; # after head
+
+  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_head} = 1;
+  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1; # in head
+  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_body} = 1; # after head
+  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1; # after head
+
+  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_head} = 1
+      for qw(head body html br);
+  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1 # in head
+      for qw(head body html br);
+  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1 # after head
+      for qw(body html br);
+  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1 # after head
+      for qw(head);
+  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1 # after head
+      for qw(body html br);
+
+  $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_head} = 1;
+  $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1; # in head
+  $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1; # after head
+  $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1; # after head
+}
+
+## The "in head" insertion mode
+{
+  # space
+  # comment
+  # DOCTYPE
+  # <html>
+
+  ## <base> <basefont> <bgsound> <link>, <meta>
+  for (qw(base basefont bgsound link meta)) {
+    $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_}->{insert_void_el} = 1;
+    $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_}->{next_token} = 1;
+  }
+
+  ## <title>
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, 'title'}->{insert_el} = 'rcdata';
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, 'title'}->{next_token} = 1;
+
+  ## <noframes> <style>
+  for (qw(noframes style)) {
+    $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_}->{insert_el} = 'rawtext';
+    $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_}->{next_token} = 1;
+  }
+
+  # <noscript> scripting enabled
+  # <noscript> scripting disabled
+
+  ## <script>
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, 'script'}->{next_token} = 1;
+
+  ## </head>
+  $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, 'head'}->{end_head} = 1;
+  $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, 'head'}->{next_token} = 1;
+
+  ## <template>
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{insert_el} = 1;
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{push_marker} = 1;
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{frameset_not_ok} = 1;
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{next_token} = 1;
+
+  ## </template>
+  $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, 'template'}->{end_template} = 1;
+  $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, 'template'}->{next_token} = 1;
+
+  # <head>
+
+  ## Any other end tag
+  $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+  $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+
+  ## Anything else
+  $Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
+  $Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1; # after head
+  $Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1; # after head
+
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1;
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_body} = 1; # after head
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1; # after head
+
+  for (qw(body html br)) {
+    $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1;
+    $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1; # after head
+    $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1; # after head
+  }
+
+  $Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
+  $Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1; # after head
+  $Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1; # after head
+}
+
+## The "in head noscript" insertion mode
+{
+  # DOCTYPE
+  # <html>
+  # space
+  # comment
+
+  ## </noscript>
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'noscript'}->{end_noscript} = 1;
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'noscript'}->{next_token} = 1;
+  
+  ## <basefont> <bgsound> <link> <meta> <noframes> <style>
+# XXX
+
+  # <head>
+  # <noscript>
+
+  ## Any other end tag
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+
+  ## Anything else
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript_error} = 'in noscript:#text';
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript} = 1;
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_head} = 1; # in head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{start_body} = 1; # after head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1; # after head
+
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{end_noscript_error} = 'in noscript:/';
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{end_noscript} = 1;
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{end_head} = 1; # in head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{start_body} = 1; # after head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{reprocess} = 1; # after head
+
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript_error} = 'in noscript';
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript} = 1;
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1; # in head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{start_body} = 1; # after head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1; # after head
+
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript_error} = 'in noscript:#eof';
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript} = 1;
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1; # in head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1; # after head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1; # after head
+}
+
+## The "after head" insertion mode
+{
+  # space
+  # comment
+  # DOCTYPE
+  # <html>
+
+  ## <body>
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'body'}->{insert_el} = 1;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'body'}->{frameset_not_ok} = 1;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'body'}->{set_im} = IN_BODY_IM;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'body'}->{next_token} = 1;
+
+  ## <frameset>
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'frameset'}->{insert_el} = 1;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'frameset'}->{set_im} = IN_FRAMESET_IM;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'frameset'}->{next_token} = 1;
+
+  ## <base> <basefont> <bgsound> <link> <meta> <noframes> <script>
+  ## <style> <template> <title>
+  for (qw(base basefont bgsound link meta)) {
+    $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{reopen_head} = 1;
+    $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{insert_void_el} = 1; # in head
+    $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{next_token} = 1;
+  }
+
+  for (qw(style noframes)) {
+    $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{reopen_head} = 1;
+    $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{insert_el} = 'rawtext'; # in head
+    $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{next_token} = 1;
+  }
+
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'script'}->{reopen_head} = 1;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'script'}->{next_token} = 1;
+
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{reopen_head} = 1;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{insert_el} = 1; # in head
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{push_marker} = 1; # in head
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{frameset_not_ok} = 1; # in head
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{next_token} = 1;
+
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'title'}->{reopen_head} = 1;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'title'}->{insert_el} = 'rcdata'; # in head
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'title'}->{next_token} = 1;
+
+  ## </template>
+  $Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, 'template'}->{end_template} = 1; # in head
+  $Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, 'template'}->{next_token} = 1;
+
+  # <head>
+
+  ## Any other end tag
+  $Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
+  $Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
+
+  ## Anything else
+  $Acts->[AFTER_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1;
+  $Acts->[AFTER_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1;
+  
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_body} = 1;
+  $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1;
+
+  for (qw(body html br)) {
+    $Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1;
+    $Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1;
+  }
+
+  $Acts->[AFTER_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
+  $Acts->[AFTER_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
+}
+
 
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'base'}->{end_noscript_error} = 'in noscript';
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'base'}->{end_noscript} = 1;
-$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'base'}->{reopen_head} = 1;
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
-  $Acts->[$im]->{START_TAG_TOKEN, 'base'}->{insert_void_el} = 1;
-  $Acts->[$im]->{START_TAG_TOKEN, 'base'}->{next_token} = 1;
-}
 
-$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{reopen_head} = 1
-    for qw(link basefont bgsound);
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
   $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_void_el} = 1
-      for qw(link basefont bgsound);
+      for qw(base link basefont bgsound);
   $Acts->[$im]->{START_TAG_TOKEN, $_}->{next_token} = 1
-      for qw(link basefont bgsound);
+      for qw(base link basefont bgsound);
 }
 
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_noscript_error} = 'in noscript'
@@ -1562,7 +1768,7 @@ $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_head} = 1
     for qw(body frameset);
 $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_}->{end_head} = 1
     for qw(body frameset);
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
   $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_el} = 1
       for qw(body frameset);
   $Acts->[$im]->{START_TAG_TOKEN, $_}->{frameset_not_ok} = 1
@@ -1573,17 +1779,14 @@ for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
       for qw(frameset body);
 }
 
-$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'meta'}->{reopen_head} = 1;
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
   $Acts->[$im]->{START_TAG_TOKEN, 'meta'}->{insert_void_el} = 1;
   $Acts->[$im]->{START_TAG_TOKEN, 'meta'}->{next_token} = 1;
 }
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'title'}->{end_noscript_error} = 'in noscript';
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'title'}->{end_noscript} = 1;
-$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'title'}->{reopen_head} = 1;
-$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $_}->{reopen_head} = 1
-    for qw(style noframes);
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+
+for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
   $Acts->[$im]->{START_TAG_TOKEN, 'title'}->{insert_el} = 'rcdata';
   $Acts->[$im]->{START_TAG_TOKEN, 'title'}->{next_token} = 1;
   $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_el} = 'rawtext'
@@ -1594,11 +1797,10 @@ for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
 
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'script'}->{end_noscript_error} = 'in noscript';
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'script'}->{end_noscript} = 1;
-$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'script'}->{reopen_head} = 1;
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'template'}->{end_noscript_error} = 'in noscript';
 $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'template'}->{end_noscript} = 1;
-$Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, 'template'}->{reopen_head} = 1;
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
+
+for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
   $Acts->[$im]->{START_TAG_TOKEN, 'template'}->{insert_el} = 1;
   $Acts->[$im]->{START_TAG_TOKEN, 'template'}->{push_marker} = 1;
   $Acts->[$im]->{START_TAG_TOKEN, 'template'}->{frameset_not_ok} = 1;
@@ -1607,84 +1809,7 @@ for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
 
 $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN, $_}->{start_head} = 1
     for qw(base basefont bgsound link meta title noframes style script
-           template html body frameset); # head noscript
-
-$Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_head} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript_error} = 'in noscript';
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript} = 1;
-$Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1;
-$Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1;
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM, AFTER_HEAD_IM) {
-  $Acts->[$im]->{START_TAG_TOKEN . ':else'}->{start_body} = 1;
-  $Acts->[$im]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1;
-}
-
-$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_head} = 1
-    for qw(head body html br);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{end_noscript_error} = 'in noscript:/'
-    for qw(br);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{end_noscript} = 1
-    for qw(noscript br);
-$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_template} = 1
-    for qw(template);
-$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_template} = 1
-    for qw(template);
-$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1
-    for qw(head body html br);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1
-    for qw(br);
-$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1
-    for qw(head body html br);
-$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
-    for qw(body html br);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
-    for qw(br);
-$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
-    for qw(body html br);
-$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1
-    for qw(body html br);
-$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
-    for qw(head);
-$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
-    for qw(head template);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
-    for qw(noscript);
-$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1
-    for qw(template);
-$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
-    for qw(body html br);
-$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
-    for qw(body html br);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
-    for qw(br);
-$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1
-    for qw(body html br);
-$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
-$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
-$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{ignore_end_tag_error} = 1;
-$Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
-$Acts->[IN_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
-$Acts->[AFTER_HEAD_IM]->{END_TAG_TOKEN . ':else'}->{next_token} = 1;
-
-$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_head} = 1;
-$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
-$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript_error} = 'in noscript:#eof';
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript} = 1;
-$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
-$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
-$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
-$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
-$Acts->[AFTER_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1;
-$Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
-$Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
-$Acts->[AFTER_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
+           template body frameset); # head noscript
 
 sub _construct_tree ($) {
   my $self = $_[0];
