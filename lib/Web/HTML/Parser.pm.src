@@ -759,28 +759,6 @@ sub _reset_insertion_mode ($) {
   ## END
 } # _reset_insertion_mode
 
-  my $parse_rcdata = sub ($$$$) {
-    my ($self, $insert, $open_tables, $parse_refs) = @_;
-
-    ## Step 1
-    my $start_tag_name = $self->{t}->{tag_name};
-    $self->_insert_el;
-
-    ## Step 2
-    if ($parse_refs) {
-      $self->{state} = RCDATA_STATE;
-    } else {
-      $self->{state} = RAWTEXT_STATE;
-    }
-    delete $self->{escape}; # MUST
-
-    ## Step 3, 4
-    $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
-
-    !!!nack ('t40.1');
-    !!!next-token;
-  }; # $parse_rcdata
-
 sub _script_start_tag ($) {
   my $self = $_[0];
 
@@ -798,7 +776,6 @@ sub _script_start_tag ($) {
 
   ## 7.
   $self->{state} = SCRIPT_DATA_STATE;
-  delete $self->{escape}; # MUST
 
   ## 8.-9.
   $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
@@ -863,7 +840,7 @@ sub _aaa ($$) {
     my $el = $self->{open_elements}->[-1]->[0]; ## 1.1.
     pop @{$self->{open_elements}}; ## 1.2.
     @{$self->{active_formatting_elements}} ## 1.3.
-        = grep { $_->[0] != $el } @{$self->{active_formatting_elements}};
+        = grep { $_->[0] ne $el } @{$self->{active_formatting_elements}};
     return; ## 1.4.
   }
 
@@ -1160,85 +1137,71 @@ sub _in_body_any_other_end_tag ($) {
   die;
 } # _in_body_any_other_end_tag
 
-  my $reconstruct_active_formatting_elements = sub ($$$$) {
-    my ($self, $insert, $active_formatting_elements, $open_tables) = @_;
+sub _reconstruct_afe ($) {
+  my $self = $_[0];
 
-    ## Step 1
-    return unless @$active_formatting_elements;
+  ## Reconstruct the active formatting elements.
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#reconstruct-the-active-formatting-elements>.
+  my $afe = $self->{active_formatting_elements};
 
-    ## Step 3
-    my $i = -1;
-    my $entry = $active_formatting_elements->[$i];
+  ## 1.
+  return unless @$afe;
 
-    ## Step 2
-    return if $entry->[0] eq '#marker';
-    for (@{$self->{open_elements}}) {
-      if ($entry->[0] eq $_->[0]) {
-        !!!cp ('t32');
-        return;
-      }
-    }
-    
-    S4: {
-      ## Step 4
-      last S4 if $active_formatting_elements->[0]->[0] eq $entry->[0];
+  ## 3.
+  my $i = $#$afe;
+  my $entry = $afe->[$i];
 
-      ## Step 5
+  ## 2.
+  return if $entry->[0] eq '#marker';
+  OE: for (@{$self->{open_elements}}) {
+    return if $entry->[0] eq $_->[0];
+  } # OE
+
+  BEFORE_CREATE: {
+    REWIND: {
+      ## 4. Rewind
+      last BEFORE_CREATE if $i == 0;
+
+      ## 5.
       $i--;
-      $entry = $active_formatting_elements->[$i];
+      $entry = $afe->[$i];
 
-      ## Step 6
-      if ($entry->[0] eq '#marker') {
-        !!!cp ('t33_1');
-        #
-      } else {
+      ## 6.
+      unless ($entry->[0] eq '#marker') {
         my $in_open_elements;
         OE: for (@{$self->{open_elements}}) {
           if ($entry->[0] eq $_->[0]) {
-            !!!cp ('t33');
             $in_open_elements = 1;
             last OE;
           }
-        }
-        if ($in_open_elements) {
-          !!!cp ('t34');
-          #
-        } else {
-          ## NOTE: <!DOCTYPE HTML><p><b><i><u></p> <p>X
-          !!!cp ('t35');
-          redo S4;
-        }
+        } # OE
+        redo REWIND unless $in_open_elements;
+            ## <!DOCTYPE HTML><p><b><i><u></p> <p>X
       }
+    } # REWIND
 
-      ## Step 7
-      $i++;
-      $entry = $active_formatting_elements->[$i];
-    } # S4
+    ## 7. Advance
+    $i++;
+    $entry = $afe->[$i];
+  } # BEFORE_CREATE
 
-    S7: {
-      ## Step 8
-      my $clone = [$entry->[0]->clone_node (0), $entry->[1], $entry->[2]];
-    
-      ## Step 9
-      $insert->($self, $clone->[0], $open_tables);
-      push @{$self->{open_elements}}, $clone;
-      
-      ## Step 10
-      $active_formatting_elements->[$i] = $self->{open_elements}->[-1];
+  CREATE: {
+    ## 8. Create
+    my $el = $self->_insert_el (undef, $entry->[2]);
+    $el->[2] = $entry->[2];
 
-      ## Step 11
-      unless ($clone->[0] eq $active_formatting_elements->[-1]->[0]) {
-        !!!cp ('t36');
-        ## Step 7'
-        $i++;
-        $entry = $active_formatting_elements->[$i];
-        
-        redo S7;
-      }
+    ## 9.
+    $afe->[$i] = $el;
 
-      !!!cp ('t37');
-    } # S7
-  }; # $reconstruct_active_formatting_elements
+    ## 10.
+    last CREATE if $i == $#$afe;
+
+    ## 7. Advance
+    $i++;
+    $entry = $afe->[$i];
+    redo CREATE;
+  } # CREATE
+} # _reconstruct_afe
 
   my $clear_up_to_marker = sub ($) {
     my $active_formatting_elements = $_[0];
@@ -1559,7 +1522,9 @@ sub _insert_el ($;$$$$) {
 
   ## 2.
   my $el = $self->_create_el
-      (defined $ln ? {%{$self->{t}}, tag_name => $ln, attributes => $attrs}
+      (defined $ln ?
+       ref $ln     ? $ln
+                   : {%{$self->{t}}, tag_name => $ln, attributes => $attrs}
                    : $self->{t},
        $nsurl,
        $parent);
@@ -2262,9 +2227,7 @@ sub _construct_tree ($) {
         ## The "in body" insertion mode, U+0000 - U+0000 is already
         ## ignored.
 
-        $reconstruct_active_formatting_elements
-            ->($self, $insert_to_foster, $active_formatting_elements,
-               $open_tables);
+        $self->_reconstruct_afe;
 
         ## Insert the token's character.
         {
@@ -2715,7 +2678,13 @@ sub _construct_tree ($) {
           }
 
           ## NOTE: There is a "as if in head" code clone.
-          $parse_rcdata->($self, $insert, $open_tables, 1); # RCDATA
+          {
+            $self->_insert_el;
+            $self->{state} = RCDATA_STATE;
+            $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+            !!!nack ('t40.1');
+            !!!next-token;
+          }
 
           ## NOTE: At this point the stack of open elements contain
           ## the |head| element (index == -2) and the |script| element
@@ -2738,10 +2707,15 @@ sub _construct_tree ($) {
                             text => $self->{t}->{tag_name}, token => $self->{t});
             push @{$self->{open_elements}},
                 [$self->{head_element}, $el_category->{head}];
-          } else {
-            !!!cp ('t115');
           }
-          $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
+
+          {
+            $self->_insert_el;
+            $self->{state} = RAWTEXT_STATE;
+            $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+            !!!nack ('t40.1');
+            !!!next-token;
+          }
           splice @{$self->{open_elements}}, -2, 1, () # <head>
               if ($self->{insertion_mode} & IM_MASK) == AFTER_HEAD_IM;
           next B;
@@ -3090,10 +3064,7 @@ sub _construct_tree ($) {
           next B;
         }
 
-        !!!cp ('t150');
-        $reconstruct_active_formatting_elements
-            ->($self, $insert_to_current, $active_formatting_elements,
-               $open_tables);
+        $self->_reconstruct_afe;
         
         $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{t}->{data});
 
@@ -3488,9 +3459,7 @@ sub _construct_tree ($) {
             next B;
           }
 
-          $reconstruct_active_formatting_elements
-              ->($self, $insert_to_foster, # FOSTER
-                 $active_formatting_elements, $open_tables);
+          $self->_reconstruct_afe;
           
           $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{t}->{data});
 
@@ -3723,7 +3692,13 @@ sub _construct_tree ($) {
         } elsif ($self->{t}->{tag_name} eq 'style') {
           !!!cp ('t227.8');
           ## NOTE: This is a "as if in head" code clone.
-          $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
+          {
+            $self->_insert_el;
+            $self->{state} = RAWTEXT_STATE;
+            $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+            !!!nack ('t40.1');
+            !!!next-token;
+          }
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           next B;
         } elsif ($self->{t}->{tag_name} eq 'script') {
@@ -4405,10 +4380,8 @@ sub _construct_tree ($) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           my $data = $1;
           ## As if in body
-          $reconstruct_active_formatting_elements
-              ->($self, $insert_to_current, $active_formatting_elements,
-                 $open_tables);
-              
+          $self->_reconstruct_afe;
+          
           $self->{open_elements}->[-1]->[0]->manakai_append_content ($data);
           
           unless (length $self->{t}->{data}) {
@@ -4547,7 +4520,13 @@ sub _construct_tree ($) {
         } elsif ($self->{t}->{tag_name} eq 'noframes') {
           !!!cp ('t320');
           ## NOTE: As if in head.
-          $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
+          {
+            $self->_insert_el;
+            $self->{state} = RAWTEXT_STATE;
+            $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+            !!!nack ('t40.1');
+            !!!next-token;
+          }
           next B;
 
           ## NOTE: |<!DOCTYPE HTML><frameset></frameset></html><noframes></noframes>|
@@ -4654,7 +4633,13 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{tag_name} eq 'style') {
         !!!cp ('t333');
         ## NOTE: This is an "as if in head" code clone
-        $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
+        {
+          $self->_insert_el;
+          $self->{state} = RAWTEXT_STATE;
+          $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+          !!!nack ('t40.1');
+          !!!next-token;
+        }
         next B;
       } elsif ($self->{t}->{tag_name} eq 'template') {
         ## This is a "template start tag" code clone.
@@ -4744,7 +4729,13 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{tag_name} eq 'title') {
         !!!cp ('t341');
         ## NOTE: This is an "as if in head" code clone
-        $parse_rcdata->($self, $insert, $open_tables, 1); # RCDATA
+        {
+          $self->_insert_el;
+          $self->{state} = RCDATA_STATE;
+          $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+          !!!nack ('t40.1');
+          !!!next-token;
+        }
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'body') {
@@ -5010,10 +5001,7 @@ sub _construct_tree ($) {
           }
         } # AFE
         
-        my $insert = $self->{insertion_mode} & TABLE_IMS
-            ? $insert_to_foster : $insert_to_current;
-        $reconstruct_active_formatting_elements
-            ->($self, $insert, $active_formatting_elements, $open_tables);
+        $self->_reconstruct_afe;
 
         $self->_insert_el;
         push_afe [$self->{open_elements}->[-1]->[0],
@@ -5028,10 +5016,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{tag_name} eq 'nobr') {
         ## The "in body" insertion mode, <nobr>
 
-        my $insert = $self->{insertion_mode} & TABLE_IMS
-            ? $insert_to_foster : $insert_to_current;
-        $reconstruct_active_formatting_elements
-            ->($self, $insert, $active_formatting_elements, $open_tables);
+        $self->_reconstruct_afe;
 
         ## has a |nobr| element in scope
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
@@ -5039,8 +5024,7 @@ sub _construct_tree ($) {
           if ($node->[1] == NOBR_EL) {
             !!!parse-error (type => 'in nobr:nobr', token => $self->{t});
             $self->_aaa ($self->{t});
-            $reconstruct_active_formatting_elements
-                ->($self, $insert, $active_formatting_elements, $open_tables);
+            $self->_reconstruct_afe;
             last INSCOPE;
           } elsif ($node->[1] & SCOPING_EL) {
             last INSCOPE;
@@ -5079,8 +5063,7 @@ sub _construct_tree ($) {
             ? $insert_to_foster : $insert_to_current;
 
         ## 2.
-        $reconstruct_active_formatting_elements
-            ->($self, $insert, $active_formatting_elements, $open_tables);
+        $self->_reconstruct_afe;
 
         ## 3.
         $self->_insert_el;
@@ -5105,11 +5088,7 @@ sub _construct_tree ($) {
 
           $self->_close_p;
 
-          my $insert = $self->{insertion_mode} & TABLE_IMS
-              ? $insert_to_foster : $insert_to_current;
-          $reconstruct_active_formatting_elements
-              ->($self, $insert, $active_formatting_elements,
-                 $open_tables);
+          $self->_reconstruct_afe;
 
           delete $self->{frameset_ok};
         } elsif ($self->{t}->{tag_name} eq 'iframe') {
@@ -5119,7 +5098,13 @@ sub _construct_tree ($) {
           !!!cp ('t399');
         }
         ## NOTE: There is an "as if in body" code clone.
-        $parse_rcdata->($self, $insert, $open_tables, 0); # RAWTEXT
+        {
+          $self->_insert_el;
+          $self->{state} = RAWTEXT_STATE;
+          $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+          !!!nack ('t40.1');
+          !!!next-token;
+        }
         next B;
       } elsif ($self->{t}->{tag_name} eq 'isindex') {
         !!!parse-error (type => 'isindex', token => $self->{t});
@@ -5161,8 +5146,7 @@ sub _construct_tree ($) {
           $self->_insert_el (undef, 'hr', {});
           pop @{$self->{open_elements}}; # <hr>
 
-          $reconstruct_active_formatting_elements
-              ->($self, $insert, $active_formatting_elements, $open_tables);
+          $self->_reconstruct_afe;
 
           $self->_insert_el (undef, 'label', {});
 
@@ -5207,7 +5191,6 @@ sub _construct_tree ($) {
 
         ## 3. RCDATA
         $self->{state} = RCDATA_STATE;
-        delete $self->{escape}; # MUST
 
         ## 4., 6. Insertion mode
         $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
@@ -5222,11 +5205,8 @@ sub _construct_tree ($) {
                $self->{t}->{tag_name} eq 'option') {
         pop @{$self->{open_elements}}
             if $self->{open_elements}->[-1]->[1] == OPTION_EL;
-
-        my $insert = $self->{insertion_mode} & TABLE_IMS
-            ? $insert_to_foster : $insert_to_current;
-        $reconstruct_active_formatting_elements
-            ->($self, $insert, $active_formatting_elements, $open_tables);
+        
+        $self->_reconstruct_afe;
 
         $self->_insert_el;
 
@@ -5269,10 +5249,7 @@ sub _construct_tree ($) {
         local $self->{foster_parenting}
             ||= $self->{insertion_mode} & TABLE_IMS;
 
-        my $insert = $self->{insertion_mode} & TABLE_IMS
-            ? $insert_to_foster : $insert_to_current;
-        $reconstruct_active_formatting_elements
-            ->($self, $insert, $active_formatting_elements, $open_tables);
+        $self->_reconstruct_afe;
 
         ## "adjust MathML attributes", "adjust SVG attributes", and
         ## "adjust foreign attributes" are performed in the
@@ -5319,11 +5296,7 @@ sub _construct_tree ($) {
         }
 
         ## NOTE: There is an "as if <br>" code clone.
-        my $insert = $self->{insertion_mode} & TABLE_IMS
-            ? $insert_to_foster : $insert_to_current;
-        $reconstruct_active_formatting_elements
-            ->($self, $insert, $active_formatting_elements, $open_tables);
-        
+        $self->_reconstruct_afe;
         $self->_insert_el;
 
         if ({
@@ -5633,11 +5606,7 @@ sub _construct_tree ($) {
                         text => 'br', token => $self->{t});
 
         ## As if <br>
-        my $insert = $self->{insertion_mode} & TABLE_IMS
-            ? $insert_to_foster : $insert_to_current;
-        $reconstruct_active_formatting_elements
-            ->($self, $insert, $active_formatting_elements, $open_tables);
-
+        $self->_reconstruct_afe;
         $self->_insert_el (undef, 'br', {});
         pop @{$self->{open_elements}}; # <br>
         
