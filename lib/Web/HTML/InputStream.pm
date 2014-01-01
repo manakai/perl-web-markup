@@ -68,7 +68,9 @@ our $DefaultErrorHandler = sub {
   my (%opt) = @_;
   my $line = $opt{token} ? $opt{token}->{line} : $opt{line};
   my $column = $opt{token} ? $opt{token}->{column} : $opt{column};
-  warn "Parse error ($opt{type}) at line $line column $column\n";
+  my $text = defined $opt{text} ? qq{ - $opt{text}} : '';
+  my $value = defined $opt{value} ? qq{ "$opt{value}"} : '';
+  warn "Parse error ($opt{type}$text) at line $line column $column$value\n";
 }; # $DefaultErrorHandler
 
 sub onerror ($;$) {
@@ -586,7 +588,7 @@ sub _read_chars ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

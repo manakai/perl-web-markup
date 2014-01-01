@@ -2091,6 +2091,8 @@ sub _construct_tree ($) {
           redo B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
+        ## The "in template" insertion mode, EOF
+
         my $i;
         OE: for (reverse 0..$#{$self->{open_elements}}) {
           if ($self->{open_elements}->[$_]->[1] == TEMPLATE_EL) {
@@ -2098,20 +2100,15 @@ sub _construct_tree ($) {
             last OE;
           }
         } # OE
-        unless (defined $i) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                          text => 'template',
-                          token => $self->{t});
-          ## Stop parsing.
-          last B;
-        }
+        last B unless defined $i; ## Go to "stop parsing".
 
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no end tag at EOF',
+                        text => 'template',
+                        token => $self->{t});
         splice @{$self->{open_elements}}, $i;
         $self->_clear_up_to_marker;
         pop @{$self->{template_ims}};
         $self->_reset_insertion_mode;
-        
         ## Reprocess the token.
         redo B;
       } else {
@@ -2386,6 +2383,7 @@ sub _construct_tree ($) {
     } # insertion_mode
 
     if ($self->{insertion_mode} & HEAD_IMS) {
+      HEAD: {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           unless ($self->{insertion_mode} == BEFORE_HEAD_IM) {
@@ -2828,13 +2826,13 @@ sub _construct_tree ($) {
         $self->{insertion_mode} = IN_BODY_IM;
         
         next B;
-      } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
-        ## "Before head", "in head", and "after head" insertion modes
-        ## ignore most of end tags.  Exceptions are "body", "html",
-        ## and "br" end tags.  "Before head" and "in head" insertion
-        ## modes also recognize "head" end tag.  "In head noscript"
-        ## insertion modes ignore end tags except for "noscript" and
-        ## "br".
+        } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
+          ## "Before head", "in head", and "after head" insertion
+          ## modes ignore most of end tags.  Exceptions are "body",
+          ## "html", and "br" end tags.  "Before head" and "in head"
+          ## insertion modes also recognize "head" end tag.  "In head
+          ## noscript" insertion modes ignore end tags except for
+          ## "noscript" and "br".
 
         if ($self->{t}->{tag_name} eq 'head') {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
@@ -2948,9 +2946,9 @@ sub _construct_tree ($) {
         ## Ignore the token.
         $self->{t} = $self->_get_next_token;
         next B;
-      } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-          ## The "before head" insertion mode, EOF
+        } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
+          if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
+            ## The "before head" insertion mode, EOF
 
           ## As if <head>
           $self->_insert_el (undef, 'head', {});
@@ -2994,13 +2992,18 @@ sub _construct_tree ($) {
           #
         }
 
-        ## Fake <body> without resetting frameset-ok
+          #
+        } else {
+          die "$0: $self->{t}->{type}: Unknown token type";
+        }
+
+        ## The "after head" insertion mode, anything else
+
         $self->_insert_el (undef, 'body', {});
         $self->{insertion_mode} = IN_BODY_IM;
+        ## Reprocess the current token.
         next B;
-      } else {
-        die "$0: $self->{t}->{type}: Unknown token type";
-      }
+      } # HEAD
 
     } elsif ($self->{insertion_mode} & BODY_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
@@ -3345,23 +3348,7 @@ sub _construct_tree ($) {
           #
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        for my $entry (@{$self->{open_elements}}) {
-          unless ($entry->[1] & ALL_END_TAG_OPTIONAL_EL) {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
-            last;
-          }
-        }
-
-        if (@{$self->{template_ims}}) {
-          ## Process the token using the rules for the "in template"
-          ## insertion mode.
-          $self->{insertion_mode} = IN_TEMPLATE_IM;
-          next B;
-        } else {
-          ## Stop parsing.
-          last B;
-        }
+        #
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";
       }
@@ -3976,108 +3963,101 @@ sub _construct_tree ($) {
           #
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        ## Process the token using the rules for the "in body"
-        ## insertion mode.
-        $self->{insertion_mode} = IN_BODY_IM;
-        $self->{t} = $self->_get_next_token;
-        redo B;
+        #
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";
       }
     } elsif (($self->{insertion_mode} & IM_MASK) == IN_COLUMN_GROUP_IM) {
-      if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($1);
-          unless (length $self->{t}->{data}) {
-            
-            $self->{t} = $self->_get_next_token;
-            next B;
+      COLGROUP: {
+        if ($self->{t}->{type} == CHARACTER_TOKEN) {
+          if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+            $self->{open_elements}->[-1]->[0]->manakai_append_content ($1);
+            unless (length $self->{t}->{data}) {
+              $self->{t} = $self->_get_next_token;
+              next B;
+            }
           }
-        }
-        
-        
-        #
-      } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
-        if ($self->{t}->{tag_name} eq 'col') {
-          $self->_insert_el;
-          pop @{$self->{open_elements}};
-          delete $self->{self_closing};
-          $self->{t} = $self->_get_next_token;
-          next B;
-        } elsif ($self->{t}->{tag_name} eq 'template') {
-          ## The "in column group" insertion mode, <template>
-
-          ## This is a "template start tag" code clone.
-          $self->_insert_el;
-          push @$active_formatting_elements, ['#marker', '', undef];
-          delete $self->{frameset_ok}; # not ok
-          push @{$self->{template_ims}},
-              $self->{insertion_mode} = IN_TEMPLATE_IM;
-          $self->{t} = $self->_get_next_token;
-          next B;
-        } else {
           
           #
-        }
-      } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
-        if ($self->{t}->{tag_name} eq 'colgroup') {
-          ## The "in column group" insertion mode, </colgroup>
-          if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                            text => 'colgroup',
-                            token => $self->{t});
-            ## Ignore the token
+        } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
+          if ($self->{t}->{tag_name} eq 'col') {
+            $self->_insert_el;
+            pop @{$self->{open_elements}};
+            delete $self->{self_closing};
+            $self->{t} = $self->_get_next_token;
+            next B;
+          } elsif ($self->{t}->{tag_name} eq 'template') {
+            ## The "in column group" insertion mode, <template>
+
+            ## This is a "template start tag" code clone.
+            $self->_insert_el;
+            push @$active_formatting_elements, ['#marker', '', undef];
+            delete $self->{frameset_ok}; # not ok
+            push @{$self->{template_ims}},
+                $self->{insertion_mode} = IN_TEMPLATE_IM;
             $self->{t} = $self->_get_next_token;
             next B;
           } else {
-            
-            pop @{$self->{open_elements}}; # colgroup
-            $self->{insertion_mode} = IN_TABLE_IM;
+            #
+          }
+        } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
+          if ($self->{t}->{tag_name} eq 'colgroup') {
+            ## The "in column group" insertion mode, </colgroup>
+            if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                              text => 'colgroup',
+                              token => $self->{t});
+              ## Ignore the token
+              $self->{t} = $self->_get_next_token;
+              next B;
+            } else {
+              
+              pop @{$self->{open_elements}}; # colgroup
+              $self->{insertion_mode} = IN_TABLE_IM;
+              $self->{t} = $self->_get_next_token;
+              next B;
+            }
+          } elsif ($self->{t}->{tag_name} eq 'col') {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                            text => 'col',
+                            token => $self->{t});
+            ## Ignore the token.
             $self->{t} = $self->_get_next_token;
             next B;
+          } elsif ($self->{t}->{tag_name} eq 'template') {
+            ## The "in column group" insertion mode, </template>
+            $self->_template_end_tag;
+            next B;
+          } else {
+            #
           }
-        } elsif ($self->{t}->{tag_name} eq 'col') {
-          
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                          text => 'col',
+        } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
+          #
+          last COLGROUP;
+        } else {
+          die "$0: $self->{t}->{type}: Unknown token type";
+        }
+
+        ## The "in column group" insertion mode, anything else
+        if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in colgroup', # XXXdoc
+                          text => 'colgroup',
                           token => $self->{t});
-          ## Ignore the token
+          ## Ignore the token.
+          
           $self->{t} = $self->_get_next_token;
           next B;
-        } elsif ($self->{t}->{tag_name} eq 'template') {
-          ## The "in column group" insertion mode, </template>
-          $self->_template_end_tag;
-          next B;
         } else {
+          pop @{$self->{open_elements}}; # <colgroup>
+          $self->{insertion_mode} = IN_TABLE_IM;
           
-          #
+          ## Reprocess the token.
+          next B;
         }
-      } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        ## Process the token using the rules for the "in body"
-        ## insertion mode.
-        $self->{insertion_mode} = IN_BODY_IM;
-        next B;
-      } else {
-        die "$0: $self->{t}->{type}: Unknown token type";
-      }
+      } # COLGROUP
 
-      ## The "in column group" insertion mode, anything else
-      if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in colgroup', # XXXdoc
-                        text => 'colgroup',
-                        token => $self->{t});
-        ## Ignore the token.
-        
-        $self->{t} = $self->_get_next_token;
-        next B;
-      } else {
-        pop @{$self->{open_elements}}; # <colgroup>
-        $self->{insertion_mode} = IN_TABLE_IM;
-        
-        ## Reprocess the token.
-        next B;
-      }
+      ## Continue processing...
+      #
     } elsif ($self->{insertion_mode} & SELECT_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         
@@ -4306,10 +4286,7 @@ sub _construct_tree ($) {
           next B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        ## Process the token using the rules for the "in body"
-        ## insertion mode.
-        $self->{insertion_mode} = IN_BODY_IM;
-        next B;
+        #
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";
       }
@@ -4399,8 +4376,9 @@ sub _construct_tree ($) {
           next B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        
-        ## Stop parsing
+        ## The "after body"/"after after body" insertin mode, EOF
+
+        ## Go to stop parsing.
         last B;
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";
@@ -4537,15 +4515,20 @@ sub _construct_tree ($) {
           next B;
         }
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        unless ($self->{open_elements}->[-1]->[1] == HTML_EL and
-                @{$self->{open_elements}} == 1) { # redundant, maybe
-          
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body:#eof', token => $self->{t});
-        } else {
-          
+        ## The "in frameset"/"after frameset"/"after after frameset"
+        ## insertion mode, EOF
+
+        if (@{$self->{open_elements}} > 1) {
+          ## The "in frameset" insertion mode only.
+
+          ## Note that the current node is always the |frameset|
+          ## element here.
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no end tag before EOF',
+                          text => $self->{open_elements}->[-1]->[0]->local_name,
+                          token => $self->{t});
         }
         
-        ## Stop parsing
+        ## Go to stop parsing.
         last B;
       } else {
         die "$0: $self->{t}->{type}: Unknown token type";
@@ -5558,8 +5541,29 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         next B;
       }
-    }
-    die "Token is not handled";
+    } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
+      ## The "in body" insertion mode, EOF
+
+      OE: for (reverse @{$self->{open_elements}}) {
+        unless ($_->[1] & ALL_END_TAG_OPTIONAL_EL) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no end tag before EOF',
+                          text => $_->[0]->local_name,
+                          token => $self->{t});
+          last OE;
+        }
+      } # OE
+
+      if (@{$self->{template_ims}}) { # stack of template insertion modes
+        ## Process the token using the rules for the "in template"
+        ## insertion mode.
+        $self->{insertion_mode} = IN_TEMPLATE_IM;
+        next B;
+      } else {
+        ## Stop parsing.
+        last B;
+      }
+    } # $self->{t}->{type}
+    die "Token ($self->{t}->{type}) is not handled";
     #next B;
   } # B
 
