@@ -1534,30 +1534,17 @@ my $Acts;
 
   ## Anything else
   $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_head} = 1;
-  $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1; # in head
-  $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1; # after head
-  $Acts->[BEFORE_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 
   $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_head} = 1;
-  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1; # in head
-  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_body} = 1; # after head
-  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 
   $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_head} = 1
       for qw(head body html br);
-  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1 # in head
-      for qw(head body html br);
-  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1 # after head
-      for qw(body html br);
-  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{next_token} = 1 # after head
-      for qw(head);
-  $Acts->[BEFORE_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1 # after head
-      for qw(body html br);
+  ## Reprocess (expanded later)
 
   $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_head} = 1;
-  $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1; # in head
-  $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1; # after head
-  $Acts->[BEFORE_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 }
 
 ## The "in head" insertion mode
@@ -1611,22 +1598,18 @@ my $Acts;
 
   ## Anything else
   $Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{end_head} = 1;
-  $Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{start_body} = 1; # after head
-  $Acts->[IN_HEAD_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 
   $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1;
-  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{start_body} = 1; # after head
-  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 
   for (qw(body html br)) {
     $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{end_head} = 1;
-    $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{start_body} = 1; # after head
-    $Acts->[IN_HEAD_IM]->{END_TAG_TOKEN, $_}->{reprocess} = 1; # after head
+    ## Reprocess (expanded later)
   }
 
   $Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1;
-  $Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1; # after head
-  $Acts->[IN_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 }
 
 ## The "in head noscript" insertion mode
@@ -1641,7 +1624,9 @@ my $Acts;
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'noscript'}->{next_token} = 1;
   
   ## <basefont> <bgsound> <link> <meta> <noframes> <style>
-# XXX
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}
+      = $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_} ## using the rules for
+          for qw(basefont bgsound link meta noframes style);
 
   # <head>
   # <noscript>
@@ -1653,27 +1638,19 @@ my $Acts;
   ## Anything else
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript_error} = 'in noscript:#text';
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_noscript} = 1;
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{end_head} = 1; # in head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{start_body} = 1; # after head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+CHARACTER_TOKEN}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{end_noscript_error} = 'in noscript:/';
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{end_noscript} = 1;
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{end_head} = 1; # in head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{start_body} = 1; # after head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{END_TAG_TOKEN, 'br'}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript_error} = 'in noscript';
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_noscript} = 1;
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{end_head} = 1; # in head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{start_body} = 1; # after head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript_error} = 'in noscript:#eof';
   $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_noscript} = 1;
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{end_head} = 1; # in head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{start_body} = 1; # after head
-  $Acts->[IN_HEAD_NOSCRIPT_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1; # after head
+  ## Reprocess (expanded later)
 }
 
 ## The "after head" insertion mode
@@ -1747,69 +1724,61 @@ my $Acts;
   $Acts->[AFTER_HEAD_IM]->{+END_OF_FILE_TOKEN}->{reprocess} = 1;
 }
 
-
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'base'}->{end_noscript_error} = 'in noscript';
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'base'}->{end_noscript} = 1;
-
-for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
-  $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_void_el} = 1
-      for qw(base link basefont bgsound);
-  $Acts->[$im]->{START_TAG_TOKEN, $_}->{next_token} = 1
-      for qw(base link basefont bgsound);
+for my $tn (qw(body frameset)) {
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $tn}
+      ||= {%{$Acts->[IN_HEAD_IM]->{START_TAG_TOKEN . ':else'}}};
+  my $data = $Acts->[AFTER_HEAD_IM]->{START_TAG_TOKEN, $tn};
+  $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $tn}->{$_} = $data->{$_} for keys %$data;
 }
 
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_noscript_error} = 'in noscript'
-    for qw(body frameset);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_noscript} = 1
-    for qw(body frameset);
-$Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN, $_}->{end_head} = 1
-    for qw(body frameset);
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $_}->{end_head} = 1
-    for qw(body frameset);
-$Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $_}->{end_head} = 1
-    for qw(body frameset);
-for my $im (BEFORE_HEAD_IM, IN_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
-  $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_el} = 1
-      for qw(body frameset);
-  $Acts->[$im]->{START_TAG_TOKEN, $_}->{frameset_not_ok} = 1
-      for qw(body);
-  $Acts->[$im]->{START_TAG_TOKEN, 'body'}->{set_im} = IN_BODY_IM;
-  $Acts->[$im]->{START_TAG_TOKEN, 'frameset'}->{set_im} = IN_FRAMESET_IM;
-  $Acts->[$im]->{START_TAG_TOKEN, $_}->{next_token} = 1
-      for qw(frameset body);
+## Expansion of reprocessing
+for my $key (CHARACTER_TOKEN,
+             START_TAG_TOKEN . ':else',
+             END_TAG_TOKEN . $; . 'body',
+             END_TAG_TOKEN . $; . 'html',
+             END_TAG_TOKEN . $; . 'br',
+             END_OF_FILE_TOKEN) {
+  my $data = $Acts->[AFTER_HEAD_IM]->{$key};
+  $Acts->[IN_HEAD_IM]->{$key}->{$_} = $data->{$_} for keys %$data;
 }
 
-for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
-  $Acts->[$im]->{START_TAG_TOKEN, 'meta'}->{insert_void_el} = 1;
-  $Acts->[$im]->{START_TAG_TOKEN, 'meta'}->{next_token} = 1;
-}
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'title'}->{end_noscript_error} = 'in noscript';
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'title'}->{end_noscript} = 1;
-
-for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
-  $Acts->[$im]->{START_TAG_TOKEN, 'title'}->{insert_el} = 'rcdata';
-  $Acts->[$im]->{START_TAG_TOKEN, 'title'}->{next_token} = 1;
-  $Acts->[$im]->{START_TAG_TOKEN, $_}->{insert_el} = 'rawtext'
-      for qw(style noframes);
-  $Acts->[$im]->{START_TAG_TOKEN, $_}->{next_token} = 1
-      for qw(style noframes script);
+for my $tn (qw(base script title template), # in head
+            qw(body frameset)) { # in head + after head
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $tn}
+      ||= {%{$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN . ':else'}}};
+  my $data = $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $tn};
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, $tn}->{$_} = $data->{$_} for keys %$data;
 }
 
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'script'}->{end_noscript_error} = 'in noscript';
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'script'}->{end_noscript} = 1;
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'template'}->{end_noscript_error} = 'in noscript';
-$Acts->[IN_HEAD_NOSCRIPT_IM]->{START_TAG_TOKEN, 'template'}->{end_noscript} = 1;
-
-for my $im (BEFORE_HEAD_IM, IN_HEAD_NOSCRIPT_IM) {
-  $Acts->[$im]->{START_TAG_TOKEN, 'template'}->{insert_el} = 1;
-  $Acts->[$im]->{START_TAG_TOKEN, 'template'}->{push_marker} = 1;
-  $Acts->[$im]->{START_TAG_TOKEN, 'template'}->{frameset_not_ok} = 1;
-  $Acts->[$im]->{START_TAG_TOKEN, 'template'}->{next_token} = 1;
+## Expansion of reprocessing
+for my $key (CHARACTER_TOKEN,
+             START_TAG_TOKEN . ':else',
+             END_TAG_TOKEN . $; . 'br',
+             END_OF_FILE_TOKEN) {
+  my $data = $Acts->[IN_HEAD_IM]->{$key}; ## including "after head"
+  $Acts->[IN_HEAD_NOSCRIPT_IM]->{$key}->{$_} = $data->{$_} for keys %$data;
 }
 
-$Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN, $_}->{start_head} = 1
-    for qw(base basefont bgsound link meta title noframes style script
-           template body frameset); # head noscript
+for my $tn (qw(base basefont bgsound link meta title noframes style script
+               template), # in head
+            qw(body frameset)) { # in head + after head
+  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN, $tn}
+      ||= {%{$Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN . ':else'}}};
+  my $data = $Acts->[IN_HEAD_IM]->{START_TAG_TOKEN, $tn};
+  $Acts->[BEFORE_HEAD_IM]->{START_TAG_TOKEN, $tn}->{$_} = $data->{$_} for keys %$data;
+}
+
+## Expansion of reprocessing
+for my $key (CHARACTER_TOKEN,
+             START_TAG_TOKEN . ':else',
+             END_TAG_TOKEN . $; . 'head',
+             END_TAG_TOKEN . $; . 'html',
+             END_TAG_TOKEN . $; . 'body',
+             END_TAG_TOKEN . $; . 'br',
+             END_OF_FILE_TOKEN) {
+  my $data = $Acts->[IN_HEAD_IM]->{$key}; ## including "after head"
+  $Acts->[BEFORE_HEAD_IM]->{$key}->{$_} = $data->{$_} for keys %$data;
+}
 
 sub _construct_tree ($) {
   my $self = $_[0];
