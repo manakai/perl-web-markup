@@ -2,7 +2,7 @@ package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '5.0';
+our $VERSION = '6.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -3931,12 +3931,17 @@ sub _get_next_token ($) {
           if ($nc == 0x003B) { # ;
             ## A reserved HTML character reference or an undeclared
             ## XML entity reference.
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## XXXtype
-                            value => $self->{kwd},
-                            level => $self->{level}->{must},
-                            line => $self->{line_prev},
-                            column => $self->{column} - length $self->{kwd});
+
+            unless (not $self->{is_xml} and
+                    $self->{prev_state} != DATA_STATE and # in attribute
+                    $self->{prev_state} != RCDATA_STATE) {
+              ## A parse error in XML or in HTML content
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## XXXtype
+                              value => $self->{kwd},
+                              level => $self->{level}->{must},
+                              line => $self->{line_prev},
+                              column => $self->{column} - length $self->{kwd});
+            }
             $self->{entity__value} .= chr $nc;
             $self->{entity__match} *= 2; ## Matched (positive) or not (zero)
             
@@ -6174,7 +6179,7 @@ sub _get_next_token ($) {
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
