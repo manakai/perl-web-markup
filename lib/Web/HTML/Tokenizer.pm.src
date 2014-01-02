@@ -638,15 +638,21 @@ $Action->[SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE]->[KEY_EOF_CHAR] = {
 };
 $Action->[SCRIPT_DATA_ESCAPED_STATE]->[0x0000] =
 $Action->[SCRIPT_DATA_ESCAPED_DASH_STATE]->[0x0000] =
-$Action->[SCRIPT_DATA_ESCAPED_DASH_DASH_STATE]->[0x0000] =
-$Action->[SCRIPT_DATA_DOUBLE_ESCAPED_STATE]->[0x0000] =
-$Action->[SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE]->[0x0000] =
-$Action->[SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE]->[0x0000] = {
+$Action->[SCRIPT_DATA_ESCAPED_DASH_DASH_STATE]->[0x0000] = {
   name => 'script data escaped null',
   emit => CHARACTER_TOKEN,
   emit_data => "\x{FFFD}",
   error => 'NULL',
   state => SCRIPT_DATA_ESCAPED_STATE,
+};
+$Action->[SCRIPT_DATA_DOUBLE_ESCAPED_STATE]->[0x0000] =
+$Action->[SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE]->[0x0000] =
+$Action->[SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE]->[0x0000] = {
+  name => 'script data double escaped null',
+  emit => CHARACTER_TOKEN,
+  emit_data => "\x{FFFD}",
+  error => 'NULL',
+  state => SCRIPT_DATA_DOUBLE_ESCAPED_STATE,
 };
 $Action->[SCRIPT_DATA_ESCAPED_STATE]->[KEY_ELSE_CHAR] = {
   name => 'script data escaped else',
