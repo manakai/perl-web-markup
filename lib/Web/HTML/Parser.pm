@@ -4937,78 +4937,74 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'isindex') {
+        ## The "in body" insertion mode, <isindex>.
+
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'isindex', token => $self->{t});
-        if (defined $self->{form_element} and
-            not do {
-              my $has_template;
-              OE: for (reverse @{$self->{open_elements}}) {
-                if ($_->[1] == TEMPLATE_EL) {
-                  $has_template = 1;
-                  last OE;
-                }
-              } # OE
-              $has_template;
-            }) {
-          
-          ## Ignore the token
+
+        my $has_template;
+        OE: for (reverse @{$self->{open_elements}}) {
+          if ($_->[1] == TEMPLATE_EL) {
+            $has_template = 1;
+            last OE;
+          }
+        } # OE
+
+        if (defined $self->{form_element} and not $has_template) {
+          ## Ignore the token.
            ## NOTE: Not acknowledged.
           $self->{t} = $self->_get_next_token;
           next B;
-        } else {
-          delete $self->{self_closing};
-
-          delete $self->{frameset_ok}; # not ok
-
-          $self->_close_p;
-
-          my $input_attrs = $self->{t}->{attributes};
-          my $form_attrs = {};
-          $form_attrs->{action} = delete $input_attrs->{action}
-              if exists $input_attrs->{action};
-          my $prompt_attr = delete $input_attrs->{prompt};
-          $input_attrs->{name} = {name => 'name', value => 'isindex'};
-
-          $self->_insert_el (undef, 'form', $form_attrs);
-#XXXXXX
-          # XXX If no |template| in $self->{open_elements}, set form element pointer
-
-          $self->_insert_el (undef, 'hr', {});
-          pop @{$self->{open_elements}}; # <hr>
-
-          $self->_reconstruct_afe;
-
-          $self->_insert_el (undef, 'label', {});
-
-          if ($prompt_attr) {
-            $self->{open_elements}->[-1]->[0]->manakai_append_content
-                ($prompt_attr->{value}) if length $prompt_attr->{value};
-          } else {
-            # XXX SHOULD: localization
-            $self->{open_elements}->[-1]->[0]->manakai_append_content
-                ('This is a searchable index. Enter search keywords: ');
-          }
-
-          $self->_insert_el (undef, 'input', $input_attrs);
-          pop @{$self->{open_elements}}; # <input>
-
-          {
-            # XXX SHOULD: localization
-            $self->{open_elements}->[-1]->[0]->manakai_append_content
-                ('XXX') if 0;
-          }
-
-          pop @{$self->{open_elements}}; # <label>
-
-          $self->_insert_el (undef, 'hr', {});
-          pop @{$self->{open_elements}}; # <hr>
-
-          pop @{$self->{open_elements}}; # <form> (or some formatting element)
-#XXXXXX
-          # XXX If no |template| in $self->{open_elements}, set form element pointer to null
-
-          $self->{t} = $self->_get_next_token;
-          next B;
         }
+
+        delete $self->{self_closing};
+        delete $self->{frameset_ok}; # not ok
+        $self->_close_p;
+
+        my $input_attrs = $self->{t}->{attributes};
+        my $form_attrs = {};
+        $form_attrs->{action} = delete $input_attrs->{action}
+            if exists $input_attrs->{action};
+        my $prompt_attr = delete $input_attrs->{prompt};
+        $input_attrs->{name} = {name => 'name', value => 'isindex'};
+
+        my $form_el = $self->_insert_el (undef, 'form', $form_attrs);
+        $self->{form_element} = $form_el->[0] if not $has_template;
+
+        $self->_insert_el (undef, 'hr', {});
+        pop @{$self->{open_elements}}; # <hr>
+
+        $self->_reconstruct_afe;
+
+        $self->_insert_el (undef, 'label', {});
+
+        if ($prompt_attr) {
+          $self->{open_elements}->[-1]->[0]->manakai_append_content
+              ($prompt_attr->{value}) if length $prompt_attr->{value};
+        } else {
+          # XXX SHOULD: localization
+          $self->{open_elements}->[-1]->[0]->manakai_append_content
+              ('This is a searchable index. Enter search keywords: ');
+        }
+
+        $self->_insert_el (undef, 'input', $input_attrs);
+        pop @{$self->{open_elements}}; # <input>
+
+        {
+          # XXX SHOULD: localization
+          $self->{open_elements}->[-1]->[0]->manakai_append_content
+              ('XXX') if 0;
+        }
+
+        pop @{$self->{open_elements}}; # <label>
+
+        $self->_insert_el (undef, 'hr', {});
+        pop @{$self->{open_elements}}; # <hr>
+
+        pop @{$self->{open_elements}}; # <form> (or some formatting element)
+        delete $self->{form_element} if not $has_template;
+
+        $self->{t} = $self->_get_next_token;
+        next B;
       } elsif ($self->{t}->{tag_name} eq 'textarea') {
         ## 1. Insert
         $self->_insert_el;
