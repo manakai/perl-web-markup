@@ -128,6 +128,8 @@ sub _test ($) {
     }
   }); # onerror
 
+  $parser->scripting (1) unless $test->{noscript};
+
   my $result;
   unless (defined $test->{element}) {
     $parser->parse_char_string ($test->{data}->[0] => $doc);

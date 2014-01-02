@@ -2,7 +2,7 @@ package Web::HTML::Parser; # -*- Perl -*-
 use strict;
 #use warnings;
 no warnings 'utf8';
-our $VERSION = '5.0';
+our $VERSION = '6.0';
 use Encode;
 use Web::HTML::Defs;
 use Web::HTML::Tokenizer;
@@ -328,6 +328,14 @@ my $foreign_attr_xname = $Web::HTML::ParserData::ForeignAttrNamespaceFixup;
 ## (e.g. |<table><b>abc</b></table>|, |abc| in <colgroup> fragment
 ## case, or |<frameset></frameset>abc|).  The parser is still
 ## conforming to the HTML specification, however.
+
+## The scripting flag
+sub scripting ($;$) {
+  if (@_ > 1) {
+    $_[0]->{scripting} = $_[1];
+  }
+  return $_[0]->{scripting};
+} # scripting
 
 ## ------ String parse API ------
 
@@ -2698,7 +2706,6 @@ sub _construct_tree ($) {
             next B;
           }
 
-        # XXX "in head", <noscript>, scripting is enabled
         } elsif ($self->{t}->{tag_name} eq 'noscript') {
           if ($self->{insertion_mode} == BEFORE_HEAD_IM) {
             ## The "before head" insertion mode, anything else (start
@@ -2713,12 +2720,21 @@ sub _construct_tree ($) {
           }
 
           if ($self->{insertion_mode} == IN_HEAD_IM) {
-            ## NOTE: and scripting is disalbed
-            $self->_insert_el;
-            $self->{insertion_mode} = IN_HEAD_NOSCRIPT_IM;
-            !!!nack ('t116.1');
-            !!!next-token;
-            next B;
+            if ($self->scripting) { ## The scripting flag is enabled
+              ## The generic raw text element parsing algorithm.
+              $self->_insert_el;
+              $self->{state} = RAWTEXT_STATE;
+              $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+              !!!nack ('t40.1');
+              !!!next-token;
+              next B;
+            } else { ## The scripting flag is disabled
+              $self->_insert_el;
+              $self->{insertion_mode} = IN_HEAD_NOSCRIPT_IM;
+              !!!nack ('t116.1');
+              !!!next-token;
+              next B;
+            }
           } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
             !!!parse-error (type => 'in noscript', text => 'noscript',
                             token => $self->{t});
@@ -4893,37 +4909,32 @@ sub _construct_tree ($) {
         !!!nack ('t379.1');
         !!!next-token;
         next B;
+      } elsif ($self->{t}->{tag_name} eq 'xmp') {
+        ## The "in body" insertion mode, <xmp>
+        $self->_close_p;
+        $self->_reconstruct_afe;
+        delete $self->{frameset_ok}; # not ok
+
+        ## The generic raw text element parsing algorithm.
+        $self->_insert_el;
+        $self->{state} = RAWTEXT_STATE;
+        $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+        !!!nack ('t40.1');
+        !!!next-token;
       } elsif ({
-                xmp => 1,
-                iframe => 1,
-                noembed => 1,
-                noframes => 1, ## NOTE: This is an "as if in head" code clone.
-                noscript => 0, ## TODO: 1 if scripting is enabled
-               }->{$self->{t}->{tag_name}}) {
-        if ($self->{t}->{tag_name} eq 'xmp') {
-          ## "In body" insertion mode, "xmp" start tag.  As normal
-          ## flow-content element start tag, but CDATA parsing.
-          !!!cp ('t381');
+        iframe => 1,
+        noembed => 1,
+        noframes => 1, ## NOTE: This is an "as if in head" code clone.
+        noscript => $self->scripting, ## the scripting flag is enabled
+      }->{$self->{t}->{tag_name}}) {
+        delete $self->{frameset_ok} if $self->{t}->{tag_name} eq 'iframe';
 
-          $self->_close_p;
-
-          $self->_reconstruct_afe;
-
-          delete $self->{frameset_ok};
-        } elsif ($self->{t}->{tag_name} eq 'iframe') {
-          !!!cp ('t381.1');
-          delete $self->{frameset_ok};
-        } else {
-          !!!cp ('t399');
-        }
-        ## NOTE: There is an "as if in body" code clone.
-        {
-          $self->_insert_el;
-          $self->{state} = RAWTEXT_STATE;
-          $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
-          !!!nack ('t40.1');
-          !!!next-token;
-        }
+        ## The generic raw text element parsing algorithm.
+        $self->_insert_el;
+        $self->{state} = RAWTEXT_STATE;
+        $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
+        !!!nack ('t40.1');
+        !!!next-token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'isindex') {
         !!!parse-error (type => 'isindex', token => $self->{t});
@@ -4958,6 +4969,7 @@ sub _construct_tree ($) {
           $input_attrs->{name} = {name => 'name', value => 'isindex'};
 
           $self->_insert_el (undef, 'form', $form_attrs);
+#XXXXXX
           # XXX If no |template| in $self->{open_elements}, set form element pointer
 
           $self->_insert_el (undef, 'hr', {});
@@ -4991,6 +5003,7 @@ sub _construct_tree ($) {
           pop @{$self->{open_elements}}; # <hr>
 
           pop @{$self->{open_elements}}; # <form> (or some formatting element)
+#XXXXXX
           # XXX If no |template| in $self->{open_elements}, set form element pointer to null
 
           !!!next-token;
@@ -5000,9 +5013,6 @@ sub _construct_tree ($) {
         ## 1. Insert
         $self->_insert_el;
         
-        ## Step 2 # XXX
-        ## TODO: $self->{form_element} if defined
-
         ## 2. Drop U+000A LINE FEED
         $self->{ignore_newline} = 1;
 
@@ -5013,7 +5023,7 @@ sub _construct_tree ($) {
         $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
 
         ## 5. Frameset-ng.
-        delete $self->{frameset_ok};
+        delete $self->{frameset_ok}; # not ok
 
         !!!nack ('t392.1');
         !!!next-token;
@@ -5574,7 +5584,7 @@ sub parse_char_string_with_context ($$$$) {
         iframe => 1,
         noembed => 1,
         noframes => 1,
-        noscript => 1, # $self->{scripting_flag}, # XXX
+        noscript => $self->scripting, ## The scripting flag is enabled
       }->{$node_ln}) {
         $self->{state} = RAWTEXT_STATE;
       } elsif ($node_ln eq 'plaintext') {

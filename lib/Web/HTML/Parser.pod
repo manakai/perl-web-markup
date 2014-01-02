@@ -97,12 +97,31 @@ Tags are compared ASCII case-insensitively.
 XXX Future revision of the parser might also use the locale language
 tag to insert localized text for C<isindex> tag.
 
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
+
 =item $string = $parser->known_definite_encoding
 
 =item $parser->known_definite_encoding ($string)
 
 Get or set a known character encoding used to parse the document.  See
 also L</SPECIFYING ENCODING>.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
+
+=item $boolean = $parser->scripting
+
+=item $parser->scripting ($boolean)
+
+Set whether the scripting flag of the parser is "enabled" or not.  By
+default the value is "disabled" (false).  If the value is "enabled",
+the |noscript| element's content is not parsed (This is how browsers
+parse the document by default).  Otherwise the content is parsed as
+normal.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
 
 =item $code = $parser->onerror
 
@@ -113,6 +132,9 @@ as warning and additional processing information, is reported to the
 handler.  See
 <https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
 for details of error handling.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
 
 =item $parser->throw ($code)
 
