@@ -321,8 +321,13 @@ my $svg_attr_name = $Web::HTML::ParserData::SVGAttrNameFixup;
 my $mml_attr_name = $Web::HTML::ParserData::MathMLAttrNameFixup;
 my $foreign_attr_xname = $Web::HTML::ParserData::ForeignAttrNamespaceFixup;
 
-## TODO: Invoke the reset algorithm when a resettable element is
-## created (cf. HTML5 revision 2259).
+## Note that the number of parse errors reported by this parser might
+## be less than the number of the parse errors in the document
+## (i.e. the number of parse errors according to the HTML
+## specification) when multiple adjacent character tokens are in error
+## (e.g. |<table><b>abc</b></table>|, |abc| in <colgroup> fragment
+## case, or |<frameset></frameset>abc|).  The parser is still
+## conforming to the HTML specification, however.
 
 ## ------ String parse API ------
 
@@ -2135,13 +2140,13 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         ## "In foreign content", character tokens.
         my $data = $self->{t}->{data};
+        if ($data =~ /[^\x00\x09\x0A\x0C\x0D\x20]/) {
+          delete $self->{frameset_ok};
+        }
         while ($data =~ s/\x00/\x{FFFD}/) {
           !!!parse-error (type => 'NULL', token => $self->{t});
         }
         $self->{open_elements}->[-1]->[0]->manakai_append_content ($data);
-        if ($data =~ /[^\x09\x0A\x0C\x0D\x20]/) {
-          delete $self->{frameset_ok};
-        }
         
         !!!next-token;
         next B;
@@ -3912,6 +3917,8 @@ sub _construct_tree ($) {
         ## The "in column group" insertion mode, anything else
 
         if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
+          ## Note that the number of parse errors for character tokens
+          ## is different from the spec in fragment case.
           !!!parse-error (type => 'in colgroup',
                           token => $self->{t});
           ## Ignore the token.
@@ -4268,6 +4275,8 @@ sub _construct_tree ($) {
         }
         
         if ($self->{t}->{data} =~ s/^[^\x09\x0A\x0C\x20]+//) {
+          ## Note that the number of parse errors for character tokens
+          ## is different from the spec .
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
             !!!cp ('t311');
             !!!parse-error (type => 'in frameset:#text', token => $self->{t});
@@ -5280,6 +5289,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{tag_name} eq 'form') {
         ## The "in body" insertion mode, </form>
 
+        # XXXXXX
         # XXX template
 
         # XXX 1.

@@ -2135,13 +2135,13 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         ## "In foreign content", character tokens.
         my $data = $self->{t}->{data};
+        if ($data =~ /[^\x00\x09\x0A\x0C\x0D\x20]/) {
+          delete $self->{frameset_ok};
+        }
         while ($data =~ s/\x00/\x{FFFD}/) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
         }
         $self->{open_elements}->[-1]->[0]->manakai_append_content ($data);
-        if ($data =~ /[^\x09\x0A\x0C\x0D\x20]/) {
-          delete $self->{frameset_ok};
-        }
         
         $self->{t} = $self->_get_next_token;
         next B;
@@ -3912,6 +3912,8 @@ sub _construct_tree ($) {
         ## The "in column group" insertion mode, anything else
 
         if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
+          ## Note that the number of parse errors for character tokens
+          ## is different from the spec in fragment case.
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'in colgroup',
                           token => $self->{t});
           ## Ignore the token.
@@ -4268,6 +4270,8 @@ sub _construct_tree ($) {
         }
         
         if ($self->{t}->{data} =~ s/^[^\x09\x0A\x0C\x20]+//) {
+          ## Note that the number of parse errors for character tokens
+          ## is different from the spec .
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
             
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'in frameset:#text', token => $self->{t});
@@ -5280,6 +5284,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{tag_name} eq 'form') {
         ## The "in body" insertion mode, </form>
 
+        # XXXXXX
         # XXX template
 
         # XXX 1.
