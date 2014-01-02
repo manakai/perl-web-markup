@@ -184,6 +184,8 @@ sub _test ($) {
       push @e, $v;
     }
     eq_or_diff join ("\x0A", @e), $test->{entities}->[0], 'Entities';
+  } else {
+    ok 1;
   }
   
   $test->{document}->[0] .= "\x0A" if length $test->{document}->[0];
@@ -202,7 +204,7 @@ for my $file_name (@FILES) {
       my $c = shift;
       _test ($test);
       done $c;
-    } n => 5, name => [$file_name, $test->{data}->[0]];
+    } n => 6, name => [$file_name, $test->{data}->[0]];
   });
 }
 

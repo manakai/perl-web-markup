@@ -136,7 +136,7 @@ test: test-deps test-main test-main-webdom
 test-deps: deps local/elements.json
 
 test-main:
-	$(PROVE) t/tests/*.t t/modules/*.t t/parsing.t t/parsing/xml.t \
+	$(PROVE) t/tests/*.t t/modules/*.t t/parsing/*.t \
 	    t/processing/*.t t/validation/*.t
 
 test-main-webdom: local/bin/pmbp.pl
