@@ -321,8 +321,13 @@ my $svg_attr_name = $Web::HTML::ParserData::SVGAttrNameFixup;
 my $mml_attr_name = $Web::HTML::ParserData::MathMLAttrNameFixup;
 my $foreign_attr_xname = $Web::HTML::ParserData::ForeignAttrNamespaceFixup;
 
-## TODO: Invoke the reset algorithm when a resettable element is
-## created (cf. HTML5 revision 2259).
+## Note that the number of parse errors reported by this parser might
+## be less than the number of the parse errors in the document
+## (i.e. the number of parse errors according to the HTML
+## specification) when multiple adjacent character tokens are in error
+## (e.g. |<table><b>abc</b></table>|, |abc| in <colgroup> fragment
+## case, or |<frameset></frameset>abc|).  The parser is still
+## conforming to the HTML specification, however.
 
 ## ------ String parse API ------
 
@@ -3546,25 +3551,37 @@ sub _construct_tree ($) {
             #
           }
         } elsif ($self->{t}->{tag_name} eq 'form') {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'form in table', token => $self->{t}); # XXX documentation
-          
-          if ($self->{form_element}) {
+          if (defined $self->{form_element} or
+              do {
+                my $has_template;
+                OE: for (reverse @{$self->{open_elements}}) {
+                  if ($_->[1] == TEMPLATE_EL) {
+                    $has_template = 1;
+                    last OE;
+                  }
+                } # OE
+                $has_template;
+              }) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:form ignored',
+                            token => $self->{t});
+
             ## Ignore the token.
             $self->{t} = $self->_get_next_token;
             
             next B;
-          } else {
-            $self->_insert_el;
-            $self->{form_element} = $self->{open_elements}->[-1]->[0];
-            
-            pop @{$self->{open_elements}};
-            
-            $self->{t} = $self->_get_next_token;
-            
-            next B;
           }
-        } else {
+
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:form', token => $self->{t});
+
+          $self->_insert_el;
+          $self->{form_element} = $self->{open_elements}->[-1]->[0];
           
+          pop @{$self->{open_elements}};
+          
+          $self->{t} = $self->_get_next_token;
+          
+          next B;
+        } else {
           #
         }
 
@@ -4629,14 +4646,22 @@ sub _construct_tree ($) {
       }->{$self->{t}->{tag_name}}) {
 
         ## 1. When there is an opening |form| element:
-        if ($self->{t}->{tag_name} eq 'form' and defined $self->{form_element}) {
-          
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in form:form', token => $self->{t});
-          ## Ignore the token
-          
-          $self->{t} = $self->_get_next_token;
-          next B;
-        }
+        my $in_template;
+        if ($self->{t}->{tag_name} eq 'form') {
+          OE: for (@{$self->{open_elements}}) {
+            if ($_->[1] == TEMPLATE_EL) {
+              $in_template = 1;
+              last OE;
+            }
+          } # OE
+          if (defined $self->{form_element} and not $in_template) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in form:form', token => $self->{t});
+            ## Ignore the token.
+            
+            $self->{t} = $self->_get_next_token;
+            next B;
+          }
+        } # <form>
 
         ## 2. If there is a |p| element in button scope, close it.
         if ($self->{t}->{tag_name} ne 'table' or # The Hixie Quirk
@@ -4675,7 +4700,8 @@ sub _construct_tree ($) {
           delete $self->{frameset_ok};
         } elsif ($self->{t}->{tag_name} eq 'form') {
           
-          $self->{form_element} = $self->{open_elements}->[-1]->[0];
+          $self->{form_element} = $self->{open_elements}->[-1]->[0]
+              if not $in_template;
 
           
           $self->{t} = $self->_get_next_token;
@@ -5284,53 +5310,97 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{tag_name} eq 'form') {
         ## The "in body" insertion mode, </form>
 
-        # XXXXXX
-        # XXX template
-
-        # XXX 1.
-
-        ## 2.
-        undef $self->{form_element};
-
-        ## 3. has an element in scope
-        my $i;
-        INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
-          my $node = $self->{open_elements}->[$_];
-          if ($node->[1] == FORM_EL) { # XXX
-            
-            $i = $_;
-            last INSCOPE;
-          } elsif ($node->[1] & SCOPING_EL) {
-            
-            last INSCOPE;
+        my $in_template;
+        OE: for (reverse @{$self->{open_elements}}) {
+          if ($_->[1] == TEMPLATE_EL) {
+            $in_template = 1;
+            last OE;
           }
-        } # INSCOPE
-        unless (defined $i) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
-                          text => $self->{t}->{tag_name},
-                          token => $self->{t});
-          ## Ignore the token.
+        } # OE
+
+        unless ($in_template) {
+          ## <form> not in template
+
+          ## 1., 2.
+          my $node = delete $self->{form_element}; # or undef # (real node)
+
+          ## 3.
+          my $i;
+          if (defined $node) {
+            ## Have an element in scope
+            OE: for (reverse 0..$#{$self->{open_elements}}) {
+              if ($self->{open_elements}->[$_]->[0] eq $node) {
+                $i = $_;
+                last OE;
+              } elsif ($self->{open_elements}->[$_]->[1] & SCOPING_EL) {
+                last OE;
+              }
+            } # OE
+          }
+          unless (defined $i) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                            value => $self->{t}->{tag_name},
+                            token => $self->{t});
+            ## Ignore the token.
+            $self->{t} = $self->_get_next_token;
+            next B;
+          }
+
+          ## 4. Generate implied end tags
+          pop @{$self->{open_elements}}
+              while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+
+          ## 5.
+          unless ($self->{open_elements}->[-1]->[0] eq $node) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                            text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                            value => $self->{t}->{tag_name}, # actual
+                            token => $self->{t});
+          }
+
+          ## 6.
+          splice @{$self->{open_elements}}, $i, 1, ();
+
+          $self->{t} = $self->_get_next_token;
+          next B;
+        } else { ## In template
+          ## 1. Have a |form| element in scope
+          my $i;
+          OE: for (reverse 0..$#{$self->{open_elements}}) {
+            if ($self->{open_elements}->[$_]->[1] == FORM_EL) {
+              $i = $_;
+              last OE;
+            } elsif ($self->{open_elements}->[$_]->[1] & SCOPING_EL) {
+              last OE;
+            }
+          } # OE
+          unless (defined $i) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                            value => $self->{t}->{tag_name},
+                            token => $self->{t});
+            ## Ignore the token.
+            $self->{t} = $self->_get_next_token;
+            next B;
+          }
+
+          ## 2. Generate implied end tags
+          pop @{$self->{open_elements}}
+              while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+
+          ## 3.
+          unless ($self->{open_elements}->[-1]->[1] == FORM_EL) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                            text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                            value => $self->{t}->{tag_name}, # actual
+                            token => $self->{t});
+          }
+
+          ## 4.
+          splice @{$self->{open_elements}}, $i;
+
           $self->{t} = $self->_get_next_token;
           next B;
         }
-
-        ## 4. generate implied end tags
-        pop @{$self->{open_elements}}
-            while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
-        
-        ## 5.
-        if ($self->{open_elements}->[-1]->[0]->manakai_local_name ne $self->{t}->{tag_name}) { # XXX
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
-                          text => $self->{open_elements}->[-1]->[0]->local_name, # expected
-                          value => $self->{t}->{tag_name}, # actual
-                          token => $self->{t});
-        }
-
-        ## 6.
-        splice @{$self->{open_elements}}, $i;
-
-        $self->{t} = $self->_get_next_token;
-        next B;
       } elsif ({
         h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1,
       }->{$self->{t}->{tag_name}}) {
