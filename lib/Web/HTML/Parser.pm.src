@@ -4921,6 +4921,7 @@ sub _construct_tree ($) {
         $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
         !!!nack ('t40.1');
         !!!next-token;
+        next B;
       } elsif ({
         iframe => 1,
         noembed => 1,

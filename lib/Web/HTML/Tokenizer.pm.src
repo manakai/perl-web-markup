@@ -3664,9 +3664,10 @@ sub _get_next_token ($) {
             ## A reserved HTML character reference or an undeclared
             ## XML entity reference.
 
-            unless (not $self->{is_xml} and
-                    $self->{prev_state} != DATA_STATE and # in attribute
-                    $self->{prev_state} != RCDATA_STATE) {
+            if ($self->{is_xml} or
+                (($self->{prev_state} == DATA_STATE or # in content (!= attr)
+                  $self->{prev_state} == RCDATA_STATE) and
+                 $self->{entity__match} == 0)) {
               ## A parse error in XML or in HTML content
               !!!parse-error (type => 'entity not declared', ## XXXtype
                               value => $self->{kwd},
