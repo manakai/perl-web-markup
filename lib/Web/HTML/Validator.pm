@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '125.0';
+our $VERSION = '126.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -55,6 +55,7 @@ sub onerror ($;$) {
 ##                       flag is undefined.
 ##   {has_meta_charset}  Set to true if there is a <meta charset=""> or
 ##                       <meta http-equiv=content-type> element.
+##   {is_template}       The checker is in the template content mode.
 
 ## $element_state
 ##
@@ -2419,7 +2420,7 @@ $Element->{+HTML_NS}->{head} = {
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'title') {
-      unless ($element_state->{has_title}) {
+      if (not $element_state->{has_title} or $item->{is_template}) {
         $element_state->{has_title} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2448,7 +2449,7 @@ $Element->{+HTML_NS}->{head} = {
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    unless ($element_state->{has_title}) {
+    if (not $element_state->{has_title} and not $item->{is_template}) {
       my $el = $item->{node};
       my $od = $el->owner_document;
       my $tmd = $od->get_user_data('manakai_title_metadata');
@@ -2465,7 +2466,7 @@ $Element->{+HTML_NS}->{head} = {
 
     $AnyChecker{check_end}->(@_);
   },
-};
+}; # head
 
 $Element->{+HTML_NS}->{title} = {
   %HTMLTextChecker,
@@ -3121,8 +3122,6 @@ $Element->{+HTML_NS}->{noscript} = {
   }, # check_end
 }; # noscript
 
-# XXX <template>
-
 # ---- Sections ----
 
 $Element->{+HTML_NS}->{article} = {
@@ -3130,6 +3129,7 @@ $Element->{+HTML_NS}->{article} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
 
+    # XXX drop pubdate
     $element_state->{has_time_pubdate_original}
         = $self->{flag}->{has_time_pubdate};
     $self->{flag}->{has_time_pubdate} = 0;
@@ -3243,6 +3243,8 @@ $Element->{+HTML_NS}->{dir} = {
                          level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'li') {
       #
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      #
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed',
@@ -3332,6 +3334,8 @@ $Element->{+HTML_NS}->{dl} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      #
     } elsif ($element_state->{phase} eq 'in dds') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'dd') {
         #$element_state->{phase} = 'in dds';
@@ -4850,8 +4854,8 @@ $Element->{+HTML_NS}->{area} = {
   }, # check_attrs2
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    unless ($self->{flag}->{in_map} or
-            not $item->{node}->manakai_parent_element) {
+    if (not ($self->{flag}->{in_map} or $self->{flag}->{is_template}) and
+        $item->{node}->manakai_parent_element) {
       $self->{onerror}->(node => $item->{node},
                          type => 'element not allowed:area',
                          level => 'm');
@@ -4875,6 +4879,8 @@ $Element->{+HTML_NS}->{table} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      #
     } elsif ($element_state->{phase} eq 'in tbodys') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'tbody') {
         #$element_state->{phase} = 'in tbodys';
@@ -5117,7 +5123,8 @@ $Element->{+HTML_NS}->{colgroup} = {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
-    } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'col') {
+    } elsif ($child_nsuri eq HTML_NS and
+             ($child_ln eq 'col' or $child_ln eq 'template')) {
       if ($item->{node}->has_attribute_ns (undef, 'span')) {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed:colgroup',
@@ -5160,6 +5167,8 @@ $Element->{+HTML_NS}->{tbody} = {
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'tr') {
+      #
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -5206,6 +5215,8 @@ $Element->{+HTML_NS}->{tr} = {
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'td') {
       #
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'th') {
+      #
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -5920,9 +5931,9 @@ $Element->{+HTML_NS}->{select} = {
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($child_nsuri eq HTML_NS and
-             {
-               option => 1, optgroup => 1,
-             }->{$child_ln}) {
+             ($child_ln eq 'option' or $child_ln eq 'optgroup')) {
+      #
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -6053,6 +6064,8 @@ $Element->{+HTML_NS}->{optgroup} = {
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'option') {
+      #
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -7915,6 +7928,115 @@ $CheckDIVContent = sub {
   $checker->check_node ($div);
 }; # $CheckDIVContent
 
+$Element->{+HTML_NS}->{template} = {
+  %HTMLEmptyChecker,
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    my $df = $item->{node}->content;
+    my @children = @{$df->child_nodes};
+
+    my $model;
+    for my $child (@children) {
+      if ($child->node_type == 1) { # ELEMENT_NODE
+        my $ns = $child->namespace_uri || '';
+        my $ln = $child->local_name;
+
+        if ($ns eq HTML_NS) {
+          $model = {
+            li => 'ul', #'ulol',
+            dt => 'dl',
+            dd => 'dl',
+            figcaption => 'figure',
+            rt => 'ruby',
+            rp => 'ruby',
+            param => 'object',
+            source => 'video', #'media',
+            track => 'video', #'media',
+            col => 'colgroup',
+            tbody => 'table',
+            thead => 'table',
+            tfoot => 'table',
+            th => 'tr',
+            td => 'tr',
+            legend => 'fieldset',
+            optgroup => 'select',
+            option => 'select',
+            summary => 'details',
+            menuitem => 'popup menu',
+          }->{$ln};
+          last if defined $model;
+
+          if ($ln eq 'tr') {
+            $model = 'table'; #tr-container
+            #not last;
+          } elsif ($ln eq 'style') {
+            unless ($child->has_attribute_ns (undef, 'scoped')) {
+              $model = 'metadata';
+              last;
+            }
+          }
+        }
+        if ($_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln} and
+            not $_Defs->{categories}->{'flow content'}->{elements}->{$ns}->{$ln} and
+            not ($ns eq HTML_NS and $ln eq 'style')) {
+          ## Metadata content
+          $model = 'metadata';
+          last;
+        }
+
+        ## Metadata content (<link> <meta> <script> <template>), flow
+        ## content, figure, ruby, object, media, table (<script>
+        ## <template>), colgroup (<script> <template>), table body
+        ## (<script> <template>), tr (<script> <template>), fieldset,
+        ## details, <menu type=popup> (<hr> <script> <template>)
+        #
+      #} elsif ($child->node_type == 3) { # TEXT_NODE
+      #  if ($child->data =~ /[\x09\x0A\x0C\x0D\x20]/) { # non-space chars
+      #    ## Flow content, figure, ruby, object, media
+      #    
+      #  }
+      }
+    } # $child
+
+    my $container;
+    if (not defined $model) {
+      ## Flow content or metadata content
+      $container = $df->owner_document->create_element ('div');
+    } elsif ($model eq 'metadata') {
+      $container = $df->owner_document->create_element ('head');
+    } elsif ($model eq 'popup menu') {
+      $container = $df->owner_document->create_element ('menu');
+      $container->set_attribute_ns (undef, type => 'popup');
+    } else {
+      $container = $df->owner_document->create_element ($model);
+      $container->set_attribute_ns (undef, data => 'http://test/') if $model eq 'object';
+    }
+
+    my $checker = Web::HTML::Validator->new;
+    $checker->_init;
+    $checker->{flag}->{is_template} = 1;
+    my $onerror = $self->onerror;
+    my $node = $item->{node};
+    $checker->onerror (sub {
+      my %args = @_;
+      $args{node} = $node if $args{node} eq $container;
+      $onerror->(%args);
+    });
+
+    $checker->_check_node
+        ([{type => 'element', node => $container, parent_state => {},
+           is_template => 1,
+           content => \@children,
+           validation_mode => 'default'}]);
+
+    $checker->_check_refs;
+    $checker->_terminate;
+
+    $HTMLEmptyChecker{check_end}->(@_);
+  }, # check_end
+}; # template
+
 ## ------ CSS ------
 
 sub _css_parser ($$) {
@@ -8077,7 +8199,7 @@ sub _determine_validation_mode ($$$) {
 
 sub _check_node ($$) {
   my $self = $_[0];
-  my @item = ($_[1]);
+  my @item = (@{$_[1]});
   while (@item) {
     my $item = shift @item;
     if (ref $item eq 'ARRAY') {
@@ -8090,6 +8212,8 @@ sub _check_node ($$) {
       ## $item
       ##   type            |element|
       ##   node            The element node
+      ##   content         Chlildren (optional)
+      ##   is_template     Is template content (boolean)
       ##   parent_state    State hashref for the parent of the element node
       ##   validation_mode Validation mode for the element node
       my $el = $item->{node};
@@ -8178,7 +8302,7 @@ sub _check_node ($$) {
       push @new_item, [$eldef->{check_attrs}, $self, $item, $element_state];
       push @new_item, [$eldef->{check_attrs2}, $self, $item, $element_state];
       
-      my @child = @{$el->child_nodes};
+      my @child = @{$item->{content} || $el->child_nodes};
       while (@child) {
         my $child = shift @child;
         my $child_nt = $child->node_type;
@@ -8234,9 +8358,10 @@ sub _check_node ($$) {
       push @new_item, {type => 'check_palpable_content',
                        node => $el,
                        element_state => $element_state}
-          if $cm eq 'flow content' or
-             $cm eq 'phrasing content' or
-             $cm eq 'transparent';
+          if ($cm eq 'flow content' or
+              $cm eq 'phrasing content' or
+              $cm eq 'transparent') and
+             not $item->{is_template};
       
       unshift @item, @new_item;
     } elsif ($item->{type} eq '_add_minus_elements') {
@@ -8508,17 +8633,17 @@ sub check_node ($$) {
   my $nt = $node->node_type;
   if ($nt == 1) { # ELEMENT_NODE
     $self->_check_node
-        ({type => 'element', node => $node, parent_state => {},
-          validation_mode => $self->_determine_validation_mode
-              ($node, 'default')});
+        ([{type => 'element', node => $node, parent_state => {},
+           validation_mode => $self->_determine_validation_mode
+               ($node, 'default')}]);
   } elsif ($nt == 9) { # DOCUMENT_NODE
-    $self->_check_node ({type => 'document', node => $node});
+    $self->_check_node ([{type => 'document', node => $node}]);
   } elsif ($nt == 3) { # TEXT_NODE
     $self->_check_data ($node, 'data');
   } elsif ($nt == 2) { # ATTRIBUTE_NODE
     $self->_check_data ($node, 'value');
   } elsif ($nt == 11) { # DOCUMENT_FRAGMENT_NODE
-    $self->_check_node ({type => 'document_fragment', node => $node});
+    $self->_check_node ([{type => 'document_fragment', node => $node}]);
   }
   # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
   $self->_check_refs;
@@ -9543,7 +9668,7 @@ $Web::HTML::Validator::LinkType = {
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

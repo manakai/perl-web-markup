@@ -86,8 +86,8 @@ sub form_table ($$) {
                      level => 'm');
         } else {
           $self->onerror->(type => 'colspan creates column with no anchored cell',
-                     node => $column_generated_by[$_],
-                     level => 'm');
+                           node => $column_generated_by[$_] || ($table->{column_group}->[$_] or {})->{element},
+                           level => 'm');
         }
         last; # only one error.
       }
@@ -725,7 +725,7 @@ sub get_assigned_headers ($$$$) {
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>
 
 This library is free software; you can redistribute it
 and/or modify it under the same terms as Perl itself.

@@ -17,7 +17,7 @@ sub test_files (@) {
   for my $file_name (@FILES) {
     for_each_test ($file_name, {
       data => {is_prefixed => 1},
-      errors => {is_list => 1},
+      errors => {is_list => 1, is_prefixed => 1},
     }, sub { _test ($file_name, $_[0]) });
   }
 } # test_files
@@ -105,6 +105,9 @@ sub get_node_path ($) {
       $node = $node->parent_node;
     } elsif ($node->node_type == 9) {
       $rs = '';
+      $node = $node->parent_node;
+    } elsif ($node->node_type == 11) {
+      $rs = '#df';
       $node = $node->parent_node;
     } else {
       $rs = '#' . $node->node_type;

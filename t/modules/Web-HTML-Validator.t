@@ -1055,11 +1055,34 @@ test {
   done $c;
 } n => 1, name => ['check_node', 'style="" with no line data'];
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('template');
+  my $el2 = $doc->create_element ('p');
+  $el->append_child ($el2);
+  my $validator = Web::HTML::Validator->new;
+  my @error;
+  $validator->onerror (sub {
+    my %args = @_;
+    push @error, \%args;
+  });
+  $validator->check_node ($el);
+  eq_or_diff [grep { $_->{type} !~ /^status:/ } @error],
+      [{type => 'element not allowed:empty',
+        level => 'm',
+        node => $el2},
+       {type => 'no significant content',
+        level => 's',
+        node => $el2}];
+  done $c;
+} n => 1, name => ['template content'];
+
 run_tests;
 
 =head1 LICENSE
 
-Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
