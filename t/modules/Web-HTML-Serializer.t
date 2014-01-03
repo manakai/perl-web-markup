@@ -33,7 +33,7 @@ for my $test (
   test {
     my $c = shift;
     my $doc = create_doc_from_html $test->[0];
-    is ${Web::HTML::Serializer->get_inner_html ($doc)}, $test->[1] // $test->[0];
+    is ${Web::HTML::Serializer->new->get_inner_html ($doc)}, $test->[1] // $test->[0];
     done $c;
   } n => 1, name => 'document_inner_html';
 }
@@ -49,7 +49,7 @@ for my $test (
   test {
     my $c = shift;
     my ($doc, $el) = create_el_from_html $test->[0];
-    is ${Web::HTML::Serializer->get_inner_html ($el)}, $test->[1] // $test->[0];
+    is ${Web::HTML::Serializer->new->get_inner_html ($el)}, $test->[1] // $test->[0];
     done $c;
   } n => 1, name => 'element_inner_html';
 }
@@ -59,7 +59,7 @@ test {
   my ($doc, $el) = create_el_from_html ('');
   my $abc = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', ['xyz', 'aBc']);
   $el->append_child ($abc);
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<aBc></aBc>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<aBc></aBc>>;
   done $c;
 } n => 1, name => 'element_name_html';
 
@@ -68,7 +68,7 @@ test {
   my ($doc, $el) = create_el_from_html ('');
   my $abc = $doc->create_element_ns ('http://www.w3.org/2000/svg', ['xyz', 'aBc']);
   $el->append_child ($abc);
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<aBc></aBc>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<aBc></aBc>>;
   done $c;
 } n => 1, name => 'element_name_svg';
 
@@ -77,7 +77,7 @@ test {
   my ($doc, $el) = create_el_from_html ('');
   my $abc = $doc->create_element_ns ('http://www.w3.org/1998/Math/MathML', ['xyz', 'aBc']);
   $el->append_child ($abc);
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<aBc></aBc>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<aBc></aBc>>;
   done $c;
 } n => 1, name => 'element_name_mathml';
 
@@ -86,7 +86,7 @@ test {
   my ($doc, $el) = create_el_from_html ('');
   my $abc = $doc->create_element_ns (undef, [undef, 'aBc']);
   $el->append_child ($abc);
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<aBc></aBc>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<aBc></aBc>>;
   done $c;
 } n => 1, name => 'element_name_null';
 
@@ -97,7 +97,7 @@ test {
   my $abc = $doc->create_element_ns (undef, [undef, 'aBc']);
   $abc->prefix ('xyz');
   $el->append_child ($abc);
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<xyz:aBc></xyz:aBc>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<xyz:aBc></xyz:aBc>>;
   done $c;
 } n => 1, name => 'element_name_null_prefixed';
 
@@ -106,7 +106,7 @@ test {
   my ($doc, $el) = create_el_from_html ('');
   my $abc = $doc->create_element_ns ('http://test/', ['xyz', 'aBc']);
   $el->append_child ($abc);
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<xyz:aBc></xyz:aBc>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<xyz:aBc></xyz:aBc>>;
   done $c;
 } n => 1, name => 'element_name_external';
 
@@ -115,7 +115,7 @@ test {
   my ($doc, $el) = create_el_from_html ('<p>');
   my $p = $el->first_child;
   $p->set_attribute_ns (undef, [undef, 'hOge'] => 'fuga');
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<p hOge="fuga"></p>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<p hOge="fuga"></p>>;
   done $c;
 } n => 1, name => 'attr_name_null';
 
@@ -124,7 +124,7 @@ test {
   my ($doc, $el) = create_el_from_html ('<p>');
   my $p = $el->first_child;
   $p->set_attribute_ns ('http://www.w3.org/XML/1998/namespace', [undef, 'hOge'] => 'fuga');
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<p xml:hOge="fuga"></p>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<p xml:hOge="fuga"></p>>;
   done $c;
 } n => 1, name => 'attr_name_xml';
 
@@ -134,7 +134,7 @@ test {
   $doc->strict_error_checking (0);
   my $p = $el->first_child;
   $p->set_attribute_ns ('http://www.w3.org/2000/xmlns/', [undef, 'hOge'] => 'fuga');
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<p xmlns:hOge="fuga"></p>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<p xmlns:hOge="fuga"></p>>;
   done $c;
 } n => 1, name => 'attr_name_xmlns';
 
@@ -143,7 +143,7 @@ test {
   my ($doc, $el) = create_el_from_html ('<p>');
   my $p = $el->first_child;
   $p->set_attribute_ns ('http://www.w3.org/2000/xmlns/', [undef, 'xmlns'] => 'fuga');
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<p xmlns="fuga"></p>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<p xmlns="fuga"></p>>;
   done $c;
 } n => 1, name => 'attr_name_xmlns_xmlns';
 
@@ -152,7 +152,7 @@ test {
   my ($doc, $el) = create_el_from_html ('<p>');
   my $p = $el->first_child;
   $p->set_attribute_ns ('http://www.w3.org/1999/xlink', [undef, 'hOge'] => 'fuga');
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<p xlink:hOge="fuga"></p>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<p xlink:hOge="fuga"></p>>;
   done $c;
 } n => 1, name => 'attr_name_xlink';
 
@@ -162,7 +162,7 @@ test {
   $doc->strict_error_checking (0);
   my $p = $el->first_child;
   $p->set_attribute_ns ('http://www.w3.org/1999/html', ['xmlns', 'hOge'] => 'fuga');
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<p xmlns:hOge="fuga"></p>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<p xmlns:hOge="fuga"></p>>;
   done $c;
 } n => 1, name => 'attr_name_html';
 
@@ -171,7 +171,7 @@ test {
   my ($doc, $el) = create_el_from_html ('<p>');
   my $p = $el->first_child;
   $p->set_attribute_ns ('http://test', [undef, 'hOge'] => 'fuga');
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, q<<p hOge="fuga"></p>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, q<<p hOge="fuga"></p>>;
   done $c;
 } n => 1, name => 'attr_name_unknown';
 
@@ -181,17 +181,17 @@ for my $tag_name (qw(style script xmp iframe noembed noframes plaintext)) {
     my ($doc, $el) = create_el_from_html
         ($tag_name eq 'plaintext' ? '<plaintext>' : '<' . $tag_name . '></' . $tag_name . '>');
     my $pt = $el->first_child;
-    is ${Web::HTML::Serializer->get_inner_html ($pt)}, q<>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($pt)}, q<>;
 
     $pt->inner_html (q<abc>);
-    is ${Web::HTML::Serializer->get_inner_html ($pt)}, q<abc>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($pt)}, q<abc>;
     
     $pt->append_child ($doc->create_text_node ('<p>xyz'));
-    is ${Web::HTML::Serializer->get_inner_html ($pt)}, q<abc<p>xyz>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($pt)}, q<abc<p>xyz>;
     
     $pt->append_child ($doc->create_element_ns (undef, [undef, 'A']))->text_content ('bcd');
-    is ${Web::HTML::Serializer->get_inner_html ($pt)}, q<abc<p>xyz<A>bcd</A>>;
-    is ${Web::HTML::Serializer->get_inner_html ($el)}, qq<<$tag_name>abc<p>xyz<A>bcd</A></$tag_name>>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($pt)}, q<abc<p>xyz<A>bcd</A>>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<$tag_name>abc<p>xyz<A>bcd</A></$tag_name>>;
     done $c;
   } n => 5, name => 'plaintext';
 }
@@ -205,16 +205,17 @@ test {
       ->set_attribute_ns (undef, [undef, 'class'] => 'xYz');
   $noscript->append_child ($doc->create_text_node ('Q&A'));
 
-  local $Web::ScriptingEnabled = 0;
-  is ${Web::HTML::Serializer->get_inner_html ($noscript)}, qq<avc&amp;&lt;"&gt;'&nbsp;<abC class="xYz"></abC>Q&amp;A>,
+  my $serializer = Web::HTML::Serializer->new;
+
+  is ${$serializer->get_inner_html ($noscript)}, qq<avc&amp;&lt;"&gt;'&nbsp;<abC class="xYz"></abC>Q&amp;A>,
       'noscript_scripting_disabled noscript inner';
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, qq<<noscript>avc&amp;&lt;"&gt;'&nbsp;<abC class="xYz"></abC>Q&amp;A</noscript>>,
+  is ${$serializer->get_inner_html ($el)}, qq<<noscript>avc&amp;&lt;"&gt;'&nbsp;<abC class="xYz"></abC>Q&amp;A</noscript>>,
       'noscript_scripting_disabled';
 
-  local $Web::ScriptingEnabled = 1;
-  is ${Web::HTML::Serializer->get_inner_html ($noscript)}, qq<avc&<">'\xA0<abC class="xYz"></abC>Q&A>,
+  $serializer->scripting (1);
+  is ${$serializer->get_inner_html ($noscript)}, qq<avc&<">'\xA0<abC class="xYz"></abC>Q&A>,
       'noscript_scripting_enabled noscript inner';
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, qq<<noscript>avc&<">'\xA0<abC class="xYz"></abC>Q&A</noscript>>,
+  is ${$serializer->get_inner_html ($el)}, qq<<noscript>avc&<">'\xA0<abC class="xYz"></abC>Q&A</noscript>>,
       'noscript_scripting_enabled';
   done $c;
 } n => 4, name => 'noscript';
@@ -227,8 +228,8 @@ test {
   my $pre = $xmp->append_child ($doc->create_element_ns ('http://www.w3.org/1999/xhtml', [undef, 'pre']));
   $pre->append_child ($doc->create_text_node ('abc<>&"' . "\xA0"));
 
-  is ${Web::HTML::Serializer->get_inner_html ($xmp)}, qq<abc<>&"\xA0<pre>\x0Aabc&lt;&gt;&amp;"&nbsp;</pre>>;
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, qq<<xmp>abc<>&"\xA0<pre>\x0Aabc&lt;&gt;&amp;"&nbsp;</pre></xmp>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($xmp)}, qq<abc<>&"\xA0<pre>\x0Aabc&lt;&gt;&amp;"&nbsp;</pre>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<xmp>abc<>&"\xA0<pre>\x0Aabc&lt;&gt;&amp;"&nbsp;</pre></xmp>>;
   done $c;
 } n => 2, name => 'xmp_descendant';
 
@@ -238,7 +239,7 @@ test {
   my $p = $el->first_child;
   $p->set_attribute_ns (undef, [undef, 'id'] => '<>&"' . qq<"']]> . '>' . "\xA0");
   
-  is ${Web::HTML::Serializer->get_inner_html ($el)}, qq{<p id="<>&amp;&quot;&quot;']]>&nbsp;"></p>};
+  is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq{<p id="<>&amp;&quot;&quot;']]>&nbsp;"></p>};
   done $c;
 } n => 1, name => 'attr_value';
 
@@ -249,7 +250,7 @@ for my $tag_name (qw(
     my $c = shift;
     my $doc = new Web::DOM::Document;
     my $el = $doc->create_element ($tag_name);
-    is ${Web::HTML::Serializer->get_inner_html ([$el])}, qq{<$tag_name></$tag_name>};
+    is ${Web::HTML::Serializer->new->get_inner_html ([$el])}, qq{<$tag_name></$tag_name>};
     done $c;
   } n => 1, name => ['normal_element', $tag_name];
 }
@@ -264,27 +265,27 @@ for my $tag_name (qw(
     my $p = $el->first_child;
     my $el1 = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', [undef, $tag_name]);
     $p->append_child ($el1);
-    is ${Web::HTML::Serializer->get_inner_html ($p)}, qq{<$tag_name>};
+    is ${Web::HTML::Serializer->new->get_inner_html ($p)}, qq{<$tag_name>};
 
     my $el2 = $doc->create_element_ns (undef, [undef, $tag_name]);
     $p->remove_child ($el1);
     $p->append_child ($el2);
-    is ${Web::HTML::Serializer->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
+    is ${Web::HTML::Serializer->new->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
 
     my $el3 = $doc->create_element_ns ('http://test/', [undef, $tag_name]);
     $p->remove_child ($el2);
     $p->append_child ($el3);
-    is ${Web::HTML::Serializer->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
+    is ${Web::HTML::Serializer->new->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
 
     my $el4 = $doc->create_element_ns ('http://www.w3.org/2000/svg', [undef, $tag_name]);
     $p->remove_child ($el3);
     $p->append_child ($el4);
-    is ${Web::HTML::Serializer->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
+    is ${Web::HTML::Serializer->new->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
 
     my $el5 = $doc->create_element_ns ('http://www.w3.org/1998/Math/MathML', [undef, $tag_name]);
     $p->remove_child ($el4);
     $p->append_child ($el5);
-    is ${Web::HTML::Serializer->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
+    is ${Web::HTML::Serializer->new->get_inner_html ($p)}, qq{<$tag_name></$tag_name>};
     done $c;
   } n => 5, name => 'void_elements';
 }
@@ -296,7 +297,7 @@ for my $tag_name (qw(textarea pre listing)) {
     my $child = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', [undef, $tag_name]);
     $child->text_content ("\x0Aabc\x0A");
     $el->append_child ($child);
-    is ${Web::HTML::Serializer->get_inner_html ($el)}, qq<<$tag_name>\x0A\x0Aabc\x0A</$tag_name>>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<$tag_name>\x0A\x0Aabc\x0A</$tag_name>>;
     done $c;
   } n => 1, name => 'start_tag_trailing_newlines';
 
@@ -307,7 +308,7 @@ for my $tag_name (qw(textarea pre listing)) {
       my $child = $doc->create_element_ns ($nsurl, [undef, $tag_name]);
       $child->text_content ("\x0Aabc\x0A");
       $el->append_child ($child);
-      is ${Web::HTML::Serializer->get_inner_html ($el)}, qq<<$tag_name>\x0Aabc\x0A</$tag_name>>;
+      is ${Web::HTML::Serializer->new->get_inner_html ($el)}, qq<<$tag_name>\x0Aabc\x0A</$tag_name>>;
       done $c;
     } n => 1, name => 'start_tag_trailing_newlines';
   }
@@ -317,7 +318,7 @@ for my $tag_name (qw(textarea pre listing)) {
     my ($doc, $el) = create_el_from_html ('');
     my $child = $doc->create_element_ns ('http://www.w3.org/1999/xhtml', [undef, $tag_name]);
     $child->text_content ("\x0Aabc\x0A");
-    is ${Web::HTML::Serializer->get_inner_html ($child)}, qq<\x0Aabc\x0A>;
+    is ${Web::HTML::Serializer->new->get_inner_html ($child)}, qq<\x0Aabc\x0A>;
     done $c;
   } n => 1, name => 'start_tag_trailing_newlines';
 }
@@ -325,7 +326,7 @@ for my $tag_name (qw(textarea pre listing)) {
 test {
   my $c = shift;
   my $doc = create_doc_from_html ('<!DOCTYPE html><p>');
-  is ${Web::HTML::Serializer->get_inner_html ($doc)}, q<<!DOCTYPE html><html><head></head><body><p></p></body></html>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($doc)}, q<<!DOCTYPE html><html><head></head><body><p></p></body></html>>;
   done $c;
 } n => 1, name => 'doc';
 
@@ -335,7 +336,7 @@ test {
   my $df = $doc->create_document_fragment;
   $df->append_child ($doc->create_element_ns (undef, [undef, 'p']))->text_content ('a&b');
   $df->manakai_append_text ('ab<>cd');
-  is ${Web::HTML::Serializer->get_inner_html ($df)},
+  is ${Web::HTML::Serializer->new->get_inner_html ($df)},
     q<<p>a&amp;b</p>ab&lt;&gt;cd>;
   done $c;
 } n => 1, name => 'df';
@@ -347,7 +348,7 @@ test {
   my $svg = $doc->create_element_ns (q<http://www.w3.org/2000/svg>, ['svg', 'svg']);
   $div->append_child ($svg);
   
-  is ${Web::HTML::Serializer->get_inner_html ($div)}, q<<svg></svg>>;
+  is ${Web::HTML::Serializer->new->get_inner_html ($div)}, q<<svg></svg>>;
   done $c;
 } n => 1, name => 'svg';
 
@@ -363,7 +364,7 @@ test {
   $el->append_child ($doc->create_comment ('A -- B'));
   $el->append_child ($doc->create_processing_instruction ('xml', 'version="1.0?>"'));
   $doc->append_child ($div);
-  my $html = Web::HTML::Serializer->get_inner_html ($doc);
+  my $html = Web::HTML::Serializer->new->get_inner_html ($doc);
   eq_or_diff $$html, qq{<div><p title="<!&amp;&quot;'>&nbsp;">a b \x{1000}\x{2000}&lt;!&amp;"'&gt;&nbsp;<!--A -- B--><?xml version="1.0?>"></p></div>};
   done $c;
 } n => 1;
@@ -437,7 +438,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2009-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2009-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

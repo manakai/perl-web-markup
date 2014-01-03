@@ -2,22 +2,22 @@ package Web::HTML::Serializer;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '11.0';
+our $VERSION = '12.0';
 use Web::HTML::_SyntaxDefs;
 
 sub new ($) {
   return bless {}, $_[0];
 } # new
 
-sub onerror ($;$) {
+sub scripting ($;$) {
   if (@_ > 1) {
-    $_[0]->{onerror} = $_[1];
+    $_[0]->{scripting} = $_[1];
   }
-  return $_[0]->{onerror} || sub { my %args = @_; die $args{type} };
-} # onerror
+  return $_[0]->{scripting};
+} # scripting
 
-sub _in_cdata ($) {
-  my $node = $_[0];
+sub _in_cdata ($$) {
+  my ($self, $node) = @_;
   
   my $ns = $node->namespace_uri;
   return 0 if not defined $ns; # in no namespace, or not an Element
@@ -32,20 +32,20 @@ sub _in_cdata ($) {
     noembed => 1,
     noframes => 1,
     plaintext => 1,
+    noscript => $self->scripting,
   }->{$ln};
-  return $Web::ScriptingEnabled if $ln eq 'noscript'; # XXX
 
   return 0;
 } # _in_cdata
 
 sub get_inner_html ($$) {
-  my $node = $_[1];
+  my ($self, $node) = @_;
 
   ## Step 1
   my $s = '';
   
   ## Step 2
-  my $node_in_cdata = ref $node eq 'ARRAY' ? 0 : _in_cdata ($node);
+  my $node_in_cdata = ref $node eq 'ARRAY' ? 0 : $self->_in_cdata ($node);
   my @node = map { [$_, $node_in_cdata] }
       ref $node eq 'ARRAY' ? @$node :
       ($node->node_type == 1 and $node->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template'))
@@ -110,7 +110,7 @@ sub get_inner_html ($$) {
           if {pre => 1, textarea => 1, listing => 1}->{$tag_name} and
               $child_ns eq q<http://www.w3.org/1999/xhtml>;
 
-      my $child_in_cdata = _in_cdata ($child);
+      my $child_in_cdata = $self->_in_cdata ($child);
       unshift @node,
           (map { [$_, $child_in_cdata] } ($child->node_type == 1 and $child->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) ? $child->content->child_nodes->to_list : $child->child_nodes->to_list),
           (['</' . $tag_name . '>', 0]);
@@ -135,8 +135,7 @@ sub get_inner_html ($$) {
     } elsif ($nt == 9 or $nt == 11) { # Document / DocumentFragment
       unshift @node, map { [$_, $c->[1]] } $child->child_nodes->to_list;
     } else {
-      # XXXerror
-      $_[0]->onerror->(type => 'node type not supported', value => $nt);
+      die "Node type not supported: $nt";
     }
   } # C
   
@@ -148,7 +147,7 @@ sub get_inner_html ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

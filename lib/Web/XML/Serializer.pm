@@ -2,19 +2,12 @@ package Web::XML::Serializer;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '10.0';
+our $VERSION = '11.0';
 use Web::HTML::ParserData;
 
 sub new ($) {
   return bless {}, $_[0];
 } # new
-
-sub onerror ($;$) {
-  if (@_ > 1) {
-    $_[0]->{onerror} = $_[1];
-  }
-  return $_[0]->{onerror} || sub { my %args = @_; die $args{type} };
-} # onerror
 
 sub get_qname ($$$$$$$) {
   #my ($nsurl, $prefix, $ln, $attrs, $default_ns, $nsmap, $is_element) = @_;
@@ -291,8 +284,7 @@ sub get_inner_html ($$) {
     } elsif ($nt == 9 or $nt == 11) { # Document / DocumentFragment
       unshift @node, map { [$_, $c->[1], $c->[2]] } $child->child_nodes->to_list;
     } else {
-      # XXXerror
-      $_[0]->onerror->(type => 'node type not supported', value => $nt);
+      die "Unsupported node type $nt";
     }
   } # C
   
@@ -304,7 +296,7 @@ sub get_inner_html ($$) {
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
