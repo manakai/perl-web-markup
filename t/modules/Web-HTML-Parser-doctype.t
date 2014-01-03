@@ -4,11 +4,11 @@ use warnings;
 use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'testdataparser', 'lib')->stringify;
+use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
 use base qw(Test::Class);
 use Test::More;
 use Web::HTML::Parser;
-use NanoDOM;
+use Web::DOM::Document;
 use Test::HTCT::Parser;
 
 my $test_d = file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'tests', 'html', 'doctype');
@@ -19,8 +19,7 @@ sub _no_quirks : Tests {
   }, sub {
     my $test = shift;
     {
-      my $dom = NanoDOM::DOMImplementation->new;
-      my $doc = $dom->create_document;
+      my $doc = new Web::DOM::Document;
 
       my $parser = Web::HTML::Parser->new;
       $parser->parse_char_string ($test->{data}->[0] => $doc);
@@ -29,8 +28,7 @@ sub _no_quirks : Tests {
       is $doc->manakai_compat_mode, 'no quirks';
     }
     {
-      my $dom = NanoDOM::DOMImplementation->new;
-      my $doc = $dom->create_document;
+      my $doc = new Web::DOM::Document;
       $doc->manakai_is_srcdoc (1);
 
       my $parser = Web::HTML::Parser->new;
@@ -50,8 +48,7 @@ sub _limited_quirks : Tests {
   }, sub {
     my $test = shift;
     {
-      my $dom = NanoDOM::DOMImplementation->new;
-      my $doc = $dom->create_document;
+      my $doc = new Web::DOM::Document;
 
       my $parser = Web::HTML::Parser->new;
       $parser->parse_char_string ($test->{data}->[0] => $doc);
@@ -60,8 +57,7 @@ sub _limited_quirks : Tests {
       is $doc->manakai_compat_mode, 'limited quirks';
     }
     {
-      my $dom = NanoDOM::DOMImplementation->new;
-      my $doc = $dom->create_document;
+      my $doc = new Web::DOM::Document;
       $doc->manakai_is_srcdoc (1);
 
       my $parser = Web::HTML::Parser->new;
@@ -81,8 +77,7 @@ sub _quirks : Tests {
   }, sub {
     my $test = shift;
     {
-      my $dom = NanoDOM::DOMImplementation->new;
-      my $doc = $dom->create_document;
+      my $doc = new Web::DOM::Document;
 
       my $parser = Web::HTML::Parser->new;
       $parser->parse_char_string ($test->{data}->[0] => $doc);
@@ -91,8 +86,7 @@ sub _quirks : Tests {
       is $doc->manakai_compat_mode, 'quirks';
     }
     {
-      my $dom = NanoDOM::DOMImplementation->new;
-      my $doc = $dom->create_document;
+      my $doc = new Web::DOM::Document;
       $doc->manakai_is_srcdoc (1);
 
       my $parser = Web::HTML::Parser->new;
@@ -107,8 +101,7 @@ sub _quirks : Tests {
 } # _quirks
 
 sub _change_compat_to_quirk : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
-  my $doc = $dom->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('no quirks');
 
@@ -123,8 +116,7 @@ sub _change_compat_to_quirk : Test(4) {
 } # _change_compat_to_quirk
 
 sub _change_compat_to_limited_quirk : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
-  my $doc = $dom->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('no quirks');
 
@@ -139,8 +131,7 @@ sub _change_compat_to_limited_quirk : Test(4) {
 } # _change_compat_to_limited_quirk
 
 sub _change_compat_to_no_quirk : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
-  my $doc = $dom->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('no quirks');
 
@@ -155,8 +146,7 @@ sub _change_compat_to_no_quirk : Test(4) {
 } # _change_compat_to_no_quirk
 
 sub _change_compat_q_to_quirk : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
-  my $doc = $dom->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('quirks');
 
@@ -171,8 +161,7 @@ sub _change_compat_q_to_quirk : Test(4) {
 } # _change_compat_q_to_quirk
 
 sub _change_compat_q_to_limited_quirk : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
-  my $doc = $dom->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('quirks');
 
@@ -187,8 +176,7 @@ sub _change_compat_q_to_limited_quirk : Test(4) {
 } # _change_compat_q_to_limited_quirk
 
 sub _change_compat_q_to_no_quirk : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
-  my $doc = $dom->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('quirks');
 
@@ -205,3 +193,12 @@ sub _change_compat_q_to_no_quirk : Test(4) {
 __PACKAGE__->runtests;
 
 1;
+
+=head1 LICENSE
+
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

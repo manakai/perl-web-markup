@@ -6,7 +6,7 @@ use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringif
 use Test::More;
 use Test::Differences;
 use Test::X1;
-use NanoDOM;
+use Web::DOM::Document;
 use Web::HTML::Table;
 
 sub serialize_node ($);
@@ -18,7 +18,7 @@ sub serialize_node ($) {
     return [map { serialize_node $_ } @$obj];
   } elsif (ref $obj eq 'HASH') {
     return {map { serialize_node $_ } %$obj};
-  } elsif ($obj->isa ('NanoDOM::Node')) {
+  } elsif ($obj->isa ('NanoDOM::Node') or $obj->isa ('Web::DOM::Node')) {
     return $obj->manakai_local_name . ' ' . $obj->text_content;
   } else {
     return $obj;
@@ -166,7 +166,7 @@ sub remove_tbody ($) {
   ) {
     test {
       my $c = shift;
-      my $doc = NanoDOM::Document->new;
+      my $doc = Web::DOM::Document->new;
       $doc->manakai_is_html (1);
 
       my $table_el;
@@ -458,7 +458,7 @@ sub remove_tbody ($) {
   ) {
     test {
       my $c = shift;
-      my $doc = NanoDOM::Document->new;
+      my $doc = Web::DOM::Document->new;
       $doc->manakai_is_html (1);
       
       my $table_el = $doc->create_element_ns
@@ -486,7 +486,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2010-2013 Wakaba <wakaba@suikawiki.org>
+Copyright 2010-2014 Wakaba <wakaba@suikawiki.org>
 
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.

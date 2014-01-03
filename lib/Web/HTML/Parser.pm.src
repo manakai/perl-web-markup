@@ -829,7 +829,7 @@ sub _create_el ($$$$) {
     ## Form association - not applicable
   } else { ## HTML namespace
     $el = [
-      $od->create_element ($token->{tag_name}),
+      $od->create_element_ns (HTML_NS, [undef, $token->{tag_name}]),
       $el_category->{$token->{tag_name}} || 0,
     ];
 
