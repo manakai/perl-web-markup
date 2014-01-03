@@ -8,6 +8,7 @@ use Web::HTML::Dumper;
 
 my $doc = new Web::DOM::Document;
 my $parser = Web::HTML::Parser->new;
+$parser->locale_tag (lc $ENV{LANG}) if $ENV{LANG};
 
 local $/ = undef;
 $parser->parse_byte_string (undef, scalar <> => $doc);

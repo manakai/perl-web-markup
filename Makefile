@@ -3,7 +3,7 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm
 clean:
-	rm -fr local/elements.json
+	rm -fr local/elements.json local/input-prompt.json
 
 PERL = ./perl
 PROVE = ./prove
@@ -60,26 +60,63 @@ update-entities: local/bin/pmbp.pl
 local/elements.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/elements.json
-lib/Web/HTML/_SyntaxDefs.pm: local/elements.json pmbp-install Makefile
+local/isindex-prompt.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/isindex-prompt.json
+lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
+    pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module JSON
-	$(PERL) -MJSON -MData::Dumper -e ' #\
+	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"prompt\":"; cat local/isindex-prompt.json; echo "}"' | \
+	$(PERL) -MJSON -MEncode -MData::Dumper -e ' #\
 	  local $$/ = undef; #\
-	  $$data = JSON->new->decode (scalar <>); #\
+	  $$data = JSON->new->decode (decode "utf-8", scalar <>); #\
 	  $$Data::Dumper::Sortkeys = 1; #\
 	  $$Data::Dumper::Useqq = 1; #\
-	  for $$ns (keys %{$$data->{elements}}) { #\
-	    for $$ln (keys %{$$data->{elements}->{$$ns}}) { #\
-	      my $$category = $$data->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
+	  for $$ns (keys %{$$data->{dom}->{elements}}) { #\
+	    for $$ln (keys %{$$data->{dom}->{elements}->{$$ns}}) { #\
+	      my $$category = $$data->{dom}->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
 	      if ($$category eq "void" or $$category eq "obsolete void") { #\
 	        $$result->{void}->{$$ns}->{$$ln} = 1; #\
 	      } #\
 	    } #\
 	  } #\
+	  for $$locale (keys %{$$data->{prompt}}) { #\
+	    $$text = $$data->{prompt}->{$$locale}->{chromium} || #\
+	             $$data->{prompt}->{$$locale}->{gecko} or next; #\
+	    $$text .= " " if $$text =~ /:$$/; #\
+	    $$result->{prompt}->{$$locale} = $$text; #\
+	  } #\
 	  $$pm = Dumper $$result; #\
 	  $$pm =~ s/VAR1/Web::HTML::_SyntaxDefs/; #\
 	  print "$$pm\n"; #\
-	' < local/elements.json > $@
+	  print "1;\n"; #\
+	  $$footer = q{\
+=head1 LICENSE\
+\
+This file contains data from the data-web-defs repository\
+<https://github.com/manakai/data-web-defs/>.\
+\
+This file contains texts from Gecko and Chromium source codes.\
+See following documents for full license terms of them:\
+\
+Gecko:\
+\
+  This Source Code Form is subject to the terms of the Mozilla Public\
+  License, v. 2.0. If a copy of the MPL was not distributed with this\
+  file, You can obtain one at http://mozilla.org/MPL/2.0/.\
+\
+Chromium:\
+\
+  See following documents:\
+  <http://src.chromium.org/viewvc/chrome/trunk/src/webkit/LICENSE>\
+  <http://src.chromium.org/viewvc/chrome/trunk/src/webkit/glue/resources/README.txt>\
+\
+=cut\
+	  }; #\
+	  $$footer =~ s/\x5C$$//gm; #\
+	  print $$footer; #\
+	' > $@
 	perl -c $@
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator

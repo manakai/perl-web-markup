@@ -5,6 +5,7 @@ no warnings 'utf8';
 our $VERSION = '6.0';
 use Encode;
 use Web::HTML::Defs;
+use Web::HTML::_SyntaxDefs;
 use Web::HTML::Tokenizer;
 push our @ISA, qw(Web::HTML::Tokenizer);
 
@@ -4982,18 +4983,20 @@ sub _construct_tree ($) {
           $self->{open_elements}->[-1]->[0]->manakai_append_content
               ($prompt_attr->{value}) if length $prompt_attr->{value};
         } else {
-          # XXX SHOULD: localization
-          $self->{open_elements}->[-1]->[0]->manakai_append_content
-              ('This is a searchable index. Enter search keywords: ');
+          ## Localization, part 1
+          my $text = $Web::HTML::_SyntaxDefs->{prompt}->{$self->locale_tag} ||
+              $Web::HTML::_SyntaxDefs->{prompt}->{[split /-/, $self->locale_tag, 2]->[0]} ||
+              $Web::HTML::_SyntaxDefs->{prompt}->{en};
+          $self->{open_elements}->[-1]->[0]->manakai_append_content ($text);
         }
 
         $self->_insert_el (undef, 'input', $input_attrs);
         pop @{$self->{open_elements}}; # <input>
 
-        {
-          # XXX SHOULD: localization
-          $self->{open_elements}->[-1]->[0]->manakai_append_content
-              ('XXX') if 0;
+        ## Localization, part 2 (not used)
+        if (0) {
+          $self->{open_elements}->[-1]->[0]->manakai_append_content ('...')
+              unless $prompt_attr;
         }
 
         pop @{$self->{open_elements}}; # <label>

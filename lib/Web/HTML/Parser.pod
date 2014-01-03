@@ -83,19 +83,17 @@ The method returns the result node list.
 
 Get or set the BCP 47 language tag for the locale used to parse the
 document, e.g. C<en>, C<ja>, C<zh-tw>, and C<zh-cn>.  It is used to
-determine the default character encoding (that is only used when
-character encoding cannot be determined by other means).
+determine the default character encoding (which is only used when
+character encoding cannot be determined by other means) and to expand
+the C<isindex> start tag (which is obsolete).
 
 If C<undef> is specified (or the C<locale_tag> method is not
 explicitly invoked at all), the default is "none", which results in
-the C<windows-1252> character encoding default.
+the C<windows-1252> character encoding and English text defaults.
 
 Except for the C<zh-tw> and C<zh-cn>, only the primary language tag
 (i.e. a language code with no C<-> and subtags) should be specified.
 Tags are compared ASCII case-insensitively.
-
-XXX Future revision of the parser might also use the locale language
-tag to insert localized text for C<isindex> tag.
 
 The value should not be set while the parser is running.  If the value
 is changed, the result is undefined.

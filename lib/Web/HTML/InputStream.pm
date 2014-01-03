@@ -237,8 +237,10 @@ sub _encoding_sniffing ($;%) {
   ## Step 8. Locale-dependent default
   my $locale = $self->locale_tag;
   if ($locale) {
-    my $name = Web::Encoding::encoding_label_to_name
-        Web::Encoding::locale_default_encoding_name $locale;
+    my $name = Web::Encoding::encoding_label_to_name (
+        Web::Encoding::locale_default_encoding_name $locale ||
+        Web::Encoding::locale_default_encoding_name [split /-/, $locale, 2]->[0]
+    );
     if ($name) {
       $self->{input_encoding} = $name;
       $self->{confident} = 0; # tentative
@@ -344,9 +346,10 @@ sub _get_attr ($$) {
   $_[1] =~ /\G[\x09\x0A\x0C\x0D\x20\x2F]+/gc;
 
   # 2.
-  return undef if $_[1] =~ /\G>/gc;
-      ## This consumes ">", which is not consumed according to the
-      ## spec, but the result is same.
+  if ($_[1] =~ /\G>/gc) {
+    pos ($_[1])--;
+    return undef;
+  }
   
   # 3.
   my $attr = {name => '', value => ''};

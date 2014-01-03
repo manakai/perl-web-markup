@@ -4,12 +4,13 @@ use warnings;
 use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'testdataparser', 'lib')->stringify;
+use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
 use base qw(Test::Class);
 use Test::More;
 use Test::Differences;
 use Web::HTML::Parser;
-use NanoDOM;
+use Web::DOM::Implementation;
+use Web::DOM::Document;
 
 sub _html_parser_gc : Test(2) {
   my $parser_destroy_called = 0;
@@ -17,9 +18,9 @@ sub _html_parser_gc : Test(2) {
 
   no warnings 'redefine';
   local *Web::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
-  local *NanoDOM::Document::DESTROY = sub { $doc_destroy_called++ };
+  local *Web::DOM::Document::DESTROY = sub { $doc_destroy_called++ };
 
-  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  my $doc = new Web::DOM::Document;
   Web::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
 
   is $parser_destroy_called, 1;
@@ -37,10 +38,10 @@ sub _html_fragment_parser_gc : Test(6) {
   no warnings 'once';
   require Web::HTML::Parser;
   local *Web::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
-  local *NanoDOM::Document::DESTROY = sub { $doc_destroy_called++ };
-  local *NanoDOM::Element::DESTROY = sub { $el_destroy_called++ };
+  local *Web::DOM::Document::DESTROY = sub { $doc_destroy_called++ };
+  local *Web::DOM::Element::DESTROY = sub { $el_destroy_called++ };
 
-  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   my $el = $doc->create_element_ns (undef, [undef, 'p']);
 
@@ -58,7 +59,7 @@ sub _html_fragment_parser_gc : Test(6) {
 } # _html_fragment_parser_gc
 
 sub _html_parser_srcdoc : Test(3) {
-  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  my $doc = new Web::DOM::Document;
   $doc->manakai_is_srcdoc (1);
 
   Web::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
@@ -76,12 +77,12 @@ sub _html_parser_change_the_encoding_char_string : Test(4) {
     $called = 1 if $args{type} eq 'charset label detected';
   });
   
-  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  my $doc = new Web::DOM::Document;
   $parser->parse_char_string ('<meta charset=shift_jis>' => $doc);
   ok !$called;
   is $doc->input_encoding, 'utf-8';
   
-  my $doc2 = NanoDOM::DOMImplementation->new->create_document;
+  my $doc2 = new Web::DOM::Document;
   $parser->parse_char_string ('<meta http-equiv=Content-Type content="text/html; charset=shift_jis">' => $doc2);
   ok !$called;
   is $doc2->input_encoding, 'utf-8';
@@ -95,21 +96,21 @@ sub _html_parser_change_the_encoding_fragment : Test(2) {
     $called = 1 if $args{type} eq 'charset label detected';
   });
   
-  my $doc = NanoDOM::DOMImplementation->new->create_document;
+  my $doc = new Web::DOM::Document;
   my $el = $doc->create_element_ns (undef, [undef, 'div']);
 
   $parser->parse_char_string_with_context
-      ('<meta charset=shift_jis>', $el, NanoDOM::Document->new);
+      ('<meta charset=shift_jis>', $el, Web::DOM::Document->new);
   ok !$called;
 
   $parser->parse_char_string_with_context
       ('<meta http-equiv=content-type content="text/html; charset=shift_jis">',
-       $el, NanoDOM::Document->new);
+       $el, Web::DOM::Document->new);
   ok !$called;
 } # _html_parser_change_the_encoding_fragment
 
 sub _html_parser_change_the_encoding_byte_string : Test(64) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
 
   for my $input (
     '<meta charset=shift_jis>',
@@ -139,7 +140,7 @@ sub _html_parser_change_the_encoding_byte_string : Test(64) {
       my $doc = $dom->create_document;
       undef $called;
       $parser->parse_byte_string (undef, (' ' x 1024) . $input => $doc);
-      ok $called;
+      ok $called, $input; # prescan fails but parser detects <meta charset>
       is $doc->input_encoding, 'shift_jis';
     }
     {
@@ -152,14 +153,14 @@ sub _html_parser_change_the_encoding_byte_string : Test(64) {
       my $doc = $dom->create_document;
       undef $called;
       $parser->parse_byte_string (undef, $input => $doc);
-      ok !$called;
+      ok !$called; # prescan detects <meta charset>
       is $doc->input_encoding, 'shift_jis';
     }
   }
 } # _html_parser_change_the_encoding_byte_string
 
 sub _html_parser_change_the_encoding_byte_string_changed : Test(96) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
 
   for (
     ['<meta charset=shift_jis>' => 'shift_jis'],
@@ -218,7 +219,7 @@ sub _html_parser_change_the_encoding_byte_string_changed : Test(96) {
 } # _html_parser_change_the_encoding_byte_string_changed
 
 sub _html_parser_change_the_encoding_byte_string_not_called : Test(56) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
 
   for my $input (
     '',
@@ -265,7 +266,7 @@ sub _html_parser_change_the_encoding_byte_string_not_called : Test(56) {
 } # _html_parser_change_the_encoding_byte_string_not_called
 
 sub _html_parser_change_the_encoding_byte_string_with_charset : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
 
   for my $input (
     '<meta http-equiv=content-type content="text/html; charset=shift_jis">',
@@ -298,7 +299,7 @@ sub _html_parser_change_the_encoding_byte_string_with_charset : Test(4) {
 } # _html_parser_change_the_encoding_byte_string_with_charset
 
 sub _html_parser_bom : Test(20) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   for my $test (
     ["\xFE\xFFhogefuga", undef, 'utf-16be'],
     ["\xFE\xFFhogefuga", 'utf-16le', 'utf-16be'],
@@ -325,7 +326,7 @@ sub _html_parser_bom : Test(20) {
 } # _html_parser_bom
 
 sub _parse_char_string : Test(4) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<!DOCTYPE html><html lang=en><title>\x{0500}\x{200}</title>\x{500}};
   my $parser = Web::HTML::Parser->new;
@@ -337,7 +338,7 @@ sub _parse_char_string : Test(4) {
 } # _parse_char_string
 
 sub _parse_char_string_onerror_old : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>};
   my $parser = Web::HTML::Parser->new;
@@ -357,7 +358,7 @@ sub _parse_char_string_onerror_old : Test(2) {
 } # _parse_char_string_onerror_old
 
 sub _parse_char_string_onerror_new : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>};
   my $parser = Web::HTML::Parser->new;
@@ -377,7 +378,7 @@ sub _parse_char_string_onerror_new : Test(2) {
 } # _parse_char_string_onerror_new
 
 sub _parse_char_string_old_children : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   $doc->inner_html (q{<foo><bar/></foo><!---->});
   is scalar @{$doc->child_nodes}, 2;
@@ -391,7 +392,7 @@ sub _parse_char_string_old_children : Test(3) {
 } # _parse_char_string_old_children
 
 sub _parse_char_string_encoding_decl : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en><meta charset=euc-jp>};
   my $parser = Web::HTML::Parser->new;
@@ -401,7 +402,7 @@ sub _parse_char_string_encoding_decl : Test(2) {
 } # _parse_char_string_encoding_decl
 
 sub _parse_byte_string_latin1 : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\xCF\xEF\xEE\x21\x21};
   my $parser = Web::HTML::Parser->new;
@@ -412,7 +413,7 @@ sub _parse_byte_string_latin1 : Test(2) {
 } # _parse_byte_string_latin1
 
 sub _parse_byte_string_utf8 : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\xCF\xAF\xEE\x21\x21};
   my $parser = Web::HTML::Parser->new;
@@ -423,7 +424,7 @@ sub _parse_byte_string_utf8 : Test(2) {
 } # _parse_byte_string_utf8
 
 sub _parse_byte_string_sjis_detected : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\x82\xD9\x82\xB0\x82\xD9\x82\xB0nemui\x82\xC5\x82\xB7};
   my $parser = Web::HTML::Parser->new;
@@ -434,7 +435,7 @@ sub _parse_byte_string_sjis_detected : Test(2) {
 } # _parse_byte_string_sjis_detected
 
 sub _parse_byte_string_utf8_detected : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\xCF\xAF\xEE\x21\x21};
   my $parser = Web::HTML::Parser->new;
@@ -445,7 +446,7 @@ sub _parse_byte_string_utf8_detected : Test(2) {
 } # _parse_byte_string_utf8_detected
 
 sub _parse_byte_string_jis_detected : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\x1B\x24B\x24_\x21\x26\x249\x21\x26\x248\x1B\x28B};
   my $parser = Web::HTML::Parser->new;
@@ -456,7 +457,7 @@ sub _parse_byte_string_jis_detected : Test(2) {
 } # _parse_byte_string_jis_detected
 
 sub _parse_byte_string_onerror_new : Test(2) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $input = qq{<html lang=en>\xC3\xAC};
   my $parser = Web::HTML::Parser->new;
@@ -476,7 +477,7 @@ sub _parse_byte_string_onerror_new : Test(2) {
 } # _parse_byte_string_onerror_new
 
 sub _parse_byte_string_with_a_known_definite_encoding : Test(1) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->known_definite_encoding ('shift_jis');
@@ -485,7 +486,7 @@ sub _parse_byte_string_with_a_known_definite_encoding : Test(1) {
 } # _parse_byte_string_with_a_known_definite_encoding
 
 sub _parse_char_string_with_context_doc : Test(1) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   $doc->manakai_is_html (1);
 
@@ -497,7 +498,7 @@ sub _parse_char_string_with_context_doc : Test(1) {
 } # _parse_char_string_with_context_doc
 
 sub _parse_bytes_stream_incomplete : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->parse_bytes_start (undef, $doc);
@@ -511,7 +512,7 @@ sub _parse_bytes_stream_incomplete : Test(3) {
 } # _parse_bytes_stream_incomplete
 
 sub _parse_bytes_stream_incomplete_2 : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->parse_bytes_start (undef, $doc);
@@ -525,7 +526,7 @@ sub _parse_bytes_stream_incomplete_2 : Test(3) {
 } # _parse_bytes_stream_incomplete_2
 
 sub _parse_bytes_stream_change_encoding_by_main_parser : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->parse_bytes_start (undef, $doc);
@@ -540,7 +541,7 @@ sub _parse_bytes_stream_change_encoding_by_main_parser : Test(3) {
 } # _parse_bytes_stream_change_encoding_by_main_parser
 
 sub _parse_bytes_stream_prescan_tag_like : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->parse_bytes_start (undef, $doc);
@@ -555,7 +556,7 @@ sub _parse_bytes_stream_prescan_tag_like : Test(3) {
 } # _parse_bytes_stream_prescan_tag_like
 
 sub _parse_bytes_stream_locale_default : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->locale_tag ('RU');
@@ -568,7 +569,7 @@ sub _parse_bytes_stream_locale_default : Test(3) {
 } # _parse_bytes_stream_locale_default
 
 sub _parse_bytes_stream_locale_default_2 : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->locale_tag ('ja');
@@ -580,8 +581,21 @@ sub _parse_bytes_stream_locale_default_2 : Test(3) {
   is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
 } # _parse_bytes_stream_locale_default_2
 
+sub _parse_bytes_stream_locale_default_2_long : Test(3) {
+  my $dom = Web::DOM::Implementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->locale_tag ('ja-JP');
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<!DOCTYPE html>hoge', start_parsing => 1);
+  $parser->parse_bytes_end;
+  
+  is $doc->input_encoding, 'shift_jis';
+  is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
+} # _parse_bytes_stream_locale_default_2_long
+
 sub _parse_bytes_stream_locale_default_3 : Test(3) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->locale_tag ('en');
@@ -594,7 +608,7 @@ sub _parse_bytes_stream_locale_default_3 : Test(3) {
 } # _parse_bytes_stream_locale_default_3
 
 sub _parse_bytes_stream_with_a_known_definite_encoding : Test(1) {
-  my $dom = NanoDOM::DOMImplementation->new;
+  my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
   $parser->known_definite_encoding ('shift_jis');
@@ -610,7 +624,7 @@ __PACKAGE__->runtests;
 
 =head1 LICENSE
 
-Copyright 2009-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2009-2014 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
