@@ -497,6 +497,19 @@ sub _parse_char_string_with_context_doc : Test(1) {
   is $doc->inner_html, '<html><head></head><body>hoge<p>foobar</p></body></html>';
 } # _parse_char_string_with_context_doc
 
+sub _parse_char_string_with_context_template_quirks : Test(2) {
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_html (1);
+  $doc->manakai_compat_mode ('quirks');
+  my $parser = Web::HTML::Parser->new;
+  my $el = $doc->create_element ('template');
+  my $el2 = $doc->create_element ('hoge');
+  $el->content->append_child ($el2);
+  my $children = $parser->parse_char_string_with_context ('<p>aa<table>', $el2 => $doc);
+  is $children->length, 2;
+  is $children->[1]->local_name, 'table';
+} # _parse_char_string_with_context_template_quirks
+
 sub _parse_bytes_stream_incomplete : Test(3) {
   my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
