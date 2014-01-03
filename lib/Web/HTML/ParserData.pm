@@ -1,7 +1,8 @@
 package Web::HTML::ParserData;
 use strict;
 use warnings;
-our $VERSION = '1.0';
+our $VERSION = '2.0';
+use Web::HTML::_SyntaxDefs;
 
 ## ------ Namespace URLs ------
 
@@ -14,21 +15,7 @@ sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 
 ## ------ Element categories ------
 
-our $AllVoidElements = {
-  ## "Void elements" per syntax spec
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#void-elements>.
-  area => 1, base => 1, br => 1, col => 1, command => 1, embed => 1,
-  hr => 1, img => 1, input => 1, keygen => 1, link => 1, meta => 1,
-  param => 1, source => 1, track => 1, wbr => 1,
-
-  ## Obsolete void elements from serialization spec
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#serializing-html-fragments>.
-  basefont => 1, bgsound => 1, frame => 1,
-
-  ## "Macro" elements, from spec comment at
-  ## <http://www.whatwg.org/specs/web-apps/current-work/#serializing-html-fragments>.
-  #image => 1, isindex => 1,
-}; ## $AllVoidElements
+our $AllVoidElements = $Web::HTML::_SyntaxDefs->{void}->{+HTML_NS};
 
 ## ------ Foreign element integration points ------
 
@@ -374,6 +361,8 @@ our $QuirkyPublicIDs = {
 ## Quirks system id
 ## http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd
 
+1;
+
 =head1 NAME
 
 Web::HTML::ParserData - Data for HTML parser
@@ -397,6 +386,12 @@ Following data from the HTML specification are included:
 =over 4
 
 =item $AllVoidElements
+
+A hash reference, whose keys are HTML void element names (conforming
+or non-conforming) and values are true.  This list is equal to the
+list of HTML elements whose "syntax_category" is "void" or "obsolete
+void" in the JSON data file
+<https://github.com/manakai/data-web-defs/blob/master/doc/elements.txt>.
 
 =item $MathMLTextIntegrationPoints
 
@@ -442,6 +437,3 @@ You are granted a license to use, reproduce and create derivative
 works of this document.
 
 =cut
-
-1;
-
