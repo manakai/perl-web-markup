@@ -168,24 +168,12 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 
 ## ------ Tests ------
 
-test: test-deps test-main test-main-webdom
+test: test-deps test-main
 
 test-deps: deps local/elements.json
 
 test-main:
 	$(PROVE) t/tests/*.t t/modules/*.t t/parsing/*.t \
 	    t/processing/*.t t/validation/*.t
-
-test-main-webdom: local/bin/pmbp.pl
-	-git clone git://github.com/manakai/perl-web-dom local/submodules/web-dom
-	cd local/submodules/web-dom && git pull
-	-git clone git://github.com/wakaba/perl-charclass local/submodules/charclass
-	cd local/submodules/charclass && git pull
-	perl local/bin/pmbp.pl \
-	    --install-modules-by-file-name local/submodules/web-dom/config/perl/pmb-install.txt \
-	    --install-modules-by-file-name local/submodules/charclass/config/perl/pmb-install.txt \
-	    --install
-	DOM_IMPL_CLASS=Web::DOM::Implementation $(PROVE) t/parsing.t
-
 
 ## License: Public Domain.
