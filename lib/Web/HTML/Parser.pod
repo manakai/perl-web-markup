@@ -228,7 +228,7 @@ Encoding Standard <http://encoding.spec.whatwg.org/>.
 
 =item MANAKAI
 
-manakai's DOM Extensions
+manakai DOM Extensions
 <http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai++DOM%20Extensions>.
 
 =back
