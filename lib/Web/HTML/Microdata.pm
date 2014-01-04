@@ -27,6 +27,7 @@ sub get_top_level_items ($$) {
   my $items = $node->query_selector_all ('html|*[itemscope]:not([itemprop])', sub {
     return 'http://www.w3.org/1999/xhtml';
   });
+  local $self->{created_items} = [];
   return [map { $self->get_item_of_element ($_) } @$items];
 } # get_top_level_items
 
@@ -39,6 +40,9 @@ sub get_item_of_element ($$) {
             looped => 1} if $_ eq $root;
   }
   push @{$self->{current_item_els} ||= []}, $root;
+  for (@{$self->{created_items} || []}) {
+    return $_ if $_->{node} eq $root;
+  }
 
   ## The properties of an item
   ## <http://www.whatwg.org/specs/web-apps/current-work/#the-properties-of-an-item>.
@@ -118,6 +122,7 @@ sub get_item_of_element ($$) {
   }
 
   pop @{$self->{current_item_els}};
+  push @{$self->{created_items} || []}, $item; # not ||=
 
   ## 13.
   return $item;

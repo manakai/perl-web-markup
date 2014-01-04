@@ -118,7 +118,7 @@ The value is a microdata item, but it is not expanded to full "item"
 data to avoid the entire data structure for containing a loop.  There
 is another full "item" data created from the same element.
 
-The "value" data is always a tree.
+The "value" data is always a DAG.
 
 =item {type => 'string', text => $text, node => $node}
 

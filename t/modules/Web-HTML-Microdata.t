@@ -379,6 +379,30 @@ test {
   done $c;
 } n => 2, name => 'multiple values';
 
+test {
+  my $c = shift;
+
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_html (1);
+  $doc->manakai_set_url ('http://foo/bar/baz');
+  $doc->inner_html (q{<!DOCTYPE html>
+    <p itemscope>
+      <span itemprop=a itemscope itemref=x></span>
+      <span itemprop=a itemscope itemref=x></span>
+    <p itemscope id=x itemprop=y>
+  });
+
+  my $md = Web::HTML::Microdata->new;
+  my @error;
+  $md->onerror (sub { push @error, {@_} });
+  my $items = $md->get_top_level_items ($doc);
+  is $items->[0]->{props}->{a}->[0]->{props}->{y}->[0],
+     $items->[0]->{props}->{a}->[1]->{props}->{y}->[0];
+  eq_or_diff $items->[0]->{props}->{a}->[0]->{props}->{y},
+             $items->[0]->{props}->{a}->[1]->{props}->{y};
+  done $c;
+} n => 2, name => 'dag';
+
 run_tests;
 
 =head1 LICENSE
