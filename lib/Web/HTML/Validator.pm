@@ -3178,6 +3178,8 @@ $Element->{+HTML_NS}->{hgroup} = {
       ## that the |h2| element in |<hgroup><ins><h2>| is not counted
       ## as an |h2| of the |hgroup| element.
       $element_state2->{has_hn} = 1;
+    } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      #
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed',
