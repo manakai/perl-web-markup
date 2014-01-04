@@ -7915,6 +7915,7 @@ $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
     $doc->manakai_is_html (1);
     require Web::HTML::Parser;
     $parser = Web::HTML::Parser->new;
+    $parser->scripting ($self->scripting);
   } else {
     require Web::XML::Parser;
     $parser = Web::XML::Parser->new;
@@ -7925,6 +7926,7 @@ $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
   
   my $checker = Web::HTML::Validator->new;
   $checker->onerror ($onerror);
+  $checker->scripting ($self->scripting);
   $checker->check_node ($doc);
 }; # <iframe srcdoc="">
 
@@ -7938,6 +7940,7 @@ $CheckDIVContent = sub {
 
   require Web::HTML::Parser;
   my $parser = Web::HTML::Parser->new;
+  $parser->scripting ($self->scripting);
   my $onerror = $GetNestedOnError->($self->onerror, $node);
   $parser->onerror ($onerror);
   for (@{$parser->parse_char_string_with_context ($value, $div => $doc)}) {
@@ -7946,6 +7949,7 @@ $CheckDIVContent = sub {
 
   require Web::HTML::Validator;
   my $checker = Web::HTML::Validator->new;
+  $checker->scripting ($self->scripting);
   $checker->onerror ($onerror);
   $checker->check_node ($div);
 }; # $CheckDIVContent
@@ -8038,6 +8042,7 @@ $Element->{+HTML_NS}->{template} = {
 
     my $checker = Web::HTML::Validator->new;
     $checker->_init;
+    $checker->scripting ($self->scripting);
     $checker->{flag}->{is_template} = 1;
     my $onerror = $self->onerror;
     my $node = $item->{node};

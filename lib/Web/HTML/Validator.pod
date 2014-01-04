@@ -171,8 +171,9 @@ C<iframe> element MUST be validated as follows:
 
     If /context/ is an HTML |iframe| element, return |span|.
 
-    Otherwise, if /context/ is a descendant of a |head| element,
-    return |head|.
+    Otherwise, if /context/ is a descendant of a |head| element or a
+    descendant of a template content whose content model is metadata
+    content, return |head|.
 
     Otherwise, if /context/ has a parent element and the content model
     of the parent element would require the content model of /context/
@@ -212,6 +213,16 @@ the validation process, as the spec's requirements are too complex to
 implement nevertheless that complexity would not help authors as much.
 The set of the validation errors detected by these steps is not
 exactly same as that of the HTML Standard.
+
+Unless otherwise specified, for the purpose of validation of HTML
+documents or fragments (serialized in the HTML syntax and then)
+embedded within other DOM attribute or node, such as the C<srcdoc>
+attribute of the HTML C<iframe> element, and Atom or RSS elements,
+whether scripting is enabled or disabled for the document associated
+with the HTML parser used to parse the document or fragment, as well
+as whether scripting is enabled or disabled for the nodes returned by
+the HTML parser, is same as whether scripting is enabled or disabled
+for the node document of the node.
 
 =item OBSVOCAB
 
