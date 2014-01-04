@@ -1,0 +1,183 @@
+package Web::HTML::Microdata;
+use strict;
+use warnings;
+our $VERSION = '1.0';
+
+sub new ($) {
+  return bless {}, $_[0];
+} # new
+
+sub onerror ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onerror} = $_[1];
+  }
+  return $_[0]->{onerror} ||= sub {
+    my %args = @_;
+    warn sprintf "%s: %s (%s)\n",
+        $args{node}->node_name,
+        $args{type},
+        $args{level};
+  };
+} # onerror
+
+sub get_top_level_items ($$) {
+  my ($self, $node) = @_;
+  ## Top-level microdata item
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#top-level-microdata-items>.
+  my $items = $node->query_selector_all ('html|*[itemscope]:not([itemprop])', sub {
+    return 'http://www.w3.org/1999/xhtml';
+  });
+  return [map { $self->get_item_of_element ($_) } @$items];
+} # get_top_level_items
+
+sub get_item_of_element ($$) {
+  my ($self, $root) = @_;
+
+  for (@{$self->{current_item_els} ||= []}) {
+    return {type => 'item',
+            node => $root,
+            looped => 1} if $_ eq $root;
+  }
+  push @{$self->{current_item_els} ||= []}, $root;
+
+  ## The properties of an item
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#the-properties-of-an-item>.
+
+  ## 1., 2., 3.
+  my $results = {};
+  my $memory = [$root];
+  my $pending = [@{$root->children}];
+
+  ## 4.
+  my $root_can_have_attrs = ($root->namespace_uri || '') eq 'http://www.w3.org/1999/xhtml';
+  if ($root_can_have_attrs) {
+    my $itemref = $root->get_attribute_ns (undef, 'itemref');
+    my @id = grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, defined $itemref ? $itemref : '';
+    my $home_root = $root;
+    while (1) {
+      my $parent = $home_root->parent_node or last;
+      $home_root = $parent;
+    }
+    push @$pending, grep { defined $_ } map { $home_root->get_element_by_id ($_) } @id;
+  }
+
+  ## 5. Loop
+  LOOP: while (@$pending) {
+    ## 6.
+    my $current = shift @$pending;
+
+    ## 7.
+    for (@$memory) {
+      if ($_ eq $current) {
+        $self->onerror->(type => 'microdata:referenced by itemref',
+                         node => $_,
+                         level => 'm');
+        next LOOP;
+      }
+    }
+
+    ## 8.
+    push @$memory, $current;
+
+    ## 9.
+    my $current_can_have_attrs = ($current->namespace_uri || '') eq 'http://www.w3.org/1999/xhtml';
+    unless ($current_can_have_attrs and
+            $current->has_attribute_ns (undef, 'itemscope')) {
+      push @$pending, @{$current->children};
+    }
+
+    ## 10.
+    if ($current_can_have_attrs) {
+      my $itemprop = $current->get_attribute_ns (undef, 'itemprop');
+      my %found;
+      my $prop_names = [grep { length $_ and not $found{$_}++ } split /[\x09\x0A\x0C\x0D\x20]+/, defined $itemprop ? $itemprop : ''];
+      if (@$prop_names) {
+        my $value = $self->get_item_value_of_element ($current);
+        push @{$results->{$_} ||= []}, $value for @$prop_names;
+      }
+    }
+
+    ## 11.
+    #next LOOP;
+  } # LOOP
+
+  my $item = {type => 'item', node => $root, props => {}, types => {}};
+
+  ## 12. End of loop
+  $item->{props}->{$_} = $self->_sort_nodes ($results->{$_})
+      for keys %$results;
+
+  if ($root_can_have_attrs) {
+    my $itemtype = $root->get_attribute_ns (undef, 'itemtype');
+    for (split /[\x09\x0A\x0C\x0D\x20]+/, defined $itemtype ? $itemtype : '') {
+      $item->{types}->{$_} = 1 if length $_;
+    }
+
+    my $itemid = $root->itemid; ## resolve
+    $item->{id} = $itemid if defined $itemid and length $itemid;
+  }
+
+  pop @{$self->{current_item_els}};
+
+  ## 13.
+  return $item;
+} # get_item_of_element
+
+sub get_item_value_of_element ($$) {
+  my ($self, $el) = @_;
+
+  ## Property value
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#concept-property-value>.
+
+  ## |itemValue|
+  ## <http://www.whatwg.org/specs/web-apps/current-work/#dom-itemvalue>.
+
+  if (($el->namespace_uri || '') eq 'http://www.w3.org/1999/xhtml') {
+    if ($el->has_attribute_ns (undef, 'itemscope')) {
+      return $self->get_item_of_element ($el);
+    }
+    my $ln = $el->local_name;
+    if ($ln eq 'meta') {
+      return {type => 'string', text => $el->content, node => $el};
+    } elsif ($ln eq 'audio' ||
+             $ln eq 'embed' ||
+             $ln eq 'iframe' ||
+             $ln eq 'img' ||
+             $ln eq 'source' ||
+             $ln eq 'track' ||
+             $ln eq 'video') {
+      return {type => 'url', text => $el->src, node => $el}; # XXX base
+    } elsif ($ln eq 'a' or $ln eq 'area' or $ln eq 'link') {
+      return {type => 'url', text => $el->href, node => $el}; # XXX base
+    } elsif ($ln eq 'object') {
+      return {type => 'url', text => $el->data, node => $el}; # XXX base
+    } elsif ($ln eq 'data' or $ln eq 'meter') {
+      my $value = $el->get_attribute_ns (undef, 'value');
+      return {type => 'string', text => defined $value ? $value : '', node => $el};
+    } elsif ($ln eq 'time') {
+      my $value = $el->get_attribute_ns (undef, 'datetime');
+      return {type => 'string', text => defined $value ? $value : $el->text_content, node => $el};
+    }
+  }
+  return {type => 'string', text => $el->text_content, node => $el};
+} # get_item_value_of_element
+
+sub _sort_nodes ($$) {
+  return [sort {
+    my $c = $b->{node}->compare_document_position ($a->{node});
+    ($c & 2 ? -1 : # DOCUMENT_POSITION_PRECEDING
+     $c & 4 ? 1 : # DOCUMENT_POSITION_FOLLOWING
+     0);
+  } @{$_[1]}];
+} # _sort_nodes
+
+1;
+
+=head1 LICENSE
+
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

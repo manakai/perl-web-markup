@@ -1,0 +1,157 @@
+=head1 NAME
+
+Web::HTML::Microdata - HTML microdata
+
+=head1 SYNOPSIS
+
+  use Web::HTML::Microdata;
+  
+  $doc->inner_html (q{
+    <p itemscope>
+      <span itemprop=a>bb</span>
+      <img itemprop=b src="http://www.example.com/" alt=Logo>
+  });
+  
+  $md = Web::HTML::Microdata->new;
+  $items = $md->get_top_level_items ($doc);
+      # [
+      #   {type => 'item', node => $doc->query_selector ('p'),
+      #    props => {
+      #      a => [{type => 'string', text => 'bb',
+      #             node => $doc->query_selector ('span')}],
+      #      b => [{type => 'url', text => 'http://www.example.com/',
+      #             node => $doc->query_selector ('img')}],
+      #    },
+      #    types => {}, id => undef},
+      # ]
+
+=head1 DESCRIPTION
+
+The C<Web::HTML::Microdata> module provides access to microdata items
+in the document.
+
+=head1 METHODS
+
+Following methods are available:
+
+=over 4
+
+=item $md = Web::HTML::Microdata->new
+
+Create a new instance of the microdata implementation.
+
+=item $code = $md->onerror
+
+=item $md->onerror ($code)
+
+Get or set the error handler for the implementation.  Any microdata
+error, as well as warning and additional processing information, is
+reported to the handler.  See
+<https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
+for details of error handling.
+
+The value should not be set while the implementation is running.  If
+the value is changed, the result is undefined.
+
+=item $items = $md->get_top_level_items ($node)
+
+Return an array reference of top-level microdata items in the subtree
+rooted by the specified node.  The argument must be a DOM C<Element>,
+C<Document>, or C<DocumentFragment>.
+
+Items of the returned array reference are "item" data described in the
+later section.
+
+=back
+
+=head1 DATA STRUCTURES
+
+=head2 Item
+
+An "item" data is a hash reference, containing following name/value
+pairs:
+
+=over 4
+
+=item type
+
+Always the string C<item>.
+
+=item node
+
+The C<Element> that created the microdata item.
+
+=item props
+
+The hash reference containing properties of the microdata item.  The
+hash names are property names in the item.  The hash values are
+corresponding property values, represented as array references of zero
+or more values.  Property values are represented as "value" data.
+Property values are sorted in tree order of elements in which values
+are contained.
+
+=item types
+
+The hash reference containing types of the microdata item.  Note that
+this is different member from C<type>.  The hash names are item types.
+The hash values are whether the item has the item type or not.
+
+=item id
+
+The global identifier of the microdata item, if any.
+
+=back
+
+=head2 Value
+
+The "value" data is a hash reference, in one of following structure:
+
+=over 4
+
+=item An "item" data
+
+The value is a microdata item.
+
+=item {type => 'item', looped => true, node => $node}
+
+The value is a microdata item, but it is not expanded to full "item"
+data to avoid the entire data structure for containing a loop.  There
+is another full "item" data created from the same element.
+
+The "value" data is always a tree.
+
+=item {type => 'string', text => $text, node => $node}
+
+The value is a string I<$text>.  The value is contained in the element
+I<$node>.
+
+=item {type => 'url', text => $text, node => $node}
+
+The value is a string I<$text>, obtained from an attribute whose value
+is a URL.  The owner of the attribute is I<$node>.
+
+=back
+
+=head1 SPECIFICATION
+
+=over 4
+
+=item HTML
+
+HTML Standard - Microdata
+<http://www.whatwg.org/specs/web-apps/current-work/#microdata>.
+
+=back
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2014 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
