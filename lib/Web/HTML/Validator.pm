@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '126.0';
+our $VERSION = '127.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -55,7 +55,12 @@ sub onerror ($;$) {
 ##                       flag is undefined.
 ##   {has_meta_charset}  Set to true if there is a <meta charset=""> or
 ##                       <meta http-equiv=content-type> element.
+##   {in_canvas}         Set to true if there is an ancestor |canvas| element.
+##   {in_head}           Set to true if there is an ancestor |head| element.
+##   {in_media}          Set to true if there is an ancestor media element.
+##   {in_phrasing}       Set to true if in phrasing content expecting element.
 ##   {is_template}       The checker is in the template content mode.
+##   {no_interactive}    Set to true if no interactive content is allowed.
 
 ## $element_state
 ##
@@ -1239,7 +1244,7 @@ our $ElementDefault = {
 ## and that convey content but not metadata, are embedded content"
 ## [HTML]
 
-our $IsInHTMLInteractiveContent = sub {
+my $IsInHTMLInteractiveContent = sub {
   my ($self, $el, $nsuri, $ln) = @_;
 
   ## NOTE: This CODE returns whether an element that is conditionally
@@ -2411,6 +2416,13 @@ $Element->{+HTML_NS}->{html} = {
 
 $Element->{+HTML_NS}->{head} = {
   %AnyChecker,
+  ## $item->{is_template} - It is actually a template content, not |head|
+  ## $item->{is_noscript} - It is actually a |noscript|, not |head|
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{in_head_original} = $self->{flag}->{in_head};
+    $self->{flag}->{in_head} = 1;
+  }, # check_start
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -2420,7 +2432,11 @@ $Element->{+HTML_NS}->{head} = {
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'title') {
-      if (not $element_state->{has_title} or $item->{is_template}) {
+      if ($item->{is_noscript}) {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:head noscript',
+                           level => 'm');
+      } elsif (not $element_state->{has_title} or $item->{is_template}) {
         $element_state->{has_title} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2429,16 +2445,22 @@ $Element->{+HTML_NS}->{head} = {
       }
     } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
       #
-    } elsif ($_Defs->{categories}->{'metadata content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+    } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'link') {
       #
+    } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'meta') {
+      #
+    } elsif ($_Defs->{categories}->{'metadata content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($item->{is_noscript}) {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:head noscript',
+                           level => 'm');
+      }
     } else {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:metadata',
                          level => 'm');
     }
-    $element_state->{in_head_original} = $self->{flag}->{in_head};
-    $self->{flag}->{in_head} = 1;
-  },
+  }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
@@ -2449,7 +2471,9 @@ $Element->{+HTML_NS}->{head} = {
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    if (not $element_state->{has_title} and not $item->{is_template}) {
+    if (not $element_state->{has_title} and
+        not $item->{is_template} and
+        not $item->{is_noscript}) {
       my $el = $item->{node};
       my $od = $el->owner_document;
       my $tmd = $od->get_user_data('manakai_title_metadata');
@@ -2889,6 +2913,13 @@ $Element->{+HTML_NS}->{style} = {
 
 # ---- Scripting ----
 
+sub scripting ($;$) {
+  if (@_ > 1) {
+    $_[0]->{scripting} = $_[1];
+  }
+  return $_[0]->{scripting};
+} # scripting
+
 $Element->{+HTML_NS}->{script} = {
   %AnyChecker,
   check_start => sub {
@@ -3034,11 +3065,11 @@ $ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{for} = sub {
   push @{$self->{idref}}, ['any', $attr->value, $attr];
 }; # <script for="">
 
-## NOTE: When script is disabled.
 $Element->{+HTML_NS}->{noscript} = {
   %TransparentChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
+    $item->{is_noscript} = 1;
 
     unless ($item->{node}->owner_document->manakai_is_html) {
       $self->{onerror}->(node => $item->{node},
@@ -3046,78 +3077,68 @@ $Element->{+HTML_NS}->{noscript} = {
                          level => 'm');
     }
 
-    if ($self->{flag}->{in_head}) {
-      $AnyChecker{check_start}->(@_);
-    } else {
-      $self->_add_minus_elements ($element_state,
-                                  {(HTML_NS) => {noscript => 1}});
-      $TransparentChecker{check_start}->(@_);
+    if ($self->scripting) { ## Scripting is enabled
+      $HTMLTextChecker{check_start}->(@_);
+    } else { ## Scripting is disabled
+      if ($self->{flag}->{in_head}) {
+        $Element->{(HTML_NS)}->{head}->{check_start}->(@_);
+      } else {
+        $self->_add_minus_elements ($element_state,
+                                    {(HTML_NS) => {noscript => 1}});
+        $TransparentChecker{check_start}->(@_);
+      }
     }
   }, # check_start
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-    if ($self->{flag}->{in_head}) { # XXX buggy??
-      if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:minus',
-                           level => 'm');
-      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'link') {
-        #
-      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'style') {
-        #
-      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'meta') {
-        my $http_equiv_attr
-            = $child_el->get_attribute_node_ns (undef, 'http-equiv');
-        if ($http_equiv_attr) {
-          # XXX no longer disallowed
-          my $value = $http_equiv_attr->value;
-          $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-          if ($value eq 'content-type') {
-            $self->{onerror}->(node => $child_el,
-                               type => 'element not allowed:head noscript',
-                               level => 'm');
-          } else {
-            #
-          }
-        } else {
-          $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:head noscript',
-                             level => 'm');
-        }
+    if ($self->scripting) { ## Scripting is enabled
+      $HTMLTextChecker{check_child_element}->(@_);
+    } else { ## Scripting is disabled
+      if ($self->{flag}->{in_head}) {
+        $Element->{(HTML_NS)}->{head}->{check_child_element}->(@_);
       } else {
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:head noscript',
-                           level => 'm');
+        $TransparentChecker{check_child_element}->(@_);
       }
-    } else {
-      $TransparentChecker{check_child_element}->(@_);
     }
-  },
+  }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($self->{flag}->{in_head}) {
-      if ($has_significant) {
-        $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed',
-                           level => 'm');
+    if ($self->scripting) { ## Scripting is enabled
+      $HTMLTextChecker{check_child_text}->(@_);
+    } else { ## Scripting is disabled
+      if ($self->{flag}->{in_head}) {
+        $Element->{(HTML_NS)}->{head}->{check_child_text}->(@_);
+      } else {
+        $TransparentChecker{check_child_text}->(@_);
       }
-    } else {
-      $TransparentChecker{check_child_text}->(@_);
     }
-  },
+  }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-    if ($self->{flag}->{in_head}) {
-      $AnyChecker{check_end}->(@_);
-    } else {
-      $self->{onerror}->(node => $item->{node},
-                         level => 's',
-                         type => 'no significant content')
-          unless $element_state->{has_palpable};
-      $TransparentChecker{check_end}->(@_);
+    if ($self->scripting) { ## Scripting is enabled
+      if ($item->{node}->owner_document->manakai_is_html) {
+        my $container_ln = $self->{flag}->{in_head} ? 'head' :
+                           $self->{flag}->{in_phrasing} ? 'span' : 'div';
+        $self->_add_minus_elements ($item->{element_state},
+                                    {(HTML_NS) => {script => 1,
+                                                   noscript => 1}});
+        $self->_check_fallback_html
+            ($item->{node}, $self->{minus_elements}, $container_ln);
+        $self->_remove_minus_elements ($item->{element_state});
+      }
+      $HTMLTextChecker{check_end}->(@_);
+    } else { ## Scripting is disabled
+      if ($self->{flag}->{in_head}) {
+        $Element->{(HTML_NS)}->{head}->{check_end}->(@_);
+      } else {
+        $self->_remove_minus_elements ($element_state);
+        $self->{onerror}->(node => $item->{node},
+                           level => 's',
+                           type => 'no significant content')
+            unless $element_state->{has_palpable};
+        $TransparentChecker{check_end}->(@_);
+      }
     }
   }, # check_end
 }; # noscript
@@ -4109,6 +4130,50 @@ $Element->{+HTML_NS}->{figure} = {
   }, # check_end
 }; # figure
 
+$Element->{+HTML_NS}->{iframe} = {
+  %HTMLTextChecker,
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    if ($item->{node}->owner_document->manakai_is_html) {
+      $self->_add_minus_elements ($item->{element_state},
+                                  {(HTML_NS) => {script => 1}});
+      $self->_check_fallback_html
+          ($item->{node}, $self->{minus_elements}, 'span');
+      $self->_remove_minus_elements ($item->{element_state});
+    }
+    $HTMLTextChecker{check_end}->(@_);
+  }, # check_end
+}; # iframe
+
+{
+  my $keywords = $_Defs->{elements}->{(HTML_NS)}->{iframe}->{attrs}->{''}->{sandbox}->{keywords};
+  $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{sandbox} = sub {
+    ## Unordered set of space-separated tokens, ASCII case-insensitive.
+    my ($self, $attr) = @_;
+    my %word;
+    for my $word (grep {length $_}
+                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+      $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+      unless ($word{$word}) {
+        $word{$word} = 1;
+        $self->{onerror}->(node => $attr,
+                           type => 'word not allowed', value => $word,
+                           level => 'm')
+            unless $keywords->{$word}->{conforming};
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'duplicate token', value => $word,
+                           level => 'm');
+      }
+    }
+    if ($word{'allow-scripts'} and $word{'allow-same-origin'}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'sandbox allow-same-origin allow-scripts',
+                         level => 'w');
+    }
+  }; # <iframe sandbox="">
+}
+
 $Element->{+HTML_NS}->{img} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -4195,39 +4260,6 @@ $Element->{+HTML_NS}->{img} = {
 
 # XXX <img alt> context
 # XXX <img srcset>
-
-$Element->{+HTML_NS}->{iframe} = {
-  %HTMLTextChecker, # XXX content model restriction
-}; # iframe
-
-{
-  my $keywords = $_Defs->{elements}->{(HTML_NS)}->{iframe}->{attrs}->{''}->{sandbox}->{keywords};
-  $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{sandbox} = sub {
-    ## Unordered set of space-separated tokens, ASCII case-insensitive.
-    my ($self, $attr) = @_;
-    my %word;
-    for my $word (grep {length $_}
-                  split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-      $word =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      unless ($word{$word}) {
-        $word{$word} = 1;
-        $self->{onerror}->(node => $attr,
-                           type => 'word not allowed', value => $word,
-                           level => 'm')
-            unless $keywords->{$word}->{conforming};
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'duplicate token', value => $word,
-                           level => 'm');
-      }
-    }
-    if ($word{'allow-scripts'} and $word{'allow-same-origin'}) {
-      $self->{onerror}->(node => $attr,
-                         type => 'sandbox allow-same-origin allow-scripts',
-                         level => 'w');
-    }
-  }; # <iframe sandbox="">
-}
 
 $Element->{+HTML_NS}->{embed} = {
   %HTMLEmptyChecker,
@@ -7832,6 +7864,45 @@ my $GetNestedOnError = sub {
   };
 }; # $GetNestedOnError
 
+sub _check_fallback_html ($$$$) {
+  my ($self, $context, $disallowed, $container_ln) = @_;
+  my $container = $context->owner_document->create_element ($container_ln);
+  
+  my $onerror = $GetNestedOnError->($self->onerror, $context);
+  # XXX pos
+
+  require Web::DOM::Document;
+  my $doc = new Web::DOM::Document;
+  $doc->manakai_is_html (1);
+
+  require Web::HTML::Parser;
+  my $parser = Web::HTML::Parser->new;
+  $parser->onerror ($onerror);
+  $parser->scripting ($self->scripting);
+  my $children = $parser->parse_char_string_with_context
+      ($context->text_content, $container => $doc);
+  
+  my $checker = Web::HTML::Validator->new;
+  $checker->_init;
+  $checker->scripting ($self->scripting);
+  $checker->onerror ($onerror);
+  $checker->{flag}->{in_media} = $self->{flag}->{in_media};
+  $checker->{flag}->{no_interactive} = $self->{flag}->{no_interactive};
+  $checker->{flag}->{has_label} = $self->{flag}->{has_label};
+  $checker->{flag}->{has_labelable} = $self->{flag}->{has_labelable};
+  $checker->{flag}->{in_canvas} = $self->{flag}->{in_canvas};
+
+  $checker->_check_node
+      ([{type => 'element', node => $container, parent_state => {},
+         disallowed => $disallowed,
+         content => $children,
+         is_noscript => $container_ln eq 'head',
+         validation_mode => 'default'}]);
+
+  $checker->_check_refs;
+  $checker->_terminate;
+} # _check_fallback_html
+
 $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
   my ($self, $attr) = @_;
   require Web::DOM::Document;
@@ -7877,6 +7948,7 @@ $CheckDIVContent = sub {
   $checker->check_node ($div);
 }; # $CheckDIVContent
 
+# XXX unserializable waring for any children
 $Element->{+HTML_NS}->{template} = {
   %HTMLEmptyChecker,
   check_end => sub {
@@ -8163,6 +8235,8 @@ sub _check_node ($$) {
       ##   node            The element node
       ##   content         Chlildren (optional)
       ##   is_template     Is template content (boolean)
+      ##   is_noscript     Is |noscript| in |head| (boolean)
+      ##   disallowed      Disallowed descendant list (optional)
       ##   parent_state    State hashref for the parent of the element node
       ##   validation_mode Validation mode for the element node
       my $el = $item->{node};
@@ -8242,7 +8316,8 @@ sub _check_node ($$) {
       } # validation mode
 
       my @new_item;
-      my $disallowed = $ElementDisallowedDescendants->{$el_nsuri}->{$el_ln};
+      my $disallowed = $item->{disallowed} ||
+          $ElementDisallowedDescendants->{$el_nsuri}->{$el_ln};
       push @new_item, {type => '_add_minus_elements',
                        element_state => $element_state,
                        disallowed => $disallowed}

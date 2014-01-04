@@ -17,10 +17,10 @@ Web::HTML::Validator - DOM Conformance Checker
 =head1 DESCRIPTION
 
 The Perl module C<Web::HTML::Validator> contains methods for
-conformance checking (validation) of DOM tree with regard to relevant
-Web standards such as HTML.  Although the module name contains "HTML",
-it can also be used to check the conformance of non-HTML XML
-documents.  See also L</SPECIFICATIONS>.
+conformance checking (or validation) of DOM tree with regard to
+relevant Web standards such as HTML and CSS.  Although the module name
+contains "HTML", it can also be used to check the conformance of
+non-HTML XML documents.  See also L</SPECIFICATIONS>.
 
 =head1 METHODS
 
@@ -41,6 +41,20 @@ error, as well as warning and additional processing information, is
 reported to the handler.  See
 <https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
 for details of error handling.
+
+The value should not be set during the validation.  If the value is
+changed, the result is undefined.
+
+=item $boolean = $val->scripting
+
+=item $val->scripting ($boolean)
+
+Get or set scripting is enabled (true) or disabled (false) for the
+purpose of validation.  By default, scripting is disabled.  It affects
+validation of the HTML C<noscript> element.
+
+The value should not be set during the validation.  If the value is
+changed, the result is undefined.
 
 =item $val->check_node ($node)
 
@@ -138,10 +152,66 @@ XML Base Specification Errata
 
 HTML Standard <http://c.whatwg.org/>.
 
-The |html| element in the HTML namespace MAY be used as the root
+The C<html> element in the HTML namespace MAY be used as the root
 element.
 
-A |DocumentFragment| MAY contain any child element and text node.
+A C<DocumentFragment> MAY contain any child element and text node.
+
+The children of a C<template> element in the HTML namespace (which is
+different from the template content of the element) MUST be empty.
+
+Contents of the C<noscript> element when scripting is enabled and the
+C<iframe> element MUST be validated as follows:
+
+  Let /context/ be the element in question.
+
+  Let /container/ be a new HTML element whose node document is same as
+  the node document of /context/.  The local name of the element is
+  the return value of the following substeps:
+
+    If /context/ is an HTML |iframe| element, return |span|.
+
+    Otherwise, if /context/ is a descendant of a |head| element,
+    return |head|.
+
+    Otherwise, if /context/ has a parent element and the content model
+    of the parent element would require the content model of /context/
+    be phrasing content given that /context/ were transparent, return
+    |span|.
+
+    Otherwise, return |div|.
+
+  Invoke the HTML fragment parsing algorithm with /container/ as the
+  /context/ element and the |textContent| attribute value of /context/
+  as the /input/.  Append the returned list of nodes to /container/ in
+  order.  If this step results in one or more parse errors, /context/
+  is not conforming.
+
+  Let /disallowed/ be an empty list.
+
+  Add elements disallowed by content model of inclusive ancestors of
+  /context/ to /disallowed/, if any.
+
+  If /context/ is an HTML |iframe| element, add HTML |script| element
+  to /disallowed/.
+
+  If /context/ is an HTML |noscript| element, add HTML |noscript| and
+  |script| elements to /disallowed/.
+
+  Check the conformance of /container/ and its descendants, with the
+  following exceptions:
+
+    Elements in /disallowed/ MUST NOT be used.
+
+    If /container/ is an HTML |head| element, it MUST contain only
+    HTML |link|, |style|, and |meta| elements.  The |head| element
+    does not require any |title| element.
+
+Note that this is a willful violation to the HTML Standard to simplify
+the validation process, as the spec's requirements are too complex to
+implement nevertheless that complexity would not help authors as much.
+The set of the validation errors detected by these steps is not
+exactly same as that of the HTML Standard.
 
 =item OBSVOCAB
 

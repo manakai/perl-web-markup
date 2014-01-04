@@ -47,7 +47,9 @@ sub _test ($$) {
       ## then it is an error of the test case itself.
     } else {
       $doc = Web::DOM::Document->new;
-      Web::HTML::Parser->new->parse_char_string ($test->{data}->[0] => $doc);
+      my $parser = Web::HTML::Parser->new;
+      $parser->scripting (not $test->{noscript});
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
     }
     $doc->document_uri (q<thismessage:/>);
 
@@ -75,6 +77,7 @@ sub _test ($$) {
           (defined $opt{level} ? ';'.$opt{level} : '');
       }
     });
+    $val->scripting (not $test->{noscript});
     $val->check_node ($doc->document_element);
 
     my $actual = join ("\n", sort {$a cmp $b} @error);

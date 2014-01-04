@@ -1078,6 +1078,41 @@ test {
   done $c;
 } n => 1, name => ['template content'];
 
+for my $test (
+  ['<p>abc', 'element not allowed:metadata'],
+  ['<base href="http://a/">', 'element not allowed:head noscript'],
+  ['<title>abc</title>', 'element not allowed:head noscript'],
+  ['<noscript><link href="a" rel=next></noscript>', 'element not allowed:minus'],
+  ['<noscript><base href="a"></noscript>', 'element not allowed:minus', 'element not allowed:head noscript'],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->manakai_is_html (1);
+    my $el1 = $doc->create_element ('head');
+    $el1->inner_html (q{<title>aa</title>});
+    my $el2 = $doc->create_element ('noscript');
+    $el2->text_content ($test->[0]);
+    $el1->append_child ($el2);
+    my $validator = Web::HTML::Validator->new;
+    my @error;
+    $validator->onerror (sub {
+      my %args = @_;
+      push @error, \%args;
+    });
+    $validator->scripting (1);
+    $validator->check_node ($el1);
+    eq_or_diff [grep { $_->{type} !~ /^status:/ } @error],
+        [{type => $test->[1],
+          level => 'm',
+          node => $el2},
+         ($test->[2] ? ({type => $test->[2],
+                         level => 'm',
+                         node => $el2}) : ())];
+    done $c;
+  } n => 1, name => ['noscript scripting enabled', $test->[0]];
+}
+
 run_tests;
 
 =head1 LICENSE
