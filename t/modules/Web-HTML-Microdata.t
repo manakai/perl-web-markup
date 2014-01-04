@@ -306,9 +306,8 @@ test {
                          node => $doc->query_selector ('#A p'),
                          props => {Y => [{type => 'item',
                                           node => $doc->query_selector ('#B p'),
-                                          props => {X => [{type => 'item',
-                                                           node => $doc->query_selector ('#A p'),
-                                                           looped => 1}]},
+                                          props => {X => [{type => 'error',
+                                                           node => $doc->query_selector ('#A p')}]},
                                           types => {}}]},
                          types => {}}]},
         types => {}}];

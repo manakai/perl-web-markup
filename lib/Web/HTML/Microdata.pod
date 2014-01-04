@@ -112,11 +112,12 @@ The "value" data is a hash reference, in one of following structure:
 
 The value is a microdata item.
 
-=item {type => 'item', looped => true, node => $node}
+=item {type => 'error', node => $node}
 
 The value is a microdata item, but it is not expanded to full "item"
 data to avoid the entire data structure for containing a loop.  There
-is another full "item" data created from the same element.
+is another full "item" data created from the same element.  This is
+non-conforming.
 
 The "value" data is always a DAG.
 

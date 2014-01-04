@@ -35,9 +35,8 @@ sub get_item_of_element ($$) {
   my ($self, $root) = @_;
 
   for (@{$self->{current_item_els} ||= []}) {
-    return {type => 'item',
-            node => $root,
-            looped => 1} if $_ eq $root;
+    return {type => 'error',
+            node => $root} if $_ eq $root;
   }
   push @{$self->{current_item_els} ||= []}, $root;
   for (@{$self->{created_items} || []}) {
