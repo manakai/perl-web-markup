@@ -892,7 +892,7 @@ our $MIMETypeChecker = sub {
 }; # $MIMETypeChecker
 
 ## IDREFS to any element
-$ElementAttrChecker->{(HTML_NS)}->{label}->{''}->{for} =
+$ElementAttrChecker->{(HTML_NS)}->{output}->{''}->{for} =
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemref} = sub {
   my ($self, $attr) = @_;
   ## Unordered set of unique space-separated tokens.
@@ -4151,6 +4151,30 @@ $Element->{+HTML_NS}->{figure} = {
 
 $Element->{+HTML_NS}->{iframe} = {
   %HTMLTextChecker,
+  check_start => sub {
+    my ($self, $item) = @_;
+    if ($item->{node}->owner_document->manakai_is_html) {
+      $HTMLTextChecker{check_start}->(@_);
+    } else {
+      $HTMLEmptyChecker{check_start}->(@_);
+    }
+  }, # check_start
+  check_child_element => sub {
+    my ($self, $item) = @_;
+    if ($item->{node}->owner_document->manakai_is_html) {
+      $HTMLTextChecker{check_child_element}->(@_);
+    } else {
+      $HTMLEmptyChecker{check_child_element}->(@_);
+    }
+  }, # check_child_element
+  check_child_text => sub {
+    my ($self, $item) = @_;
+    if ($item->{node}->owner_document->manakai_is_html) {
+      $HTMLTextChecker{check_child_text}->(@_);
+    } else {
+      $HTMLEmptyChecker{check_child_text}->(@_);
+    }
+  }, # check_child_text
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     if ($item->{node}->owner_document->manakai_is_html) {
@@ -4159,9 +4183,10 @@ $Element->{+HTML_NS}->{iframe} = {
       $self->_check_fallback_html
           ($item->{node}, $self->{minus_elements}, 'span');
       $self->_remove_minus_elements ($item->{element_state});
+      $HTMLTextChecker{check_end}->(@_);
+    } else {
+      $HTMLEmptyChecker{check_end}->(@_);
     }
-    # XXX In XML, it must be empty
-    $HTMLTextChecker{check_end}->(@_);
   }, # check_end
 }; # iframe
 
