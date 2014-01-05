@@ -24,9 +24,18 @@ sub get_top_level_items ($$) {
   my ($self, $node) = @_;
   ## Top-level microdata item
   ## <http://www.whatwg.org/specs/web-apps/current-work/#top-level-microdata-items>.
-  my $items = $node->query_selector_all ('html|*[itemscope]:not([itemprop])', sub {
-    return 'http://www.w3.org/1999/xhtml';
-  });
+  my $items = [];
+  my @cand = ($node);
+  while (@cand) {
+    my $node = shift @cand;
+    if ($node->node_type == 1 and # ELEMENT_NODE
+        ($node->namespace_uri || '') eq 'http://www.w3.org/1999/xhtml' and
+        $node->has_attribute_ns (undef, 'itemscope') and
+        not $node->has_attribute_ns (undef, 'itemprop')) {
+      push @$items, $node;
+    }
+    unshift @cand, @{$node->child_nodes};
+  }
   local $self->{created_items} = [];
   return [map { $self->get_item_of_element ($_) } @$items];
 } # get_top_level_items
