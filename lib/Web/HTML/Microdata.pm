@@ -176,12 +176,32 @@ sub get_item_value_of_element ($$) {
 } # get_item_value_of_element
 
 sub _sort_nodes ($$) {
-  return [sort {
-    my $c = $b->{node}->compare_document_position ($a->{node});
-    ($c & 2 ? -1 : # DOCUMENT_POSITION_PRECEDING
-     $c & 4 ? 1 : # DOCUMENT_POSITION_FOLLOWING
-     0);
-  } @{$_[1]}];
+  return $_[1] if @{$_[1]} < 2;
+
+  my @node = map {
+    my $r = [-1];
+    my $n = $_->{node};
+    P: while (my $p = $n->parent_node) {
+      my $i = 0;
+      for (@{$p->child_nodes}) {
+        if ($_ eq $n) {
+          unshift @$r, $i;
+          last;
+        }
+        $i++;
+      }
+      $n = $p;
+    } # P
+    [$_, $r];
+  } @{$_[1]};
+
+  return [map { $_->[0] } sort {
+    my $cmp = 0;
+    for (0..$#{$a->[1]}) {
+      last if $cmp = $a->[1]->[$_] <=> $b->[1]->[$_];
+    }
+    $cmp;
+  } @node];
 } # _sort_nodes
 
 1;
