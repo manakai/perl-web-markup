@@ -25,7 +25,7 @@ sub get_top_level_items ($$) {
   ## Top-level microdata item
   ## <http://www.whatwg.org/specs/web-apps/current-work/#top-level-microdata-items>.
   my $items = [];
-  my @cand = ($node);
+  my @cand = (ref $node eq 'ARRAY' ? @$node : $node);
   while (@cand) {
     my $node = shift @cand;
     if ($node->node_type == 1 and # ELEMENT_NODE

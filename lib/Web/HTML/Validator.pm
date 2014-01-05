@@ -891,6 +891,25 @@ our $MIMETypeChecker = sub {
   return $type; # or undef
 }; # $MIMETypeChecker
 
+## IDREFS to any element
+$ElementAttrChecker->{(HTML_NS)}->{label}->{''}->{for} =
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemref} = sub {
+  my ($self, $attr) = @_;
+  ## Unordered set of unique space-separated tokens.
+  my %word;
+  for my $word (grep {length $_}
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
+      push @{$self->{idref}}, ['any', $word, $attr];
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'm');
+    }
+  }
+}; # IDREFS
+
 ## ------ XML and XML Namespaces ------
 
 ## XML Namespaces
@@ -1860,8 +1879,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
       }
     }
 }; # dropzone=""
-
-# XXX microdata attributes
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{language} = sub {
   my ($self, $attr) = @_;
@@ -4143,6 +4160,7 @@ $Element->{+HTML_NS}->{iframe} = {
           ($item->{node}, $self->{minus_elements}, 'span');
       $self->_remove_minus_elements ($item->{element_state});
     }
+    # XXX In XML, it must be empty
     $HTMLTextChecker{check_end}->(@_);
   }, # check_end
 }; # iframe
@@ -6229,24 +6247,6 @@ $Element->{+HTML_NS}->{keygen} = {
 $Element->{+HTML_NS}->{output} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    for => sub {
-      my ($self, $attr) = @_;
-      
-      ## NOTE: "Unordered set of unique space-separated tokens".
-      
-      my %word;
-      for my $word (grep {length $_}
-                    split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-        unless ($word{$word}) {
-          $word{$word} = 1;
-          push @{$self->{idref}}, ['any', $word, $attr];
-        } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'duplicate token', value => $word,
-                             level => 'm');
-        }
-      }
-    },
     form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }),
@@ -6629,6 +6629,89 @@ $Element->{+HTML_NS}->{frameset} = {
 $Element->{+HTML_NS}->{noframes} = {
   %HTMLTextChecker, # XXX content model restriction (same as iframe)
 }; # noframes
+
+## ------ Microdata ------
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemtype} = sub {
+  my ($self, $attr) = @_;
+  ## Unordered set of unique space-separated tokens.
+  my %word;
+  for my $word (grep { length $_ }
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
+
+      require Web::URL::Checker;
+      my $chk = Web::URL::Checker->new_from_string ($word);
+      $chk->onerror (sub {
+        $self->{onerror}->(value => $word, @_, node => $attr);
+      });
+      $chk->check_iri_reference; # XXX absolute URL
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'm');
+    }
+  }
+}; # itemtype=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemprop} = sub {
+  my ($self, $attr) = @_;
+  ## Unordered set of unique space-separated tokens.
+  my %word;
+  for my $word (grep { length $_ }
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
+      if ($word =~ /:/) {
+        require Web::URL::Checker;
+        my $chk = Web::URL::Checker->new_from_string ($word);
+        $chk->onerror (sub {
+          $self->{onerror}->(value => $word, @_, node => $attr);
+        });
+        $chk->check_iri_reference; # XXX absolute URL
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => '. in itemprop',
+                           level => 'm')
+            if $word =~ /\./;
+      }
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'm');
+    }
+  }
+
+  $self->{onerror}->(node => $attr,
+                     type => 'empty itemprop', # XXXdoc
+                     level => 'm')
+      unless keys %word;
+}; # itemprop=""
+
+sub _validate_microdata ($$) {
+  my ($self, $root) = @_;
+
+  require Web::HTML::Microdata;
+  my $md = Web::HTML::Microdata->new;
+  $md->onerror (sub { $self->onerror->(@_) });
+
+  my $items = $md->get_top_level_items ($root);
+  for my $item (@$items) {
+    # XXX
+
+# XXX item types MUST be defined
+# XXX itemid="" not allowed if itemtype does not allow it
+# XXX typed item's itemprop must be defined
+# XXX if item value is URL, must use URL property elements
+# XXX microdata error
+# XXX item loop
+# XXX unused itemprop
+# XXX vocab validation
+  }
+} # _validate_microdata
+
+## ------ Atom ------
 
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
 sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
@@ -7901,6 +7984,7 @@ sub _check_fallback_html ($$$$) {
          is_noscript => $container_ln eq 'head',
          validation_mode => 'default'}]);
 
+  $checker->_validate_microdata ([@$children]);
   $checker->_check_refs;
   $checker->_terminate;
 } # _check_fallback_html
@@ -8059,6 +8143,7 @@ $Element->{+HTML_NS}->{template} = {
            validation_mode => 'default'}]);
 
     $checker->_check_refs;
+    $checker->_validate_microdata (\@children);
     $checker->_terminate;
 
     $HTMLEmptyChecker{check_end}->(@_);
@@ -8410,6 +8495,15 @@ sub _check_node ($$) {
                              level => $item->{element_state}->{require_title} || 's');
         }
       }
+
+      unless ($item->{node}->has_attribute_ns (undef, 'itemscope')) {
+        for my $name (qw(itemtype itemid itemref)) {
+          my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
+          $self->{onerror}->(node => $attr,
+                             type => 'attribute not allowed',
+                             level => 'm') if $attr;
+        }
+      }
     } elsif ($item->{type} eq 'check_palpable_content') {
       $self->{onerror}->(node => $item->{node},
                          level => 's',
@@ -8678,6 +8772,7 @@ sub check_node ($$) {
   }
   # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
   $self->_check_refs;
+  $self->_validate_microdata ($node);
   $self->_terminate;
 
   # XXX More useful return object
