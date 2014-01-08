@@ -4323,14 +4323,11 @@ $Element->{+HTML_NS}->{embed} = {
       ## is likely an authoring error.
     }
 
-    ## These obsolete attributes are allowed (since every attribute is
-    ## conforming for the |embed| element) but should not be used in
-    ## fact.
     for (qw(align border hspace vspace name)) {
       my $attr = $item->{node}->get_attribute_node_ns (undef, $_);
       $self->{onerror}->(node => $attr,
                          type => 'attribute not defined',
-                         level => 'w')
+                         level => $_ eq 'border' ? 'w' : 'm')
           if $attr;
     }
 
