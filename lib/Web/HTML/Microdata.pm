@@ -37,10 +37,16 @@ sub get_top_level_items ($$) {
     unshift @cand, @{$node->child_nodes};
   }
   local $self->{created_items} = [];
-  return [map { $self->get_item_of_element ($_) } @$items];
+  return [map { $self->_get_item_of_element ($_) } @$items];
 } # get_top_level_items
 
 sub get_item_of_element ($$) {
+  my ($self, $element) = @_;
+  local $self->{created_items} = [];
+  return $self->_get_item_of_element ($element);
+} # get_item_of_element
+
+sub _get_item_of_element ($$) {
   my ($self, $root) = @_;
 
   for (@{$self->{current_item_els} ||= []}) {
@@ -134,7 +140,7 @@ sub get_item_of_element ($$) {
 
   ## 13.
   return $item;
-} # get_item_of_element
+} # _get_item_of_element
 
 sub get_item_value_of_element ($$) {
   my ($self, $el) = @_;

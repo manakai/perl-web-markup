@@ -62,6 +62,18 @@ C<Document>, or C<DocumentFragment>.
 Items of the returned array reference are "item" data described in the
 later section.
 
+=item $item = $md->get_item_of_element ($element)
+
+Return a top-level microdata item created by the specified node.  The
+argument must be a DOM C<Element>.
+
+The element must be an element that creates an item (i.e. an HTML
+element with the C<itemscope> attribute specified).  If the element
+specified does not create an item according to the spec, the result
+could be somewhat stupid.
+
+The method returns an "item" data described in the later section.
+
 =back
 
 =head1 DATA STRUCTURES

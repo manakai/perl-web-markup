@@ -4,6 +4,7 @@ all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm
 clean:
 	rm -fr local/elements.json local/input-prompt.json
+	rm -fr local/microdata.json
 
 PERL = ./perl
 PROVE = ./prove
@@ -63,6 +64,10 @@ local/elements.json:
 local/isindex-prompt.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/isindex-prompt.json
+local/microdata.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/microdata.json
+
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
     pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator
@@ -118,12 +123,16 @@ Chromium:\
 	  print $$footer; #\
 	' > $@
 	perl -c $@
-lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
+
+lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
+    pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module JSON
+	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"microdata\":"; cat local/microdata.json; echo "}"' | \
 	$(PERL) -MJSON -MData::Dumper -e ' #\
 	  local $$/ = undef; #\
 	  $$data = JSON->new->decode (scalar <>); #\
+	  $$data = {%{$$data->{dom}}, md => $$data->{microdata}}; #\
 	  $$Data::Dumper::Sortkeys = 1; #\
 	  $$Data::Dumper::Useqq = 1; #\
 	  for $$ns (keys %{$$data->{elements}}) { #\
@@ -160,10 +169,16 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json pmbp-install Makefile
 	  delete $$data->{input}->{idl_attrs}; #\
 	  delete $$data->{input}->{methods}; #\
 	  delete $$data->{input}->{events}; #\
+	  for $$type (keys %{$$data->{md}}) { #\
+	    next unless $$data->{md}->{$$type}->{vocab} eq "http://schema.org/"; #\
+	    for $$prop (keys %{$$data->{md}->{$$type}->{props} or {}}) { #\
+	      $$data->{schemaorg_props}->{$$prop} = {}; #\
+	    } #\
+	  } #\
 	  $$pm = Dumper $$data; #\
-	  $$pm =~ s/VAR1/Web::HTML::Validator::_Defs/; #\
+	  $$pm =~ s/VAR1/Web::HTML::Validator::_Defs/g; #\
 	  print "$$pm\n"; #\
-	' < local/elements.json > $@
+	' > $@
 	perl -c $@
 
 ## ------ Tests ------

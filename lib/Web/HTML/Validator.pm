@@ -102,6 +102,10 @@ sub _init ($) {
   $self->{map_compat} = {}; # |map| elements with their lowercased |name|s
   $self->{has_link_type} = {};
   $self->{flag} = {};
+  $self->{top_level_item_elements} = [];
+      ## An arrayref of elements that create top-level microdata items
+  $self->{itemprop_els} = [];
+      ## An atrrayref of elements with |itemprop| attribute
   #$self->{has_uri_attr};
   #$self->{has_hyperlink_element};
   #$self->{has_charset};
@@ -128,6 +132,8 @@ sub _terminate ($) {
   delete $self->{usemap};
   delete $self->{map_exact};
   delete $self->{map_compat};
+  delete $self->{top_level_item_elements};
+  delete $self->{itemprop_els};
 } # _terminate
 
 ## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
@@ -6675,6 +6681,11 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemtype} = sub {
                          level => 'm');
     }
   }
+
+  $self->{onerror}->(node => $attr,
+                     type => 'empty itemtype', # XXXdoc
+                     level => 'm')
+      unless keys %word;
 }; # itemtype=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemprop} = sub {
@@ -6711,27 +6722,208 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemprop} = sub {
       unless keys %word;
 }; # itemprop=""
 
-sub _validate_microdata ($$) {
-  my ($self, $root) = @_;
+sub _validate_microdata ($) {
+  my ($self) = @_;
 
   require Web::HTML::Microdata;
   my $md = Web::HTML::Microdata->new;
   $md->onerror (sub { $self->onerror->(@_) });
 
-  my $items = $md->get_top_level_items ($root);
-  for my $item (@$items) {
-    # XXX
+  for my $el (@{$self->{top_level_item_elements}}) {
+    my $item = $md->get_item_of_element ($el);
+    $self->_validate_microdata_item ($item);
+  }
 
-# XXX item types MUST be defined
-# XXX itemid="" not allowed if itemtype does not allow it
-# XXX typed item's itemprop must be defined
-# XXX if item value is URL, must use URL property elements
-# XXX microdata error
-# XXX item loop
-# XXX unused itemprop
-# XXX vocab validation
+  while (@{$self->{itemprop_els}}) {
+    my $el = shift @{$self->{itemprop_els}};
+    $self->{onerror}->(node => $el,
+                       type => 'microdata:unused itemprop', # XXX
+                       level => 'm');
+    if ($el->has_attribute_ns (undef, 'itemscope')) {
+      my $item = $md->get_item_of_element ($el);
+      $self->_validate_microdata_item ($item);
+    }
   }
 } # _validate_microdata
+
+sub _validate_microdata_item ($$) {
+  my ($self, $item) = @_;
+
+  my $typed;
+  my $vocab = '';
+  my $type_defs = [];
+  for my $itemtype (sort { $a cmp $b } # For stability of errors
+                    keys %{$item->{types}}) {
+    next unless $item->{types}->{$itemtype};
+    $typed = 1;
+    my $it = $itemtype;
+    if (($_Defs->{md}->{$itemtype} and
+         defined $_Defs->{md}->{$itemtype}->{vocab}) or
+        ( ## <http://schema.org/docs/extension.html>
+         $itemtype =~ m{^(http://schema\.org/[^/]+)/.}s and
+         $_Defs->{md}->{$1} and
+         defined $_Defs->{md}->{$1}->{vocab} and
+         $it = $1
+        )) {
+      if ($vocab ne '') {
+        unless ($vocab eq $_Defs->{md}->{$it}->{vocab}) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'microdata:mixed vocab', # XXXdoc
+                             text => $vocab, # expected
+                             value => $itemtype, # actual
+                             level => 'm');
+        }
+      } else {
+        $vocab = $_Defs->{md}->{$it}->{vocab};
+      }
+      unless ($it eq $itemtype) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'microdata:schemaorg:private', # XXXdoc
+                           value => $itemtype,
+                           level => 'w');
+      }
+      push @$type_defs, $_Defs->{md}->{$it};
+    } else {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'microdata:item type not defined',
+                         value => $itemtype,
+                         level => 'm');
+    }
+  } # $itemtype
+
+  if (defined $item->{id}) {
+    my $use_id;
+    for (@$type_defs) {
+      if ($_->{use_itemid}) {
+        $use_id = 1;
+        last;
+      }
+    }
+    $self->{onerror}->(node => $item->{node},
+                       type => 'microdata:itemid not supported', # XXXdoc,
+                       level => 'm')
+        unless $use_id;
+  } # $item->{id}
+
+  for my $prop (keys %{$item->{props}}) {
+    next unless $item->{props}->{$prop};
+    my $prop_def;
+    PROPDEF: {
+      my @all_def = @$type_defs;
+      for (@$type_defs) {
+        if ($_->{props}->{$prop}) {
+          $prop_def = $_->{props}->{$prop};
+          last PROPDEF;
+        }
+      }
+      my %super = map { %{$_->{subclass_of} || {}} } @$type_defs;
+      for (keys %super) {
+        next unless $super{$_};
+        my $type_def = $_Defs->{md}->{$_} or next;
+        if ($type_def->{props}->{$prop}) {
+          $prop_def = $type_def->{props}->{$prop};
+          last PROPDEF;
+        }
+        push @all_def, $type_def;
+      }
+      if ($vocab eq 'http://schema.org/') {
+        for my $type_def (@all_def) {
+          for (keys %{$type_def->{props} or {}}) {
+            next unless $type_def->{props}->{$_};
+            if ($prop =~ m{^\Q$_\E/.}s) {
+              $prop_def = $type_def->{props}->{$_};
+              $self->{onerror}->(node => $_,
+                                 type => 'microdata:schemaorg:itemprop private', # XXXdoc
+                                 value => $prop,
+                                 level => 'w')
+                  for map { $_->{node} } @{$item->{props}->{$prop} or []};
+              last PROPDEF;
+            }
+          }
+        }
+      }
+    } # PROPDEF
+
+    if (defined $prop_def) {
+      #
+    } elsif ($prop =~ /:/) { ## An absolute URL
+      if ($typed) {
+        $self->{onerror}->(node => $_,
+                           type => 'microdata:itemprop proprietary', # XXXdoc
+                           value => $prop,
+                           level => 'w')
+            for map { $_->{node} } @{$item->{props}->{$prop} or []};
+      }
+    } else {
+      if ($typed) {
+        if ($vocab eq 'http://schema.org/' and
+            $_Defs->{schemaorg_props}->{$prop}) {
+          $self->{onerror}->(node => $_,
+                             type => 'microdata:schemaorg:bad domain', # XXXdoc
+                             text => (join ' ', grep { $item->{types}->{$_} } keys %{$item->{types} or {}}),
+                             value => $prop,
+                             level => 'm')
+              for map { $_->{node} } @{$item->{props}->{$prop} or []};
+        } else {
+          $self->{onerror}->(node => $_,
+                             type => 'microdata:itemprop not defined', # XXXdoc
+                             text => (join ' ', grep { $item->{types}->{$_} } keys %{$item->{types} or {}}),
+                             value => $prop,
+                             level => $vocab eq 'http://schema.org/' ? 'w' : 'm')
+              for map { $_->{node} } @{$item->{props}->{$prop} or []};
+        }
+      }
+    }
+
+    for my $value (@{$item->{props}->{$prop}}) {
+      @{$self->{itemprop_els}} = grep { $_ ne $value->{node} } @{$self->{itemprop_els}};
+
+      if ($value->{type} eq 'error') {
+        $self->{onerror}->(node => $value->{node},
+                           type => 'microdata:nested item loop', # XXXdoc
+                           level => 'm');
+      }
+      
+      my $type_ok;
+      my $error_reported;
+      if ($value->{type} eq 'item') {
+        $self->_validate_microdata_item ($value);
+
+        if (defined $prop_def) {
+          for (keys %{$value->{types}}) {
+            if ($prop_def->{item}->{types}->{$_} and $value->{types}->{$_}) {
+              $type_ok = 1;
+              last;
+            }
+          }
+          unless ($type_ok) {
+            $self->{onerror}->(node => $value->{node},
+                               type => 'microdata:unexpected nested item type', # XXXdoc
+                               text => (join ' ', grep { $prop_def->{item}->{types}->{$_} } keys %{$prop_def->{item}->{types} or {}}), # expected
+                               value => (join ' ', grep { $value->{types}->{$_} } keys %{$value->{types}}), # actual
+                               level => 'm');
+            $error_reported = 1;
+          }
+        }
+      }
+
+      unless ($value->{type} eq 'url') {
+        if ($prop_def and $prop_def->{is_url}) {
+          $self->{onerror}->(node => $value->{node},
+                             type => 'microdata:not url prop element', # XXXdoc
+                             text => $prop,
+                             level => 'm')
+              if not $error_reported and not $type_ok;
+        }
+      }
+    } # $value
+  } # $item->{props}
+
+# XXX nested typed item
+# XXX text item value syntax
+# XXX prop min/max
+# XXX vocab-specific validation
+} # _validate_microdata_item
 
 ## ------ Atom ------
 
@@ -8006,7 +8198,7 @@ sub _check_fallback_html ($$$$) {
          is_noscript => $container_ln eq 'head',
          validation_mode => 'default'}]);
 
-  $checker->_validate_microdata ([@$children]);
+  $checker->_validate_microdata;
   $checker->_check_refs;
   $checker->_terminate;
 } # _check_fallback_html
@@ -8165,7 +8357,7 @@ $Element->{+HTML_NS}->{template} = {
            validation_mode => 'default'}]);
 
     $checker->_check_refs;
-    $checker->_validate_microdata (\@children);
+    $checker->_validate_microdata;
     $checker->_terminate;
 
     $HTMLEmptyChecker{check_end}->(@_);
@@ -8439,6 +8631,10 @@ sub _check_node ($$) {
       push @new_item, [$eldef->{check_start}, $self, $item, $element_state];
       push @new_item, [$eldef->{check_attrs}, $self, $item, $element_state];
       push @new_item, [$eldef->{check_attrs2}, $self, $item, $element_state];
+      push @new_item, {type => 'check_html_attrs',
+                       node => $el,
+                       element_state => $element_state}
+          if $el_nsuri eq HTML_NS;
       
       my @child = @{$item->{content} || $el->child_nodes};
       while (@child) {
@@ -8488,10 +8684,6 @@ sub _check_node ($$) {
       push @new_item, {type => '_remove_minus_elements',
                        element_state => $element_state}
           if $disallowed;
-      push @new_item, {type => 'check_html_attrs',
-                       node => $el,
-                       element_state => $element_state}
-          if $el_nsuri eq HTML_NS;
       my $cm = $_Defs->{elements}->{$el_nsuri}->{$el_ln}->{content_model} || '';
       push @new_item, {type => 'check_palpable_content',
                        node => $el,
@@ -8518,13 +8710,20 @@ sub _check_node ($$) {
         }
       }
 
-      unless ($item->{node}->has_attribute_ns (undef, 'itemscope')) {
+      if ($item->{node}->has_attribute_ns (undef, 'itemscope')) {
+        push @{$self->{top_level_item_elements}}, $item->{node}
+            unless $item->{node}->has_attribute_ns (undef, 'itemprop');
+      } else {
         for my $name (qw(itemtype itemid itemref)) {
           my $attr = $item->{node}->get_attribute_node_ns (undef, $name);
           $self->{onerror}->(node => $attr,
                              type => 'attribute not allowed',
                              level => 'm') if $attr;
         }
+      }
+
+      if ($item->{node}->has_attribute_ns (undef, 'itemprop')) {
+        push @{$self->{itemprop_els}}, $item->{node};
       }
     } elsif ($item->{type} eq 'check_palpable_content') {
       $self->{onerror}->(node => $item->{node},
@@ -8794,7 +8993,7 @@ sub check_node ($$) {
   }
   # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
   $self->_check_refs;
-  $self->_validate_microdata ($node);
+  $self->_validate_microdata;
   $self->_terminate;
 
   # XXX More useful return object
