@@ -839,7 +839,7 @@ test {
   my @error;
   $validator->onerror (sub {
     my %args = @_;
-    push @error, \%args;
+    push @error, \%args unless $args{type} =~ /^attribute/;
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'element not allowed:root',
@@ -860,7 +860,7 @@ test {
   my @error;
   $validator->onerror (sub {
     my %args = @_;
-    push @error, \%args;
+    push @error, \%args unless $args{type} =~ /^attribute/;
   });
   $validator->check_node ($doc);
   eq_or_diff \@error, [{type => 'element not allowed:root',
