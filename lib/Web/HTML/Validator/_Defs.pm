@@ -25715,3 +25715,4 @@ $Web::HTML::Validator::_Defs = {
                                }
         };
 
+# Some of data drived from schema.org Web site, which is licensed under the Creative Commons Attribution-ShareAlike License (version 3.0).  See <http://schema.org/docs/terms.html> for full terms.

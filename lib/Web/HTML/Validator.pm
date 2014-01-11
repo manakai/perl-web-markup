@@ -226,6 +226,7 @@ sub _check_data ($$) {
 my $CheckerByType = {};
 my $NamespacedAttrChecker = {};
 my $ElementAttrChecker = {};
+my $ItemValueChecker = {};
 
 sub _check_element_attrs ($$$;%) {
   my ($self, $item, $element_state, %args) = @_;
@@ -357,6 +358,7 @@ sub _check_element_attrs ($$$;%) {
 
 $CheckerByType->{any} = sub {};
 $CheckerByType->{text} = sub {};
+$ItemValueChecker->{text} = sub {};
 
 ## Non-empty text
 $CheckerByType->{'non-empty'} =
@@ -422,6 +424,17 @@ $CheckerByType->{'non-negative integer'} = sub {
                        level => 'm');
   }
 }; # non-negative integer
+$ItemValueChecker->{'non-negative integer'} = sub {
+  my ($self, $value, $node) = @_;
+  if ($value =~ /\A[0-9]+\z/) {
+    #
+  } else {
+    $self->{onerror}->(node => $node,
+                       type => 'nninteger:syntax error',
+                       value => $value,
+                       level => 'm');
+  }
+}; # non-negative integer
 
 ## Non-negative integer greater than zero [HTML]
 $CheckerByType->{'non-negative integer greater than zero'} = sub {
@@ -480,6 +493,21 @@ $CheckerByType->{'floating-point number'} = sub {
   } else {
     $self->{onerror}->(node => $attr,
                        type => 'float:syntax error',
+                       level => 'm');
+  }
+}; # floating-point number
+$ItemValueChecker->{'floating-point number'} = sub {
+  my ($self, $value, $node) = @_;
+  if ($value =~ /\A
+    (-? (?> [0-9]+ (?>(?:\.[0-9]+))? | \.[0-9]+))
+    (?>[Ee] ([+-]?[0-9]+) )?
+  \z/x) {
+    my $num = 0+$1;
+    $num *= 10 ** ($2 + 0) if $2;
+  } else {
+    $self->{onerror}->(node => $node,
+                       type => 'float:syntax error',
+                       value => $value,
                        level => 'm');
   }
 }; # floating-point number
@@ -6746,12 +6774,12 @@ sub _validate_microdata ($) {
   }
 } # _validate_microdata
 
-sub _validate_microdata_item ($$) {
-  my ($self, $item) = @_;
+sub _validate_microdata_item ($$;$) {
+  my ($self, $item, $item_def) = @_;
 
-  my $typed;
+  my $typed = !!$item_def;
   my $vocab = '';
-  my $type_defs = [];
+  my $type_defs = $item_def ? [$item_def] : [];
   for my $itemtype (sort { $a cmp $b } # For stability of errors
                     keys %{$item->{types}}) {
     next unless $item->{types}->{$itemtype};
@@ -6845,7 +6873,13 @@ sub _validate_microdata_item ($$) {
     } # PROPDEF
 
     if (defined $prop_def) {
-      #
+      if ($prop_def->{discouraged}) {
+        $self->{onerror}->(node => $_,
+                           type => 'microdata:itemprop:discouraged', # XXXdoc
+                           value => $prop,
+                           level => 'w')
+            for map { $_->{node} } @{$item->{props}->{$prop} or []};
+      }
     } elsif ($prop =~ /:/) { ## An absolute URL
       if ($typed) {
         $self->{onerror}->(node => $_,
@@ -6854,7 +6888,7 @@ sub _validate_microdata_item ($$) {
                            level => 'w')
             for map { $_->{node} } @{$item->{props}->{$prop} or []};
       }
-    } else {
+    } else { ## Non-URL property with no definition
       if ($typed) {
         if ($vocab eq 'http://schema.org/' and
             $_Defs->{schemaorg_props}->{$prop}) {
@@ -6873,7 +6907,7 @@ sub _validate_microdata_item ($$) {
               for map { $_->{node} } @{$item->{props}->{$prop} or []};
         }
       }
-    }
+    } ## $prop_def or not
 
     for my $value (@{$item->{props}->{$prop}}) {
       @{$self->{itemprop_els}} = grep { $_ ne $value->{node} } @{$self->{itemprop_els}};
@@ -6882,48 +6916,145 @@ sub _validate_microdata_item ($$) {
         $self->{onerror}->(node => $value->{node},
                            type => 'microdata:nested item loop', # XXXdoc
                            level => 'm');
-      }
-      
-      my $type_ok;
-      my $error_reported;
-      if ($value->{type} eq 'item') {
-        $self->_validate_microdata_item ($value);
-
+      } elsif ($value->{type} eq 'item') {
+        my $has_type;
+        my $type_ok;
         if (defined $prop_def) {
-          for (keys %{$value->{types}}) {
-            if ($prop_def->{item}->{types}->{$_} and $value->{types}->{$_}) {
-              $type_ok = 1;
-              last;
+          if ($prop_def->{item}) {
+            for (keys %{$value->{types}}) {
+              $has_type = 1;
+              if ($prop_def->{item}->{types}->{$_} and $value->{types}->{$_}) {
+                $type_ok = 1;
+                last;
+              }
             }
           }
-          unless ($type_ok) {
-            $self->{onerror}->(node => $value->{node},
-                               type => 'microdata:unexpected nested item type', # XXXdoc
-                               text => (join ' ', grep { $prop_def->{item}->{types}->{$_} } keys %{$prop_def->{item}->{types} or {}}), # expected
-                               value => (join ' ', grep { $value->{types}->{$_} } keys %{$value->{types}}), # actual
-                               level => 'm');
-            $error_reported = 1;
+
+          if ($type_ok) {
+            ## The child item has an item type expected by the parent item.
+            #
+          } else {
+            ## The child item has a item type, but:
+            if ($prop_def->{item}) { ## Different type is expected
+              $self->{onerror}->(node => $value->{node},
+                                 type => 'microdata:unexpected nested item type', # XXXdoc
+                                 text => (join ' ', grep { $prop_def->{item}->{types}->{$_} } keys %{$prop_def->{item}->{types} or {}}), # expected
+                                 value => (join ' ', grep { $value->{types}->{$_} } keys %{$value->{types}}), # actual
+                                 level => 'm')
+                  if keys %{$prop_def->{item}->{types} or {}};
+            } elsif (defined $prop_def->{value} or ## Non-item is expected
+                     $prop_def->{is_url} or
+                     keys %{$prop_def->{enum} or {}}) {
+              $self->{onerror}->(node => $value->{node},
+                                 type => 'microdata:itemvalue not text', # XXXdoc
+                                 level => 'm');
+            } # else, no constraint
           }
         }
-      }
 
-      unless ($value->{type} eq 'url') {
-        if ($prop_def and $prop_def->{is_url}) {
-          $self->{onerror}->(node => $value->{node},
-                             type => 'microdata:not url prop element', # XXXdoc
-                             text => $prop,
-                             level => 'm')
-              if not $error_reported and not $type_ok;
+        if (defined $prop_def and not $type_ok and $prop_def->{item}) {
+          $self->_validate_microdata_item ($value, $prop_def->{item});
+        } else {
+          $self->_validate_microdata_item ($value);
         }
-      }
+      } else { # $value->{type} eq 'url' or 'text'
+        if (defined $prop_def) {
+          if (not $value->{type} eq 'url' and
+              $prop_def->{is_url} and
+              not defined $prop_def->{value} and
+              not %{$prop_def->{enum} or {}}) {
+            $self->{onerror}->(node => $value->{node},
+                               type => 'microdata:not url prop element', # XXXdoc
+                               text => $prop,
+                               level => 'm');
+          }
+
+          if ($prop_def->{item} and
+              not ($prop_def->{is_url} or
+                   defined $prop_def->{value} or
+                   keys %{$prop_def->{enum} or {}})) {
+            $self->{onerror}->(node => $value->{node},
+                               type => 'microdata:not item', # XXXdoc
+                               text => $prop,
+                               level => 'm');
+          }
+
+          if (defined $prop_def->{value} or keys %{$prop_def->{enum} or {}}) {
+            if (defined $prop_def->{value}) {
+              my $checker = $ItemValueChecker->{$prop_def->{value}};
+              if ($checker) {
+                $checker->($self, $value->{text}, $value->{node});
+              } else {
+                $self->{onerror}->(node => $value->{node},
+                                   type => 'microdata:unknown type', # XXXdoc
+                                   text => $prop_def->{value},
+                                   value => $value->{text},
+                                   level => 'u');
+              }
+
+              # XXX dtstart and dtend must have same datatype
+              # XXX dtstart < dtend
+            } else { # enum
+              unless ($prop_def->{enum}->{$value->{text}}) {
+                $self->{onerror}->(node => $value->{node},
+                                   type => 'microdata:enum:bad', # XXXdoc
+                                   value => $value->{text},
+                                   level => 'm');
+              }
+            }
+          } # value or enum
+        } # $prop_def
+      } # $value->{type}
     } # $value
   } # $item->{props}
 
-# XXX nested typed item
-# XXX text item value syntax
-# XXX prop min/max
-# XXX vocab-specific validation
+  for my $type_def (@$type_defs) {
+    for my $prop (keys %{$type_def->{props} or {}}) {
+      my $prop_def = $type_def->{props}->{$prop} or next;
+      if (defined $prop_def->{min} and $prop_def->{min} > 0) {
+        if (@{$item->{props}->{$prop} or []} < $prop_def->{min}) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'microdata:no required itemprop', # XXXdoc
+                             text => $prop,
+                             level => 'm');
+        }
+      }
+      if (defined $prop_def->{max} and not $prop_def->{max} eq 'Infinity') {
+        if ($prop_def->{max} < @{$item->{props}->{$prop} or []}) {
+          $self->{onerror}->(node => $item->{node},
+                             type => 'microdata:too many itemprop', # XXXdoc
+                             text => $prop,
+                             level => 'm');
+        }
+      }
+    }
+  } # @$type_defs
+
+  if ($item->{types}->{'http://microformats.org/profile/hcalendar#vevent'} and
+      @{$item->{props}->{dtend} or []} and
+      @{$item->{props}->{duration} or []}) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'microdata:vevent:dtend and duration', # XXXdoc
+                       level => 'm');
+  }
 } # _validate_microdata_item
+
+# XXX itemvalue text syntax:
+#    integer
+#    currency
+#    date string
+#    global date and time string
+#    global or local date and time string
+#    date string or global date and time string
+#    language tag
+#    vevent duration
+#    vcard geo
+#    vevent rdate
+#    icalendar recur
+#    time string
+#    vcard tz
+#    vcard telephone number
+#    vcard sex
 
 ## ------ Atom ------
 
