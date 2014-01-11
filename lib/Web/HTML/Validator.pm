@@ -2266,7 +2266,8 @@ my %HTMLFlowContentChecker = (
                            type => 'element not allowed:flow style',
                            level => 'm');
       }
-    } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+    } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+             $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
       $element_state->{has_non_style} = 1;
     } else {
       $self->{onerror}->(node => $child_el,
@@ -2300,7 +2301,8 @@ my %HTMLPhrasingContentChecker = (
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
-    } elsif ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+    } elsif ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+             $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
       #
     } else {
       $self->{onerror}->(node => $child_el,
@@ -2333,7 +2335,8 @@ my %TransparentChecker = (
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($self->{flag}->{in_phrasing}) { # phrasing content
-      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2354,7 +2357,8 @@ my %TransparentChecker = (
                              type => 'element not allowed:flow style',
                              level => 'm');
         }
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{has_non_style} = 1;
       } else {
         $self->{onerror}->(node => $child_el,
@@ -2664,10 +2668,22 @@ $Element->{+HTML_NS}->{link} = {
                          level => 'm');
     }
 
-    unless ($item->{node}->has_attribute_ns (undef, 'rel')) {
+    my $itemprop_attr = $item->{node}->get_attribute_node_ns (undef, 'itemprop');
+    if ($rel_attr and $itemprop_attr) {
+      $self->{onerror}->(node => $self->{flag}->{in_head} ? $itemprop_attr : $rel_attr,
+                         type => 'attribute not allowed',
+                         level => 'm');
+    } elsif (not $rel_attr and not $itemprop_attr) {
       $self->{onerror}->(node => $item->{node},
                          type => 'attribute missing',
-                         text => 'rel',
+                         text => ($self->{flag}->{in_head} or $item->{is_root}) ? 'rel' : 'itemprop',
+                         level => 'm');
+    } elsif (not $itemprop_attr and
+             not $self->{flag}->{in_head} and
+             not $item->{is_root}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'itemprop',
                          level => 'm');
     }
     
@@ -2734,6 +2750,15 @@ $Element->{+HTML_NS}->{meta} = {
                          level => 'm')
           if $content_attr;
     } # content=""
+
+    if (not $itemprop_attr and
+        not $self->{flag}->{in_head} and
+        not $item->{is_root}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'itemprop',
+                         level => 'm');
+    }
 
     my $charset;
     if ($charset_attr) {
@@ -3569,6 +3594,12 @@ $Element->{+HTML_NS}->{a} = {
                              level => 'm');
         }
       }
+
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'href',
+                         level => 'm')
+          if defined $attr{itemprop};
     }
 
     if ($attr{target}) {
@@ -3896,7 +3927,8 @@ $Element->{+HTML_NS}->{ruby} = {
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($element_state->{phase} eq 'before-rb') {
-      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -3915,7 +3947,8 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'in-rb') {
-      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         #$element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         unless (delete $element_state->{has_palpable}) {
@@ -3938,7 +3971,8 @@ $Element->{+HTML_NS}->{ruby} = {
         #$element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rt') {
-      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rp' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -3974,7 +4008,8 @@ $Element->{+HTML_NS}->{ruby} = {
                            type => 'ps element missing',
                            text => 'rp',
                            level => 'm');
-        unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+                $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => 'm');
@@ -3998,7 +4033,8 @@ $Element->{+HTML_NS}->{ruby} = {
                            type => 'ps element missing',
                            text => 'rp',
                            level => 'm');
-        unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+        unless ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+                $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
           $self->{onerror}->(node => $child_el,
                              type => 'element not allowed:ruby base',
                              level => 'm');
@@ -4006,7 +4042,8 @@ $Element->{+HTML_NS}->{ruby} = {
         $element_state->{phase} = 'in-rb';
       }
     } elsif ($element_state->{phase} eq 'after-rp2') {
-      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'in-rb';
       } elsif ($child_ln eq 'rt' and $child_nsuri eq HTML_NS) {
         $self->{onerror}->(node => $child_el,
@@ -4031,6 +4068,7 @@ $Element->{+HTML_NS}->{ruby} = {
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
+      $element_state->{has_palpable} = 1;
       if ($element_state->{phase} eq 'before-rb') {
         $element_state->{phase} = 'in-rb';
       } elsif ($element_state->{phase} eq 'in-rb') {
@@ -4164,7 +4202,8 @@ $Element->{+HTML_NS}->{figure} = {
         }
         $element_state->{in_flow_content} = 1;
         push @{$element_state->{figcaptions} ||= []}, 'flow';
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{in_flow_content} = 1;
         $element_state->{has_non_style} = 1;
         push @{$element_state->{figcaptions} ||= []}, 'flow';
@@ -4215,6 +4254,16 @@ $Element->{+HTML_NS}->{iframe} = {
       $HTMLEmptyChecker{check_start}->(@_);
     }
   }, # check_start
+  check_attrs2 => sub {
+    my ($self, $item) = @_;
+    if ($item->{node}->has_attribute_ns (undef, 'itemprop') and
+        not $item->{node}->has_attribute_ns (undef, 'src')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'src',
+                         level => 'm');
+    }
+  }, # check_attrs2
   check_child_element => sub {
     my ($self, $item) = @_;
     if ($item->{node}->owner_document->manakai_is_html) {
@@ -4370,13 +4419,17 @@ $Element->{+HTML_NS}->{embed} = {
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     unless ($item->{node}->has_attribute_ns (undef, 'src')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'src',
-                         level => 'i');
-      ## NOTE: <embed> without src="" is allowed since revision 1929.
-      ## We issues an informational message since <embed> w/o src=""
-      ## is likely an authoring error.
+      if ($item->{node}->has_attribute_ns (undef, 'itemprop')) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'src',
+                           level => 'm');
+      } else {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'src',
+                           level => 'i');
+      }
     }
 
     for (qw(align border hspace vspace name)) {
@@ -4418,7 +4471,13 @@ $Element->{+HTML_NS}->{object} = {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing:data|type',
                          level => 'm');
+    } elsif (not $has_data and $el->has_attribute_ns (undef, 'itemprop')) {
+      $self->{onerror}->(node => $el,
+                         type => 'attribute missing',
+                         text => 'data',
+                         level => 'm');
     }
+
     if ($has_data and $has_type) {
       unless ($el->has_attribute_ns (undef, 'typemustmatch')) {
         ## Strictly speaking, if |data|'s origin is same as the
@@ -4574,6 +4633,16 @@ $Element->{+HTML_NS}->{video} = {
 
     $TransparentChecker{check_start}->(@_);
   }, # check_start
+  check_attrs2 => sub {
+    my ($self, $item, $element_state) = @_;
+    if ($item->{node}->has_attribute_ns (undef, 'itemprop') and
+        not $item->{node}->has_attribute_ns (undef, 'src')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'src',
+                         level => 'm');
+    }
+  }, # check_attrs2
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -4926,6 +4995,13 @@ $Element->{+HTML_NS}->{area} = {
                              type => 'attribute not allowed',
                              level => 'm');
         }
+      }
+
+      if (defined $attr{itemprop}) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'attribute missing',
+                           text => 'href',
+                           level => 'm');
       }
     }
 
@@ -5416,7 +5492,8 @@ $Element->{+HTML_NS}->{fieldset} = {
                            level => 'm')
             if $element_state->{has_non_style};
         $element_state->{in_flow_content} = 1;
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{has_non_style} = 1;
         $element_state->{in_flow_content} = 1;
       } else {
@@ -6062,7 +6139,8 @@ $Element->{+HTML_NS}->{datalist} = {
                          type => 'element not allowed:minus',
                          level => 'm');
     } elsif ($element_state->{phase} eq 'phrasing') {
-      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -6078,7 +6156,8 @@ $Element->{+HTML_NS}->{datalist} = {
                            level => 'm');
       }
     } elsif ($element_state->{phase} eq 'any') {
-      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'phrasing';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'option') {
         $element_state->{phase} = 'option';
@@ -6450,7 +6529,8 @@ $Element->{+HTML_NS}->{details} = {
                            level => 'm')
             if $element_state->{has_non_style};
         $element_state->{in_flow_content} = 1;
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{has_non_style} = 1;
         $element_state->{in_flow_content} = 1;
       } else {
@@ -6528,7 +6608,8 @@ $Element->{+HTML_NS}->{menu} = {
         $element_state->{phase} = 'toolbar-li';
       } elsif ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
         #
-      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      } elsif ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+               $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         $element_state->{phase} = 'toolbar-flow';
       } else {
         $self->{onerror}->(node => $child_el,
@@ -6546,7 +6627,8 @@ $Element->{+HTML_NS}->{menu} = {
                            level => 'm');
       }
     } elsif ($element_state->{phase} eq 'toolbar-flow') {
-      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($_Defs->{categories}->{'flow content'}->{elements}->{$child_nsuri}->{$child_ln} or
+          $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
         #
       } else {
         $self->{onerror}->(node => $child_el,
@@ -8416,6 +8498,7 @@ $Element->{+HTML_NS}->{template} = {
     my @children = @{$df->child_nodes};
 
     my $model;
+    my $has_flow;
     for my $child (@children) {
       if ($child->node_type == 1) { # ELEMENT_NODE
         my $ns = $child->namespace_uri || '';
@@ -8458,10 +8541,14 @@ $Element->{+HTML_NS}->{template} = {
         }
         if ($_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln} and
             not $_Defs->{categories}->{'flow content'}->{elements}->{$ns}->{$ln} and
-            not ($ns eq HTML_NS and $ln eq 'style')) {
+            not $_Defs->{categories}->{'flow content'}->{elements_with_exceptions}->{$ns}->{$ln}) {
           ## Metadata content
           $model = 'metadata';
           last;
+        }
+
+        if (not $_Defs->{categories}->{'metadata content'}->{elements}->{$ns}->{$ln}) {
+          $has_flow = 1;
         }
 
         ## Metadata content (<link> <meta> <script> <template>), flow
@@ -8470,18 +8557,19 @@ $Element->{+HTML_NS}->{template} = {
         ## (<script> <template>), tr (<script> <template>), fieldset,
         ## details, <menu type=popup> (<hr> <script> <template>)
         #
-      #} elsif ($child->node_type == 3) { # TEXT_NODE
-      #  if ($child->data =~ /[\x09\x0A\x0C\x0D\x20]/) { # non-space chars
-      #    ## Flow content, figure, ruby, object, media
-      #    
-      #  }
+      } elsif ($child->node_type == 3) { # TEXT_NODE
+        if ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/) { # non-space chars
+          ## Flow content, figure, ruby, object, media
+          $has_flow = 1;
+        }
       }
     } # $child
 
     my $container;
     if (not defined $model) {
       ## Flow content or metadata content
-      $container = $df->owner_document->create_element ('div');
+      $container = $df->owner_document->create_element
+          ($has_flow ? 'div' : 'head');
     } elsif ($model eq 'metadata') {
       $container = $df->owner_document->create_element ('head');
     } elsif ($model eq 'popup menu') {
@@ -8693,6 +8781,7 @@ sub _check_node ($$) {
       ## $item
       ##   type            |element|
       ##   node            The element node
+      ##   is_root         Handled as if it had no parent
       ##   content         Chlildren (optional)
       ##   is_template     Is template content (boolean)
       ##   is_noscript     Is |noscript| in |head| (boolean)
@@ -9134,6 +9223,7 @@ sub check_node ($$) {
   if ($nt == 1) { # ELEMENT_NODE
     $self->_check_node
         ([{type => 'element', node => $node, parent_state => {},
+           is_root => 1,
            validation_mode => $self->_determine_validation_mode
                ($node, 'default')}]);
   } elsif ($nt == 9) { # DOCUMENT_NODE
