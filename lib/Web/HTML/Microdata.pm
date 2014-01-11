@@ -153,7 +153,7 @@ sub get_item_value_of_element ($$) {
 
   if (($el->namespace_uri || '') eq 'http://www.w3.org/1999/xhtml') {
     if ($el->has_attribute_ns (undef, 'itemscope')) {
-      return $self->get_item_of_element ($el);
+      return $self->_get_item_of_element ($el);
     }
     my $ln = $el->local_name;
     if ($ln eq 'meta') {
