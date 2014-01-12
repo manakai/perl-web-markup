@@ -46,8 +46,9 @@ sub get_item_of_element ($$) {
   return $self->_get_item_of_element ($element);
 } # get_item_of_element
 
-sub _get_item_of_element ($$) {
-  my ($self, $root) = @_;
+## Also invoked by |Web::DOM::HTMLElement|.
+sub _get_item_of_element ($$;%) {
+  my ($self, $root, %args) = @_;
 
   for (@{$self->{current_item_els} ||= []}) {
     return {type => 'error',
@@ -110,8 +111,12 @@ sub _get_item_of_element ($$) {
       my %found;
       my $prop_names = [grep { length $_ and not $found{$_}++ } split /[\x09\x0A\x0C\x0D\x20]+/, defined $itemprop ? $itemprop : ''];
       if (@$prop_names) {
-        my $value = $self->get_item_value_of_element ($current);
-        push @{$results->{$_} ||= []}, $value for @$prop_names;
+        if ($args{no_value}) {
+          push @{$results->{$_} ||= []}, {node => $current} for @$prop_names;
+        } else {
+          my $value = $self->get_item_value_of_element ($current);
+          push @{$results->{$_} ||= []}, $value for @$prop_names;
+        }
       }
     }
 
