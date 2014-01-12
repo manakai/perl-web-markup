@@ -190,20 +190,9 @@ sub _sort_nodes ($$) {
   return $_[1] if @{$_[1]} < 2;
 
   my @node = map {
-    my $r = [-1];
-    my $n = $_->{node};
-    P: while (my $p = $n->parent_node) {
-      my $i = 0;
-      for (@{$p->child_nodes}) {
-        if ($_ eq $n) {
-          unshift @$r, $i;
-          last;
-        }
-        $i++;
-      }
-      $n = $p;
-    } # P
-    [$_, $r];
+    my $list = $_->{node}->_tree_node_indexes;
+    push @$list, -1;
+    [$_, $list];
   } @{$_[1]};
 
   return [map { $_->[0] } sort {
