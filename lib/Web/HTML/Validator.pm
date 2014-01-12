@@ -3225,13 +3225,6 @@ $Element->{+HTML_NS}->{noscript} = {
 
 # ---- Sections ----
 
-$Element->{+HTML_NS}->{nav} = {
-  %HTMLFlowContentChecker, # XXX
-};
-$Element->{+HTML_NS}->{aside} = {
-  %HTMLFlowContentChecker, # XXX
-};
-
 $Element->{+HTML_NS}->{$_}->{check_start} = sub {
   my ($self, $item, $element_state) = @_;
   $self->{flag}->{has_hn} = 1;
@@ -3455,7 +3448,18 @@ $Element->{+HTML_NS}->{dl} = {
     } else {
       die "check_child_element: Bad |dl| phase: $element_state->{phase}";
     }
-  },
+
+    if ($child_nsuri eq HTML_NS and $child_ln eq 'dt') {
+      my $name = $child_el->text_content;
+      if (defined $element_state->{dl_names}->{$name}) {
+        $self->{onerror}->(node => $child_el,
+                           type => 'duplicate dl name',
+                           level => 's');
+      } else {
+        $element_state->{dl_names}->{$name} = 1;
+      }
+    }
+  }, # check_child_element
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
@@ -3476,9 +3480,6 @@ $Element->{+HTML_NS}->{dl} = {
     $AnyChecker{check_end}->(@_);
   },
 }; # dl
-## XXX Within a single <code>dl</code> element, there should not be
-## more than one <code>dt</code> element for each name.</p> (HTML5
-## revision 3859)
 
 $ElementAttrChecker->{(HTML_NS)}->{marquee}->{''}->{loop} = $LegacyLoopChecker;
 
