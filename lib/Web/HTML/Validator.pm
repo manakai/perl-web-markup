@@ -1210,8 +1210,8 @@ for my $ns (keys %{$_Defs->{elements}}) {
     }
   }
 }
-## Note that there might be exceptions, which is checked by
-## |$IsInHTMLInteractiveContent|.
+## Note that there might be exceptions, which is checked by the
+## |_is_minus_element| method.
 
 $IsPalpableContent->{(HTML_NS)}->{audio} = sub {
   return $_[0]->has_attribute_ns (undef, 'controls');
@@ -1315,24 +1315,15 @@ our $ElementDefault = {
   check_start => sub {},
 };
 
-## "Elements that are from namespaces other than the HTML namespace
-## and that convey content but not metadata, are embedded content"
-## [HTML]
-
-my $IsInHTMLInteractiveContent = sub {
+## This method returns whether the specified element is disallowed in
+## the current context or not, given that the specified element is
+## included in the list of possibly disallowed elements.
+##
+## Flags |no_interactive| and |in_canvas| are used to allow some kinds
+## of interactive content that are descendant of |canvas| elements but
+## not descendant of |a| or |button| elements.
+sub _is_minus_element ($$$$) {
   my ($self, $el, $nsuri, $ln) = @_;
-
-  ## NOTE: This CODE returns whether an element that is conditionally
-  ## categorizzed as an interactive content is currently in that
-  ## condition or not.
-
-  ## The variable name is not good, since this method also returns
-  ## true for non-interactive content as long as the element cannot be
-  ## interactive content.
-
-  ## Flags |no_interactive| and |in_canvas| are used to allow some
-  ## kinds of interactive content that are descendant of |canvas|
-  ## elements but not descendant of |a| or |button| elements.
 
   if ($nsuri ne HTML_NS) {
     return 1;
@@ -1368,7 +1359,7 @@ my $IsInHTMLInteractiveContent = sub {
       return 1;
     }
   } # ns
-}; # $IsInHTMLInteractiveContent
+} # _is_minus_element
 
 our $Element = {};
 
@@ -1802,15 +1793,6 @@ my $TextFormatAttrChecker = sub {
   }
 }; # $TextFormatAttrChecker
 
-my $PrecisionAttrChecker = sub {
-  my ($self, $attr) = @_;
-  unless ($attr->value =~ /\A(?>[0-9]+(?>dp|sf)|integer|float)\z/) {
-    $self->{onerror}->(node => $attr,
-                       type => 'precision:syntax error',
-                       level => 'm');
-  }
-}; # $PrecisionAttrChecker
-
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey} = sub {
   my ($self, $attr) = @_;
   
@@ -2212,7 +2194,7 @@ my %HTMLEmptyChecker = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -2238,7 +2220,7 @@ my %HTMLTextChecker = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -2256,7 +2238,7 @@ my %HTMLFlowContentChecker = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -2297,7 +2279,7 @@ my %HTMLPhrasingContentChecker = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -2330,7 +2312,7 @@ my %TransparentChecker = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -2421,7 +2403,7 @@ $Element->{+HTML_NS}->{html} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -2504,7 +2486,7 @@ $Element->{+HTML_NS}->{head} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -2965,7 +2947,7 @@ $Element->{+HTML_NS}->{style} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -3062,7 +3044,7 @@ $Element->{+HTML_NS}->{script} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -3264,7 +3246,7 @@ $Element->{+HTML_NS}->{hgroup} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state, $element_state2) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -3336,7 +3318,7 @@ $Element->{+HTML_NS}->{dir} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -3429,7 +3411,7 @@ $Element->{+HTML_NS}->{dl} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -3922,7 +3904,7 @@ $Element->{+HTML_NS}->{ruby} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -4187,7 +4169,7 @@ $Element->{+HTML_NS}->{figure} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -4514,7 +4496,7 @@ $Element->{+HTML_NS}->{object} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -4647,7 +4629,7 @@ $Element->{+HTML_NS}->{video} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -5030,7 +5012,7 @@ $Element->{+HTML_NS}->{table} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -5274,7 +5256,7 @@ $Element->{+HTML_NS}->{colgroup} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -5317,7 +5299,7 @@ $Element->{+HTML_NS}->{tbody} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -5363,7 +5345,7 @@ $Element->{+HTML_NS}->{tr} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -5473,7 +5455,7 @@ $Element->{+HTML_NS}->{fieldset} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -5621,7 +5603,14 @@ $Element->{+HTML_NS}->{input} = {
     max => sub {}, ## check_attrs2
     min => sub {}, ## check_attrs2
     name => $FormControlNameAttrChecker,
-    precision => $PrecisionAttrChecker,
+    precision => sub {
+      my ($self, $attr) = @_;
+      unless ($attr->value =~ /\A(?>[0-9]+(?>dp|sf)|integer|float)\z/) {
+        $self->{onerror}->(node => $attr,
+                           type => 'precision:syntax error',
+                           level => 'm');
+      }
+    }, # precision
     ## XXXresource src="" referenced resource type
     usemap => $HTMLUsemapAttrChecker,
     value => sub {}, ## check_attrs2
@@ -6082,7 +6071,7 @@ $Element->{+HTML_NS}->{select} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -6134,7 +6123,7 @@ $Element->{+HTML_NS}->{datalist} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -6217,7 +6206,7 @@ $Element->{+HTML_NS}->{optgroup} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -6510,7 +6499,7 @@ $Element->{+HTML_NS}->{details} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -6599,7 +6588,7 @@ $Element->{+HTML_NS}->{menu} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -6736,7 +6725,7 @@ $Element->{+HTML_NS}->{frameset} = {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -7226,7 +7215,7 @@ my %AtomTextConstruct = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -7298,7 +7287,7 @@ my %AtomPersonConstruct = (
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -7498,7 +7487,7 @@ $Element->{+ATOM_NS}->{entry} = {
     ## NOTE: metadata elements, followed by atom:entry* (no explicit MAY)
 
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -7657,7 +7646,7 @@ $Element->{+ATOM_NS}->{feed} = {
     ## NOTE: metadata elements, followed by atom:entry* (no explicit MAY)
 
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -7829,7 +7818,7 @@ $Element->{+ATOM_NS}->{content} = {
         $child_is_transparent, $element_state) = @_;
 
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -8170,7 +8159,7 @@ $Element->{+ATOM_NS}->{source} = {
         $child_is_transparent, $element_state) = @_;
 
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
@@ -8313,7 +8302,7 @@ $Element->{+THR_NS}->{total} = {
         $child_is_transparent, $element_state) = @_;
 
     if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $IsInHTMLInteractiveContent->($self, $child_el, $child_nsuri, $child_ln)) {
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
       $self->{onerror}->(node => $child_el,
                          type => 'element not allowed:minus',
                          level => 'm');
