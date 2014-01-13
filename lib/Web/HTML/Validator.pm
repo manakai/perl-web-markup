@@ -5,9 +5,13 @@ no warnings 'utf8';
 our $VERSION = '128.0';
 use Web::HTML::Validator::_Defs;
 
+## ------ Constructor ------
+
 sub new ($) {
   return bless {}, $_[0];
 } # new
+
+## ------ Validator error handler ------
 
 sub onerror ($;$) {
   if (@_ > 1) {
@@ -16,14 +20,65 @@ sub onerror ($;$) {
   return $_[0]->{onerror} ||= sub {
     my %args = @_;
     return if $args{level} eq 'mh';
-    warn sprintf "%s%s%s%s (%s)\n",
+    warn sprintf "%s%s%s%s (%s)%s\n",
         defined $args{node} ? $args{node}->node_name . ': ' : '',
         $args{type},
         defined $args{text} ? ' ' . $args{text} : '',
         defined $args{value} ? ' "' . $args{value} . '"' : '',
-        $args{level};
+        $args{level},
+        (defined $args{column} ? sprintf ' at line %d column %d', $args{line}, $args{column} : '');
   };
 } # onerror
+
+my $GetNestedOnError = sub {
+  my ($onerror, $node) = @_;
+  my $pos = $node->get_user_data ('manakai_pos');
+  return sub {
+    my %args = @_;
+    delete $args{uri}; # XXX
+
+    my $line = delete $args{line};
+    my $column = delete $args{column};
+    if (not defined $line and $args{node}) {
+      $line = $args{node}->get_user_data ('manakai_source_line');
+      $column = $args{node}->get_user_data ('manakai_source_column');
+    }
+
+    if (defined $line and defined $column) {
+      $column ||= 1;
+      if ($pos and ref $pos eq 'ARRAY') {
+        my $v = [1,1 => 1,1];
+        for (@$pos) {
+          if ($_->[0] < $line or
+              ($_->[0] == $line and $_->[1] <= $column)) {
+            $v = $_;
+          } else {
+            last;
+          }
+        }
+        if ($v) {
+          if ($v->[0] == $line) {
+            $onerror->(@_, node => $node,
+                       line => $v->[2],
+                       column => $v->[3] + $column - $v->[1]);
+            return;
+          } else {
+            $onerror->(@_, node => $node,
+                       line => $v->[2] + $line - $v->[0],
+                       column => $column);
+            return;
+          }
+        }
+      }
+    }
+
+    # XXX has no line/column; can we do something better?
+
+    $onerror->(%args, node => $node);
+  };
+}; # $GetNestedOnError
+
+## ------ Validator definitions and states ------
 
 ## Variable |$_Defs| (|$Web::HTML::Validator::_Defs|), defined in
 ## |Web::HTML::Validator::_Defs| module, is generated from
@@ -205,6 +260,8 @@ my $InvalidChar = qr{[^\x09\x0A\x{0020}-~\x{00A0}-\x{D7FF}\x{E000}-\x{FDCF}\x{FD
 sub _check_data ($$) {
   my ($self, $node, $method) = @_;
   my $value = $node->$method;
+
+  # XXX line/column by manakai_pos
   while ($value =~ /($InvalidChar)/og) {
     my $char = ord $1;
     if ($char == 0x000D) {
@@ -228,9 +285,49 @@ sub _check_data ($$) {
                          level => 'm');
     }
   }
-
-  # XXX bidi char tests
 } # _check_data
+
+sub _check_attr_bidi ($$) {
+  my ($self, $attr) = @_;
+  my $value = $attr->value;
+  my @expected;
+  my $onerror = $GetNestedOnError->($self->onerror, $attr);
+
+  my $line = 1;
+  my $col_offset = -1;
+  while ($value =~ /([\x{202A}-\x{202E}\x{2066}-\x{2069}\x0A]|\x0D\x0A?)/g) {
+    my $c = $1;
+    if ($c eq "\x{202A}" or $c eq "\x{202B}" or # LRE / RLE
+        $c eq "\x{202D}" or $c eq "\x{202E}") { # LRO / RLO
+      unshift @expected, "\x{202C}";
+    } elsif ($c eq "\x{2066}" or $c eq "\x{2067}" or
+             $c eq "\x{2068}") { # LRI / RLI / FSI
+      unshift @expected, "\x{2069}";
+    } elsif ($c eq "\x{202C}" or $c eq "\x{2069}") { # PDF / PDI
+      if (@expected and $expected[0] eq $c) {
+        shift @expected;
+      } else {
+        $onerror->(type => 'bidi:stray pop',
+                   value => $c eq "\x{202C}" ? "PDF" : "PDI",
+                   line => $line,
+                   column => $-[0] - $col_offset,
+                   level => 'm');
+      }
+    } elsif ($c eq "\x0A" or $c eq "\x0D\x0A" or $c eq "\x0D") {
+      $line++;
+      $col_offset = $+[0] - 1;
+    }
+  }
+  if (@expected) {
+    $onerror->(type => 'bidi:no pop',
+               text => (join '', map { $_ eq "\x{202C}" ? "&#x202C;" : "&#x2069;" } @expected),
+               line => $line,
+               column => (length $value) - $col_offset,
+               level => 'm');
+  }
+} # _check_attr_bidi
+
+# XXX bidi check for element contents
 
 ## ------ Attribute conformance checkers ------
 
@@ -3641,12 +3738,6 @@ $Element->{+HTML_NS}->{a} = {
     $TransparentChecker{check_end}->(@_);
   }, # check_end
 }; # a
-
-## XXX |q|: "Quotation punctuation (such as quotation marks), if any,
-## must be placed inside the <code>q</code> element."  Though we
-## cannot test the element against this requirement since it incluides
-## a semantic bit, it might be possible to inform of the existence of
-## quotation marks OUTSIDE the |q| element.
 
 $Element->{+HTML_NS}->{dfn} = {
   %HTMLPhrasingContentChecker,
@@ -8390,54 +8481,6 @@ $Element->{+THR_NS}->{total} = {
 
 ## ------ Nested document ------
 
-my $GetNestedOnError = sub {
-  my ($onerror, $node) = @_;
-  my $pos = $node->get_user_data ('manakai_pos');
-  return sub {
-    my %args = @_;
-    delete $args{uri}; # XXX
-
-    my $line = delete $args{line};
-    my $column = delete $args{column};
-    if (not defined $line and $args{node}) {
-      $line = $args{node}->get_user_data ('manakai_source_line');
-      $column = $args{node}->get_user_data ('manakai_source_column');
-    }
-
-    if (defined $line and defined $column) {
-      $column ||= 1;
-      if ($pos and ref $pos eq 'ARRAY') {
-        my $v = [1,1 => 1,1];
-        for (@$pos) {
-          if ($_->[0] < $line or
-              ($_->[0] == $line and $_->[1] <= $column)) {
-            $v = $_;
-          } else {
-            last;
-          }
-        }
-        if ($v) {
-          if ($v->[0] == $line) {
-            $onerror->(@_, node => $node,
-                       line => $v->[2],
-                       column => $v->[3] + $column - $v->[1]);
-            return;
-          } else {
-            $onerror->(@_, node => $node,
-                       line => $v->[2] + $line - $v->[0],
-                       column => $column);
-            return;
-          }
-        }
-      }
-    }
-
-    # XXX has no line/column; can we do something better?
-
-    $onerror->(%args, node => $node);
-  };
-}; # $GetNestedOnError
-
 sub _check_fallback_html ($$$$) {
   my ($self, $context, $disallowed, $container_ln) = @_;
   my $container = $context->owner_document->create_element ($container_ln);
@@ -8981,6 +9024,11 @@ sub _check_node ($$) {
     } elsif ($item->{type} eq '_remove_minus_elements') {
       $self->_remove_minus_elements ($item->{element_state});
     } elsif ($item->{type} eq 'check_html_attrs') {
+      for my $attr (@{$item->{node}->attributes}) {
+        next if defined $attr->namespace_uri;
+        $self->_check_attr_bidi ($attr);
+      }
+
       unless ($item->{node}->has_attribute_ns (undef, 'title')) {
         if ($item->{element_state}->{require_title} or
             $item->{node}->has_attribute_ns (undef, 'draggable') or
