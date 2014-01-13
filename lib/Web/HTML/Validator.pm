@@ -3219,12 +3219,12 @@ $Element->{+HTML_NS}->{noscript} = {
       if ($item->{node}->owner_document->manakai_is_html) {
         my $container_ln = $self->{flag}->{in_head} ? 'head' :
                            $self->{flag}->{in_phrasing} ? 'span' : 'div';
-        $self->_add_minus_elements ($item->{element_state},
+        $self->_add_minus_elements ($element_state,
                                     {(HTML_NS) => {script => 1,
                                                    noscript => 1}});
         $self->_check_fallback_html
             ($item->{node}, $self->{minus_elements}, $container_ln);
-        $self->_remove_minus_elements ($item->{element_state});
+        $self->_remove_minus_elements ($element_state);
       }
       $HTMLTextChecker{check_end}->(@_);
     } else { ## Scripting is disabled

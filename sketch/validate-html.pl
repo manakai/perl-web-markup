@@ -8,10 +8,12 @@ use Web::HTML::Validator;
 
 my $doc = new Web::DOM::Document;
 my $parser = Web::HTML::Parser->new;
+$parser->scripting (1);
 $parser->locale_tag (lc $ENV{LANG}) if $ENV{LANG};
 
 local $/ = undef;
 $parser->parse_byte_string (undef, scalar <> => $doc);
 
 my $checker = new Web::HTML::Validator;
+$checker->scripting ($parser->scripting);
 $checker->check_node ($doc);
