@@ -78,6 +78,7 @@ sub _test ($$) {
       }
     });
     $val->scripting (not $test->{noscript});
+    $val->image_viewable ($test->{'image-viewable'});
     $val->check_node ($doc->document_element);
 
     my $actual = join ("\n", sort {$a cmp $b} @error);

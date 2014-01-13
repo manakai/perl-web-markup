@@ -2,7 +2,7 @@ package Web::HTML::Validator;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '127.0';
+our $VERSION = '128.0';
 use Web::HTML::Validator::_Defs;
 
 sub new ($) {
@@ -15,6 +15,7 @@ sub onerror ($;$) {
   }
   return $_[0]->{onerror} ||= sub {
     my %args = @_;
+    return if $args{level} eq 'mh';
     warn sprintf "%s%s%s%s (%s)\n",
         defined $args{node} ? $args{node}->node_name . ': ' : '',
         $args{type},
@@ -65,6 +66,16 @@ sub onerror ($;$) {
 ## $element_state
 ##
 ##   figcaptions     Used by |figure| element checker.
+##   figure_embedded_count If the element is a |figure| element, the number
+##                   of embedded content child elements.
+##   figure_has_non_table If the element is a |figure| element, whether
+##                   there is a non-|table| content or not.
+##   figure_table_count If the element is a |figure| element, the number
+##                   of |table| child elements.
+##   has_figcaption_content The element is a |figure| element and
+##                   there is a |figcaption| child element whose content
+##                   has elements and/or texts other than inter-element
+##                   whitespaces.
 ##   has_label_original Used to preserve the value of
 ##                   |$self->{flag}->{has_label}| at the time of
 ##                   invocation of the method |check_start| for the
@@ -347,8 +358,16 @@ sub _check_element_attrs ($$$;%) {
         ## "Authors must not use elements, attributes, or attribute
         ## values that are not permitted by this specification or
         ## other applicable specifications" [HTML]
-        $self->{onerror}->(node => $attr,
-                           type => 'attribute not defined', level => 'm');
+        if ($attr_ns eq '' and
+            $attr_ln eq 'generator-unable-to-provide-required-alt' and
+            $el_ns eq HTML_NS and
+            $el_ln eq 'img') {
+          #
+        } else {
+          $self->{onerror}->(node => $attr,
+                             type => 'attribute not defined',
+                             level => 'm');
+        }
       }
     }
 
@@ -4165,6 +4184,48 @@ $Element->{+HTML_NS}->{del} = {
 
 $Element->{+HTML_NS}->{figure} = {
   %HTMLFlowContentChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    for my $child (@{$item->{node}->child_nodes}) {
+      my $child_nt = $child->node_type;
+      if ($child_nt == 1) { # ELEMENT_NODE
+        my $child_ns = $child->namespace_uri || '';
+        if ($child_ns eq HTML_NS) {
+          my $child_ln = $child->local_name;
+          if ($child_ln eq 'figcaption') {
+            for (@{$child->child_nodes}) {
+              my $nt = $_->node_type;
+              if ($nt == 1) { # ELEMENT_NODE
+                $element_state->{has_figcaption_content} = 1;
+                last;
+              } elsif ($nt == 3) { # TEXT_NODE
+                if ($_->data =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+                  $element_state->{has_figcaption_content} = 1;
+                  last;
+                }
+              }
+            }
+          } elsif ($child_ln eq 'table') {
+            $element_state->{figure_table_count}++;
+          } elsif ($_Defs->{categories}->{'embedded content'}->{elements}->{$child_ns}->{$child_ln}) {
+            $element_state->{figure_embedded_count}++;
+            $element_state->{figure_has_non_table} = 1;
+          } else {
+            $element_state->{figure_has_non_table} = 1;
+          }
+        } else { # ns
+          $element_state->{figure_has_non_table} = 1;
+        }
+      } elsif ($child_nt == 3) { # TEXT_NODE
+        if ($child->data =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+          $element_state->{figure_embedded_count}++;
+          $element_state->{figure_has_non_table} = 1;
+        } else {
+          #$element_state->{figure_has_non_table} = 1; ## Spec does not explicitly allow inter-element whitespaces
+        }
+      }
+    } # $child
+  }, # check_start
   ## Flow content, optionally either preceded or followed by a |figcaption|
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
@@ -4307,6 +4368,13 @@ $Element->{+HTML_NS}->{iframe} = {
   }; # <iframe sandbox="">
 }
 
+sub image_viewable ($;$) {
+  if (@_ > 1) {
+    $_[0]->{image_viewable} = $_[1];
+  }
+  return $_[0]->{image_viewable};
+} # image_viewable
+
 $Element->{+HTML_NS}->{img} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -4359,13 +4427,40 @@ $Element->{+HTML_NS}->{img} = {
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
-    unless ($el->has_attribute_ns (undef, 'alt')) {
-      $self->{onerror}->(node => $el,
-                         type => 'attribute missing',
-                         text => 'alt',
-                         level => 's');
-      ## TODO: ...
+
+    my $long_attr = $el->get_attribute_node_ns
+        (undef, 'generator-unable-to-provide-required-alt');
+
+    if (defined $long_attr and not $long_attr->value eq '') {
+      $self->{onerror}->(node => $long_attr,
+                         type => 'invalid attribute value',
+                         level => 'm');
     }
+
+    unless ($el->has_attribute_ns (undef, 'alt')) {
+      if (defined $long_attr or
+          (($item->{parent_state}->{figure_embedded_count} || 0) == 1 and
+           $item->{parent_state}->{has_figcaption_content}) or
+          $self->image_viewable) {
+        #
+      } else {
+        my $title = $el->get_attribute_ns (undef, 'title');
+        $self->{onerror}->(node => $el,
+                           type => 'attribute missing:alt',
+                           level => 'm')
+            unless defined $title and length $title;
+      }
+      $self->{onerror}->(node => $long_attr,
+                         type => 'attribute not defined',
+                         level => 'mh')
+          if defined $long_attr;
+    } else {
+      $self->{onerror}->(node => $long_attr,
+                         type => 'attribute not defined',
+                         level => 'm')
+          if defined $long_attr;
+    }
+
     unless ($el->has_attribute_ns (undef, 'src')) {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing',
@@ -4391,7 +4486,6 @@ $Element->{+HTML_NS}->{img} = {
   }, # check_end
 }; # img
 
-# XXX <img alt> context
 # XXX <img srcset>
 
 $Element->{+HTML_NS}->{embed} = {
@@ -5075,8 +5169,13 @@ $Element->{+HTML_NS}->{table} = {
       }
     } elsif ($element_state->{phase} eq 'before caption') {
       if ($child_nsuri eq HTML_NS and $child_ln eq 'caption') {
-        $item->{parent_state}->{table_caption_element} = $child_el;
         $element_state->{phase} = 'in colgroup';
+        if (($item->{parent_state}->{figure_table_count} || 0) == 1 and
+            not $item->{parent_state}->{figure_has_non_table}) {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:figure table caption',
+                             level => 's');
+        }
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'colgroup') {
         $element_state->{phase} = 'in colgroup';
       } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'thead') {
@@ -5189,56 +5288,6 @@ $Element->{+HTML_NS}->{table} = {
 }; # table
 
 # XXX sortable table
-
-$Element->{+HTML_NS}->{caption} = {
-  %HTMLFlowContentChecker,
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    FIGURE: {
-      my $caption = $item->{node};
-      
-      my $table = $caption->parent_node or last FIGURE;
-      last FIGURE if $table->node_type != 1;
-      my $nsurl = $table->namespace_uri;
-      last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-      last FIGURE if $table->local_name ne 'table';
-
-      my $dd = $table->parent_node or last FIGURE;
-      last FIGURE if $dd->node_type != 1;
-      $nsurl = $dd->namespace_uri;
-      last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-      last FIGURE if $dd->local_name ne 'dd';
-
-      my $figure = $dd->parent_node or last FIGURE;
-      last FIGURE if $figure->node_type != 1;
-      $nsurl = $figure->namespace_uri;
-      last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-      last FIGURE if $figure->local_name ne 'figure';
-
-      my @table;
-      for my $node (@{$dd->child_nodes}) {
-        my $nt = $node->node_type;
-        if ($nt == 1) { # Element
-          $nsurl = $node->namespace_uri;
-          last FIGURE if not defined $nsurl or $nsurl ne HTML_NS;
-          last FIGURE if $node->local_name ne 'table';
-
-          push @table, $node;
-        } elsif ($nt == 3 or $nt == 4) { # Text / CDATASection
-          last FIGURE if $node->data =~ /[^\x09\x0A\x0C\x0D\x20]/;
-        }
-      }
-
-      last FIGURE if @table != 1;
-
-      $self->{onerror}->(node => $caption,
-                         type => 'element not allowed:figure table caption',
-                         level => 's');
-    } # FIGURE
-
-    $HTMLFlowContentChecker{check_end}->(@_);
-  },
-}; # caption
 
 $Element->{+HTML_NS}->{colgroup} = {
   %HTMLEmptyChecker,

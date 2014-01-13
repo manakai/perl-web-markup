@@ -32,6 +32,15 @@ This module has following methods:
 
 Create a new instance of the validator.
 
+=item $val->check_node ($node)
+
+Validate the specified node.  If the node is not a document node, the
+node is validated as if it were an orphaned node, i.e. a node with no
+parent or owner.  The node can be an attribute, but element- or
+attribute-specific validation is not performed in that case.
+
+Errors and warnings are reported through the C<onerror> handler.
+
 =item $code = $val->onerror
 
 =item $val->onerror ($code)
@@ -56,14 +65,17 @@ validation of the HTML C<noscript> element.
 The value should not be set during the validation.  If the value is
 changed, the result is undefined.
 
-=item $val->check_node ($node)
+=item $boolean = $val->image_viewable
 
-Validate the specified node.  If the node is not a document node, the
-node is validated as if it were an orphaned node, i.e. a node with no
-parent or owner.  The node can be an attribute, but element- or
-attribute-specific validation is not performed in that case.
+=item $val->image_viewable ($boolean)
 
-Errors and warnings are reported through the C<onerror> handler.
+Get or set whether the intended user is known to be able to view
+images or not.  Its default is false (I<not known>).  This affects
+whether missing of the C<alt> attribute of the C<img> element is
+conforming or not.
+
+The value should not be set during the validation.  If the value is
+changed, the result is undefined.
 
 =back
 
