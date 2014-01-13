@@ -90,7 +90,7 @@ sub _test ($$) {
       eq_or_diff $actual, $expected, $test->{data}->[0];
     }
     done $c;
-  } n => 1, name => [$file_name, substr $test->{data}->[0], 0, 20];
+  } n => 1, name => [$file_name, substr $test->{data}->[0], 0, 40];
 } # test
 
 sub get_node_path ($) {

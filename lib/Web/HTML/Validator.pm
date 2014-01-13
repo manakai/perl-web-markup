@@ -89,6 +89,7 @@ my $GetNestedOnError = sub {
 
 ## $self->{flag}->
 ##
+##   {has_autofocus}     Used to detect duplicate autofocus="" attributes.
 ##   {has_http_equiv}->{$keyword}  Set to true if there is a
 ##                       <meta http-equiv=$keyword> element.
 ##   {has_label}         Set to a true value if and only if there is a
@@ -111,6 +112,8 @@ my $GetNestedOnError = sub {
 ##                       flag is undefined.
 ##   {has_meta_charset}  Set to true if there is a <meta charset=""> or
 ##                       <meta http-equiv=content-type> element.
+##   {in_a_href}         Set to true if there is an ancestor |a| element
+##                       with a |href| attribute.
 ##   {in_canvas}         Set to true if there is an ancestor |canvas| element.
 ##   {in_head}           Set to true if there is an ancestor |head| element.
 ##   {in_media}          Set to true if there is an ancestor media element.
@@ -127,6 +130,7 @@ my $GetNestedOnError = sub {
 ##                   there is a non-|table| content or not.
 ##   figure_table_count If the element is a |figure| element, the number
 ##                   of |table| child elements.
+##   has_autofocus_original Used for autofocus="" scoping by |dialog|
 ##   has_figcaption_content The element is a |figure| element and
 ##                   there is a |figcaption| child element whose content
 ##                   has elements and/or texts other than inter-element
@@ -144,6 +148,7 @@ my $GetNestedOnError = sub {
 ##   has_palpable    Set to true if a palpable content child is found.
 ##                   (Handled specially for <ruby>.)
 ##   has_summary     Used by |details| element checker.
+##   in_a_href_original Used to preserve |$self->{flag}->{in_a_href}|.
 ##   in_flow_content Set to true while the content model checker is
 ##                   in the "flow content" checking mode.
 ##   phase           Content model checker state name.  Possible values
@@ -160,7 +165,6 @@ sub _init ($) {
   $self->{id_type} = {};
   $self->{name} = {};
   $self->{form} = {}; # form/@name
-  #$self->{has_autofocus};
   $self->{idref} = [];
   $self->{term} = {};
   $self->{usemap} = [];
@@ -193,7 +197,6 @@ sub _terminate ($) {
   delete $self->{id_type};
   delete $self->{name};
   delete $self->{form};
-  delete $self->{has_autofocus};
   delete $self->{idref};
   delete $self->{usemap};
   delete $self->{map_exact};
@@ -492,11 +495,26 @@ $CheckerByType->{boolean} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
   $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-  unless ($value eq '' or $value eq $attr->local_name) {
-    $self->{onerror}->(node => $attr, type => 'boolean:invalid',
-                       level => 'm');
-  }
+  $self->{onerror}->(node => $attr,
+                     type => 'boolean:invalid',
+                     level => 'm')
+      unless $value eq '' or $value eq $attr->local_name;
 }; # boolean
+
+$ElementAttrChecker->{(HTML_NS)}->{img}->{''}->{ismap} = sub {
+  my ($self, $attr) = @_;
+  $self->{onerror}->(node => $attr,
+                     type => 'attribute not allowed:ismap',
+                     level => 'm')
+      unless $self->{flag}->{in_a_href};
+
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  $self->{onerror}->(node => $attr,
+                     type => 'boolean:invalid',
+                     level => 'm')
+      unless $value eq '' or $value eq 'ismap';
+}; # <a ismap="">
 
 ## Enumerated attribute [HTML]
 $CheckerByType->{enumerated} = sub {
@@ -1606,20 +1624,6 @@ my $GetHTMLEnumeratedAttrChecker = sub {
   };
 }; # $GetHTMLEnumeratedAttrChecker
 
-my $GetHTMLBooleanAttrChecker = sub {
-  my $local_name = shift;
-  return sub {
-    my ($self, $attr) = @_;
-    my $value = $attr->value;
-    $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-    unless ($value eq $local_name or $value eq '') {
-      $self->{onerror}->(node => $attr,
-                         type => 'boolean:invalid',
-                         level => 'm');
-    }
-  };
-}; # $GetHTMLBooleanAttrChecker
-
 ## |rel| attribute (set of space separated tokens,
 ## whose allowed values are defined by the section on link types)
 my $HTMLLinkTypesAttrChecker = sub {
@@ -1827,20 +1831,6 @@ my $FormControlNameAttrChecker = sub {
   
   ## NOTE: No uniqueness constraint.
 }; # $FormControlNameAttrChecker
-
-my $AutofocusAttrChecker = sub {
-  my ($self, $attr) = @_;
-
-  $GetHTMLBooleanAttrChecker->('autofocus')->(@_);
-
-  # XXX <dialog> scoped
-  if ($self->{has_autofocus}) {
-    $self->{onerror}->(node => $attr,
-                       type => 'duplicate autofocus',
-                       level => 'm');
-  }
-  $self->{has_autofocus} = 1;
-}; # $AutofocusAttrChekcer
 
 my $HTMLUsemapAttrChecker = sub {
   my ($self, $attr) = @_;
@@ -3406,7 +3396,6 @@ $Element->{+HTML_NS}->{header} = {
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     unless ($self->{flag}->{has_hn}) {
-      # XXX drop this warning?
       $self->{onerror}->(node => $item->{node},
                          type => 'element missing:hn',
                          level => 'w');
@@ -4488,15 +4477,6 @@ $Element->{+HTML_NS}->{img} = {
           }
         }
       }, # border
-      ismap => sub {
-        my ($self, $attr, $parent_item) = @_;
-        if (not $self->{flag}->{in_a_href}) {
-          $self->{onerror}->(node => $attr,
-                             type => 'attribute not allowed:ismap',
-                             level => 'm');
-        }
-        $GetHTMLBooleanAttrChecker->('ismap')->($self, $attr, $parent_item);
-      },
       localsrc => sub {
         my ($self, $attr) = @_;
         my $value = $attr->value;
@@ -4768,26 +4748,9 @@ $Element->{+HTML_NS}->{param}->{check_attrs2} = sub {
   }
 }; # check_attrs2
 
-$Element->{+HTML_NS}->{video} = {
+$Element->{+HTML_NS}->{video} =
+$Element->{+HTML_NS}->{audio} = {
   %TransparentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    autoplay => sub {
-      my ($self, $attr) = @_;
-
-      ## "Authors are also encouraged to consider not using the
-      ## automatic playback behavior at all" according to HTML5.
-      $self->{onerror}->(node => $attr,
-                         type => 'attribute not allowed',
-                         level => 'w');
-      # XXX change error type?
-
-      ## In addition, the |preload| attribute is ignored if the
-      ## |autoplay| attribute is specified.
-      # XXX warning
-
-      $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
-    },
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{allow_source}
@@ -4809,6 +4772,18 @@ $Element->{+HTML_NS}->{video} = {
                          type => 'attribute missing',
                          text => 'src',
                          level => 'm');
+    }
+
+    my $ap_attr = $item->{node}->get_attribute_node_ns (undef, 'autoplay');
+    if (defined $ap_attr) {
+      $self->{onerror}->(node => $ap_attr,
+                         type => 'autoplay',
+                         level => 'w');
+      my $pre_attr = $item->{node}->get_attribute_node_ns (undef, 'preload');
+      $self->{onerror}->(node => $pre_attr,
+                         type => 'autoplay:preload',
+                         level => 'w')
+          if defined $pre_attr;
     }
   }, # check_attrs2
   check_child_element => sub {
@@ -4872,29 +4847,7 @@ $Element->{+HTML_NS}->{video} = {
 
     $TransparentChecker{check_end}->(@_);
   }, # check_end
-}; # video
-
-$Element->{+HTML_NS}->{audio} = {
-  %{$Element->{+HTML_NS}->{video}},
-  check_attrs => $GetHTMLAttrsChecker->({
-    autoplay => sub {
-      my ($self, $attr) = @_;
-
-      ## "Authors are also encouraged to consider not using the
-      ## automatic playback behavior at all" according to HTML5.
-      $self->{onerror}->(node => $attr,
-                         type => 'attribute not allowed',
-                         level => 'w');
-      # XXX change error type?
-
-      ## In addition, the |preload| attribute is ignored if the
-      ## |autoplay| attribute is specified.
-      # XXX warning
-
-      $GetHTMLBooleanAttrChecker->('autoplay')->(@_);
-    },
-  }), # check_attrs
-}; # audio
+}; # video, audio
 
 $Element->{+HTML_NS}->{source}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
@@ -4904,7 +4857,7 @@ $Element->{+HTML_NS}->{source}->{check_attrs2} = sub {
                        text => 'src',
                        level => 'm');
   }
-}; # check_attrs2
+}; # source - check_attrs2
 
 $Element->{+HTML_NS}->{track} = {
   %HTMLEmptyChecker,
@@ -5533,7 +5486,7 @@ $ElementAttrChecker->{(HTML_NS)}->{th}->{''}->{headers} = sub {};
 ## element does not form a part of a table, the element is
 ## non-conforming in that case anyway.
 
-# ---- Forms ----
+# ------ Forms ------
 
 $Element->{+HTML_NS}->{form} = {
   %HTMLFlowContentChecker,
@@ -5736,7 +5689,6 @@ $Element->{+HTML_NS}->{input} = {
     autocomplete => $GetHTMLEnumeratedAttrChecker->({ # XXX old
       on => 1, off => 1,
     }),
-    autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
     list => $ListAttrChecker,
@@ -6068,7 +6020,6 @@ $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{accept} = sub {
 $Element->{+HTML_NS}->{button} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
@@ -6131,7 +6082,6 @@ $ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{menu} = sub {
 $Element->{+HTML_NS}->{select} = {
   %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
@@ -6410,7 +6360,6 @@ $Element->{+HTML_NS}->{option} = {
 $Element->{+HTML_NS}->{textarea} = {
   %HTMLTextChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
     maxlength => sub {
@@ -6471,7 +6420,6 @@ $Element->{+HTML_NS}->{textarea} = {
 $Element->{+HTML_NS}->{keygen} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    autofocus => $AutofocusAttrChecker,
     form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
@@ -6631,7 +6579,31 @@ $Element->{+HTML_NS}->{meter} = {
   ## maximum value inline as text" - This is not really testable.
 }; # meter
 
-# ---- Interactive elements ----
+$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{autofocus} =
+$ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{autofocus} =
+$ElementAttrChecker->{(HTML_NS)}->{select}->{''}->{autofocus} =
+$ElementAttrChecker->{(HTML_NS)}->{textarea}->{''}->{autofocus} =
+$ElementAttrChecker->{(HTML_NS)}->{keygen}->{''}->{autofocus} = sub {
+  my ($self, $attr) = @_;
+
+  ## A boolean attribute
+  my $value = $attr->value;
+  $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+  $self->{onerror}->(node => $attr,
+                     type => 'boolean:invalid',
+                     level => 'm')
+      unless $value eq '' or $value eq 'autofocus';
+
+  if ($self->{flag}->{has_autofocus}) {
+    $self->{onerror}->(node => $attr,
+                       type => 'duplicate autofocus',
+                       level => 'm');
+  } else {
+    $self->{flag}->{has_autofocus} = 1;
+  }
+}; # autofocus=""
+
+# ------ Interactive elements ------
 
 $Element->{+HTML_NS}->{details} = {
   %HTMLFlowContentChecker,
@@ -6858,7 +6830,25 @@ $ElementAttrChecker->{(HTML_NS)}->{menuitem}->{''}->{command} = sub {
 #  push @{$self->{idref}}, ['command', $attr->value, $attr]; # XXX not implemented yet
 }; # <menuitem command="">
 
-# ---- Frames ----
+$Element->{+HTML_NS}->{dialog} = {
+  %HTMLFlowContentChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{has_autofocus_original} = $self->{flag}->{has_autofocus};
+    $self->{flag}->{has_autofocus} = 0;
+
+    $HTMLFlowContentChecker{check_start}->(@_);
+  }, # check_start
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    delete $self->{flag}->{has_autofocus}
+        unless $element_state->{has_autofocus_original};
+
+    $HTMLFlowContentChecker{check_end}->(@_);
+  }, # check_end
+}; # dialog
+
+# ------ Frames ------
 
 $Element->{+HTML_NS}->{frameset} = {
   %AnyChecker,
