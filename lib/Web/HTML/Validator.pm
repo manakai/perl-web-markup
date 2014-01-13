@@ -4327,11 +4327,11 @@ $Element->{+HTML_NS}->{iframe} = {
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     if ($item->{node}->owner_document->manakai_is_html) {
-      $self->_add_minus_elements ($item->{element_state},
+      $self->_add_minus_elements ($element_state,
                                   {(HTML_NS) => {script => 1}});
       $self->_check_fallback_html
           ($item->{node}, $self->{minus_elements}, 'span');
-      $self->_remove_minus_elements ($item->{element_state});
+      $self->_remove_minus_elements ($element_state);
       $HTMLTextChecker{check_end}->(@_);
     } else {
       $HTMLEmptyChecker{check_end}->(@_);
