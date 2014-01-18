@@ -245,6 +245,7 @@ sub _terminate ($) {
 ## XXX xml-stylesheet PI
 
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
+sub SVG_NS () { q<http://www.w3.org/2000/svg> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 sub XSLT_NS () { q<http://www.w3.org/1999/XSL/Transform> }
@@ -1312,6 +1313,143 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
   }
 }; # xmlns="", xmlns:*=""
 
+## ------ ARIA ------
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub {
+  my ($self, $attr) = @_;
+
+  ## An ordered set of unique space-separated tokens.
+  my @value = grep { length $_ } split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value, -1;
+  my %word;
+  for my $token (@value) {
+    if ($word{$token}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $token,
+                         level => 'm');
+    } else {
+      $word{$token} = 1;
+      my $def = $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{role};
+      if ($def->{keywords}->{$token} and
+          $def->{keywords}->{$token}->{conforming}) {
+        #
+      } else {
+        $self->{onerror}->(node => $attr,
+                           type => 'aria:bad role', value => $token,
+                           level => 'm');
+      }
+
+      my $preferred = $_Defs->{roles}->{$token}->{preferred};
+      if ($preferred) {
+        if ($preferred->{type} eq 'html-element' and
+            do {
+              my $oe = $attr->owner_element;
+              ($oe and
+               ($oe->namespace_uri || '') eq HTML_NS and
+               $oe->local_name eq $preferred->{name});
+            }) {
+          $self->{onerror}->(node => $attr,
+                             type => 'aria:redundant role',
+                             value => $token,
+                             level => 'w');
+        } elsif ($preferred->{type} eq 'input' and
+            do {
+              my $oe = $attr->owner_element;
+              ($oe and
+               ($oe->namespace_uri || '') eq HTML_NS and
+               $oe->local_name eq 'input' and
+               $oe->type eq $preferred->{name});
+            }) {
+          $self->{onerror}->(node => $attr,
+                             type => 'aria:redundant role',
+                             value => $token,
+                             level => 'w');
+        } else {
+          $self->{onerror}->(node => $attr,
+                             type => 'aria:not preferred markup:' . $preferred->{type},
+                             text => $preferred->{name} || $preferred->{scope}, # or undef
+                             value => $token,
+                             level => 'w');
+        }
+      }
+    }
+  }
+}; # role=""
+
+## XXX aria-*
+
+# XXX attributes MUST only be used where applicable role is set.  MUST
+# set required attrs
+
+# XXX If there is a missing required owned element (descendant or
+# owns), there MUST be an |aria-busy| attribute set to |true|.
+
+# XXX roles MUST be used in required context (descendant or owns)
+
+# XXX |role=document| or |role=application| SHOULD NOT have multiple
+# |role=banner|; SHOULD NOT have multiple |role=contentinfo|;
+# |role=main|
+
+# XXX For |role=application| or |role=document| of non-|body|
+# non-|svg| element, |aria-labelledby| SHOULD be specified
+
+## XXX If a |role=application| has multiple |role=toolbar|,
+## |aria-label| MUST be specified
+
+# XXX |aria-activedescendant| SHOULD reference a descendant or
+# |aria-owns| descendant.
+
+# XXX |role=definition|'s |aria-labelledby| SHOULD point |dfn|
+
+# XXX |role=dialog| SHOULD have |aria-label| or |aria-labelledby|
+
+# XXX |role=math| is set to an image, |aria-describedby| SHOULD be set
+
+# XXX If <img role=presentation> has alt="", its value SHOULD be empty
+
+# XXX For |radio|, |menuitemradio|, or subroles, |aria-checked=mixed|
+# -> warning
+
+# XXX warning: instead of |aria-label|, HTML |title=""| or ARIA
+# |aria-labellledby| should be used
+
+# XXX |aria-live=assertive| SHOULD be avoided
+
+# XXX |aria-owns|'s referenced element MUST NOT be a descendant.
+
+# XXX |aria-owns|'s ID MUST NOT be in other |aria-owns| attribute.
+
+# XXX If |aria-posinset| specified, |aria-setsize| SHOULD be
+# specified.  |aria-posinset| MUST be <= |aria_setsize|.
+
+# XXX |aria-sort=""| (!= |none|) SHOULD only be used at most once per
+# table/grid
+
+# XXX MUST |aria-valuemax| >= |aria-valuemin|
+
+# XXX |aria-valuenow| SHOULD be set if |aria-valuetext| is specified;
+# |aria-valuetext| SHOULD NOT be used
+
+## XXX |role=progressbar| - If |aria-valuenow| is specified,
+## |aria-valuemin| and |aria-valuemax| SHOULD be specified.
+
+# XXX |role=radio| SHOULD be in |role=radiogroup|
+
+# XXX |role=region| SHOULD have |role=labellledby| pointing |h/n/| or
+# |role=heading|
+
+# XXX |role=tabpanel| SHOULD be associated with |role=tab|, by:
+# <role=tab aria-controls={tabpanel-id}> or <role=tabpanel
+# aria-labelledby={tab-id}>
+
+# XXX warning: |aria-owns| should not be used
+
+# XXX warning: |aria-level| should not be used if |hn| or |hgroup|
+
+# XXX HTML semantics
+
+# XXX aria-* alternatives
+
 ## ------ Element content model ------
 
 my $ElementDisallowedDescendants = {};
@@ -1927,8 +2065,6 @@ $ElementAttrChecker->{(HTML_NS)}->{a}->{''}->{directkey}
 $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{directkey}
     = $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{accesskey};
 
-## XXX aria-*
-
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{id} = sub {
   my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
@@ -2034,8 +2170,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{language} = sub {
                        level => 'm');
   }
 }; # language=""
-
-# XXX role=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'xml:lang'} = sub {
   ## The |xml:lang| attribute in the null namespace, which is

@@ -67,6 +67,17 @@ local/isindex-prompt.json:
 local/microdata.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/microdata.json
+local/aria.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/aria.json
+
+local/bin/jq:
+	mkdir -p local/bin
+	$(WGET) -O $@ http://stedolan.github.io/jq/download/linux64/jq
+	chmod u+x $@
+
+local/aria-html-map.json: local/aria.json local/bin/jq
+	cat local/aria.json | local/bin/jq '.attrs | to_entries | map(select(.value.preferred.type == "html-attr")) | map([.key, .value.preferred.name])' > $@
 
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
     pmbp-install Makefile
@@ -125,14 +136,14 @@ Chromium:\
 	perl -c $@
 
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
-    pmbp-install Makefile
+    local/aria.json local/aria-html-map.json pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module JSON
-	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"microdata\":"; cat local/microdata.json; echo "}"' | \
+	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"microdata\":"; cat local/microdata.json; echo ",\"aria\":"; cat local/aria.json; echo ",\"aria_html\":"; cat local/aria-html-map.json; echo "}"' | \
 	$(PERL) -MJSON -MData::Dumper -e ' #\
 	  local $$/ = undef; #\
 	  $$data = JSON->new->decode (scalar <>); #\
-	  $$data = {%{$$data->{dom}}, md => $$data->{microdata}}; #\
+	  $$data = {%{$$data->{dom}}, md => $$data->{microdata}, roles => $$data->{aria}->{roles}, aria_to_html => $$data->{aria_html}}; #\
 	  $$Data::Dumper::Sortkeys = 1; #\
 	  $$Data::Dumper::Useqq = 1; #\
 	  for $$ns (keys %{$$data->{elements}}) { #\

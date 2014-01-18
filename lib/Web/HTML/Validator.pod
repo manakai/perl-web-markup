@@ -320,6 +320,17 @@ time string.  If the value is defined as an "ISO duration", it MUST be
 a valid vevent duration string.  If the value is defined as a URL,
 image, or link, it MUST be an absolute URL.
 
+=item ARIA
+
+Accessible Rich Internet Applications (WAI-ARIA) 1.0
+<http://www.w3.org/WAI/PF/aria/complete>.
+
+When an attribute value is defined as "token list", the value MUST be
+a valid unordered set of unique space-separated tokens.
+
+When an attribute value is defined as "ID reference list", the value
+MUST be a valid ordered set of unique space-separated tokens.
+
 =item MANAKAI
 
 manakai DOM Extensions
@@ -338,12 +349,13 @@ The validator also supports much more Web standards (indirectly via
 required modules), including but not limited to CSS, URL Standard,
 IETF BCP 47 language tags, and Encoding Standard.
 
-Note that XML 1.1, Namespaces in XML 1.1, C<xml:id>, XLink, XHTML
-Modularization, Ruby Annotations, and RDFa are not applicable
-specifications.  Also, the module does not support historical HTML
-features no longer part of the language, except for those explicitly
-listed in the OBSVOCAB specification.  See the specification for
-details.
+Note that HTML 3.2, HTML4, XML 1.1, Namespaces in XML 1.1, C<xml:id>,
+XLink, XInclude, XHTML1, XHTML Modularization, Ruby Annotations, RDFa,
+XForms, and XHTML2 are not considered as applicable specifications.
+The module does not support ARIA attributes in its own namespace.
+Also, the module does not support historical HTML features no longer
+part of the language, except for those explicitly listed in the
+OBSVOCAB specification.  See the specification for details.
 
 =head1 AUTHOR
 

@@ -1,4 +1,22 @@
 $Web::HTML::Validator::_Defs = {
+          "aria_to_html" => [
+                              [
+                                "aria-disabled",
+                                "inert"
+                              ],
+                              [
+                                "aria-dropeffect",
+                                "dropzone"
+                              ],
+                              [
+                                "aria-haspopup",
+                                "contextmenu"
+                              ],
+                              [
+                                "aria-hidden",
+                                "hidden"
+                              ]
+                            ],
           "categories" => {
                             "URL property elements" => {
                                                          "elements" => {
@@ -663,9 +681,471 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
                                                                                             "align" => {},
+                                                                                            "aria-activedescendant" => {
+                                                                                                                         "conforming" => 1,
+                                                                                                                         "status" => "CR",
+                                                                                                                         "value_type" => "idref"
+                                                                                                                       },
+                                                                                            "aria-atomic" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                            "aria-autocomplete" => {
+                                                                                                                     "conforming" => 1,
+                                                                                                                     "enumerated" => {
+                                                                                                                                       "both" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                                 },
+                                                                                                                                       "inline" => {
+                                                                                                                                                     "conforming" => 1,
+                                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                                   },
+                                                                                                                                       "list" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                                 },
+                                                                                                                                       "none" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                                 }
+                                                                                                                                     },
+                                                                                                                     "status" => "CR",
+                                                                                                                     "value_type" => "enumerated"
+                                                                                                                   },
+                                                                                            "aria-busy" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "enumerated" => {
+                                                                                                                               "false" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                               "true" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         }
+                                                                                                                             },
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "enumerated"
+                                                                                                           },
+                                                                                            "aria-checked" => {
+                                                                                                                "conforming" => 1,
+                                                                                                                "enumerated" => {
+                                                                                                                                  "false" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                  "mixed" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                  "true" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                  "undefined" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                                 }
+                                                                                                                                },
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "enumerated"
+                                                                                                              },
+                                                                                            "aria-controls" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                               },
+                                                                                            "aria-describedby" => {
+                                                                                                                    "conforming" => 1,
+                                                                                                                    "status" => "CR",
+                                                                                                                    "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                                  },
+                                                                                            "aria-disabled" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "false" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                   "true" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             }
+                                                                                                                                 },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "enumerated"
+                                                                                                               },
+                                                                                            "aria-dropeffect" => {
+                                                                                                                   "conforming" => 1,
+                                                                                                                   "keywords" => {
+                                                                                                                                   "copy" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                   "execute" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                                },
+                                                                                                                                   "link" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                   "move" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                   "none" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                   "popup" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              }
+                                                                                                                                 },
+                                                                                                                   "status" => "CR",
+                                                                                                                   "value_type" => "unordered set of unique space-separated tokens"
+                                                                                                                 },
+                                                                                            "aria-expanded" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "false" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                   "true" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                   "undefined" => {
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                                  }
+                                                                                                                                 },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "enumerated"
+                                                                                                               },
+                                                                                            "aria-flowto" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                             },
+                                                                                            "aria-grabbed" => {
+                                                                                                                "conforming" => 1,
+                                                                                                                "enumerated" => {
+                                                                                                                                  "false" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                  "true" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                  "undefined" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                                 }
+                                                                                                                                },
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "enumerated"
+                                                                                                              },
+                                                                                            "aria-haspopup" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "false" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                   "true" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             }
+                                                                                                                                 },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "enumerated"
+                                                                                                               },
+                                                                                            "aria-hidden" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                            "aria-invalid" => {
+                                                                                                                "conforming" => 1,
+                                                                                                                "enumerated" => {
+                                                                                                                                  "false" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                  "grammer" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               },
+                                                                                                                                  "spelling" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                                },
+                                                                                                                                  "true" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            }
+                                                                                                                                },
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "enumerated"
+                                                                                                              },
                                                                                             "aria-label" => {
-                                                                                                              "translatable" => 1
+                                                                                                              "conforming" => 1,
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "any"
                                                                                                             },
+                                                                                            "aria-labelledby" => {
+                                                                                                                   "conforming" => 1,
+                                                                                                                   "status" => "CR",
+                                                                                                                   "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                                 },
+                                                                                            "aria-level" => {
+                                                                                                              "conforming" => 1,
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "non-negative integer greater than zero"
+                                                                                                            },
+                                                                                            "aria-live" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "enumerated" => {
+                                                                                                                               "assertive" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                               "off" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                               "polite" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                             },
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "enumerated"
+                                                                                                           },
+                                                                                            "aria-multiline" => {
+                                                                                                                  "conforming" => 1,
+                                                                                                                  "enumerated" => {
+                                                                                                                                    "false" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               },
+                                                                                                                                    "true" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              }
+                                                                                                                                  },
+                                                                                                                  "status" => "CR",
+                                                                                                                  "value_type" => "enumerated"
+                                                                                                                },
+                                                                                            "aria-multiselectable" => {
+                                                                                                                        "conforming" => 1,
+                                                                                                                        "enumerated" => {
+                                                                                                                                          "false" => {
+                                                                                                                                                       "conforming" => 1,
+                                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                                     },
+                                                                                                                                          "true" => {
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                                    }
+                                                                                                                                        },
+                                                                                                                        "status" => "CR",
+                                                                                                                        "value_type" => "enumerated"
+                                                                                                                      },
+                                                                                            "aria-orientation" => {
+                                                                                                                    "conforming" => 1,
+                                                                                                                    "enumerated" => {
+                                                                                                                                      "horizontal" => {
+                                                                                                                                                        "conforming" => 1,
+                                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                                      },
+                                                                                                                                      "vertical" => {
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                                    }
+                                                                                                                                    },
+                                                                                                                    "status" => "CR",
+                                                                                                                    "value_type" => "enumerated"
+                                                                                                                  },
+                                                                                            "aria-owns" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                           },
+                                                                                            "aria-posinset" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "non-negative integer greater than zero"
+                                                                                                               },
+                                                                                            "aria-pressed" => {
+                                                                                                                "conforming" => 1,
+                                                                                                                "enumerated" => {
+                                                                                                                                  "false" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                  "mixed" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                  "true" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                  "undefined" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                                 }
+                                                                                                                                },
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "enumerated"
+                                                                                                              },
+                                                                                            "aria-readonly" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "false" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                   "true" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             }
+                                                                                                                                 },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "enumerated"
+                                                                                                               },
+                                                                                            "aria-relevant" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "keywords" => {
+                                                                                                                                 "additions" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                                },
+                                                                                                                                 "all" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                                 "removals" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               },
+                                                                                                                                 "text" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "unordered set of unique space-separated tokens"
+                                                                                                               },
+                                                                                            "aria-required" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "false" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                   "true" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             }
+                                                                                                                                 },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "enumerated"
+                                                                                                               },
+                                                                                            "aria-selected" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "enumerated" => {
+                                                                                                                                   "false" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                   "true" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                   "undefined" => {
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                                  }
+                                                                                                                                 },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "enumerated"
+                                                                                                               },
+                                                                                            "aria-setsize" => {
+                                                                                                                "conforming" => 1,
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "non-negative integer"
+                                                                                                              },
+                                                                                            "aria-sort" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "enumerated" => {
+                                                                                                                               "ascending" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                               "descending" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               },
+                                                                                                                               "none" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                               "other" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          }
+                                                                                                                             },
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "enumerated"
+                                                                                                           },
+                                                                                            "aria-valuemax" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "real number"
+                                                                                                               },
+                                                                                            "aria-valuemin" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "real number"
+                                                                                                               },
+                                                                                            "aria-valuenow" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "real number"
+                                                                                                               },
+                                                                                            "aria-valuetext" => {
+                                                                                                                  "conforming" => 1,
+                                                                                                                  "status" => "CR",
+                                                                                                                  "value_type" => "any"
+                                                                                                                },
                                                                                             "atomicselection" => {
                                                                                                                    "enumerated" => {
                                                                                                                                      "false" => {
@@ -1294,7 +1774,291 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        "value_type" => "any"
                                                                                                      },
                                                                                             "role" => {
-                                                                                                        "conforming" => 1
+                                                                                                        "conforming" => 1,
+                                                                                                        "keywords" => {
+                                                                                                                        "alert" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                        "alertdialog" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                        "application" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                        "article" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "banner" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "button" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "checkbox" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "columnheader" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                        "combobox" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "command" => {
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "complementary" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                        "composite" => {
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                        "contentinfo" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                        "definition" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                        "dialog" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "directory" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                        "document" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "form" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "grid" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "gridcell" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "group" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                        "heading" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "img" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                        "input" => {
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                        "landmark" => {
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "link" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "list" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "listbox" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "listitem" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "log" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                        "main" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "marquee" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "math" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "menu" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "menubar" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "menuitem" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "menuitemcheckbox" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                        "menuitemradio" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                        "navigation" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                        "note" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "option" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "presentation" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                        "progressbar" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                        "radio" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                        "radiogroup" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                        "range" => {
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                        "region" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "roletype" => {
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "row" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                        "rowgroup" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "rowheader" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                        "scrollbar" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                        "search" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "section" => {
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "sectionhead" => {
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                        "select" => {
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "separator" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                        "slider" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "spinbutton" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                        "status" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "structure" => {
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                        "tab" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                        "tablist" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "tabpanel" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "textbox" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "timer" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                        "toolbar" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "tooltip" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                        "tree" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                        "treegrid" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "treeitem" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                        "widget" => {
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                        "window" => {
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    }
+                                                                                                                      },
+                                                                                                        "status" => "CR",
+                                                                                                        "value_type" => "unordered set of unique space-separated tokens"
                                                                                                       },
                                                                                             "soundstart" => {},
                                                                                             "spellcheck" => {
@@ -1411,6 +2175,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                   }
                                                                      },
                                                               "a" => {
+                                                                       "aria_default_role" => "#contextual",
                                                                        "attrs" => {
                                                                                     "" => {
                                                                                             "acords" => {
@@ -1652,6 +2417,11 @@ $Web::HTML::Validator::_Defs = {
                                                                              "status" => "LC"
                                                                            },
                                                               "address" => {
+                                                                             "aria_avail_roles" => {
+                                                                                                     "contentinfo" => 1,
+                                                                                                     "presentation" => 1
+                                                                                                   },
+                                                                             "aria_default_role" => "#norole",
                                                                              "attrs" => {
                                                                                           "" => {
                                                                                                   "clear" => {
@@ -1800,6 +2570,7 @@ $Web::HTML::Validator::_Defs = {
                                                                             "transparent" => "semi"
                                                                           },
                                                               "area" => {
+                                                                          "aria_strong_role" => "#contextual",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "alt" => {
@@ -1918,12 +2689,27 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "article" => {
+                                                                             "aria_avail_roles" => {
+                                                                                                     "application" => 1,
+                                                                                                     "article" => 1,
+                                                                                                     "document" => 1,
+                                                                                                     "main" => 1,
+                                                                                                     "presentation" => 1
+                                                                                                   },
+                                                                             "aria_default_role" => "article",
                                                                              "attrs" => {},
                                                                              "conforming" => 1,
                                                                              "content_model" => "flow content",
                                                                              "status" => "CR"
                                                                            },
                                                               "aside" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "complementary" => 1,
+                                                                                                   "note" => 1,
+                                                                                                   "presentation" => 1,
+                                                                                                   "search" => 1
+                                                                                                 },
+                                                                           "aria_default_role" => "complementary",
                                                                            "attrs" => {},
                                                                            "conforming" => 1,
                                                                            "content_model" => "flow content",
@@ -1937,6 +2723,11 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "CR"
                                                                          },
                                                               "audio" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "application" => 1,
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_default_role" => "#norole",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "autoplay" => {
@@ -2061,6 +2852,10 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "base" => {
+                                                                          "aria_avail_roles" => {
+                                                                                                  "presentation" => 1
+                                                                                                },
+                                                                          "aria_strong_role" => "#norole",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "href" => {
@@ -2234,6 +3029,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                 "status" => "LC"
                                                                               },
                                                               "body" => {
+                                                                          "aria_default_role" => "#contextual",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "alink" => {
@@ -2412,6 +3208,12 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "button" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "button" => 1,
+                                                                                                    "menuitem" => 1,
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_default_role" => "button",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "action" => {
@@ -2856,6 +3658,11 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "datalist" => {
+                                                                              "aria_avail_roles" => {
+                                                                                                      "listbox" => 1,
+                                                                                                      "presentation" => 1
+                                                                                                    },
+                                                                              "aria_strong_role" => "listbox",
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "data" => {
@@ -2902,6 +3709,64 @@ $Web::HTML::Validator::_Defs = {
                                                                          "trasparent" => 1
                                                                        },
                                                               "details" => {
+                                                                             "aria_avail_roles" => {
+                                                                                                     "alert" => 1,
+                                                                                                     "alertdialog" => 1,
+                                                                                                     "application" => 1,
+                                                                                                     "article" => 1,
+                                                                                                     "banner" => 1,
+                                                                                                     "button" => 1,
+                                                                                                     "columnheader" => 1,
+                                                                                                     "combobox" => 1,
+                                                                                                     "complementary" => 1,
+                                                                                                     "contentinfo" => 1,
+                                                                                                     "definition" => 1,
+                                                                                                     "dialog" => 1,
+                                                                                                     "directory" => 1,
+                                                                                                     "document" => 1,
+                                                                                                     "form" => 1,
+                                                                                                     "grid" => 1,
+                                                                                                     "gridcell" => 1,
+                                                                                                     "group" => 1,
+                                                                                                     "heading" => 1,
+                                                                                                     "img" => 1,
+                                                                                                     "landmark" => 1,
+                                                                                                     "link" => 1,
+                                                                                                     "list" => 1,
+                                                                                                     "listbox" => 1,
+                                                                                                     "listitem" => 1,
+                                                                                                     "log" => 1,
+                                                                                                     "main" => 1,
+                                                                                                     "marquee" => 1,
+                                                                                                     "math" => 1,
+                                                                                                     "menu" => 1,
+                                                                                                     "menubar" => 1,
+                                                                                                     "navigation" => 1,
+                                                                                                     "note" => 1,
+                                                                                                     "presentation" => 1,
+                                                                                                     "radiogroup" => 1,
+                                                                                                     "region" => 1,
+                                                                                                     "row" => 1,
+                                                                                                     "rowgroup" => 1,
+                                                                                                     "rowheader" => 1,
+                                                                                                     "search" => 1,
+                                                                                                     "section" => 1,
+                                                                                                     "sectionhead" => 1,
+                                                                                                     "select" => 1,
+                                                                                                     "separator" => 1,
+                                                                                                     "status" => 1,
+                                                                                                     "tab" => 1,
+                                                                                                     "tablist" => 1,
+                                                                                                     "tabpanel" => 1,
+                                                                                                     "timer" => 1,
+                                                                                                     "toolbar" => 1,
+                                                                                                     "tooltip" => 1,
+                                                                                                     "tree" => 1,
+                                                                                                     "treegrid" => 1,
+                                                                                                     "treeitem" => 1,
+                                                                                                     "window" => 1
+                                                                                                   },
+                                                                             "aria_default_role" => "group",
                                                                              "attrs" => {
                                                                                           "" => {
                                                                                                   "open" => {
@@ -2952,6 +3817,22 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "dialog" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "alert" => 1,
+                                                                                                    "alertdialog" => 1,
+                                                                                                    "application" => 1,
+                                                                                                    "contentinfo" => 1,
+                                                                                                    "dialog" => 1,
+                                                                                                    "document" => 1,
+                                                                                                    "log" => 1,
+                                                                                                    "main" => 1,
+                                                                                                    "marquee" => 1,
+                                                                                                    "presentation" => 1,
+                                                                                                    "region" => 1,
+                                                                                                    "search" => 1,
+                                                                                                    "status" => 1
+                                                                                                  },
+                                                                            "aria_default_role" => "dialog",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "open" => {
@@ -3087,6 +3968,13 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "embed" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "application" => 1,
+                                                                                                   "document" => 1,
+                                                                                                   "img" => 1,
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_default_role" => "#norole",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "align" => {
@@ -3251,6 +4139,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                             }
                                                                                },
                                                               "fieldset" => {
+                                                                              "aria_avail_roles" => {
+                                                                                                      "group" => 1,
+                                                                                                      "presentation" => 1
+                                                                                                    },
+                                                                              "aria_strong_role" => "group",
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "datafld" => {
@@ -3322,6 +4215,11 @@ $Web::HTML::Validator::_Defs = {
                                                                           "transparent" => 1
                                                                         },
                                                               "footer" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "contentinfo" => 1,
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_default_role" => "#norole",
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
                                                                             "content_model" => "flow content",
@@ -3600,6 +4498,7 @@ $Web::HTML::Validator::_Defs = {
                                                                            "content_model" => "empty"
                                                                          },
                                                               "frameset" => {
+                                                                              "aria_default_role" => "#contextual",
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "border" => {
@@ -3687,6 +4586,7 @@ $Web::HTML::Validator::_Defs = {
                                                                               "has_additional_content_constraints" => 1
                                                                             },
                                                               "h1" => {
+                                                                        "aria_default_role" => "#contextual",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -3734,6 +4634,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h2" => {
+                                                                        "aria_default_role" => "#contextual",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -3781,6 +4682,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h3" => {
+                                                                        "aria_default_role" => "#contextual",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -3828,6 +4730,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h4" => {
+                                                                        "aria_default_role" => "#contextual",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -3875,6 +4778,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h5" => {
+                                                                        "aria_default_role" => "#contextual",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -3922,6 +4826,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h6" => {
+                                                                        "aria_default_role" => "#contextual",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -3969,6 +4874,10 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "head" => {
+                                                                          "aria_avail_roles" => {
+                                                                                                  "presentation" => 1
+                                                                                                },
+                                                                          "aria_strong_role" => "#norole",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "profile" => {
@@ -3984,6 +4893,11 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "header" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "banner" => 1,
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_default_role" => "#norole",
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
                                                                             "content_model" => "flow content",
@@ -3999,6 +4913,11 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "CR"
                                                                           },
                                                               "hgroup" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "heading" => 1,
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_strong_role" => "heading",
                                                                             "attrs" => {},
                                                                             "complex_content_model" => [
                                                                                                          {
@@ -4022,6 +4941,11 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "CR"
                                                                           },
                                                               "hr" => {
+                                                                        "aria_avail_roles" => {
+                                                                                                "presentation" => 1,
+                                                                                                "separator" => 1
+                                                                                              },
+                                                                        "aria_strong_role" => "separator",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4062,6 +4986,10 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "html" => {
+                                                                          "aria_avail_roles" => {
+                                                                                                  "presentation" => 1
+                                                                                                },
+                                                                          "aria_strong_role" => "#norole",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "manifest" => {
@@ -4121,6 +5049,13 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "iframe" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "application" => 1,
+                                                                                                    "document" => 1,
+                                                                                                    "img" => 1,
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_default_role" => "#norole",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "align" => {
@@ -4357,6 +5292,8 @@ $Web::HTML::Validator::_Defs = {
                                                                            "attrs" => {}
                                                                          },
                                                               "img" => {
+                                                                         "aria_default_role" => "#contextual",
+                                                                         "aria_strong_role" => "#contextual",
                                                                          "attrs" => {
                                                                                       "" => {
                                                                                               "align" => {
@@ -4493,6 +5430,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                 },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               },
+                                                                                              "guidance-for-markup-generators" => {
+                                                                                                                                    "status" => "LC",
+                                                                                                                                    "value_type" => "boolean"
+                                                                                                                                  },
                                                                                               "height" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC",
@@ -4580,6 +5521,8 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "LC"
                                                                        },
                                                               "input" => {
+                                                                           "aria_default_role" => "#contextual",
+                                                                           "aria_strong_role" => "#contextual",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "accept" => {
@@ -5445,6 +6388,10 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "keygen" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_strong_role" => "#norole",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "autofocus" => {
@@ -5508,6 +6455,10 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                               "label" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_strong_role" => "#norole",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "datafld" => {
@@ -5607,6 +6558,7 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                               "li" => {
+                                                                        "aria_default_role" => "#contextual",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "type" => {
@@ -5624,6 +6576,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "link" => {
+                                                                          "aria_strong_role" => "#contextual",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "charset" => {
@@ -5696,7 +6649,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         },
                                                                                                "sizes" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC",
+                                                                                                            "status" => "FD",
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                                "target" => {
@@ -5750,6 +6703,13 @@ $Web::HTML::Validator::_Defs = {
                                                                              "status" => "LC"
                                                                            },
                                                               "main" => {
+                                                                          "aria_avail_roles" => {
+                                                                                                  "application" => 1,
+                                                                                                  "document" => 1,
+                                                                                                  "main" => 1,
+                                                                                                  "presentation" => 1
+                                                                                                },
+                                                                          "aria_default_role" => "main",
                                                                           "attrs" => {},
                                                                           "conforming" => 1,
                                                                           "content_model" => "flow content"
@@ -5911,6 +6871,7 @@ $Web::HTML::Validator::_Defs = {
                                                                              "status" => "LC"
                                                                            },
                                                               "menu" => {
+                                                                          "aria_default_role" => "#contextual",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "compact" => {
@@ -6023,6 +6984,10 @@ $Web::HTML::Validator::_Defs = {
                                                                               "content_model" => "empty"
                                                                             },
                                                               "meta" => {
+                                                                          "aria_avail_roles" => {
+                                                                                                  "presentation" => 1
+                                                                                                },
+                                                                          "aria_strong_role" => "#norole",
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "charset" => {
@@ -6056,6 +7021,10 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "meter" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_strong_role" => "#norole",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "high" => {
@@ -6107,6 +7076,11 @@ $Web::HTML::Validator::_Defs = {
                                                                               "status" => "LC"
                                                                             },
                                                               "nav" => {
+                                                                         "aria_avail_roles" => {
+                                                                                                 "navigation" => 1,
+                                                                                                 "presentation" => 1
+                                                                                               },
+                                                                         "aria_strong_role" => "navigation",
                                                                          "attrs" => {},
                                                                          "conforming" => 1,
                                                                          "content_model" => "flow content",
@@ -6139,6 +7113,10 @@ $Web::HTML::Validator::_Defs = {
                                                                               "status" => "LC"
                                                                             },
                                                               "noscript" => {
+                                                                              "aria_avail_roles" => {
+                                                                                                      "presentation" => 1
+                                                                                                    },
+                                                                              "aria_strong_role" => "#norole",
                                                                               "attrs" => {},
                                                                               "conforming" => 1,
                                                                               "has_additional_content_constraints" => 1,
@@ -6146,6 +7124,13 @@ $Web::HTML::Validator::_Defs = {
                                                                               "transparent" => "partial"
                                                                             },
                                                               "object" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "application" => 1,
+                                                                                                    "document" => 1,
+                                                                                                    "img" => 1,
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_default_role" => "#norole",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "align" => {
@@ -6323,6 +7308,19 @@ $Web::HTML::Validator::_Defs = {
                                                                             "transparent" => "semi"
                                                                           },
                                                               "ol" => {
+                                                                        "aria_avail_roles" => {
+                                                                                                "directory" => 1,
+                                                                                                "group" => 1,
+                                                                                                "list" => 1,
+                                                                                                "listbox" => 1,
+                                                                                                "menu" => 1,
+                                                                                                "menubar" => 1,
+                                                                                                "presentation" => 1,
+                                                                                                "tablist" => 1,
+                                                                                                "toolbar" => 1,
+                                                                                                "tree" => 1
+                                                                                              },
+                                                                        "aria_default_role" => "list",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "compact" => {
@@ -6362,6 +7360,10 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                               "optgroup" => {
+                                                                              "aria_avail_roles" => {
+                                                                                                      "presentation" => 1
+                                                                                                    },
+                                                                              "aria_strong_role" => "#norole",
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "disabled" => {
@@ -6395,6 +7397,7 @@ $Web::HTML::Validator::_Defs = {
                                                                               "status" => "LC"
                                                                             },
                                                               "option" => {
+                                                                            "aria_strong_role" => "#contextual",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "dataformatas" => {
@@ -6450,6 +7453,7 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                               "output" => {
+                                                                            "aria_default_role" => "status",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "for" => {
@@ -6521,6 +7525,10 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "param" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_strong_role" => "#norole",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "datafld" => {
@@ -6627,6 +7635,11 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "progress" => {
+                                                                              "aria_avail_roles" => {
+                                                                                                      "presentation" => 1,
+                                                                                                      "progressbar" => 1
+                                                                                                    },
+                                                                              "aria_strong_role" => "progressbar",
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "max" => {
@@ -6702,6 +7715,10 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "REC"
                                                                         },
                                                               "script" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_strong_role" => "#norole",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "archive" => {
@@ -6788,12 +7805,33 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "REC"
                                                                           },
                                                               "section" => {
+                                                                             "aria_avail_roles" => {
+                                                                                                     "alert" => 1,
+                                                                                                     "alertdialog" => 1,
+                                                                                                     "application" => 1,
+                                                                                                     "contentinfo" => 1,
+                                                                                                     "dialog" => 1,
+                                                                                                     "document" => 1,
+                                                                                                     "log" => 1,
+                                                                                                     "main" => 1,
+                                                                                                     "marquee" => 1,
+                                                                                                     "presentation" => 1,
+                                                                                                     "region" => 1,
+                                                                                                     "search" => 1,
+                                                                                                     "status" => 1
+                                                                                                   },
+                                                                             "aria_default_role" => "region",
                                                                              "attrs" => {},
                                                                              "conforming" => 1,
                                                                              "content_model" => "flow content",
                                                                              "status" => "CR"
                                                                            },
                                                               "select" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "listbox" => 1,
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_strong_role" => "listbox",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "autocomplete" => {
@@ -6889,6 +7927,10 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "REC"
                                                                          },
                                                               "source" => {
+                                                                            "aria_avail_roles" => {
+                                                                                                    "presentation" => 1
+                                                                                                  },
+                                                                            "aria_strong_role" => "#norole",
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "media" => {
@@ -6962,6 +8004,10 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "REC"
                                                                           },
                                                               "style" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_strong_role" => "#norole",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "media" => {
@@ -6997,6 +8043,10 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "summary" => {
+                                                                             "aria_avail_roles" => {
+                                                                                                     "presentation" => 1
+                                                                                                   },
+                                                                             "aria_strong_role" => "#norole",
                                                                              "attrs" => {},
                                                                              "conforming" => 1,
                                                                              "content_model" => "phrasing content"
@@ -7415,11 +8465,20 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                               "template" => {
+                                                                              "aria_avail_roles" => {
+                                                                                                      "presentation" => 1
+                                                                                                    },
+                                                                              "aria_strong_role" => "#norole",
                                                                               "attrs" => {},
                                                                               "conforming" => 1,
                                                                               "has_additional_content_constraints" => 1
                                                                             },
                                                               "textarea" => {
+                                                                              "aria_avail_roles" => {
+                                                                                                      "presentation" => 1,
+                                                                                                      "textbox" => 1
+                                                                                                    },
+                                                                              "aria_strong_role" => "textbox",
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "autocapitalize" => {
@@ -8102,6 +9161,10 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "title" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_strong_role" => "#norole",
                                                                            "attrs" => {},
                                                                            "conforming" => 1,
                                                                            "content_model" => "text",
@@ -8289,6 +9352,19 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "ul" => {
+                                                                        "aria_avail_roles" => {
+                                                                                                "directory" => 1,
+                                                                                                "group" => 1,
+                                                                                                "list" => 1,
+                                                                                                "listbox" => 1,
+                                                                                                "menu" => 1,
+                                                                                                "menubar" => 1,
+                                                                                                "presentation" => 1,
+                                                                                                "tablist" => 1,
+                                                                                                "toolbar" => 1,
+                                                                                                "tree" => 1
+                                                                                              },
+                                                                        "aria_default_role" => "list",
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "compact" => {
@@ -8323,6 +9399,11 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "video" => {
+                                                                           "aria_avail_roles" => {
+                                                                                                   "application" => 1,
+                                                                                                   "presentation" => 1
+                                                                                                 },
+                                                                           "aria_default_role" => "#norole",
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "autoplay" => {
@@ -8502,7 +9583,762 @@ $Web::HTML::Validator::_Defs = {
                                                             },
                           "http://www.w3.org/2000/svg" => {
                                                             "*" => {
-                                                                     "attrs" => {}
+                                                                     "attrs" => {
+                                                                                  "" => {
+                                                                                          "aria-activedescendant" => {
+                                                                                                                       "conforming" => 1,
+                                                                                                                       "status" => "CR",
+                                                                                                                       "value_type" => "idref"
+                                                                                                                     },
+                                                                                          "aria-atomic" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "enumerated" => {
+                                                                                                                               "false" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                               "true" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         }
+                                                                                                                             },
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "enumerated"
+                                                                                                           },
+                                                                                          "aria-autocomplete" => {
+                                                                                                                   "conforming" => 1,
+                                                                                                                   "enumerated" => {
+                                                                                                                                     "both" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               },
+                                                                                                                                     "inline" => {
+                                                                                                                                                   "conforming" => 1,
+                                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                                 },
+                                                                                                                                     "list" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               },
+                                                                                                                                     "none" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               }
+                                                                                                                                   },
+                                                                                                                   "status" => "CR",
+                                                                                                                   "value_type" => "enumerated"
+                                                                                                                 },
+                                                                                          "aria-busy" => {
+                                                                                                           "conforming" => 1,
+                                                                                                           "enumerated" => {
+                                                                                                                             "false" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                             "true" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       }
+                                                                                                                           },
+                                                                                                           "status" => "CR",
+                                                                                                           "value_type" => "enumerated"
+                                                                                                         },
+                                                                                          "aria-checked" => {
+                                                                                                              "conforming" => 1,
+                                                                                                              "enumerated" => {
+                                                                                                                                "false" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                "mixed" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                "true" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                                "undefined" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               }
+                                                                                                                              },
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "enumerated"
+                                                                                                            },
+                                                                                          "aria-controls" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                             },
+                                                                                          "aria-describedby" => {
+                                                                                                                  "conforming" => 1,
+                                                                                                                  "status" => "CR",
+                                                                                                                  "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                                },
+                                                                                          "aria-disabled" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                          "aria-dropeffect" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "keywords" => {
+                                                                                                                                 "copy" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                 "execute" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                 "link" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                 "move" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                 "none" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                 "popup" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            }
+                                                                                                                               },
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "unordered set of unique space-separated tokens"
+                                                                                                               },
+                                                                                          "aria-expanded" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                 "undefined" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                                }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                          "aria-flowto" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                           },
+                                                                                          "aria-grabbed" => {
+                                                                                                              "conforming" => 1,
+                                                                                                              "enumerated" => {
+                                                                                                                                "false" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                "true" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                                "undefined" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               }
+                                                                                                                              },
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "enumerated"
+                                                                                                            },
+                                                                                          "aria-haspopup" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                          "aria-hidden" => {
+                                                                                                             "conforming" => 1,
+                                                                                                             "enumerated" => {
+                                                                                                                               "false" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                               "true" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         }
+                                                                                                                             },
+                                                                                                             "status" => "CR",
+                                                                                                             "value_type" => "enumerated"
+                                                                                                           },
+                                                                                          "aria-invalid" => {
+                                                                                                              "conforming" => 1,
+                                                                                                              "enumerated" => {
+                                                                                                                                "false" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                "grammer" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                "spelling" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                                "true" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          }
+                                                                                                                              },
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "enumerated"
+                                                                                                            },
+                                                                                          "aria-label" => {
+                                                                                                            "conforming" => 1,
+                                                                                                            "status" => "CR",
+                                                                                                            "value_type" => "any"
+                                                                                                          },
+                                                                                          "aria-labelledby" => {
+                                                                                                                 "conforming" => 1,
+                                                                                                                 "status" => "CR",
+                                                                                                                 "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                               },
+                                                                                          "aria-level" => {
+                                                                                                            "conforming" => 1,
+                                                                                                            "status" => "CR",
+                                                                                                            "value_type" => "non-negative integer greater than zero"
+                                                                                                          },
+                                                                                          "aria-live" => {
+                                                                                                           "conforming" => 1,
+                                                                                                           "enumerated" => {
+                                                                                                                             "assertive" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                             "off" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                             "polite" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         }
+                                                                                                                           },
+                                                                                                           "status" => "CR",
+                                                                                                           "value_type" => "enumerated"
+                                                                                                         },
+                                                                                          "aria-multiline" => {
+                                                                                                                "conforming" => 1,
+                                                                                                                "enumerated" => {
+                                                                                                                                  "false" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                                  "true" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            }
+                                                                                                                                },
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "enumerated"
+                                                                                                              },
+                                                                                          "aria-multiselectable" => {
+                                                                                                                      "conforming" => 1,
+                                                                                                                      "enumerated" => {
+                                                                                                                                        "false" => {
+                                                                                                                                                     "conforming" => 1,
+                                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                                   },
+                                                                                                                                        "true" => {
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                                  }
+                                                                                                                                      },
+                                                                                                                      "status" => "CR",
+                                                                                                                      "value_type" => "enumerated"
+                                                                                                                    },
+                                                                                          "aria-orientation" => {
+                                                                                                                  "conforming" => 1,
+                                                                                                                  "enumerated" => {
+                                                                                                                                    "horizontal" => {
+                                                                                                                                                      "conforming" => 1,
+                                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                                    },
+                                                                                                                                    "vertical" => {
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                                  }
+                                                                                                                                  },
+                                                                                                                  "status" => "CR",
+                                                                                                                  "value_type" => "enumerated"
+                                                                                                                },
+                                                                                          "aria-owns" => {
+                                                                                                           "conforming" => 1,
+                                                                                                           "status" => "CR",
+                                                                                                           "value_type" => "ordered set of unique space-separated tokens"
+                                                                                                         },
+                                                                                          "aria-posinset" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "non-negative integer greater than zero"
+                                                                                                             },
+                                                                                          "aria-pressed" => {
+                                                                                                              "conforming" => 1,
+                                                                                                              "enumerated" => {
+                                                                                                                                "false" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                "mixed" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                "true" => {
+                                                                                                                                            "conforming" => 1,
+                                                                                                                                            "spec" => "ARIA"
+                                                                                                                                          },
+                                                                                                                                "undefined" => {
+                                                                                                                                                 "conforming" => 1,
+                                                                                                                                                 "spec" => "ARIA"
+                                                                                                                                               }
+                                                                                                                              },
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "enumerated"
+                                                                                                            },
+                                                                                          "aria-readonly" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                          "aria-relevant" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "keywords" => {
+                                                                                                                               "additions" => {
+                                                                                                                                                "conforming" => 1,
+                                                                                                                                                "spec" => "ARIA"
+                                                                                                                                              },
+                                                                                                                               "all" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                               "removals" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                               "text" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         }
+                                                                                                                             },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "unordered set of unique space-separated tokens"
+                                                                                                             },
+                                                                                          "aria-required" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                          "aria-selected" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "enumerated" => {
+                                                                                                                                 "false" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                                 "true" => {
+                                                                                                                                             "conforming" => 1,
+                                                                                                                                             "spec" => "ARIA"
+                                                                                                                                           },
+                                                                                                                                 "undefined" => {
+                                                                                                                                                  "conforming" => 1,
+                                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                                }
+                                                                                                                               },
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "enumerated"
+                                                                                                             },
+                                                                                          "aria-setsize" => {
+                                                                                                              "conforming" => 1,
+                                                                                                              "status" => "CR",
+                                                                                                              "value_type" => "non-negative integer"
+                                                                                                            },
+                                                                                          "aria-sort" => {
+                                                                                                           "conforming" => 1,
+                                                                                                           "enumerated" => {
+                                                                                                                             "ascending" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                             "descending" => {
+                                                                                                                                               "conforming" => 1,
+                                                                                                                                               "spec" => "ARIA"
+                                                                                                                                             },
+                                                                                                                             "none" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                             "other" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        }
+                                                                                                                           },
+                                                                                                           "status" => "CR",
+                                                                                                           "value_type" => "enumerated"
+                                                                                                         },
+                                                                                          "aria-valuemax" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "real number"
+                                                                                                             },
+                                                                                          "aria-valuemin" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "real number"
+                                                                                                             },
+                                                                                          "aria-valuenow" => {
+                                                                                                               "conforming" => 1,
+                                                                                                               "status" => "CR",
+                                                                                                               "value_type" => "real number"
+                                                                                                             },
+                                                                                          "aria-valuetext" => {
+                                                                                                                "conforming" => 1,
+                                                                                                                "status" => "CR",
+                                                                                                                "value_type" => "any"
+                                                                                                              },
+                                                                                          "role" => {
+                                                                                                      "conforming" => 1,
+                                                                                                      "keywords" => {
+                                                                                                                      "alert" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                      "alertdialog" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                      "application" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                      "article" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "banner" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "button" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "checkbox" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "columnheader" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                      "combobox" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "command" => {
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "complementary" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                      "composite" => {
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                      "contentinfo" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                      "definition" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                      "dialog" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "directory" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                      "document" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "form" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "grid" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "gridcell" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "group" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                      "heading" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "img" => {
+                                                                                                                                 "conforming" => 1,
+                                                                                                                                 "spec" => "ARIA"
+                                                                                                                               },
+                                                                                                                      "input" => {
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                      "landmark" => {
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "link" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "list" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "listbox" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "listitem" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "log" => {
+                                                                                                                                 "conforming" => 1,
+                                                                                                                                 "spec" => "ARIA"
+                                                                                                                               },
+                                                                                                                      "main" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "marquee" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "math" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "menu" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "menubar" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "menuitem" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "menuitemcheckbox" => {
+                                                                                                                                              "conforming" => 1,
+                                                                                                                                              "spec" => "ARIA"
+                                                                                                                                            },
+                                                                                                                      "menuitemradio" => {
+                                                                                                                                           "conforming" => 1,
+                                                                                                                                           "spec" => "ARIA"
+                                                                                                                                         },
+                                                                                                                      "navigation" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                      "note" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "option" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "presentation" => {
+                                                                                                                                          "conforming" => 1,
+                                                                                                                                          "spec" => "ARIA"
+                                                                                                                                        },
+                                                                                                                      "progressbar" => {
+                                                                                                                                         "conforming" => 1,
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                      "radio" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                      "radiogroup" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                      "range" => {
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                      "region" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "roletype" => {
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "row" => {
+                                                                                                                                 "conforming" => 1,
+                                                                                                                                 "spec" => "ARIA"
+                                                                                                                               },
+                                                                                                                      "rowgroup" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "rowheader" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                      "scrollbar" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                      "search" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "section" => {
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "sectionhead" => {
+                                                                                                                                         "spec" => "ARIA"
+                                                                                                                                       },
+                                                                                                                      "select" => {
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "separator" => {
+                                                                                                                                       "conforming" => 1,
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                      "slider" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "spinbutton" => {
+                                                                                                                                        "conforming" => 1,
+                                                                                                                                        "spec" => "ARIA"
+                                                                                                                                      },
+                                                                                                                      "status" => {
+                                                                                                                                    "conforming" => 1,
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "structure" => {
+                                                                                                                                       "spec" => "ARIA"
+                                                                                                                                     },
+                                                                                                                      "tab" => {
+                                                                                                                                 "conforming" => 1,
+                                                                                                                                 "spec" => "ARIA"
+                                                                                                                               },
+                                                                                                                      "tablist" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "tabpanel" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "textbox" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "timer" => {
+                                                                                                                                   "conforming" => 1,
+                                                                                                                                   "spec" => "ARIA"
+                                                                                                                                 },
+                                                                                                                      "toolbar" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "tooltip" => {
+                                                                                                                                     "conforming" => 1,
+                                                                                                                                     "spec" => "ARIA"
+                                                                                                                                   },
+                                                                                                                      "tree" => {
+                                                                                                                                  "conforming" => 1,
+                                                                                                                                  "spec" => "ARIA"
+                                                                                                                                },
+                                                                                                                      "treegrid" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "treeitem" => {
+                                                                                                                                      "conforming" => 1,
+                                                                                                                                      "spec" => "ARIA"
+                                                                                                                                    },
+                                                                                                                      "widget" => {
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  },
+                                                                                                                      "window" => {
+                                                                                                                                    "spec" => "ARIA"
+                                                                                                                                  }
+                                                                                                                    },
+                                                                                                      "status" => "CR",
+                                                                                                      "value_type" => "unordered set of unique space-separated tokens"
+                                                                                                    }
+                                                                                        }
+                                                                                }
                                                                    },
                                                             "a" => {
                                                                      "attrs" => {}
@@ -24998,6 +26834,1593 @@ $Web::HTML::Validator::_Defs = {
                                                                         "supported" => 1
                                                                       }
                           },
+          "roles" => {
+                       "alert" => {
+                                    "attrs" => {
+                                                 "aria-expanded" => {}
+                                               },
+                                    "subclass_of" => {
+                                                       "region" => 1,
+                                                       "roletype" => 4,
+                                                       "section" => 2,
+                                                       "structure" => 3
+                                                     },
+                                    "superclass_of" => {
+                                                         "alertdialog" => 1
+                                                       }
+                                  },
+                       "alertdialog" => {
+                                          "attrs" => {
+                                                       "aria-describedby" => {
+                                                                               "should" => 1
+                                                                             },
+                                                       "aria-expanded" => {}
+                                                     },
+                                          "subclass_of" => {
+                                                             "alert" => 1,
+                                                             "dialog" => 1,
+                                                             "region" => 2,
+                                                             "roletype" => 3,
+                                                             "section" => 3,
+                                                             "structure" => 4,
+                                                             "window" => 2
+                                                           }
+                                        },
+                       "application" => {
+                                          "attrs" => {
+                                                       "aria-expanded" => {}
+                                                     },
+                                          "subclass_of" => {
+                                                             "landmark" => 1,
+                                                             "region" => 2,
+                                                             "roletype" => 5,
+                                                             "section" => 3,
+                                                             "structure" => 4
+                                                           }
+                                        },
+                       "article" => {
+                                      "attrs" => {
+                                                   "aria-expanded" => {}
+                                                 },
+                                      "preferred" => {
+                                                       "name" => "article",
+                                                       "type" => "html-element"
+                                                     },
+                                      "subclass_of" => {
+                                                         "document" => 1,
+                                                         "region" => 1,
+                                                         "roletype" => 4,
+                                                         "section" => 2,
+                                                         "structure" => 3
+                                                       }
+                                    },
+                       "banner" => {
+                                     "attrs" => {
+                                                  "aria-expanded" => {}
+                                                },
+                                     "subclass_of" => {
+                                                        "landmark" => 1,
+                                                        "region" => 2,
+                                                        "roletype" => 5,
+                                                        "section" => 3,
+                                                        "structure" => 4
+                                                      }
+                                   },
+                       "button" => {
+                                     "attrs" => {
+                                                  "aria-expanded" => {},
+                                                  "aria-pressed" => {}
+                                                },
+                                     "preferred" => {
+                                                      "name" => "button",
+                                                      "type" => "html-element"
+                                                    },
+                                     "subclass_of" => {
+                                                        "command" => 1,
+                                                        "roletype" => 3,
+                                                        "widget" => 2
+                                                      }
+                                   },
+                       "checkbox" => {
+                                       "attrs" => {
+                                                    "aria-checked" => {
+                                                                        "must" => 1
+                                                                      }
+                                                  },
+                                       "preferred" => {
+                                                        "name" => "checkbox",
+                                                        "type" => "input"
+                                                      },
+                                       "subclass_of" => {
+                                                          "input" => 1,
+                                                          "roletype" => 3,
+                                                          "widget" => 2
+                                                        },
+                                       "superclass_of" => {
+                                                            "menuitemcheckbox" => 1,
+                                                            "menuitemradio" => 2,
+                                                            "radio" => 1
+                                                          }
+                                     },
+                       "columnheader" => {
+                                           "attrs" => {
+                                                        "aria-expanded" => {},
+                                                        "aria-readonly" => {},
+                                                        "aria-required" => {},
+                                                        "aria-selected" => {},
+                                                        "aria-sort" => {}
+                                                      },
+                                           "preferred" => {
+                                                            "scope" => "col",
+                                                            "type" => "th"
+                                                          },
+                                           "scope" => {
+                                                        "row" => 1
+                                                      },
+                                           "subclass_of" => {
+                                                              "gridcell" => 1,
+                                                              "roletype" => 2,
+                                                              "section" => 2,
+                                                              "sectionhead" => 1,
+                                                              "structure" => 2,
+                                                              "widget" => 1
+                                                            }
+                                         },
+                       "combobox" => {
+                                       "attrs" => {
+                                                    "aria-activedescendant" => {},
+                                                    "aria-autocomplete" => {},
+                                                    "aria-expanded" => {
+                                                                         "must" => 1
+                                                                       },
+                                                    "aria-required" => {}
+                                                  },
+                                       "must_contain" => {
+                                                           "listbox" => 1,
+                                                           "textbox" => 1
+                                                         },
+                                       "preferred" => {
+                                                        "name" => "text",
+                                                        "type" => "input"
+                                                      },
+                                       "subclass_of" => {
+                                                          "composite" => 2,
+                                                          "group" => 2,
+                                                          "input" => 2,
+                                                          "roletype" => 4,
+                                                          "section" => 3,
+                                                          "select" => 1,
+                                                          "structure" => 4,
+                                                          "widget" => 3
+                                                        }
+                                     },
+                       "command" => {
+                                      "abstract" => 1,
+                                      "subclass_of" => {
+                                                         "roletype" => 2,
+                                                         "widget" => 1
+                                                       },
+                                      "superclass_of" => {
+                                                           "button" => 1,
+                                                           "link" => 1,
+                                                           "menuitem" => 1,
+                                                           "menuitemcheckbox" => 2,
+                                                           "menuitemradio" => 3
+                                                         }
+                                    },
+                       "complementary" => {
+                                            "attrs" => {
+                                                         "aria-expanded" => {}
+                                                       },
+                                            "subclass_of" => {
+                                                               "landmark" => 1,
+                                                               "region" => 2,
+                                                               "roletype" => 5,
+                                                               "section" => 3,
+                                                               "structure" => 4
+                                                             }
+                                          },
+                       "composite" => {
+                                        "abstract" => 1,
+                                        "attrs" => {
+                                                     "aria-activedescendant" => {}
+                                                   },
+                                        "subclass_of" => {
+                                                           "roletype" => 2,
+                                                           "widget" => 1
+                                                         },
+                                        "superclass_of" => {
+                                                             "combobox" => 2,
+                                                             "grid" => 1,
+                                                             "listbox" => 2,
+                                                             "menu" => 2,
+                                                             "menubar" => 3,
+                                                             "radiogroup" => 2,
+                                                             "select" => 1,
+                                                             "tablist" => 1,
+                                                             "tree" => 2,
+                                                             "treegrid" => 3
+                                                           }
+                                      },
+                       "contentinfo" => {
+                                          "attrs" => {
+                                                       "aria-expanded" => {}
+                                                     },
+                                          "subclass_of" => {
+                                                             "landmark" => 1,
+                                                             "region" => 2,
+                                                             "roletype" => 5,
+                                                             "section" => 3,
+                                                             "structure" => 4
+                                                           }
+                                        },
+                       "definition" => {
+                                         "attrs" => {
+                                                      "aria-expanded" => {},
+                                                      "aria-labelledby" => {
+                                                                             "should" => 1
+                                                                           }
+                                                    },
+                                         "subclass_of" => {
+                                                            "roletype" => 3,
+                                                            "section" => 1,
+                                                            "structure" => 2
+                                                          }
+                                       },
+                       "dialog" => {
+                                     "attrs" => {
+                                                  "aria-expanded" => {}
+                                                },
+                                     "preferred" => {
+                                                      "name" => "dialog",
+                                                      "type" => "html-element"
+                                                    },
+                                     "subclass_of" => {
+                                                        "roletype" => 2,
+                                                        "window" => 1
+                                                      },
+                                     "superclass_of" => {
+                                                          "alertdialog" => 1
+                                                        }
+                                   },
+                       "directory" => {
+                                        "attrs" => {
+                                                     "aria-expanded" => {}
+                                                   },
+                                        "must_contain" => {
+                                                            "group" => 1,
+                                                            "listitem" => 1
+                                                          },
+                                        "subclass_of" => {
+                                                           "list" => 1,
+                                                           "region" => 2,
+                                                           "roletype" => 5,
+                                                           "section" => 3,
+                                                           "structure" => 4
+                                                         },
+                                        "superclass_of" => {
+                                                             "tablist" => 1
+                                                           }
+                                      },
+                       "document" => {
+                                       "attrs" => {
+                                                    "aria-expanded" => {}
+                                                  },
+                                       "subclass_of" => {
+                                                          "roletype" => 2,
+                                                          "structure" => 1
+                                                        },
+                                       "superclass_of" => {
+                                                            "article" => 1
+                                                          }
+                                     },
+                       "form" => {
+                                   "attrs" => {
+                                                "aria-expanded" => {},
+                                                "aria-labelledby" => {
+                                                                       "should" => 1
+                                                                     }
+                                              },
+                                   "preferred" => {
+                                                    "name" => "form",
+                                                    "type" => "html-element"
+                                                  },
+                                   "subclass_of" => {
+                                                      "landmark" => 1,
+                                                      "region" => 2,
+                                                      "roletype" => 5,
+                                                      "section" => 3,
+                                                      "structure" => 4
+                                                    }
+                                 },
+                       "grid" => {
+                                   "attrs" => {
+                                                "aria-activedescendant" => {},
+                                                "aria-expanded" => {},
+                                                "aria-level" => {},
+                                                "aria-multiselectable" => {},
+                                                "aria-readonly" => {}
+                                              },
+                                   "must_contain" => {
+                                                       "row" => 1,
+                                                       "rowgroup" => 1
+                                                     },
+                                   "preferred" => {
+                                                    "name" => "table",
+                                                    "type" => "html-element"
+                                                  },
+                                   "subclass_of" => {
+                                                      "composite" => 1,
+                                                      "region" => 1,
+                                                      "roletype" => 4,
+                                                      "section" => 2,
+                                                      "structure" => 3,
+                                                      "widget" => 2
+                                                    },
+                                   "superclass_of" => {
+                                                        "treegrid" => 1
+                                                      }
+                                 },
+                       "gridcell" => {
+                                       "attrs" => {
+                                                    "aria-expanded" => {},
+                                                    "aria-readonly" => {},
+                                                    "aria-required" => {},
+                                                    "aria-selected" => {}
+                                                  },
+                                       "preferred" => {
+                                                        "name" => "td",
+                                                        "type" => "html-element"
+                                                      },
+                                       "scope" => {
+                                                    "row" => 1
+                                                  },
+                                       "subclass_of" => {
+                                                          "roletype" => 2,
+                                                          "section" => 1,
+                                                          "structure" => 2,
+                                                          "widget" => 1
+                                                        },
+                                       "superclass_of" => {
+                                                            "columnheader" => 1,
+                                                            "rowheader" => 1
+                                                          }
+                                     },
+                       "group" => {
+                                    "attrs" => {
+                                                 "aria-activedescendant" => {},
+                                                 "aria-expanded" => {}
+                                               },
+                                    "preferred" => {
+                                                     "name" => "fieldset",
+                                                     "type" => "html-element"
+                                                   },
+                                    "subclass_of" => {
+                                                       "roletype" => 3,
+                                                       "section" => 1,
+                                                       "structure" => 2
+                                                     },
+                                    "superclass_of" => {
+                                                         "combobox" => 2,
+                                                         "listbox" => 2,
+                                                         "menu" => 2,
+                                                         "menubar" => 3,
+                                                         "radiogroup" => 2,
+                                                         "row" => 1,
+                                                         "rowgroup" => 1,
+                                                         "select" => 1,
+                                                         "toolbar" => 1,
+                                                         "tree" => 2,
+                                                         "treegrid" => 3
+                                                       }
+                                  },
+                       "heading" => {
+                                      "attrs" => {
+                                                   "aria-expanded" => {},
+                                                   "aria-level" => {}
+                                                 },
+                                      "preferred" => {
+                                                       "name" => "h1",
+                                                       "type" => "html-element"
+                                                     },
+                                      "subclass_of" => {
+                                                         "roletype" => 3,
+                                                         "sectionhead" => 1,
+                                                         "structure" => 2
+                                                       }
+                                    },
+                       "img" => {
+                                  "attrs" => {
+                                               "aria-expanded" => {}
+                                             },
+                                  "preferred" => {
+                                                   "name" => "img",
+                                                   "type" => "html-element"
+                                                 },
+                                  "subclass_of" => {
+                                                     "roletype" => 3,
+                                                     "section" => 1,
+                                                     "structure" => 2
+                                                   }
+                                },
+                       "input" => {
+                                    "abstract" => 1,
+                                    "subclass_of" => {
+                                                       "roletype" => 2,
+                                                       "widget" => 1
+                                                     },
+                                    "superclass_of" => {
+                                                         "checkbox" => 1,
+                                                         "combobox" => 2,
+                                                         "listbox" => 2,
+                                                         "menu" => 2,
+                                                         "menubar" => 3,
+                                                         "menuitemcheckbox" => 2,
+                                                         "menuitemradio" => 3,
+                                                         "option" => 1,
+                                                         "radio" => 2,
+                                                         "radiogroup" => 2,
+                                                         "scrollbar" => 1,
+                                                         "select" => 1,
+                                                         "slider" => 1,
+                                                         "spinbutton" => 1,
+                                                         "textbox" => 1,
+                                                         "tree" => 2,
+                                                         "treegrid" => 3,
+                                                         "treeitem" => 2
+                                                       }
+                                  },
+                       "landmark" => {
+                                       "abstract" => 1,
+                                       "attrs" => {
+                                                    "aria-expanded" => {}
+                                                  },
+                                       "subclass_of" => {
+                                                          "region" => 1,
+                                                          "roletype" => 4,
+                                                          "section" => 2,
+                                                          "structure" => 3
+                                                        },
+                                       "superclass_of" => {
+                                                            "application" => 1,
+                                                            "banner" => 1,
+                                                            "complementary" => 1,
+                                                            "contentinfo" => 1,
+                                                            "form" => 1,
+                                                            "main" => 1,
+                                                            "navigation" => 1,
+                                                            "search" => 1
+                                                          }
+                                     },
+                       "link" => {
+                                   "attrs" => {
+                                                "aria-expanded" => {}
+                                              },
+                                   "preferred" => {
+                                                    "name" => "a",
+                                                    "type" => "html-element"
+                                                  },
+                                   "subclass_of" => {
+                                                      "command" => 1,
+                                                      "roletype" => 3,
+                                                      "widget" => 2
+                                                    }
+                                 },
+                       "list" => {
+                                   "attrs" => {
+                                                "aria-expanded" => {}
+                                              },
+                                   "must_contain" => {
+                                                       "group" => 1,
+                                                       "listitem" => 1
+                                                     },
+                                   "preferred" => {
+                                                    "name" => "ul",
+                                                    "type" => "html-element"
+                                                  },
+                                   "subclass_of" => {
+                                                      "region" => 1,
+                                                      "roletype" => 4,
+                                                      "section" => 2,
+                                                      "structure" => 3
+                                                    },
+                                   "superclass_of" => {
+                                                        "directory" => 1,
+                                                        "listbox" => 1,
+                                                        "menu" => 1,
+                                                        "menubar" => 2,
+                                                        "tablist" => 2
+                                                      }
+                                 },
+                       "listbox" => {
+                                      "attrs" => {
+                                                   "aria-activedescendant" => {},
+                                                   "aria-expanded" => {},
+                                                   "aria-multiselectable" => {},
+                                                   "aria-required" => {}
+                                                 },
+                                      "must_contain" => {
+                                                          "group" => 1,
+                                                          "listitem" => 1,
+                                                          "option" => 1
+                                                        },
+                                      "preferred" => {
+                                                       "name" => "select",
+                                                       "type" => "html-element"
+                                                     },
+                                      "subclass_of" => {
+                                                         "composite" => 2,
+                                                         "group" => 2,
+                                                         "input" => 2,
+                                                         "list" => 1,
+                                                         "region" => 2,
+                                                         "roletype" => 4,
+                                                         "section" => 3,
+                                                         "select" => 1,
+                                                         "structure" => 4,
+                                                         "widget" => 3
+                                                       }
+                                    },
+                       "listitem" => {
+                                       "attrs" => {
+                                                    "aria-expanded" => {},
+                                                    "aria-level" => {},
+                                                    "aria-posinset" => {},
+                                                    "aria-setsize" => {}
+                                                  },
+                                       "preferred" => {
+                                                        "name" => "li",
+                                                        "type" => "html-element"
+                                                      },
+                                       "scope" => {
+                                                    "list" => 1
+                                                  },
+                                       "subclass_of" => {
+                                                          "roletype" => 3,
+                                                          "section" => 1,
+                                                          "structure" => 2
+                                                        },
+                                       "superclass_of" => {
+                                                            "treeitem" => 1
+                                                          }
+                                     },
+                       "log" => {
+                                  "attrs" => {
+                                               "aria-expanded" => {}
+                                             },
+                                  "subclass_of" => {
+                                                     "region" => 1,
+                                                     "roletype" => 4,
+                                                     "section" => 2,
+                                                     "structure" => 3
+                                                   }
+                                },
+                       "main" => {
+                                   "attrs" => {
+                                                "aria-expanded" => {}
+                                              },
+                                   "preferred" => {
+                                                    "name" => "main",
+                                                    "type" => "html-element"
+                                                  },
+                                   "subclass_of" => {
+                                                      "landmark" => 1,
+                                                      "region" => 2,
+                                                      "roletype" => 5,
+                                                      "section" => 3,
+                                                      "structure" => 4
+                                                    }
+                                 },
+                       "marquee" => {
+                                      "attrs" => {
+                                                   "aria-expanded" => {}
+                                                 },
+                                      "subclass_of" => {
+                                                         "roletype" => 3,
+                                                         "section" => 1,
+                                                         "structure" => 2
+                                                       }
+                                    },
+                       "math" => {
+                                   "attrs" => {
+                                                "aria-expanded" => {}
+                                              },
+                                   "preferred" => {
+                                                    "type" => "math"
+                                                  },
+                                   "subclass_of" => {
+                                                      "roletype" => 3,
+                                                      "section" => 1,
+                                                      "structure" => 2
+                                                    }
+                                 },
+                       "menu" => {
+                                   "attrs" => {
+                                                "aria-activedescendant" => {},
+                                                "aria-expanded" => {}
+                                              },
+                                   "must_contain" => {
+                                                       "group" => 1,
+                                                       "listitem" => 1,
+                                                       "menuitem" => 1,
+                                                       "menuitemcheckbox" => 1,
+                                                       "menuitemradio" => 1
+                                                     },
+                                   "preferred" => {
+                                                    "name" => "menu",
+                                                    "type" => "html-element"
+                                                  },
+                                   "subclass_of" => {
+                                                      "composite" => 2,
+                                                      "group" => 2,
+                                                      "input" => 2,
+                                                      "list" => 1,
+                                                      "region" => 2,
+                                                      "roletype" => 4,
+                                                      "section" => 3,
+                                                      "select" => 1,
+                                                      "structure" => 4,
+                                                      "widget" => 3
+                                                    },
+                                   "superclass_of" => {
+                                                        "menubar" => 1
+                                                      }
+                                 },
+                       "menubar" => {
+                                      "attrs" => {
+                                                   "aria-activedescendant" => {},
+                                                   "aria-expanded" => {}
+                                                 },
+                                      "must_contain" => {
+                                                          "group" => 1,
+                                                          "listitem" => 1,
+                                                          "menuitem" => 1,
+                                                          "menuitemcheckbox" => 1,
+                                                          "menuitemradio" => 1
+                                                        },
+                                      "preferred" => {
+                                                       "name" => "menu",
+                                                       "type" => "html-element"
+                                                     },
+                                      "subclass_of" => {
+                                                         "composite" => 3,
+                                                         "group" => 3,
+                                                         "input" => 3,
+                                                         "list" => 2,
+                                                         "menu" => 1,
+                                                         "region" => 3,
+                                                         "roletype" => 5,
+                                                         "section" => 4,
+                                                         "select" => 2,
+                                                         "structure" => 5,
+                                                         "widget" => 4
+                                                       }
+                                    },
+                       "menuitem" => {
+                                       "preferred" => {
+                                                        "name" => "menuitem",
+                                                        "type" => "html-element"
+                                                      },
+                                       "scope" => {
+                                                    "menu" => 1,
+                                                    "menubar" => 1
+                                                  },
+                                       "subclass_of" => {
+                                                          "command" => 1,
+                                                          "roletype" => 3,
+                                                          "widget" => 2
+                                                        },
+                                       "superclass_of" => {
+                                                            "menuitemcheckbox" => 1,
+                                                            "menuitemradio" => 2
+                                                          }
+                                     },
+                       "menuitemcheckbox" => {
+                                               "attrs" => {
+                                                            "aria-checked" => {
+                                                                                "must" => 1
+                                                                              }
+                                                          },
+                                               "preferred" => {
+                                                                "name" => "menuitem",
+                                                                "type" => "html-element"
+                                                              },
+                                               "scope" => {
+                                                            "menu" => 1,
+                                                            "menubar" => 1
+                                                          },
+                                               "subclass_of" => {
+                                                                  "checkbox" => 1,
+                                                                  "command" => 2,
+                                                                  "input" => 2,
+                                                                  "menuitem" => 1,
+                                                                  "roletype" => 4,
+                                                                  "widget" => 3
+                                                                },
+                                               "superclass_of" => {
+                                                                    "menuitemradio" => 1
+                                                                  }
+                                             },
+                       "menuitemradio" => {
+                                            "attrs" => {
+                                                         "aria-checked" => {
+                                                                             "must" => 1
+                                                                           },
+                                                         "aria-posinset" => {},
+                                                         "aria-selected" => {},
+                                                         "aria-setsize" => {}
+                                                       },
+                                            "preferred" => {
+                                                             "name" => "menuitem",
+                                                             "type" => "html-element"
+                                                           },
+                                            "scope" => {
+                                                         "menu" => 1,
+                                                         "menubar" => 1
+                                                       },
+                                            "subclass_of" => {
+                                                               "checkbox" => 2,
+                                                               "command" => 3,
+                                                               "input" => 3,
+                                                               "menuitem" => 2,
+                                                               "menuitemcheckbox" => 1,
+                                                               "option" => 2,
+                                                               "radio" => 1,
+                                                               "roletype" => 5,
+                                                               "widget" => 4
+                                                             }
+                                          },
+                       "navigation" => {
+                                         "attrs" => {
+                                                      "aria-expanded" => {}
+                                                    },
+                                         "preferred" => {
+                                                          "name" => "nav",
+                                                          "type" => "html-element"
+                                                        },
+                                         "subclass_of" => {
+                                                            "landmark" => 1,
+                                                            "region" => 2,
+                                                            "roletype" => 5,
+                                                            "section" => 3,
+                                                            "structure" => 4
+                                                          }
+                                       },
+                       "note" => {
+                                   "attrs" => {
+                                                "aria-expanded" => {}
+                                              },
+                                   "subclass_of" => {
+                                                      "roletype" => 3,
+                                                      "section" => 1,
+                                                      "structure" => 2
+                                                    }
+                                 },
+                       "option" => {
+                                     "attrs" => {
+                                                  "aria-checked" => {},
+                                                  "aria-posinset" => {},
+                                                  "aria-selected" => {},
+                                                  "aria-setsize" => {}
+                                                },
+                                     "preferred" => {
+                                                      "name" => "option",
+                                                      "type" => "html-element"
+                                                    },
+                                     "subclass_of" => {
+                                                        "input" => 1,
+                                                        "roletype" => 3,
+                                                        "widget" => 2
+                                                      },
+                                     "superclass_of" => {
+                                                          "menuitemradio" => 2,
+                                                          "radio" => 1,
+                                                          "treeitem" => 1
+                                                        }
+                                   },
+                       "presentation" => {
+                                           "subclass_of" => {
+                                                              "roletype" => 2,
+                                                              "structure" => 1
+                                                            }
+                                         },
+                       "progressbar" => {
+                                          "attrs" => {
+                                                       "aria-valuemax" => {},
+                                                       "aria-valuemin" => {},
+                                                       "aria-valuenow" => {},
+                                                       "aria-valuetext" => {}
+                                                     },
+                                          "preferred" => {
+                                                           "name" => "progress",
+                                                           "type" => "html-element"
+                                                         },
+                                          "subclass_of" => {
+                                                             "range" => 1,
+                                                             "roletype" => 3,
+                                                             "widget" => 2
+                                                           }
+                                        },
+                       "radio" => {
+                                    "attrs" => {
+                                                 "aria-checked" => {
+                                                                     "must" => 1
+                                                                   },
+                                                 "aria-posinset" => {},
+                                                 "aria-selected" => {},
+                                                 "aria-setsize" => {}
+                                               },
+                                    "preferred" => {
+                                                     "name" => "radio",
+                                                     "type" => "input"
+                                                   },
+                                    "subclass_of" => {
+                                                       "checkbox" => 1,
+                                                       "input" => 2,
+                                                       "option" => 1,
+                                                       "roletype" => 4,
+                                                       "widget" => 3
+                                                     },
+                                    "superclass_of" => {
+                                                         "menuitemradio" => 1
+                                                       }
+                                  },
+                       "radiogroup" => {
+                                         "attrs" => {
+                                                      "aria-activedescendant" => {},
+                                                      "aria-expanded" => {},
+                                                      "aria-required" => {}
+                                                    },
+                                         "must_contain" => {
+                                                             "radio" => 1
+                                                           },
+                                         "subclass_of" => {
+                                                            "composite" => 2,
+                                                            "group" => 2,
+                                                            "input" => 2,
+                                                            "roletype" => 4,
+                                                            "section" => 3,
+                                                            "select" => 1,
+                                                            "structure" => 4,
+                                                            "widget" => 3
+                                                          }
+                                       },
+                       "range" => {
+                                    "abstract" => 1,
+                                    "attrs" => {
+                                                 "aria-valuemax" => {},
+                                                 "aria-valuemin" => {},
+                                                 "aria-valuenow" => {},
+                                                 "aria-valuetext" => {}
+                                               },
+                                    "subclass_of" => {
+                                                       "roletype" => 2,
+                                                       "widget" => 1
+                                                     },
+                                    "superclass_of" => {
+                                                         "progressbar" => 1,
+                                                         "scrollbar" => 1,
+                                                         "slider" => 1,
+                                                         "spinbutton" => 1
+                                                       }
+                                  },
+                       "region" => {
+                                     "attrs" => {
+                                                  "aria-expanded" => {}
+                                                },
+                                     "subclass_of" => {
+                                                        "roletype" => 3,
+                                                        "section" => 1,
+                                                        "structure" => 2
+                                                      },
+                                     "superclass_of" => {
+                                                          "alert" => 1,
+                                                          "alertdialog" => 2,
+                                                          "application" => 2,
+                                                          "article" => 1,
+                                                          "banner" => 2,
+                                                          "complementary" => 2,
+                                                          "contentinfo" => 2,
+                                                          "directory" => 2,
+                                                          "form" => 2,
+                                                          "grid" => 1,
+                                                          "landmark" => 1,
+                                                          "list" => 1,
+                                                          "listbox" => 2,
+                                                          "log" => 1,
+                                                          "main" => 2,
+                                                          "menu" => 2,
+                                                          "menubar" => 3,
+                                                          "navigation" => 2,
+                                                          "search" => 2,
+                                                          "status" => 1,
+                                                          "tablist" => 3,
+                                                          "tabpanel" => 1,
+                                                          "timer" => 2,
+                                                          "treegrid" => 2
+                                                        }
+                                   },
+                       "roletype" => {
+                                       "abstract" => 1,
+                                       "attrs" => {
+                                                    "aria-atomic" => {},
+                                                    "aria-busy" => {},
+                                                    "aria-controls" => {},
+                                                    "aria-describedby" => {},
+                                                    "aria-disabled" => {},
+                                                    "aria-dropeffect" => {},
+                                                    "aria-flowto" => {},
+                                                    "aria-grabbed" => {},
+                                                    "aria-haspopup" => {},
+                                                    "aria-hidden" => {},
+                                                    "aria-invalid" => {},
+                                                    "aria-label" => {},
+                                                    "aria-labelledby" => {},
+                                                    "aria-live" => {},
+                                                    "aria-owns" => {},
+                                                    "aria-relevant" => {}
+                                                  },
+                                       "subclass_of" => {},
+                                       "superclass_of" => {
+                                                            "alert" => 4,
+                                                            "alertdialog" => 3,
+                                                            "application" => 5,
+                                                            "article" => 4,
+                                                            "banner" => 5,
+                                                            "button" => 3,
+                                                            "checkbox" => 3,
+                                                            "columnheader" => 2,
+                                                            "combobox" => 4,
+                                                            "command" => 2,
+                                                            "complementary" => 5,
+                                                            "composite" => 2,
+                                                            "contentinfo" => 5,
+                                                            "definition" => 3,
+                                                            "dialog" => 2,
+                                                            "directory" => 5,
+                                                            "document" => 2,
+                                                            "form" => 5,
+                                                            "grid" => 4,
+                                                            "gridcell" => 2,
+                                                            "group" => 3,
+                                                            "heading" => 3,
+                                                            "img" => 3,
+                                                            "input" => 2,
+                                                            "landmark" => 4,
+                                                            "link" => 3,
+                                                            "list" => 4,
+                                                            "listbox" => 4,
+                                                            "listitem" => 3,
+                                                            "log" => 4,
+                                                            "main" => 5,
+                                                            "marquee" => 3,
+                                                            "math" => 3,
+                                                            "menu" => 4,
+                                                            "menubar" => 5,
+                                                            "menuitem" => 3,
+                                                            "menuitemcheckbox" => 4,
+                                                            "menuitemradio" => 5,
+                                                            "navigation" => 5,
+                                                            "note" => 3,
+                                                            "option" => 3,
+                                                            "presentation" => 2,
+                                                            "progressbar" => 3,
+                                                            "radio" => 4,
+                                                            "radiogroup" => 4,
+                                                            "range" => 2,
+                                                            "region" => 3,
+                                                            "row" => 2,
+                                                            "rowgroup" => 4,
+                                                            "rowheader" => 2,
+                                                            "scrollbar" => 3,
+                                                            "search" => 5,
+                                                            "section" => 2,
+                                                            "sectionhead" => 2,
+                                                            "select" => 3,
+                                                            "separator" => 2,
+                                                            "slider" => 3,
+                                                            "spinbutton" => 3,
+                                                            "status" => 4,
+                                                            "structure" => 1,
+                                                            "tab" => 2,
+                                                            "tablist" => 6,
+                                                            "tabpanel" => 4,
+                                                            "textbox" => 3,
+                                                            "timer" => 5,
+                                                            "toolbar" => 4,
+                                                            "tooltip" => 3,
+                                                            "tree" => 4,
+                                                            "treegrid" => 5,
+                                                            "treeitem" => 4,
+                                                            "widget" => 1,
+                                                            "window" => 1
+                                                          }
+                                     },
+                       "row" => {
+                                  "attrs" => {
+                                               "aria-activedescendant" => {},
+                                               "aria-expanded" => {},
+                                               "aria-level" => {},
+                                               "aria-selected" => {}
+                                             },
+                                  "must_contain" => {
+                                                      "columnheader" => 1,
+                                                      "gridcell" => 1,
+                                                      "rowheader" => 1
+                                                    },
+                                  "preferred" => {
+                                                   "name" => "tr",
+                                                   "type" => "html-element"
+                                                 },
+                                  "scope" => {
+                                               "grid" => 1,
+                                               "rowgroup" => 1,
+                                               "treegrid" => 1
+                                             },
+                                  "subclass_of" => {
+                                                     "group" => 1,
+                                                     "roletype" => 2,
+                                                     "section" => 2,
+                                                     "structure" => 3,
+                                                     "widget" => 1
+                                                   }
+                                },
+                       "rowgroup" => {
+                                       "attrs" => {
+                                                    "aria-activedescendant" => {},
+                                                    "aria-expanded" => {}
+                                                  },
+                                       "must_contain" => {
+                                                           "row" => 1
+                                                         },
+                                       "preferred" => {
+                                                        "name" => "tbody",
+                                                        "type" => "html-element"
+                                                      },
+                                       "scope" => {
+                                                    "grid" => 1
+                                                  },
+                                       "subclass_of" => {
+                                                          "group" => 1,
+                                                          "roletype" => 4,
+                                                          "section" => 2,
+                                                          "structure" => 3
+                                                        }
+                                     },
+                       "rowheader" => {
+                                        "attrs" => {
+                                                     "aria-expanded" => {},
+                                                     "aria-readonly" => {},
+                                                     "aria-required" => {},
+                                                     "aria-selected" => {},
+                                                     "aria-sort" => {}
+                                                   },
+                                        "preferred" => {
+                                                         "scope" => "row",
+                                                         "type" => "th"
+                                                       },
+                                        "scope" => {
+                                                     "row" => 1
+                                                   },
+                                        "subclass_of" => {
+                                                           "gridcell" => 1,
+                                                           "roletype" => 2,
+                                                           "section" => 2,
+                                                           "sectionhead" => 1,
+                                                           "structure" => 2,
+                                                           "widget" => 1
+                                                         }
+                                      },
+                       "scrollbar" => {
+                                        "attrs" => {
+                                                     "aria-controls" => {
+                                                                          "must" => 1
+                                                                        },
+                                                     "aria-orientation" => {
+                                                                             "must" => 1
+                                                                           },
+                                                     "aria-valuemax" => {
+                                                                          "must" => 1
+                                                                        },
+                                                     "aria-valuemin" => {
+                                                                          "must" => 1
+                                                                        },
+                                                     "aria-valuenow" => {
+                                                                          "must" => 1
+                                                                        },
+                                                     "aria-valuetext" => {}
+                                                   },
+                                        "preferred" => {
+                                                         "type" => "css"
+                                                       },
+                                        "subclass_of" => {
+                                                           "input" => 1,
+                                                           "range" => 1,
+                                                           "roletype" => 3,
+                                                           "widget" => 2
+                                                         }
+                                      },
+                       "search" => {
+                                     "attrs" => {
+                                                  "aria-expanded" => {}
+                                                },
+                                     "subclass_of" => {
+                                                        "landmark" => 1,
+                                                        "region" => 2,
+                                                        "roletype" => 5,
+                                                        "section" => 3,
+                                                        "structure" => 4
+                                                      }
+                                   },
+                       "section" => {
+                                      "abstract" => 1,
+                                      "attrs" => {
+                                                   "aria-expanded" => {}
+                                                 },
+                                      "subclass_of" => {
+                                                         "roletype" => 2,
+                                                         "structure" => 1
+                                                       },
+                                      "superclass_of" => {
+                                                           "alert" => 2,
+                                                           "alertdialog" => 3,
+                                                           "application" => 3,
+                                                           "article" => 2,
+                                                           "banner" => 3,
+                                                           "columnheader" => 2,
+                                                           "combobox" => 3,
+                                                           "complementary" => 3,
+                                                           "contentinfo" => 3,
+                                                           "definition" => 1,
+                                                           "directory" => 3,
+                                                           "form" => 3,
+                                                           "grid" => 2,
+                                                           "gridcell" => 1,
+                                                           "group" => 1,
+                                                           "img" => 1,
+                                                           "landmark" => 2,
+                                                           "list" => 2,
+                                                           "listbox" => 3,
+                                                           "listitem" => 1,
+                                                           "log" => 2,
+                                                           "main" => 3,
+                                                           "marquee" => 1,
+                                                           "math" => 1,
+                                                           "menu" => 3,
+                                                           "menubar" => 4,
+                                                           "navigation" => 3,
+                                                           "note" => 1,
+                                                           "radiogroup" => 3,
+                                                           "region" => 1,
+                                                           "row" => 2,
+                                                           "rowgroup" => 2,
+                                                           "rowheader" => 2,
+                                                           "search" => 3,
+                                                           "select" => 2,
+                                                           "status" => 2,
+                                                           "tablist" => 4,
+                                                           "tabpanel" => 2,
+                                                           "timer" => 3,
+                                                           "toolbar" => 2,
+                                                           "tooltip" => 1,
+                                                           "tree" => 3,
+                                                           "treegrid" => 4,
+                                                           "treeitem" => 2
+                                                         }
+                                    },
+                       "sectionhead" => {
+                                          "abstract" => 1,
+                                          "attrs" => {
+                                                       "aria-expanded" => {}
+                                                     },
+                                          "subclass_of" => {
+                                                             "roletype" => 2,
+                                                             "structure" => 1
+                                                           },
+                                          "superclass_of" => {
+                                                               "columnheader" => 1,
+                                                               "heading" => 1,
+                                                               "rowheader" => 1,
+                                                               "tab" => 1
+                                                             }
+                                        },
+                       "select" => {
+                                     "abstract" => 1,
+                                     "attrs" => {
+                                                  "aria-activedescendant" => {},
+                                                  "aria-expanded" => {}
+                                                },
+                                     "subclass_of" => {
+                                                        "composite" => 1,
+                                                        "group" => 1,
+                                                        "input" => 1,
+                                                        "roletype" => 3,
+                                                        "section" => 2,
+                                                        "structure" => 3,
+                                                        "widget" => 2
+                                                      },
+                                     "superclass_of" => {
+                                                          "combobox" => 1,
+                                                          "listbox" => 1,
+                                                          "menu" => 1,
+                                                          "menubar" => 2,
+                                                          "radiogroup" => 1,
+                                                          "tree" => 1,
+                                                          "treegrid" => 2
+                                                        }
+                                   },
+                       "separator" => {
+                                        "attrs" => {
+                                                     "aria-expanded" => {},
+                                                     "aria-orientation" => {}
+                                                   },
+                                        "subclass_of" => {
+                                                           "roletype" => 2,
+                                                           "structure" => 1
+                                                         }
+                                      },
+                       "slider" => {
+                                     "attrs" => {
+                                                  "aria-orientation" => {},
+                                                  "aria-valuemax" => {
+                                                                       "must" => 1
+                                                                     },
+                                                  "aria-valuemin" => {
+                                                                       "must" => 1
+                                                                     },
+                                                  "aria-valuenow" => {
+                                                                       "must" => 1
+                                                                     },
+                                                  "aria-valuetext" => {}
+                                                },
+                                     "preferred" => {
+                                                      "name" => "range",
+                                                      "type" => "input"
+                                                    },
+                                     "subclass_of" => {
+                                                        "input" => 1,
+                                                        "range" => 1,
+                                                        "roletype" => 3,
+                                                        "widget" => 2
+                                                      }
+                                   },
+                       "spinbutton" => {
+                                         "attrs" => {
+                                                      "aria-required" => {},
+                                                      "aria-valuemax" => {
+                                                                           "must" => 1
+                                                                         },
+                                                      "aria-valuemin" => {
+                                                                           "must" => 1
+                                                                         },
+                                                      "aria-valuenow" => {
+                                                                           "must" => 1
+                                                                         },
+                                                      "aria-valuetext" => {}
+                                                    },
+                                         "preferred" => {
+                                                          "name" => "number",
+                                                          "type" => "input"
+                                                        },
+                                         "subclass_of" => {
+                                                            "input" => 1,
+                                                            "range" => 1,
+                                                            "roletype" => 3,
+                                                            "widget" => 2
+                                                          }
+                                       },
+                       "status" => {
+                                     "attrs" => {
+                                                  "aria-expanded" => {}
+                                                },
+                                     "subclass_of" => {
+                                                        "region" => 1,
+                                                        "roletype" => 4,
+                                                        "section" => 2,
+                                                        "structure" => 3
+                                                      },
+                                     "superclass_of" => {
+                                                          "timer" => 1
+                                                        }
+                                   },
+                       "structure" => {
+                                        "abstract" => 1,
+                                        "subclass_of" => {
+                                                           "roletype" => 1
+                                                         },
+                                        "superclass_of" => {
+                                                             "alert" => 3,
+                                                             "alertdialog" => 4,
+                                                             "application" => 4,
+                                                             "article" => 3,
+                                                             "banner" => 4,
+                                                             "columnheader" => 2,
+                                                             "combobox" => 4,
+                                                             "complementary" => 4,
+                                                             "contentinfo" => 4,
+                                                             "definition" => 2,
+                                                             "directory" => 4,
+                                                             "document" => 1,
+                                                             "form" => 4,
+                                                             "grid" => 3,
+                                                             "gridcell" => 2,
+                                                             "group" => 2,
+                                                             "heading" => 2,
+                                                             "img" => 2,
+                                                             "landmark" => 3,
+                                                             "list" => 3,
+                                                             "listbox" => 4,
+                                                             "listitem" => 2,
+                                                             "log" => 3,
+                                                             "main" => 4,
+                                                             "marquee" => 2,
+                                                             "math" => 2,
+                                                             "menu" => 4,
+                                                             "menubar" => 5,
+                                                             "navigation" => 4,
+                                                             "note" => 2,
+                                                             "presentation" => 1,
+                                                             "radiogroup" => 4,
+                                                             "region" => 2,
+                                                             "row" => 3,
+                                                             "rowgroup" => 3,
+                                                             "rowheader" => 2,
+                                                             "search" => 4,
+                                                             "section" => 1,
+                                                             "sectionhead" => 1,
+                                                             "select" => 3,
+                                                             "separator" => 1,
+                                                             "status" => 3,
+                                                             "tab" => 2,
+                                                             "tablist" => 5,
+                                                             "tabpanel" => 3,
+                                                             "timer" => 4,
+                                                             "toolbar" => 3,
+                                                             "tooltip" => 2,
+                                                             "tree" => 4,
+                                                             "treegrid" => 5,
+                                                             "treeitem" => 3
+                                                           }
+                                      },
+                       "tab" => {
+                                  "attrs" => {
+                                               "aria-expanded" => {},
+                                               "aria-selected" => {}
+                                             },
+                                  "scope" => {
+                                               "tablist" => 1
+                                             },
+                                  "subclass_of" => {
+                                                     "roletype" => 2,
+                                                     "sectionhead" => 1,
+                                                     "structure" => 2,
+                                                     "widget" => 1
+                                                   }
+                                },
+                       "tablist" => {
+                                      "attrs" => {
+                                                   "aria-activedescendant" => {},
+                                                   "aria-expanded" => {},
+                                                   "aria-level" => {}
+                                                 },
+                                      "must_contain" => {
+                                                          "group" => 1,
+                                                          "listitem" => 1,
+                                                          "tab" => 1
+                                                        },
+                                      "subclass_of" => {
+                                                         "composite" => 1,
+                                                         "directory" => 1,
+                                                         "list" => 2,
+                                                         "region" => 3,
+                                                         "roletype" => 6,
+                                                         "section" => 4,
+                                                         "structure" => 5,
+                                                         "widget" => 2
+                                                       }
+                                    },
+                       "tabpanel" => {
+                                       "attrs" => {
+                                                    "aria-expanded" => {}
+                                                  },
+                                       "subclass_of" => {
+                                                          "region" => 1,
+                                                          "roletype" => 4,
+                                                          "section" => 2,
+                                                          "structure" => 3
+                                                        }
+                                     },
+                       "textbox" => {
+                                      "attrs" => {
+                                                   "aria-activedescendant" => {},
+                                                   "aria-autocomplete" => {},
+                                                   "aria-multiline" => {},
+                                                   "aria-readonly" => {},
+                                                   "aria-required" => {}
+                                                 },
+                                      "preferred" => {
+                                                       "type" => "textbox"
+                                                     },
+                                      "subclass_of" => {
+                                                         "input" => 1,
+                                                         "roletype" => 3,
+                                                         "widget" => 2
+                                                       }
+                                    },
+                       "timer" => {
+                                    "attrs" => {
+                                                 "aria-expanded" => {}
+                                               },
+                                    "subclass_of" => {
+                                                       "region" => 2,
+                                                       "roletype" => 5,
+                                                       "section" => 3,
+                                                       "status" => 1,
+                                                       "structure" => 4
+                                                     }
+                                  },
+                       "toolbar" => {
+                                      "attrs" => {
+                                                   "aria-activedescendant" => {},
+                                                   "aria-expanded" => {}
+                                                 },
+                                      "preferred" => {
+                                                       "name" => "menu",
+                                                       "type" => "html-element"
+                                                     },
+                                      "subclass_of" => {
+                                                         "group" => 1,
+                                                         "roletype" => 4,
+                                                         "section" => 2,
+                                                         "structure" => 3
+                                                       }
+                                    },
+                       "tooltip" => {
+                                      "attrs" => {
+                                                   "aria-expanded" => {}
+                                                 },
+                                      "preferred" => {
+                                                       "type" => "title"
+                                                     },
+                                      "subclass_of" => {
+                                                         "roletype" => 3,
+                                                         "section" => 1,
+                                                         "structure" => 2
+                                                       }
+                                    },
+                       "tree" => {
+                                   "attrs" => {
+                                                "aria-activedescendant" => {},
+                                                "aria-expanded" => {},
+                                                "aria-multiselectable" => {},
+                                                "aria-required" => {}
+                                              },
+                                   "must_contain" => {
+                                                       "group" => 1,
+                                                       "treeitem" => 1
+                                                     },
+                                   "subclass_of" => {
+                                                      "composite" => 2,
+                                                      "group" => 2,
+                                                      "input" => 2,
+                                                      "roletype" => 4,
+                                                      "section" => 3,
+                                                      "select" => 1,
+                                                      "structure" => 4,
+                                                      "widget" => 3
+                                                    },
+                                   "superclass_of" => {
+                                                        "treegrid" => 1
+                                                      }
+                                 },
+                       "treegrid" => {
+                                       "attrs" => {
+                                                    "aria-activedescendant" => {},
+                                                    "aria-expanded" => {},
+                                                    "aria-level" => {},
+                                                    "aria-multiselectable" => {},
+                                                    "aria-readonly" => {},
+                                                    "aria-required" => {}
+                                                  },
+                                       "must_contain" => {
+                                                           "group" => 1,
+                                                           "row" => 1,
+                                                           "rowgroup" => 1,
+                                                           "treeitem" => 1
+                                                         },
+                                       "subclass_of" => {
+                                                          "composite" => 3,
+                                                          "grid" => 1,
+                                                          "group" => 3,
+                                                          "input" => 3,
+                                                          "region" => 2,
+                                                          "roletype" => 5,
+                                                          "section" => 4,
+                                                          "select" => 2,
+                                                          "structure" => 5,
+                                                          "tree" => 1,
+                                                          "widget" => 4
+                                                        }
+                                     },
+                       "treeitem" => {
+                                       "attrs" => {
+                                                    "aria-checked" => {},
+                                                    "aria-expanded" => {},
+                                                    "aria-level" => {},
+                                                    "aria-posinset" => {},
+                                                    "aria-selected" => {},
+                                                    "aria-setsize" => {}
+                                                  },
+                                       "scope" => {
+                                                    "group" => 1,
+                                                    "list" => 1,
+                                                    "tree" => 1
+                                                  },
+                                       "subclass_of" => {
+                                                          "input" => 2,
+                                                          "listitem" => 1,
+                                                          "option" => 1,
+                                                          "roletype" => 4,
+                                                          "section" => 2,
+                                                          "structure" => 3,
+                                                          "widget" => 3
+                                                        }
+                                     },
+                       "widget" => {
+                                     "abstract" => 1,
+                                     "subclass_of" => {
+                                                        "roletype" => 1
+                                                      },
+                                     "superclass_of" => {
+                                                          "button" => 2,
+                                                          "checkbox" => 2,
+                                                          "columnheader" => 1,
+                                                          "combobox" => 3,
+                                                          "command" => 1,
+                                                          "composite" => 1,
+                                                          "grid" => 2,
+                                                          "gridcell" => 1,
+                                                          "input" => 1,
+                                                          "link" => 2,
+                                                          "listbox" => 3,
+                                                          "menu" => 3,
+                                                          "menubar" => 4,
+                                                          "menuitem" => 2,
+                                                          "menuitemcheckbox" => 3,
+                                                          "menuitemradio" => 4,
+                                                          "option" => 2,
+                                                          "progressbar" => 2,
+                                                          "radio" => 3,
+                                                          "radiogroup" => 3,
+                                                          "range" => 1,
+                                                          "row" => 1,
+                                                          "rowheader" => 1,
+                                                          "scrollbar" => 2,
+                                                          "select" => 2,
+                                                          "slider" => 2,
+                                                          "spinbutton" => 2,
+                                                          "tab" => 1,
+                                                          "tablist" => 2,
+                                                          "textbox" => 2,
+                                                          "tree" => 3,
+                                                          "treegrid" => 4,
+                                                          "treeitem" => 3
+                                                        }
+                                   },
+                       "window" => {
+                                     "abstract" => 1,
+                                     "attrs" => {
+                                                  "aria-expanded" => {}
+                                                },
+                                     "subclass_of" => {
+                                                        "roletype" => 1
+                                                      },
+                                     "superclass_of" => {
+                                                          "alertdialog" => 2,
+                                                          "dialog" => 1
+                                                        }
+                                   }
+                     },
           "schemaorg_props" => {
                                  "about" => {},
                                  "acceptedOffer" => {},
