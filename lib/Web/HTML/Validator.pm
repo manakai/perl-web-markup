@@ -1315,66 +1315,63 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 
 ## ------ ARIA ------
 
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} =
-$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub {
-  my ($self, $attr) = @_;
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
 
-  ## An ordered set of unique space-separated tokens.
-  my @value = grep { length $_ } split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value, -1;
-  my %word;
-  for my $token (@value) {
-    if ($word{$token}) {
-      $self->{onerror}->(node => $attr,
-                         type => 'duplicate token', value => $token,
-                         level => 'm');
-    } else {
-      $word{$token} = 1;
-      my $def = $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{role};
-      if ($def->{keywords}->{$token} and
-          $def->{keywords}->{$token}->{conforming}) {
-        #
-      } else {
-        $self->{onerror}->(node => $attr,
-                           type => 'aria:bad role', value => $token,
+sub _check_aria ($$$) {
+  my ($self, $el, $element_state) = @_;
+
+  my $role_attr = $el->get_attribute_node_ns (undef, 'role');
+  if (defined $role_attr) {
+    ## An ordered set of unique space-separated tokens.
+    my @value = grep { length $_ }
+        split /[\x09\x0A\x0C\x0D\x20]+/, $role_attr->value, -1;
+    my %word;
+    for my $token (@value) {
+      if ($word{$token}) {
+        $self->{onerror}->(node => $role_attr,
+                           type => 'duplicate token', value => $token,
                            level => 'm');
-      }
-
-      my $preferred = $_Defs->{roles}->{$token}->{preferred};
-      if ($preferred) {
-        if ($preferred->{type} eq 'html-element' and
-            do {
-              my $oe = $attr->owner_element;
-              ($oe and
-               ($oe->namespace_uri || '') eq HTML_NS and
-               $oe->local_name eq $preferred->{name});
-            }) {
-          $self->{onerror}->(node => $attr,
-                             type => 'aria:redundant role',
-                             value => $token,
-                             level => 'w');
-        } elsif ($preferred->{type} eq 'input' and
-            do {
-              my $oe = $attr->owner_element;
-              ($oe and
-               ($oe->namespace_uri || '') eq HTML_NS and
-               $oe->local_name eq 'input' and
-               $oe->type eq $preferred->{name});
-            }) {
-          $self->{onerror}->(node => $attr,
-                             type => 'aria:redundant role',
-                             value => $token,
-                             level => 'w');
+      } else {
+        $word{$token} = 1;
+        my $def = $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{role};
+        if ($def->{keywords}->{$token} and
+            $def->{keywords}->{$token}->{conforming}) {
+          #
         } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'aria:not preferred markup:' . $preferred->{type},
-                             text => $preferred->{name} || $preferred->{scope}, # or undef
-                             value => $token,
-                             level => 'w');
+          $self->{onerror}->(node => $role_attr,
+                             type => 'aria:bad role', value => $token,
+                             level => 'm');
+        }
+
+        my $preferred = $_Defs->{roles}->{$token}->{preferred};
+        if ($preferred) {
+          if ($preferred->{type} eq 'html-element' and
+              ($el->namespace_uri || '') eq HTML_NS and
+              $el->local_name eq $preferred->{name}) {
+            $self->{onerror}->(node => $role_attr,
+                               type => 'aria:redundant role',
+                               value => $token,
+                               level => 'w');
+          } elsif ($preferred->{type} eq 'input' and
+                   ($el->namespace_uri || '') eq HTML_NS and
+                   $el->local_name eq 'input' and
+                   $el->type eq $preferred->{name}) {
+            $self->{onerror}->(node => $role_attr,
+                               type => 'aria:redundant role',
+                               value => $token,
+                               level => 'w');
+          } else {
+            $self->{onerror}->(node => $role_attr,
+                               type => 'aria:not preferred markup:' . $preferred->{type},
+                               text => $preferred->{name} || $preferred->{scope}, # or undef
+                               value => $token,
+                               level => 'w');
+          }
         }
       }
     }
-  }
-}; # role=""
+  } # role=""
 
 ## XXX aria-*
 
@@ -1449,6 +1446,7 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub {
 # XXX HTML semantics
 
 # XXX aria-* alternatives
+} # _check_aria
 
 ## ------ Element content model ------
 
@@ -9084,6 +9082,10 @@ sub _check_node ($$) {
                        node => $el,
                        element_state => $element_state}
           if $el_nsuri eq HTML_NS;
+      push @new_item, {type => '_check_aria',
+                       node => $el,
+                       element_state => $element_state}
+          if $el_nsuri eq HTML_NS or $el_nsuri eq SVG_NS;
       
       my @child = @{$item->{content} || $el->child_nodes};
       while (@child) {
@@ -9147,6 +9149,8 @@ sub _check_node ($$) {
       $self->_add_minus_elements ($item->{element_state}, $item->{disallowed});
     } elsif ($item->{type} eq '_remove_minus_elements') {
       $self->_remove_minus_elements ($item->{element_state});
+    } elsif ($item->{type} eq '_check_aria') {
+      $self->_check_aria ($item->{node}, $item->{element_state});
     } elsif ($item->{type} eq 'check_html_attrs') {
       for my $attr (@{$item->{node}->attributes}) {
         next if defined $attr->namespace_uri;
