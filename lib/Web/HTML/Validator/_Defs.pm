@@ -669,6 +669,24 @@ $Web::HTML::Validator::_Defs = {
                                                                     },
                           "http://www.w3.org/1999/xhtml" => {
                                                               "*" => {
+                                                                       "aria" => {
+                                                                                   "hidden-attr" => {
+                                                                                                      "attrs" => {
+                                                                                                                   "aria-hidden" => {
+                                                                                                                                      "strong" => 1,
+                                                                                                                                      "value_type" => "true"
+                                                                                                                                    }
+                                                                                                                 }
+                                                                                                    },
+                                                                                   "inert" => {
+                                                                                                "attrs" => {
+                                                                                                             "aria-hidden" => {
+                                                                                                                                "strong" => 1,
+                                                                                                                                "value_type" => "true"
+                                                                                                                              }
+                                                                                                           }
+                                                                                              }
+                                                                                 },
                                                                        "attrs" => {
                                                                                     "" => {
                                                                                             "about" => {
@@ -2175,7 +2193,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                   }
                                                                      },
                                                               "a" => {
-                                                                       "aria_default_role" => "#contextual",
+                                                                       "aria" => {
+                                                                                   "hyperlink" => {
+                                                                                                    "allowed_roles" => {
+                                                                                                                         "menuitem" => 1,
+                                                                                                                         "presentation" => 1,
+                                                                                                                         "tab" => 1,
+                                                                                                                         "treeitem" => 1
+                                                                                                                       },
+                                                                                                    "default_role" => "link"
+                                                                                                  }
+                                                                                 },
                                                                        "attrs" => {
                                                                                     "" => {
                                                                                             "acords" => {
@@ -2417,11 +2445,14 @@ $Web::HTML::Validator::_Defs = {
                                                                              "status" => "LC"
                                                                            },
                                                               "address" => {
-                                                                             "aria_avail_roles" => {
-                                                                                                     "contentinfo" => 1,
-                                                                                                     "presentation" => 1
-                                                                                                   },
-                                                                             "aria_default_role" => "#norole",
+                                                                             "aria" => {
+                                                                                         "" => {
+                                                                                                 "allowed_roles" => {
+                                                                                                                      "contentinfo" => 1,
+                                                                                                                      "presentation" => 1
+                                                                                                                    }
+                                                                                               }
+                                                                                       },
                                                                              "attrs" => {
                                                                                           "" => {
                                                                                                   "clear" => {
@@ -2570,7 +2601,15 @@ $Web::HTML::Validator::_Defs = {
                                                                             "transparent" => "semi"
                                                                           },
                                                               "area" => {
-                                                                          "aria_strong_role" => "#contextual",
+                                                                          "aria" => {
+                                                                                      "hyperlink" => {
+                                                                                                       "allowed_roles" => {
+                                                                                                                            "presentation" => 1
+                                                                                                                          },
+                                                                                                       "default_role" => "link",
+                                                                                                       "strong_role" => 1
+                                                                                                     }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "alt" => {
@@ -2689,27 +2728,33 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "article" => {
-                                                                             "aria_avail_roles" => {
-                                                                                                     "application" => 1,
-                                                                                                     "article" => 1,
-                                                                                                     "document" => 1,
-                                                                                                     "main" => 1,
-                                                                                                     "presentation" => 1
-                                                                                                   },
-                                                                             "aria_default_role" => "article",
+                                                                             "aria" => {
+                                                                                         "" => {
+                                                                                                 "allowed_roles" => {
+                                                                                                                      "application" => 1,
+                                                                                                                      "document" => 1,
+                                                                                                                      "main" => 1,
+                                                                                                                      "presentation" => 1
+                                                                                                                    },
+                                                                                                 "default_role" => "article"
+                                                                                               }
+                                                                                       },
                                                                              "attrs" => {},
                                                                              "conforming" => 1,
                                                                              "content_model" => "flow content",
                                                                              "status" => "CR"
                                                                            },
                                                               "aside" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "complementary" => 1,
-                                                                                                   "note" => 1,
-                                                                                                   "presentation" => 1,
-                                                                                                   "search" => 1
-                                                                                                 },
-                                                                           "aria_default_role" => "complementary",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "note" => 1,
+                                                                                                                    "presentation" => 1,
+                                                                                                                    "search" => 1
+                                                                                                                  },
+                                                                                               "default_role" => "complementary"
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {},
                                                                            "conforming" => 1,
                                                                            "content_model" => "flow content",
@@ -2723,11 +2768,14 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "CR"
                                                                          },
                                                               "audio" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "application" => 1,
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_default_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "application" => 1,
+                                                                                                                    "presentation" => 1
+                                                                                                                  }
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "autoplay" => {
@@ -2852,10 +2900,14 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "base" => {
-                                                                          "aria_avail_roles" => {
-                                                                                                  "presentation" => 1
-                                                                                                },
-                                                                          "aria_strong_role" => "#norole",
+                                                                          "aria" => {
+                                                                                      "" => {
+                                                                                              "allowed_roles" => {
+                                                                                                                   "presentation" => 1
+                                                                                                                 },
+                                                                                              "strong_role" => 1
+                                                                                            }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "href" => {
@@ -3029,7 +3081,15 @@ $Web::HTML::Validator::_Defs = {
                                                                                 "status" => "LC"
                                                                               },
                                                               "body" => {
-                                                                          "aria_default_role" => "#contextual",
+                                                                          "aria" => {
+                                                                                      "the-body" => {
+                                                                                                      "allowed_roles" => {
+                                                                                                                           "application" => 1,
+                                                                                                                           "presentation" => 1
+                                                                                                                         },
+                                                                                                      "default_role" => "document"
+                                                                                                    }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "alink" => {
@@ -3208,12 +3268,27 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "button" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "button" => 1,
-                                                                                                    "menuitem" => 1,
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_default_role" => "button",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "menuitem" => 1,
+                                                                                                                     "presentation" => 1
+                                                                                                                   },
+                                                                                                "attrs" => {
+                                                                                                             "attr-disabled" => {
+                                                                                                                                  "state" => ":disabled",
+                                                                                                                                  "strong" => 1,
+                                                                                                                                  "value_type" => "true/missing"
+                                                                                                                                },
+                                                                                                             "attr-invalid" => {
+                                                                                                                                 "state" => ":invalid",
+                                                                                                                                 "strong" => 1,
+                                                                                                                                 "value_type" => "true/missing"
+                                                                                                                               }
+                                                                                                           },
+                                                                                                "default_role" => "button"
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "action" => {
@@ -3658,11 +3733,21 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "datalist" => {
-                                                                              "aria_avail_roles" => {
-                                                                                                      "listbox" => 1,
-                                                                                                      "presentation" => 1
-                                                                                                    },
-                                                                              "aria_strong_role" => "listbox",
+                                                                              "aria" => {
+                                                                                          "" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "attrs" => {
+                                                                                                               "aria-multiselectable" => {
+                                                                                                                                           "strong" => 1,
+                                                                                                                                           "value_type" => "false"
+                                                                                                                                         }
+                                                                                                             },
+                                                                                                  "default_role" => "listbox",
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                        },
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "data" => {
@@ -3709,64 +3794,74 @@ $Web::HTML::Validator::_Defs = {
                                                                          "trasparent" => 1
                                                                        },
                                                               "details" => {
-                                                                             "aria_avail_roles" => {
-                                                                                                     "alert" => 1,
-                                                                                                     "alertdialog" => 1,
-                                                                                                     "application" => 1,
-                                                                                                     "article" => 1,
-                                                                                                     "banner" => 1,
-                                                                                                     "button" => 1,
-                                                                                                     "columnheader" => 1,
-                                                                                                     "combobox" => 1,
-                                                                                                     "complementary" => 1,
-                                                                                                     "contentinfo" => 1,
-                                                                                                     "definition" => 1,
-                                                                                                     "dialog" => 1,
-                                                                                                     "directory" => 1,
-                                                                                                     "document" => 1,
-                                                                                                     "form" => 1,
-                                                                                                     "grid" => 1,
-                                                                                                     "gridcell" => 1,
-                                                                                                     "group" => 1,
-                                                                                                     "heading" => 1,
-                                                                                                     "img" => 1,
-                                                                                                     "landmark" => 1,
-                                                                                                     "link" => 1,
-                                                                                                     "list" => 1,
-                                                                                                     "listbox" => 1,
-                                                                                                     "listitem" => 1,
-                                                                                                     "log" => 1,
-                                                                                                     "main" => 1,
-                                                                                                     "marquee" => 1,
-                                                                                                     "math" => 1,
-                                                                                                     "menu" => 1,
-                                                                                                     "menubar" => 1,
-                                                                                                     "navigation" => 1,
-                                                                                                     "note" => 1,
-                                                                                                     "presentation" => 1,
-                                                                                                     "radiogroup" => 1,
-                                                                                                     "region" => 1,
-                                                                                                     "row" => 1,
-                                                                                                     "rowgroup" => 1,
-                                                                                                     "rowheader" => 1,
-                                                                                                     "search" => 1,
-                                                                                                     "section" => 1,
-                                                                                                     "sectionhead" => 1,
-                                                                                                     "select" => 1,
-                                                                                                     "separator" => 1,
-                                                                                                     "status" => 1,
-                                                                                                     "tab" => 1,
-                                                                                                     "tablist" => 1,
-                                                                                                     "tabpanel" => 1,
-                                                                                                     "timer" => 1,
-                                                                                                     "toolbar" => 1,
-                                                                                                     "tooltip" => 1,
-                                                                                                     "tree" => 1,
-                                                                                                     "treegrid" => 1,
-                                                                                                     "treeitem" => 1,
-                                                                                                     "window" => 1
-                                                                                                   },
-                                                                             "aria_default_role" => "group",
+                                                                             "aria" => {
+                                                                                         "" => {
+                                                                                                 "allowed_roles" => {
+                                                                                                                      "alert" => 1,
+                                                                                                                      "alertdialog" => 1,
+                                                                                                                      "application" => 1,
+                                                                                                                      "article" => 1,
+                                                                                                                      "banner" => 1,
+                                                                                                                      "button" => 1,
+                                                                                                                      "columnheader" => 1,
+                                                                                                                      "combobox" => 1,
+                                                                                                                      "complementary" => 1,
+                                                                                                                      "contentinfo" => 1,
+                                                                                                                      "definition" => 1,
+                                                                                                                      "dialog" => 1,
+                                                                                                                      "directory" => 1,
+                                                                                                                      "document" => 1,
+                                                                                                                      "form" => 1,
+                                                                                                                      "grid" => 1,
+                                                                                                                      "gridcell" => 1,
+                                                                                                                      "heading" => 1,
+                                                                                                                      "img" => 1,
+                                                                                                                      "landmark" => 1,
+                                                                                                                      "link" => 1,
+                                                                                                                      "list" => 1,
+                                                                                                                      "listbox" => 1,
+                                                                                                                      "listitem" => 1,
+                                                                                                                      "log" => 1,
+                                                                                                                      "main" => 1,
+                                                                                                                      "marquee" => 1,
+                                                                                                                      "math" => 1,
+                                                                                                                      "menu" => 1,
+                                                                                                                      "menubar" => 1,
+                                                                                                                      "navigation" => 1,
+                                                                                                                      "note" => 1,
+                                                                                                                      "presentation" => 1,
+                                                                                                                      "radiogroup" => 1,
+                                                                                                                      "region" => 1,
+                                                                                                                      "row" => 1,
+                                                                                                                      "rowgroup" => 1,
+                                                                                                                      "rowheader" => 1,
+                                                                                                                      "search" => 1,
+                                                                                                                      "section" => 1,
+                                                                                                                      "sectionhead" => 1,
+                                                                                                                      "select" => 1,
+                                                                                                                      "separator" => 1,
+                                                                                                                      "status" => 1,
+                                                                                                                      "tab" => 1,
+                                                                                                                      "tablist" => 1,
+                                                                                                                      "tabpanel" => 1,
+                                                                                                                      "timer" => 1,
+                                                                                                                      "toolbar" => 1,
+                                                                                                                      "tooltip" => 1,
+                                                                                                                      "tree" => 1,
+                                                                                                                      "treegrid" => 1,
+                                                                                                                      "treeitem" => 1,
+                                                                                                                      "window" => 1
+                                                                                                                    },
+                                                                                                 "attrs" => {
+                                                                                                              "aria-expanded" => {
+                                                                                                                                   "attr" => "open",
+                                                                                                                                   "strong" => 1,
+                                                                                                                                   "value_type" => "true/false"
+                                                                                                                                 }
+                                                                                                            },
+                                                                                                 "default_role" => "group"
+                                                                                               }
+                                                                                       },
                                                                              "attrs" => {
                                                                                           "" => {
                                                                                                   "open" => {
@@ -3817,22 +3912,32 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "dialog" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "alert" => 1,
-                                                                                                    "alertdialog" => 1,
-                                                                                                    "application" => 1,
-                                                                                                    "contentinfo" => 1,
-                                                                                                    "dialog" => 1,
-                                                                                                    "document" => 1,
-                                                                                                    "log" => 1,
-                                                                                                    "main" => 1,
-                                                                                                    "marquee" => 1,
-                                                                                                    "presentation" => 1,
-                                                                                                    "region" => 1,
-                                                                                                    "search" => 1,
-                                                                                                    "status" => 1
-                                                                                                  },
-                                                                            "aria_default_role" => "dialog",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "alert" => 1,
+                                                                                                                     "alertdialog" => 1,
+                                                                                                                     "application" => 1,
+                                                                                                                     "contentinfo" => 1,
+                                                                                                                     "document" => 1,
+                                                                                                                     "log" => 1,
+                                                                                                                     "main" => 1,
+                                                                                                                     "marquee" => 1,
+                                                                                                                     "presentation" => 1,
+                                                                                                                     "region" => 1,
+                                                                                                                     "search" => 1,
+                                                                                                                     "status" => 1
+                                                                                                                   },
+                                                                                                "attrs" => {
+                                                                                                             "aria-hidden" => {
+                                                                                                                                "attr" => "open",
+                                                                                                                                "strong" => 1,
+                                                                                                                                "value_type" => "missing/true"
+                                                                                                                              }
+                                                                                                           },
+                                                                                                "default_role" => "dialog"
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "open" => {
@@ -3968,13 +4073,16 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "embed" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "application" => 1,
-                                                                                                   "document" => 1,
-                                                                                                   "img" => 1,
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_default_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "application" => 1,
+                                                                                                                    "document" => 1,
+                                                                                                                    "img" => 1,
+                                                                                                                    "presentation" => 1
+                                                                                                                  }
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "align" => {
@@ -4139,11 +4247,15 @@ $Web::HTML::Validator::_Defs = {
                                                                                             }
                                                                                },
                                                               "fieldset" => {
-                                                                              "aria_avail_roles" => {
-                                                                                                      "group" => 1,
-                                                                                                      "presentation" => 1
-                                                                                                    },
-                                                                              "aria_strong_role" => "group",
+                                                                              "aria" => {
+                                                                                          "" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "default_role" => "group",
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                        },
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "datafld" => {
@@ -4215,11 +4327,14 @@ $Web::HTML::Validator::_Defs = {
                                                                           "transparent" => 1
                                                                         },
                                                               "footer" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "contentinfo" => 1,
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_default_role" => "#norole",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "contentinfo" => 1,
+                                                                                                                     "presentation" => 1
+                                                                                                                   }
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
                                                                             "content_model" => "flow content",
@@ -4498,7 +4613,15 @@ $Web::HTML::Validator::_Defs = {
                                                                            "content_model" => "empty"
                                                                          },
                                                               "frameset" => {
-                                                                              "aria_default_role" => "#contextual",
+                                                                              "aria" => {
+                                                                                          "the-body" => {
+                                                                                                          "allowed_roles" => {
+                                                                                                                               "application" => 1,
+                                                                                                                               "presentation" => 1
+                                                                                                                             },
+                                                                                                          "default_role" => "document"
+                                                                                                        }
+                                                                                        },
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "border" => {
@@ -4586,7 +4709,21 @@ $Web::HTML::Validator::_Defs = {
                                                                               "has_additional_content_constraints" => 1
                                                                             },
                                                               "h1" => {
-                                                                        "aria_default_role" => "#contextual",
+                                                                        "aria" => {
+                                                                                    "no-hgroup" => {
+                                                                                                     "allowed_roles" => {
+                                                                                                                          "presentation" => 1,
+                                                                                                                          "tab" => 1
+                                                                                                                        },
+                                                                                                     "attrs" => {
+                                                                                                                  "aria-level" => {
+                                                                                                                                    "strong" => 0,
+                                                                                                                                    "value_type" => "outlinedepth"
+                                                                                                                                  }
+                                                                                                                },
+                                                                                                     "default_role" => "heading"
+                                                                                                   }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4634,7 +4771,21 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h2" => {
-                                                                        "aria_default_role" => "#contextual",
+                                                                        "aria" => {
+                                                                                    "no-hgroup" => {
+                                                                                                     "allowed_roles" => {
+                                                                                                                          "presentation" => 1,
+                                                                                                                          "tab" => 1
+                                                                                                                        },
+                                                                                                     "attrs" => {
+                                                                                                                  "aria-level" => {
+                                                                                                                                    "strong" => 0,
+                                                                                                                                    "value_type" => "outlinedepth"
+                                                                                                                                  }
+                                                                                                                },
+                                                                                                     "default_role" => "heading"
+                                                                                                   }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4682,7 +4833,21 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h3" => {
-                                                                        "aria_default_role" => "#contextual",
+                                                                        "aria" => {
+                                                                                    "no-hgroup" => {
+                                                                                                     "allowed_roles" => {
+                                                                                                                          "presentation" => 1,
+                                                                                                                          "tab" => 1
+                                                                                                                        },
+                                                                                                     "attrs" => {
+                                                                                                                  "aria-level" => {
+                                                                                                                                    "strong" => 0,
+                                                                                                                                    "value_type" => "outlinedepth"
+                                                                                                                                  }
+                                                                                                                },
+                                                                                                     "default_role" => "heading"
+                                                                                                   }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4730,7 +4895,21 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h4" => {
-                                                                        "aria_default_role" => "#contextual",
+                                                                        "aria" => {
+                                                                                    "no-hgroup" => {
+                                                                                                     "allowed_roles" => {
+                                                                                                                          "presentation" => 1,
+                                                                                                                          "tab" => 1
+                                                                                                                        },
+                                                                                                     "attrs" => {
+                                                                                                                  "aria-level" => {
+                                                                                                                                    "strong" => 0,
+                                                                                                                                    "value_type" => "outlinedepth"
+                                                                                                                                  }
+                                                                                                                },
+                                                                                                     "default_role" => "heading"
+                                                                                                   }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4778,7 +4957,21 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h5" => {
-                                                                        "aria_default_role" => "#contextual",
+                                                                        "aria" => {
+                                                                                    "no-hgroup" => {
+                                                                                                     "allowed_roles" => {
+                                                                                                                          "presentation" => 1,
+                                                                                                                          "tab" => 1
+                                                                                                                        },
+                                                                                                     "attrs" => {
+                                                                                                                  "aria-level" => {
+                                                                                                                                    "strong" => 0,
+                                                                                                                                    "value_type" => "outlinedepth"
+                                                                                                                                  }
+                                                                                                                },
+                                                                                                     "default_role" => "heading"
+                                                                                                   }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4826,7 +5019,21 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "h6" => {
-                                                                        "aria_default_role" => "#contextual",
+                                                                        "aria" => {
+                                                                                    "no-hgroup" => {
+                                                                                                     "allowed_roles" => {
+                                                                                                                          "presentation" => 1,
+                                                                                                                          "tab" => 1
+                                                                                                                        },
+                                                                                                     "attrs" => {
+                                                                                                                  "aria-level" => {
+                                                                                                                                    "strong" => 0,
+                                                                                                                                    "value_type" => "outlinedepth"
+                                                                                                                                  }
+                                                                                                                },
+                                                                                                     "default_role" => "heading"
+                                                                                                   }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4874,10 +5081,20 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "head" => {
-                                                                          "aria_avail_roles" => {
-                                                                                                  "presentation" => 1
-                                                                                                },
-                                                                          "aria_strong_role" => "#norole",
+                                                                          "aria" => {
+                                                                                      "" => {
+                                                                                              "allowed_roles" => {
+                                                                                                                   "presentation" => 1
+                                                                                                                 },
+                                                                                              "attrs" => {
+                                                                                                           "aria-hidden" => {
+                                                                                                                              "strong" => 1,
+                                                                                                                              "value_type" => "true"
+                                                                                                                            }
+                                                                                                         },
+                                                                                              "strong_role" => 1
+                                                                                            }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "profile" => {
@@ -4893,11 +5110,14 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "header" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "banner" => 1,
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_default_role" => "#norole",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "banner" => 1,
+                                                                                                                     "presentation" => 1
+                                                                                                                   }
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
                                                                             "content_model" => "flow content",
@@ -4913,11 +5133,21 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "CR"
                                                                           },
                                                               "hgroup" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "heading" => 1,
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_strong_role" => "heading",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "presentation" => 1
+                                                                                                                   },
+                                                                                                "attrs" => {
+                                                                                                             "aria-level" => {
+                                                                                                                               "strong" => 1,
+                                                                                                                               "value_type" => "outlinedepth"
+                                                                                                                             }
+                                                                                                           },
+                                                                                                "default_role" => "heading",
+                                                                                                "strong_role" => 1
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {},
                                                                             "complex_content_model" => [
                                                                                                          {
@@ -4941,11 +5171,15 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "CR"
                                                                           },
                                                               "hr" => {
-                                                                        "aria_avail_roles" => {
-                                                                                                "presentation" => 1,
-                                                                                                "separator" => 1
-                                                                                              },
-                                                                        "aria_strong_role" => "separator",
+                                                                        "aria" => {
+                                                                                    "" => {
+                                                                                            "allowed_roles" => {
+                                                                                                                 "presentation" => 1
+                                                                                                               },
+                                                                                            "default_role" => "separator",
+                                                                                            "strong_role" => 1
+                                                                                          }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
@@ -4986,10 +5220,14 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "html" => {
-                                                                          "aria_avail_roles" => {
-                                                                                                  "presentation" => 1
-                                                                                                },
-                                                                          "aria_strong_role" => "#norole",
+                                                                          "aria" => {
+                                                                                      "" => {
+                                                                                              "allowed_roles" => {
+                                                                                                                   "presentation" => 1
+                                                                                                                 },
+                                                                                              "strong_role" => 1
+                                                                                            }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "manifest" => {
@@ -5049,13 +5287,16 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "iframe" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "application" => 1,
-                                                                                                    "document" => 1,
-                                                                                                    "img" => 1,
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_default_role" => "#norole",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "application" => 1,
+                                                                                                                     "document" => 1,
+                                                                                                                     "img" => 1,
+                                                                                                                     "presentation" => 1
+                                                                                                                   }
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "align" => {
@@ -5292,8 +5533,80 @@ $Web::HTML::Validator::_Defs = {
                                                                            "attrs" => {}
                                                                          },
                                                               "img" => {
-                                                                         "aria_default_role" => "#contextual",
-                                                                         "aria_strong_role" => "#contextual",
+                                                                         "aria" => {
+                                                                                     "empty-alt" => {
+                                                                                                      "allowed_roles" => {
+                                                                                                                           "presentation" => 1
+                                                                                                                         },
+                                                                                                      "default_role" => "presentation",
+                                                                                                      "strong_role" => 1
+                                                                                                    },
+                                                                                     "not-empty-alt" => {
+                                                                                                          "allowed_roles" => {
+                                                                                                                               "alert" => 1,
+                                                                                                                               "alertdialog" => 1,
+                                                                                                                               "application" => 1,
+                                                                                                                               "article" => 1,
+                                                                                                                               "banner" => 1,
+                                                                                                                               "button" => 1,
+                                                                                                                               "checkbox" => 1,
+                                                                                                                               "columnheader" => 1,
+                                                                                                                               "combobox" => 1,
+                                                                                                                               "complementary" => 1,
+                                                                                                                               "contentinfo" => 1,
+                                                                                                                               "definition" => 1,
+                                                                                                                               "dialog" => 1,
+                                                                                                                               "directory" => 1,
+                                                                                                                               "document" => 1,
+                                                                                                                               "form" => 1,
+                                                                                                                               "grid" => 1,
+                                                                                                                               "gridcell" => 1,
+                                                                                                                               "group" => 1,
+                                                                                                                               "heading" => 1,
+                                                                                                                               "link" => 1,
+                                                                                                                               "list" => 1,
+                                                                                                                               "listbox" => 1,
+                                                                                                                               "listitem" => 1,
+                                                                                                                               "log" => 1,
+                                                                                                                               "main" => 1,
+                                                                                                                               "marquee" => 1,
+                                                                                                                               "math" => 1,
+                                                                                                                               "menu" => 1,
+                                                                                                                               "menubar" => 1,
+                                                                                                                               "menuitem" => 1,
+                                                                                                                               "menuitemcheckbox" => 1,
+                                                                                                                               "menuitemradio" => 1,
+                                                                                                                               "navigation" => 1,
+                                                                                                                               "note" => 1,
+                                                                                                                               "option" => 1,
+                                                                                                                               "presentation" => 1,
+                                                                                                                               "progressbar" => 1,
+                                                                                                                               "radio" => 1,
+                                                                                                                               "radiogroup" => 1,
+                                                                                                                               "region" => 1,
+                                                                                                                               "row" => 1,
+                                                                                                                               "rowgroup" => 1,
+                                                                                                                               "rowheader" => 1,
+                                                                                                                               "scrollbar" => 1,
+                                                                                                                               "search" => 1,
+                                                                                                                               "separator" => 1,
+                                                                                                                               "slider" => 1,
+                                                                                                                               "spinbutton" => 1,
+                                                                                                                               "status" => 1,
+                                                                                                                               "tab" => 1,
+                                                                                                                               "tablist" => 1,
+                                                                                                                               "tabpanel" => 1,
+                                                                                                                               "textbox" => 1,
+                                                                                                                               "timer" => 1,
+                                                                                                                               "toolbar" => 1,
+                                                                                                                               "tooltip" => 1,
+                                                                                                                               "tree" => 1,
+                                                                                                                               "treegrid" => 1,
+                                                                                                                               "treeitem" => 1
+                                                                                                                             },
+                                                                                                          "default_role" => "img"
+                                                                                                        }
+                                                                                   },
                                                                          "attrs" => {
                                                                                       "" => {
                                                                                               "align" => {
@@ -5521,8 +5834,27 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "LC"
                                                                        },
                                                               "input" => {
-                                                                           "aria_default_role" => "#contextual",
-                                                                           "aria_strong_role" => "#contextual",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "attrs" => {
+                                                                                                            "aria-required" => {
+                                                                                                                                 "attr" => "required",
+                                                                                                                                 "strong" => 1,
+                                                                                                                                 "value_type" => "true/missing"
+                                                                                                                               },
+                                                                                                            "attr-disabled" => {
+                                                                                                                                 "state" => ":disabled",
+                                                                                                                                 "strong" => 1,
+                                                                                                                                 "value_type" => "true/missing"
+                                                                                                                               },
+                                                                                                            "attr-invalid" => {
+                                                                                                                                "state" => ":invalid",
+                                                                                                                                "strong" => 1,
+                                                                                                                                "value_type" => "true/missing"
+                                                                                                                              }
+                                                                                                          }
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "accept" => {
@@ -6388,10 +6720,26 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "keygen" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_strong_role" => "#norole",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "presentation" => 1
+                                                                                                                   },
+                                                                                                "attrs" => {
+                                                                                                             "attr-disabled" => {
+                                                                                                                                  "state" => ":disabled",
+                                                                                                                                  "strong" => 1,
+                                                                                                                                  "value_type" => "true/missing"
+                                                                                                                                },
+                                                                                                             "attr-invalid" => {
+                                                                                                                                 "state" => ":invalid",
+                                                                                                                                 "strong" => 1,
+                                                                                                                                 "value_type" => "true/missing"
+                                                                                                                               }
+                                                                                                           },
+                                                                                                "strong_role" => 1
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "autofocus" => {
@@ -6455,10 +6803,14 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                               "label" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_strong_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "datafld" => {
@@ -6558,7 +6910,19 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                               "li" => {
-                                                                        "aria_default_role" => "#contextual",
+                                                                        "aria" => {
+                                                                                    "in-ulol" => {
+                                                                                                   "allowed_roles" => {
+                                                                                                                        "menuitemcheckbox" => 1,
+                                                                                                                        "menuitemradio" => 1,
+                                                                                                                        "option" => 1,
+                                                                                                                        "presentation" => 1,
+                                                                                                                        "tab" => 1,
+                                                                                                                        "treeitem" => 1
+                                                                                                                      },
+                                                                                                   "default_role" => "listitem"
+                                                                                                 }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "type" => {
@@ -6576,7 +6940,15 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "link" => {
-                                                                          "aria_strong_role" => "#contextual",
+                                                                          "aria" => {
+                                                                                      "hyperlink" => {
+                                                                                                       "allowed_roles" => {
+                                                                                                                            "presentation" => 1
+                                                                                                                          },
+                                                                                                       "default_role" => "link",
+                                                                                                       "strong_role" => 1
+                                                                                                     }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "charset" => {
@@ -6703,13 +7075,16 @@ $Web::HTML::Validator::_Defs = {
                                                                              "status" => "LC"
                                                                            },
                                                               "main" => {
-                                                                          "aria_avail_roles" => {
-                                                                                                  "application" => 1,
-                                                                                                  "document" => 1,
-                                                                                                  "main" => 1,
-                                                                                                  "presentation" => 1
-                                                                                                },
-                                                                          "aria_default_role" => "main",
+                                                                          "aria" => {
+                                                                                      "" => {
+                                                                                              "allowed_roles" => {
+                                                                                                                   "application" => 1,
+                                                                                                                   "document" => 1,
+                                                                                                                   "presentation" => 1
+                                                                                                                 },
+                                                                                              "default_role" => "main"
+                                                                                            }
+                                                                                    },
                                                                           "attrs" => {},
                                                                           "conforming" => 1,
                                                                           "content_model" => "flow content"
@@ -6871,7 +7246,27 @@ $Web::HTML::Validator::_Defs = {
                                                                              "status" => "LC"
                                                                            },
                                                               "menu" => {
-                                                                          "aria_default_role" => "#contextual",
+                                                                          "aria" => {
+                                                                                      "popup" => {
+                                                                                                   "allowed_roles" => {
+                                                                                                                        "presentation" => 1
+                                                                                                                      },
+                                                                                                   "strong_role" => 1
+                                                                                                 },
+                                                                                      "toolbar" => {
+                                                                                                     "allowed_roles" => {
+                                                                                                                          "directory" => 1,
+                                                                                                                          "list" => 1,
+                                                                                                                          "listbox" => 1,
+                                                                                                                          "menu" => 1,
+                                                                                                                          "menubar" => 1,
+                                                                                                                          "presentation" => 1,
+                                                                                                                          "tablist" => 1,
+                                                                                                                          "tree" => 1
+                                                                                                                        },
+                                                                                                     "default_role" => "toolbar"
+                                                                                                   }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "compact" => {
@@ -6984,10 +7379,14 @@ $Web::HTML::Validator::_Defs = {
                                                                               "content_model" => "empty"
                                                                             },
                                                               "meta" => {
-                                                                          "aria_avail_roles" => {
-                                                                                                  "presentation" => 1
-                                                                                                },
-                                                                          "aria_strong_role" => "#norole",
+                                                                          "aria" => {
+                                                                                      "" => {
+                                                                                              "allowed_roles" => {
+                                                                                                                   "presentation" => 1
+                                                                                                                 },
+                                                                                              "strong_role" => 1
+                                                                                            }
+                                                                                    },
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "charset" => {
@@ -7021,10 +7420,14 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "meter" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_strong_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "high" => {
@@ -7076,11 +7479,15 @@ $Web::HTML::Validator::_Defs = {
                                                                               "status" => "LC"
                                                                             },
                                                               "nav" => {
-                                                                         "aria_avail_roles" => {
-                                                                                                 "navigation" => 1,
-                                                                                                 "presentation" => 1
-                                                                                               },
-                                                                         "aria_strong_role" => "navigation",
+                                                                         "aria" => {
+                                                                                     "" => {
+                                                                                             "allowed_roles" => {
+                                                                                                                  "presentation" => 1
+                                                                                                                },
+                                                                                             "default_role" => "navigation",
+                                                                                             "strong_role" => 1
+                                                                                           }
+                                                                                   },
                                                                          "attrs" => {},
                                                                          "conforming" => 1,
                                                                          "content_model" => "flow content",
@@ -7113,10 +7520,20 @@ $Web::HTML::Validator::_Defs = {
                                                                               "status" => "LC"
                                                                             },
                                                               "noscript" => {
-                                                                              "aria_avail_roles" => {
-                                                                                                      "presentation" => 1
-                                                                                                    },
-                                                                              "aria_strong_role" => "#norole",
+                                                                              "aria" => {
+                                                                                          "" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "attrs" => {
+                                                                                                               "aria-hidden" => {
+                                                                                                                                  "strong" => 1,
+                                                                                                                                  "value_type" => "true"
+                                                                                                                                }
+                                                                                                             },
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                        },
                                                                               "attrs" => {},
                                                                               "conforming" => 1,
                                                                               "has_additional_content_constraints" => 1,
@@ -7124,13 +7541,23 @@ $Web::HTML::Validator::_Defs = {
                                                                               "transparent" => "partial"
                                                                             },
                                                               "object" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "application" => 1,
-                                                                                                    "document" => 1,
-                                                                                                    "img" => 1,
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_default_role" => "#norole",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "application" => 1,
+                                                                                                                     "document" => 1,
+                                                                                                                     "img" => 1,
+                                                                                                                     "presentation" => 1
+                                                                                                                   },
+                                                                                                "attrs" => {
+                                                                                                             "attr-invalid" => {
+                                                                                                                                 "state" => ":invalid",
+                                                                                                                                 "strong" => 1,
+                                                                                                                                 "value_type" => "true/missing"
+                                                                                                                               }
+                                                                                                           }
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "align" => {
@@ -7308,19 +7735,22 @@ $Web::HTML::Validator::_Defs = {
                                                                             "transparent" => "semi"
                                                                           },
                                                               "ol" => {
-                                                                        "aria_avail_roles" => {
-                                                                                                "directory" => 1,
-                                                                                                "group" => 1,
-                                                                                                "list" => 1,
-                                                                                                "listbox" => 1,
-                                                                                                "menu" => 1,
-                                                                                                "menubar" => 1,
-                                                                                                "presentation" => 1,
-                                                                                                "tablist" => 1,
-                                                                                                "toolbar" => 1,
-                                                                                                "tree" => 1
-                                                                                              },
-                                                                        "aria_default_role" => "list",
+                                                                        "aria" => {
+                                                                                    "" => {
+                                                                                            "allowed_roles" => {
+                                                                                                                 "directory" => 1,
+                                                                                                                 "group" => 1,
+                                                                                                                 "listbox" => 1,
+                                                                                                                 "menu" => 1,
+                                                                                                                 "menubar" => 1,
+                                                                                                                 "presentation" => 1,
+                                                                                                                 "tablist" => 1,
+                                                                                                                 "toolbar" => 1,
+                                                                                                                 "tree" => 1
+                                                                                                               },
+                                                                                            "default_role" => "list"
+                                                                                          }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "compact" => {
@@ -7360,10 +7790,14 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                               "optgroup" => {
-                                                                              "aria_avail_roles" => {
-                                                                                                      "presentation" => 1
-                                                                                                    },
-                                                                              "aria_strong_role" => "#norole",
+                                                                              "aria" => {
+                                                                                          "" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                        },
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "disabled" => {
@@ -7397,7 +7831,21 @@ $Web::HTML::Validator::_Defs = {
                                                                               "status" => "LC"
                                                                             },
                                                               "option" => {
-                                                                            "aria_strong_role" => "#contextual",
+                                                                            "aria" => {
+                                                                                        "in-list" => {
+                                                                                                       "allowed_roles" => {
+                                                                                                                            "presentation" => 1
+                                                                                                                          },
+                                                                                                       "attrs" => {
+                                                                                                                    "aria-selected" => {
+                                                                                                                                         "strong" => 1,
+                                                                                                                                         "value_type" => "selected"
+                                                                                                                                       }
+                                                                                                                  },
+                                                                                                       "default_role" => "option",
+                                                                                                       "strong_role" => 1
+                                                                                                     }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "dataformatas" => {
@@ -7453,7 +7901,73 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                               "output" => {
-                                                                            "aria_default_role" => "status",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "alert" => 1,
+                                                                                                                     "alertdialog" => 1,
+                                                                                                                     "application" => 1,
+                                                                                                                     "article" => 1,
+                                                                                                                     "banner" => 1,
+                                                                                                                     "button" => 1,
+                                                                                                                     "checkbox" => 1,
+                                                                                                                     "columnheader" => 1,
+                                                                                                                     "combobox" => 1,
+                                                                                                                     "complementary" => 1,
+                                                                                                                     "contentinfo" => 1,
+                                                                                                                     "definition" => 1,
+                                                                                                                     "dialog" => 1,
+                                                                                                                     "directory" => 1,
+                                                                                                                     "document" => 1,
+                                                                                                                     "form" => 1,
+                                                                                                                     "grid" => 1,
+                                                                                                                     "gridcell" => 1,
+                                                                                                                     "group" => 1,
+                                                                                                                     "heading" => 1,
+                                                                                                                     "img" => 1,
+                                                                                                                     "link" => 1,
+                                                                                                                     "list" => 1,
+                                                                                                                     "listbox" => 1,
+                                                                                                                     "listitem" => 1,
+                                                                                                                     "log" => 1,
+                                                                                                                     "main" => 1,
+                                                                                                                     "marquee" => 1,
+                                                                                                                     "math" => 1,
+                                                                                                                     "menu" => 1,
+                                                                                                                     "menubar" => 1,
+                                                                                                                     "menuitem" => 1,
+                                                                                                                     "menuitemcheckbox" => 1,
+                                                                                                                     "menuitemradio" => 1,
+                                                                                                                     "navigation" => 1,
+                                                                                                                     "note" => 1,
+                                                                                                                     "option" => 1,
+                                                                                                                     "presentation" => 1,
+                                                                                                                     "progressbar" => 1,
+                                                                                                                     "radio" => 1,
+                                                                                                                     "radiogroup" => 1,
+                                                                                                                     "region" => 1,
+                                                                                                                     "row" => 1,
+                                                                                                                     "rowgroup" => 1,
+                                                                                                                     "rowheader" => 1,
+                                                                                                                     "scrollbar" => 1,
+                                                                                                                     "search" => 1,
+                                                                                                                     "separator" => 1,
+                                                                                                                     "slider" => 1,
+                                                                                                                     "spinbutton" => 1,
+                                                                                                                     "tab" => 1,
+                                                                                                                     "tablist" => 1,
+                                                                                                                     "tabpanel" => 1,
+                                                                                                                     "textbox" => 1,
+                                                                                                                     "timer" => 1,
+                                                                                                                     "toolbar" => 1,
+                                                                                                                     "tooltip" => 1,
+                                                                                                                     "tree" => 1,
+                                                                                                                     "treegrid" => 1,
+                                                                                                                     "treeitem" => 1
+                                                                                                                   },
+                                                                                                "default_role" => "status"
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "for" => {
@@ -7525,10 +8039,14 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "param" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_strong_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "datafld" => {
@@ -7635,11 +8153,29 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "progress" => {
-                                                                              "aria_avail_roles" => {
-                                                                                                      "presentation" => 1,
-                                                                                                      "progressbar" => 1
-                                                                                                    },
-                                                                              "aria_strong_role" => "progressbar",
+                                                                              "aria" => {
+                                                                                          "" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "attrs" => {
+                                                                                                               "aria-valuemax" => {
+                                                                                                                                    "strong" => 1,
+                                                                                                                                    "value_type" => "maximum-if-determinate"
+                                                                                                                                  },
+                                                                                                               "aria-valuemin" => {
+                                                                                                                                    "strong" => 1,
+                                                                                                                                    "value_type" => "0-if-determinate"
+                                                                                                                                  },
+                                                                                                               "aria-valuenow" => {
+                                                                                                                                    "strong" => 1,
+                                                                                                                                    "value_type" => "value-if-determinate"
+                                                                                                                                  }
+                                                                                                             },
+                                                                                                  "default_role" => "progressbar",
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                        },
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "max" => {
@@ -7715,10 +8251,20 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "REC"
                                                                         },
                                                               "script" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_strong_role" => "#norole",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "presentation" => 1
+                                                                                                                   },
+                                                                                                "attrs" => {
+                                                                                                             "aria-hidden" => {
+                                                                                                                                "strong" => 1,
+                                                                                                                                "value_type" => "true"
+                                                                                                                              }
+                                                                                                           },
+                                                                                                "strong_role" => 1
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "archive" => {
@@ -7805,33 +8351,62 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "REC"
                                                                           },
                                                               "section" => {
-                                                                             "aria_avail_roles" => {
-                                                                                                     "alert" => 1,
-                                                                                                     "alertdialog" => 1,
-                                                                                                     "application" => 1,
-                                                                                                     "contentinfo" => 1,
-                                                                                                     "dialog" => 1,
-                                                                                                     "document" => 1,
-                                                                                                     "log" => 1,
-                                                                                                     "main" => 1,
-                                                                                                     "marquee" => 1,
-                                                                                                     "presentation" => 1,
-                                                                                                     "region" => 1,
-                                                                                                     "search" => 1,
-                                                                                                     "status" => 1
-                                                                                                   },
-                                                                             "aria_default_role" => "region",
+                                                                             "aria" => {
+                                                                                         "" => {
+                                                                                                 "allowed_roles" => {
+                                                                                                                      "alert" => 1,
+                                                                                                                      "alertdialog" => 1,
+                                                                                                                      "application" => 1,
+                                                                                                                      "contentinfo" => 1,
+                                                                                                                      "dialog" => 1,
+                                                                                                                      "document" => 1,
+                                                                                                                      "log" => 1,
+                                                                                                                      "main" => 1,
+                                                                                                                      "marquee" => 1,
+                                                                                                                      "presentation" => 1,
+                                                                                                                      "search" => 1,
+                                                                                                                      "status" => 1
+                                                                                                                    },
+                                                                                                 "default_role" => "region"
+                                                                                               }
+                                                                                       },
                                                                              "attrs" => {},
                                                                              "conforming" => 1,
                                                                              "content_model" => "flow content",
                                                                              "status" => "CR"
                                                                            },
                                                               "select" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "listbox" => 1,
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_strong_role" => "listbox",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "presentation" => 1
+                                                                                                                   },
+                                                                                                "attrs" => {
+                                                                                                             "aria-multiselectable" => {
+                                                                                                                                         "attr" => "multiple",
+                                                                                                                                         "strong" => 1,
+                                                                                                                                         "value_type" => "true/false"
+                                                                                                                                       },
+                                                                                                             "aria-required" => {
+                                                                                                                                  "attr" => "required",
+                                                                                                                                  "strong" => 1,
+                                                                                                                                  "value_type" => "true/missing"
+                                                                                                                                },
+                                                                                                             "attr-disabled" => {
+                                                                                                                                  "state" => ":disabled",
+                                                                                                                                  "strong" => 1,
+                                                                                                                                  "value_type" => "true/missing"
+                                                                                                                                },
+                                                                                                             "attr-invalid" => {
+                                                                                                                                 "state" => ":invalid",
+                                                                                                                                 "strong" => 1,
+                                                                                                                                 "value_type" => "true/missing"
+                                                                                                                               }
+                                                                                                           },
+                                                                                                "default_role" => "listbox",
+                                                                                                "strong_role" => 1
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "autocomplete" => {
@@ -7927,10 +8502,14 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "REC"
                                                                          },
                                                               "source" => {
-                                                                            "aria_avail_roles" => {
-                                                                                                    "presentation" => 1
-                                                                                                  },
-                                                                            "aria_strong_role" => "#norole",
+                                                                            "aria" => {
+                                                                                        "" => {
+                                                                                                "allowed_roles" => {
+                                                                                                                     "presentation" => 1
+                                                                                                                   },
+                                                                                                "strong_role" => 1
+                                                                                              }
+                                                                                      },
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "media" => {
@@ -8004,10 +8583,20 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "REC"
                                                                           },
                                                               "style" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_strong_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "attrs" => {
+                                                                                                            "aria-hidden" => {
+                                                                                                                               "strong" => 1,
+                                                                                                                               "value_type" => "true"
+                                                                                                                             }
+                                                                                                          },
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "media" => {
@@ -8043,10 +8632,14 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "summary" => {
-                                                                             "aria_avail_roles" => {
-                                                                                                     "presentation" => 1
-                                                                                                   },
-                                                                             "aria_strong_role" => "#norole",
+                                                                             "aria" => {
+                                                                                         "" => {
+                                                                                                 "allowed_roles" => {
+                                                                                                                      "presentation" => 1
+                                                                                                                    },
+                                                                                                 "strong_role" => 1
+                                                                                               }
+                                                                                       },
                                                                              "attrs" => {},
                                                                              "conforming" => 1,
                                                                              "content_model" => "phrasing content"
@@ -8465,20 +9058,60 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                               "template" => {
-                                                                              "aria_avail_roles" => {
-                                                                                                      "presentation" => 1
-                                                                                                    },
-                                                                              "aria_strong_role" => "#norole",
+                                                                              "aria" => {
+                                                                                          "" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "attrs" => {
+                                                                                                               "aria-hidden" => {
+                                                                                                                                  "strong" => 1,
+                                                                                                                                  "value_type" => "true"
+                                                                                                                                }
+                                                                                                             },
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                        },
                                                                               "attrs" => {},
                                                                               "conforming" => 1,
                                                                               "has_additional_content_constraints" => 1
                                                                             },
                                                               "textarea" => {
-                                                                              "aria_avail_roles" => {
-                                                                                                      "presentation" => 1,
-                                                                                                      "textbox" => 1
-                                                                                                    },
-                                                                              "aria_strong_role" => "textbox",
+                                                                              "aria" => {
+                                                                                          "" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "attrs" => {
+                                                                                                               "aria-multiline" => {
+                                                                                                                                     "strong" => 1,
+                                                                                                                                     "value_type" => "true"
+                                                                                                                                   },
+                                                                                                               "aria-readonly" => {
+                                                                                                                                    "attr" => "readonly",
+                                                                                                                                    "strong" => 1,
+                                                                                                                                    "value_type" => "true/missing"
+                                                                                                                                  },
+                                                                                                               "aria-required" => {
+                                                                                                                                    "attr" => "required",
+                                                                                                                                    "strong" => 1,
+                                                                                                                                    "value_type" => "true/missing"
+                                                                                                                                  },
+                                                                                                               "attr-disabled" => {
+                                                                                                                                    "state" => ":disabled",
+                                                                                                                                    "strong" => 1,
+                                                                                                                                    "value_type" => "true/missing"
+                                                                                                                                  },
+                                                                                                               "attr-invalid" => {
+                                                                                                                                   "state" => ":invalid",
+                                                                                                                                   "strong" => 1,
+                                                                                                                                   "value_type" => "true/missing"
+                                                                                                                                 }
+                                                                                                             },
+                                                                                                  "default_role" => "textbox",
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                        },
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "autocapitalize" => {
@@ -9161,10 +9794,14 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "title" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_strong_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {},
                                                                            "conforming" => 1,
                                                                            "content_model" => "text",
@@ -9352,19 +9989,22 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "ul" => {
-                                                                        "aria_avail_roles" => {
-                                                                                                "directory" => 1,
-                                                                                                "group" => 1,
-                                                                                                "list" => 1,
-                                                                                                "listbox" => 1,
-                                                                                                "menu" => 1,
-                                                                                                "menubar" => 1,
-                                                                                                "presentation" => 1,
-                                                                                                "tablist" => 1,
-                                                                                                "toolbar" => 1,
-                                                                                                "tree" => 1
-                                                                                              },
-                                                                        "aria_default_role" => "list",
+                                                                        "aria" => {
+                                                                                    "" => {
+                                                                                            "allowed_roles" => {
+                                                                                                                 "directory" => 1,
+                                                                                                                 "group" => 1,
+                                                                                                                 "listbox" => 1,
+                                                                                                                 "menu" => 1,
+                                                                                                                 "menubar" => 1,
+                                                                                                                 "presentation" => 1,
+                                                                                                                 "tablist" => 1,
+                                                                                                                 "toolbar" => 1,
+                                                                                                                 "tree" => 1
+                                                                                                               },
+                                                                                            "default_role" => "list"
+                                                                                          }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "compact" => {
@@ -9399,11 +10039,14 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "REC"
                                                                        },
                                                               "video" => {
-                                                                           "aria_avail_roles" => {
-                                                                                                   "application" => 1,
-                                                                                                   "presentation" => 1
-                                                                                                 },
-                                                                           "aria_default_role" => "#norole",
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "application" => 1,
+                                                                                                                    "presentation" => 1
+                                                                                                                  }
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "autoplay" => {
@@ -10741,6 +11384,346 @@ $Web::HTML::Validator::_Defs = {
                                                            }
                         },
           "input" => {
+                       "aria" => {
+                                   "button" => {
+                                                 "" => {
+                                                         "allowed_roles" => {
+                                                                              "menuitem" => 1,
+                                                                              "presentation" => 1
+                                                                            },
+                                                         "default_role" => "button"
+                                                       }
+                                               },
+                                   "checkbox" => {
+                                                   "" => {
+                                                           "allowed_roles" => {
+                                                                                "menuitemcheckbox" => 1,
+                                                                                "presentation" => 1
+                                                                              },
+                                                           "attrs" => {
+                                                                        "aria-checked" => {
+                                                                                            "state" => ":indeterminate:checked",
+                                                                                            "strong" => 1,
+                                                                                            "value_type" => "true/false/mixed"
+                                                                                          }
+                                                                      },
+                                                           "default_role" => "checkbox"
+                                                         }
+                                                 },
+                                   "color" => {
+                                                "" => {
+                                                        "allowed_roles" => {
+                                                                             "presentation" => 1
+                                                                           },
+                                                        "strong_role" => 1
+                                                      }
+                                              },
+                                   "date" => {
+                                               "" => {
+                                                       "allowed_roles" => {
+                                                                            "presentation" => 1
+                                                                          },
+                                                       "attrs" => {
+                                                                    "aria-readonly" => {
+                                                                                         "attr" => "readonly",
+                                                                                         "strong" => 1,
+                                                                                         "value_type" => "true/missing"
+                                                                                       }
+                                                                  },
+                                                       "strong_role" => 1
+                                                     }
+                                             },
+                                   "datetime" => {
+                                                   "" => {
+                                                           "allowed_roles" => {
+                                                                                "presentation" => 1
+                                                                              },
+                                                           "attrs" => {
+                                                                        "aria-readonly" => {
+                                                                                             "attr" => "readonly",
+                                                                                             "strong" => 1,
+                                                                                             "value_type" => "true/missing"
+                                                                                           }
+                                                                      },
+                                                           "strong_role" => 1
+                                                         }
+                                                 },
+                                   "datetime-local" => {
+                                                         "" => {
+                                                                 "allowed_roles" => {
+                                                                                      "presentation" => 1
+                                                                                    },
+                                                                 "attrs" => {
+                                                                              "aria-readonly" => {
+                                                                                                   "attr" => "readonly",
+                                                                                                   "strong" => 1,
+                                                                                                   "value_type" => "true/missing"
+                                                                                                 }
+                                                                            },
+                                                                 "strong_role" => 1
+                                                               }
+                                                       },
+                                   "email" => {
+                                                "" => {
+                                                        "allowed_roles" => {
+                                                                             "presentation" => 1
+                                                                           },
+                                                        "attrs" => {
+                                                                     "aria-owns" => {
+                                                                                      "strong" => 1,
+                                                                                      "value_type" => "list-if-combobox"
+                                                                                    },
+                                                                     "aria-readonly" => {
+                                                                                          "attr" => "readonly",
+                                                                                          "strong" => 1,
+                                                                                          "value_type" => "true/missing"
+                                                                                        }
+                                                                   },
+                                                        "default_role" => "#textbox-or-combobox",
+                                                        "strong_role" => 1
+                                                      }
+                                              },
+                                   "file" => {
+                                               "" => {
+                                                       "allowed_roles" => {
+                                                                            "presentation" => 1
+                                                                          },
+                                                       "strong_role" => 1
+                                                     }
+                                             },
+                                   "hidden" => {
+                                                 "" => {
+                                                         "allowed_roles" => {
+                                                                              "presentation" => 1
+                                                                            },
+                                                         "strong_role" => 1
+                                                       }
+                                               },
+                                   "image" => {
+                                                "" => {
+                                                        "allowed_roles" => {
+                                                                             "menuitem" => 1,
+                                                                             "presentation" => 1
+                                                                           },
+                                                        "default_role" => "button"
+                                                      }
+                                              },
+                                   "month" => {
+                                                "" => {
+                                                        "allowed_roles" => {
+                                                                             "presentation" => 1
+                                                                           },
+                                                        "attrs" => {
+                                                                     "aria-readonly" => {
+                                                                                          "attr" => "readonly",
+                                                                                          "strong" => 1,
+                                                                                          "value_type" => "true/missing"
+                                                                                        }
+                                                                   },
+                                                        "strong_role" => 1
+                                                      }
+                                              },
+                                   "number" => {
+                                                 "" => {
+                                                         "allowed_roles" => {
+                                                                              "presentation" => 1
+                                                                            },
+                                                         "attrs" => {
+                                                                      "aria-readonly" => {
+                                                                                           "attr" => "readonly",
+                                                                                           "strong" => 1,
+                                                                                           "value_type" => "true/missing"
+                                                                                         },
+                                                                      "aria-valuemax" => {
+                                                                                           "strong" => 1,
+                                                                                           "value_type" => "maximum"
+                                                                                         },
+                                                                      "aria-valuemin" => {
+                                                                                           "strong" => 1,
+                                                                                           "value_type" => "minimum"
+                                                                                         },
+                                                                      "aria-valuenow" => {
+                                                                                           "strong" => 1,
+                                                                                           "value_type" => "value-if-number"
+                                                                                         }
+                                                                    },
+                                                         "default_role" => "spinbutton",
+                                                         "strong_role" => 1
+                                                       }
+                                               },
+                                   "radio" => {
+                                                "" => {
+                                                        "allowed_roles" => {
+                                                                             "menuitemradio" => 1,
+                                                                             "presentation" => 1
+                                                                           },
+                                                        "attrs" => {
+                                                                     "aria-checked" => {
+                                                                                         "state" => ":checked",
+                                                                                         "strong" => 1,
+                                                                                         "value_type" => "true/false"
+                                                                                       }
+                                                                   },
+                                                        "default_role" => "radio"
+                                                      }
+                                              },
+                                   "range" => {
+                                                "" => {
+                                                        "allowed_roles" => {
+                                                                             "presentation" => 1
+                                                                           },
+                                                        "attrs" => {
+                                                                     "aria-readonly" => {
+                                                                                          "attr" => "readonly",
+                                                                                          "strong" => 1,
+                                                                                          "value_type" => "true/missing"
+                                                                                        },
+                                                                     "aria-valuemax" => {
+                                                                                          "strong" => 1,
+                                                                                          "value_type" => "maximum"
+                                                                                        },
+                                                                     "aria-valuemin" => {
+                                                                                          "strong" => 1,
+                                                                                          "value_type" => "minimum"
+                                                                                        },
+                                                                     "aria-valuenow" => {
+                                                                                          "strong" => 1,
+                                                                                          "value_type" => "value-if-number"
+                                                                                        }
+                                                                   },
+                                                        "default_role" => "slider",
+                                                        "strong_role" => 1
+                                                      }
+                                              },
+                                   "reset" => {
+                                                "" => {
+                                                        "allowed_roles" => {
+                                                                             "presentation" => 1
+                                                                           },
+                                                        "default_role" => "button",
+                                                        "strong_role" => 1
+                                                      }
+                                              },
+                                   "search" => {
+                                                 "" => {
+                                                         "allowed_roles" => {
+                                                                              "presentation" => 1
+                                                                            },
+                                                         "attrs" => {
+                                                                      "aria-owns" => {
+                                                                                       "strong" => 1,
+                                                                                       "value_type" => "list-if-combobox"
+                                                                                     },
+                                                                      "aria-readonly" => {
+                                                                                           "attr" => "readonly",
+                                                                                           "strong" => 1,
+                                                                                           "value_type" => "true/missing"
+                                                                                         }
+                                                                    },
+                                                         "default_role" => "#textbox-or-combobox",
+                                                         "strong_role" => 1
+                                                       }
+                                               },
+                                   "submit" => {
+                                                 "" => {
+                                                         "allowed_roles" => {
+                                                                              "presentation" => 1
+                                                                            },
+                                                         "default_role" => "button",
+                                                         "strong_role" => 1
+                                                       }
+                                               },
+                                   "tel" => {
+                                              "" => {
+                                                      "allowed_roles" => {
+                                                                           "presentation" => 1
+                                                                         },
+                                                      "attrs" => {
+                                                                   "aria-owns" => {
+                                                                                    "strong" => 1,
+                                                                                    "value_type" => "list-if-combobox"
+                                                                                  },
+                                                                   "aria-readonly" => {
+                                                                                        "attr" => "readonly",
+                                                                                        "strong" => 1,
+                                                                                        "value_type" => "true/missing"
+                                                                                      }
+                                                                 },
+                                                      "default_role" => "#textbox-or-combobox",
+                                                      "strong_role" => 1
+                                                    }
+                                            },
+                                   "text" => {
+                                               "" => {
+                                                       "allowed_roles" => {
+                                                                            "presentation" => 1
+                                                                          },
+                                                       "attrs" => {
+                                                                    "aria-owns" => {
+                                                                                     "strong" => 1,
+                                                                                     "value_type" => "list-if-combobox"
+                                                                                   },
+                                                                    "aria-readonly" => {
+                                                                                         "attr" => "readonly",
+                                                                                         "strong" => 1,
+                                                                                         "value_type" => "true/missing"
+                                                                                       }
+                                                                  },
+                                                       "default_role" => "#textbox-or-combobox",
+                                                       "strong_role" => 1
+                                                     }
+                                             },
+                                   "time" => {
+                                               "" => {
+                                                       "allowed_roles" => {
+                                                                            "presentation" => 1
+                                                                          },
+                                                       "attrs" => {
+                                                                    "aria-readonly" => {
+                                                                                         "attr" => "readonly",
+                                                                                         "strong" => 1,
+                                                                                         "value_type" => "true/missing"
+                                                                                       }
+                                                                  },
+                                                       "strong_role" => 1
+                                                     }
+                                             },
+                                   "url" => {
+                                              "" => {
+                                                      "allowed_roles" => {
+                                                                           "presentation" => 1
+                                                                         },
+                                                      "attrs" => {
+                                                                   "aria-owns" => {
+                                                                                    "strong" => 1,
+                                                                                    "value_type" => "list-if-combobox"
+                                                                                  },
+                                                                   "aria-readonly" => {
+                                                                                        "attr" => "readonly",
+                                                                                        "strong" => 1,
+                                                                                        "value_type" => "true/missing"
+                                                                                      }
+                                                                 },
+                                                      "default_role" => "#textbox-or-combobox",
+                                                      "strong_role" => 1
+                                                    }
+                                            },
+                                   "week" => {
+                                               "" => {
+                                                       "allowed_roles" => {
+                                                                            "presentation" => 1
+                                                                          },
+                                                       "attrs" => {
+                                                                    "aria-readonly" => {
+                                                                                         "attr" => "readonly",
+                                                                                         "strong" => 1,
+                                                                                         "value_type" => "true/missing"
+                                                                                       }
+                                                                  },
+                                                       "strong_role" => 1
+                                                     }
+                                             }
+                                 },
                        "attrs" => {
                                     "accept" => {
                                                   "file" => 1
@@ -27234,7 +28217,7 @@ $Web::HTML::Validator::_Defs = {
                                                "aria-expanded" => {}
                                              },
                                   "preferred" => {
-                                                   "name" => "img",
+                                                   "name" => "figure",
                                                    "type" => "html-element"
                                                  },
                                   "subclass_of" => {

@@ -1318,65 +1318,340 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
 
-sub _check_aria ($$$) {
-  my ($self, $el, $element_state) = @_;
+sub _parse_float ($) {
+  ## Rules for parsing floating-point number value
+  if ($_[0] =~ /^[\x09\x0A\x0C\x0D\x20]*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)[Ee][+-][0-9]+)/) {
+    return $1;
+  } else {
+    return undef;
+  }
+} # _parse_float
 
-  my $role_attr = $el->get_attribute_node_ns (undef, 'role');
-  if (defined $role_attr) {
-    ## An ordered set of unique space-separated tokens.
-    my @value = grep { length $_ }
-        split /[\x09\x0A\x0C\x0D\x20]+/, $role_attr->value, -1;
-    my %word;
-    for my $token (@value) {
-      if ($word{$token}) {
-        $self->{onerror}->(node => $role_attr,
-                           type => 'duplicate token', value => $token,
-                           level => 'm');
-      } else {
-        $word{$token} = 1;
-        my $def = $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{role};
-        if ($def->{keywords}->{$token} and
-            $def->{keywords}->{$token}->{conforming}) {
-          #
-        } else {
-          $self->{onerror}->(node => $role_attr,
-                             type => 'aria:bad role', value => $token,
-                             level => 'm');
+# XXX
+use Scalar::Util qw(refaddr);
+sub _validate_aria ($$) {
+  my ($self, $target_nodes) = @_;
+
+  my @relevant;
+
+  my $descendants = {};
+  my $aria_owned_nodes = {};
+
+  my @node = (map { [$_, []] } @$target_nodes);
+  while (@node) {
+    my ($node, $parents) = @{shift @node};
+    if ($node->node_type == 1) { # ELEMENT_NODE
+      my $node_ref = refaddr $node;
+      $descendants->{refaddr $_}->{$node_ref} = $node for @$parents;
+
+      my $ns = $node->namespace_uri || '';
+      if ($ns eq HTML_NS or $ns eq SVG_NS) {
+        my $ln = $node->local_name;
+        if ($_Defs->{elements}->{$ns}->{$ln}->{aria} or
+            $ln eq 'input' or
+            $node->has_attribute_ns (undef, 'role')) {
+          push @relevant, $node;
         }
 
-        my $preferred = $_Defs->{roles}->{$token}->{preferred};
-        if ($preferred) {
-          if ($preferred->{type} eq 'html-element' and
-              ($el->namespace_uri || '') eq HTML_NS and
-              $el->local_name eq $preferred->{name}) {
-            $self->{onerror}->(node => $role_attr,
-                               type => 'aria:redundant role',
-                               value => $token,
-                               level => 'w');
-          } elsif ($preferred->{type} eq 'input' and
-                   ($el->namespace_uri || '') eq HTML_NS and
-                   $el->local_name eq 'input' and
-                   $el->type eq $preferred->{name}) {
-            $self->{onerror}->(node => $role_attr,
-                               type => 'aria:redundant role',
-                               value => $token,
-                               level => 'w');
+        my $ids = $node->get_attribute_ns (undef, 'aria-owns');
+        if (defined $ids) {
+          my @node;
+          for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $ids) {
+            my $attr = ($self->{id}->{$_} or [])->[0] or next;
+            push @node, $attr->owner_element;
+          }
+          $aria_owned_nodes->{$node_ref} = {map { (refaddr $_) => $_ } @node};
+        }
+      }
+
+      $parents = [@$parents, $node];
+      unshift @node, map { [$_, $parents] } @{$node->children};
+    } else {
+      unshift @node, map { [$_, $parents] } @{$node->children};
+    }
+  } # @node
+
+  my $get_owned_nodes = sub {
+    my $node = $_[0];
+    my $nodes = {%{$descendants->{refaddr $node}}};
+    my $prev_keys = 0;
+    my $new_keys = keys %$nodes;
+    while ($prev_keys != $new_keys) {
+      $prev_keys = $new_keys;
+      my %parent = map { %{$aria_owned_nodes->{$_}} } keys %$nodes;
+      $nodes = {%$nodes, %parent, map { %{$descendants->{$_}} } keys %parent};
+      $new_keys = keys %$nodes;
+    }
+    return $nodes;
+  };
+
+  for my $node (@relevant) {
+    my $ns = $node->namespace_uri || '';
+    my $ln = $node->local_name;
+
+    my %role;
+    my $role_attr = $node->get_attribute_node_ns (undef, 'role');
+    if (defined $role_attr) {
+      ## An ordered set of unique space-separated tokens.
+      my @value = grep { length $_ }
+          split /[\x09\x0A\x0C\x0D\x20]+/, $role_attr->value, -1;
+      my %word;
+      for my $token (@value) {
+        if ($word{$token}) {
+          $self->{onerror}->(node => $role_attr,
+                             type => 'duplicate token', value => $token,
+                             level => 'm');
+        } else {
+          $word{$token} = 1;
+          my $def = $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{role};
+          if ($def->{keywords}->{$token} and
+              $def->{keywords}->{$token}->{conforming}) {
+            $role{$token} = 1;
           } else {
             $self->{onerror}->(node => $role_attr,
-                               type => 'aria:not preferred markup:' . $preferred->{type},
-                               text => $preferred->{name} || $preferred->{scope}, # or undef
-                               value => $token,
-                               level => 'w');
+                               type => 'aria:bad role', value => $token,
+                               level => 'm');
           }
         }
       }
+    } # role=""
+
+    my $aria_defs = $_Defs->{elements}->{$ns}->{$ln}->{aria};
+    if ($ns eq HTML_NS and $ln eq 'input') {
+      $aria_defs = $_Defs->{input}->{aria}->{$node->type};
     }
-  } # role=""
 
-## XXX aria-*
+    my $adef;
+    if ($ns eq HTML_NS) {
+      if ($ln eq 'img') {
+        my $alt = $node->get_attribute_ns (undef, 'alt');
+        if (defined $alt and not length $alt) {
+          $adef = $aria_defs->{'empty-alt'};
+        } else {
+          $adef = $aria_defs->{'not-empty-alt'};
+        }
+      } elsif ($ln eq 'a' or $ln eq 'area') {
+        $adef = $aria_defs->{'hyperlink'}
+            if $node->has_attribute_ns (undef, 'href');
+      } elsif ($ln eq 'link') {
+        # XXX
+      } elsif ($ln eq 'option') {
+        # XXX
+      } elsif ($ln eq 'li') {
+        #XXX parent
+      } elsif ($ln eq 'menu') {
+        $adef = $aria_defs->{$node->type}; # type=popup or toolbar
+      } elsif ($ln =~ /\Ah[1-6]\z/) {
+        # XXX no-hgroup
+      } elsif ($ln eq 'body' or $ln eq 'frameset') {
+        # XXX the-body
+      }
+    }
+    $adef ||= $aria_defs->{''};
 
-# XXX attributes MUST only be used where applicable role is set.  MUST
-# set required attrs
+    for my $role (keys %role) {
+      my $conflict_error;
+      if ($adef->{allowed_roles}) {
+        unless ($adef->{allowed_roles}->{$role}) {
+          if (defined $adef->{default_role} and
+              $adef->{default_role} eq $role) {
+            $self->{onerror}->(node => $role_attr,
+                               type => 'aria:role:default role',
+                               value => $role,
+                               level => 'm');
+            next;
+          } else {
+            $self->{onerror}->(node => $role_attr,
+                               type => 'aria:role:conflict with semantics',
+                               value => $role,
+                               level => 'm');
+            $conflict_error = 1;
+          }
+        }
+      }
+
+      my $preferred = $_Defs->{roles}->{$role}->{preferred};
+      if ($preferred) {
+        if ($preferred->{type} eq 'html-element' and
+            $ns eq HTML_NS and
+            $ln eq $preferred->{name}) {
+          $self->{onerror}->(node => $role_attr,
+                             type => 'aria:redundant role',
+                             value => $role,
+                             level => 'w')
+              unless $conflict_error;
+        } elsif ($preferred->{type} eq 'input' and
+                 $ns eq HTML_NS and
+                 $ln eq 'input' and
+                 $node->type eq $preferred->{name}) {
+          $self->{onerror}->(node => $role_attr,
+                             type => 'aria:redundant role',
+                             value => $role,
+                             level => 'w')
+              unless $conflict_error;
+        } else {
+          $self->{onerror}->(node => $role_attr,
+                             type => 'aria:not preferred markup:' . $preferred->{type},
+                             text => $preferred->{name} || $preferred->{scope}, # or undef
+                             value => $role,
+                             level => 'w')
+              unless $role eq 'textbox' and $ns eq HTML_NS and $ln eq 'input';
+        }
+      }
+    } # $role
+
+    if (not keys %role and defined $adef->{default_role}) {
+      if ($adef->{default_role} eq '#textbox-or-combobox') {
+        # XXX
+      } else {
+        $role{$adef->{default_role}} = 1;
+      }
+    }
+
+    # XXX $_Defs->{$ns}->{'*'}->{aria} |hidden-attr| |inert|
+
+    for my $attr (@{$node->attributes}) {
+      next if defined $attr->namespace_uri;
+      my $attr_ln = $attr->local_name;
+      next unless $attr_ln =~ /^aria-/;
+      next unless $_Defs->{elements}->{$ns}->{'*'}->{attrs}->{''}->{$attr_ln};
+      
+      if ($_Defs->{roles}->{roletype}->{attrs}->{$attr_ln}) {
+        ## A global ARIA attribute
+        #
+      } else {
+        ## A non-global ARIA attribute
+        my $allowed;
+        for my $role (keys %role) {
+          if ($_Defs->{roles}->{$role}->{attrs}->{$attr_ln}) {
+            $allowed = 1;
+            last;
+          }
+        }
+        $self->{onerror}->(node => $attr,
+                           type => 'aria:attr not allowed',
+                           text => (join ' ', sort { $a cmp $b } keys %role),
+                           level => 'm')
+            unless $allowed;
+
+        # XXX attributes implied by semantics MUST NOT be specified
+      }
+    }
+  } # @relevant
+
+=pod
+
+  # XXX
+  my %aria_attr;
+  my $el_nsurl;
+  my $el_ln;
+  if ($el_nsurl eq HTML_NS) {
+    if ($el_ln eq 'datalist') {
+      $aria_attr{'aria-multiselectable'} = 'false';
+    } elsif ($el_ln eq 'details') {
+      $aria_attr{'aria-expanded'}
+          = $el->has_attribute_ns (undef, 'open') ? 'true' : 'false';
+    } elsif ($el_ln eq 'dialog') {
+      $aria_attr{'aria-hidden'} = 'true'
+          unless $node->has_attribute_ns (undef, 'open');
+    } elsif ($el_ln eq 'head') {
+      $aria_attr{'aria-hidden'} = 'true';
+    } elsif ($el_ln eq 'heading') {
+      $aria_attr{'aria-level'} = 1; # XXX outline depth
+    } elsif ($el_ln eq 'input') {
+      my $type = $node->type;
+      if ($type eq 'checkbox') {
+        # XXX
+        #$aria_attr{'aria-checked'} = $node->indeterminate ? 'mixed' : $node->checked ? 'true' : 'false';
+        $aria_attr{'aria-checked'} = $node->default_checked ? 'true' : 'false';
+      } elsif ($type eq 'radio') {
+        #$aria_attr{'aria-checked'} = $node->checked ? 'true' : 'false';
+        $aria_attr{'aria-checked'} = $node->default_checked ? 'true' : 'false';
+      }
+      if ($type eq 'number') {
+        $aria_attr{'aria-valuemin'} = _parse_float $node->min;
+        $aria_attr{'aria-valuemax'} = _parse_float $node->max;
+        $aria_attr{'aria-valuenow'} = _parse_float $node->default_value; # XXX $node->value
+        for (qw(aria-valuemin aria-valuemax aria-valuenow)) {
+          delete $aria_attr{$_} unless defined $aria_attr{$_};
+        }
+      } elsif ($type eq 'range') {
+        $aria_attr{'aria-valuemin'} = _parse_float $node->min;
+        $aria_attr{'aria-valuemax'} = _parse_float $node->max;
+        $aria_attr{'aria-valuenow'} = _parse_float $node->default_value; # XXX $node->value
+        $aria_attr{'aria-valuemin'} = 0 unless defined $aria_attr{'aria-valuemin'};
+        $aria_attr{'aria-valuemaxn'} = 100 unless defined $aria_attr{'aria-valuemax'};
+        $aria_attr{'aria-valuenow'} = ($aria_attr{'aria-valuemax'} < $aria_attr{'aria-valuemin'})
+            ? $aria_attr{'aria-min'}
+            : ($aria_attr{'aria-valuemin'} + ($aria_attr{'aria-valuemax'} - $aria_attr{'aria-valuemin'}) / 2);
+            unless defined $aria_attr{'aria-valuenow'};
+      }
+      if ($type eq 'date' or
+          $type eq 'datetime' or
+          $type eq 'datetime-local' or
+          $type eq 'email' or
+          $type eq 'month' or
+          $type eq 'number' or
+          $type eq 'password' or
+          $type eq 'search' or
+          $type eq 'tel' or
+          $type eq 'text' or
+          $type eq 'url' or
+          $type eq 'time' or
+          $type eq 'week') {
+        $aria_attr{'aria-readonly'}
+            = $node->get_attribute_ns (undef, 'readonly') ? 'true' : 'false';
+      }
+      if ($strong_role eq 'combobox') {
+        $aria_attr{'aria-owns'} = $node->list;
+      }
+      if ($node->has_attribute_ns (undef, 'required')) {
+        $aria_attr{'aria-required'} = 'true';
+      }
+    } elsif ($ln eq 'noscript' or
+             $ln eq 'script' or
+             $ln eq 'style' or
+             $ln eq 'template') {
+      $aria_attr{'aria-hidden'} = 'true';
+    } elsif ($ln eq 'option') {
+      # XXX $aria_attr{'aria-selected'} = selectedness is true or false
+    } elsif ($ln eq 'progress') {
+      # XXX aria-valuemax, aria-valuemin, aria-valuenow
+    } elsif ($ln eq 'select') {
+      $aria_attr{'aria-multiselectable'}
+          = $node->has_attribute_ns (undef, 'multiple') ? 'true' : 'false';
+      $aria_attr{'aria-required'} = 'true'
+          if $node->has_attribute_ns (undef, 'required');
+    } elsif ($ln eq 'textarea') {
+      $aria_attr{'aria-multiline'} = 'true';
+      $aria_attr{'aria-readonly'} = 'true'
+          if $node->has_attribute_ns (undef, 'readonly');
+      $aria_attr{'aria-required'} = 'true'
+          if $node->has_attribute_ns (undef, 'required');
+    } # $ln
+
+    # XXX If disabled, aria-disabled = 'true'
+
+    # XXX If inert, aria-hidden = 'true'
+
+    if ($node->has_attribute_ns (undef, 'hidden')) {
+      $aria_attr{'aria-hidden'} = 'true';
+    }
+
+    # XXX aria-invalid=true if invalid
+  } # HTML_NS
+
+
+  # XXX default semantics
+  if ($ns eq HTML_NS) {
+    # XXX If hn not in hgroup, aria-level = outline depth
+
+
+  }
+
+=cut
+
+# XXX role=presentation overrides children's implicit role
 
 # XXX If there is a missing required owned element (descendant or
 # owns), there MUST be an |aria-busy| attribute set to |true|.
@@ -1443,10 +1718,12 @@ sub _check_aria ($$$) {
 
 # XXX warning: |aria-level| should not be used if |hn| or |hgroup|
 
-# XXX HTML semantics
+# XXX some aria-* SHOULD/MUST be specified for role=???
 
-# XXX aria-* alternatives
-} # _check_aria
+# XXX aria-* {preferred} data
+
+# XXX tests for ARIA in <iframe>, <noscript>, <atom:content>
+} # _validate_aria
 
 ## ------ Element content model ------
 
@@ -8639,6 +8916,7 @@ sub _check_fallback_html ($$$$) {
          validation_mode => 'default'}]);
 
   $checker->_validate_microdata;
+  $checker->_validate_aria ($children);
   $checker->_check_refs;
   $checker->_terminate;
 } # _check_fallback_html
@@ -8804,6 +9082,7 @@ $Element->{+HTML_NS}->{template} = {
 
     $checker->_check_refs;
     $checker->_validate_microdata;
+    $checker->_validate_aria (\@children);
     $checker->_terminate;
 
     $HTMLEmptyChecker{check_end}->(@_);
@@ -9082,10 +9361,6 @@ sub _check_node ($$) {
                        node => $el,
                        element_state => $element_state}
           if $el_nsuri eq HTML_NS;
-      push @new_item, {type => '_check_aria',
-                       node => $el,
-                       element_state => $element_state}
-          if $el_nsuri eq HTML_NS or $el_nsuri eq SVG_NS;
       
       my @child = @{$item->{content} || $el->child_nodes};
       while (@child) {
@@ -9149,8 +9424,6 @@ sub _check_node ($$) {
       $self->_add_minus_elements ($item->{element_state}, $item->{disallowed});
     } elsif ($item->{type} eq '_remove_minus_elements') {
       $self->_remove_minus_elements ($item->{element_state});
-    } elsif ($item->{type} eq '_check_aria') {
-      $self->_check_aria ($item->{node}, $item->{element_state});
     } elsif ($item->{type} eq 'check_html_attrs') {
       for my $attr (@{$item->{node}->attributes}) {
         next if defined $attr->namespace_uri;
@@ -9453,6 +9726,7 @@ sub check_node ($$) {
   # XXX PI Comment DocumentType Entity Notation ElementTypeDefinition AttributeDefinition
   $self->_check_refs;
   $self->_validate_microdata;
+  $self->_validate_aria ([$node]);
   $self->_terminate;
 
   # XXX More useful return object
