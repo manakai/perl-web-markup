@@ -3,6 +3,7 @@ use strict;
 use warnings;
 no warnings 'utf8';
 our $VERSION = '128.0';
+use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 
 ## ------ Constructor ------
@@ -1318,17 +1319,6 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
 
-sub _parse_float ($) {
-  ## Rules for parsing floating-point number value
-  if ($_[0] =~ /^[\x09\x0A\x0C\x0D\x20]*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)[Ee][+-][0-9]+)/) {
-    return $1;
-  } else {
-    return undef;
-  }
-} # _parse_float
-
-# XXX
-use Scalar::Util qw(refaddr);
 sub _validate_aria ($$) {
   my ($self, $target_nodes) = @_;
 
@@ -1337,6 +1327,8 @@ sub _validate_aria ($$) {
   my $descendants = {};
   my $aria_owned_nodes = {};
 
+  my %is_root = (map { refaddr $_ => 1 } @$target_nodes);
+  my %owned_id;
   my @node = (map { [$_, []] } @$target_nodes);
   while (@node) {
     my ($node, $parents) = @{shift @node};
@@ -1359,6 +1351,14 @@ sub _validate_aria ($$) {
           for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $ids) {
             my $attr = ($self->{id}->{$_} or [])->[0] or next;
             push @node, $attr->owner_element;
+            if ($owned_id{$_}) {
+              $self->{onerror}->(node => $attr,
+                                 type => 'aria:owns:duplicate idref',
+                                 value => $_,
+                                 level => 'm');
+            } else {
+              $owned_id{$_} = [$node => $node[-1]];
+            }
           }
           $aria_owned_nodes->{$node_ref} = {map { (refaddr $_) => $_ } @node};
         }
@@ -1371,20 +1371,34 @@ sub _validate_aria ($$) {
     }
   } # @node
 
+  for my $id (keys %owned_id) {
+    if ($descendants->{refaddr $owned_id{$id}->[0]}->{refaddr $owned_id{$id}->[1]}) {
+      $self->{onerror}->(node => $owned_id{$id}->[0]->get_attribute_node_ns (undef, 'aria-owns'),
+                         type => 'aria:owns:descendant is refed',
+                         value => $id,
+                         level => 'm');
+    }
+  }
+
   my $get_owned_nodes = sub {
     my $node = $_[0];
-    my $nodes = {%{$descendants->{refaddr $node}}};
+    my $nodes = {%{$descendants->{refaddr $node} or {}}};
+    {
+      my %parent = %{$aria_owned_nodes->{refaddr $node} or {}};
+      $nodes = {%$nodes, %parent, map { %{$descendants->{$_} or {}} } keys %parent};
+    }
     my $prev_keys = 0;
     my $new_keys = keys %$nodes;
     while ($prev_keys != $new_keys) {
       $prev_keys = $new_keys;
-      my %parent = map { %{$aria_owned_nodes->{$_}} } keys %$nodes;
-      $nodes = {%$nodes, %parent, map { %{$descendants->{$_}} } keys %parent};
+      my %parent = map { %{$aria_owned_nodes->{$_} or {}} } keys %$nodes;
+      $nodes = {%$nodes, %parent, map { %{$descendants->{$_} or {}} } keys %parent};
       $new_keys = keys %$nodes;
     }
     return $nodes;
-  };
+  }; # $get_owned_nodes
 
+  my $node_to_roles = {};
   for my $node (@relevant) {
     my $ns = $node->namespace_uri || '';
     my $ln = $node->local_name;
@@ -1406,7 +1420,7 @@ sub _validate_aria ($$) {
           my $def = $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{role};
           if ($def->{keywords}->{$token} and
               $def->{keywords}->{$token}->{conforming}) {
-            $role{$token} = 1;
+            $role{$token} = 'attr';
           } else {
             $self->{onerror}->(node => $role_attr,
                                type => 'aria:bad role', value => $token,
@@ -1438,7 +1452,15 @@ sub _validate_aria ($$) {
       } elsif ($ln eq 'option') {
         # XXX
       } elsif ($ln eq 'li') {
-        #XXX parent
+        my $parent = $node->parent_node;
+        if (defined $parent and
+            $parent->node_type == 1 and # ELEMENT_NODE
+            do {
+              my $ln = $parent->local_name;
+              ($ln eq 'ul' or $ln eq 'ol');
+            }) {
+          $adef = $aria_defs->{'in-ulol'};
+        }
       } elsif ($ln eq 'menu') {
         $adef = $aria_defs->{$node->type}; # type=popup or toolbar
       } elsif ($ln =~ /\Ah[1-6]\z/) {
@@ -1504,7 +1526,7 @@ sub _validate_aria ($$) {
       if ($adef->{default_role} eq '#textbox-or-combobox') {
         # XXX
       } else {
-        $role{$adef->{default_role}} = 1;
+        $role{$adef->{default_role}} = 'implicit';
       }
     }
 
@@ -1528,135 +1550,83 @@ sub _validate_aria ($$) {
             last;
           }
         }
-        $self->{onerror}->(node => $attr,
-                           type => 'aria:attr not allowed',
-                           text => (join ' ', sort { $a cmp $b } keys %role),
-                           level => 'm')
-            unless $allowed;
 
-        # XXX attributes implied by semantics MUST NOT be specified
+        if (not $allowed) {
+          $self->{onerror}->(node => $attr,
+                             type => 'aria:attr not allowed for role',
+                             text => (join ' ', sort { $a cmp $b } keys %role),
+                             level => 'm');
+        } elsif ($adef->{attrs}->{$attr_ln}) {
+          $self->{onerror}->(node => $attr,
+                             type => 'aria:attr not allowed for element',
+                             level => 'm');
+        }
+      }
+    }
+
+    delete $role{presentation};
+    $node_to_roles->{refaddr $node} = \%role;
+  } # @relevant
+
+  my $node_has_scope = {};
+  for my $node (@relevant) {
+    my $roles = $node_to_roles->{refaddr $node};
+    my $owned_nodes;
+    ROLE: for my $role (keys %$roles) {
+      my $role_def = $_Defs->{roles}->{$role};
+      my @scope = keys %{$role_def->{scope_of} or {}};
+      if (@scope) {
+        $owned_nodes ||= $get_owned_nodes->($node);
+        for my $n_a (keys %$owned_nodes) {
+          for my $r (@scope) {
+            if ($node_to_roles->{$n_a}->{$r}) {
+              $node_has_scope->{$n_a}->{$role} = 1;
+            }
+          }
+        }
+      }
+      my @must = keys %{$role_def->{must_contain} or {}};
+      if (not $roles->{$role} eq 'implicit' and @must) {
+        my $busy = $node->get_attribute_ns (undef, 'aria-busy');
+        if (defined $busy and $busy =~ /\A[Tt][Rr][Uu][Ee]\z/) {
+          last ROLE; ## aria-busy=true, ASCII case-insensitive.
+        }
+        $owned_nodes ||= $get_owned_nodes->($node);
+        for my $n_a (keys %$owned_nodes) {
+          for my $r (@must) {
+            next ROLE if $node_to_roles->{$n_a}->{$r};
+          }
+        }
+        $self->{onerror}->(node => $node,
+                           type => 'aria:role:no required owned element',
+                           text => (join ' ', keys %{$role_def->{must_contain}}),
+                           value => $role,
+                           level => 'm');
       }
     }
   } # @relevant
 
-=pod
-
-  # XXX
-  my %aria_attr;
-  my $el_nsurl;
-  my $el_ln;
-  if ($el_nsurl eq HTML_NS) {
-    if ($el_ln eq 'datalist') {
-      $aria_attr{'aria-multiselectable'} = 'false';
-    } elsif ($el_ln eq 'details') {
-      $aria_attr{'aria-expanded'}
-          = $el->has_attribute_ns (undef, 'open') ? 'true' : 'false';
-    } elsif ($el_ln eq 'dialog') {
-      $aria_attr{'aria-hidden'} = 'true'
-          unless $node->has_attribute_ns (undef, 'open');
-    } elsif ($el_ln eq 'head') {
-      $aria_attr{'aria-hidden'} = 'true';
-    } elsif ($el_ln eq 'heading') {
-      $aria_attr{'aria-level'} = 1; # XXX outline depth
-    } elsif ($el_ln eq 'input') {
-      my $type = $node->type;
-      if ($type eq 'checkbox') {
-        # XXX
-        #$aria_attr{'aria-checked'} = $node->indeterminate ? 'mixed' : $node->checked ? 'true' : 'false';
-        $aria_attr{'aria-checked'} = $node->default_checked ? 'true' : 'false';
-      } elsif ($type eq 'radio') {
-        #$aria_attr{'aria-checked'} = $node->checked ? 'true' : 'false';
-        $aria_attr{'aria-checked'} = $node->default_checked ? 'true' : 'false';
-      }
-      if ($type eq 'number') {
-        $aria_attr{'aria-valuemin'} = _parse_float $node->min;
-        $aria_attr{'aria-valuemax'} = _parse_float $node->max;
-        $aria_attr{'aria-valuenow'} = _parse_float $node->default_value; # XXX $node->value
-        for (qw(aria-valuemin aria-valuemax aria-valuenow)) {
-          delete $aria_attr{$_} unless defined $aria_attr{$_};
+  for my $node (@relevant) {
+    my $node_addr = refaddr $node;
+    next if $is_root{$node_addr};
+    my $roles = $node_to_roles->{$node_addr};
+    ROLE: for my $role (keys %$roles) {
+      my $role_def = $_Defs->{roles}->{$role};
+      my @scope = keys %{$role_def->{scope} or {}};
+      if (@scope) {
+        for (@scope) {
+          next ROLE if $node_has_scope->{$node_addr}->{$_};
         }
-      } elsif ($type eq 'range') {
-        $aria_attr{'aria-valuemin'} = _parse_float $node->min;
-        $aria_attr{'aria-valuemax'} = _parse_float $node->max;
-        $aria_attr{'aria-valuenow'} = _parse_float $node->default_value; # XXX $node->value
-        $aria_attr{'aria-valuemin'} = 0 unless defined $aria_attr{'aria-valuemin'};
-        $aria_attr{'aria-valuemaxn'} = 100 unless defined $aria_attr{'aria-valuemax'};
-        $aria_attr{'aria-valuenow'} = ($aria_attr{'aria-valuemax'} < $aria_attr{'aria-valuemin'})
-            ? $aria_attr{'aria-min'}
-            : ($aria_attr{'aria-valuemin'} + ($aria_attr{'aria-valuemax'} - $aria_attr{'aria-valuemin'}) / 2);
-            unless defined $aria_attr{'aria-valuenow'};
+        $self->{onerror}->(node => $node,
+                           type => 'aria:role:not required context',
+                           text => (join ' ', sort { $a cmp $b } @scope),
+                           value => $role,
+                           level => 'm');
       }
-      if ($type eq 'date' or
-          $type eq 'datetime' or
-          $type eq 'datetime-local' or
-          $type eq 'email' or
-          $type eq 'month' or
-          $type eq 'number' or
-          $type eq 'password' or
-          $type eq 'search' or
-          $type eq 'tel' or
-          $type eq 'text' or
-          $type eq 'url' or
-          $type eq 'time' or
-          $type eq 'week') {
-        $aria_attr{'aria-readonly'}
-            = $node->get_attribute_ns (undef, 'readonly') ? 'true' : 'false';
-      }
-      if ($strong_role eq 'combobox') {
-        $aria_attr{'aria-owns'} = $node->list;
-      }
-      if ($node->has_attribute_ns (undef, 'required')) {
-        $aria_attr{'aria-required'} = 'true';
-      }
-    } elsif ($ln eq 'noscript' or
-             $ln eq 'script' or
-             $ln eq 'style' or
-             $ln eq 'template') {
-      $aria_attr{'aria-hidden'} = 'true';
-    } elsif ($ln eq 'option') {
-      # XXX $aria_attr{'aria-selected'} = selectedness is true or false
-    } elsif ($ln eq 'progress') {
-      # XXX aria-valuemax, aria-valuemin, aria-valuenow
-    } elsif ($ln eq 'select') {
-      $aria_attr{'aria-multiselectable'}
-          = $node->has_attribute_ns (undef, 'multiple') ? 'true' : 'false';
-      $aria_attr{'aria-required'} = 'true'
-          if $node->has_attribute_ns (undef, 'required');
-    } elsif ($ln eq 'textarea') {
-      $aria_attr{'aria-multiline'} = 'true';
-      $aria_attr{'aria-readonly'} = 'true'
-          if $node->has_attribute_ns (undef, 'readonly');
-      $aria_attr{'aria-required'} = 'true'
-          if $node->has_attribute_ns (undef, 'required');
-    } # $ln
-
-    # XXX If disabled, aria-disabled = 'true'
-
-    # XXX If inert, aria-hidden = 'true'
-
-    if ($node->has_attribute_ns (undef, 'hidden')) {
-      $aria_attr{'aria-hidden'} = 'true';
     }
-
-    # XXX aria-invalid=true if invalid
-  } # HTML_NS
-
-
-  # XXX default semantics
-  if ($ns eq HTML_NS) {
-    # XXX If hn not in hgroup, aria-level = outline depth
-
-
-  }
-
-=cut
+  } # @relevant
 
 # XXX role=presentation overrides children's implicit role
-
-# XXX If there is a missing required owned element (descendant or
-# owns), there MUST be an |aria-busy| attribute set to |true|.
-
-# XXX roles MUST be used in required context (descendant or owns)
 
 # XXX |role=document| or |role=application| SHOULD NOT have multiple
 # |role=banner|; SHOULD NOT have multiple |role=contentinfo|;
@@ -1686,10 +1656,6 @@ sub _validate_aria ($$) {
 # |aria-labellledby| should be used
 
 # XXX |aria-live=assertive| SHOULD be avoided
-
-# XXX |aria-owns|'s referenced element MUST NOT be a descendant.
-
-# XXX |aria-owns|'s ID MUST NOT be in other |aria-owns| attribute.
 
 # XXX If |aria-posinset| specified, |aria-setsize| SHOULD be
 # specified.  |aria-posinset| MUST be <= |aria_setsize|.
@@ -1721,6 +1687,8 @@ sub _validate_aria ($$) {
 # XXX some aria-* SHOULD/MUST be specified for role=???
 
 # XXX aria-* {preferred} data
+
+# XXX aria-* validation
 
 # XXX tests for ARIA in <iframe>, <noscript>, <atom:content>
 } # _validate_aria
@@ -3659,6 +3627,23 @@ $ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{for} = sub {
   ## NOTE: MUST be an ID of an element.
   push @{$self->{idref}}, ['any', $attr->value, $attr];
 }; # <script for="">
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-owns'} = sub {
+  my ($self, $attr) = @_;
+  ## Unordered set of space-separated tokens.
+  my %word;
+  for my $word (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    if ($word{$word}) {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token',
+                         value => $word,
+                         level => 'm');
+    } else{
+      push @{$self->{idref}}, ['any', $word, $attr];
+      $word{$word} = 1;
+    }
+  }
+}; # aria-owns=""
 
 $Element->{+HTML_NS}->{noscript} = {
   %TransparentChecker,

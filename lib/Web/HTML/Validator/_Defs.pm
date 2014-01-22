@@ -28132,6 +28132,10 @@ $Web::HTML::Validator::_Defs = {
                                                     "name" => "table",
                                                     "type" => "html-element"
                                                   },
+                                   "scope_of" => {
+                                                   "row" => 1,
+                                                   "rowgroup" => 1
+                                                 },
                                    "subclass_of" => {
                                                       "composite" => 1,
                                                       "region" => 1,
@@ -28178,6 +28182,9 @@ $Web::HTML::Validator::_Defs = {
                                                      "name" => "fieldset",
                                                      "type" => "html-element"
                                                    },
+                                    "scope_of" => {
+                                                    "treeitem" => 1
+                                                  },
                                     "subclass_of" => {
                                                        "roletype" => 3,
                                                        "section" => 1,
@@ -28301,6 +28308,10 @@ $Web::HTML::Validator::_Defs = {
                                                     "name" => "ul",
                                                     "type" => "html-element"
                                                   },
+                                   "scope_of" => {
+                                                   "listitem" => 1,
+                                                   "treeitem" => 1
+                                                 },
                                    "subclass_of" => {
                                                       "region" => 1,
                                                       "roletype" => 4,
@@ -28433,6 +28444,11 @@ $Web::HTML::Validator::_Defs = {
                                                     "name" => "menu",
                                                     "type" => "html-element"
                                                   },
+                                   "scope_of" => {
+                                                   "menuitem" => 1,
+                                                   "menuitemcheckbox" => 1,
+                                                   "menuitemradio" => 1
+                                                 },
                                    "subclass_of" => {
                                                       "composite" => 2,
                                                       "group" => 2,
@@ -28465,6 +28481,11 @@ $Web::HTML::Validator::_Defs = {
                                                        "name" => "menu",
                                                        "type" => "html-element"
                                                      },
+                                      "scope_of" => {
+                                                      "menuitem" => 1,
+                                                      "menuitemcheckbox" => 1,
+                                                      "menuitemradio" => 1
+                                                    },
                                       "subclass_of" => {
                                                          "composite" => 3,
                                                          "group" => 3,
@@ -28840,6 +28861,11 @@ $Web::HTML::Validator::_Defs = {
                                                "rowgroup" => 1,
                                                "treegrid" => 1
                                              },
+                                  "scope_of" => {
+                                                  "columnheader" => 1,
+                                                  "gridcell" => 1,
+                                                  "rowheader" => 1
+                                                },
                                   "subclass_of" => {
                                                      "group" => 1,
                                                      "roletype" => 2,
@@ -28863,6 +28889,9 @@ $Web::HTML::Validator::_Defs = {
                                        "scope" => {
                                                     "grid" => 1
                                                   },
+                                       "scope_of" => {
+                                                       "row" => 1
+                                                     },
                                        "subclass_of" => {
                                                           "group" => 1,
                                                           "roletype" => 4,
@@ -29191,6 +29220,9 @@ $Web::HTML::Validator::_Defs = {
                                                           "listitem" => 1,
                                                           "tab" => 1
                                                         },
+                                      "scope_of" => {
+                                                      "tab" => 1
+                                                    },
                                       "subclass_of" => {
                                                          "composite" => 1,
                                                          "directory" => 1,
@@ -29282,6 +29314,9 @@ $Web::HTML::Validator::_Defs = {
                                                        "group" => 1,
                                                        "treeitem" => 1
                                                      },
+                                   "scope_of" => {
+                                                   "treeitem" => 1
+                                                 },
                                    "subclass_of" => {
                                                       "composite" => 2,
                                                       "group" => 2,
@@ -29311,6 +29346,9 @@ $Web::HTML::Validator::_Defs = {
                                                            "rowgroup" => 1,
                                                            "treeitem" => 1
                                                          },
+                                       "scope_of" => {
+                                                       "row" => 1
+                                                     },
                                        "subclass_of" => {
                                                           "composite" => 3,
                                                           "grid" => 1,

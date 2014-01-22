@@ -186,6 +186,11 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
 	      $$data->{schemaorg_props}->{$$prop} = {}; #\
 	    } #\
 	  } #\
+	  for $$role (keys %{$$data->{roles}}) { #\
+	    for (keys %{$$data->{roles}->{$$role}->{scope} or {}}) { #\
+	      $$data->{roles}->{$$_}->{scope_of}->{$$role} = 1; #\
+	    } #\
+	  } #\
 	  $$pm = Dumper $$data; #\
 	  $$pm =~ s/VAR1/Web::HTML::Validator::_Defs/g; #\
 	  print "$$pm\n"; #\
