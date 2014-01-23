@@ -246,6 +246,7 @@ sub _terminate ($) {
 ## XXX xml-stylesheet PI
 
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
+sub MML_NS () { q<http://www.w3.org/1998/Math/MathML> }
 sub SVG_NS () { q<http://www.w3.org/2000/svg> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
@@ -1319,6 +1320,14 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
 
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-label'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-label'} = sub {
+  my ($self, $attr) = @_;
+  $self->{onerror}->(node => $attr,
+                     type => 'aria:label',
+                     level => 'w');
+}; # aria-label=""
+
 sub _validate_aria ($$) {
   my ($self, $target_nodes) = @_;
 
@@ -1343,6 +1352,13 @@ sub _validate_aria ($$) {
             $ln eq 'input' or
             $node->has_attribute_ns (undef, 'role')) {
           push @relevant, $node;
+        } else {
+          for (@{$node->attributes}) {
+            if ($_->local_name =~ /^aria-/) {
+              push @relevant, $node;
+              last;
+            }
+          }
         }
 
         my $ids = $node->get_attribute_ns (undef, 'aria-owns');
@@ -1652,9 +1668,6 @@ sub _validate_aria ($$) {
 # XXX For |radio|, |menuitemradio|, or subroles, |aria-checked=mixed|
 # -> warning
 
-# XXX warning: instead of |aria-label|, HTML |title=""| or ARIA
-# |aria-labellledby| should be used
-
 # XXX |aria-live=assertive| SHOULD be avoided
 
 # XXX If |aria-posinset| specified, |aria-setsize| SHOULD be
@@ -1689,6 +1702,28 @@ sub _validate_aria ($$) {
 # XXX aria-* {preferred} data
 
 # XXX aria-* validation
+#aria-activedescendant
+#aria-controls
+#aria-describedby
+#aria-dropeffect
+#aria-flowto
+#aria-labelledby
+#aria-live
+#aria-multiline
+#aria-multiselectable
+#aria-orientation
+#aria-posinset
+#aria-pressed
+#aria-readonly
+#aria-relevant
+#aria-required
+#aria-selected
+#aria-setsize
+#aria-sort
+#aria-valuemax
+#aria-valuemin
+#aria-valuenow
+#aria-valuetext
 
 # XXX tests for ARIA in <iframe>, <noscript>, <atom:content>
 } # _validate_aria
@@ -7674,6 +7709,18 @@ sub _validate_microdata_item ($$;$) {
 #    icalendar recur
 #    time string
 #    vcard tz
+
+## ------ SVG ------
+
+# XXX
+$_Defs->{elements}->{(SVG_NS)}->{$_}->{conforming} = 1
+    for qw(svg g rect circle foreignObject title desc metadata);
+
+## ------ MathML ------
+
+# XXX
+$_Defs->{elements}->{(MML_NS)}->{$_}->{conforming} = 1
+    for qw(math mi mo mn mtext annotation-xml);
 
 ## ------ Atom ------
 
