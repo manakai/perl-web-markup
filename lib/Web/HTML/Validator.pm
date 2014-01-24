@@ -1548,11 +1548,13 @@ sub _validate_aria ($$) {
 
     # XXX $_Defs->{$ns}->{'*'}->{aria} |hidden-attr| |inert|
 
+    my %attr;
     for my $attr (@{$node->attributes}) {
       next if defined $attr->namespace_uri;
       my $attr_ln = $attr->local_name;
       next unless $attr_ln =~ /^aria-/;
       next unless $_Defs->{elements}->{$ns}->{'*'}->{attrs}->{''}->{$attr_ln};
+      $attr{$attr_ln} = $attr;
       
       if ($_Defs->{roles}->{roletype}->{attrs}->{$attr_ln}) {
         ## A global ARIA attribute
@@ -1577,6 +1579,74 @@ sub _validate_aria ($$) {
                              type => 'aria:attr not allowed for element',
                              level => 'm');
         }
+      }
+    } # $attr
+
+    if (defined $attr{'aria-posinset'}) {
+      if (defined $attr{'aria-setsize'}) {
+        $attr{'aria-posinset'}->value =~ /^([0-9]+)/;
+        my $pos = $1;
+        $attr{'aria-setsize'}->value =~ /^([0-9]+)/;
+        my $size = $1;
+        if (defined $pos and defined $size and not $pos <= $size) {
+          $self->{onerror}->(node => $attr{'aria-posinset'},
+                             type => 'aria:posinset:> setsize',
+                             level => 'm');
+        }
+      } else {
+        $self->{onerror}->(node => $attr{'aria-posinset'},
+                           type => 'aria:posinset:no setsize',
+                           level => 's');
+      }
+    }
+
+    if (defined $attr{'aria-valuemax'} or
+        defined $attr{'aria-valuemin'} or
+        defined $attr{'aria-valuenow'}) {
+      my %v;
+      for (qw(max min now)) {
+        next unless defined $attr{'aria-value'.$_};
+        $attr{'aria-value'.$_}->value =~ /^[\x09\x0A\x0C\x0D\x20]*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[Ee][+-]?[0-9]+)?)/;
+        $v{$_} = $1;
+      }
+      if (defined $v{max} and defined $v{min} and not $v{min} <= $v{max}) {
+        $self->{onerror}->(node => $attr{'aria-valuemax'},
+                           type => 'aria:valuemax lt valuemin',
+                           level => 'm');
+      } elsif (defined $v{min} and defined $v{now} and not $v{min} <= $v{now}) {
+        $self->{onerror}->(node => $attr{'aria-valuenow'},
+                           type => 'aria:valuenow lt valuemin',
+                           level => 'w');
+      } elsif (defined $v{max} and defined $v{now} and not $v{now} <= $v{max}) {
+        $self->{onerror}->(node => $attr{'aria-valuemax'},
+                           type => 'aria:valuemax lt valuenow',
+                           level => 'w');
+      }
+
+      if ($role{progressbar} and defined $attr{'aria-valuenow'}) {
+        $self->{onerror}->(node => $node,
+                           type => 'attribute missing',
+                           text => 'aria-valuemin',
+                           level => 's')
+            if not defined $attr{'aria-valuemin'};
+        $self->{onerror}->(node => $node,
+                           type => 'attribute missing',
+                           text => 'aria-valuemax',
+                           level => 's')
+            if not defined $attr{'aria-valuemax'};
+      }
+    }
+
+    if (defined $attr{'aria-valuetext'}) {
+      if (defined $attr{'aria-valuenow'}) {
+        $self->{onerror}->(node => $attr{'aria-valuetext'},
+                           type => 'aria:valuetext',
+                           level => 's');
+      } else {
+        $self->{onerror}->(node => $node,
+                           type => 'attribute missing',
+                           text => 'aria-valuenow',
+                           level => 's');
       }
     }
 
@@ -1670,19 +1740,8 @@ sub _validate_aria ($$) {
 
 # XXX |aria-live=assertive| SHOULD be avoided
 
-# XXX If |aria-posinset| specified, |aria-setsize| SHOULD be
-# specified.  |aria-posinset| MUST be <= |aria_setsize|.
-
 # XXX |aria-sort=""| (!= |none|) SHOULD only be used at most once per
 # table/grid
-
-# XXX MUST |aria-valuemax| >= |aria-valuemin|
-
-# XXX |aria-valuenow| SHOULD be set if |aria-valuetext| is specified;
-# |aria-valuetext| SHOULD NOT be used
-
-## XXX |role=progressbar| - If |aria-valuenow| is specified,
-## |aria-valuemin| and |aria-valuemax| SHOULD be specified.
 
 # XXX |role=radio| SHOULD be in |role=radiogroup|
 
@@ -1708,22 +1767,7 @@ sub _validate_aria ($$) {
 #aria-dropeffect
 #aria-flowto
 #aria-labelledby
-#aria-live
-#aria-multiline
-#aria-multiselectable
-#aria-orientation
-#aria-posinset
-#aria-pressed
-#aria-readonly
 #aria-relevant
-#aria-required
-#aria-selected
-#aria-setsize
-#aria-sort
-#aria-valuemax
-#aria-valuemin
-#aria-valuenow
-#aria-valuetext
 
 # XXX tests for ARIA in <iframe>, <noscript>, <atom:content>
 } # _validate_aria

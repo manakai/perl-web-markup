@@ -1147,17 +1147,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "aria-valuemax" => {
                                                                                                                  "conforming" => 1,
                                                                                                                  "status" => "CR",
-                                                                                                                 "value_type" => "real number"
+                                                                                                                 "value_type" => "floating-point number"
                                                                                                                },
                                                                                             "aria-valuemin" => {
                                                                                                                  "conforming" => 1,
                                                                                                                  "status" => "CR",
-                                                                                                                 "value_type" => "real number"
+                                                                                                                 "value_type" => "floating-point number"
                                                                                                                },
                                                                                             "aria-valuenow" => {
                                                                                                                  "conforming" => 1,
                                                                                                                  "status" => "CR",
-                                                                                                                 "value_type" => "real number"
+                                                                                                                 "value_type" => "floating-point number"
                                                                                                                },
                                                                                             "aria-valuetext" => {
                                                                                                                   "conforming" => 1,
@@ -10676,17 +10676,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                           "aria-valuemax" => {
                                                                                                                "conforming" => 1,
                                                                                                                "status" => "CR",
-                                                                                                               "value_type" => "real number"
+                                                                                                               "value_type" => "floating-point number"
                                                                                                              },
                                                                                           "aria-valuemin" => {
                                                                                                                "conforming" => 1,
                                                                                                                "status" => "CR",
-                                                                                                               "value_type" => "real number"
+                                                                                                               "value_type" => "floating-point number"
                                                                                                              },
                                                                                           "aria-valuenow" => {
                                                                                                                "conforming" => 1,
                                                                                                                "status" => "CR",
-                                                                                                               "value_type" => "real number"
+                                                                                                               "value_type" => "floating-point number"
                                                                                                              },
                                                                                           "aria-valuetext" => {
                                                                                                                 "conforming" => 1,
