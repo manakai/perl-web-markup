@@ -1608,6 +1608,8 @@ sub _validate_aria ($$) {
     }
     $adef ||= $aria_defs->{''};
 
+    # XXX role=presentation overrides children's implicit role
+
     for my $role (keys %role) {
       my $conflict_error;
       if ($adef->{allowed_roles}) {
@@ -1700,8 +1702,16 @@ sub _validate_aria ($$) {
           $self->{onerror}->(node => $attr,
                              type => 'aria:attr not allowed for element',
                              level => 'm');
+        } elsif ($attr_ln eq 'aria-level') {
+          if (($node->namespace_uri || '') eq HTML_NS and
+              {h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1,
+               hgroup => 1}->{$node->local_name}) {
+            $self->{onerror}->(node => $attr,
+                               type => 'attribute not allowed',
+                               level => 'w');
+          }
         }
-      }
+      } # non-global ARIA attribute
 
       if ($attr_def->{preferred}) {
         if ($attr_def->{preferred}->{type} eq 'html-attr' and
@@ -1868,17 +1878,30 @@ sub _validate_aria ($$) {
              not defined $attr{'aria-labelledby'};
     }
 
+    if ($role{presentation} and
+        ($node->namespace_uri || '') eq HTML_NS and
+        $node->local_name eq 'img') {
+      my $attr = $node->get_attribute_node_ns (undef, 'alt');
+      if (defined $attr and not $attr->value eq '') {
+        $self->{onerror}->(node => $attr,
+                           type => 'aria:img presentation:non empty alt',
+                           level => 's');
+      }
+    }
+
     delete $role{presentation};
     $node_to_roles->{refaddr $node} = \%role;
   } # @relevant
 
   my $node_has_scope = {};
+  my $need_tab = {};
   for my $node (@relevant) {
     my $roles = $node_to_roles->{refaddr $node};
     my $owned_nodes;
     ROLE: for my $role (keys %$roles) {
       my $role_def = $_Defs->{roles}->{$role};
       my @scope = keys %{$role_def->{scope_of} or {}};
+      push @scope, 'radio' if $role eq 'radiogroup';
       if (@scope) {
         $owned_nodes ||= $get_owned_nodes->($node);
         for my $n_a (keys %$owned_nodes) {
@@ -1907,7 +1930,44 @@ sub _validate_aria ($$) {
                            value => $role,
                            level => 'm');
       }
-    }
+    } # $roles
+
+    if ($roles->{document} or $roles->{application}) {
+      $owned_nodes ||= $get_owned_nodes->($node);
+      my $els = {banner => [], contentinfo => [], main => [], toolbar => []};
+      for my $n_a (keys %$owned_nodes) {
+        for my $r (qw(banner contentinfo main toolbar)) {
+          push @{$els->{$r}}, $owned_nodes->{$n_a}
+              if $node_to_roles->{$n_a}->{$r};
+        }
+      }
+      for my $r (qw(banner contentinfo main)) {
+        $self->{onerror}->(node => $node,
+                           type => 'aria:multiple role elements',
+                           text => $r,
+                           level => 's')
+            if @{$els->{$r}} > 1;
+      }
+
+      if ($roles->{application} and @{$els->{toolbar}} > 1) {
+        for (@{$els->{toolbar}}) {
+          $self->{onerror}->(node => $_,
+                             type => 'attribute missing',
+                             text => 'aria-label',
+                             level => 'm')
+              unless $_->has_attribute_ns (undef, 'aria-label');
+        }
+      }
+
+      unless ((($node->namespace_uri || '') eq HTML_NS and $node->local_name eq 'body') or
+              (($node->namespace_uri || '') eq SVG_NS and $node->local_name eq 'svg')) {
+        $self->{onerror}->(node => $node,
+                           type => 'attribute missing',
+                           text => 'aria-labelledby',
+                           level => 's')
+            unless $node->has_attribute_ns (undef, 'aria-labelledby');
+      }
+    } # role=document role=application
 
     my $ad = $node->get_attribute_node_ns (undef, 'aria-activedescendant');
     if (defined $ad) {
@@ -1921,6 +1981,64 @@ sub _validate_aria ($$) {
                              level => 's')
               unless $owned_nodes->{refaddr $refed->owner_element};
         }
+      }
+    }
+
+    if ($roles->{tabpanel}) {
+      TABPANEL: {
+        my $lbls = $node->get_attribute_ns (undef, 'aria-labelledby');
+        if (defined $lbls) {
+          for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $lbls) {
+            my $attr = $self->{id}->{$_}->[0] or next;
+            if ($node_to_roles->{refaddr $attr->owner_element}->{tab}) {
+              last TABPANEL;
+            }
+          }
+        }
+        $need_tab->{refaddr $node} = $node;
+      } # TABPANEL
+    }
+
+    if ($roles->{region}) {
+      LABEL: {
+        my $lbls = $node->get_attribute_ns (undef, 'aria-labelledby');
+        if (defined $lbls) {
+          for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $lbls) {
+            my $attr = $self->{id}->{$_}->[0] or next;
+            my $el = $attr->owner_element;
+            if ($node_to_roles->{refaddr $el}->{heading} or
+                ((($el->namespace_uri || '') eq HTML_NS) and
+                 {h1 => 1, h2 => 1, h3 => 1,
+                  h4 => 1, h5 => 1, h6 => 1}->{$el->local_name})) {
+              last LABEL;
+            }
+          }
+        }
+        $self->{onerror}->(node => $node,
+                           type => 'aria:region:no heading label',
+                           level => 's');
+      } # LABEL
+    }
+
+    if ($roles->{grid} or $roles->{treegrid}) {
+      $owned_nodes ||= $get_owned_nodes->($node);
+      my $has_sort = 0;
+      for (keys %$owned_nodes) {
+        if ($node_to_roles->{$_}->{columnheader} or
+            $node_to_roles->{$_}->{rowheader}) {
+          my $sort = $owned_nodes->{$_}->get_attribute_ns (undef, 'aria-sort');
+          if (defined $sort) {
+            $sort =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+            unless ($sort eq 'none') {
+              $has_sort++;
+            }
+          }
+        }
+      }
+      if ($has_sort > 1) {
+        $self->{onerror}->(node => $node,
+                           type => 'aria:grid:multiple sorts',
+                           level => 's');
       }
     }
   } # @relevant
@@ -1943,37 +2061,32 @@ sub _validate_aria ($$) {
                            level => 'm');
       }
     }
+    if ($roles->{radio} and
+        not $roles->{radio} eq 'implicit' and
+        not $node_has_scope->{$node_addr}->{radiogroup}) {
+      $self->{onerror}->(node => $node,
+                         type => 'aria:role:not required context',
+                         text => 'radiogroup',
+                         value => 'radio',
+                         level => 's');
+    }
+
+    if ($roles->{tab}) {
+      my $controls = $node->get_attribute_ns (undef, 'aria-controls');
+      if (defined $controls) {
+        for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $controls) {
+          my $attr = $self->{id}->{$_}->[0] or next;
+          delete $need_tab->{refaddr $attr->owner_element};
+        }
+      }
+    }
   } # @relevant
 
-# XXX role=presentation overrides children's implicit role
-
-# XXX |role=document| or |role=application| SHOULD NOT have multiple
-# |role=banner|; SHOULD NOT have multiple |role=contentinfo|;
-# |role=main|
-
-# XXX For |role=application| or |role=document| of non-|body|
-# non-|svg| element, |aria-labelledby| SHOULD be specified
-
-## XXX If a |role=application| has multiple |role=toolbar|,
-## |aria-label| MUST be specified
-
-# XXX If <img role=presentation> has alt="", its value SHOULD be empty
-
-# XXX |aria-sort=""| (!= |none|) SHOULD only be used at most once per
-# table/grid
-
-# XXX |role=radio| SHOULD be in |role=radiogroup|
-
-# XXX |role=region| SHOULD have |role=labellledby| pointing |h/n/| or
-# |role=heading|
-
-# XXX |role=tabpanel| SHOULD be associated with |role=tab|, by:
-# <role=tab aria-controls={tabpanel-id}> or <role=tabpanel
-# aria-labelledby={tab-id}>
-
-# XXX warning: |aria-level| should not be used if |hn| or |hgroup|
-
-# XXX tests for ARIA in <iframe>, <noscript>, <atom:content>
+  for (keys %$need_tab) {
+    $self->{onerror}->(node => $need_tab->{$_},
+                       type => 'aria:tabpanel:no tab',
+                       level => 's');
+  }
 } # _validate_aria
 
 ## ------ Element content model ------
