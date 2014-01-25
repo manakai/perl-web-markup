@@ -1509,10 +1509,9 @@ sub _validate_aria ($$) {
                    in_datalist => $ancestor_state->{in_datalist}};
       if ($ns eq HTML_NS) {
         if ($ln eq 'select') {
-          $state->{in_select} = 1;
+          $state->{in_select} = $node->multiple ? 'multilist' : $node->size > 1 ? 'singlelist' : 'dropdown';
         } elsif ($ln eq 'optgroup') {
-          $state->{in_select_optgroup} = 1
-              if $ancestor_state->{in_select};
+          $state->{in_select_optgroup} = $ancestor_state->{in_select};
           $state->{in_disabled_optgroup} = 1
               if $node->has_attribute_ns (undef, 'disabled');
         } elsif ($ln eq 'hgroup') {
@@ -1614,15 +1613,20 @@ sub _validate_aria ($$) {
         if ($NodeIsHyperlink->{refaddr $node}) {
           $adef = $aria_defs->{'hyperlink'};
         }
+      } elsif ($ln eq 'select') {
+        my $type = $node->multiple ? 'multilist' : $node->size > 1 ? 'singlelist' : 'dropdown';
+        $adef = $aria_defs->{$type};
       } elsif ($ln eq 'option') {
         my $context = $node_context->{refaddr $node};
-        $adef = $aria_defs->{'in-list'}
-            if $context->{in_select} or
-               $context->{in_select_optgroup} or
-               ($context->{in_datalist} and
-                not $node->has_attribute_ns (undef, 'disabled') and
-                not $context->{in_disabled_optgroup} and
-                not $node->value eq '');
+        if ($context->{in_select} or $context->{in_select_optgroup}) {
+          $adef = $aria_defs->{'in-select-' . ($context->{in_select} ||
+                                               $context->{in_select_optgroup})};
+        } elsif ($context->{in_datalist}) {
+          $adef = $aria_defs->{'in-datalist'}
+              if not $node->has_attribute_ns (undef, 'disabled') and
+                 not $context->{in_disabled_optgroup} and
+                 not $node->value eq '';
+        }
       } elsif ($ln eq 'li') {
         $adef = $aria_defs->{'in-ulol'}
             if $node_context->{refaddr $node}->{in_ulol};

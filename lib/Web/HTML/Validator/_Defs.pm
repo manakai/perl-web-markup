@@ -7895,19 +7895,66 @@ $Web::HTML::Validator::_Defs = {
                                                                             },
                                                               "option" => {
                                                                             "aria" => {
-                                                                                        "in-list" => {
-                                                                                                       "allowed_roles" => {
-                                                                                                                            "presentation" => 1
-                                                                                                                          },
-                                                                                                       "attrs" => {
-                                                                                                                    "aria-selected" => {
-                                                                                                                                         "strong" => 1,
-                                                                                                                                         "value_type" => "selected"
-                                                                                                                                       }
-                                                                                                                  },
-                                                                                                       "default_role" => "option",
-                                                                                                       "strong_role" => 1
-                                                                                                     }
+                                                                                        "in-datalist" => {
+                                                                                                           "allowed_roles" => {
+                                                                                                                                "presentation" => 1
+                                                                                                                              },
+                                                                                                           "default_role" => "option",
+                                                                                                           "strong_role" => 1
+                                                                                                         },
+                                                                                        "in-select-dropdown" => {
+                                                                                                                  "allowed_roles" => {
+                                                                                                                                       "menuitem" => 1,
+                                                                                                                                       "menuitemradio" => 1,
+                                                                                                                                       "presentation" => 1,
+                                                                                                                                       "separator" => 1
+                                                                                                                                     },
+                                                                                                                  "attrs" => {
+                                                                                                                               "aria-checked" => {
+                                                                                                                                                   "strong" => 1,
+                                                                                                                                                   "value_type" => "selected"
+                                                                                                                                                 },
+                                                                                                                               "aria-selected" => {
+                                                                                                                                                    "strong" => 1,
+                                                                                                                                                    "value_type" => "selected"
+                                                                                                                                                  }
+                                                                                                                             },
+                                                                                                                  "default_role" => "option"
+                                                                                                                },
+                                                                                        "in-select-multilist" => {
+                                                                                                                   "allowed_roles" => {
+                                                                                                                                        "presentation" => 1
+                                                                                                                                      },
+                                                                                                                   "attrs" => {
+                                                                                                                                "aria-checked" => {
+                                                                                                                                                    "strong" => 1,
+                                                                                                                                                    "value_type" => "selected"
+                                                                                                                                                  },
+                                                                                                                                "aria-selected" => {
+                                                                                                                                                     "strong" => 1,
+                                                                                                                                                     "value_type" => "selected"
+                                                                                                                                                   }
+                                                                                                                              },
+                                                                                                                   "default_role" => "option",
+                                                                                                                   "strong_role" => 1
+                                                                                                                 },
+                                                                                        "in-select-singlelist" => {
+                                                                                                                    "allowed_roles" => {
+                                                                                                                                         "presentation" => 1
+                                                                                                                                       },
+                                                                                                                    "attrs" => {
+                                                                                                                                 "aria-checked" => {
+                                                                                                                                                     "strong" => 1,
+                                                                                                                                                     "value_type" => "selected"
+                                                                                                                                                   },
+                                                                                                                                 "aria-selected" => {
+                                                                                                                                                      "strong" => 1,
+                                                                                                                                                      "value_type" => "selected"
+                                                                                                                                                    }
+                                                                                                                               },
+                                                                                                                    "default_role" => "option",
+                                                                                                                    "strong_role" => 1
+                                                                                                                  }
                                                                                       },
                                                                             "attrs" => {
                                                                                          "" => {
@@ -8445,20 +8492,7 @@ $Web::HTML::Validator::_Defs = {
                                                               "select" => {
                                                                             "aria" => {
                                                                                         "" => {
-                                                                                                "allowed_roles" => {
-                                                                                                                     "presentation" => 1
-                                                                                                                   },
                                                                                                 "attrs" => {
-                                                                                                             "aria-multiselectable" => {
-                                                                                                                                         "attr" => "multiple",
-                                                                                                                                         "strong" => 1,
-                                                                                                                                         "value_type" => "true/false"
-                                                                                                                                       },
-                                                                                                             "aria-required" => {
-                                                                                                                                  "attr" => "required",
-                                                                                                                                  "strong" => 1,
-                                                                                                                                  "value_type" => "true/missing"
-                                                                                                                                },
                                                                                                              "attr-disabled" => {
                                                                                                                                   "state" => ":disabled",
                                                                                                                                   "strong" => 1,
@@ -8469,10 +8503,62 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                  "strong" => 1,
                                                                                                                                  "value_type" => "true/missing"
                                                                                                                                }
-                                                                                                           },
-                                                                                                "default_role" => "listbox",
-                                                                                                "strong_role" => 1
-                                                                                              }
+                                                                                                           }
+                                                                                              },
+                                                                                        "dropdown" => {
+                                                                                                        "allowed_roles" => {
+                                                                                                                             "menu" => 1,
+                                                                                                                             "presentation" => 1
+                                                                                                                           },
+                                                                                                        "attrs" => {
+                                                                                                                     "aria-multiselectable" => {
+                                                                                                                                                 "strong" => 1,
+                                                                                                                                                 "value_type" => "false"
+                                                                                                                                               },
+                                                                                                                     "aria-required" => {
+                                                                                                                                          "attr" => "required",
+                                                                                                                                          "strong" => 1,
+                                                                                                                                          "value_type" => "true/missing"
+                                                                                                                                        }
+                                                                                                                   },
+                                                                                                        "default_role" => "listbox"
+                                                                                                      },
+                                                                                        "multilist" => {
+                                                                                                         "allowed_roles" => {
+                                                                                                                              "presentation" => 1
+                                                                                                                            },
+                                                                                                         "attrs" => {
+                                                                                                                      "aria-multiselectable" => {
+                                                                                                                                                  "strong" => 1,
+                                                                                                                                                  "value_type" => "true"
+                                                                                                                                                },
+                                                                                                                      "aria-required" => {
+                                                                                                                                           "attr" => "required",
+                                                                                                                                           "strong" => 1,
+                                                                                                                                           "value_type" => "true/missing"
+                                                                                                                                         }
+                                                                                                                    },
+                                                                                                         "default_role" => "listbox",
+                                                                                                         "strong_role" => 1
+                                                                                                       },
+                                                                                        "singlelist" => {
+                                                                                                          "allowed_roles" => {
+                                                                                                                               "presentation" => 1
+                                                                                                                             },
+                                                                                                          "attrs" => {
+                                                                                                                       "aria-multiselectable" => {
+                                                                                                                                                   "strong" => 1,
+                                                                                                                                                   "value_type" => "false"
+                                                                                                                                                 },
+                                                                                                                       "aria-required" => {
+                                                                                                                                            "attr" => "required",
+                                                                                                                                            "strong" => 1,
+                                                                                                                                            "value_type" => "true/missing"
+                                                                                                                                          }
+                                                                                                                     },
+                                                                                                          "default_role" => "listbox",
+                                                                                                          "strong_role" => 1
+                                                                                                        }
                                                                                       },
                                                                             "attrs" => {
                                                                                          "" => {
