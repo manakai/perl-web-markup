@@ -1104,6 +1104,14 @@ $ElementAttrChecker->{(HTML_NS)}->{menuitem}->{''}->{command} = sub {
 ## IDREFS to any element
 $ElementAttrChecker->{(HTML_NS)}->{output}->{''}->{for} =
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemref} =
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-controls'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-controls'} =
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-describedby'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-describedby'} =
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-flowto'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-flowto'} =
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-labelledby'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-labelledby'} =
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-owns'} =
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-owns'} = sub {
   my ($self, $attr) = @_;
@@ -1395,6 +1403,48 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-label'} = sub {
                      level => 'w');
 }; # aria-label=""
 
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-dropeffect'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-dropeffect'} = sub {
+  my ($self, $attr) = @_;
+  ## Unordered set of unique space-separated tokens.
+  my %word;
+  for my $word (grep {length $_}
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
+      $self->{onerror}->(node => $attr,
+                         type => 'word not allowed', value => $word,
+                         level => 'm')
+          unless $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{'aria-dropeffect'}->{keywords}->{$word}->{conforming};
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'm');
+    }
+  }
+}; # aria-dropeffect=""
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-relevant'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-relevant'} = sub {
+  my ($self, $attr) = @_;
+  ## Unordered set of unique space-separated tokens.
+  my %word;
+  for my $word (grep {length $_}
+                split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
+    unless ($word{$word}) {
+      $word{$word} = 1;
+      $self->{onerror}->(node => $attr,
+                         type => 'word not allowed', value => $word,
+                         level => 'm')
+          unless $_Defs->{elements}->{(HTML_NS)}->{'*'}->{attrs}->{''}->{'aria-relevant'}->{keywords}->{$word}->{conforming};
+    } else {
+      $self->{onerror}->(node => $attr,
+                         type => 'duplicate token', value => $word,
+                         level => 'm');
+    }
+  }
+}; # aria-relevant=""
+
 sub _validate_aria ($$) {
   my ($self, $target_nodes) = @_;
 
@@ -1428,14 +1478,18 @@ sub _validate_aria ($$) {
           }
         }
 
-        my $ids = $node->get_attribute_ns (undef, 'aria-owns');
-        if (defined $ids) {
+        my $owns = $node->get_attribute_node_ns (undef, 'aria-owns');
+        if (defined $owns) {
+          $self->{onerror}->(node => $owns,
+                             type => 'aria:owns',
+                             level => 'w');
+
           my @node;
-          for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $ids) {
+          for (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $owns->value) {
             my $attr = ($self->{id}->{$_} or [])->[0] or next;
             push @node, $attr->owner_element;
             if ($owned_id{$_}) {
-              $self->{onerror}->(node => $attr,
+              $self->{onerror}->(node => $owns,
                                  type => 'aria:owns:duplicate idref',
                                  value => $_,
                                  level => 'm');
@@ -1649,6 +1703,27 @@ sub _validate_aria ($$) {
       }
     } # $attr
 
+    if (defined $attr{'aria-checked'}) {
+      if ($role{radio} or $role{menuitemradio}) {
+        my $value = $attr{'aria-checked'}->value;
+        $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+        $self->{onerror}->(node => $attr{'aria-checked'},
+                           type => 'aria:checked:mixed but radio',
+                           level => 'w')
+            if $value eq 'mixed';
+      }
+    }
+
+    if (defined $attr{'aria-live'}) {
+      my $value = $attr{'aria-live'}->value;
+      $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
+      if ($value eq 'assertive') {
+        $self->{onerror}->(node => $attr{'aria-live'},
+                           type => 'aria:live:assertive',
+                           level => 's');
+      }
+    }
+
     if (defined $attr{'aria-posinset'}) {
       if (defined $attr{'aria-setsize'}) {
         $attr{'aria-posinset'}->value =~ /^([0-9]+)/;
@@ -1757,6 +1832,21 @@ sub _validate_aria ($$) {
                            level => 'm');
       }
     }
+
+    my $ad = $node->get_attribute_node_ns (undef, 'aria-activedescendant');
+    if (defined $ad) {
+      my $id = $ad->value;
+      if (length $id) {
+        my $refed = $self->{id}->{$id}->[0];
+        if (defined $refed) {
+          $owned_nodes ||= $get_owned_nodes->($node);
+          $self->{onerror}->(node => $ad,
+                             type => 'aria:activedescendant:not owned',
+                             level => 's')
+              unless $owned_nodes->{refaddr $refed->owner_element};
+        }
+      }
+    }
   } # @relevant
 
   for my $node (@relevant) {
@@ -1791,9 +1881,6 @@ sub _validate_aria ($$) {
 ## XXX If a |role=application| has multiple |role=toolbar|,
 ## |aria-label| MUST be specified
 
-# XXX |aria-activedescendant| SHOULD reference a descendant or
-# |aria-owns| descendant.
-
 # XXX |role=definition|'s |aria-labelledby| SHOULD point |dfn|
 
 # XXX |role=dialog| SHOULD have |aria-label| or |aria-labelledby|
@@ -1801,11 +1888,6 @@ sub _validate_aria ($$) {
 # XXX |role=math| is set to an image, |aria-describedby| SHOULD be set
 
 # XXX If <img role=presentation> has alt="", its value SHOULD be empty
-
-# XXX For |radio|, |menuitemradio|, or subroles, |aria-checked=mixed|
-# -> warning
-
-# XXX |aria-live=assertive| SHOULD be avoided
 
 # XXX |aria-sort=""| (!= |none|) SHOULD only be used at most once per
 # table/grid
@@ -1819,22 +1901,11 @@ sub _validate_aria ($$) {
 # <role=tab aria-controls={tabpanel-id}> or <role=tabpanel
 # aria-labelledby={tab-id}>
 
-# XXX warning: |aria-owns| should not be used
-
 # XXX warning: |aria-level| should not be used if |hn| or |hgroup|
 
 # XXX some aria-* SHOULD/MUST be specified for role=???
 
 # XXX aria-* {preferred} data
-
-# XXX aria-* validation
-#aria-activedescendant
-#aria-controls
-#aria-describedby
-#aria-dropeffect
-#aria-flowto
-#aria-labelledby
-#aria-relevant
 
 # XXX tests for ARIA in <iframe>, <noscript>, <atom:content>
 } # _validate_aria
