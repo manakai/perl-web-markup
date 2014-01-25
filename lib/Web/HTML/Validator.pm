@@ -1674,7 +1674,8 @@ sub _validate_aria ($$) {
       next if defined $attr->namespace_uri;
       my $attr_ln = $attr->local_name;
       next unless $attr_ln =~ /^aria-/;
-      next unless $_Defs->{elements}->{$ns}->{'*'}->{attrs}->{''}->{$attr_ln};
+      my $attr_def = $_Defs->{elements}->{$ns}->{'*'}->{attrs}->{''}->{$attr_ln};
+      next unless $attr_def;
       $attr{$attr_ln} = $attr;
       
       if ($_Defs->{roles}->{roletype}->{attrs}->{$attr_ln}) {
@@ -1701,7 +1702,46 @@ sub _validate_aria ($$) {
                              level => 'm');
         }
       }
+
+      if ($attr_def->{preferred}) {
+        if ($attr_def->{preferred}->{type} eq 'html-attr' and
+            ($node->namespace_uri || '') eq HTML_NS) {
+          if ($node->has_attribute_ns (undef, $attr_def->{preferred}->{name})) {
+            $self->{onerror}->(node => $attr,
+                               type => 'aria:redundant:html-attr',
+                               text => $attr_def->{preferred}->{name},
+                               level => 'w');
+          } else {
+            $self->{onerror}->(node => $attr,
+                               type => 'aria:not preferred markup:html-attr',
+                               text => $attr_def->{preferred}->{name},
+                               level => 'w');
+          }
+        }
+      }
     } # $attr
+
+    for my $role (keys %role) {
+      next if $role{$role} eq 'implicit';
+      my $role_def = $_Defs->{roles}->{$role};
+      for my $attr_ln (keys %{$role_def->{attrs} or {}}) {
+        if ($role_def->{attrs}->{$attr_ln}->{must}) {
+          $self->{onerror}->(node => $role_attr,
+                             value => $role,
+                             type => 'attribute missing',
+                             text => $attr_ln,
+                             level => 'm')
+              unless defined $attr{$attr_ln};
+        } elsif ($role_def->{attrs}->{$attr_ln}->{should}) {
+          $self->{onerror}->(node => $role_attr,
+                             value => $role,
+                             type => 'attribute missing',
+                             text => $attr_ln,
+                             level => 's')
+              unless defined $attr{$attr_ln};
+        }
+      }
+    }
 
     if (defined $attr{'aria-checked'}) {
       if ($role{radio} or $role{menuitemradio}) {
@@ -1790,6 +1830,42 @@ sub _validate_aria ($$) {
                            text => 'aria-valuenow',
                            level => 's');
       }
+    }
+
+    if ($role{definition} and defined $attr{'aria-labelledby'}) {
+      for (split /[\x09\x0A\x0C\x0D\x20]+/, $attr{'aria-labelledby'}->value) {
+        my $attr = $self->{id}->{$_}->[0];
+        if (defined $attr) {
+          my $el = $attr->owner_element;
+          if (($el->namespace_uri || '') eq HTML_NS and
+              $el->local_name eq 'dfn') {
+            #
+          } else {
+            $self->{onerror}->(node => $attr{'aria-labelledby'},
+                               value => $_,
+                               type => 'aria:labelledby:definition label not dfn',
+                               level => 's');
+          }
+        }
+      }
+    }
+
+    if ($role{math} and not $role{math} eq 'implicit') {
+      $self->{onerror}->(node => $node,
+                         type => 'attribute missing',
+                         text => 'aria-describedby',
+                         level => 's')
+          if not defined $attr{'aria-describedby'} and
+             ($node->namespace_uri || '') eq HTML_NS and
+             $node->local_name eq 'img';
+    }
+
+    if ($role{dialog} and not $role{dialog} eq 'implicit') {
+      $self->{onerror}->(node => $node,
+                         type => 'attribute missing:aria-label*',
+                         level => 's')
+          if not defined $attr{'aria-label'} and
+             not defined $attr{'aria-labelledby'};
     }
 
     delete $role{presentation};
@@ -1881,12 +1957,6 @@ sub _validate_aria ($$) {
 ## XXX If a |role=application| has multiple |role=toolbar|,
 ## |aria-label| MUST be specified
 
-# XXX |role=definition|'s |aria-labelledby| SHOULD point |dfn|
-
-# XXX |role=dialog| SHOULD have |aria-label| or |aria-labelledby|
-
-# XXX |role=math| is set to an image, |aria-describedby| SHOULD be set
-
 # XXX If <img role=presentation> has alt="", its value SHOULD be empty
 
 # XXX |aria-sort=""| (!= |none|) SHOULD only be used at most once per
@@ -1902,10 +1972,6 @@ sub _validate_aria ($$) {
 # aria-labelledby={tab-id}>
 
 # XXX warning: |aria-level| should not be used if |hn| or |hgroup|
-
-# XXX some aria-* SHOULD/MUST be specified for role=???
-
-# XXX aria-* {preferred} data
 
 # XXX tests for ARIA in <iframe>, <noscript>, <atom:content>
 } # _validate_aria

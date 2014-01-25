@@ -808,6 +808,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "spec" => "ARIA"
                                                                                                                                              }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "inert",
+                                                                                                                                  "type" => "html-attr"
+                                                                                                                                },
                                                                                                                  "status" => "CR",
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
@@ -839,6 +843,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "spec" => "ARIA"
                                                                                                                                               }
                                                                                                                                  },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "dropzone",
+                                                                                                                                    "type" => "html-attr"
+                                                                                                                                  },
                                                                                                                    "status" => "CR",
                                                                                                                    "value_type" => "unordered set of unique space-separated tokens"
                                                                                                                  },
@@ -899,6 +907,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "spec" => "ARIA"
                                                                                                                                              }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "contextmenu",
+                                                                                                                                  "type" => "html-attr"
+                                                                                                                                },
                                                                                                                  "status" => "CR",
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
@@ -914,6 +926,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "spec" => "ARIA"
                                                                                                                                            }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "hidden",
+                                                                                                                                "type" => "html-attr"
+                                                                                                                              },
                                                                                                                "status" => "CR",
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
@@ -10393,6 +10409,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "spec" => "ARIA"
                                                                                                                                            }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "inert",
+                                                                                                                                "type" => "html-attr"
+                                                                                                                              },
                                                                                                                "status" => "CR",
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
@@ -10424,6 +10444,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "spec" => "ARIA"
                                                                                                                                             }
                                                                                                                                },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "dropzone",
+                                                                                                                                  "type" => "html-attr"
+                                                                                                                                },
                                                                                                                  "status" => "CR",
                                                                                                                  "value_type" => "unordered set of unique space-separated tokens"
                                                                                                                },
@@ -10484,6 +10508,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "spec" => "ARIA"
                                                                                                                                            }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "contextmenu",
+                                                                                                                                "type" => "html-attr"
+                                                                                                                              },
                                                                                                                "status" => "CR",
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
@@ -10499,6 +10527,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "spec" => "ARIA"
                                                                                                                                          }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "hidden",
+                                                                                                                              "type" => "html-attr"
+                                                                                                                            },
                                                                                                              "status" => "CR",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
