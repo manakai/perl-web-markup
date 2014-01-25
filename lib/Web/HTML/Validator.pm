@@ -1392,6 +1392,8 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 
 ## ------ ARIA ------
 
+my $NodeIsHyperlink = {};
+
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
 
@@ -1452,19 +1454,20 @@ sub _validate_aria ($$) {
 
   my $descendants = {};
   my $aria_owned_nodes = {};
+  my $node_context = {};
 
   my %is_root = (map { refaddr $_ => 1 } @$target_nodes);
   my %owned_id;
-  my @node = (map { [$_, []] } @$target_nodes);
+  my @node = (map { [$_, [], {}] } @$target_nodes);
   while (@node) {
-    my ($node, $parents) = @{shift @node};
+    my ($node, $parents, $ancestor_state) = @{shift @node};
     if ($node->node_type == 1) { # ELEMENT_NODE
       my $node_ref = refaddr $node;
       $descendants->{refaddr $_}->{$node_ref} = $node for @$parents;
 
       my $ns = $node->namespace_uri || '';
+      my $ln = $node->local_name;
       if ($ns eq HTML_NS or $ns eq SVG_NS) {
-        my $ln = $node->local_name;
         if ($_Defs->{elements}->{$ns}->{$ln}->{aria} or
             $ln eq 'input' or
             $node->has_attribute_ns (undef, 'role')) {
@@ -1499,12 +1502,34 @@ sub _validate_aria ($$) {
           }
           $aria_owned_nodes->{$node_ref} = {map { (refaddr $_) => $_ } @node};
         }
+      } # $ns
+      $node_context->{$node_ref} = $ancestor_state;
+
+      my $state = {in_hgroup => $ancestor_state->{in_hgroup},
+                   in_datalist => $ancestor_state->{in_datalist}};
+      if ($ns eq HTML_NS) {
+        if ($ln eq 'select') {
+          $state->{in_select} = 1;
+        } elsif ($ln eq 'optgroup') {
+          $state->{in_select_optgroup} = 1
+              if $ancestor_state->{in_select};
+          $state->{in_disabled_optgroup} = 1
+              if $node->has_attribute_ns (undef, 'disabled');
+        } elsif ($ln eq 'hgroup') {
+          $state->{in_hgroup} = 1;
+        } elsif ($ln eq 'datalist') {
+          $state->{in_datalist} = 1;
+        } elsif ($ln eq 'ul' or $ln eq 'ol') {
+          $state->{in_ulol} = 1;
+        }
+        $state->{is_inert} = 1
+            if $ancestor_state->{is_inert} || $node->has_attribute_ns (undef, 'inert'); # XXX or inert by <dialog>
       }
 
       $parents = [@$parents, $node];
-      unshift @node, map { [$_, $parents] } @{$node->children};
+      unshift @node, map { [$_, $parents, $state] } @{$node->children};
     } else {
-      unshift @node, map { [$_, $parents] } grep { $_->node_type == 1 } @{$node->child_nodes};
+      unshift @node, map { [$_, $parents, $ancestor_state] } grep { $_->node_type == 1 } @{$node->child_nodes};
     }
   } # @node
 
@@ -1536,6 +1561,7 @@ sub _validate_aria ($$) {
   }; # $get_owned_nodes
 
   my $node_to_roles = {};
+  my $parent_is_presentation = {};
   for my $node (@relevant) {
     my $ns = $node->namespace_uri || '';
     my $ln = $node->local_name;
@@ -1585,37 +1611,68 @@ sub _validate_aria ($$) {
         $adef = $aria_defs->{'hyperlink'}
             if $node->has_attribute_ns (undef, 'href');
       } elsif ($ln eq 'link') {
-        # XXX
-      } elsif ($ln eq 'option') {
-        # XXX
-      } elsif ($ln eq 'li') {
-        my $parent = $node->parent_node;
-        if (defined $parent and
-            $parent->node_type == 1 and # ELEMENT_NODE
-            do {
-              my $ln = $parent->local_name;
-              ($ln eq 'ul' or $ln eq 'ol');
-            }) {
-          $adef = $aria_defs->{'in-ulol'};
+        if ($NodeIsHyperlink->{refaddr $node}) {
+          $adef = $aria_defs->{'hyperlink'};
         }
+      } elsif ($ln eq 'option') {
+        my $context = $node_context->{refaddr $node};
+        $adef = $aria_defs->{'in-list'}
+            if $context->{in_select} or
+               $context->{in_select_optgroup} or
+               ($context->{in_datalist} and
+                not $node->has_attribute_ns (undef, 'disabled') and
+                not $context->{in_disabled_optgroup} and
+                not $node->value eq '');
+      } elsif ($ln eq 'li') {
+        $adef = $aria_defs->{'in-ulol'}
+            if $node_context->{refaddr $node}->{in_ulol};
       } elsif ($ln eq 'menu') {
         $adef = $aria_defs->{$node->type}; # type=popup or toolbar
       } elsif ($ln =~ /\Ah[1-6]\z/) {
-        # XXX no-hgroup
+        $adef = $aria_defs->{'no-hgroup'}
+            unless $node_context->{refaddr $node}->{in_hgroup};
       } elsif ($ln eq 'body' or $ln eq 'frameset') {
-        # XXX the-body
+        $adef = $aria_defs->{'the-body'}
+            if ($node->owner_document->body || '') eq $node;
       }
     }
     $adef ||= $aria_defs->{''};
 
-    # XXX role=presentation overrides children's implicit role
+    ## If role=presentation, its required children is also implicitly
+    ## set to presentation.  Whether this is a right implementation of
+    ## that requirement is unclear...
+    if ($parent_is_presentation->{refaddr $node}) {
+      $adef = {};
+    }
+    if ($role{presentation}) {
+      $parent_is_presentation->{refaddr $_} = 1
+          for ($node->children->to_list);
+    }
+
+    my $default_role = $adef->{default_role};
+    if (defined $default_role and $default_role eq '#textbox-or-combobox') {
+      LIST: {
+        my $list = $node->get_attribute_ns (undef, 'list');
+        if (defined $list and length $list) {
+          my $attr = $self->{id}->{$list}->[0];
+          if (defined $attr) {
+            my $oe = $attr->owner_element;
+            if (($oe->namespace_uri || '') eq HTML_NS and
+                $oe->local_name eq 'datalist') {
+              $default_role = 'combobox';
+              last LIST;
+            }
+          }
+        }
+        $default_role = 'textbox';
+      } # LIST
+    }
 
     for my $role (keys %role) {
       my $conflict_error;
       if ($adef->{allowed_roles}) {
         unless ($adef->{allowed_roles}->{$role}) {
-          if (defined $adef->{default_role} and
-              $adef->{default_role} eq $role) {
+          if (defined $default_role and $default_role eq $role) {
             $self->{onerror}->(node => $role_attr,
                                type => 'aria:role:default role',
                                value => $role,
@@ -1661,16 +1718,10 @@ sub _validate_aria ($$) {
       }
     } # $role
 
-    if (not keys %role and defined $adef->{default_role}) {
-      if ($adef->{default_role} eq '#textbox-or-combobox') {
-        # XXX
-      } else {
-        $role{$adef->{default_role}} = 'implicit';
-      }
+    if (not keys %role and defined $default_role) {
+      $role{$default_role} = 'implicit';
     }
-
-    # XXX $_Defs->{$ns}->{'*'}->{aria} |hidden-attr| |inert|
-
+    
     my %attr;
     for my $attr (@{$node->attributes}) {
       next if defined $attr->namespace_uri;
@@ -1680,40 +1731,42 @@ sub _validate_aria ($$) {
       next unless $attr_def;
       $attr{$attr_ln} = $attr;
       
+      my $allowed;
       if ($_Defs->{roles}->{roletype}->{attrs}->{$attr_ln}) {
         ## A global ARIA attribute
-        #
+        $allowed = 1;
       } else {
         ## A non-global ARIA attribute
-        my $allowed;
         for my $role (keys %role) {
           if ($_Defs->{roles}->{$role}->{attrs}->{$attr_ln}) {
             $allowed = 1;
             last;
           }
         }
+      }
 
-        if (not $allowed) {
-          $self->{onerror}->(node => $attr,
-                             type => 'aria:attr not allowed for role',
-                             text => (join ' ', sort { $a cmp $b } keys %role),
-                             level => 'm');
-        } elsif ($adef->{attrs}->{$attr_ln}) {
-          $self->{onerror}->(node => $attr,
-                             type => 'aria:attr not allowed for element',
-                             level => 'm');
-        } elsif ($attr_ln eq 'aria-level') {
-          if (($node->namespace_uri || '') eq HTML_NS and
-              {h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1,
-               hgroup => 1}->{$node->local_name}) {
-            $self->{onerror}->(node => $attr,
-                               type => 'attribute not allowed',
-                               level => 'w');
-          }
-        }
-      } # non-global ARIA attribute
-
-      if ($attr_def->{preferred}) {
+      if (not $allowed) {
+        $self->{onerror}->(node => $attr,
+                           type => 'aria:attr not allowed for role',
+                           text => (join ' ', sort { $a cmp $b } keys %role),
+                           level => 'm');
+      } elsif ($adef->{attrs}->{$attr_ln} or
+               ($attr_ln eq 'aria-hidden' and
+                ($node->namespace_uri || '') eq HTML_NS and
+                $node->has_attribute_ns (undef, 'hidden')) or
+               ($attr_ln eq 'aria-disabled' and
+                $node_context->{refaddr $node}->{is_inert})) {
+        $self->{onerror}->(node => $attr,
+                           type => 'aria:attr not allowed for element',
+                           level => 'm');
+      } elsif ($attr_ln eq 'aria-level' and
+               ($node->namespace_uri || '') eq HTML_NS and
+               {h1 => 1, h2 => 1, h3 => 1, h4 => 1, h5 => 1, h6 => 1,
+                hgroup => 1}->{$node->local_name}) {
+        $self->{onerror}->(node => $attr,
+                           type => 'attribute not allowed',
+                           level => 'w');
+      } elsif ($attr_def->{preferred}) {
         if ($attr_def->{preferred}->{type} eq 'html-attr' and
             ($node->namespace_uri || '') eq HTML_NS) {
           if ($node->has_attribute_ns (undef, $attr_def->{preferred}->{name})) {
@@ -2014,6 +2067,7 @@ sub _validate_aria ($$) {
             }
           }
         }
+        last LABEL if $roles->{region} eq 'implicit';
         $self->{onerror}->(node => $node,
                            type => 'aria:region:no heading label',
                            level => 's');
@@ -2524,6 +2578,8 @@ my $HTMLLinkTypesAttrChecker = sub {
 
   $todo->{has_hyperlink_link_type} = 1 if $is_hyperlink;
   $element_state->{link_rel} = \%word;
+
+  $NodeIsHyperlink->{refaddr $item->{node}} = 1 if $is_hyperlink;
 }; # $HTMLLinkTypesAttrChecker
 
 ## Valid global date and time.
