@@ -1086,56 +1086,20 @@ our $MIMETypeChecker = sub {
 
 ## ------ ID references ------
 
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{contextmenu} = sub {
-  my ($self, $attr) = @_;
-  push @{$self->{idref}}, ['popup', $attr->value => $attr];
-}; # contextmenu=""
-
-$ElementAttrChecker->{(HTML_NS)}->{label}->{''}->{for} = sub {
-  my ($self, $attr) = @_;
-  
-  ## NOTE: MUST be an ID of a labelable element.
-  push @{$self->{idref}}, ['labelable', $attr->value, $attr];
-}; # <label for="">
-
-$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{for} = sub {
-  my ($self, $attr) = @_;
-  push @{$self->{idref}}, ['any', $attr->value, $attr];
-}; # <script for="">
-
-$ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{menu} = sub {
-  my ($self, $attr) = @_;
-  push @{$self->{idref}}, ['popup', $attr->value => $attr];
-}; # <button menu="">
+## ID reference
+$CheckerByType->{idref} = sub {
+  my ($self, $attr, undef, undef, $def) = @_;
+  push @{$self->{idref}}, [$def->{id_type} || 'any', $attr->value => $attr];
+}; # ID reference
 
 $ElementAttrChecker->{(HTML_NS)}->{menuitem}->{''}->{command} = sub {
   my ($self, $attr) = @_;
 #  push @{$self->{idref}}, ['command', $attr->value, $attr]; # XXX not implemented yet
 }; # <menuitem command="">
 
-my $HTMLFormAttrChecker = sub {
-  my ($self, $attr) = @_;
-
-  ## NOTE: MUST be the ID of a |form| element.
-
-  my $value = $attr->value;
-  push @{$self->{idref}}, ['form', $value => $attr];
-
-  ## ISSUE: <form id=""><input form=""> (empty ID)?
-}; # $HTMLFormAttrChecker
-
-$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{list} = sub {
-  my ($self, $attr) = @_;
-  
-  ## NOTE: MUST be the ID of a |datalist| element.
-  
-  push @{$self->{idref}}, ['datalist', $attr->value, $attr];
-
-  ## TODO: Warn violation to control-dependent restrictions.  For
-  ## example, |<input type=url maxlength=10 list=a> <datalist
-  ## id=a><option value=nonurlandtoolong></datalist>| should be
-  ## warned.
-}; # <input list="">
+## XXX Warn violation to control-dependent restrictions.  For example,
+## |<input type=url maxlength=10 list=a> <datalist id=a><option
+## value=nonurlandtoolong></datalist>| should be warned.
 
 ## IDREFS to any element
 $ElementAttrChecker->{(HTML_NS)}->{output}->{''}->{for} =
@@ -1158,7 +1122,8 @@ $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-owns'} = sub {
   }
 }; # IDREFS
 
-my $HTMLUsemapAttrChecker = sub {
+## Hash-name reference to a |map| element [HTML]
+$CheckerByType->{'hash-name reference'} = sub {
   my ($self, $attr) = @_;
   ## MUST be a valid hash-name reference to a |map| element.
   my $value = $attr->value;
@@ -1175,9 +1140,10 @@ my $HTMLUsemapAttrChecker = sub {
   }
   ## NOTE: Space characters in hash-name references are conforming.
   ## ISSUE: UA algorithm for matching is case-insensitive; IDs only different in cases should be reported
-}; # $HTMLUsemapAttrChecker
+}; # hash-name reference
 
-my $ObjectHashIDRefChecker = sub {
+## Hash-ID reference to an |object| element [OBSVOCAB]
+$CheckerByType->{'hash-ID reference'} = sub {
   my ($self, $attr) = @_;
   
   my $value = $attr->value;
@@ -1188,9 +1154,10 @@ my $ObjectHashIDRefChecker = sub {
                        type => 'hashref:syntax error',
                        level => 'm');
   }
-}; # $ObjectHashIDRefChecker
+}; # hash-ID reference
 
-my $ObjectOptionalHashIDRefChecker = sub {
+## ID reference or hash-ID reference to an |object| element [OBSVOCAB]
+$CheckerByType->{'idref or hash-ID reference'} = sub {
   my ($self, $attr) = @_;
   
   my $value = $attr->value;
@@ -1201,7 +1168,7 @@ my $ObjectOptionalHashIDRefChecker = sub {
                        type => 'hashref:syntax error',
                        level => 'm');
   }
-}; # $ObjectHashIDRefChecker
+}; # ID reference or hash-ID reference
 
 ## ------ XML and XML Namespaces ------
 
@@ -4094,11 +4061,6 @@ $Element->{+HTML_NS}->{a} = {
                                  level => 'm');
             }
           }, # cti
-          eswf => $ObjectHashIDRefChecker,
-          ijam => $ObjectOptionalHashIDRefChecker,
-          ilet => $ObjectHashIDRefChecker,
-          irst => $ObjectHashIDRefChecker,
-          iswf => $ObjectHashIDRefChecker,
           loop => sub {
             my ($self, $attr) = @_;
             if ($attr->value =~ /\A(?:[0-9]+|infinite)\z/) {
@@ -4147,7 +4109,7 @@ $Element->{+HTML_NS}->{a} = {
     } else {
       for (qw(
         target ping rel hreflang type
-        ilet iswf irst ib ifb ijam
+        ilet iswf irst ib ifb ijam ista
         email telbook kana memoryname
         lcs
         loop soundstart volume
@@ -4969,7 +4931,6 @@ $Element->{+HTML_NS}->{img} = {
         }
       },
       name => $NameAttrChecker,
-      usemap => $HTMLUsemapAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -5082,8 +5043,6 @@ $Element->{+HTML_NS}->{object} = {
   %TransparentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
     # XXX classid="" MUST be absolute
-    form => $HTMLFormAttrChecker,
-    usemap => $HTMLUsemapAttrChecker,
   }), # check_attrs
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
@@ -6017,7 +5976,6 @@ $Element->{+HTML_NS}->{form} = {
 $Element->{+HTML_NS}->{fieldset} = {
   %HTMLFlowContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
   ## Optional |legend| element, followed by flow content.
@@ -6074,9 +6032,6 @@ $Element->{+HTML_NS}->{fieldset} = {
 
 $Element->{+HTML_NS}->{label} = {
   %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    form => $HTMLFormAttrChecker,
-  }), # check_attrs
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $self->_add_minus_elements ($element_state, {(HTML_NS) => {label => 1}});
@@ -6159,7 +6114,6 @@ $Element->{+HTML_NS}->{input} = {
     autocomplete => $GetHTMLEnumeratedAttrChecker->({ # XXX old
       on => 1, off => 1,
     }),
-    form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
     loop => $LegacyLoopChecker,
     max => sub {}, ## check_attrs2
@@ -6174,7 +6128,6 @@ $Element->{+HTML_NS}->{input} = {
       }
     }, # precision
     ## XXXresource src="" referenced resource type
-    usemap => $HTMLUsemapAttrChecker,
     value => sub {}, ## check_attrs2
     viblength => $GetHTMLNonNegativeIntegerAttrChecker->(sub {
       1 <= $_[0] and $_[0] <= 9;
@@ -6489,7 +6442,6 @@ $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{accept} = sub {
 $Element->{+HTML_NS}->{button} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
   check_start => sub {
@@ -6546,7 +6498,6 @@ $Element->{+HTML_NS}->{button} = {
 $Element->{+HTML_NS}->{select} = {
   %AnyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
   check_start => sub {
@@ -6824,7 +6775,6 @@ $Element->{+HTML_NS}->{option} = {
 $Element->{+HTML_NS}->{textarea} = {
   %HTMLTextChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
     maxlength => sub {
       my ($self, $attr, $item, $element_state) = @_;
@@ -6884,7 +6834,6 @@ $Element->{+HTML_NS}->{textarea} = {
 $Element->{+HTML_NS}->{keygen} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }), # check_attrs
   check_start => sub {
@@ -6946,7 +6895,6 @@ $Element->{+HTML_NS}->{keygen} = {
 $Element->{+HTML_NS}->{output} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    form => $HTMLFormAttrChecker,
     name => $FormControlNameAttrChecker,
   }),
 }; # output

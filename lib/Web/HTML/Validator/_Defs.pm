@@ -695,12 +695,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        },
                                                                                             "accesskey" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "item_type" => "char",
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
                                                                                             "align" => {},
                                                                                             "aria-activedescendant" => {
                                                                                                                          "conforming" => 1,
+                                                                                                                         "id_type" => "any",
                                                                                                                          "status" => "CR",
                                                                                                                          "value_type" => "idref"
                                                                                                                        },
@@ -782,11 +784,15 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               },
                                                                                             "aria-controls" => {
                                                                                                                  "conforming" => 1,
+                                                                                                                 "id_type" => "any",
+                                                                                                                 "item_type" => "idref",
                                                                                                                  "status" => "CR",
                                                                                                                  "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                },
                                                                                             "aria-describedby" => {
                                                                                                                     "conforming" => 1,
+                                                                                                                    "id_type" => "any",
+                                                                                                                    "item_type" => "idref",
                                                                                                                     "status" => "CR",
                                                                                                                     "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                   },
@@ -857,6 +863,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                },
                                                                                             "aria-flowto" => {
                                                                                                                "conforming" => 1,
+                                                                                                               "id_type" => "any",
+                                                                                                               "item_type" => "idref",
                                                                                                                "status" => "CR",
                                                                                                                "value_type" => "ordered set of unique space-separated tokens"
                                                                                                              },
@@ -939,6 +947,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             },
                                                                                             "aria-labelledby" => {
                                                                                                                    "conforming" => 1,
+                                                                                                                   "id_type" => "any",
+                                                                                                                   "item_type" => "idref",
                                                                                                                    "status" => "CR",
                                                                                                                    "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                  },
@@ -1013,6 +1023,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   },
                                                                                             "aria-owns" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "id_type" => "any",
+                                                                                                             "item_type" => "idref",
                                                                                                              "status" => "CR",
                                                                                                              "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
@@ -1181,6 +1193,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "border" => {},
                                                                                             "class" => {
                                                                                                          "conforming" => 1,
+                                                                                                         "item_type" => "non-empty",
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "set of space-separated tokens"
                                                                                                        },
@@ -1211,6 +1224,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                             "contextmenu" => {
                                                                                                                "conforming" => 1,
+                                                                                                               "id_type" => "popup",
                                                                                                                "value_type" => "idref"
                                                                                                              },
                                                                                             "datafld" => {},
@@ -1309,6 +1323,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                             "itemref" => {
                                                                                                            "conforming" => 1,
+                                                                                                           "id_type" => "any",
+                                                                                                           "item_type" => "idref",
                                                                                                            "status" => "CR",
                                                                                                            "value_type" => "unordered set of unique space-separated tokens"
                                                                                                          },
@@ -1319,6 +1335,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                             "itemtype" => {
                                                                                                             "conforming" => 1,
+                                                                                                            "item_type" => "non-empty URL",
                                                                                                             "status" => "CR",
                                                                                                             "url_role" => "id",
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
@@ -2227,6 +2244,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                             "directkey" => {
+                                                                                                             "item_type" => "char",
                                                                                                              "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
                                                                                             "download" => {
@@ -2255,17 +2273,24 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "ifb" => {
                                                                                                        "value_type" => "URL potentially surrounded by spaces"
                                                                                                      },
-                                                                                            "ijam" => {},
+                                                                                            "ijam" => {
+                                                                                                        "id_type" => "object",
+                                                                                                        "value_type" => "idref or hash-ID reference"
+                                                                                                      },
                                                                                             "ilet" => {
+                                                                                                        "id_type" => "object",
                                                                                                         "value_type" => "hash-ID reference"
                                                                                                       },
                                                                                             "irst" => {
+                                                                                                        "id_type" => "object",
                                                                                                         "value_type" => "hash-ID reference"
                                                                                                       },
                                                                                             "ista" => {
+                                                                                                        "id_type" => "object",
                                                                                                         "value_type" => "idref"
                                                                                                       },
                                                                                             "iswf" => {
+                                                                                                        "id_type" => "object",
                                                                                                         "value_type" => "hash-ID reference"
                                                                                                       },
                                                                                             "kana" => {
@@ -2286,12 +2311,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                                       },
                                                                                             "ping" => {
                                                                                                         "conforming" => 1,
+                                                                                                        "item_type" => "non-empty URL",
                                                                                                         "status" => "LC",
                                                                                                         "url_role" => "submission",
                                                                                                         "value_type" => "set of space-separated tokens"
                                                                                                       },
                                                                                             "rel" => {
                                                                                                        "conforming" => 1,
+                                                                                                       "item_type" => "link type",
                                                                                                        "status" => "LC",
                                                                                                        "url_role" => "id",
                                                                                                        "value_type" => "set of space-separated tokens"
@@ -2536,6 +2563,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "text"
                                                                                                           },
                                                                                                  "archive" => {
+                                                                                                                "item_type" => "non-empty URL",
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "set of comma-separated tokens"
@@ -2647,12 +2675,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                "ping" => {
                                                                                                            "conforming" => 1,
+                                                                                                           "item_type" => "non-empty URL",
                                                                                                            "status" => "LC",
                                                                                                            "url_role" => "submission",
                                                                                                            "value_type" => "set of space-separated tokens"
                                                                                                          },
                                                                                                "rel" => {
                                                                                                           "conforming" => 1,
+                                                                                                          "item_type" => "link type",
                                                                                                           "status" => "LC",
                                                                                                           "url_role" => "id",
                                                                                                           "value_type" => "set of space-separated tokens"
@@ -3331,6 +3361,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "id_type" => "form",
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "idref"
                                                                                                            },
@@ -3412,6 +3443,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                                  "menu" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "id_type" => "popup",
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "idref"
                                                                                                            },
@@ -4269,6 +4301,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                                    "form" => {
                                                                                                                "conforming" => 1,
+                                                                                                               "id_type" => "form",
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "idref"
                                                                                                              },
@@ -4357,6 +4390,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                                "accept-charset" => {
                                                                                                                      "conforming" => 1,
+                                                                                                                     "item_type" => "character encoding label",
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                    },
@@ -5098,6 +5132,7 @@ $Web::HTML::Validator::_Defs = {
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "profile" => {
+                                                                                                              "item_type" => "non-empty URL",
                                                                                                               "status" => "LC",
                                                                                                               "url_role" => "id",
                                                                                                               "value_type" => "set of space-separated tokens"
@@ -5977,6 +6012,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                 "directkey" => {
+                                                                                                                 "item_type" => "char",
                                                                                                                  "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                },
                                                                                                 "dirname" => {
@@ -6005,7 +6041,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                                 "form" => {
                                                                                                             "conforming" => 1,
-                                                                                                            "status" => "LC"
+                                                                                                            "id_type" => "form",
+                                                                                                            "status" => "LC",
+                                                                                                            "value_type" => "idref"
                                                                                                           },
                                                                                                 "formaction" => {
                                                                                                                   "conforming" => 1,
@@ -6260,6 +6298,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             },
                                                                                                 "list" => {
                                                                                                             "conforming" => 1,
+                                                                                                            "id_type" => "datalist",
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "idref"
                                                                                                           },
@@ -6537,7 +6576,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                                 "usemap" => {
                                                                                                               "status" => "LC",
-                                                                                                              "value_type" => "hash-ID reference"
+                                                                                                              "value_type" => "hash-name reference"
                                                                                                             },
                                                                                                 "value" => {
                                                                                                              "conforming" => 1,
@@ -6759,6 +6798,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "id_type" => "form",
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "idref"
                                                                                                            },
@@ -6839,11 +6879,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                                 "for" => {
                                                                                                            "conforming" => 1,
+                                                                                                           "id_type" => "labelable",
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "idref"
                                                                                                          },
                                                                                                 "form" => {
                                                                                                             "conforming" => 1,
+                                                                                                            "id_type" => "form",
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "idref"
                                                                                                           }
@@ -7012,6 +7054,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             },
                                                                                                "rel" => {
                                                                                                           "conforming" => 1,
+                                                                                                          "item_type" => "link type",
                                                                                                           "status" => "LC",
                                                                                                           "url_role" => "id",
                                                                                                           "value_type" => "set of space-separated tokens"
@@ -7314,6 +7357,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 },
                                                                                                    "command" => {
                                                                                                                   "conforming" => 1,
+                                                                                                                  "id_type" => "command",
                                                                                                                   "value_type" => "idref"
                                                                                                                 },
                                                                                                    "default" => {
@@ -7597,6 +7641,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                  "archive" => {
+                                                                                                                "item_type" => "non-empty URL",
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "set of space-separated tokens"
@@ -7671,7 +7716,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
-                                                                                                             "status" => "LC"
+                                                                                                             "id_type" => "form",
+                                                                                                             "status" => "LC",
+                                                                                                             "value_type" => "idref"
                                                                                                            },
                                                                                                  "height" => {
                                                                                                                "conforming" => 1,
@@ -7972,11 +8019,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                          "" => {
                                                                                                  "for" => {
                                                                                                             "conforming" => 1,
+                                                                                                            "id_type" => "any",
+                                                                                                            "item_type" => "idref",
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "id_type" => "form",
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "idref"
                                                                                                            },
@@ -8326,6 +8376,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "any"
                                                                                                             },
                                                                                                  "for" => {
+                                                                                                            "id_type" => "any",
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "idref"
                                                                                                           },
@@ -8453,6 +8504,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "id_type" => "form",
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "idref"
                                                                                                            },
@@ -8978,6 +9030,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                              "headers" => {
                                                                                                             "conforming" => 1,
+                                                                                                            "id_type" => "th",
+                                                                                                            "item_type" => "idref",
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
@@ -9187,6 +9241,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 },
                                                                                                    "form" => {
                                                                                                                "conforming" => 1,
+                                                                                                               "id_type" => "form",
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "idref"
                                                                                                              },
@@ -9601,6 +9656,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                              "headers" => {
                                                                                                             "conforming" => 1,
+                                                                                                            "id_type" => "th",
+                                                                                                            "item_type" => "idref",
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
@@ -10230,6 +10287,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                   "" => {
                                                                                           "aria-activedescendant" => {
                                                                                                                        "conforming" => 1,
+                                                                                                                       "id_type" => "any",
                                                                                                                        "status" => "CR",
                                                                                                                        "value_type" => "idref"
                                                                                                                      },
@@ -10311,11 +10369,15 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             },
                                                                                           "aria-controls" => {
                                                                                                                "conforming" => 1,
+                                                                                                               "id_type" => "any",
+                                                                                                               "item_type" => "idref",
                                                                                                                "status" => "CR",
                                                                                                                "value_type" => "ordered set of unique space-separated tokens"
                                                                                                              },
                                                                                           "aria-describedby" => {
                                                                                                                   "conforming" => 1,
+                                                                                                                  "id_type" => "any",
+                                                                                                                  "item_type" => "idref",
                                                                                                                   "status" => "CR",
                                                                                                                   "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                 },
@@ -10386,6 +10448,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                           "aria-flowto" => {
                                                                                                              "conforming" => 1,
+                                                                                                             "id_type" => "any",
+                                                                                                             "item_type" => "idref",
                                                                                                              "status" => "CR",
                                                                                                              "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
@@ -10468,6 +10532,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                                           "aria-labelledby" => {
                                                                                                                  "conforming" => 1,
+                                                                                                                 "id_type" => "any",
+                                                                                                                 "item_type" => "idref",
                                                                                                                  "status" => "CR",
                                                                                                                  "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                },
@@ -10542,6 +10608,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 },
                                                                                           "aria-owns" => {
                                                                                                            "conforming" => 1,
+                                                                                                           "id_type" => "any",
+                                                                                                           "item_type" => "idref",
                                                                                                            "status" => "CR",
                                                                                                            "value_type" => "ordered set of unique space-separated tokens"
                                                                                                          },
