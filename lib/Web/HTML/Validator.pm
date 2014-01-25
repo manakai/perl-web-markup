@@ -1084,9 +1084,64 @@ our $MIMETypeChecker = sub {
   return $type; # or undef
 }; # $MIMETypeChecker
 
+## ------ ID references ------
+
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{contextmenu} = sub {
+  my ($self, $attr) = @_;
+  push @{$self->{idref}}, ['popup', $attr->value => $attr];
+}; # contextmenu=""
+
+$ElementAttrChecker->{(HTML_NS)}->{label}->{''}->{for} = sub {
+  my ($self, $attr) = @_;
+  
+  ## NOTE: MUST be an ID of a labelable element.
+  push @{$self->{idref}}, ['labelable', $attr->value, $attr];
+}; # <label for="">
+
+$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{for} = sub {
+  my ($self, $attr) = @_;
+  push @{$self->{idref}}, ['any', $attr->value, $attr];
+}; # <script for="">
+
+$ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{menu} = sub {
+  my ($self, $attr) = @_;
+  push @{$self->{idref}}, ['popup', $attr->value => $attr];
+}; # <button menu="">
+
+$ElementAttrChecker->{(HTML_NS)}->{menuitem}->{''}->{command} = sub {
+  my ($self, $attr) = @_;
+#  push @{$self->{idref}}, ['command', $attr->value, $attr]; # XXX not implemented yet
+}; # <menuitem command="">
+
+my $HTMLFormAttrChecker = sub {
+  my ($self, $attr) = @_;
+
+  ## NOTE: MUST be the ID of a |form| element.
+
+  my $value = $attr->value;
+  push @{$self->{idref}}, ['form', $value => $attr];
+
+  ## ISSUE: <form id=""><input form=""> (empty ID)?
+}; # $HTMLFormAttrChecker
+
+$ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{list} = sub {
+  my ($self, $attr) = @_;
+  
+  ## NOTE: MUST be the ID of a |datalist| element.
+  
+  push @{$self->{idref}}, ['datalist', $attr->value, $attr];
+
+  ## TODO: Warn violation to control-dependent restrictions.  For
+  ## example, |<input type=url maxlength=10 list=a> <datalist
+  ## id=a><option value=nonurlandtoolong></datalist>| should be
+  ## warned.
+}; # <input list="">
+
 ## IDREFS to any element
 $ElementAttrChecker->{(HTML_NS)}->{output}->{''}->{for} =
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemref} = sub {
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemref} =
+$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-owns'} =
+$ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{'aria-owns'} = sub {
   my ($self, $attr) = @_;
   ## Unordered set of unique space-separated tokens.
   my %word;
@@ -1102,6 +1157,51 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemref} = sub {
     }
   }
 }; # IDREFS
+
+my $HTMLUsemapAttrChecker = sub {
+  my ($self, $attr) = @_;
+  ## MUST be a valid hash-name reference to a |map| element.
+  my $value = $attr->value;
+  if ($value =~ s/^#//) {
+    ## NOTE: |usemap="#"| is conforming, though it identifies no |map| element
+    ## according to the "rules for parsing a hash-name reference" algorithm.
+    ## The document is non-conforming anyway, since |<map name="">| (empty
+    ## name) is non-conforming.
+    push @{$self->{usemap}}, [$value => $attr];
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'hashref:syntax error',
+                       level => 'm');
+  }
+  ## NOTE: Space characters in hash-name references are conforming.
+  ## ISSUE: UA algorithm for matching is case-insensitive; IDs only different in cases should be reported
+}; # $HTMLUsemapAttrChecker
+
+my $ObjectHashIDRefChecker = sub {
+  my ($self, $attr) = @_;
+  
+  my $value = $attr->value;
+  if ($value =~ s/^\x23(?=.)//s) {
+    push @{$self->{idref}}, ['object', $value, $attr];
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'hashref:syntax error',
+                       level => 'm');
+  }
+}; # $ObjectHashIDRefChecker
+
+my $ObjectOptionalHashIDRefChecker = sub {
+  my ($self, $attr) = @_;
+  
+  my $value = $attr->value;
+  if ($value =~ s/^\x23?(?=.)//s) {
+    push @{$self->{idref}}, ['object', $value, $attr];
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'hashref:syntax error',
+                       level => 'm');
+  }
+}; # $ObjectHashIDRefChecker
 
 ## ------ XML and XML Namespaces ------
 
@@ -1383,7 +1483,7 @@ sub _validate_aria ($$) {
       $parents = [@$parents, $node];
       unshift @node, map { [$_, $parents] } @{$node->children};
     } else {
-      unshift @node, map { [$_, $parents] } @{$node->children};
+      unshift @node, map { [$_, $parents] } grep { $_->node_type == 1 } @{$node->child_nodes};
     }
   } # @node
 
@@ -2256,30 +2356,6 @@ my $GetHTMLNonNegativeIntegerAttrChecker = sub {
   };
 }; # $GetHTMLNonNegativeIntegerAttrChecker
 
-my $HTMLFormAttrChecker = sub {
-  my ($self, $attr) = @_;
-
-  ## NOTE: MUST be the ID of a |form| element.
-
-  my $value = $attr->value;
-  push @{$self->{idref}}, ['form', $value => $attr];
-
-  ## ISSUE: <form id=""><input form=""> (empty ID)?
-}; # $HTMLFormAttrChecker
-
-my $ListAttrChecker = sub {
-  my ($self, $attr) = @_;
-  
-  ## NOTE: MUST be the ID of a |datalist| element.
-  
-  push @{$self->{idref}}, ['datalist', $attr->value, $attr];
-
-  ## TODO: Warn violation to control-dependent restrictions.  For
-  ## example, |<input type=url maxlength=10 list=a> <datalist
-  ## id=a><option value=nonurlandtoolong></datalist>| should be
-  ## warned.
-}; # $ListAttrChecker
-
 my $FormControlNameAttrChecker = sub {
   my ($self, $attr) = @_;
   
@@ -2291,51 +2367,6 @@ my $FormControlNameAttrChecker = sub {
   
   ## NOTE: No uniqueness constraint.
 }; # $FormControlNameAttrChecker
-
-my $HTMLUsemapAttrChecker = sub {
-  my ($self, $attr) = @_;
-  ## MUST be a valid hash-name reference to a |map| element.
-  my $value = $attr->value;
-  if ($value =~ s/^#//) {
-    ## NOTE: |usemap="#"| is conforming, though it identifies no |map| element
-    ## according to the "rules for parsing a hash-name reference" algorithm.
-    ## The document is non-conforming anyway, since |<map name="">| (empty
-    ## name) is non-conforming.
-    push @{$self->{usemap}}, [$value => $attr];
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'hashref:syntax error',
-                       level => 'm');
-  }
-  ## NOTE: Space characters in hash-name references are conforming.
-  ## ISSUE: UA algorithm for matching is case-insensitive; IDs only different in cases should be reported
-}; # $HTMLUsemapAttrChecker
-
-my $ObjectHashIDRefChecker = sub {
-  my ($self, $attr) = @_;
-  
-  my $value = $attr->value;
-  if ($value =~ s/^\x23(?=.)//s) {
-    push @{$self->{idref}}, ['object', $value, $attr];
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'hashref:syntax error',
-                       level => 'm');
-  }
-}; # $ObjectHashIDRefChecker
-
-my $ObjectOptionalHashIDRefChecker = sub {
-  my ($self, $attr) = @_;
-  
-  my $value = $attr->value;
-  if ($value =~ s/^\x23?(?=.)//s) {
-    push @{$self->{idref}}, ['object', $value, $attr];
-  } else {
-    $self->{onerror}->(node => $attr,
-                       type => 'hashref:syntax error',
-                       level => 'm');
-  }
-}; # $ObjectHashIDRefChecker
 
 my $CharChecker = sub {
   my ($self, $attr) = @_;
@@ -2443,11 +2474,6 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{class} = sub {
       }
     }
 }; # class=""
-
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{contextmenu} = sub {
-  my ($self, $attr) = @_;
-  push @{$self->{idref}}, ['popup', $attr->value => $attr];
-}; # contextmenu=""
 
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{dropzone} = sub {
   ## Unordered set of space-separated tokens, ASCII case-insensitive.
@@ -3700,29 +3726,6 @@ $ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{language} = sub {
                        level => 'm');
   }
 }; # <script language="">
-
-$ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{for} = sub {
-  my ($self, $attr) = @_;
-  ## NOTE: MUST be an ID of an element.
-  push @{$self->{idref}}, ['any', $attr->value, $attr];
-}; # <script for="">
-
-$ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'aria-owns'} = sub {
-  my ($self, $attr) = @_;
-  ## Unordered set of space-separated tokens.
-  my %word;
-  for my $word (grep { length } split /[\x09\x0A\x0C\x0D\x20]+/, $attr->value) {
-    if ($word{$word}) {
-      $self->{onerror}->(node => $attr,
-                         type => 'duplicate token',
-                         value => $word,
-                         level => 'm');
-    } else{
-      push @{$self->{idref}}, ['any', $word, $attr];
-      $word{$word} = 1;
-    }
-  }
-}; # aria-owns=""
 
 $Element->{+HTML_NS}->{noscript} = {
   %TransparentChecker,
@@ -6072,12 +6075,6 @@ $Element->{+HTML_NS}->{fieldset} = {
 $Element->{+HTML_NS}->{label} = {
   %HTMLPhrasingContentChecker,
   check_attrs => $GetHTMLAttrsChecker->({
-    for => sub {
-      my ($self, $attr) = @_;
-      
-      ## NOTE: MUST be an ID of a labelable element.
-      push @{$self->{idref}}, ['labelable', $attr->value, $attr];
-    },
     form => $HTMLFormAttrChecker,
   }), # check_attrs
   check_start => sub {
@@ -6164,7 +6161,6 @@ $Element->{+HTML_NS}->{input} = {
     }),
     form => $HTMLFormAttrChecker,
     format => $TextFormatAttrChecker,
-    list => $ListAttrChecker,
     loop => $LegacyLoopChecker,
     max => sub {}, ## check_attrs2
     min => sub {}, ## check_attrs2
@@ -6546,11 +6542,6 @@ $Element->{+HTML_NS}->{button} = {
     $HTMLPhrasingContentChecker{check_end}->(@_);
   }, # check_end
 }; # button
-
-$ElementAttrChecker->{(HTML_NS)}->{button}->{''}->{menu} = sub {
-  my ($self, $attr) = @_;
-  push @{$self->{idref}}, ['popup', $attr->value => $attr];
-}; # <button menu="">
 
 $Element->{+HTML_NS}->{select} = {
   %AnyChecker,
@@ -7297,11 +7288,6 @@ $Element->{+HTML_NS}->{menuitem} = {
     }
   }, # check_attrs2
 }; # menuitem
-
-$ElementAttrChecker->{(HTML_NS)}->{menuitem}->{''}->{command} = sub {
-  my ($self, $attr) = @_;
-#  push @{$self->{idref}}, ['command', $attr->value, $attr]; # XXX not implemented yet
-}; # <menuitem command="">
 
 $Element->{+HTML_NS}->{dialog} = {
   %HTMLFlowContentChecker,
