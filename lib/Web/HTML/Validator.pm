@@ -1792,7 +1792,9 @@ sub _validate_aria ($$) {
       next if $role{$role} eq 'implicit';
       my $role_def = $_Defs->{roles}->{$role};
       for my $attr_ln (keys %{$role_def->{attrs} or {}}) {
-        if ($role_def->{attrs}->{$attr_ln}->{must}) {
+        if ($adef->{attrs}->{$attr_ln}) {
+          #
+        } elsif ($role_def->{attrs}->{$attr_ln}->{must}) {
           $self->{onerror}->(node => $role_attr,
                              value => $role,
                              type => 'attribute missing',
@@ -1809,6 +1811,11 @@ sub _validate_aria ($$) {
         }
       }
     }
+
+    ## IMPLATTRCHK: Some codes below checks existence of an attribute.
+    ## Strictly speaking, it should also check
+    ## |$adef->{attrs}->{$attr_ln}| in addition to the element's
+    ## attribute.  They skip it as this only occurs in invalid cases.
 
     if (defined $attr{'aria-checked'}) {
       if ($role{radio} or $role{menuitemradio}) {
@@ -1873,6 +1880,7 @@ sub _validate_aria ($$) {
       }
 
       if ($role{progressbar} and defined $attr{'aria-valuenow'}) {
+        ## See IMPLATTRCHK note above.
         $self->{onerror}->(node => $node,
                            type => 'attribute missing',
                            text => 'aria-valuemin',
@@ -1892,6 +1900,7 @@ sub _validate_aria ($$) {
                            type => 'aria:valuetext',
                            level => 's');
       } else {
+        ## See IMPLATTRCHK note above.
         $self->{onerror}->(node => $node,
                            type => 'attribute missing',
                            text => 'aria-valuenow',
@@ -1918,6 +1927,7 @@ sub _validate_aria ($$) {
     }
 
     if ($role{math} and not $role{math} eq 'implicit') {
+      ## See IMPLATTRCHK note above.
       $self->{onerror}->(node => $node,
                          type => 'attribute missing',
                          text => 'aria-describedby',
@@ -1928,6 +1938,7 @@ sub _validate_aria ($$) {
     }
 
     if ($role{dialog} and not $role{dialog} eq 'implicit') {
+      ## See IMPLATTRCHK note above.
       $self->{onerror}->(node => $node,
                          type => 'attribute missing:aria-label*',
                          level => 's')
@@ -2008,6 +2019,7 @@ sub _validate_aria ($$) {
 
       if ($roles->{application} and @{$els->{toolbar}} > 1) {
         for (@{$els->{toolbar}}) {
+          ## See IMPLATTRCHK note above.
           $self->{onerror}->(node => $_,
                              type => 'attribute missing',
                              text => 'aria-label',
@@ -2018,6 +2030,7 @@ sub _validate_aria ($$) {
 
       unless ((($node->namespace_uri || '') eq HTML_NS and $node->local_name eq 'body') or
               (($node->namespace_uri || '') eq SVG_NS and $node->local_name eq 'svg')) {
+        ## See IMPLATTRCHK note above.
         $self->{onerror}->(node => $node,
                            type => 'attribute missing',
                            text => 'aria-labelledby',
