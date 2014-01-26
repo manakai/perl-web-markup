@@ -849,6 +849,21 @@ $CheckerByType->{'language tag or empty'} = sub {
   }
 }; # language tag or empty
 
+## ISO 4217 currency code
+$ItemValueChecker->{currency} = sub {
+  my ($self, $value, $node) = @_;
+  require Web::LangTag;
+  my $lang = Web::LangTag->new;
+  $value =~ tr/A-Z/a-z/;
+  my $data = $lang->tag_registry_data ('u_cu', $value);
+  unless ($data->{_registry}->{unicode}) {
+    $self->{onerror}->(node => $node,
+                       value => $value,
+                       type => 'currency:not registered',
+                       level => 'm');
+  }
+}; # currency
+
 $CheckerByType->{'character encoding label'} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
@@ -1557,6 +1572,9 @@ sub _validate_aria ($$) {
       $new_keys = keys %$nodes;
     }
     return $nodes;
+
+    ## |aria-owns| attributes implied by HTML's semantics is not taken
+    ## into account...  Is it really matter?
   }; # $get_owned_nodes
 
   my $node_to_roles = {};
@@ -2817,7 +2835,7 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{'xml:lang'} = sub {
   if ($attr->owner_document->manakai_is_html) {
     ## Allowed by HTML Standard but is ignored.
     $self->{onerror}->(type => 'in HTML:xml:lang',
-                       level => 'i',
+                       level => 'w',
                        node => $attr);
   } else {
     ## Not allowed by any spec.
@@ -3752,7 +3770,7 @@ $Element->{+HTML_NS}->{meta} = {
       }
 
       $self->{onerror}->(node => $el,
-                         type => 'srcdoc:charset', # XXXdocumentation
+                         type => 'srcdoc:charset',
                          level => 'm')
           if $el->owner_document->manakai_is_srcdoc;
 
@@ -5336,7 +5354,7 @@ $Element->{+HTML_NS}->{embed} = {
         $self->{onerror}->(node => $item->{node},
                            type => 'attribute missing',
                            text => 'src',
-                           level => 'i');
+                           level => 'w');
       }
     }
 
@@ -7699,7 +7717,7 @@ $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{itemprop} = sub {
   }
 
   $self->{onerror}->(node => $attr,
-                     type => 'empty itemprop', # XXXdoc
+                     type => 'empty itemprop',
                      level => 'm')
       unless keys %word;
 }; # itemprop=""
@@ -7997,7 +8015,6 @@ sub _validate_microdata_item ($$;$) {
 } # _validate_microdata_item
 
 # XXX itemvalue text syntax:
-#    currency
 #    vcard telephone number
 #    vcard sex
 #    vcard geo
@@ -10113,6 +10130,11 @@ $Defs->{cache} = {
 
 # XXX Implement all values listed in WHATWG Wiki
 # <http://wiki.whatwg.org/wiki/MetaExtensions>
+
+$Defs->{viewport} = {
+  unique => 1,
+  status => STATUS_STANDARD,
+};
 
 our $DefaultDef = {
   unique => 0,
