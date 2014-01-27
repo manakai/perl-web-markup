@@ -86,6 +86,7 @@ sub _initialize_tokenizer ($) {
   #$self->{kwd} = ''; # State-dependent keyword; initialized when used
   #$self->{entity__value}; # initialized when used
   #$self->{entity__match}; # initialized when used
+  #$self->{entity__is_tree}; # initialized when used
   undef $self->{ct}; # current token
   undef $self->{ca}; # current attribute
   undef $self->{last_stag_name}; # last emitted start tag name
@@ -3565,6 +3566,7 @@ sub _get_next_token ($) {
         $self->{kwd} = chr $nc;
         $self->{entity__value} = $self->{kwd};
         $self->{entity__match} = 0;
+        delete $self->{entity__is_tree};
         
     $self->_set_nc;
   
@@ -3885,14 +3887,16 @@ sub _get_next_token ($) {
               if ($self->{ge}->{$self->{kwd}}->{only_text}) {
                 
                 $self->{entity__value} = $self->{ge}->{$self->{kwd}}->{value};
+                delete $self->{entity__is_tree};
                 # XXX entity__pos
               } else {
                 if (defined $self->{ge}->{$self->{kwd}}->{notation}) {
                   
                   $self->{parse_error}->(level => $self->{level}->{must}, type => 'unparsed entity', ## TODO: type
                                   value => $self->{kwd});
-                } else {
-                  
+                  delete $self->{entity__is_tree};
+                } elsif (defined $self->{ge}->{$self->{kwd}}->{value}) {
+                  $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
                 }
                 $self->{entity__value} = '&' . $self->{kwd}; ## TODO: expand
               }
@@ -3917,6 +3921,7 @@ sub _get_next_token ($) {
                 
               }
               $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
+              delete $self->{entity__is_tree};
             }
             $self->{entity__match} = 1; ## Matched exactly with ";" entity.
             
@@ -3926,6 +3931,7 @@ sub _get_next_token ($) {
           } else {
             
             $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
+            delete $self->{entity__is_tree};
             $self->{entity__match} = -1; ## Exactly matched to non-";" entity.
             ## Stay in the state.
             
@@ -3950,6 +3956,7 @@ sub _get_next_token ($) {
                               column => $self->{column} - length $self->{kwd});
             }
             $self->{entity__value} .= chr $nc;
+            delete $self->{entity__is_tree};
             $self->{entity__match} *= 2; ## Matched (positive) or not (zero)
             
     $self->_set_nc;
@@ -3958,6 +3965,7 @@ sub _get_next_token ($) {
           } else {
             
             $self->{entity__value} .= chr $nc;
+            delete $self->{entity__is_tree};
             $self->{entity__match} *= 2; ## Matched (positive) or not (zero)
             ## Stay in the state.
             
@@ -4034,18 +4042,24 @@ sub _get_next_token ($) {
       ## entity-replaced string otherwise, in this stage, since any characters
       ## that would not be consumed are appended in the data state or in an
       ## appropriate attribute value state anyway.
- 
+
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
         
         $self->{state} = $self->{prev_state};
         ## Reconsume.
-        return  ({type => CHARACTER_TOKEN,
-                  data => $data,
-                  has_reference => $has_ref,
-                  line => $self->{line_prev},
-                  column => $self->{column_prev} + 1 - length $self->{kwd},
-                 });
+        if ($self->{entity__is_tree}) {
+          return  ({type => ENTITY_SUBTREE_TOKEN,
+                    name => $self->{kwd},
+                    line => $self->{line_prev},
+                    column => $self->{column_prev} + 1 - length $self->{kwd}});
+        } else {
+          return  ({type => CHARACTER_TOKEN,
+                    data => $data,
+                    has_reference => $has_ref,
+                    line => $self->{line_prev},
+                    column => $self->{column_prev} + 1 - length $self->{kwd}});
+        }
         redo A;
       } else {
         

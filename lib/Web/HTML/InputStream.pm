@@ -60,6 +60,8 @@ sub _clear_refs ($) {
   delete $self->{form_element};
   delete $self->{active_formatting_elements};
   delete $self->{insert};
+  delete $self->{ge};
+  delete $self->{pe};
 } # _clear_refs
 
 ## ------ Error handling ------

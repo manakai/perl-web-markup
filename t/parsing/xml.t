@@ -86,6 +86,8 @@ sub _test ($) {
   };
 
   my $p = Web::XML::Parser->new;
+  my $ges = $p->{ge} ||= {};
+  my $pes = $p->{pe} ||= {};
   $p->onerror (sub {
     my %opt = @_;
     push @errors, join ';',
@@ -157,8 +159,8 @@ sub _test ($) {
 
   if ($test->{entities}) {
     my @e;
-    for (keys %{$p->{ge}}) {
-      my $ent = $p->{ge}->{$_};
+    for (keys %$ges) {
+      my $ent = $ges->{$_};
       my $v = '<!ENTITY ' . $ent->{name} . ' "'; 
       $v .= $ent->{value} if defined $ent->{value};
       $v .= '" "';
@@ -170,8 +172,8 @@ sub _test ($) {
       $v .= '>';
       push @e, $v;
     }
-    for (keys %{$p->{pe}}) {
-      my $ent = $p->{pe}->{$_};
+    for (keys %$pes) {
+      my $ent = $pes->{$_};
       my $v = '<!ENTITY % ' . $ent->{name} . ' "'; 
       $v .= $ent->{value} if defined $ent->{value};
       $v .= '" "';

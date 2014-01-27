@@ -2,7 +2,7 @@ package Web::XML::Parser; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '5.0';
+our $VERSION = '6.0';
 use Web::HTML::Defs;
 use Web::HTML::ParserData;
 use Web::HTML::InputStream;
@@ -25,6 +25,8 @@ sub parse_char_string ($$$) {
     local $self->{document}->dom_config->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'} = 0;
     $self->{document}->text_content ('');
   }
+  $self->{ge} ||= {};
+  $self->{pe} ||= {};
 
   ## Confidence: irrelevant.
   $self->{confident} = 1;
@@ -66,6 +68,8 @@ sub parse_char_string_with_context ($$$$) {
   ## 1.
   my $doc = $_[3];
   $self->{document} = $doc;
+  $self->{ge} ||= {};
+  $self->{pe} ||= {};
   
   ## Confidence: irrelevant.
   $self->{confident} = 1;
@@ -198,6 +202,8 @@ sub _terminate_tree_constructor ($) {
 ## XML5: Start, main, end phases.  In this implementation, they are
 ## represented by insertion modes.
 
+## XML5: No entity expansion support
+
 sub _construct_tree ($) {
   my ($self) = @_;
   while (1) {
@@ -275,7 +281,7 @@ sub _tree_after_xml_decl ($) {
       
       $self->{document}->append_child ($doctype);
 
-      $self->{ge} = {};
+      %{$self->{ge}} = ();
 
       ## XML5: No "has internal subset" flag.
       if ($self->{t}->{has_internal_subset}) {
@@ -287,7 +293,8 @@ sub _tree_after_xml_decl ($) {
       $self->{t} = $self->_get_next_token;
       return;
     } elsif ($self->{t}->{type} == START_TAG_TOKEN or
-             $self->{t}->{type} == END_OF_FILE_TOKEN) {
+             $self->{t}->{type} == END_OF_FILE_TOKEN or
+             $self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
       $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
       ## Reprocess.
       return;
@@ -347,7 +354,7 @@ sub _tree_after_xml_decl ($) {
       die "$0: XML parser initial: Unknown token type $self->{t}->{type}";
     }
   } # B
-} # _tree_initial
+} # _tree_after_xml_decl
 
 sub _tree_before_root_element ($) {
   my $self = shift;
@@ -544,6 +551,39 @@ sub _tree_before_root_element ($) {
       ## Stay in the mode.
       $self->{t} = $self->_get_next_token;
       next B;
+    } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'entityref outside of root element', # XXX
+                      token => $self->{t});
+      my $list = $self->_parse_entity_subtree_token;
+      for (@$list) {
+        if ($_->node_type == 3) { # TEXT_NODE
+          if ($self->{tainted}) {
+            $self->{document}->manakai_append_text ($_->data); # XXX pos
+          } else {
+            my $data = $_->data;
+            $data =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
+            if (length $data) {
+              $self->{document}->manakai_append_text ($data); # XXX pos
+              $self->{tainted} = 1;
+            }
+          }
+        } elsif ($_->node_type == 1) { # ELEMENT_NODE
+          if ($self->{insertion_mode} == AFTER_ROOT_ELEMENT_IM) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'second root element',
+                            token => $self->{t});
+            ## Ignore the element.
+          } else {
+            delete $self->{tainted};
+            $self->{insertion_mode} = AFTER_ROOT_ELEMENT_IM;
+            $self->{document}->append_child ($_);
+          }
+        } else {
+          $self->{document}->append_child ($_);
+        }
+      }
+      ## Stay in the original mode or AFTER_ROOT_ELEMENT_IM.
+      $self->{t} = $self->_get_next_token;
+      return;
     } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
       $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#doctype',
                       token => $self->{t});
@@ -785,6 +825,20 @@ sub _tree_in_element ($) {
       $self->{insertion_mode} = AFTER_ROOT_ELEMENT_IM;
       $self->{t} = $self->_get_next_token;
       return;
+    } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
+      my $list = $self->_parse_entity_subtree_token;
+      my $parent = _insert_point $self->{open_elements}->[-1]->[0];
+      for (@$list) {
+        if ($_->node_type == 3) { # TEXT_NODE
+          $parent->manakai_append_text ($_->data); # XXX pos
+        } else {
+          $parent->append_child ($_);
+        }
+      }
+
+      ## Stay in the state.
+      $self->{t} = $self->_get_next_token;
+      next B;
     } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
       $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#doctype',
                       token => $self->{t});
@@ -869,6 +923,34 @@ sub _tree_after_root_element ($) {
       ## Ignore the token.
 
       ## Stay in the mode.
+      $self->{t} = $self->_get_next_token;
+      next B;
+    } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'entityref outside of root element', # XXX
+                      token => $self->{t});
+      my $list = $self->_parse_entity_subtree_token;
+      for (@$list) {
+        if ($_->node_type == 3) { # TEXT_NODE
+          if ($self->{tainted}) {
+            $self->{document}->manakai_append_text ($_->data); # XXX pos
+          } else {
+            my $data = $_->data;
+            $data =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
+            if (length $data) {
+              $self->{document}->manakai_append_text ($data); # XXX pos
+              $self->{tainted} = 1;
+            }
+          }
+        } elsif ($_->node_type == 1) { # ELEMENT_NODE
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'second root element',
+                          token => $self->{t});
+          ## Ignore the element.
+        } else {
+          $self->{document}->append_child ($_);
+        }
+      }
+
+      ## Stay in the state.
       $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
@@ -1161,11 +1243,35 @@ sub _tree_in_subset ($) {
 
 } # _tree_in_subset
 
+sub _parse_entity_subtree_token ($) {
+  my $self = $_[0];
+  my $context = @{$self->{open_elements}}
+      ? $self->{open_elements}->[-1]->[0]
+      : $self->{document}->create_element_ns (undef, 'dummy');
+  my $t = $self->{t};
+
+  my $doc = $self->{document}->implementation->create_document;
+  my $parser = (ref $self)->new;
+  $parser->onerror ($self->onerror);
+  $parser->{ge} = {%{$self->{ge}}};
+  delete $parser->{ge}->{$t->{name}};
+  return $parser->parse_char_string_with_context
+      ($self->{ge}->{$t->{name}}->{value}, $context, $doc);
+  # XXX pos
+} # _parse_entity_subtree_token
+
+# XXX ent outside root element tests
+# XXX nested entref in attr values
+# XXX param refs
+# XXX external subset
+# XXX entref depth limitation
+# XXX doc
+
 1;
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
