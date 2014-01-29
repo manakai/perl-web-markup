@@ -82,13 +82,24 @@ sub _initialize_tokenizer ($) {
   #$self->{parse_error}
   #$self->{is_xml} (if XML)
 
-  $self->{state} = DATA_STATE; # MUST
+  $self->{state} = $self->{initial_state} || DATA_STATE; # MUST
+      ## $self->{initial_state} is the initial value for the
+      ## $self->{state}.  This value can be set after the parser is
+      ## initialized.  This should only be used by nested XML parser
+      ## invocation.
   #$self->{kwd} = ''; # State-dependent keyword; initialized when used
   #$self->{entity__value}; # initialized when used
   #$self->{entity__match}; # initialized when used
   #$self->{entity__is_tree}; # initialized when used
   undef $self->{ct}; # current token
   undef $self->{ca}; # current attribute
+  if ($self->{state} == ATTR_VALUE_ENTITY_STATE) {
+    $self->{ca}->{value} = '';
+    $self->{ca}->{cl} = 1;
+    $self->{ca}->{cc} = 1;
+    $self->{ca}->{cpos} = 0;
+    $self->{ca}->{pos} = [];
+  }
   undef $self->{last_stag_name}; # last emitted start tag name
   #$self->{prev_state}; # initialized when used
   delete $self->{self_closing};
@@ -126,6 +137,7 @@ sub _initialize_tokenizer ($) {
 ##        ->{value}
 ##        ->{has_reference} == 1 or 0
 ##        ->{index}: Index of the attribute in a tag.
+##        ->{pos}
 ##   ->{data} (COMMENT_TOKEN, CHARACTER_TOKEN, PI_TOKEN)
 ##   ->{has_reference} == 1 or 0 (CHARACTER_TOKEN)
 ##   ->{last_index} (ELEMENT_TOKEN): Next attribute's index - 1.
@@ -1405,11 +1417,18 @@ sub _get_next_token ($) {
       } else {
         die "$state/$nc is implemented";
       }
-    } elsif ($state == ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE) {
-      ## XML5: "Tag attribute value double quoted state" and "DOCTYPE
-      ## ATTLIST attribute value double quoted state".
-      
-      if ($nc == 0x0022) { # "
+    } elsif ($state == ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE or
+             $state == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE or
+             $state == ATTR_VALUE_ENTITY_STATE) {
+      ## XML5: "Tag attribute value double quoted state", "DOCTYPE
+      ## ATTLIST attribute value double quoted state", "Tag attribute
+      ## value single quoted state", and "DOCTYPE ATTLIST attribute
+      ## value single quoted state".
+
+      my $ec = $state == ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE ? 0x0022 :
+               $state == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE ? 0x0027 :
+               NEVER_CHAR;
+      if ($nc == $ec) { # " '
         push @{$self->{ca}->{pos} ||= []},
             [$self->{ca}->{cl}, $self->{ca}->{cc}
                  => $self->{line}, $self->{column}]
@@ -1453,6 +1472,17 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ($nc == EOF_CHAR) {
+        if ($state == ATTR_VALUE_ENTITY_STATE) {
+          my $token = {type => CHARACTER_TOKEN,
+                       data => $self->{ca}->{value},
+                       line => $self->{line}, column => $self->{column}}; # XXX
+          $self->{ca}->{value} = '';
+          unshift @{$self->{token}},
+              {type => END_OF_FILE_TOKEN,
+               line => $self->{line}, column => $self->{column}};
+          return $token;
+        }
+
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed attribute value');
         if ($self->{ct}->{type} == START_TAG_TOKEN or
             $self->{ct}->{type} == END_TAG_TOKEN) {
@@ -1505,117 +1535,7 @@ sub _get_next_token ($) {
         $self->{ca}->{value} .= chr ($nc);
 
         $self->{ca}->{value} .= $self->_read_chars
-            ({"\x00" => 1, q<"> => 1, q<&> => 1, "<" => 1,
-              "\x09" => 1, "\x0C" => 1, "\x20" => 1});
-        #$self->{read_until}->($self->{ca}->{value},
-        #                      qq[\x00"&<\x09\x0C\x20],
-        #                      length $self->{ca}->{value});
-
-        ## Stay in the state
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE) {
-      ## XML5: "Tag attribute value single quoted state" and "DOCTYPE
-      ## ATTLIST attribute value single quoted state".
-
-      if ($nc == 0x0027) { # '
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if not @{$self->{ca}->{pos} ||= []} and
-                   ($self->{ca}->{cc} != $self->{column} or
-                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
-        if ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          
-          ## XML5: "DOCTYPE ATTLIST name after state".
-          push @{$self->{ct}->{attrdefs}}, $self->{ca};
-          $self->{state} = AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE;
-        } else {
-          
-          ## XML5: "Before attribute name state" (sic).
-          $self->{state} = AFTER_ATTRIBUTE_VALUE_QUOTED_STATE;
-        }
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0026) { # &
-        
-        ## XML5: Not defined yet.
-
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if not @{$self->{ca}->{pos} ||= []} and
-                   ($self->{ca}->{cc} != $self->{column} or
-                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
-
-        ## NOTE: In the spec, the tokenizer is switched to the 
-        ## "entity in attribute value state".  In this implementation, the
-        ## tokenizer is switched to the |ENTITY_STATE|, which is an
-        ## implementation of the "consume a character reference" algorithm.
-        $self->{entity_add} = 0x0027; # '
-        $self->{prev_state} = $state;
-        $self->{state} = ENTITY_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed attribute value');
-        if ($self->{ct}->{type} == START_TAG_TOKEN or
-            $self->{ct}->{type} == END_TAG_TOKEN) {
-          $self->{state} = DATA_STATE;
-          ## Reconsume the current input character.
-          ## Discard the current token, including attributes.
-          redo A;
-        } elsif ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          ## XML5: No parse error above; not defined yet.
-          push @{$self->{ct}->{attrdefs}}, $self->{ca};
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-          ## Reconsume the current input character.
-          ## Discard the current token, including attributes.
-          redo A;
-        } else {
-          die "$0: $self->{ct}->{type}: Unknown token type";
-        }
-      } else {
-        ## XML5 [ATTLIST]: Not defined yet.
-        if ($self->{is_xml} and $is_space->{$nc}) {
-          
-          $nc = 0x0020;
-        } elsif ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-          $nc = 0xFFFD;
-        } elsif ($self->{is_xml} and $nc == 0x003C) { # <
-          
-          ## XML5: Not a parse error.
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'lt in attr value'); ## TODO: type
-        } else {
-          
-        }
-
-        my $new_cpos = length $self->{ca}->{value};
-        if ($nc == 0x000A) {
-          $self->{ca}->{cl}++;
-          $self->{ca}->{cc} = 0;
-        } else {
-          $self->{ca}->{cc} += $new_cpos - $self->{ca}->{cpos};
-        }
-        $self->{ca}->{cpos} = $new_cpos;
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if $self->{ca}->{cc} != $self->{column} or
-                   (not @{$self->{ca}->{pos} ||= []} and
-                    $self->{ca}->{cc} == 0);
-
-        $self->{ca}->{value} .= chr ($nc);
-        $self->{ca}->{value} .= $self->_read_chars
-            ({"\x00" => 1, q<'> => 1, q<&> => 1, "<" => 1,
+            ({"\x00" => 1, (chr $ec) => 1, q<&> => 1, "<" => 1,
               "\x09" => 1, "\x0C" => 1, "\x20" => 1});
 
         ## Stay in the state
@@ -3898,7 +3818,7 @@ sub _get_next_token ($) {
                 } elsif (defined $self->{ge}->{$self->{kwd}}->{value}) {
                   $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
                 }
-                $self->{entity__value} = '&' . $self->{kwd}; ## TODO: expand
+                $self->{entity__value} = '&' . $self->{kwd};
               }
             } else {
               ## An HTML character reference.
@@ -4062,8 +3982,11 @@ sub _get_next_token ($) {
         }
         redo A;
       } else {
-        
-        $self->{ca}->{value} .= $data;
+        if ($self->{entity__is_tree}) {
+          $self->{ca}->{value} .= $self->_expand_ge_in_attr ($self->{kwd}); # XXX pos
+        } else {
+          $self->{ca}->{value} .= $data;
+        }
         $self->{ca}->{has_reference} = 1 if $has_ref;
         $self->{state} = $self->{prev_state};
         ## Reconsume.
@@ -6192,6 +6115,34 @@ sub _get_next_token ($) {
 
   die "$0: _get_next_token: unexpected case";
 } # _get_next_token
+
+sub _expand_ge_in_attr ($$) {
+  my ($self, $name) = @_;
+
+  ## Expand general entity references in attribute values.  This
+  ## method can only be used for XML documents.
+
+  if ($self->{ge}->{$name}->{value} =~ /</) {
+    ## If the entity value contains a "<" character, referencing the
+    ## entity in an attribute value is a well-formedness error.
+    $self->{parse_error}->(level => $self->{level}->{must}, type => 'entref in attr has element',
+                    token => $self->{t});
+    return '&' . $name;
+  } else {
+    ## If the entity value contains a "&" character...
+    my $context = $self->{document}->create_element_ns (undef, 'dummy');
+    my $doc = $self->{document}->implementation->create_document;
+    my $parser = (ref $self)->new;
+    $parser->{initial_state} = ATTR_VALUE_ENTITY_STATE;
+    $parser->onerror ($self->onerror);
+    $parser->{ge} = {%{$self->{ge}}};
+    delete $parser->{ge}->{$name};
+    my $list = $parser->parse_char_string_with_context
+        ($self->{ge}->{$name}->{value}, $context, $doc);
+    # XXX pos
+    return join '', map { $_->text_content } @$list;
+  }
+} # _expand_ge_in_attr
 
 # XXX manakai_pos user data for Text nodes and entities
 # XXX entity refs should also set pos c.f. style="&amp;foo"

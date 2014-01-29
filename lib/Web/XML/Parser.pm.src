@@ -191,12 +191,13 @@ sub _terminate_tree_constructor ($) {
 
 ## Tree construction stage
 
-# XXX nested entref in attr values
 # XXX param refs
 # XXX external subset
 # XXX entref depth limitation
 # XXX error doc
 # XXX spec
+# XXX GE pos
+# XXX PE pos
 # XXX well-formedness of entity decls
 
 # XXX external entity support

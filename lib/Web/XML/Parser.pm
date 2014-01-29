@@ -191,6 +191,13 @@ sub _terminate_tree_constructor ($) {
 
 ## Tree construction stage
 
+# XXX nested entref in attr values
+# XXX param refs
+# XXX external subset
+# XXX entref depth limitation
+# XXX error doc
+# XXX spec
+# XXX well-formedness of entity decls
 
 # XXX external entity support
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
@@ -1259,13 +1266,6 @@ sub _parse_entity_subtree_token ($) {
       ($self->{ge}->{$t->{name}}->{value}, $context, $doc);
   # XXX pos
 } # _parse_entity_subtree_token
-
-# XXX ent outside root element tests
-# XXX nested entref in attr values
-# XXX param refs
-# XXX external subset
-# XXX entref depth limitation
-# XXX doc
 
 1;
 
