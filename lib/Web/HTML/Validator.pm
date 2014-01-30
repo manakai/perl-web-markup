@@ -7418,6 +7418,58 @@ $Element->{+HTML_NS}->{details} = {
   }, # check_end
 }; # details
 
+$Element->{+HTML_NS}->{summary} = {
+  %HTMLPhrasingContentChecker,
+  ## Phrasing content or a heading content element
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed:minus',
+                         level => 'm');
+    } elsif ($_Defs->{categories}->{'phrasing content'}->{elements}->{$child_nsuri}->{$child_ln} or
+             $_Defs->{categories}->{'phrasing content'}->{elements_with_exceptions}->{$child_nsuri}->{$child_ln}) {
+      if ($element_state->{has_heading}) {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:a heading',
+                           level => 'm');
+      } else {
+        $element_state->{has_phrasing} = 1;
+      }
+    } elsif ($_Defs->{categories}->{'heading content'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      if ($element_state->{has_phrasing}) {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:phrasing',
+                           level => 'm');
+      } elsif ($element_state->{has_heading}) {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:a heading',
+                           level => 'm');
+      } else {
+        $element_state->{has_heading} = 1;
+      }
+    } else {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed:phrasing',
+                         level => 'm');
+    }
+  }, # check_child_element
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($has_significant) {
+      if ($element_state->{has_heading}) {
+        $self->{onerror}->(node => $child_node,
+                           type => 'character not allowed:a heading',
+                           level => 'm');
+      } else {
+        $element_state->{has_phrasing} = 1;
+      }
+    }
+  }, # check_child_text
+}; # summary
+
 $Element->{+HTML_NS}->{menu} = {
   %AnyChecker,
   ## <menu type=toolbar>: (li | script-supporting)* | flow
