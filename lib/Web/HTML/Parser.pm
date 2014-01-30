@@ -2979,9 +2979,7 @@ sub _construct_tree ($) {
           } elsif (($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
             ## The "in caption" insertion mode, <caption> <col>
             ## <colgroup> <tbody> <td> <tfoot> <th> <thead> <tr>
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed', text => 'caption',
-                            token => $self->{t});
-            
+
             ## have a |caption| element in table scope
             my $i;
             INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
@@ -2993,10 +2991,24 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in caption',
+                              text => $self->{t}->{tag_name},
+                              token => $self->{t});
               ## Ignore the token.
               
               $self->{t} = $self->_get_next_token;
               redo B;
+            }
+
+            ## Generate implied end tags.
+            pop @{$self->{open_elements}}
+                while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+
+            unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                              text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                              value => 'caption', # actual (implied)
+                              token => $self->{t});
             }
 
             splice @{$self->{open_elements}}, $i;
@@ -3007,11 +3019,9 @@ sub _construct_tree ($) {
             
             next B;
           } else {
-            
             #
           }
         } else {
-          
           #
         }
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
@@ -3182,8 +3192,6 @@ sub _construct_tree ($) {
         } elsif ($self->{t}->{tag_name} eq 'table' and
                  ($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
           ## The "in caption" insertion mode, </table>
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed', text => 'caption',
-                          token => $self->{t});
 
           ## have a |caption| element in table scope
           my $i;
@@ -3196,12 +3204,25 @@ sub _construct_tree ($) {
             }
           } # INSCOPE
           unless (defined $i) {
-            
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                            value => $self->{t}->{tag_name},
+                            token => $self->{t});
             ## Ignore the token.
             $self->{t} = $self->_get_next_token;
             next B;
           }
-          
+
+          ## Generate implied end tags.
+          pop @{$self->{open_elements}}
+              while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
+
+          unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+                            text => $self->{open_elements}->[-1]->[0]->local_name, # expected
+                            value => $self->{t}->{tag_name}, # actual
+                            token => $self->{t});
+          }
+
           splice @{$self->{open_elements}}, $i;
           $self->_clear_up_to_marker;
           $self->{insertion_mode} = IN_TABLE_IM;
