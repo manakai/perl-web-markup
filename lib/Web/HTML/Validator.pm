@@ -7501,6 +7501,13 @@ $Element->{+HTML_NS}->{summary} = {
       }
     }
   }, # check_child_text
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    $self->{onerror}->(node => $item->{node},
+                       level => 's',
+                       type => 'no significant content')
+        unless $element_state->{has_palpable};
+  }, # check_end
 }; # summary
 
 $Element->{+HTML_NS}->{menu} = {
