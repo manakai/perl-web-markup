@@ -70,6 +70,9 @@ local/microdata.json:
 local/aria.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/aria.json
+local/html-syntax.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/html-syntax.json
 
 local/bin/jq:
 	mkdir -p local/bin
@@ -80,10 +83,10 @@ local/aria-html-map.json: local/aria.json local/bin/jq
 	cat local/aria.json | local/bin/jq '.attrs | to_entries | map(select(.value.preferred.type == "html-attr")) | map([.key, .value.preferred.name])' > $@
 
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
-    pmbp-install Makefile
+    local/html-syntax.json pmbp-install Makefile
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module JSON
-	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"prompt\":"; cat local/isindex-prompt.json; echo "}"' | \
+	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"prompt\":"; cat local/isindex-prompt.json; echo ",\"syntax\":"; cat local/html-syntax.json; echo "}"' | \
 	$(PERL) -MJSON -MEncode -MData::Dumper -e ' #\
 	  local $$/ = undef; #\
 	  $$data = JSON->new->decode (decode "utf-8", scalar <>); #\
@@ -103,6 +106,10 @@ lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
 	    $$text .= " " if $$text =~ /:$$/; #\
 	    $$result->{prompt}->{$$locale} = $$text; #\
 	  } #\
+	  for (qw(adjusted_mathml_attr_names adjusted_ns_attr_names), #\
+               qw(adjusted_svg_attr_names adjusted_svg_element_names)) { #\
+	    $$result->{$$_} = $$data->{syntax}->{$$_}; #\
+          } #\
 	  $$pm = Dumper $$result; #\
 	  $$pm =~ s/VAR1/Web::HTML::_SyntaxDefs/; #\
 	  print "$$pm\n"; #\
