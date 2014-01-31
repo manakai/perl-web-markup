@@ -159,7 +159,7 @@ sub _test ($) {
 
   if ($test->{entities}) {
     my @e;
-    for (keys %$ges) {
+    for (sort { $a cmp $b } keys %$ges) {
       my $ent = $ges->{$_};
       my $v = '<!ENTITY ' . $ent->{name} . ' "'; 
       $v .= $ent->{value} if defined $ent->{value};
@@ -172,7 +172,7 @@ sub _test ($) {
       $v .= '>';
       push @e, $v;
     }
-    for (keys %$pes) {
+    for (sort { $a cmp $b } keys %$pes) {
       my $ent = $pes->{$_};
       my $v = '<!ENTITY % ' . $ent->{name} . ' "'; 
       $v .= $ent->{value} if defined $ent->{value};
