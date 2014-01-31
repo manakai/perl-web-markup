@@ -834,7 +834,10 @@ sub _create_el ($$$$) {
     ];
 
     my $attrs = $token->{attributes};
-    for my $attr_name (keys %$attrs) {
+    for my $attr_name (sort {
+      $attrs->{$a}->{line} <=> $attrs->{$b}->{line} ||
+      $attrs->{$a}->{column} <=> $attrs->{$b}->{column};
+    } keys %$attrs) {
       my $attr_t = $attrs->{$attr_name};
       my $attr = $od->create_attribute ($attr_name);
       $attr->value ($attr_t->{value});

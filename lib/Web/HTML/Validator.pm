@@ -2041,7 +2041,7 @@ sub _validate_aria ($$) {
         }
         $self->{onerror}->(node => $node,
                            type => 'aria:role:no required owned element',
-                           text => (join ' ', keys %{$role_def->{must_contain}}),
+                           text => (join ' ', sort { $a cmp $b } keys %{$role_def->{must_contain}}),
                            value => $role,
                            level => 'm');
       }
@@ -7961,14 +7961,14 @@ sub _validate_microdata_item ($$;$) {
             $_Defs->{schemaorg_props}->{$prop}) {
           $self->{onerror}->(node => $_,
                              type => 'microdata:schemaorg:bad domain',
-                             text => (join ' ', grep { $item->{types}->{$_} } keys %{$item->{types} or {}}),
+                             text => (join ' ', sort { $a cmp $b } grep { $item->{types}->{$_} } keys %{$item->{types} or {}}),
                              value => $prop,
                              level => 'm')
               for map { $_->{node} } @{$item->{props}->{$prop} or []};
         } else {
           $self->{onerror}->(node => $_,
                              type => 'microdata:itemprop not defined',
-                             text => (join ' ', grep { $item->{types}->{$_} } keys %{$item->{types} or {}}),
+                             text => (join ' ', sort { $a cmp $b } grep { $item->{types}->{$_} } keys %{$item->{types} or {}}),
                              value => $prop,
                              level => $vocab eq 'http://schema.org/' ? 'w' : 'm')
               for map { $_->{node} } @{$item->{props}->{$prop} or []};
@@ -8005,8 +8005,8 @@ sub _validate_microdata_item ($$;$) {
             if ($prop_def->{item}) { ## Different type is expected
               $self->{onerror}->(node => $value->{node},
                                  type => 'microdata:unexpected nested item type',
-                                 text => (join ' ', grep { $prop_def->{item}->{types}->{$_} } keys %{$prop_def->{item}->{types} or {}}), # expected
-                                 value => (join ' ', grep { $value->{types}->{$_} } keys %{$value->{types}}), # actual
+                                 text => (join ' ', sort { $a cmp $b } grep { $prop_def->{item}->{types}->{$_} } keys %{$prop_def->{item}->{types} or {}}), # expected
+                                 value => (join ' ', sort { $a cmp $b } grep { $value->{types}->{$_} } keys %{$value->{types}}), # actual
                                  level => 'm')
                   if keys %{$prop_def->{item}->{types} or {}};
             } elsif (defined $prop_def->{value} or ## Non-item is expected
