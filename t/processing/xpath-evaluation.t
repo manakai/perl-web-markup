@@ -104,7 +104,7 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
       }
 
       my $lookup_ns = sub {
-        return $ns{$_[0] // ''};
+        return $ns{defined $_[0] ? $_[0] : ''};
       }; # lookup_namespace_uri
 
       my $parser = Web::XPath::Parser->new;
@@ -116,19 +116,23 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
       my @error;
       $evaluator->onerror (sub {
         my %args = @_;
-        push @error, join ';', $args{level}, $args{type}, $args{value} // '';
+        push @error, join ';', $args{level}, $args{type}, defined $args{value} ? $args{value} : '';
       });
 
       my $xerrors = {};
       for (@{$test->{errors} or []}) {
-        my $label = $_->[1]->[0] // '';
-        my $root = $_->[1]->[1] // '/';
+        my $label = $_->[1]->[0];
+        $label = '' unless defined $label;
+        my $root = $_->[1]->[1];
+        $root = '/' unless defined $root;
         $xerrors->{$label, $root} = $_;
       }
 
       for my $result (@{$test->{result} or []}) {
-        my $label = $result->[1]->[0] // '';
-        my $root = $result->[1]->[1] // '/';
+        my $label = $result->[1]->[0];
+        $label = '' unless defined $label;
+        my $root = $result->[1]->[1];
+        $root = '/' unless defined $root;
         my $doc = $documents->{$f, $label} or die "Test |$label| not found\n";
         my $root_node = get_node_by_path ($doc, $root);
         @error = ();
@@ -141,6 +145,7 @@ for my $f (grep { -f and /\.dat$/ } file (__FILE__)->dir->parent->parent->subdir
             $actual = 'null';
           } elsif ($r->{type} eq 'number') {
             $actual = $r->{value};
+            $actual = '0' if $actual eq '-0'; ## < Perl 5.14
           } elsif ($r->{type} eq 'boolean') {
             $actual = $r->{value} ? 'true' : 'false';
           } elsif ($r->{type} eq 'string') {
@@ -166,7 +171,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

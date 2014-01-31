@@ -1,6 +1,7 @@
 package Web::XPath::Parser;
 use strict;
 use warnings;
+no warnings 'utf8';
 our $VERSION = '1.0';
 use Char::Class::XML qw(InXMLNCNameChar10_1 InXML_NCNameStartChar10_1);
 

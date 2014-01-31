@@ -1,6 +1,7 @@
 package Web::XPath::Evaluator;
 use strict;
 use warnings;
+no warnings 'utf8';
 our $VERSION = '1.0';
 use POSIX ();
 use Scalar::Util qw(refaddr);
@@ -259,7 +260,9 @@ sub to_boolean ($$) {
     return {type => 'boolean', value => !!@{$value->{value}}};
   } elsif ($value->{type} eq 'number') {
     return {type => 'boolean',
-            value => not ($value->{value} eq 'nan' or not $value->{value})};
+            value => not ($value->{value} eq 'nan' or
+                          $value->{value} eq '-0' or ## < Perl 5.14
+                          not $value->{value})};
   } elsif ($value->{type} eq 'string') {
     return {type => 'boolean', value => !!length $value->{value}};
   } else {
@@ -741,7 +744,7 @@ sub evaluate ($$$;%) {
 
 =head1 LICENSE
 
-Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

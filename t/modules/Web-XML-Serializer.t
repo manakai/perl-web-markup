@@ -40,7 +40,7 @@ for my $test (
   test {
     my $c = shift;
     my $doc = create_doc_from_html $test->[0];
-    is ${Web::XML::Serializer->new->get_inner_html ($doc)}, $test->[1] // $test->[0];
+    is ${Web::XML::Serializer->new->get_inner_html ($doc)}, $test->[1] || $test->[0];
     done $c;
   } n => 1, name => 'document_inner_html';
 }
@@ -58,7 +58,7 @@ for my $test (
   test {
     my $c = shift;
     my ($doc, $el) = create_el_from_html $test->[0];
-    is ${Web::XML::Serializer->new->get_inner_html ($el)}, $test->[1] // $test->[0];
+    is ${Web::XML::Serializer->new->get_inner_html ($el)}, $test->[1] || $test->[0];
     done $c;
   } n => 1, name => 'element_inner_html';
 }

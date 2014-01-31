@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'utf8';
 use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', 'test-x1', 'lib')->stringify;
