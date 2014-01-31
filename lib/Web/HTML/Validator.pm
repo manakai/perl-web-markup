@@ -136,6 +136,7 @@ my $GetNestedOnError = sub {
 ##                   there is a |figcaption| child element whose content
 ##                   has elements and/or texts other than inter-element
 ##                   whitespaces.
+##   has_heading     Has heading content (used for <summary> validation).
 ##   has_label_original Used to preserve the value of
 ##                   |$self->{flag}->{has_label}| at the time of
 ##                   invocation of the method |check_start| for the
@@ -148,6 +149,7 @@ my $GetNestedOnError = sub {
 ##                   |style| elements.
 ##   has_palpable    Set to true if a palpable content child is found.
 ##                   (Handled specially for <ruby>.)
+##   has_phrasing    Has phrasing content (used for <summary> validation).
 ##   has_summary     Used by |details| element checker.
 ##   in_a_href_original Used to preserve |$self->{flag}->{in_a_href}|.
 ##   in_flow_content Set to true while the content model checker is
@@ -7507,6 +7509,7 @@ $Element->{+HTML_NS}->{summary} = {
                        level => 's',
                        type => 'no significant content')
         unless $element_state->{has_palpable};
+    $HTMLPhrasingContentChecker{check_end}->(@_);
   }, # check_end
 }; # summary
 
