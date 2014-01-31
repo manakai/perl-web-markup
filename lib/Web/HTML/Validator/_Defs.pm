@@ -8795,8 +8795,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                }
                                                                                        },
                                                                              "attrs" => {},
+                                                                             "complex_content_model" => [
+                                                                                                          {
+                                                                                                            "categories" => {
+                                                                                                                              "flow content" => 1,
+                                                                                                                              "heading content" => 1
+                                                                                                                            }
+                                                                                                          }
+                                                                                                        ],
                                                                              "conforming" => 1,
-                                                                             "content_model" => "phrasing content"
+                                                                             "has_additional_content_constraints" => 1
                                                                            },
                                                               "sup" => {
                                                                          "attrs" => {},
@@ -11779,7 +11787,24 @@ $Web::HTML::Validator::_Defs = {
                                                                    },
                                                         "default_role" => "slider",
                                                         "strong_role" => 1
-                                                      }
+                                                      },
+                                                "multiple" => {
+                                                                "attrs" => {
+                                                                             "aria-readonly" => {
+                                                                                                  "attr" => "readonly",
+                                                                                                  "strong" => 1,
+                                                                                                  "value_type" => "true/missing"
+                                                                                                },
+                                                                             "aria-valuemax" => {
+                                                                                                  "strong" => 1,
+                                                                                                  "value_type" => "maximum"
+                                                                                                },
+                                                                             "aria-valuemin" => {
+                                                                                                  "strong" => 1,
+                                                                                                  "value_type" => "minimum"
+                                                                                                }
+                                                                           }
+                                                              }
                                               },
                                    "reset" => {
                                                 "" => {
@@ -12108,7 +12133,8 @@ $Web::HTML::Validator::_Defs = {
                                               },
                                     "multiple" => {
                                                     "email" => 1,
-                                                    "file" => 1
+                                                    "file" => 1,
+                                                    "range" => 1
                                                   },
                                     "pattern" => {
                                                    "email" => 1,
@@ -12211,7 +12237,7 @@ $Web::HTML::Validator::_Defs = {
                                                  "number" => "floating-point number",
                                                  "password" => "one-line text",
                                                  "radio" => "any",
-                                                 "range" => "floating-point number",
+                                                 "range" => "one or two floating-point numbers",
                                                  "reset" => "any",
                                                  "search" => "one-line text",
                                                  "submit" => "any",

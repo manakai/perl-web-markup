@@ -661,6 +661,33 @@ $ItemValueChecker->{'floating-point number'} = sub {
   }
 }; # floating-point number
 
+## Two floating-point numbers, separated by just a COMMA character
+$CheckerByType->{'one or two floating-point numbers'} = sub {
+  ## <input type=range> is handled by "floating-point number" checker
+  ## (see <input>'s code).  This checker only handles <input
+  ## type=range multiple> case, where two floating-point numbers are
+  ## required.
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  if ($value =~ /\A
+    (-? (?> [0-9]+ (?>(?:\.[0-9]+))? | \.[0-9]+))
+    (?>[Ee] ([+-]?[0-9]+) )?
+    ,
+    (-? (?> [0-9]+ (?>(?:\.[0-9]+))? | \.[0-9]+))
+    (?>[Ee] ([+-]?[0-9]+) )?
+  \z/x) {
+    my $num1 = 0+$1;
+    $num1 *= 10 ** ($2 + 0) if $2;
+    my $num2 = 0+$3;
+    $num2 *= 10 ** ($4 + 0) if $4;
+    $element_state->{number_values}->{$attr->name} = [$num1, $num2];
+  } else {
+    $self->{onerror}->(node => $attr,
+                       type => 'two floats:syntax error',
+                       level => 'm');
+  }
+}; # one or two floating-point numbers
+
 $ElementAttrChecker->{(HTML_NS)}->{input}->{''}->{step} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
@@ -6505,7 +6532,10 @@ $Element->{+HTML_NS}->{input} = {
                                level => 'u');
           };
           $checker = $CheckerByType->{'e-mail address'}
-              if $value_type eq 'email' and
+              if $input_type eq 'email' and
+                 not $item->{node}->has_attribute_ns (undef, 'multiple');
+          $checker = $CheckerByType->{'floating-point number'}
+              if $input_type eq 'range' and
                  not $item->{node}->has_attribute_ns (undef, 'multiple');
           $checker->($self, $attr, $item, $element_state);
         }
@@ -6521,6 +6551,8 @@ $Element->{+HTML_NS}->{input} = {
                            type => 'unknown attribute',
                            level => 'u');
       };
+      $checker = $CheckerByType->{'floating-point number'}
+          if $input_type eq 'range';
       $checker->($self, $attr, $item, $element_state);
     } # min="" max=""
 
@@ -6684,37 +6716,38 @@ $Element->{+HTML_NS}->{input} = {
              defined $element_state->{number_value}->{max}) {
       my $min_value = $element_state->{number_value}->{min};
       my $max_value = $element_state->{number_value}->{max};
-      my $value_value = $element_state->{number_value}->{value};
 
       if (defined $min_value and defined $max_value) {
-        if ($min_value > $max_value) {
+        if (not $min_value <= $max_value) {
           my $attr = $item->{node}->get_attribute_node_ns (undef, 'max')
               || $item->{node}->get_attribute_node_ns (undef, 'min');
           $self->{onerror}->(node => $attr,
+                             value => "$min_value <= $max_value",
                              type => 'max lt min',
                              level => 'm');
         }
       }
-      
-      if (defined $min_value and defined $value_value) {
-        if ($min_value > $value_value) {
+
+      for my $value_value (
+        (defined $element_state->{number_value}->{value}
+            ? ($element_state->{number_value}->{value}) : ()),
+        @{$element_state->{number_values}->{value} or []},
+      ) {
+        if (defined $min_value and not $min_value <= $value_value) {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value lt min',
+                             value => "$min_value <= $value_value",
                              level => 'w');
-          ## NOTE: Not an error.
         }
-      }
-      
-      if (defined $max_value and defined $value_value) {
-        if ($max_value < $value_value) {
+        if (defined $max_value and not $value_value <= $max_value) {
           my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
           $self->{onerror}->(node => $value,
                              type => 'value gt max',
+                             value => "$value_value <= $max_value",
                              level => 'w');
-          ## NOTE: Not an error.
         }
-      }
+      } # $value_value
     }
     
     ## TODO: Warn unless value = min * x where x is an integer.
