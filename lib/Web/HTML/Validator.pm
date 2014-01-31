@@ -121,6 +121,8 @@ my $GetNestedOnError = sub {
 ##   {in_phrasing}       Set to true if in phrasing content expecting element.
 ##   {is_template}       The checker is in the template content mode.
 ##   {no_interactive}    Set to true if no interactive content is allowed.
+##   {node_is_hyperlink}->{refaddr $node}
+##                       Whether $node creates a hyperlink link or not.
 
 ## $element_state
 ##
@@ -1436,8 +1438,6 @@ $NamespacedAttrChecker->{(XMLNS_NS)}->{''} = sub {
 
 ## ------ ARIA ------
 
-my $NodeIsHyperlink = {};
-
 $ElementAttrChecker->{(HTML_NS)}->{'*'}->{''}->{role} = sub { };
 $ElementAttrChecker->{(SVG_NS)}->{'*'}->{''}->{role} = sub { };
 
@@ -1657,7 +1657,7 @@ sub _validate_aria ($$) {
         $adef = $aria_defs->{'hyperlink'}
             if $node->has_attribute_ns (undef, 'href');
       } elsif ($ln eq 'link') {
-        if ($NodeIsHyperlink->{refaddr $node}) {
+        if ($self->{flag}->{node_is_hyperlink}->{refaddr $node}) {
           $adef = $aria_defs->{'hyperlink'};
         }
       } elsif ($ln eq 'input' and $node->type eq 'range') {
@@ -2645,7 +2645,8 @@ my $HTMLLinkTypesAttrChecker = sub {
   $todo->{has_hyperlink_link_type} = 1 if $is_hyperlink;
   $element_state->{link_rel} = \%word;
 
-  $NodeIsHyperlink->{refaddr $item->{node}} = 1 if $is_hyperlink;
+  $self->{flag}->{node_is_hyperlink}->{refaddr $item->{node}} = $item->{node}
+      if $is_hyperlink;
 }; # $HTMLLinkTypesAttrChecker
 
 ## Valid global date and time.
