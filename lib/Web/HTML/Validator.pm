@@ -1660,6 +1660,8 @@ sub _validate_aria ($$) {
         if ($NodeIsHyperlink->{refaddr $node}) {
           $adef = $aria_defs->{'hyperlink'};
         }
+      } elsif ($ln eq 'input' and $node->type eq 'range') {
+        $adef = $aria_defs->{multiple} if $node->multiple;
       } elsif ($ln eq 'select') {
         my $type = $node->multiple ? 'multilist' : $node->size > 1 ? 'singlelist' : 'dropdown';
         $adef = $aria_defs->{$type};
