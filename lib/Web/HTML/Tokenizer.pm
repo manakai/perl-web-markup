@@ -3458,8 +3458,7 @@ sub _get_next_token ($) {
           
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare ero',
                           line => $self->{line_prev},
-                          column => $self->{column_prev}
-                              + ($nc == -1 ? 1 : 0));
+                          column => $self->{column_prev});
         } else {
           
           ## No error
@@ -3841,7 +3840,7 @@ sub _get_next_token ($) {
                                           'apos;' => $self->{level}->{warn},
                                          }->{$self->{kwd}} ||
                                          $self->{level}->{must},
-                                line => $self->{line_prev},
+                                line => $self->{line},
                                 column => $self->{column} - length $self->{kwd});
               } else {
                 
@@ -3878,7 +3877,7 @@ sub _get_next_token ($) {
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## XXXtype
                               value => $self->{kwd},
                               level => $self->{level}->{must},
-                              line => $self->{line_prev},
+                              line => $self->{line},
                               column => $self->{column} - length $self->{kwd});
             }
             $self->{entity__value} .= chr $nc;
@@ -3910,6 +3909,7 @@ sub _get_next_token ($) {
                           line => $self->{line},
                           column => $self->{column});
         }
+        #
       }
 
       my $data;
@@ -3972,24 +3972,40 @@ sub _get_next_token ($) {
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
         ## An entity reference in an element content
-        $self->{state} = $self->{prev_state};
-        ## Reconsume.
         if ($self->{entity__is_tree}) {
-          ## An XML internal parsed entity with "&" and/or "<", or an
-          ## XML external parsed entity
-          return  ({type => ENTITY_SUBTREE_TOKEN,
-                    name => $self->{kwd},
-                    line => $self->{line_prev},
-                    column => $self->{column_prev} + 1 - length $self->{kwd}});
+          if (not defined $self->{ge}->{$self->{kwd}}->{value}) {
+            ## An external entity
+
+            ## Ignore the entity reference
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
+                            value => $self->{kwd},
+                            line => $self->{line_prev},
+                            column => $self->{column_prev} - length $self->{kwd},
+                            level => 'i');
+
+            $self->{state} = $self->{prev_state};
+            ## Reconsume the current input character.
+            redo A;
+          } else {
+            ## An XML internal parsed entity with "&" and/or "<"
+            $self->{state} = $self->{prev_state};
+            ## Reconsume the current input character.
+            return  ({type => ENTITY_SUBTREE_TOKEN,
+                      name => $self->{kwd},
+                      line => $self->{line_prev},
+                      column => $self->{column_prev} - length $self->{kwd}});
+          }
         } else {
           ## An XML unexpanded entity, an HTML character reference
           ## (defined or not defined), an XML internal parsed entity
           ## without "&" and "<"
+          $self->{state} = $self->{prev_state};
+          ## Reconsume the current input character.
           return  ({type => CHARACTER_TOKEN,
                     data => $data,
                     has_reference => $has_ref,
                     line => $self->{line_prev},
-                    column => $self->{column_prev} + 1 - length $self->{kwd}});
+                    column => $self->{column_prev} - length $self->{kwd}});
         }
         redo A;
       } else {
@@ -4001,7 +4017,7 @@ sub _get_next_token ($) {
         }
         $self->{ca}->{has_reference} = 1 if $has_ref;
         $self->{state} = $self->{prev_state};
-        ## Reconsume.
+        ## Reconsume the current input character.
         redo A;
       }
 
@@ -4012,23 +4028,20 @@ sub _get_next_token ($) {
 
       if ($is_space->{$nc} or
           $nc == 0x003F or # ?
-          $nc == -1) {
+          $nc == EOF_CHAR) {
         ## XML5: U+003F: "pi state": Same as "Anything else"; "DOCTYPE
         ## pi state": Switch to the "DOCTYPE pi after state".  EOF:
         ## "DOCTYPE pi state": Parse error, switch to the "data
         ## state".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare pio', ## TODO: type
                         line => $self->{line_prev},
-                        column => $self->{column_prev}
-                            - 1 * ($nc != -1));
+                        column => $self->{column_prev} - 1);
         $self->{state} = BOGUS_COMMENT_STATE;
         ## Reconsume.
         $self->{ct} = {type => COMMENT_TOKEN,
                        data => '?',
                        line => $self->{line_prev},
-                       column => $self->{column_prev}
-                           - 1 * ($nc != -1),
-                      };
+                       column => $self->{column_prev} - 1};
         redo A;
       } else {
         ## XML5: "DOCTYPE pi state": Stay in the state.
@@ -4039,8 +4052,7 @@ sub _get_next_token ($) {
                        target => $nc == 0x0000 ? "\x{FFFD}" : chr $nc,
                        data => '',
                        line => $self->{line_prev},
-                       column => $self->{column_prev} - 1,
-                      };
+                       column => $self->{column_prev} - 1};
         $self->{state} = PI_TARGET_STATE;
         
     $self->_set_nc;
@@ -4165,8 +4177,7 @@ sub _get_next_token ($) {
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no s after target', ## TODO: type
                         line => $self->{line_prev},
-                        column => $self->{column_prev}
-                            + 1 * ($nc == -1)); ## XML5: no error
+                        column => $self->{column_prev}); ## XML5: no error
         $self->{ct}->{data} .= '?'; ## XML5: not appended
         $self->{state} = PI_DATA_STATE;
         ## Reprocess.
@@ -4400,8 +4411,7 @@ sub _get_next_token ($) {
         ## XML5: No parse error.
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
-                        column => $self->{column_prev} - 2
-                            + 1 * ($nc == EOF_CHAR));
+                        column => $self->{column_prev} - 2);
         ## Reconsume.
         $self->{state} = BOGUS_COMMENT_STATE;
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
@@ -4451,8 +4461,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
-                            - (length $self->{kwd})
-                            + 1 * ($nc == EOF_CHAR));
+                            - (length $self->{kwd}));
         $self->{state} = BOGUS_COMMENT_STATE;
         ## Reconsume.
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
@@ -4504,8 +4513,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
-                            - (length $self->{kwd})
-                            + 1 * ($nc == EOF_CHAR));
+                            - (length $self->{kwd}));
         $self->{state} = BOGUS_COMMENT_STATE;
         ## Reconsume.
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
@@ -4558,8 +4566,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
-                             - (length $self->{kwd})
-                             + 1 * ($nc == EOF_CHAR));
+                             - (length $self->{kwd}));
         $self->{state} = BOGUS_COMMENT_STATE;
         ## Reconsume.
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
@@ -4613,8 +4620,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bogus comment',
                         line => $self->{line_prev},
                         column => $self->{column_prev} - 1
-                            - (length $self->{kwd})
-                            + 1 * ($nc == EOF_CHAR));
+                            - (length $self->{kwd}));
         $self->{state} = BOGUS_COMMENT_STATE;
         ## Reconsume.
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
@@ -5735,8 +5741,7 @@ sub _get_next_token ($) {
           }->{$nc}) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare ero',
                         line => $self->{line_prev},
-                        column => $self->{column_prev}
-                            + ($nc == EOF_CHAR ? 1 : 0));
+                        column => $self->{column_prev});
         ## Don't consume
         ## Return nothing.
         #

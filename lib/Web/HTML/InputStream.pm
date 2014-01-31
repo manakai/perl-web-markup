@@ -2,7 +2,7 @@ package Web::HTML::InputStream;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '5.0';
+our $VERSION = '6.0';
 use Web::Encoding ();
 use Web::HTML::Defs;
 
@@ -562,6 +562,10 @@ sub _set_nc ($) {
         $self->{nc} = ABORT_CHAR;
       } else {
         delete $self->{chars_was_cr};
+        if ($self->{nc} != EOF_CHAR) {
+          $self->{line_prev} = $self->{line};
+          $self->{column_prev} = $self->{column};
+        }
         $self->{nc} = EOF_CHAR;
       }
     }

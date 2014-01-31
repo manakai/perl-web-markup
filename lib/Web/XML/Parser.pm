@@ -193,9 +193,8 @@ sub _terminate_tree_constructor ($) {
 
 # XXX param refs
 # XXX external subset
-# XXX external refs
+# XXX expansion of external GE refs
 # XXX entref depth limitation
-# XXX error doc
 # XXX spec
 # XXX GE pos
 # XXX PE pos
@@ -1261,17 +1260,6 @@ sub _tree_in_subset ($) {
 sub _parse_entity_subtree_token ($) {
   my $self = $_[0];
   my $t = $self->{t};
-  if (not defined $self->{ge}->{$t->{name}}->{value}) {
-    ## An external entity
-
-    ## Ignore the entity reference
-    $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
-                    value => $t->{name},
-                    line => $self->{line},
-                    column => $self->{column} - 1 - length $t->{name},
-                    level => 'i');
-    return [];
-  }
 
   my $context = @{$self->{open_elements}}
       ? $self->{open_elements}->[-1]->[0]
