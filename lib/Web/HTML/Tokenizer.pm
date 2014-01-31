@@ -2,7 +2,7 @@ package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '6.0';
+our $VERSION = '7.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -3805,20 +3805,26 @@ sub _get_next_token ($) {
             if (defined $self->{ge}->{$self->{kwd}}) {
               ## A declared XML entity.
               if ($self->{ge}->{$self->{kwd}}->{only_text}) {
-                
+                ## Internal entity with no "&" or "<" in value
                 $self->{entity__value} = $self->{ge}->{$self->{kwd}}->{value};
                 delete $self->{entity__is_tree};
                 # XXX entity__pos
-              } else {
-                if (defined $self->{ge}->{$self->{kwd}}->{notation}) {
-                  
-                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'unparsed entity', ## TODO: type
-                                  value => $self->{kwd});
-                  delete $self->{entity__is_tree};
-                } elsif (defined $self->{ge}->{$self->{kwd}}->{value}) {
-                  $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
-                }
+              } elsif (defined $self->{ge}->{$self->{kwd}}->{notation}) {
+                ## Unparsed entity
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unparsed entity',
+                                value => $self->{kwd},
+                                line => $self->{line},
+                                column => $self->{column} - length $self->{kwd});
                 $self->{entity__value} = '&' . $self->{kwd};
+                delete $self->{entity__is_tree};
+              } elsif (defined $self->{ge}->{$self->{kwd}}->{value}) {
+                ## Internal entity with "&" and/or "<"
+                $self->{entity__value} = '&' . $self->{kwd};
+                $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
+              } else {
+                ## External parsed entity
+                $self->{entity__value} = '&' . $self->{kwd};
+                $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
               }
             } else {
               ## An HTML character reference.
@@ -3965,15 +3971,20 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
-        
+        ## An entity reference in an element content
         $self->{state} = $self->{prev_state};
         ## Reconsume.
         if ($self->{entity__is_tree}) {
+          ## An XML internal parsed entity with "&" and/or "<", or an
+          ## XML external parsed entity
           return  ({type => ENTITY_SUBTREE_TOKEN,
                     name => $self->{kwd},
                     line => $self->{line_prev},
                     column => $self->{column_prev} + 1 - length $self->{kwd}});
         } else {
+          ## An XML unexpanded entity, an HTML character reference
+          ## (defined or not defined), an XML internal parsed entity
+          ## without "&" and "<"
           return  ({type => CHARACTER_TOKEN,
                     data => $data,
                     has_reference => $has_ref,
@@ -3982,6 +3993,7 @@ sub _get_next_token ($) {
         }
         redo A;
       } else {
+        ## An entity reference in an attribute value
         if ($self->{entity__is_tree}) {
           $self->{ca}->{value} .= $self->_expand_ge_in_attr ($self->{kwd}); # XXX pos
         } else {
@@ -6122,11 +6134,19 @@ sub _expand_ge_in_attr ($$) {
   ## Expand general entity references in attribute values.  This
   ## method can only be used for XML documents.
 
-  if ($self->{ge}->{$name}->{value} =~ /</) {
+  if (not defined $self->{ge}->{$name}->{value}) {
+    ## An external entity
+    $self->{parse_error}->(level => $self->{level}->{must}, type => 'WFC:No External Entity References',
+                    line => $self->{line},
+                    column => $self->{column} - 1 - length $name,
+                    value => $name);
+    return '&' . $name;
+  } elsif ($self->{ge}->{$name}->{value} =~ /</) {
     ## If the entity value contains a "<" character, referencing the
     ## entity in an attribute value is a well-formedness error.
     $self->{parse_error}->(level => $self->{level}->{must}, type => 'entref in attr has element',
-                    token => $self->{t});
+                    line => $self->{line},
+                    column => $self->{column} - 1 - length $name);
     return '&' . $name;
   } else {
     ## If the entity value contains a "&" character...

@@ -191,16 +191,24 @@ sub _terminate_tree_constructor ($) {
 
 ## Tree construction stage
 
-# XXX nested entref in attr values
 # XXX param refs
 # XXX external subset
+# XXX external refs
 # XXX entref depth limitation
 # XXX error doc
 # XXX spec
+# XXX GE pos
+# XXX PE pos
 # XXX well-formedness of entity decls
 
 # XXX external entity support
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
+
+# XXX GEref: 
+#       If internal entity, expanded.
+#       If unparsed entity, a well-formedness error.
+#       If external entity, expanded to the empty string.
+#       Otherwise, a well-formedness error.
 
 ## NOTE: Differences from the XML5 draft are marked as "XML5:".
 
@@ -1252,10 +1260,22 @@ sub _tree_in_subset ($) {
 
 sub _parse_entity_subtree_token ($) {
   my $self = $_[0];
+  my $t = $self->{t};
+  if (not defined $self->{ge}->{$t->{name}}->{value}) {
+    ## An external entity
+
+    ## Ignore the entity reference
+    $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
+                    value => $t->{name},
+                    line => $self->{line},
+                    column => $self->{column} - 1 - length $t->{name},
+                    level => 'i');
+    return [];
+  }
+
   my $context = @{$self->{open_elements}}
       ? $self->{open_elements}->[-1]->[0]
       : $self->{document}->create_element_ns (undef, 'dummy');
-  my $t = $self->{t};
 
   my $doc = $self->{document}->implementation->create_document;
   my $parser = (ref $self)->new;
