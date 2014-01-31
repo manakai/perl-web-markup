@@ -425,7 +425,7 @@ sub manakai_has_bom ($;$) {
 
 sub xml_version ($;$) {
   $_[0]->{xml_version} = $_[1] if @_ > 1;
-  return $_[0]->{xml_version} // '1.0';
+  return $_[0]->{xml_version} || '1.0';
 }
 
 sub xml_encoding ($;$) {
