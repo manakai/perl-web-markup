@@ -140,7 +140,7 @@ sub _test ($) {
   }
 
   if ($test->{'xml-encoding'}) {
-    if (($test->{'xml-encoding'}->[1]->[0] // '') eq 'null') {
+    if (($test->{'xml-encoding'}->[1]->[0] || '') eq 'null') {
       is $doc->xml_encoding, undef, 'XML encoding';
     } else {
       is $doc->xml_encoding, $test->{'xml-encoding'}->[0], 'XML encoding';
