@@ -122,9 +122,9 @@ sub _test ($) {
   $parser->onerror (sub {
     my %opt = @_;
     if ($opt{level} eq 's') {
-      push @shoulds, join ':', grep { defined } $opt{line}, $opt{column}, $opt{value} // '', $opt{type}, $opt{text};
+      push @shoulds, join ':', grep { defined } $opt{line}, $opt{column}, defined $opt{value} ? $opt{value} : '', $opt{type}, $opt{text};
     } else {
-      push @errors, join ':', grep { defined } $opt{line}, $opt{column}, $opt{value} // '', $opt{type}, $opt{text};
+      push @errors, join ':', grep { defined } $opt{line}, $opt{column}, defined $opt{value} ? $opt{value} : '', $opt{type}, $opt{text};
     }
   }); # onerror
 
