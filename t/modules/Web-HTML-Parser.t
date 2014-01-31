@@ -12,52 +12,6 @@ use Web::HTML::Parser;
 use Web::DOM::Implementation;
 use Web::DOM::Document;
 
-sub _html_parser_gc : Test(2) {
-  my $parser_destroy_called = 0;
-  my $doc_destroy_called = 0;
-
-  no warnings 'redefine';
-  local *Web::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
-  local *Web::DOM::Document::DESTROY = sub { $doc_destroy_called++ };
-
-  my $doc = new Web::DOM::Document;
-  Web::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
-
-  is $parser_destroy_called, 1;
-
-  undef $doc;
-  is $doc_destroy_called, 1;
-} # _html_parser_gc
-
-sub _html_fragment_parser_gc : Test(6) {
-  my $parser_destroy_called = 0;
-  my $doc_destroy_called = 0;
-  my $el_destroy_called = 0;
-
-  no warnings 'redefine';
-  no warnings 'once';
-  require Web::HTML::Parser;
-  local *Web::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
-  local *Web::DOM::Document::DESTROY = sub { $doc_destroy_called++ };
-  local *Web::DOM::Element::DESTROY = sub { $el_destroy_called++ };
-
-  my $doc = new Web::DOM::Document;
-  $doc->manakai_is_html (1);
-  my $el = $doc->create_element_ns (undef, [undef, 'p']);
-
-  $el->inner_html (q[]);
-  is $el_destroy_called, 1; # fragment parser's |Element|
-  is $doc_destroy_called, 1; # fragment parser's |Document|
-
-  is $parser_destroy_called, 1; # parser itself
-
-  undef $el;
-  is $el_destroy_called, 2; # $el
-  undef $doc;
-  is $doc_destroy_called, 2; # $doc
-  is $el_destroy_called, 2;
-} # _html_fragment_parser_gc
-
 sub _html_parser_srcdoc : Test(3) {
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_srcdoc (1);
