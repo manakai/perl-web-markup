@@ -33,8 +33,7 @@ pmbp-install: pmbp-upgrade
 
 ## ------ Build ------
 
-GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm \
-  lib/Web/XML/Parser.pm
+GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm
 
 generated-pm-files: $(GENERATED_PM_FILES)
 
