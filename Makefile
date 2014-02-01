@@ -1,10 +1,9 @@
 # -*- Makefile -*-
 
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
-    lib/Web/HTML/_SyntaxDefs.pm
+    lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm
 clean:
-	rm -fr local/elements.json local/input-prompt.json
-	rm -fr local/microdata.json
+	rm -fr local/*.json
 
 PERL = ./perl
 PROVE = ./prove
@@ -43,9 +42,10 @@ $(GENERATED_PM_FILES):: %: %.src deps bin/mkhtmlparser.pl
 
 CURL = curl
 
-update-entities: local/bin/pmbp.pl
-	perl local/bin/pmbp.pl --install-module JSON
-	$(CURL) http://www.whatwg.org/specs/web-apps/current-work/entities.json | \
+lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
+    Makefile
+	perl local/bin/pmbp.pl --install-module JSON \
+	    --create-perl-command-shortcut perl
 	$(PERL) -MJSON -MData::Dumper -e ' #\
 	  local $$/ = undef; #\
 	  $$data = JSON->new->decode (scalar <>); #\
@@ -54,9 +54,12 @@ update-entities: local/bin/pmbp.pl
 	  $$pm = Dumper {map { (substr $$_, 1) => $$data->{$$_}->{characters} } keys %$$data}; #\
 	  $$pm =~ s/VAR1/Web::HTML::EntityChar/; #\
 	  print "$$pm\n1;\n# © Copyright 2004-2011 Apple Computer, Inc., Mozilla Foundation, and Opera Software ASA.\n# You are granted a license to use, reproduce and create derivative works of this document."; #\
-	' > lib/Web/HTML/_NamedEntityList.pm
+	' < local/html-charrefs.json > lib/Web/HTML/_NamedEntityList.pm
 	perl -c lib/Web/HTML/_NamedEntityList.pm
 
+local/html-charrefs.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/html-charrefs.json
 local/elements.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.github.com/manakai/data-web-defs/master/data/elements.json
@@ -82,9 +85,10 @@ local/aria-html-map.json: local/aria.json local/bin/jq
 	cat local/aria.json | local/bin/jq '.attrs | to_entries | map(select(.value.preferred.type == "html-attr")) | map([.key, .value.preferred.name])' > $@
 
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
-    local/html-syntax.json pmbp-install Makefile
+    local/html-syntax.json local/bin/pmbp.pl Makefile
 	mkdir -p lib/Web/HTML/Validator
-	perl local/bin/pmbp.pl --install-module JSON
+	perl local/bin/pmbp.pl --install-module JSON \
+	    --create-perl-command-shortcut perl
 	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"prompt\":"; cat local/isindex-prompt.json; echo ",\"syntax\":"; cat local/html-syntax.json; echo "}"' | \
 	$(PERL) -MJSON -MEncode -MData::Dumper -e ' #\
 	  local $$/ = undef; #\
@@ -142,9 +146,10 @@ Chromium:\
 	perl -c $@
 
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
-    local/aria.json local/aria-html-map.json pmbp-install Makefile
+    local/aria.json local/aria-html-map.json local/bin/pmbp.pl Makefile
 	mkdir -p lib/Web/HTML/Validator
-	perl local/bin/pmbp.pl --install-module JSON
+	perl local/bin/pmbp.pl --install-module JSON \
+	    --create-perl-command-shortcut perl
 	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"microdata\":"; cat local/microdata.json; echo ",\"aria\":"; cat local/aria.json; echo ",\"aria_html\":"; cat local/aria-html-map.json; echo "}"' | \
 	$(PERL) -MJSON -MData::Dumper -e ' #\
 	  local $$/ = undef; #\
