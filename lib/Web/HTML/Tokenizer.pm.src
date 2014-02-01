@@ -82,6 +82,12 @@ sub _initialize_tokenizer ($) {
   #$self->{parse_error}
   #$self->{is_xml} (if XML)
 
+  delete $self->{wait_tokenization};
+      ## While this flag is set, the tokenizer does not return normal
+      ## token, but returns ABORT_TOKEN instead.  This is used to wait
+      ## for an external entity being fetched in XML parsing.  This
+      ## might be also used in future to wait for script execution.
+
   $self->{state} = $self->{initial_state} || DATA_STATE; # MUST
       ## $self->{initial_state} is the initial value for the
       ## $self->{state}.  This value can be set after the parser is
@@ -1116,6 +1122,25 @@ sub _get_next_token ($) {
   if (@{$self->{token}}) {
     $self->{self_closing} = $self->{token}->[0]->{self_closing};
     return shift @{$self->{token}};
+  }
+
+  if ($self->{wait_tokenization}) {
+    ## Ignore the entity reference
+    !!!parse-error (type => 'external entref',
+                    value => $self->{kwd},
+                    line => $self->{line_prev},
+                    column => $self->{column_prev} - length $self->{kwd},
+                    level => 'i');
+    
+    if (0) {
+      !!!emit ({type => ENTITY_SUBTREE_TOKEN,
+                name => $self->{kwd},
+                line => $self->{line_prev},
+                column => $self->{column_prev} - length $self->{kwd}});
+    }
+
+    delete $self->{wait_tokenization};
+    return {type => ABORT_TOKEN};
   }
 
   A: {
@@ -3701,18 +3726,20 @@ sub _get_next_token ($) {
           $self->{prev_state} == RCDATA_STATE) {
         ## An entity reference in an element content
         if ($self->{entity__is_tree}) {
-          if (not defined $self->{ge}->{$self->{kwd}}->{value}) {
+          my $gedef = $self->{ge}->{$self->{kwd}};
+          if (not defined $gedef->{value}) {
             ## An external entity
 
-            ## Ignore the entity reference
-            !!!parse-error (type => 'external entref',
-                            value => $self->{kwd},
-                            line => $self->{line_prev},
-                            column => $self->{column_prev} - length $self->{kwd},
-                            level => 'i');
+            $self->{wait_tokenization} = {
+              external_entity => {type => 'general',
+                                  pubid => $gedef->{pubid},
+                                  sysid => $gedef->{sysid}},
+            };
 
             $self->{state} = $self->{prev_state};
-            ## Reconsume the current input character.
+            ## Reconsume the current input character (after the
+            ## exteral entity is expanded).
+            return {type => ABORT_TOKEN};
             redo A;
           } else {
             ## An XML internal parsed entity with "&" and/or "<"
@@ -3722,6 +3749,7 @@ sub _get_next_token ($) {
                       name => $self->{kwd},
                       line => $self->{line_prev},
                       column => $self->{column_prev} - length $self->{kwd}});
+            redo A;
           }
         } else {
           ## An XML unexpanded entity, an HTML character reference
@@ -3734,8 +3762,8 @@ sub _get_next_token ($) {
                     has_reference => $has_ref,
                     line => $self->{line_prev},
                     column => $self->{column_prev} - length $self->{kwd}});
+          redo A;
         }
-        redo A;
       } else {
         ## An entity reference in an attribute value
         if ($self->{entity__is_tree}) {

@@ -49,8 +49,11 @@ sub parse_char_string ($$$) {
 
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
-  $self->{t} = $self->_get_next_token;
-  $self->_construct_tree;
+  {
+    $self->{t} = $self->_get_next_token;
+    $self->_construct_tree;
+    redo if $self->{t}->{type} == ABORT_TOKEN and not $self->{t}->{last};
+  }
   $self->_on_terminate;
 
   return {};
@@ -126,14 +129,16 @@ sub parse_char_string_with_context ($$$$) {
     $self->{insertion_mode} = IN_ELEMENT_IM;
   }
 
-  $self->{t} = $self->_get_next_token;
-
   # 5. If not well-formed, throw SyntaxError - should be handled by
   # callee using $self->onerror.
 
   # XXX and well-formedness errors not detected by this parser
 
-  $self->_construct_tree;
+  {
+    $self->{t} = $self->_get_next_token;
+    $self->_construct_tree;
+    redo if $self->{t}->{type} == ABORT_TOKEN and not $self->{t}->{last};
+  }
   $self->_on_terminate;
 
   # 7.
@@ -928,7 +933,7 @@ sub _tree_after_root_element ($) {
 
       ## TODO: implement "stop parsing".
 
-      $self->{t} = {type => ABORT_TOKEN};
+      $self->{t} = {type => ABORT_TOKEN, last => 1}; # XXX
       return;
     } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
       $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',

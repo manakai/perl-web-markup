@@ -2,7 +2,7 @@ package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '7.0';
+our $VERSION = '8.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -81,6 +81,12 @@ sub _initialize_tokenizer ($) {
   #$self->{set_nc}
   #$self->{parse_error}
   #$self->{is_xml} (if XML)
+
+  delete $self->{wait_tokenization};
+      ## While this flag is set, the tokenizer does not return normal
+      ## token, but returns ABORT_TOKEN instead.  This is used to wait
+      ## for an external entity being fetched in XML parsing.  This
+      ## might be also used in future to wait for script execution.
 
   $self->{state} = $self->{initial_state} || DATA_STATE; # MUST
       ## $self->{initial_state} is the initial value for the
@@ -1118,6 +1124,25 @@ sub _get_next_token ($) {
   if (@{$self->{token}}) {
     $self->{self_closing} = $self->{token}->[0]->{self_closing};
     return shift @{$self->{token}};
+  }
+
+  if ($self->{wait_tokenization}) {
+    ## Ignore the entity reference
+    $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
+                    value => $self->{kwd},
+                    line => $self->{line_prev},
+                    column => $self->{column_prev} - length $self->{kwd},
+                    level => 'i');
+    
+    if (0) {
+      return  ({type => ENTITY_SUBTREE_TOKEN,
+                name => $self->{kwd},
+                line => $self->{line_prev},
+                column => $self->{column_prev} - length $self->{kwd}});
+    }
+
+    delete $self->{wait_tokenization};
+    return {type => ABORT_TOKEN};
   }
 
   A: {
@@ -3734,7 +3759,7 @@ sub _get_next_token ($) {
 
       my $code = $self->{kwd};
       my $l = $self->{line_prev};
-      my $c = $self->{column_prev};
+      my $c = $self->{column_prev}; # XXX This is the last character of the reference; this should be the first character...
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'invalid character reference',
                         text => (sprintf 'U+%04X', $code),
@@ -3973,18 +3998,20 @@ sub _get_next_token ($) {
           $self->{prev_state} == RCDATA_STATE) {
         ## An entity reference in an element content
         if ($self->{entity__is_tree}) {
-          if (not defined $self->{ge}->{$self->{kwd}}->{value}) {
+          my $gedef = $self->{ge}->{$self->{kwd}};
+          if (not defined $gedef->{value}) {
             ## An external entity
 
-            ## Ignore the entity reference
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
-                            value => $self->{kwd},
-                            line => $self->{line_prev},
-                            column => $self->{column_prev} - length $self->{kwd},
-                            level => 'i');
+            $self->{wait_tokenization} = {
+              external_entity => {type => 'general',
+                                  pubid => $gedef->{pubid},
+                                  sysid => $gedef->{sysid}},
+            };
 
             $self->{state} = $self->{prev_state};
-            ## Reconsume the current input character.
+            ## Reconsume the current input character (after the
+            ## exteral entity is expanded).
+            return {type => ABORT_TOKEN};
             redo A;
           } else {
             ## An XML internal parsed entity with "&" and/or "<"
@@ -3994,6 +4021,7 @@ sub _get_next_token ($) {
                       name => $self->{kwd},
                       line => $self->{line_prev},
                       column => $self->{column_prev} - length $self->{kwd}});
+            redo A;
           }
         } else {
           ## An XML unexpanded entity, an HTML character reference
@@ -4006,8 +4034,8 @@ sub _get_next_token ($) {
                     has_reference => $has_ref,
                     line => $self->{line_prev},
                     column => $self->{column_prev} - length $self->{kwd}});
+          redo A;
         }
-        redo A;
       } else {
         ## An entity reference in an attribute value
         if ($self->{entity__is_tree}) {
