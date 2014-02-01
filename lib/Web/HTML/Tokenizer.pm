@@ -1127,19 +1127,23 @@ sub _get_next_token ($) {
   }
 
   if ($self->{wait_tokenization}) {
+    # XXX
+    if (my $parsed = $self->{wait_tokenization}->{XXX_parsed}) {
+      delete $self->{wait_tokenization};
+      return  ({type => ENTITY_SUBTREE_TOKEN,
+                name => $self->{kwd},
+                XXX_parsed => $parsed,
+                line => $self->{line_prev},
+                column => $self->{column_prev} - length $self->{kwd}});
+      die;
+    }
+
     ## Ignore the entity reference
     $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
                     value => $self->{kwd},
                     line => $self->{line_prev},
                     column => $self->{column_prev} - length $self->{kwd},
                     level => 'i');
-    
-    if (0) {
-      return  ({type => ENTITY_SUBTREE_TOKEN,
-                name => $self->{kwd},
-                line => $self->{line_prev},
-                column => $self->{column_prev} - length $self->{kwd}});
-    }
 
     delete $self->{wait_tokenization};
     return {type => ABORT_TOKEN};
