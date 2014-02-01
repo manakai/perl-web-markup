@@ -106,7 +106,31 @@ test {
   done $c;
 } n => 1, name => 'an external entity - not expanded';
 
-# XXX parse_bytes_ feed -> _entity_* -> _feed -> _end
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;v&x;b</a>});
+  $parser->parse_bytes_feed ('', start_parsing => 1);
+  my $count = 0;
+  while (defined (my $req = $parser->parse_bytes_get_entity_req)) {
+    if ($req) {
+      $parser->parse_bytes_entity_start (undef);
+      $parser->parse_bytes_entity_feed ('X<p>Y</p>Z');
+      $parser->parse_bytes_feed ('<!--zz-->');
+      $parser->parse_bytes_entity_end;
+      $parser->parse_bytes_feed ('', start_parsing => 1);
+      $count++;
+    }
+  }
+  $parser->parse_bytes_feed ('<!--abc-->');
+  $parser->parse_bytes_end;
+  is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cX<p>Y</p>ZvX<p>Y</p>Zb</a><!--zz--><!--zz--><!--abc-->};
+  is $count, 2;
+  done $c;
+} n => 2, name => 'an external entity';
+
 # XXX nested entity
 
 run_tests;

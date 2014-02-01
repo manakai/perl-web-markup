@@ -1135,17 +1135,18 @@ sub _get_next_token ($) {
                 line => $self->{line_prev},
                 column => $self->{column_prev} - length $self->{kwd}});
       die;
+    } elsif ($self->{wait_tokenization}->{skip}) {
+      ## Ignore the entity reference
+      $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
+                      value => $self->{kwd},
+                      line => $self->{line_prev},
+                      column => $self->{column_prev} - length $self->{kwd},
+                      level => 'i');
+      delete $self->{wait_tokenization};
+      #
+    } else {
+      return {type => ABORT_TOKEN, debug => 'entity not yet available'};
     }
-
-    ## Ignore the entity reference
-    $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
-                    value => $self->{kwd},
-                    line => $self->{line_prev},
-                    column => $self->{column_prev} - length $self->{kwd},
-                    level => 'i');
-
-    delete $self->{wait_tokenization};
-    return {type => ABORT_TOKEN, debug => 'after ignored'};
   }
 
   A: {

@@ -53,6 +53,7 @@ sub parse_char_string ($$$) {
   {
     $self->{t} = $self->_get_next_token;
     $self->_construct_tree;
+    $self->{wait_tokenization}->{skip} = 1 if $self->{wait_tokenization};
     redo if $self->{t}->{type} == ABORT_TOKEN;
   }
   $self->_on_terminate;
@@ -138,6 +139,7 @@ sub parse_char_string_with_context ($$$$) {
   {
     $self->{t} = $self->_get_next_token;
     $self->_construct_tree;
+    $self->{wait_tokenization}->{skip} = 1 if $self->{wait_tokenization};
     redo if $self->{t}->{type} == ABORT_TOKEN;
   }
   $self->_on_terminate;
@@ -261,16 +263,6 @@ sub parse_bytes_feed ($$;%) {
 
 sub parse_bytes_end ($) {
   my $self = $_[0];
-
-  while (defined (my $req = $self->parse_bytes_get_entity_req)) {
-    if ($req) {
-      $self->parse_bytes_entity_start (undef);
-# XXX external entity error
-      $self->parse_bytes_entity_end;
-      $self->parse_bytes_feed ('', start_parsing => 1);
-    }
-  }
-
   unless ($self->{parse_bytes_started}) {
     $self->_parse_bytes_start_parsing;
   }
@@ -281,11 +273,15 @@ sub parse_bytes_end ($) {
     $self->{byte_buffer} = '';
   }
   $self->{chars_pull_next} = sub { 0 };
-  $self->{t} = $self->_get_next_token;
-  $self->_construct_tree;
-  if ($self->{embedded_encoding_name}) {
-    ## Restarting the parser
-    $self->_parse_bytes_start_parsing;
+  {
+    $self->{t} = $self->_get_next_token;
+    $self->_construct_tree;
+    if ($self->{embedded_encoding_name}) {
+      ## Restarting the parser
+      $self->_parse_bytes_start_parsing;
+    }
+    $self->{wait_tokenization}->{skip} = 1 if $self->{wait_tokenization};
+    redo if $self->{t}->{type} == ABORT_TOKEN;
   }
 
   $self->_on_terminate;
