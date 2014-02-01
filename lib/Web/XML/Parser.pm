@@ -3,6 +3,7 @@ use strict;
 use warnings;
 no warnings 'utf8';
 our $VERSION = '7.0';
+use Encode;
 use Web::HTML::Defs;
 use Web::HTML::ParserData;
 use Web::HTML::InputStream;
@@ -155,6 +156,137 @@ sub parse_char_string_with_context ($$$$) {
           ? $root->content->child_nodes : $root->child_nodes
       : $doc->child_nodes;
 } # parse_char_string_with_context
+
+## ------ Stream parse API (experimental) ------
+
+## XXX tests
+
+sub parse_bytes_start ($$$) {
+  #my ($self, $charset_name, $doc) = @_;
+  my $self = ref $_[0] ? $_[0] : $_[0]->new;
+  my $doc = $self->{document} = $_[2];
+  
+  $self->{chars_pull_next} = sub { 1 };
+  $self->{restart_parser} = sub {
+    $self->{embedded_encoding_name} = $_[0];
+    # XXX need a hook to invoke a subset of "navigate" algorithm
+    $self->{byte_buffer} = $self->{byte_buffer_orig};
+    return 1;
+  };
+  
+  my $onerror = $self->onerror;
+  $self->{parse_error} = sub {
+    $onerror->(line => $self->{line}, column => $self->{column}, @_);
+  };
+
+  $self->{byte_buffer} = '';
+  $self->{byte_buffer_orig} = '';
+
+  $self->_parse_bytes_start_parsing
+      (transport_encoding_name => $_[1],
+       no_body_data_yet => 1);
+} # parse_bytes_start
+
+sub _parse_bytes_start_parsing ($;%) {
+  my ($self, %args) = @_;
+  {
+    local $self->{document}->dom_config->{'http://suika.fam.cx/www/2006/dom-config/strict-document-children'} = 0;
+    $self->{document}->text_content ('');
+  }
+  $self->{line_prev} = $self->{line} = 1;
+  $self->{column_prev} = -1;
+  $self->{column} = 0;
+  $self->{chars} = [];
+  $self->{chars_pos} = 0;
+  delete $self->{chars_was_cr};
+  
+  $self->_encoding_sniffing
+      (embedded_encoding_name => delete $self->{embedded_encoding_name},
+       transport_encoding_name => $args{transport_encoding_name},
+       no_body_data_yet => $args{no_body_data_yet},
+       read_head => sub {
+         return \(substr $self->{byte_buffer}, 0, 1024);
+     }); # $self->{confident} is set within this method.
+  if (not $self->{input_encoding} and $args{no_body_data_yet}) {
+    delete $self->{parse_bytes_started};
+    return;
+  }
+
+  $self->{parse_bytes_started} = 1;
+  
+  $self->{document}->input_encoding ($self->{input_encoding});
+  
+  $self->_initialize_tokenizer;
+  $self->_initialize_tree_constructor;
+
+  push @{$self->{chars}}, split //,
+      decode $self->{input_encoding}, $self->{byte_buffer}, # XXX Encoding Standard
+          Encode::FB_QUIET;
+  $self->{t} = $self->_get_next_token;
+  $self->_construct_tree;
+  if ($self->{embedded_encoding_name}) {
+    ## Restarting
+    $self->_parse_bytes_start_parsing;
+  }
+} # _parse_bytes_start_parsing
+
+## The $args{start_parsing} flag should be set true if it has taken
+## more than 500ms from the start of overall parsing process.
+sub parse_bytes_feed ($$;%) {
+  my ($self, undef, %args) = @_;
+
+  if ($self->{parse_bytes_started}) {
+    $self->{byte_buffer} .= $_[1];
+    $self->{byte_buffer_orig} .= $_[1];
+    $self->{chars}
+        = [split //, decode $self->{input_encoding}, $self->{byte_buffer},
+                         Encode::FB_QUIET]; # XXX encoding standard
+    $self->{chars_pos} = 0;
+    my $i = 0;
+    if (length $self->{byte_buffer} and @{$self->{chars}} == $i) {
+      substr ($self->{byte_buffer}, 0, 1) = '';
+      push @{$self->{chars}}, "\x{FFFD}", split //,
+          decode $self->{input_encoding}, $self->{byte_buffer},
+              Encode::FB_QUIET; # XXX Encoding Standard
+      $i++;
+    }
+    
+    $self->{t} = $self->_get_next_token;
+    $self->_construct_tree;
+    if ($self->{embedded_encoding_name}) {
+      ## Restarting the parser
+      $self->_parse_bytes_start_parsing;
+    }
+  } else {
+    $self->{byte_buffer} .= $_[1];
+    $self->{byte_buffer_orig} .= $_[1];
+    if ($args{start_parsing} or 1024 <= length $self->{byte_buffer}) {
+      $self->_parse_bytes_start_parsing;
+    }
+  }
+} # parse_bytes_feed
+
+sub parse_bytes_end {
+  my $self = $_[0];
+  unless ($self->{parse_bytes_started}) {
+    $self->_parse_bytes_start_parsing;
+  }
+
+  if (length $self->{byte_buffer}) {
+    push @{$self->{chars}},
+        split //, decode $self->{input_encoding}, $self->{byte_buffer}; # XXX encoding standard
+    $self->{byte_buffer} = '';
+  }
+  $self->{chars_pull_next} = sub { 0 };
+  $self->{t} = $self->_get_next_token;
+  $self->_construct_tree;
+  if ($self->{embedded_encoding_name}) {
+    ## Restarting the parser
+    $self->_parse_bytes_start_parsing;
+  }
+
+  $self->_on_terminate;
+} # parse_bytes_end
 
 sub _on_terminate ($) {
   $_[0]->_terminate_tree_constructor;
