@@ -62,6 +62,7 @@ sub _clear_refs ($) {
   delete $self->{insert};
   delete $self->{ge};
   delete $self->{pe};
+  delete $self->{wait_tokenization};
 } # _clear_refs
 
 ## ------ Error handling ------

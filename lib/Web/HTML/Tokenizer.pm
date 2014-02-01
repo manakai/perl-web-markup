@@ -1127,12 +1127,11 @@ sub _get_next_token ($) {
   }
 
   if ($self->{wait_tokenization}) {
-    # XXX
-    if (my $parsed = $self->{wait_tokenization}->{XXX_parsed}) {
+    if (my $parsed = $self->{wait_tokenization}->{parsed_nodes}) {
       delete $self->{wait_tokenization};
       return  ({type => ENTITY_SUBTREE_TOKEN,
                 name => $self->{kwd},
-                XXX_parsed => $parsed,
+                parsed_nodes => $parsed,
                 line => $self->{line_prev},
                 column => $self->{column_prev} - length $self->{kwd}});
       die;
@@ -1146,7 +1145,7 @@ sub _get_next_token ($) {
                     level => 'i');
 
     delete $self->{wait_tokenization};
-    return {type => ABORT_TOKEN};
+    return {type => ABORT_TOKEN, debug => 'after ignored'};
   }
 
   A: {
@@ -1155,7 +1154,7 @@ sub _get_next_token ($) {
     if ($nc == ABORT_CHAR) {
       $self->_set_nc;
       $nc = $self->{nc};
-      return {type => ABORT_TOKEN} if $nc == ABORT_CHAR;
+      return {type => ABORT_TOKEN, debug => 'abort char'} if $nc == ABORT_CHAR;
     }
 
     my $state = $self->{state};
@@ -4015,7 +4014,7 @@ sub _get_next_token ($) {
             $self->{state} = $self->{prev_state};
             ## Reconsume the current input character (after the
             ## exteral entity is expanded).
-            return {type => ABORT_TOKEN};
+            return {type => ABORT_TOKEN, debug => 'external entity'};
             redo A;
           } else {
             ## An XML internal parsed entity with "&" and/or "<"

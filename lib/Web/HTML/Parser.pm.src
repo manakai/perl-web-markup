@@ -529,10 +529,9 @@ sub parse_bytes_feed ($$;%) {
   if ($self->{parse_bytes_started}) {
     $self->{byte_buffer} .= $_[1];
     $self->{byte_buffer_orig} .= $_[1];
-    $self->{chars}
-        = [split //, decode $self->{input_encoding}, $self->{byte_buffer},
-                         Encode::FB_QUIET]; # XXX encoding standard
-    $self->{chars_pos} = 0;
+    push @{$self->{chars}},
+        split //, decode $self->{input_encoding}, $self->{byte_buffer},
+                         Encode::FB_QUIET; # XXX encoding standard
     my $i = 0;
     if (length $self->{byte_buffer} and @{$self->{chars}} == $i) {
       substr ($self->{byte_buffer}, 0, 1) = '';
@@ -557,7 +556,7 @@ sub parse_bytes_feed ($$;%) {
   }
 } # parse_bytes_feed
 
-sub parse_bytes_end {
+sub parse_bytes_end ($) {
   my $self = $_[0];
   unless ($self->{parse_bytes_started}) {
     $self->_parse_bytes_start_parsing;

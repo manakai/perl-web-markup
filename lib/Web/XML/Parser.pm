@@ -53,13 +53,6 @@ sub parse_char_string ($$$) {
   {
     $self->{t} = $self->_get_next_token;
     $self->_construct_tree;
-
-    if ($self->{wait_tokenization}) {
-      # XXX resolve system ID
-      # XXX expand entity
-      $self->{wait_tokenization}->{XXX_parsed} = '';
-    }
-
     redo if $self->{t}->{type} == ABORT_TOKEN;
   }
   $self->_on_terminate;
@@ -145,7 +138,6 @@ sub parse_char_string_with_context ($$$$) {
   {
     $self->{t} = $self->_get_next_token;
     $self->_construct_tree;
-    # XXX external entity
     redo if $self->{t}->{type} == ABORT_TOKEN;
   }
   $self->_on_terminate;
@@ -159,7 +151,7 @@ sub parse_char_string_with_context ($$$$) {
 
 ## ------ Stream parse API (experimental) ------
 
-## XXX tests
+# XXX XML encoding sniffer
 
 sub parse_bytes_start ($$$) {
   #my ($self, $charset_name, $doc) = @_;
@@ -215,6 +207,8 @@ sub _parse_bytes_start_parsing ($;%) {
   $self->{parse_bytes_started} = 1;
   
   $self->{document}->input_encoding ($self->{input_encoding});
+
+  $self->{is_xml} = 1;
   
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
@@ -238,10 +232,9 @@ sub parse_bytes_feed ($$;%) {
   if ($self->{parse_bytes_started}) {
     $self->{byte_buffer} .= $_[1];
     $self->{byte_buffer_orig} .= $_[1];
-    $self->{chars}
-        = [split //, decode $self->{input_encoding}, $self->{byte_buffer},
-                         Encode::FB_QUIET]; # XXX encoding standard
-    $self->{chars_pos} = 0;
+    push @{$self->{chars}},
+        split //, decode $self->{input_encoding}, $self->{byte_buffer},
+                         Encode::FB_QUIET; # XXX encoding standard
     my $i = 0;
     if (length $self->{byte_buffer} and @{$self->{chars}} == $i) {
       substr ($self->{byte_buffer}, 0, 1) = '';
@@ -266,8 +259,18 @@ sub parse_bytes_feed ($$;%) {
   }
 } # parse_bytes_feed
 
-sub parse_bytes_end {
+sub parse_bytes_end ($) {
   my $self = $_[0];
+
+  while (defined (my $req = $self->parse_bytes_get_entity_req)) {
+    if ($req) {
+      $self->parse_bytes_entity_start (undef);
+# XXX external entity error
+      $self->parse_bytes_entity_end;
+      $self->parse_bytes_feed ('', start_parsing => 1);
+    }
+  }
+
   unless ($self->{parse_bytes_started}) {
     $self->_parse_bytes_start_parsing;
   }
@@ -287,6 +290,39 @@ sub parse_bytes_end {
 
   $self->_on_terminate;
 } # parse_bytes_end
+
+sub parse_bytes_get_entity_req ($) {
+  my $self = $_[0];
+  if ($self->{wait_tokenization}) {
+    # XXX resolve system ID
+    # XXX expand entity
+    return $self->{wait_tokenization};
+  } else {
+    return undef;
+  }
+} # parse_bytes_get_entity_req
+
+sub parse_bytes_entity_start ($$) {
+  my ($self, $charset) = @_;
+  my $parser = (ref $self)->new;
+  my $doc = $self->{wait_tokenization}->{doc}
+      = $self->{document}->implementation->create_document;
+  $self->{wait_tokenization}->{parser} = $parser;
+  $parser->onerror ($self->onerror); # XXX location, pos
+  $parser->parse_bytes_start ($charset => $doc); # XXX external entity mode
+} # parse_bytes_entity_start
+
+sub parse_bytes_entity_feed ($$) {
+  my $self = $_[0];
+  $self->{wait_tokenization}->{parser}->parse_bytes_feed ($_[1]);
+} # parse_bytes_entity_feed
+
+sub parse_bytes_entity_end ($) {
+  my $self = $_[0];
+  $self->{wait_tokenization}->{parser}->parse_bytes_end;
+  $self->{wait_tokenization}->{parsed_nodes}
+      = $self->{wait_tokenization}->{doc}->child_nodes;
+} # parse_bytes_entity_end
 
 sub _on_terminate ($) {
   $_[0]->_terminate_tree_constructor;
@@ -1348,9 +1384,8 @@ sub _parse_entity_subtree_token ($) {
   my $self = $_[0];
   my $t = $self->{t};
 
-  if ($t->{XXX_parsed}) {
-    #return [$self->{document}->create_text_node ($t->{XXX_parsed})];
-    return [];
+  if ($t->{parsed_nodes}) {
+    return $t->{parsed_nodes};
   }
 
   my $context = @{$self->{open_elements}}
