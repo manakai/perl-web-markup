@@ -36,11 +36,10 @@ GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm
 
 generated-pm-files: $(GENERATED_PM_FILES)
 
-$(GENERATED_PM_FILES):: %: %.src deps bin/mkhtmlparser.pl
+$(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl local/bin/pmbp.pl
+	perl local/bin/pmbp.pl --create-perl-command-shortcut perl
 	perl bin/mkhtmlparser.pl $< > $@
 	$(PERL) -c $@
-
-CURL = curl
 
 lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
     Makefile
