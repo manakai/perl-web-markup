@@ -65,6 +65,45 @@ test {
 
 test {
   my $c = shift;
+  my $s = q{<!DOCTYPE a[<!ENTITY x SYSTEM "">]><a>B&x;C</a>};
+  my $parser = Web::XML::Parser->new;
+  my $doc = new Web::DOM::Document;
+  
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->parse_char_string ($s => $doc);
+  eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BC</a>};
+  eq_or_diff \@error, [{type => 'external entref',
+                        level => 'i', value => 'x;',
+                        line => 1, column => 40}];
+  done $c;
+} n => 2, name => 'parse_char_string - external entity';
+
+test {
+  my $c = shift;
+  my $s = q{<!DOCTYPE a[<!ENTITY x SYSTEM "">]><a>B&x;C&x;D</a>};
+  my $parser = Web::XML::Parser->new;
+  my $doc = new Web::DOM::Document;
+  
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->parse_char_string ($s => $doc);
+  eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BCD</a>};
+  eq_or_diff \@error, [{type => 'external entref',
+                        level => 'i', value => 'x;',
+                        line => 1, column => 40},
+                       {type => 'external entref',
+                        level => 'i', value => 'x;',
+                        line => 1, column => 44}];
+  done $c;
+} n => 2, name => 'parse_char_string - external entity';
+
+test {
+  my $c = shift;
   my $parser = Web::XML::Parser->new;
   my $doc = new Web::DOM::Document;
   my $el = $doc->create_element_ns (undef, [undef, 'nnn']);
@@ -277,6 +316,45 @@ test {
   is $result->[0]->outer_html, q{<template xmlns="http://www.w3.org/1999/xhtml"><p>a</p><!--aa-->bb</template>};
   done $c;
 } n => 5, name => 'parse_char_string_with_context has template';
+
+test {
+  my $c = shift;
+  my $s = q{<!DOCTYPE a[<!ENTITY x SYSTEM "">]><a>B&x;C</a>};
+  my $parser = Web::XML::Parser->new;
+  my $doc = new Web::DOM::Document;
+  
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->parse_char_string_with_context ($s, undef, $doc);
+  eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BC</a>};
+  eq_or_diff \@error, [{type => 'external entref',
+                        level => 'i', value => 'x;',
+                        line => 1, column => 40}];
+  done $c;
+} n => 2, name => 'parse_char_string_with_context - external entity';
+
+test {
+  my $c = shift;
+  my $s = q{<!DOCTYPE a[<!ENTITY x SYSTEM "">]><a>B&x;C&x;D</a>};
+  my $parser = Web::XML::Parser->new;
+  my $doc = new Web::DOM::Document;
+  
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->parse_char_string_with_context ($s, undef, $doc);
+  eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BCD</a>};
+  eq_or_diff \@error, [{type => 'external entref',
+                        level => 'i', value => 'x;',
+                        line => 1, column => 40},
+                       {type => 'external entref',
+                        level => 'i', value => 'x;',
+                        line => 1, column => 44}];
+  done $c;
+} n => 2, name => 'parse_char_string_with_context - external entity';
 
 run_tests;
 

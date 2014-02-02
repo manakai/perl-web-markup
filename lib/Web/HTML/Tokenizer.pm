@@ -82,12 +82,7 @@ sub _initialize_tokenizer ($) {
   #$self->{parse_error}
   #$self->{is_xml} (if XML)
 
-  delete $self->{wait_tokenization};
-      ## While this flag is set, the tokenizer does not return normal
-      ## token, but returns ABORT_TOKEN instead.  This is used to wait
-      ## for an external entity being fetched in XML parsing.  This
-      ## might be also used in future to wait for script execution.
-
+  delete $self->{parser_pause}; # parser pause flag
   $self->{state} = $self->{initial_state} || DATA_STATE; # MUST
       ## $self->{initial_state} is the initial value for the
       ## $self->{state}.  This value can be set after the parser is
@@ -1126,27 +1121,8 @@ sub _get_next_token ($) {
     return shift @{$self->{token}};
   }
 
-  if ($self->{wait_tokenization}) {
-    if (my $parsed = $self->{wait_tokenization}->{parsed_nodes}) {
-      delete $self->{wait_tokenization};
-      return  ({type => ENTITY_SUBTREE_TOKEN,
-                name => $self->{kwd},
-                parsed_nodes => $parsed,
-                line => $self->{line_prev},
-                column => $self->{column_prev} - length $self->{kwd}});
-      die;
-    } elsif ($self->{wait_tokenization}->{skip}) {
-      ## Ignore the entity reference
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'external entref',
-                      value => $self->{kwd},
-                      line => $self->{line_prev},
-                      column => $self->{column_prev} - length $self->{kwd},
-                      level => 'i');
-      delete $self->{wait_tokenization};
-      #
-    } else {
-      return {type => ABORT_TOKEN, debug => 'entity not yet available'};
-    }
+  if ($self->{parser_pause}) {
+    return {type => ABORT_TOKEN, debug => 'parser pause flag is set'};
   }
 
   A: {
@@ -4006,16 +3982,20 @@ sub _get_next_token ($) {
           if (not defined $gedef->{value}) {
             ## An external entity
 
-            $self->{wait_tokenization} = {
-              external_entity => {type => 'general',
-                                  pubid => $gedef->{pubid},
-                                  sysid => $gedef->{sysid}},
-            };
-
             $self->{state} = $self->{prev_state};
+            $self->{parser_pause} = 1;
             ## Reconsume the current input character (after the
             ## exteral entity is expanded).
-            return {type => ABORT_TOKEN, debug => 'external entity'};
+            return {type => ABORT_TOKEN,
+
+                    extent => $gedef,
+
+                    ## Used to construct the next token
+                    #type => ENTITY_SUBTREE_TOKEN,
+                    name => $self->{kwd},
+                    #parsed_nodes => $parsed,
+                    line => $self->{line_prev},
+                    column => $self->{column_prev} - length $self->{kwd}};
             redo A;
           } else {
             ## An XML internal parsed entity with "&" and/or "<"

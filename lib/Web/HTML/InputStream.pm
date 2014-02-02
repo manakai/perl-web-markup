@@ -54,6 +54,8 @@ sub _clear_refs ($) {
   delete $self->{inner_html_node};
   delete $self->{inner_html_tag_name};
   delete $self->{onerror};
+  delete $self->{onextentref};
+  delete $self->{onparsed};
   delete $self->{open_tables};
   delete $self->{open_elements};
   delete $self->{head_element};
@@ -62,7 +64,6 @@ sub _clear_refs ($) {
   delete $self->{insert};
   delete $self->{ge};
   delete $self->{pe};
-  delete $self->{wait_tokenization};
 } # _clear_refs
 
 ## ------ Error handling ------

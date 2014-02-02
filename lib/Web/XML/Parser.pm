@@ -53,10 +53,21 @@ sub parse_char_string ($$$) {
   {
     $self->{t} = $self->_get_next_token;
     $self->_construct_tree;
-    $self->{wait_tokenization}->{skip} = 1 if $self->{wait_tokenization};
-    redo if $self->{t}->{type} == ABORT_TOKEN;
+    if (defined $self->{t} and
+        $self->{t}->{type} == ABORT_TOKEN and
+        defined $self->{t}->{extent}) {
+      $self->{parse_error}->(type => 'external entref',
+                             value => $self->{t}->{name},
+                             line => $self->{t}->{line},
+                             column => $self->{t}->{column},
+                             level => 'i');
+      unshift @{$self->{token}}, {%{$self->{t}},
+                                  type => ENTITY_SUBTREE_TOKEN,
+                                  parsed_nodes => []};
+      delete $self->{parser_pause};
+      redo;
+    }
   }
-  $self->_on_terminate;
 
   return {};
 } # parse_char_string
@@ -139,10 +150,21 @@ sub parse_char_string_with_context ($$$$) {
   {
     $self->{t} = $self->_get_next_token;
     $self->_construct_tree;
-    $self->{wait_tokenization}->{skip} = 1 if $self->{wait_tokenization};
-    redo if $self->{t}->{type} == ABORT_TOKEN;
+    if (defined $self->{t} and
+        $self->{t}->{type} == ABORT_TOKEN and
+        defined $self->{t}->{extent}) {
+      $self->{parse_error}->(type => 'external entref',
+                             value => $self->{t}->{name},
+                             line => $self->{t}->{line},
+                             column => $self->{t}->{column},
+                             level => 'i');
+      unshift @{$self->{token}}, {%{$self->{t}},
+                                  type => ENTITY_SUBTREE_TOKEN,
+                                  parsed_nodes => []};
+      delete $self->{parser_pause};
+      redo;
+    }
   }
-  $self->_on_terminate;
 
   # 7.
   return defined $context
@@ -154,11 +176,11 @@ sub parse_char_string_with_context ($$$$) {
 ## ------ Stream parse API (experimental) ------
 
 # XXX XML encoding sniffer
+# XXX documentation
 
 sub parse_bytes_start ($$$) {
-  #my ($self, $charset_name, $doc) = @_;
-  my $self = ref $_[0] ? $_[0] : $_[0]->new;
-  my $doc = $self->{document} = $_[2];
+  my ($self, $charset_name, $doc) = @_;
+  $self->{document} = $doc;
   
   $self->{chars_pull_next} = sub { 1 };
   $self->{restart_parser} = sub {
@@ -218,12 +240,7 @@ sub _parse_bytes_start_parsing ($;%) {
   push @{$self->{chars}}, split //,
       decode $self->{input_encoding}, $self->{byte_buffer}, # XXX Encoding Standard
           Encode::FB_QUIET;
-  $self->{t} = $self->_get_next_token;
-  $self->_construct_tree;
-  if ($self->{embedded_encoding_name}) {
-    ## Restarting
-    $self->_parse_bytes_start_parsing;
-  }
+  $self->_parse_bytes_run;
 } # _parse_bytes_start_parsing
 
 ## The $args{start_parsing} flag should be set true if it has taken
@@ -245,13 +262,7 @@ sub parse_bytes_feed ($$;%) {
               Encode::FB_QUIET; # XXX Encoding Standard
       $i++;
     }
-    
-    $self->{t} = $self->_get_next_token;
-    $self->_construct_tree;
-    if ($self->{embedded_encoding_name}) {
-      ## Restarting the parser
-      $self->_parse_bytes_start_parsing;
-    }
+    $self->_parse_bytes_run;
   } else {
     $self->{byte_buffer} .= $_[1];
     $self->{byte_buffer_orig} .= $_[1];
@@ -273,57 +284,96 @@ sub parse_bytes_end ($) {
     $self->{byte_buffer} = '';
   }
   $self->{chars_pull_next} = sub { 0 };
-  {
-    $self->{t} = $self->_get_next_token;
-    $self->_construct_tree;
-    if ($self->{embedded_encoding_name}) {
-      ## Restarting the parser
-      $self->_parse_bytes_start_parsing;
-    }
-    $self->{wait_tokenization}->{skip} = 1 if $self->{wait_tokenization};
-    redo if $self->{t}->{type} == ABORT_TOKEN;
-  }
-
-  $self->_on_terminate;
+  $self->_parse_bytes_run;
 } # parse_bytes_end
 
-sub parse_bytes_get_entity_req ($) {
+sub _parse_bytes_run ($) {
   my $self = $_[0];
-  if ($self->{wait_tokenization}) {
-    # XXX resolve system ID
-    # XXX expand entity
-    return $self->{wait_tokenization};
-  } else {
-    return undef;
+
+  ## This is either the first invocation of the |_get_next_token|
+  ## method or |$self->{t}| is an |ABORT_TOKEN|.
+  $self->{t} = $self->_get_next_token;
+
+  $self->_construct_tree;
+  return unless defined $self->{t}; ## _stop_parsing is invoked
+
+  ## HTML only
+  if ($self->{embedded_encoding_name}) {
+    ## Restarting the parser
+    $self->_parse_bytes_start_parsing;
   }
-} # parse_bytes_get_entity_req
 
-sub parse_bytes_entity_start ($$) {
-  my ($self, $charset) = @_;
-  my $parser = (ref $self)->new;
-  my $doc = $self->{wait_tokenization}->{doc}
-      = $self->{document}->implementation->create_document;
-  $self->{wait_tokenization}->{parser} = $parser;
-  $parser->onerror ($self->onerror); # XXX location, pos
-  $parser->parse_bytes_start ($charset => $doc); # XXX external entity mode
-} # parse_bytes_entity_start
+  ## XML only
+  if ($self->{t}->{type} == ABORT_TOKEN and defined $self->{t}->{extent}) {
+    my $subparser = Web::XML::Parser::SubParser->new_from_parser ($self);
+    $self->onextentref->($self, $self->{t}, $subparser);
+  }
+} # _parse_bytes_run
 
-sub parse_bytes_entity_feed ($$) {
-  my $self = $_[0];
-  $self->{wait_tokenization}->{parser}->parse_bytes_feed ($_[1]);
-} # parse_bytes_entity_feed
+sub _parse_bytes_subparser_done ($$) {
+  my ($self, $doc) = @_;
+  ## |$self->{t}| is an |ABORT_TOKEN| requesting the external entity.
+  unshift @{$self->{token}}, {%{$self->{t}},
+                              type => ENTITY_SUBTREE_TOKEN,
+                              parsed_nodes => $doc->child_nodes};
+  delete $self->{parser_pause};
+  $self->_parse_bytes_run;
+} # _parse_bytes_subparser_done
 
-sub parse_bytes_entity_end ($) {
-  my $self = $_[0];
-  $self->{wait_tokenization}->{parser}->parse_bytes_end;
-  $self->{wait_tokenization}->{parsed_nodes}
-      = $self->{wait_tokenization}->{doc}->child_nodes;
-} # parse_bytes_entity_end
+{
+  package Web::XML::Parser::SubParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub new_from_parser ($$) {
+    my $self = $_[0]->new;
+    my $main_parser = $_[1];
+    $self->{ge} = $main_parser->{ge};
+    $self->{pe} = $main_parser->{pe};
+    $self->{document} = $main_parser->{document}->implementation->create_document;
+    $self->onerror ($main_parser->onerror);
+    $self->onextentref ($main_parser->onextentref);
+    $self->onparsed (sub { $main_parser->_parse_bytes_subparser_done ($_[1]) });
+    return $self;
+  } # new_from_parser
+
+  sub parse_bytes_start ($$$) {
+    return $_[0]->SUPER::parse_bytes_start ($_[1], $_[0]->{document});
+  } # parse_bytes_start
+}
+
+sub _stop_parsing ($) {
+  # XXX stop parsing
+  $_[0]->_on_terminate;
+} # _stop_parsing
 
 sub _on_terminate ($) {
+  $_[0]->onparsed->($_[0], $_[0]->{document});
   $_[0]->_terminate_tree_constructor;
   $_[0]->_clear_refs;
 } # _on_terminate
+
+sub onextentref ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onextentref} = $_[1];
+  }
+  return $_[0]->{onextentref} ||= sub {
+    my ($self, $t, $subparser) = @_;
+    $self->{parse_error}->(type => 'external entref',
+                           value => $t->{name},
+                           line => $t->{line},
+                           column => $t->{column},
+                           level => 'i');
+    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_end;
+  };
+} # onextentref
+
+sub onparsed ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onparsed} = $_[1];
+  }
+  return $_[0]->{onparsed} ||= sub { };
+} # onparsed
 
 ## ------ Tree construction ------
 
@@ -961,11 +1011,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
-        ## Stop parsing.
-
-        ## TODO: implement "stop parsing".
-
-        return;
+        return $self->_stop_parsing;
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         $onerror->(level => 'm', type => 'unmatched end tag',
                         text => $self->{t}->{tag_name},

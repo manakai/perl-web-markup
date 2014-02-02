@@ -32,17 +32,14 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XML::Parser->new;
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_feed ('XYZ');
+    $subparser->parse_bytes_end;
+  });
   $parser->parse_bytes_start (undef, $doc);
   $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;b</a>});
-  $parser->parse_bytes_feed ('', start_parsing => 1);
-  while (defined (my $req = $parser->parse_bytes_get_entity_req)) {
-    if ($req) {
-      $parser->parse_bytes_entity_start (undef);
-      $parser->parse_bytes_entity_feed ('XYZ');
-      $parser->parse_bytes_entity_end;
-      $parser->parse_bytes_feed ('', start_parsing => 1);
-    }
-  }
   $parser->parse_bytes_end;
   is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cXYZb</a>};
   done $c;
@@ -52,19 +49,40 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XML::Parser->new;
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ('XYZ');
+      $subparser->parse_bytes_end;
+    };
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;b</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cXYZb</a>};
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 1, name => 'an external entity async';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $count = 0;
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_feed ('XYZ');
+    $subparser->parse_bytes_end;
+    $count++;
+  });
   $parser->parse_bytes_start (undef, $doc);
   $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;v&x;b</a>});
-  $parser->parse_bytes_feed ('', start_parsing => 1);
-  my $count = 0;
-  while (defined (my $req = $parser->parse_bytes_get_entity_req)) {
-    if ($req) {
-      $parser->parse_bytes_entity_start (undef);
-      $parser->parse_bytes_entity_feed ('XYZ');
-      $parser->parse_bytes_entity_end;
-      $parser->parse_bytes_feed ('', start_parsing => 1);
-      $count++;
-    }
-  }
   $parser->parse_bytes_end;
   is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cXYZvXYZb</a>};
   is $count, 2;
@@ -75,19 +93,16 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XML::Parser->new;
+  my $count = 0;
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_feed ('X<p>Y</p>Z');
+    $subparser->parse_bytes_end;
+    $count++;
+  });
   $parser->parse_bytes_start (undef, $doc);
   $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;v&x;b</a>});
-  $parser->parse_bytes_feed ('', start_parsing => 1);
-  my $count = 0;
-  while (defined (my $req = $parser->parse_bytes_get_entity_req)) {
-    if ($req) {
-      $parser->parse_bytes_entity_start (undef);
-      $parser->parse_bytes_entity_feed ('X<p>Y</p>Z');
-      $parser->parse_bytes_entity_end;
-      $parser->parse_bytes_feed ('', start_parsing => 1);
-      $count++;
-    }
-  }
   $parser->parse_bytes_end;
   is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cX<p>Y</p>ZvX<p>Y</p>Zb</a>};
   is $count, 2;
@@ -100,7 +115,6 @@ test {
   my $parser = Web::XML::Parser->new;
   $parser->parse_bytes_start (undef, $doc);
   $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;v&x;b</a>});
-  $parser->parse_bytes_feed ('', start_parsing => 1);
   $parser->parse_bytes_end;
   is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cvb</a>};
   done $c;
@@ -110,26 +124,54 @@ test {
   my $c = shift;
   my $doc = new Web::DOM::Document;
   my $parser = Web::XML::Parser->new;
+  my $count = 0;
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_feed ('X<p>Y');
+    $parser->parse_bytes_feed ('<!--zz-->');
+    $subparser->parse_bytes_feed ('</p>Z');
+    $subparser->parse_bytes_end;
+    $count++;
+  });
   $parser->parse_bytes_start (undef, $doc);
   $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;v&x;b</a>});
-  $parser->parse_bytes_feed ('', start_parsing => 1);
-  my $count = 0;
-  while (defined (my $req = $parser->parse_bytes_get_entity_req)) {
-    if ($req) {
-      $parser->parse_bytes_entity_start (undef);
-      $parser->parse_bytes_entity_feed ('X<p>Y</p>Z');
-      $parser->parse_bytes_feed ('<!--zz-->');
-      $parser->parse_bytes_entity_end;
-      $parser->parse_bytes_feed ('', start_parsing => 1);
-      $count++;
-    }
-  }
   $parser->parse_bytes_feed ('<!--abc-->');
   $parser->parse_bytes_end;
-  is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cX<p>Y</p>ZvX<p>Y</p>Zb</a><!--zz--><!--zz--><!--abc-->};
+  is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cX<p>Y</p>ZvX<p>Y</p>Zb</a><!--abc--><!--zz--><!--zz-->};
   is $count, 2;
   done $c;
 } n => 2, name => 'an external entity';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $count = 0;
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ('X<p>Y');
+      $parser->parse_bytes_feed ('<!--zz-->');
+      $subparser->parse_bytes_feed ('</p>Z');
+      $subparser->parse_bytes_end;
+    };
+    $count++;
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM ""> ]><a>c&x;v&x;b</a>});
+  $parser->parse_bytes_feed ('<!--abc-->');
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cX<p>Y</p>ZvX<p>Y</p>Zb</a><!--abc--><!--zz--><!--zz-->};
+      is $count, 2;
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'an external entity async';
 
 # XXX nested entity
 
