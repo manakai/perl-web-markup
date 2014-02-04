@@ -6175,6 +6175,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "label" => "Kana",
                                                                                                                                                "spec" => "HTML"
                                                                                                                                              },
+                                                                                                                                   "kana-name" => {
+                                                                                                                                                    "conforming" => 1,
+                                                                                                                                                    "id" => "attr-fe-inputmode-state-kana-name",
+                                                                                                                                                    "label" => "Kana Name",
+                                                                                                                                                    "spec" => "HTML"
+                                                                                                                                                  },
                                                                                                                                    "katakana" => {
                                                                                                                                                    "conforming" => 1,
                                                                                                                                                    "id" => "attr-fe-inputmode-state-katakana",
