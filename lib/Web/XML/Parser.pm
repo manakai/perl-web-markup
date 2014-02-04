@@ -237,6 +237,38 @@ sub _parse_bytes_start_parsing ($;%) {
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
 
+  my $context = $self->{context_element};
+  if (defined $context) {
+    # 4., 6. (Fake end tag)
+    $self->{inner_html_tag_name} = $context->manakai_tag_name;
+
+    # 2. Fake start tag
+    my $root = $self->{document}->create_element_ns
+        ($context->namespace_uri, [$context->prefix, $context->local_name]);
+    my $nsmap = {};
+    {
+      my $prefixes = {};
+      my $p = $context;
+      while ($p and $p->node_type == 1) { # ELEMENT_NODE
+        $prefixes->{$_->local_name} = 1 for grep {
+          ($_->namespace_uri || '') eq Web::HTML::ParserData::XMLNS_NS;
+        } @{$p->attributes or []};
+        my $prefix = $p->prefix;
+        $prefixes->{$prefix} = 1 if defined $prefix;
+        $p = $p->parent_node;
+      }
+      for ('', keys %$prefixes) {
+        $nsmap->{$_} = $context->lookup_namespace_uri ($_);
+      }
+      $nsmap->{xml} = Web::HTML::ParserData::XML_NS;
+      $nsmap->{xmlns} = Web::HTML::ParserData::XMLNS_NS;
+    }
+    push @{$self->{open_elements}},
+        [$root, $self->{inner_html_tag_name}, $nsmap];
+    $self->{document}->append_child ($root);
+    $self->{insertion_mode} = IN_ELEMENT_IM;
+  } # $context
+
   push @{$self->{chars}}, split //,
       decode $self->{input_encoding}, $self->{byte_buffer}, # XXX Encoding Standard
           Encode::FB_QUIET;
@@ -311,11 +343,11 @@ sub _parse_bytes_run ($) {
 } # _parse_bytes_run
 
 sub _parse_bytes_subparser_done ($$) {
-  my ($self, $doc) = @_;
+  my ($self, $node) = @_;
   ## |$self->{t}| is an |ABORT_TOKEN| requesting the external entity.
   unshift @{$self->{token}}, {%{$self->{t}},
                               type => ENTITY_SUBTREE_TOKEN,
-                              parsed_nodes => $doc->child_nodes};
+                              parsed_nodes => $node->child_nodes};
   delete $self->{parser_pause};
   $self->_parse_bytes_run;
 } # _parse_bytes_subparser_done
@@ -330,6 +362,7 @@ sub _parse_bytes_subparser_done ($$) {
     $self->{ge} = $main_parser->{ge};
     $self->{pe} = $main_parser->{pe};
     $self->{document} = $main_parser->{document}->implementation->create_document;
+    $self->{context_element} = $self->{document}->create_element_ns (undef, 'dummy');
     $self->onerror ($main_parser->onerror);
     $self->onextentref ($main_parser->onextentref);
     $self->onparsed (sub { $main_parser->_parse_bytes_subparser_done ($_[1]) });
@@ -347,7 +380,7 @@ sub _stop_parsing ($) {
 } # _stop_parsing
 
 sub _on_terminate ($) {
-  $_[0]->onparsed->($_[0], $_[0]->{document});
+  $_[0]->onparsed->($_[0], $_[0]->{context_element} ? $_[0]->{document}->document_element : $_[0]->{document});
   $_[0]->_terminate_tree_constructor;
   $_[0]->_clear_refs;
 } # _on_terminate
@@ -418,9 +451,9 @@ sub _terminate_tree_constructor ($) {
 
 ## Tree construction stage
 
+# XXX text declarations in external GEs
 # XXX param refs
 # XXX external subset
-# XXX expansion of external GE refs
 # XXX entref depth limitation
 # XXX spec
 # XXX GE pos

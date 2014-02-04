@@ -53,6 +53,7 @@ sub _clear_refs ($) {
   delete $self->{byte_buffer};
   delete $self->{inner_html_node};
   delete $self->{inner_html_tag_name};
+  delete $self->{context_element};
   delete $self->{onerror};
   delete $self->{onextentref};
   delete $self->{onparsed};
