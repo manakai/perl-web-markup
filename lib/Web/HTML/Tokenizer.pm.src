@@ -83,8 +83,8 @@ sub _initialize_tokenizer ($) {
   #$self->{is_xml} (if XML)
 
   delete $self->{parser_pause}; # parser pause flag
-  $self->{state} = $self->{initial_state} || DATA_STATE; # MUST
-      ## $self->{initial_state} is the initial value for the
+  $self->{state} = $self->{tokenizer_initial_state} || DATA_STATE; # MUST
+      ## $self->{tokenizer_initial_state} is the initial value for the
       ## $self->{state}.  This value can be set after the parser is
       ## initialized.  This should only be used by nested XML parser
       ## invocation.
@@ -5540,7 +5540,7 @@ sub _expand_ge_in_attr ($$) {
     my $context = $self->{document}->create_element_ns (undef, 'dummy');
     my $doc = $self->{document}->implementation->create_document;
     my $parser = (ref $self)->new;
-    $parser->{initial_state} = ATTR_VALUE_ENTITY_STATE;
+    $parser->{tokenizer_initial_state} = ATTR_VALUE_ENTITY_STATE;
     $parser->onerror ($self->onerror);
     $parser->{ge} = {%{$self->{ge}}};
     delete $parser->{ge}->{$name};
