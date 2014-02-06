@@ -28,11 +28,11 @@ sub _abort : Test(10) {
   $tokenizer->_initialize_tokenizer;
 
   my $token = $tokenizer->_get_next_token;
-  eq_or_diff $token, {type => ABORT_TOKEN};
+  eq_or_diff $token, {type => ABORT_TOKEN, debug => 'abort char'};
 
   push @{$tokenizer->{chars}}, split //, "<!DOC";
   $token = $tokenizer->_get_next_token;
-  eq_or_diff $token, {type => ABORT_TOKEN};
+  eq_or_diff $token, {type => ABORT_TOKEN, debug => 'abort char'};
 
   push @{$tokenizer->{chars}}, split //, "TYPE html>";
   $token = $tokenizer->_get_next_token;
@@ -41,14 +41,14 @@ sub _abort : Test(10) {
 
   push @{$tokenizer->{chars}}, split //, "<";
   $token = $tokenizer->_get_next_token;
-  eq_or_diff $token, {type => ABORT_TOKEN};
+  eq_or_diff $token, {type => ABORT_TOKEN, debug => 'abort char'};
 
   $token = $tokenizer->_get_next_token;
-  eq_or_diff $token, {type => ABORT_TOKEN};
+  eq_or_diff $token, {type => ABORT_TOKEN, debug => 'abort char'};
 
   push @{$tokenizer->{chars}}, split //, 'html';
   $token = $tokenizer->_get_next_token;
-  eq_or_diff $token, {type => ABORT_TOKEN};
+  eq_or_diff $token, {type => ABORT_TOKEN, debug => 'abort char'};
 
   push @{$tokenizer->{chars}}, split //, '>';
   $token = $tokenizer->_get_next_token;
@@ -56,16 +56,16 @@ sub _abort : Test(10) {
                       line => 1, column => 16, data => undef};
 
   $token = $tokenizer->_get_next_token;
-  eq_or_diff $token, {type => ABORT_TOKEN};
+  eq_or_diff $token, {type => ABORT_TOKEN, debug => 'abort char'};
 
   $eof = 1;
   $token = $tokenizer->_get_next_token;
   eq_or_diff $token, {type => END_OF_FILE_TOKEN,
-                      line => 1, column => 21};
+                      line => 1, column => 22};
 
   $token = $tokenizer->_get_next_token;
   eq_or_diff $token, {type => END_OF_FILE_TOKEN,
-                      line => 1, column => 21};
+                      line => 1, column => 22};
 } # _abort
 
 __PACKAGE__->runtests;

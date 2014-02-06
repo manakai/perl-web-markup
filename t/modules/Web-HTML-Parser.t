@@ -307,7 +307,7 @@ sub _parse_char_string_onerror_old : Test(2) {
     type => 'no DOCTYPE',
     level => 'm',
     line => 1,
-    column => 14,
+    column => 15,
   }];
 } # _parse_char_string_onerror_old
 
@@ -327,7 +327,7 @@ sub _parse_char_string_onerror_new : Test(2) {
     type => 'no DOCTYPE',
     level => 'm',
     line => 1,
-    column => 14,
+    column => 15,
   }];
 } # _parse_char_string_onerror_new
 

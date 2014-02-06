@@ -109,7 +109,8 @@ sub _initialize_tokenizer ($) {
   delete $self->{chars_was_cr};
   $self->{char_buffer} = '';
   $self->{char_buffer_pos} = 0;
-  $self->{nc} = -1; # next input character
+  $self->{nc} = ABORT_CHAR; # next input character
+  $self->{column}++;
   #$self->{next_nc}
   
     $self->_set_nc;
@@ -4210,6 +4211,9 @@ sub _get_next_token ($) {
         ## characters differs from XML 1.0.
         #!!! next-input-character;
         $self->{nc} = ABORT_CHAR;
+        $self->{line_prev} = $self->{line};
+        $self->{column_prev} = $self->{column};
+        $self->{column}++;
         return  ($self->{ct}); # pi
         redo A;
       } elsif ($nc == 0x003F) { # ?

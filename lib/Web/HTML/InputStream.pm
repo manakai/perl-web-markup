@@ -514,12 +514,12 @@ sub _set_nc ($) {
   my $self = $_[0];
   {
     if ($self->{chars_pos} < @{$self->{chars}}) {
-      $self->{line_prev} = $self->{line};
-      $self->{column_prev} = $self->{column};
       my $lang = $self->{is_xml} || 'html';
       my $c = ord $self->{chars}->[$self->{chars_pos}++];
       if ($c == 0x000A or
           ($c == 0x0085 and $lang eq 1.1)) {
+        $self->{line_prev} = $self->{line};
+        $self->{column_prev} = $self->{column};
         if ($self->{chars_was_cr}) {
           delete $self->{chars_was_cr};
           redo;
@@ -531,47 +531,64 @@ sub _set_nc ($) {
         }
       } elsif ($c == 0x000D) {
         $self->{chars_was_cr} = 1;
+        $self->{line_prev} = $self->{line};
+        $self->{column_prev} = $self->{column};
         $self->{line}++;
         $self->{column} = 0;
         $c = 0x000A;
       } elsif ($c == 0x2028 and $lang eq 1.1) {
         delete $self->{chars_was_cr};
+        $self->{line_prev} = $self->{line};
+        $self->{column_prev} = $self->{column};
         $self->{line}++;
         $self->{column} = 0;
         $c = 0x000A;
       } else {
+        delete $self->{chars_was_cr};
+        if ($self->{nc} != ABORT_CHAR) {
+          $self->{line_prev} = $self->{line};
+          $self->{column_prev} = $self->{column};
+          $self->{column}++;
+        }
+
         if (my $level = $ParseErrorControlCodePosition->{$lang}->{$c}) {
           $self->{parse_error}
               ->(type => 'control char', # XXXtype
                  value => (sprintf 'U+%04X', $c),
                  level => $self->{level}->{$level},
                  line => $self->{line},
-                 column => $self->{column} + 1);
+                 column => $self->{column});
         } elsif ($level = $ParseErrorNoncharCodePosition->{$lang}->{$c}) {
           $self->{parse_error}
               ->(type => 'nonchar', # XXXtype
                  value => (sprintf 'U+%04X', $c),
                  level => $self->{level}->{$level},
                  line => $self->{line},
-                 column => $self->{column} + 1);
+                 column => $self->{column});
         }
-        
-        delete $self->{chars_was_cr};
-        $self->{column}++;
       }
       $self->{nc} = $c;
     } else {
       if ($self->{chars_pull_next}->()) {
-        $self->{nc} = ABORT_CHAR;
+        if ($self->{nc} != ABORT_CHAR) {
+          $self->{line_prev} = $self->{line};
+          $self->{column_prev} = $self->{column};
+          $self->{column}++;
+          $self->{nc} = ABORT_CHAR;
+        }
       } else {
         delete $self->{chars_was_cr};
         if ($self->{nc} != EOF_CHAR) {
-          $self->{line_prev} = $self->{line};
-          $self->{column_prev} = $self->{column};
+          if ($self->{nc} != ABORT_CHAR) {
+            $self->{line_prev} = $self->{line};
+            $self->{column_prev} = $self->{column};
+            $self->{column}++;
+          }
         }
         $self->{nc} = EOF_CHAR;
       }
     }
+    #warn "$self->{line_prev}/$self->{column_prev}, $self->{line}/$self->{column} $self->{nc} ", chr $self->{nc};
   } # block
 } # _set_nc
 
