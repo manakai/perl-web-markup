@@ -342,10 +342,10 @@ sub _parse_bytes_run ($) {
   }
 } # _parse_bytes_run
 
-sub _parse_bytes_subparser_done ($$) {
-  my ($self, $node) = @_;
-  ## |$self->{t}| is an |ABORT_TOKEN| requesting the external entity.
-  unshift @{$self->{token}}, {%{$self->{t}},
+sub _parse_bytes_subparser_done ($$$) {
+  my ($self, $node, $token) = @_;
+  ## |$token| is an |ABORT_TOKEN| requesting the external entity.
+  unshift @{$self->{token}}, {%$token,
                               type => ENTITY_SUBTREE_TOKEN,
                               parsed_nodes => $node->child_nodes};
   delete $self->{parser_pause};
@@ -362,10 +362,13 @@ sub _parse_bytes_subparser_done ($$) {
     $self->{ge} = $main_parser->{ge};
     $self->{pe} = $main_parser->{pe};
     $self->{document} = $main_parser->{document}->implementation->create_document;
-    $self->{context_element} = $self->{document}->create_element_ns (undef, 'dummy');
+    $self->{context_element} = @{$main_parser->{open_elements}}
+        ? $main_parser->{open_elements}->[-1]->[0]
+        : $self->{document}->create_element_ns (undef, 'dummy');
     $self->onerror ($main_parser->onerror);
     $self->onextentref ($main_parser->onextentref);
-    $self->onparsed (sub { $main_parser->_parse_bytes_subparser_done ($_[1]) });
+    my $t = $main_parser->{t};
+    $self->onparsed (sub { $main_parser->_parse_bytes_subparser_done ($_[1], $t) });
     return $self;
   } # new_from_parser
 
@@ -1056,7 +1059,7 @@ sub _construct_tree ($) {
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
         $onerror->(level => 'm', type => 'entityref outside of root element', # XXX
-                        token => $self->{t});
+                   token => $self->{t});
         my $list = $self->_parse_entity_subtree_token;
         for (@$list) {
           if ($_->node_type == 3) { # TEXT_NODE
@@ -1288,7 +1291,7 @@ sub _construct_tree ($) {
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
         $onerror->(level => 'm', type => 'entityref outside of root element', # XXX
-                        token => $self->{t});
+                   token => $self->{t});
         my $list = $self->_parse_entity_subtree_token;
         for (@$list) {
           if ($_->node_type == 3) { # TEXT_NODE

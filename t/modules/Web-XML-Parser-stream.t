@@ -173,7 +173,99 @@ test {
   });
 } n => 2, name => 'an external entity async';
 
-# XXX nested entity
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    a => 'f<p>&b;x</p>',
+    b => 'ab<q>ss</q>d',
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "a"><!ENTITY b SYSTEM "b"> ]><a>c&x;v</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="">cf<p>ab<q>ss</q>dx</p>v</a>};
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 1, name => 'nested entity';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    a => 'f<p>b;x</p>',
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "a"> ]><a xmlns="http://hoge/.">c&x;v</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/.">cf<p>b;x</p>v</a>};
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 1, name => 'default namespace';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    a => 'f<p>b;x</p>',
+  };
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "a"> ]>&x;});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a>f<p xmlns="">b;x</p>};
+      delete $error[0]->{token}->{parsed_nodes};
+      delete $error[0]->{token}->{extent};
+      eq_or_diff \@error, [{type => 'entityref outside of root element',
+                            token => {type => 15, line => 1, column => 40,
+                                      name => 'x;'},
+                            level => 'm'}];
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'default namespace, outside of root element';
+
+# XXX namespaces in external entity
 
 run_tests;
 
