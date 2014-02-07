@@ -3209,6 +3209,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "event handler"
                                                                                                                  },
+                                                                                               "onlanguagechange" => {
+                                                                                                                       "conforming" => 1,
+                                                                                                                       "status" => "LC",
+                                                                                                                       "value_type" => "event handler"
+                                                                                                                     },
                                                                                                "onmessage" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "LC",
@@ -4719,6 +4724,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                        "status" => "LC",
                                                                                                                        "value_type" => "event handler"
                                                                                                                      },
+                                                                                                   "onlanguagechange" => {
+                                                                                                                           "status" => "LC",
+                                                                                                                           "value_type" => "event handler"
+                                                                                                                         },
                                                                                                    "onmessage" => {
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "event handler"
@@ -8673,9 +8682,7 @@ $Web::HTML::Validator::_Defs = {
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "media" => {
-                                                                                                              "conforming" => 1,
-                                                                                                              "status" => "LC",
-                                                                                                              "value_type" => "media query list"
+                                                                                                              "status" => "LC"
                                                                                                             },
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
