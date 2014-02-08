@@ -252,12 +252,12 @@ test {
   $parser->parse_bytes_end;
   $parser->onparsed (sub {
     test {
-      is $doc->inner_html, q{<!DOCTYPE a>f<p xmlns="">b;x</p>};
-      delete $error[0]->{token}->{parsed_nodes};
-      delete $error[0]->{token}->{extent};
-      eq_or_diff \@error, [{type => 'entityref outside of root element',
-                            token => {type => 15, line => 1, column => 40,
-                                      name => 'x;'},
+      is $doc->inner_html, q{<!DOCTYPE a>};
+      eq_or_diff \@error, [{type => 'ref outside of root element',
+                            line => 1, column => 40,
+                            level => 'm'},
+                           {type => 'no root element',
+                            token => {type => 5, line => 1, column => 43},
                             level => 'm'}];
       done $c;
       undef $c;

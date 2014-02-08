@@ -1031,15 +1031,18 @@ sub _construct_tree ($) {
         die "$0: XML parser subset im: Unknown token type $self->{t}->{type}";
       }
 
-    } elsif ($self->{insertion_mode} == AFTER_ROOT_ELEMENT_IM) {
+    } elsif ($self->{insertion_mode} == AFTER_ROOT_ELEMENT_IM) { ## End phase
       if ($self->{t}->{type} == START_TAG_TOKEN) {
         $onerror->(level => 'm', type => 'second root element',
-                        token => $self->{t});
+                   token => $self->{t});
 
-        ## XML5: Ignore the token.
+        ## Ignore the token.
+        if ($self->{self_closing}) {
+          delete $self->{self_closing}; # ack
+        }
 
-        $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
-        ## Reprocess the token.
+        ## Stay in the mode.
+        $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         my $comment = $self->{document}->create_comment ($self->{t}->{data});
@@ -1057,28 +1060,24 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == CHARACTER_TOKEN) {
-        while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
-          $onerror->(level => 'm', type => 'NULL', token => $self->{t});
-        }
+        ## XML5: Always a parse error.
 
-        if (not $self->{tainted} and
-            not $self->{t}->{has_reference} and
-            $self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
-          #
-        }
-        
-        if (length $self->{t}->{data}) {
-          ## XML5: Ignore the token.
-
-          unless ($self->{tainted}) {
+        unless ($self->{tainted}) {
+          $self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]*)//;
+          if (length $self->{t}->{data}) {
+            my $l = $self->{t}->{line};
+            my $c = $self->{t}->{column};
+            my $sp = $1;
+            $l += $sp =~ /\x0A/g;
+            $c = $l == $self->{t}->{line} ? $c + length $1 : length $1
+                if $sp =~ /([^\x0A]+)\z/;
             $onerror->(level => 'm', type => 'text outside of root element',
-                            token => $self->{t});
+                       token => $self->{t}, line => $l, column => $c);
             $self->{tainted} = 1;
           }
-
-          $self->{document}->manakai_append_text ($self->{t}->{data});
         }
 
+        ## Ignore the token.
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -1086,46 +1085,23 @@ sub _construct_tree ($) {
         return $self->_stop_parsing;
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         $onerror->(level => 'm', type => 'unmatched end tag',
-                        text => $self->{t}->{tag_name},
-                        token => $self->{t});
-        ## Ignore the token.
+                   value => $self->{t}->{tag_name},
+                   token => $self->{t});
 
+        ## Ignore the token.
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-        $onerror->(level => 'm', type => 'entityref outside of root element', # XXX
-                   token => $self->{t});
-        my $list = $self->_parse_entity_subtree_token;
-        for (@$list) {
-          if ($_->node_type == 3) { # TEXT_NODE
-            if ($self->{tainted}) {
-              $self->{document}->manakai_append_text ($_->data); # XXX pos
-            } else {
-              my $data = $_->data;
-              $data =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
-              if (length $data) {
-                $self->{document}->manakai_append_text ($data); # XXX pos
-                $self->{tainted} = 1;
-              }
-            }
-          } elsif ($_->node_type == 1) { # ELEMENT_NODE
-            $onerror->(level => 'm', type => 'second root element',
-                            token => $self->{t});
-            ## Ignore the element.
-          } else {
-            $self->{document}->append_child ($_);
-          }
-        }
-
+        ## Ignore the token.
         ## Stay in the state.
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
         $onerror->(level => 'm', type => 'in html:#doctype',
-                        token => $self->{t});
+                   token => $self->{t});
+
         ## Ignore the token.
-        
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -1133,7 +1109,7 @@ sub _construct_tree ($) {
         die "$0: XML parser initial: Unknown token type $self->{t}->{type}";
       }
 
-    } elsif ($self->{insertion_mode} == BEFORE_ROOT_ELEMENT_IM) {
+    } elsif ($self->{insertion_mode} == BEFORE_ROOT_ELEMENT_IM) { ## Start phase
       if ($self->{t}->{type} == START_TAG_TOKEN) {
         my $nsmap = {
           xml => q<http://www.w3.org/XML/1998/namespace>,
@@ -1284,28 +1260,25 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == CHARACTER_TOKEN) {
-        while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
-          $onerror->(level => 'm', type => 'NULL', token => $self->{t});
-        }
+        ## XML5: Always a parse error.
 
-        if (not $self->{tainted} and
-            not $self->{t}->{has_reference} and
-            $self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
-          #
-        }
-        
-        if (length $self->{t}->{data}) {
-          ## XML5: Ignore the token.
-
-          unless ($self->{tainted}) {
+        unless ($self->{tainted}) {
+          $self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]*)//;
+          if (length $self->{t}->{data}) {
+            my $l = $self->{t}->{line};
+            my $c = $self->{t}->{column};
+            my $sp = $1;
+            $l += ($sp =~ /\x0A/g);
+            $l--, $c = 1 if $c == 0;
+            $c = ($l == $self->{t}->{line}) ? ($c + length $1) : (1 + length $1)
+                if $sp =~ /([^\x0A]+)\z/;
             $onerror->(level => 'm', type => 'text outside of root element',
-                            token => $self->{t});
+                       token => $self->{t}, line => $l, column => $c);
             $self->{tainted} = 1;
           }
-
-          $self->{document}->manakai_append_text ($self->{t}->{data});
         }
 
+        ## Ignore the token.
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -1317,52 +1290,24 @@ sub _construct_tree ($) {
         ## Reprocess the token.
         redo B;
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
-        $onerror->(level => 'm', type => 'unmatched end tag',
-                        text => $self->{t}->{tag_name},
-                        token => $self->{t});
-        ## Ignore the token.
+        $onerror->(level => 'm', type => 'stray end tag',
+                   value => $self->{t}->{tag_name},
+                   token => $self->{t});
 
+        ## Ignore the token.
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-        $onerror->(level => 'm', type => 'entityref outside of root element', # XXX
-                   token => $self->{t});
-        my $list = $self->_parse_entity_subtree_token;
-        for (@$list) {
-          if ($_->node_type == 3) { # TEXT_NODE
-            if ($self->{tainted}) {
-              $self->{document}->manakai_append_text ($_->data); # XXX pos
-            } else {
-              my $data = $_->data;
-              $data =~ s/^[\x09\x0A\x0C\x0D\x20]+//;
-              if (length $data) {
-                $self->{document}->manakai_append_text ($data); # XXX pos
-                $self->{tainted} = 1;
-              }
-            }
-          } elsif ($_->node_type == 1) { # ELEMENT_NODE
-            if ($self->{insertion_mode} == AFTER_ROOT_ELEMENT_IM) {
-              $onerror->(level => 'm', type => 'second root element',
-                              token => $self->{t});
-              ## Ignore the element.
-            } else {
-              delete $self->{tainted};
-              $self->{insertion_mode} = AFTER_ROOT_ELEMENT_IM;
-              $self->{document}->append_child ($_);
-            }
-          } else {
-            $self->{document}->append_child ($_);
-          }
-        }
-        ## Stay in the original mode or AFTER_ROOT_ELEMENT_IM.
+        ## Ignore the token.
+        ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
-        $onerror->(level => 'm', type => 'in html:#doctype',
-                        token => $self->{t});
+        $onerror->(level => 'm', type => 'second doctype', # XXXdoc
+                   token => $self->{t});
+
         ## Ignore the token.
-        
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -1371,9 +1316,9 @@ sub _construct_tree ($) {
       }
 
     } elsif ($self->{insertion_mode} == AFTER_XML_DECL_IM) {
+      ## XML5: DOCTYPE is not supported.
+
       if ($self->{t}->{type} == DOCTYPE_TOKEN) {
-        ## XML5: No "DOCTYPE" token.
-        
         my $doctype = $self->{document}->create_document_type_definition
             (defined $self->{t}->{name} ? $self->{t}->{name} : '');
         
@@ -1420,37 +1365,22 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == CHARACTER_TOKEN) {
-        while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
-          $onerror->(level => 'm', type => 'NULL', token => $self->{t});
+        if ($self->{t}->{data} =~ /[^\x09\x0A\x0C\x20]/) {
+          $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+          ## Reprocess the token.
+          redo B;
+        } else {
+          ## Stay in the mode.
+          ## Ignore the token.
+          $self->{t} = $self->_get_next_token;
+          redo B;
         }
-
-        if (not $self->{tainted} and
-            not $self->{t}->{has_reference} and
-            $self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
-          #
-        }
-        
-        if (length $self->{t}->{data}) {
-          ## XML5: Ignore the token.
-
-          unless ($self->{tainted}) {
-            $onerror->(level => 'm', type => 'text outside of root element',
-                            token => $self->{t});
-            $self->{tainted} = 1;
-          }
-
-          $self->{document}->manakai_append_text ($self->{t}->{data});
-        }
-
-        ## Stay in the mode.
-        $self->{t} = $self->_get_next_token;
-        redo B;
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
-        $onerror->(level => 'm', type => 'unmatched end tag',
-                        text => $self->{t}->{tag_name},
-                        token => $self->{t});
+        $onerror->(level => 'm', type => 'stray end tag',
+                   value => $self->{t}->{tag_name},
+                   token => $self->{t});
+
         ## Ignore the token.
-        
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -1460,6 +1390,7 @@ sub _construct_tree ($) {
 
     } elsif ($self->{insertion_mode} == BEFORE_XML_DECL_IM) {
       ## XML5: No support for the XML declaration
+
       if ($self->{t}->{type} == PI_TOKEN and
           $self->{t}->{target} eq 'xml' and
           $self->{t}->{data} =~ /\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
@@ -1472,6 +1403,7 @@ sub _construct_tree ($) {
                             (?>"(yes|no)"|'(yes|no)'))?
                          [\x09\x0A\x20]*\z/x) {
         $self->{document}->xml_version (defined $1 ? $1 : $2);
+        # XXX drop XML 1.1 support?
         $self->{is_xml} = 1.1 if defined $1 and $1 eq '1.1';
         $self->{document}->xml_encoding (defined $3 ? $3 : $4); # or undef
         $self->{document}->xml_standalone (($5 || $6 || 'no') ne 'no');

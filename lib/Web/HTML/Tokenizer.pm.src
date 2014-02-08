@@ -1169,6 +1169,13 @@ sub _get_next_token ($) {
           $self->{ca}->{cpos} = 0;
           $self->{ca}->{pos} = [[$self->{ca}->{cl}, $self->{ca}->{cc}
                                      => $self->{line}, $self->{column}]];
+        } elsif ($self->{state} == ENTITY_STATE) {
+          if ($self->{is_xml} and
+              not $self->{tainted} and
+              @{$self->{open_elements} or []} == 0) {
+            !!!parse-error (type => 'ref outside of root element', # XXXdoc
+                            line => $self->{line}, column => $self->{column});
+          }
         }
         
         if ($action->{state_set}) {

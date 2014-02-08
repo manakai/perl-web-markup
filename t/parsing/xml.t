@@ -91,8 +91,8 @@ sub _test ($) {
   $p->onerror (sub {
     my %opt = @_;
     push @errors, join ';',
-        $opt{token}->{line} || $opt{line},
-        $opt{token}->{column} || $opt{column},
+        $opt{line} || $opt{token}->{line},
+        $opt{column} || $opt{token}->{column},
         $opt{type},
         defined $opt{text} ? $opt{text} : '',
         defined $opt{value} ? $opt{value} : '',
@@ -196,6 +196,7 @@ sub _test ($) {
 
 for my $file_name (@FILES) {
   for_each_test ($file_name, {
+    data => {is_prefixed => 1},
     errors => {is_list => 1},
     document => {is_prefixed => 1},
     'document-fragment' => {is_prefixed => 1},
