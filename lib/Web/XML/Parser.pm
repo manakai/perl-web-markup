@@ -454,11 +454,21 @@ sub _terminate_tree_constructor ($) {
 
 ## Tree construction stage
 
+## Differences from the XML5 spec are marked as "XML5:".
+
+## XML5: The spec has no namespace support.
+
+## XML5: Start, main, end phases in the spec are represented as
+## insertion modes.  BEFORE_XML_DECL_IM and AFTER_XML_DECL_IM are not
+## defined in the spec.
+
+## XML5: The spec does not support entity expansion.
+
+# XXX spec external entity in element content
 # XXX text declarations in external GEs
 # XXX param refs
 # XXX external subset
 # XXX entref depth limitation
-# XXX spec
 # XXX GE pos
 # XXX PE pos
 # XXX well-formedness of entity decls
@@ -466,24 +476,50 @@ sub _terminate_tree_constructor ($) {
 # XXX external entity support
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
 
+# XXX elemsnts in GEref vs script execution, stack of open elements
+# considerations...
+
 # XXX GEref: 
 #       If internal entity, expanded.
 #       If unparsed entity, a well-formedness error.
 #       If external entity, expanded to the empty string.
 #       Otherwise, a well-formedness error.
 
-## NOTE: Differences from the XML5 draft are marked as "XML5:".
-
-## XML5: No namespace support.
-
-## XML5: Start, main, end phases.  In this implementation, they are
-## represented by insertion modes.
-
-## XML5: No entity expansion support
-
 sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
 } # _insert_point
+
+sub _append_text ($$$$) {
+  #my ($string, $parent, $s_line, $s_column) = @_;
+  return unless length $_[0];
+  my $parent = $_[1];
+  $parent = $parent->content
+      if $parent->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template');
+
+  my $text = $parent->last_child;
+  my $s_pos = 0;
+  my $pos_list;
+  if (defined $text and $text->node_type == 3) { # TEXT_NODE
+    $s_pos += length $text->data;
+    $text->manakai_append_text ($_[0]);
+    $pos_list = $text->get_user_data ('manakai_sp');
+    $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
+  } else {
+    $text = $parent->owner_document->create_text_node ($_[0]);
+    $parent->append_child ($text);
+    $pos_list = [];
+  }
+
+  my $p = [$s_pos, length $_[0], $_[2], $_[3]];
+  if (@$pos_list and
+      $pos_list->[-1]->[0] + $pos_list->[-1]->[1] == $p->[0] and
+      $pos_list->[-1]->[2] == $p->[2] and $pos_list->[-1]->[3] + $pos_list->[-1]->[1] == $p->[3]) {
+    $pos_list->[-1]->[1] += $p->[1];
+  } else {
+    push @$pos_list, $p;
+  }
+  $text->set_user_data (manakai_sp => $pos_list);
+} # _append_text
 
 sub _construct_tree ($) {
   my ($self) = @_;
@@ -496,8 +532,8 @@ sub _construct_tree ($) {
         while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
           $onerror->(level => 'm', type => 'NULL', token => $self->{t});
         }
-        (_insert_point $self->{open_elements}->[-1]->[0])
-            ->manakai_append_text ($self->{t}->{data});
+        _append_text $self->{t}->{data} => $self->{open_elements}->[-1]->[0],
+            $self->{t}->{line}, $self->{t}->{column} + ($self->{t}->{char_delta} || 0);
         
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;

@@ -1262,7 +1262,7 @@ sub _get_next_token ($) {
               $token->{data} .= chr $nc;
             }
           } elsif ($action->{emit} == CHARACTER_TOKEN) {
-            $token->{data} .= chr $nc;
+            $token->{data} = chr $nc;
           }
           if ($action->{emit_delta}) {
             $token->{line} = $self->{line_prev};
@@ -1274,10 +1274,6 @@ sub _get_next_token ($) {
           if (defined $action->{emit_data_read_until}) {
             $token->{data} .= $self->_read_chars
                 ({map { $_ => 1 } split //, $action->{emit_data_read_until}});
-
-            #$self->{read_until}->($token->{data},
-            #                      $action->{emit_data_read_until},
-            #                      length $token->{data});
           }
           
           if ($action->{reconsume}) {
@@ -1932,9 +1928,10 @@ sub _get_next_token ($) {
         }
 
         $self->{ct} = {type => CHARACTER_TOKEN,
-                                  data => '',
-                                  line => $self->{line_prev},
-                                  column => $self->{column_prev} - 7};
+                       data => '',
+                       line => $self->{line_prev},
+                       column => $self->{column_prev} - 7,
+                       char_delta => 9}; # <![CDATA[
         $self->{state} = CDATA_SECTION_STATE;
         
     $self->_set_nc;
