@@ -913,6 +913,8 @@ sub _construct_tree ($) {
                 default => (($default and ($default == 1 or $default == 4))
                               ? defined $at->{value} ? $at->{value} : ''
                               : undef),
+                line => $at->{line},
+                column => $at->{column},
                 sps => $at->{sps},
               };
             } else {
@@ -1493,10 +1495,7 @@ sub _parse_entity_subtree_token ($) {
       }
     }
 
-    unshift @node, @{$node->child_nodes};
-
-    # XXX manakai_pos
-    # XXX attrs
+    unshift @node, @{$node->attributes or []}, @{$node->child_nodes};
   }
 
   return $list;
