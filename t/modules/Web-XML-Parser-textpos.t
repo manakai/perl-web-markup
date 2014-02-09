@@ -69,7 +69,7 @@ for my $test (
     Web::XML::Parser->new->parse_char_string ($test->[0] => $doc);
 
     my $text = $doc->document_element->first_child;
-    my $pos = $text->get_user_data ('manakai_sp');
+    my $pos = $text->get_user_data ('manakai_sps');
 
     eq_or_diff $pos, $test->[1];
 
@@ -97,13 +97,80 @@ for my $test (
     Web::XML::Parser->new->parse_char_string ($test->[0] => $doc);
 
     my $text = $doc->document_element->first_child->first_child;
-    my $pos = $text->get_user_data ('manakai_sp');
+    my $pos = $text->get_user_data ('manakai_sps');
 
     eq_or_diff $pos, $test->[1];
 
     done $c;
   } n => 1, name => 'a text node';
 }
+
+test {
+  my $c = shift;
+
+  my $doc = new Web::DOM::Document;
+  Web::XML::Parser->new->parse_char_string (q{<!DOCTYPE a[
+<!ENTITY b "<e>cd</e>">
+]><a>&b;</a>} => $doc);
+
+  my $node = $doc->document_element->first_child;
+  is $node->get_user_data ('manakai_source_line'), 2;
+  is $node->get_user_data ('manakai_source_column'), 13;
+  is $node->get_user_data ('manakai_di'), 0;
+
+  done $c;
+} n => 3;
+
+test {
+  my $c = shift;
+
+  my $doc = new Web::DOM::Document;
+  Web::XML::Parser->new->parse_char_string (q{<!DOCTYPE a[
+<!ENTITY b "<e><f>c</f>d</e>">
+]><a>&b;</a>} => $doc);
+
+  my $node = $doc->document_element->first_child->first_element_child;
+  is $node->get_user_data ('manakai_source_line'), 2;
+  is $node->get_user_data ('manakai_source_column'), 16;
+  is $node->get_user_data ('manakai_di'), 0;
+
+  done $c;
+} n => 3;
+
+test {
+  my $c = shift;
+
+  my $doc = new Web::DOM::Document;
+  Web::XML::Parser->new->parse_char_string (q{<!DOCTYPE a[
+<!ENTITY b "<e>
+<f>c</f>d</e>">
+]><a>&b;</a>} => $doc);
+
+  my $node = $doc->document_element->first_child->first_element_child;
+  is $node->get_user_data ('manakai_source_line'), 3;
+  is $node->get_user_data ('manakai_source_column'), 1;
+  is $node->get_user_data ('manakai_di'), 0;
+
+  done $c;
+} n => 3;
+
+test {
+  my $c = shift;
+
+  my $doc = new Web::DOM::Document;
+  Web::XML::Parser->new->parse_char_string (q{<!DOCTYPE a[
+<!ENTITY b "<e>
+<f>c</f>d</e>">
+<!ENTITY g "&b;">
+]><a>&g;</a>} => $doc);
+
+  my $node = $doc->document_element->first_child->first_element_child;
+  is $node->get_user_data ('manakai_source_line'), 3;
+  is $node->get_user_data ('manakai_source_column'), 1;
+  is $node->get_user_data ('manakai_di'), 0;
+
+  done $c;
+} n => 3;
 
 run_tests;
 

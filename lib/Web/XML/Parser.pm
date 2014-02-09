@@ -8,6 +8,7 @@ use Web::HTML::Defs;
 use Web::HTML::ParserData;
 use Web::HTML::InputStream;
 use Web::HTML::Tokenizer;
+use Web::HTML::SourceMap;
 push our @ISA, qw(Web::HTML::Tokenizer);
 
 ## Insertion modes
@@ -505,7 +506,7 @@ sub _construct_tree ($) {
         my $parent = _insert_point $self->{open_elements}->[-1]->[0];
         my $text = $parent->last_child;
         if (defined $text and $text->node_type == 3) { # TEXT_NODE
-          my $pos_list = $text->get_user_data ('manakai_sp');
+          my $pos_list = $text->get_user_data ('manakai_sps');
           $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
           if (defined $self->{t}->{sps}) {
             my $delta = length $text->data;
@@ -517,19 +518,19 @@ sub _construct_tree ($) {
                  $self->{t}->{line},
                  $self->{t}->{column} + ($self->{t}->{char_delta} || 0)];
           }
-          $text->set_user_data (manakai_sp => $pos_list);
+          $text->set_user_data (manakai_sps => $pos_list);
           $text->manakai_append_text ($self->{t}->{data});
         } else {
           $text = $parent->owner_document->create_text_node
               ($self->{t}->{data});
           if (defined $self->{t}->{sps}) {
-            $text->set_user_data (manakai_sp => $self->{t}->{sps});
+            $text->set_user_data (manakai_sps => $self->{t}->{sps});
           } else {
             $text->set_user_data
-                (manakai_sp => [[0,
-                                 length $self->{t}->{data},
-                                 $self->{t}->{line},
-                                 $self->{t}->{column} + ($self->{t}->{char_delta} || 0)]]);
+                (manakai_sps => [[0,
+                                  length $self->{t}->{data},
+                                  $self->{t}->{line},
+                                  $self->{t}->{column} + ($self->{t}->{char_delta} || 0)]]);
           }
           $parent->append_child ($text);
         }
@@ -751,13 +752,13 @@ sub _construct_tree ($) {
         for (@$list) {
           if ($_->node_type == 3) { # TEXT_NODE
             if (defined $lc and $lc->node_type == 3) { # TEXT_NODE
-              my $sp2 = $_->get_user_data ('manakai_sp');
-              my $sp = $lc->get_user_data ('manakai_sp');
+              my $sp2 = $_->get_user_data ('manakai_sps');
+              my $sp = $lc->get_user_data ('manakai_sps');
               $sp = [] unless defined $sp and ref $sp eq 'ARRAY';
               my $delta = length $lc->data;
               $_->[0] += $delta for @$sp2;
               push @$sp, @$sp2;
-              $lc->set_user_data (manakai_sp => $sp);
+              $lc->set_user_data (manakai_sps => $sp);
               $lc->manakai_append_text ($_->data);
             } else {
               $parent->append_child ($lc = $_);
@@ -1448,82 +1449,20 @@ sub _parse_entity_subtree_token ($) {
   ## Internal entity with "&" and/or "<" in entity value, referenced
   ## from element content.
 
-  if ($t->{parsed_nodes}) {
-    return $t->{parsed_nodes};
-  }
+  return $t->{parsed_nodes} if defined $t->{parsed_nodes};
 
   my $context = @{$self->{open_elements}}
       ? $self->{open_elements}->[-1]->[0]
       : $self->{document}->create_element_ns (undef, 'dummy');
 
-  my $index_to_source_pos = $self->{ge}->{$t->{name}}->{sps} || [];
-  my $index_to_parsed_pos = [];
-  my $s = $self->{ge}->{$t->{name}}->{value};
-  my $pos = 0;
-  my $l = 1;
-  my $c = 1;
-  for (split /(\x0D\x0A?|\x0A)/, $s, -1) {
-    if (/[\x0D\x0A]/) {
-      $l++;
-      $c = 0;
-      push @$index_to_parsed_pos, [$pos, length $_, $l, $c];
-      $pos += length $_;
-    } else {
-      my $length = length $_;
-      push @$index_to_parsed_pos, [$pos, $length, $l, $c];
-      $c += $length;
-      $pos += $length;
-    }
-  }
-
-  my $mapper = sub {
-    my $args = $_[0];
-    return if defined $args->{di};
-    
-    my $line;
-    my $column;
-    if (defined $args->{token}) {
-      $line = $args->{token}->{line};
-      $column = $args->{token}->{column};
-    } else {
-      $line = $args->{line};
-      $column = $args->{column};
-    }
-    $args->{di} = -1;
-    if (defined $column) {
-      my $p;
-      for (@$index_to_parsed_pos) {
-        if ($_->[2] < $line or
-            $_->[2] == $line and $_->[3] <= $column) {
-          $p = $_;
-        } else {
-          last;
-        }
-      }
-      if (defined $p) {
-        my $pos = $p->[0] + ($column - $p->[3]);
-        undef $p;
-        for (@$index_to_source_pos) {
-          if ($pos < $_->[0]) {
-            last;
-          } else {
-            $p = $_;
-          }
-        }
-        if (defined $p) {
-          $args->{line} = $p->[2];
-          $args->{column} = $p->[3] + $pos - $p->[0];
-          $args->{di} = 0; # XXX
-        }
-      }
-    }
-  }; # $mapper
+  my $map_parsed = create_pos_lc_map $self->{ge}->{$t->{name}}->{value};
+  my $map_source = $self->{ge}->{$t->{name}}->{sps} || [];
 
   my $doc = $self->{document}->implementation->create_document;
   my $parser = (ref $self)->new;
   $parser->onerror (sub {
     my %args = @_;
-    $mapper->(\%args);
+    lc_lc_mapper $map_parsed => $map_source, \%args;
     $self->onerror->(%args);
   });
   $parser->{ge} = {%{$self->{ge}}};
@@ -1534,16 +1473,29 @@ sub _parse_entity_subtree_token ($) {
   my @node = @$list;
   while (@node) {
     my $node = shift @node;
-    my $sps = $node->get_user_data ('manakai_sp');
+    my $sps = $node->get_user_data ('manakai_sps');
     if (defined $sps) {
       for (@$sps) {
-        my %p = (line => $_->[2], column => $_->[3], di => $_->[4]);
-        $mapper->(\%p);
-        $_->[2] = $p{line};
-        $_->[3] = $p{column};
-        $_->[4] = $p{di} if defined $p{di};
+        next if defined $_->[4];
+        my $p = {line => $_->[2], column => $_->[3]};
+        lc_lc_mapper $map_parsed => $map_source, $p;
+        $_->[2] = $p->{line};
+        $_->[3] = $p->{column};
+        $_->[4] = $p->{di} if defined $p->{di};
       }
     }
+
+    if (not defined $node->get_user_data ('manakai_di')) {
+      my $p = {line => $node->get_user_data ('manakai_source_line'),
+               column => $node->get_user_data ('manakai_source_column')};
+      if (defined $p->{column}) {
+        lc_lc_mapper $map_parsed => $map_source, $p;
+        $node->set_user_data (manakai_source_line => $p->{line});
+        $node->set_user_data (manakai_source_column => $p->{column});
+        $node->set_user_data (manakai_di => $p->{di});
+      }
+    }
+
     unshift @node, @{$node->child_nodes};
 
     # XXX manakai_pos
