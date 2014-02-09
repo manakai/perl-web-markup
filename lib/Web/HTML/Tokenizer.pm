@@ -92,6 +92,7 @@ sub _initialize_tokenizer ($) {
   #$self->{entity__value}; # initialized when used
   #$self->{entity__match}; # initialized when used
   #$self->{entity__is_tree}; # initialized when used
+  #$self->{entity__sps}; # initialized when used
   undef $self->{ct}; # current token
   undef $self->{ca}; # current attribute
   if ($self->{state} == ATTR_VALUE_ENTITY_STATE) {
@@ -1175,7 +1176,7 @@ sub _get_next_token ($) {
           if ($self->{is_xml} and
               not $self->{tainted} and
               @{$self->{open_elements} or []} == 0) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'ref outside of root element', # XXXdoc
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'ref outside of root element',
                             line => $self->{line}, column => $self->{column});
           }
         }
@@ -2475,6 +2476,7 @@ sub _get_next_token ($) {
         
         $self->{state} = DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE;
         $self->{ct}->{value} = ''; # ENTITY
+        $self->{ct}->{sps} = [];
         
     $self->_set_nc;
   
@@ -2485,6 +2487,7 @@ sub _get_next_token ($) {
         
         $self->{state} = DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE;
         $self->{ct}->{value} = ''; # ENTITY
+        $self->{ct}->{sps} = [];
         
     $self->_set_nc;
   
@@ -3496,6 +3499,7 @@ sub _get_next_token ($) {
         $self->{entity__value} = $self->{kwd};
         $self->{entity__match} = 0;
         delete $self->{entity__is_tree};
+        delete $self->{entity__sps};
         
     $self->_set_nc;
   
@@ -3557,7 +3561,7 @@ sub _get_next_token ($) {
                $nc <= 0x0039) { # 0..9
         
         $self->{state} = NCR_NUM_STATE;
-        $self->{kwd} = $nc - 0x0030;
+        $self->{kwd} = chr $nc;
         
     $self->_set_nc;
   
@@ -3583,7 +3587,9 @@ sub _get_next_token ($) {
                    });
           redo A;
         } else {
-          
+          push @{$self->{ca}->{sps}},
+              [length $self->{ca}->{value}, 2,
+               $self->{line_prev}, $self->{column_prev}];
           $self->{ca}->{value} .= '&#';
           $self->{state} = $self->{prev_state};
           ## Reconsume.
@@ -3591,11 +3597,8 @@ sub _get_next_token ($) {
         }
       }
     } elsif ($state == NCR_NUM_STATE) {
-      if (0x0030 <= $nc and 
-          $nc <= 0x0039) { # 0..9
-        
-        $self->{kwd} *= 10;
-        $self->{kwd} += $nc - 0x0030;
+      if (0x0030 <= $nc and $nc <= 0x0039) { # 0..9
+        $self->{kwd} .= chr $nc;
         
         ## Stay in the state.
         
@@ -3615,9 +3618,9 @@ sub _get_next_token ($) {
         #
       }
 
-      my $code = $self->{kwd};
+      my $code = 0+$self->{kwd};
       my $l = $self->{line_prev};
-      my $c = $self->{column_prev};
+      my $c = $self->{column_prev} - 2 - length $self->{kwd}; # '&#'
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'invalid character reference',
                         text => (sprintf 'U+%04X', $code),
@@ -3652,6 +3655,7 @@ sub _get_next_token ($) {
           push @{$self->{ca}->{pos} ||= []},
               [$self->{ca}->{cl}, $self->{ca}->{cc} => $l, $c];
         }
+        push @{$self->{ca}->{sps}}, [length $self->{ca}->{value}, 1, $l, $c];
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
         $self->{state} = $self->{prev_state};
@@ -3663,9 +3667,8 @@ sub _get_next_token ($) {
           (0x0041 <= $nc and $nc <= 0x0046) or
           (0x0061 <= $nc and $nc <= 0x0066)) {
         # 0..9, A..F, a..f
-        
         $self->{state} = HEXREF_HEX_STATE;
-        $self->{kwd} = 0;
+        $self->{kwd} = '';
         ## Reconsume.
         redo A;
       } else {
@@ -3689,7 +3692,9 @@ sub _get_next_token ($) {
                    });
           redo A;
         } else {
-          
+          push @{$self->{ca}->{sps}},
+              [length $self->{ca}->{value}, 1 + length $self->{kwd},
+               $self->{line_prev}, $self->{column_prev} - length $self->{kwd}];
           $self->{ca}->{value} .= '&' . $self->{kwd};
           $self->{state} = $self->{prev_state};
           ## Reconsume.
@@ -3699,19 +3704,15 @@ sub _get_next_token ($) {
     } elsif ($state == HEXREF_HEX_STATE) {
       if (0x0030 <= $nc and $nc <= 0x0039) {
         # 0..9
-        
-        $self->{kwd} *= 0x10;
-        $self->{kwd} += $nc - 0x0030;
+        $self->{kwd} .= chr $nc;
         ## Stay in the state.
         
     $self->_set_nc;
   
         redo A;
-      } elsif (0x0061 <= $nc and
-               $nc <= 0x0066) { # a..f
+      } elsif (0x0061 <= $nc and $nc <= 0x0066) { # a..f
         
-        $self->{kwd} *= 0x10;
-        $self->{kwd} += $nc - 0x0060 + 9;
+        $self->{kwd} .= chr $nc;
         ## Stay in the state.
         
     $self->_set_nc;
@@ -3720,8 +3721,7 @@ sub _get_next_token ($) {
       } elsif (0x0041 <= $nc and
                $nc <= 0x0046) { # A..F
         
-        $self->{kwd} *= 0x10;
-        $self->{kwd} += $nc - 0x0040 + 9;
+        $self->{kwd} .= chr $nc;
         ## Stay in the state.
         
     $self->_set_nc;
@@ -3742,9 +3742,9 @@ sub _get_next_token ($) {
         #
       }
 
-      my $code = $self->{kwd};
+      my $code = hex $self->{kwd};
       my $l = $self->{line_prev};
-      my $c = $self->{column_prev}; # XXX This is the last character of the reference; this should be the first character...
+      my $c = $self->{column_prev} - 3 - length $self->{kwd}; # '&#x'
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'invalid character reference',
                         text => (sprintf 'U+%04X', $code),
@@ -3762,16 +3762,13 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
-        
         $self->{state} = $self->{prev_state};
         ## Reconsume.
         return  ({type => CHARACTER_TOKEN, data => chr $code,
                   has_reference => 1,
-                  line => $l, column => $c,
-                 });
+                  line => $l, column => $c});
         redo A;
       } else {
-        
         if ($code == 0x000A or $code == 0x000D) {
           $self->{ca}->{cl}++;
           $self->{ca}->{cc} = 0;
@@ -3779,6 +3776,7 @@ sub _get_next_token ($) {
           push @{$self->{ca}->{pos} ||= []},
               [$self->{ca}->{cl}, $self->{ca}->{cc} => $l, $c];
         }
+        push @{$self->{ca}->{sps}}, [length $self->{ca}->{value}, 1, $l, $c];
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
         $self->{state} = $self->{prev_state};
@@ -3817,7 +3815,7 @@ sub _get_next_token ($) {
                 ## Internal entity with no "&" or "<" in value
                 $self->{entity__value} = $self->{ge}->{$self->{kwd}}->{value};
                 delete $self->{entity__is_tree};
-                # XXX entity__pos
+                $self->{entity__sps} = $self->{ge}->{$self->{kwd}}->{sps};
               } elsif (defined $self->{ge}->{$self->{kwd}}->{notation}) {
                 ## Unparsed entity
                 $self->{parse_error}->(level => $self->{level}->{must}, type => 'unparsed entity',
@@ -3826,14 +3824,17 @@ sub _get_next_token ($) {
                                 column => $self->{column} - length $self->{kwd});
                 $self->{entity__value} = '&' . $self->{kwd};
                 delete $self->{entity__is_tree};
+                delete $self->{entity__sps};
               } elsif (defined $self->{ge}->{$self->{kwd}}->{value}) {
                 ## Internal entity with "&" and/or "<"
                 $self->{entity__value} = '&' . $self->{kwd};
                 $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
+                delete $self->{entity__sps};
               } else {
                 ## External parsed entity
                 $self->{entity__value} = '&' . $self->{kwd};
                 $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
+                delete $self->{entity__sps};
               }
             } else {
               ## An HTML character reference.
@@ -3857,6 +3858,7 @@ sub _get_next_token ($) {
               }
               $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
               delete $self->{entity__is_tree};
+              delete $self->{entity__sps};
             }
             $self->{entity__match} = 1; ## Matched exactly with ";" entity.
             
@@ -3867,6 +3869,7 @@ sub _get_next_token ($) {
             
             $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
             delete $self->{entity__is_tree};
+            delete $self->{entity__sps};
             $self->{entity__match} = -1; ## Exactly matched to non-";" entity.
             ## Stay in the state.
             
@@ -3892,6 +3895,7 @@ sub _get_next_token ($) {
             }
             $self->{entity__value} .= chr $nc;
             delete $self->{entity__is_tree};
+            delete $self->{entity__sps};
             $self->{entity__match} *= 2; ## Matched (positive) or not (zero)
             
     $self->_set_nc;
@@ -3901,6 +3905,7 @@ sub _get_next_token ($) {
             
             $self->{entity__value} .= chr $nc;
             delete $self->{entity__is_tree};
+            delete $self->{entity__sps};
             $self->{entity__match} *= 2; ## Matched (positive) or not (zero)
             ## Stay in the state.
             
@@ -4022,7 +4027,8 @@ sub _get_next_token ($) {
                     data => $data,
                     has_reference => $has_ref,
                     line => $self->{line_prev},
-                    column => $self->{column_prev} - length $self->{kwd}});
+                    column => $self->{column_prev} - length $self->{kwd},
+                    sps => $self->{entity__sps}});
           redo A;
         }
       } else {
@@ -5715,7 +5721,14 @@ sub _get_next_token ($) {
         if ($nc == 0x0000) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{value},
+                                     0,
+                                     $self->{line}, $self->{column}];
         $self->{ct}->{value} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
+        $self->{ct}->{value} .= $self->_read_chars
+            ({"\x00" => 1, "&" => 1, "%" => 1, q<"> => 1});
+        $self->{ct}->{sps}->[-1]->[1]
+            = (length $self->{ct}->{value}) - $self->{ct}->{sps}->[-1]->[0];
         
     $self->_set_nc;
   
@@ -5747,7 +5760,14 @@ sub _get_next_token ($) {
         if ($nc == 0x0000) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{value},
+                                     0,
+                                     $self->{line}, $self->{column}];
         $self->{ct}->{value} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
+        $self->{ct}->{value} .= $self->_read_chars
+            ({"\x00" => 1, "&" => 1, "%" => 1, q<'> => 1});
+        $self->{ct}->{sps}->[-1]->[1]
+            = (length $self->{ct}->{value}) - $self->{ct}->{sps}->[-1]->[0];
         
     $self->_set_nc;
   
@@ -5778,6 +5798,8 @@ sub _get_next_token ($) {
       }
 
       $self->{ct}->{value} .= '&';
+      push @{$self->{ct}->{sps}}, [length $self->{ct}->{value}, 1,
+                                   $self->{line}, $self->{column}];
       $self->{state} = $self->{prev_state};
       ## Reconsume.
       redo A;

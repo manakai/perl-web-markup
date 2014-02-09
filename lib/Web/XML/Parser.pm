@@ -56,11 +56,11 @@ sub parse_char_string ($$$) {
     if (defined $self->{t} and
         $self->{t}->{type} == ABORT_TOKEN and
         defined $self->{t}->{extent}) {
-      $self->{parse_error}->(type => 'external entref',
-                             value => $self->{t}->{name},
-                             line => $self->{t}->{line},
-                             column => $self->{t}->{column},
-                             level => 'i');
+      $onerror->(type => 'external entref',
+                 value => $self->{t}->{name},
+                 line => $self->{t}->{line},
+                 column => $self->{t}->{column},
+                 level => 'i');
       unshift @{$self->{token}}, {%{$self->{t}},
                                   type => ENTITY_SUBTREE_TOKEN,
                                   parsed_nodes => []};
@@ -153,11 +153,11 @@ sub parse_char_string_with_context ($$$$) {
     if (defined $self->{t} and
         $self->{t}->{type} == ABORT_TOKEN and
         defined $self->{t}->{extent}) {
-      $self->{parse_error}->(type => 'external entref',
-                             value => $self->{t}->{name},
-                             line => $self->{t}->{line},
-                             column => $self->{t}->{column},
-                             level => 'i');
+      $onerror->(type => 'external entref',
+                 value => $self->{t}->{name},
+                 line => $self->{t}->{line},
+                 column => $self->{t}->{column},
+                 level => 'i');
       unshift @{$self->{token}}, {%{$self->{t}},
                                   type => ENTITY_SUBTREE_TOKEN,
                                   parsed_nodes => []};
@@ -472,6 +472,7 @@ sub _terminate_tree_constructor ($) {
 # XXX GE pos
 # XXX PE pos
 # XXX well-formedness of entity decls
+# XXX double-escaped entity value
 
 # XXX external entity support
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
@@ -489,38 +490,6 @@ sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
 } # _insert_point
 
-sub _append_text ($$$$) {
-  #my ($string, $parent, $s_line, $s_column) = @_;
-  return unless length $_[0];
-  my $parent = $_[1];
-  $parent = $parent->content
-      if $parent->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template');
-
-  my $text = $parent->last_child;
-  my $s_pos = 0;
-  my $pos_list;
-  if (defined $text and $text->node_type == 3) { # TEXT_NODE
-    $s_pos += length $text->data;
-    $text->manakai_append_text ($_[0]);
-    $pos_list = $text->get_user_data ('manakai_sp');
-    $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
-  } else {
-    $text = $parent->owner_document->create_text_node ($_[0]);
-    $parent->append_child ($text);
-    $pos_list = [];
-  }
-
-  my $p = [$s_pos, length $_[0], $_[2], $_[3]];
-  if (@$pos_list and
-      $pos_list->[-1]->[0] + $pos_list->[-1]->[1] == $p->[0] and
-      $pos_list->[-1]->[2] == $p->[2] and $pos_list->[-1]->[3] + $pos_list->[-1]->[1] == $p->[3]) {
-    $pos_list->[-1]->[1] += $p->[1];
-  } else {
-    push @$pos_list, $p;
-  }
-  $text->set_user_data (manakai_sp => $pos_list);
-} # _append_text
-
 sub _construct_tree ($) {
   my ($self) = @_;
   my $onerror = $self->onerror;
@@ -532,8 +501,38 @@ sub _construct_tree ($) {
         while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
           $onerror->(level => 'm', type => 'NULL', token => $self->{t});
         }
-        _append_text $self->{t}->{data} => $self->{open_elements}->[-1]->[0],
-            $self->{t}->{line}, $self->{t}->{column} + ($self->{t}->{char_delta} || 0);
+
+        my $parent = _insert_point $self->{open_elements}->[-1]->[0];
+        my $text = $parent->last_child;
+        if (defined $text and $text->node_type == 3) { # TEXT_NODE
+          my $pos_list = $text->get_user_data ('manakai_sp');
+          $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
+          if (defined $self->{t}->{sps}) {
+            my $delta = length $text->data;
+            push @$pos_list, map { $_->[0] += $delta; $_ } @{$self->{t}->{sps}};
+          } else {
+            push @$pos_list,
+                [length $text->data,
+                 length $self->{t}->{data},
+                 $self->{t}->{line},
+                 $self->{t}->{column} + ($self->{t}->{char_delta} || 0)];
+          }
+          $text->set_user_data (manakai_sp => $pos_list);
+          $text->manakai_append_text ($self->{t}->{data});
+        } else {
+          $text = $parent->owner_document->create_text_node
+              ($self->{t}->{data});
+          if (defined $self->{t}->{sps}) {
+            $text->set_user_data (manakai_sp => $self->{t}->{sps});
+          } else {
+            $text->set_user_data
+                (manakai_sp => [[0,
+                                 length $self->{t}->{data},
+                                 $self->{t}->{line},
+                                 $self->{t}->{column} + ($self->{t}->{char_delta} || 0)]]);
+          }
+          $parent->append_child ($text);
+        }
         
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
@@ -748,11 +747,24 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
         my $list = $self->_parse_entity_subtree_token;
         my $parent = _insert_point $self->{open_elements}->[-1]->[0];
+        my $lc = $parent->last_child;
         for (@$list) {
           if ($_->node_type == 3) { # TEXT_NODE
-            $parent->manakai_append_text ($_->data); # XXX pos
+            if (defined $lc and $lc->node_type == 3) { # TEXT_NODE
+              my $sp2 = $_->get_user_data ('manakai_sp');
+              my $sp = $lc->get_user_data ('manakai_sp');
+              $sp = [] unless defined $sp and ref $sp eq 'ARRAY';
+              my $delta = length $lc->data;
+              $_->[0] += $delta for @$sp2;
+              push @$sp, @$sp2;
+              $lc->set_user_data (manakai_sp => $sp);
+              $lc->manakai_append_text ($_->data);
+            } else {
+              $parent->append_child ($lc = $_);
+            }
           } else {
             $parent->append_child ($_);
+            $lc = $_;
           }
         }
 
@@ -947,6 +959,9 @@ sub _construct_tree ($) {
           if (defined $self->{t}->{value} and
               $self->{t}->{value} !~ /[&<]/) {
             $self->{t}->{only_text} = 1;
+          }
+          if (defined $self->{t}->{sps}) {
+            $_->[4] = 0 for @{$self->{t}->{sps}}; # XXX di
           }
           
           ## For DOM.
@@ -1430,6 +1445,9 @@ sub _parse_entity_subtree_token ($) {
   my $self = $_[0];
   my $t = $self->{t};
 
+  ## Internal entity with "&" and/or "<" in entity value, referenced
+  ## from element content.
+
   if ($t->{parsed_nodes}) {
     return $t->{parsed_nodes};
   }
@@ -1438,14 +1456,101 @@ sub _parse_entity_subtree_token ($) {
       ? $self->{open_elements}->[-1]->[0]
       : $self->{document}->create_element_ns (undef, 'dummy');
 
+  my $index_to_source_pos = $self->{ge}->{$t->{name}}->{sps} || [];
+  my $index_to_parsed_pos = [];
+  my $s = $self->{ge}->{$t->{name}}->{value};
+  my $pos = 0;
+  my $l = 1;
+  my $c = 1;
+  for (split /(\x0D\x0A?|\x0A)/, $s, -1) {
+    if (/[\x0D\x0A]/) {
+      $l++;
+      $c = 0;
+      push @$index_to_parsed_pos, [$pos, length $_, $l, $c];
+      $pos += length $_;
+    } else {
+      my $length = length $_;
+      push @$index_to_parsed_pos, [$pos, $length, $l, $c];
+      $c += $length;
+      $pos += $length;
+    }
+  }
+
+  my $mapper = sub {
+    my $args = $_[0];
+    return if defined $args->{di};
+    
+    my $line;
+    my $column;
+    if (defined $args->{token}) {
+      $line = $args->{token}->{line};
+      $column = $args->{token}->{column};
+    } else {
+      $line = $args->{line};
+      $column = $args->{column};
+    }
+    $args->{di} = -1;
+    if (defined $column) {
+      my $p;
+      for (@$index_to_parsed_pos) {
+        if ($_->[2] < $line or
+            $_->[2] == $line and $_->[3] <= $column) {
+          $p = $_;
+        } else {
+          last;
+        }
+      }
+      if (defined $p) {
+        my $pos = $p->[0] + ($column - $p->[3]);
+        undef $p;
+        for (@$index_to_source_pos) {
+          if ($pos < $_->[0]) {
+            last;
+          } else {
+            $p = $_;
+          }
+        }
+        if (defined $p) {
+          $args->{line} = $p->[2];
+          $args->{column} = $p->[3] + $pos - $p->[0];
+          $args->{di} = 0; # XXX
+        }
+      }
+    }
+  }; # $mapper
+
   my $doc = $self->{document}->implementation->create_document;
   my $parser = (ref $self)->new;
-  $parser->onerror ($self->onerror);
+  $parser->onerror (sub {
+    my %args = @_;
+    $mapper->(\%args);
+    $self->onerror->(%args);
+  });
   $parser->{ge} = {%{$self->{ge}}};
   delete $parser->{ge}->{$t->{name}};
-  return $parser->parse_char_string_with_context
+  my $list = $parser->parse_char_string_with_context
       ($self->{ge}->{$t->{name}}->{value}, $context, $doc);
-  # XXX pos
+
+  my @node = @$list;
+  while (@node) {
+    my $node = shift @node;
+    my $sps = $node->get_user_data ('manakai_sp');
+    if (defined $sps) {
+      for (@$sps) {
+        my %p = (line => $_->[2], column => $_->[3], di => $_->[4]);
+        $mapper->(\%p);
+        $_->[2] = $p{line};
+        $_->[3] = $p{column};
+        $_->[4] = $p{di} if defined $p{di};
+      }
+    }
+    unshift @node, @{$node->child_nodes};
+
+    # XXX manakai_pos
+    # XXX attrs
+  }
+
+  return $list;
 } # _parse_entity_subtree_token
 
 1;

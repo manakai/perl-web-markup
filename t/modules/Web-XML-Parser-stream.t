@@ -266,6 +266,7 @@ test {
 } n => 2, name => 'default namespace, outside of root element';
 
 # XXX namespaces in external entity
+# XXX recursive entref
 
 run_tests;
 
