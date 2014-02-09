@@ -6,6 +6,7 @@ our $VERSION = '8.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
+use Web::HTML::SourceMap;
 push our @ISA, qw(Web::HTML::InputStream);
 
 ## This module implements the tokenization phase of both HTML5 and
@@ -101,6 +102,7 @@ sub _initialize_tokenizer ($) {
     $self->{ca}->{cc} = 1;
     $self->{ca}->{cpos} = 0;
     $self->{ca}->{pos} = [];
+    $self->{ca}->{sps} = [];
   }
   undef $self->{last_stag_name}; # last emitted start tag name
   #$self->{prev_state}; # initialized when used
@@ -141,16 +143,26 @@ sub _initialize_tokenizer ($) {
 ##        ->{has_reference} == 1 or 0
 ##        ->{index}: Index of the attribute in a tag.
 ##        ->{pos}
+##        ->{sps}: Source positions
 ##   ->{data} (COMMENT_TOKEN, CHARACTER_TOKEN, PI_TOKEN)
 ##   ->{has_reference} == 1 or 0 (CHARACTER_TOKEN)
 ##   ->{last_index} (ELEMENT_TOKEN): Next attribute's index - 1.
 ##   ->{has_internal_subset} = 1 or 0 (DOCTYPE_TOKEN)
+##   ->{sps}: Source positions
 
 ## NOTE: The "self-closing flag" is hold as |$self->{self_closing}|.
 ##     |->{self_closing}| is used to save the value of |$self->{self_closing}|
 ##     while the token is pushed back to the stack.
 
-## Emitted token MUST immediately be handled by the tree construction state.
+## "sps" - Source positions structure is an array reference of "sp"s.
+##         Items are sorted by their 0th values.
+## "sp" - Source position structure is an array reference of:
+##     0    Offset of the substring in the parsed value
+##     1    Length of the substring in the parsed value
+##     2    Line number of the substring in the source text
+##     3    Column number of the substring in the source text
+##     4    Document index of the source text; If the source text
+##          is a parsed value in another source text, |undef|
 
 ## Before each step, UA MAY check to see if either one of the scripts in
 ## "list of scripts that will execute as soon as possible" or the first
@@ -1166,12 +1178,14 @@ sub _get_next_token ($) {
           $self->{ca}->{cc} = 1;
           $self->{ca}->{cpos} = 0;
           $self->{ca}->{pos} = [];
+          $self->{ca}->{sps} = [];
         } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
           $self->{ca}->{cl} = 1;
           $self->{ca}->{cc} = 1;
           $self->{ca}->{cpos} = 0;
           $self->{ca}->{pos} = [[$self->{ca}->{cl}, $self->{ca}->{cc}
                                      => $self->{line}, $self->{column}]];
+          $self->{ca}->{sps} = [[0, 1, $self->{line}, $self->{column}]];
         } elsif ($self->{state} == ENTITY_STATE) {
           if ($self->{is_xml} and
               not $self->{tainted} and
@@ -1485,7 +1499,8 @@ sub _get_next_token ($) {
         if ($state == ATTR_VALUE_ENTITY_STATE) {
           my $token = {type => CHARACTER_TOKEN,
                        data => $self->{ca}->{value},
-                       line => $self->{line}, column => $self->{column}}; # XXX
+                       line => 1, column => 1,
+                       sps => $self->{ca}->{sps}};
           $self->{ca}->{value} = '';
           unshift @{$self->{token}},
               {type => END_OF_FILE_TOKEN,
@@ -1542,11 +1557,16 @@ sub _get_next_token ($) {
                    (not @{$self->{ca}->{pos} ||= []} and
                     $self->{ca}->{cc} == 0);
 
+        my $offset = length $self->{ca}->{value};
+        my $l = $self->{line};
+        my $c = $self->{column};
         $self->{ca}->{value} .= chr ($nc);
-
         $self->{ca}->{value} .= $self->_read_chars
             ({"\x00" => 1, (chr $ec) => 1, q<&> => 1, "<" => 1,
               "\x09" => 1, "\x0C" => 1, "\x20" => 1});
+
+        push @{$self->{ca}->{sps}},
+            [$offset, (length $self->{ca}->{value}) - $offset, $l, $c];
 
         ## Stay in the state
         
@@ -1688,11 +1708,17 @@ sub _get_next_token ($) {
                 if $self->{ca}->{cc} != $self->{column} or
                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0);
 
+        my $l = $self->{line};
+        my $c = $self->{column};
+        my $offset = length $self->{ca}->{value};
         $self->{ca}->{value} .= chr ($nc);
         $self->{ca}->{value} .= $self->_read_chars
             ({"\x00" => 1, q<"> => 1, q<'> => 1, 
               q<=> => 1, q<&> => 1, q<`> => 1, "<" => 1, ">" => 1,
               "\x09" => 1, "\x0C" => 1, "\x20" => 1});
+
+        push @{$self->{ca}->{sps}},
+            [$offset, (length $self->{ca}->{value}) - $offset, $l, $c];
 
         ## Stay in the state
         
@@ -3531,7 +3557,8 @@ sub _get_next_token ($) {
                  });
         redo A;
       } else {
-        
+        push @{$self->{ca}->{sps}},
+            [length $self->{ca}->{value}, 1, $self->{line}, $self->{column}];
         $self->{ca}->{value} .= '&';
         $self->{state} = $self->{prev_state};
         ## Reconsume.
@@ -4034,8 +4061,17 @@ sub _get_next_token ($) {
       } else {
         ## An entity reference in an attribute value
         if ($self->{entity__is_tree}) {
-          $self->{ca}->{value} .= $self->_expand_ge_in_attr ($self->{kwd}); # XXX pos
+          $self->_expand_ge_in_attr ($self->{kwd} => $self->{ca});
         } else {
+          if (defined $self->{entity__sps}) {
+            my $delta = length $self->{ca}->{value};
+            push @{$self->{ca}->{sps}}, map { my $v = [@$_]; $v->[0] += $delta; $v } @{$self->{entity__sps}};
+          } else { 
+            push @{$self->{ca}->{sps}},
+                [length $self->{ca}->{value}, length $data,
+                 $self->{line_prev},
+                 $self->{column_prev} - length $self->{kwd}];
+          }
           $self->{ca}->{value} .= $data;
         }
         $self->{ca}->{has_reference} = 1 if $has_ref;
@@ -4951,6 +4987,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -4964,6 +5001,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5031,6 +5069,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5043,6 +5082,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5074,6 +5114,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5245,6 +5286,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5257,6 +5299,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5285,6 +5328,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5308,6 +5352,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5319,6 +5364,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5347,6 +5393,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
         redo A;
@@ -5366,6 +5413,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5379,6 +5427,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5425,6 +5474,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5438,6 +5488,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5483,6 +5534,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5494,6 +5546,7 @@ sub _get_next_token ($) {
         $self->{ca}->{cc} = 1;
         $self->{ca}->{cpos} = 0;
         $self->{ca}->{pos} = [];
+        $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
     $self->_set_nc;
@@ -5525,6 +5578,7 @@ sub _get_next_token ($) {
           $self->{ca}->{cc} = 1;
           $self->{ca}->{cpos} = 0;
           $self->{ca}->{pos} = [];
+          $self->{ca}->{sps} = [];
           $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         } else {
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
@@ -6176,38 +6230,59 @@ sub _get_next_token ($) {
 } # _get_next_token
 
 sub _expand_ge_in_attr ($$) {
-  my ($self, $name) = @_;
+  my ($self, $name => $ca) = @_;
 
   ## Expand general entity references in attribute values.  This
   ## method can only be used for XML documents.
 
   if (not defined $self->{ge}->{$name}->{value}) {
     ## An external entity
+    my $c = $self->{column} - 1 - length $name;
     $self->{parse_error}->(level => $self->{level}->{must}, type => 'WFC:No External Entity References',
                     line => $self->{line},
-                    column => $self->{column} - 1 - length $name,
+                    column => $c,
                     value => $name);
-    return '&' . $name;
+    push @{$ca->{sps}}, [length $ca->{value}, 1 + length $name,
+                         $self->{line}, $c];
+    $ca->{value} .= '&' . $name;
   } elsif ($self->{ge}->{$name}->{value} =~ /</) {
     ## If the entity value contains a "<" character, referencing the
     ## entity in an attribute value is a well-formedness error.
+    my $c = $self->{column} - 1 - length $name;
     $self->{parse_error}->(level => $self->{level}->{must}, type => 'entref in attr has element',
                     line => $self->{line},
-                    column => $self->{column} - 1 - length $name);
-    return '&' . $name;
+                    column => $c);
+    push @{$ca->{sps}}, [length $ca->{value}, 1 + length $name,
+                         $self->{line}, $c];
+    $ca->{value} .= '&' . $name;
   } else {
     ## If the entity value contains a "&" character...
     my $context = $self->{document}->create_element_ns (undef, 'dummy');
+
+    my $map_parsed = create_pos_lc_map $self->{ge}->{$name}->{value};
+    my $map_source = $self->{ge}->{$name}->{sps} || [];
+
+    ## XXX don't invoke tree construction phase, but only use tokenizer
     my $doc = $self->{document}->implementation->create_document;
     my $parser = (ref $self)->new;
     $parser->{tokenizer_initial_state} = ATTR_VALUE_ENTITY_STATE;
-    $parser->onerror ($self->onerror);
+    $parser->onerror (sub {
+      my %args = @_;
+      lc_lc_mapper $map_parsed => $map_source, \%args;
+      $self->onerror->(%args);
+    });
     $parser->{ge} = {%{$self->{ge}}};
     delete $parser->{ge}->{$name};
     my $list = $parser->parse_char_string_with_context
         ($self->{ge}->{$name}->{value}, $context, $doc);
-    # XXX pos
-    return join '', map { $_->text_content } @$list;
+    for (@$list) {
+      my $sps = [@{$_->get_user_data ('manakai_sps') || []}];
+      lc_lc_mapper_for_sps $map_parsed => $map_source, $sps;
+      my $delta = length $ca->{value};
+      $_->[0] += $delta for @$sps;
+      push @{$ca->{sps}}, @$sps;
+    }
+    $ca->{value} .= join '', map { $_->text_content } @$list;
   }
 } # _expand_ge_in_attr
 

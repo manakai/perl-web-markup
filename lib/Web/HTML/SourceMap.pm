@@ -72,6 +72,19 @@ sub lc_lc_mapper ($$$) {
   }
 } # lc_lc_mapper
 
+push @EXPORT, qw(lc_lc_mapper_for_sps);
+sub lc_lc_mapper_for_sps ($$$) {
+  my ($from_map => $to_map, $sps) = @_;
+  for (@{$sps or []}) {
+    next if defined $_->[4];
+    my $p = {line => $_->[2], column => $_->[3]};
+    lc_lc_mapper $from_map => $to_map, $p;
+    $_->[2] = $p->{line};
+    $_->[3] = $p->{column};
+    $_->[4] = $p->{di} if defined $p->{di};
+  }
+} # lc_lc_mapper_for_sps
+
 1;
 
 =head1 LICENSE

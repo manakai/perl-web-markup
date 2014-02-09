@@ -510,7 +510,7 @@ sub _construct_tree ($) {
           $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
           if (defined $self->{t}->{sps}) {
             my $delta = length $text->data;
-            push @$pos_list, map { $_->[0] += $delta; $_ } @{$self->{t}->{sps}};
+            push @$pos_list, map { my $v = [@$_]; $v->[0] += $delta; $v } @{$self->{t}->{sps}};
           } else {
             push @$pos_list,
                 [length $text->data,
@@ -559,6 +559,7 @@ sub _construct_tree ($) {
               line => $attrdefs->{$attr_name}->{line},
               column => $attrdefs->{$attr_name}->{column},
               index => 1 + keys %{$attrs},
+              sps => $attrdefs->{$attr_name}->{sps},
             };
           }
         }
@@ -652,6 +653,7 @@ sub _construct_tree ($) {
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
           $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+          $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
           $el->set_attribute_node_ns ($attr);
           $attr->specified (0) if $attr_t->{not_specified};
         }
@@ -850,6 +852,7 @@ sub _construct_tree ($) {
               $node->set_user_data (manakai_source_line => $at->{line});
               $node->set_user_data (manakai_source_column => $at->{column});
               $node->set_user_data (manakai_pos => $at->{pos}) if $at->{pos};
+              $node->set_user_data (manakai_sps => $at->{sps}) if $at->{sps};
               
               my $type = defined $at->{type} ? {
                 CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,
@@ -910,6 +913,7 @@ sub _construct_tree ($) {
                 default => (($default and ($default == 1 or $default == 4))
                               ? defined $at->{value} ? $at->{value} : ''
                               : undef),
+                sps => $at->{sps},
               };
             } else {
               $onerror->(level => 'w', type => 'duplicate attrdef', ## TODO: type
@@ -1150,6 +1154,7 @@ sub _construct_tree ($) {
               line => $attrdefs->{$attr_name}->{line},
               column => $attrdefs->{$attr_name}->{column},
               index => 1 + keys %{$attrs},
+              sps => $attrdefs->{$attr_name}->{sps},
             };
           }
         }
@@ -1242,6 +1247,7 @@ sub _construct_tree ($) {
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
           $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+          $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
           $el->set_attribute_node_ns ($attr);
           $attr->specified (0) if $attr_t->{not_specified};
         }
@@ -1473,17 +1479,8 @@ sub _parse_entity_subtree_token ($) {
   my @node = @$list;
   while (@node) {
     my $node = shift @node;
-    my $sps = $node->get_user_data ('manakai_sps');
-    if (defined $sps) {
-      for (@$sps) {
-        next if defined $_->[4];
-        my $p = {line => $_->[2], column => $_->[3]};
-        lc_lc_mapper $map_parsed => $map_source, $p;
-        $_->[2] = $p->{line};
-        $_->[3] = $p->{column};
-        $_->[4] = $p->{di} if defined $p->{di};
-      }
-    }
+    lc_lc_mapper_for_sps $map_parsed => $map_source,
+        $node->get_user_data ('manakai_sps');
 
     if (not defined $node->get_user_data ('manakai_di')) {
       my $p = {line => $node->get_user_data ('manakai_source_line'),

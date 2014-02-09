@@ -172,6 +172,120 @@ test {
   done $c;
 } n => 3;
 
+for my $test (
+  [q{<p hoge></p>} => undef],
+  [q{<p hoge=""></p>} => []],
+  [q{<p hoge=''></p>} => []],
+  [q{<p hoge=abc></p>} => [[0, 1, 1, 9], [1, 2, 1, 10]]],
+  [q{<p hoge="abc"></p>} => [[0, 3, 1, 10]]],
+  [q{<p hoge='abc'></p>} => [[0, 3, 1, 10]]],
+  [q{<p hoge=abc&amp></p>} => [[0, 1, 1, 9], [1, 2, 1, 10], [3, 1, 1, 12]]],
+  [q{<p hoge=abc&amp;b></p>} => [[0, 1, 1, 9], [1, 2, 1, 10],
+                                 [3, 1, 1, 12], [4, 1, 1, 17]]],
+  [q{<p hoge=abc&ampxy;></p>} => [[0, 1, 1, 9], [1, 2, 1, 10], [3, 7, 1, 12]]],
+  [q{<p hoge="abc"></p>} => [[0, 3, 1, 10]]],
+  [q{<p hoge='abc'></p>} => [[0, 3, 1, 10]]],
+  [q{<p hoge="ab&lt;x"></p>} => [[0, 2, 1, 10], [2, 1, 1, 12], [3, 1, 1, 16]]],
+  [q{<p hoge='ab&lt;x'></p>} => [[0, 2, 1, 10], [2, 1, 1, 12], [3, 1, 1, 16]]],
+  [q{<p hoge="ab&ltvx"></p>} => [[0, 2, 1, 10], [2, 5, 1, 12]]],
+  [q{<!DOCTYPE p[
+    <!ENTITY ltv "foo">
+  ]><p hoge="ab&ltv;x"></p>} => [[0, 2, 3, 14],
+                                 [2, 3, 2, 19, 0],
+                                 [5, 1, 3, 21]]],
+  [q{<!DOCTYPE p[
+    <!ENTITY ltv "fo&amp;o">
+  ]><p hoge="ab&ltv;x"></p>} => [[0, 2, 3, 14], # ab
+                                 [2, 2, 2, 19, 0], # fo
+                                 [4, 1, 2, 21, 0], # &amp;
+                                 [5, 1, 2, 26, 0], # o
+                                 [6, 1, 3, 21]]], # x
+  [q{<!DOCTYPE p[
+    <!ENTITY ltv "fo&abc;o">
+  ]><p hoge="ab&ltv;x"></p>} => [[0, 2, 3, 14], # ab
+                                 [2, 2, 2, 19, 0], # fo
+                                 [4, 5, 2, 21, 0], # &abc;
+                                 [9, 1, 2, 26, 0], # o
+                                 [10, 1, 3, 21]]], # x
+  [q{<!DOCTYPE p[
+    <!ENTITY abc SYSTEM "foo" aa>
+    <!ENTITY ltv "fo&abc;o">
+  ]><p hoge="ab&ltv;x"></p>} => [[0, 2, 4, 14], # ab
+                                 [2, 2, 3, 19, 0], # fo
+                                 [4, 5, 3, 21, 0], # &abc;
+                                 [9, 1, 3, 26, 0], # o
+                                 [10, 1, 4, 21]]], # x
+  [q{<!DOCTYPE p[
+    <!ENTITY abc SYSTEM "foo">
+    <!ENTITY ltv "fo&abc;o">
+  ]><p hoge="ab&ltv;x"></p>} => [[0, 2, 4, 14], # ab
+                                 [2, 2, 3, 19, 0], # fo
+                                 [4, 5, 3, 21, 0], # &abc;
+                                 [9, 1, 3, 26, 0], # o
+                                 [10, 1, 4, 21]]], # x
+  [q{<!DOCTYPE a [
+    <!ATTLIST a bb CDATA "">
+  ]><a/>} => []],
+  [q{<!DOCTYPE a [
+    <!ATTLIST a bb CDATA "dd">
+  ]><a/>} => [[0, 2, 2, 27]]],
+  [q{<!DOCTYPE a [
+    <!ATTLIST a bb CDATA "dd&amp;b">
+  ]><a/>} => [[0, 2, 2, 27], [2, 1, 2, 29], [3, 1, 2, 34]]],
+  [q{<!DOCTYPE a [
+    <!ENTITY foo "b">
+    <!ATTLIST a bb CDATA "dd&foo;b">
+  ]><a/>} => [[0, 2, 3, 27], [2, 1, 2, 19, 0], [3, 1, 3, 34]]],
+  [q{<!DOCTYPE a [
+    <!ATTLIST a bb CDATA "dd&foo;b">
+    <!ENTITY foo "b">
+  ]><a/>} => [[0, 2, 2, 27], [2, 5, 2, 29], [7, 1, 2, 34]]],
+) {
+  test {
+    my $c = shift;
+
+    my $doc = new Web::DOM::Document;
+    Web::XML::Parser->new->parse_char_string ($test->[0] => $doc);
+
+    my $text = $doc->document_element->attributes->[0];
+    my $pos = $text->get_user_data ('manakai_sps');
+
+    eq_or_diff $pos, $test->[1];
+
+    done $c;
+  } n => 1, name => 'attr value';
+}
+
+for my $test (
+  [q{<!DOCTYPE a [
+    <!ENTITY foo "b">
+    <!ATTLIST a bb CDATA "dd&foo;b">
+  ]><b><a/></b>} => [[0, 2, 3, 27], [2, 1, 2, 19, 0], [3, 1, 3, 34]]],
+  [q{<!DOCTYPE a [
+    <!ENTITY x "d">
+    <!ENTITY foo "b&x;c">
+    <!ATTLIST a bb CDATA "dd&foo;b">
+  ]><b><a/></b>} => [[0, 2, 4, 27],
+                     [2, 1, 3, 19, 0], # b
+                     [3, 1, 2, 17, 0],
+                     [4, 1, 3, 23, 0], # c
+                     [5, 1, 4, 34]]],
+) {
+  test {
+    my $c = shift;
+
+    my $doc = new Web::DOM::Document;
+    Web::XML::Parser->new->parse_char_string ($test->[0] => $doc);
+
+    my $text = $doc->document_element->first_child->attributes->[0];
+    my $pos = $text->get_user_data ('manakai_sps');
+
+    eq_or_diff $pos, $test->[1];
+
+    done $c;
+  } n => 1, name => 'attr value';
+}
+
 run_tests;
 
 =head1 LICENSE
