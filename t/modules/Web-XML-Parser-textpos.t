@@ -147,12 +147,13 @@ test {
 ]><a>&b;</a>} => $doc);
 
   my $node = $doc->document_element->first_child->first_element_child;
+  is $node->local_name, 'f';
   is $node->get_user_data ('manakai_source_line'), 3;
   is $node->get_user_data ('manakai_source_column'), 1;
   is $node->get_user_data ('manakai_di'), 0;
 
   done $c;
-} n => 3;
+} n => 4;
 
 test {
   my $c = shift;

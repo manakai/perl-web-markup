@@ -465,12 +465,18 @@ sub _terminate_tree_constructor ($) {
 
 ## XML5: The spec does not support entity expansion.
 
+# XXXsps
+#   - drop manakai_pos
+#   - manakai_sps for element content in HTML
+#   - validator sps for element content
+#   - docid
+#   - errors.txt
+
 # XXX spec external entity in element content
 # XXX text declarations in external GEs
 # XXX param refs
 # XXX external subset
 # XXX entref depth limitation
-# XXX GE pos
 # XXX PE pos
 # XXX well-formedness of entity decls
 # XXX double-escaped entity value

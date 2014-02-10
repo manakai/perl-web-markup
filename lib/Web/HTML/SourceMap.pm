@@ -15,8 +15,8 @@ sub create_pos_lc_map ($) {
   for (split /(\x0D\x0A?|\x0A)/, $_[0], -1) {
     if (/[\x0D\x0A]/) {
       $l++;
-      $c = 0;
-      push @map, [$pos, length $_, $l, $c];
+      push @map, [$pos, length $_, $l, 0];
+      $c = 1;
       $pos += length $_;
     } else {
       my $length = length $_;
@@ -24,6 +24,9 @@ sub create_pos_lc_map ($) {
       $c += $length;
       $pos += $length;
     }
+  }
+  unless (@map) {
+    unshift @map, [0, 0, 1, 1];
   }
   return \@map;
 } # create_pos_lc_map
@@ -65,9 +68,9 @@ sub lc_lc_mapper ($$$) {
       $q = $_;
     }
   }
-  if (defined $q) {
+  if (defined $q and $pos <= $q->[0] + $q->[1]) {
     $args->{line} = $q->[2];
-    $args->{column} = $q->[3] + $pos - $q->[0] + ($q->[3] == 0 ? -1 : 0);
+    $args->{column} = $q->[3] + $pos - $q->[0];
     $args->{di} = $q->[4];
   }
 } # lc_lc_mapper

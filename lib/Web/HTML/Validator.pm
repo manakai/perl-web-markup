@@ -5,6 +5,7 @@ no warnings 'utf8';
 our $VERSION = '128.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
+use Web::HTML::SourceMap;
 
 ## ------ Constructor ------
 
@@ -27,53 +28,34 @@ sub onerror ($;$) {
         defined $args{text} ? ' ' . $args{text} : '',
         defined $args{value} ? ' "' . $args{value} . '"' : '',
         $args{level},
-        (defined $args{column} ? sprintf ' at line %d column %d', $args{line}, $args{column} : '');
+        (defined $args{column} ? sprintf ' at line %d column %d%s',
+                                     $args{line}, $args{column}, (defined $args{di} ? ' document #' . $args{di} : '') : '');
   };
 } # onerror
 
-my $GetNestedOnError = sub {
-  my ($onerror, $node) = @_;
-  my $pos = $node->get_user_data ('manakai_pos');
+my $GetNestedOnError = sub ($$$) {
+  my ($onerror, $node) = @_; # , $value
+
+  my $map_parsed = create_pos_lc_map $_[2];
+  my $map_source = $node->get_user_data ('manakai_sps') || [];
+  unless (@$map_source) {
+    my $sp = [0, 0,
+              $node->get_user_data ('manakai_source_line'),
+              $node->get_user_data ('manakai_source_column'),
+              $node->get_user_data ('manakai_di')];
+    unshift @$map_source, $sp if defined $sp->[3];
+  }
+
   return sub {
     my %args = @_;
     delete $args{uri}; # XXX
 
-    my $line = delete $args{line};
-    my $column = delete $args{column};
-    if (not defined $line and $args{node}) {
-      $line = $args{node}->get_user_data ('manakai_source_line');
-      $column = $args{node}->get_user_data ('manakai_source_column');
+    if (not defined $args{column} and defined $args{node}) {
+      $args{line} = $args{node}->get_user_data ('manakai_source_line');
+      $args{column} = $args{node}->get_user_data ('manakai_source_column');
+      $args{di} = $args{node}->get_user_data ('manakai_di');
     }
-
-    if (defined $line and defined $column) {
-      $column ||= 1;
-      if ($pos and ref $pos eq 'ARRAY') {
-        my $v = [1,1 => 1,1];
-        for (@$pos) {
-          if ($_->[0] < $line or
-              ($_->[0] == $line and $_->[1] <= $column)) {
-            $v = $_;
-          } else {
-            last;
-          }
-        }
-        if ($v) {
-          if ($v->[0] == $line) {
-            $onerror->(@_, node => $node,
-                       line => $v->[2],
-                       column => $v->[3] + $column - $v->[1]);
-            return;
-          } else {
-            $onerror->(@_, node => $node,
-                       line => $v->[2] + $line - $v->[0],
-                       column => $column);
-            return;
-          }
-        }
-      }
-    }
-
-    # XXX has no line/column; can we do something better?
+    lc_lc_mapper $map_parsed => $map_source, \%args;
 
     $onerror->(%args, node => $node);
   };
@@ -301,7 +283,7 @@ sub _check_attr_bidi ($$) {
   my ($self, $attr) = @_;
   my $value = $attr->value;
   my @expected;
-  my $onerror = $GetNestedOnError->($self->onerror, $attr);
+  my $onerror = $GetNestedOnError->($self->onerror, $attr, $value);
 
   my $line = 1;
   my $col_offset = -1;
@@ -3904,7 +3886,7 @@ $Element->{+HTML_NS}->{style} = {
 
     if (defined $element_state->{content_type} and
         ($element_state->{content_type}->as_valid_mime_type || '') eq 'text/css') {
-      my $parser = $self->_css_parser ($item->{node}); # XXX
+      my $parser = $self->_css_parser ($item->{node}, $element_state->{text});
       # XXX $parser->context->scoped (has_attribute ('scoped'));
       my $ss = $parser->parse_char_string_as_ss ($element_state->{text});
       # XXX Web::CSS::Checker->new->check_ss ($ss);
@@ -9331,8 +9313,9 @@ $Element->{+THR_NS}->{total} = {
 sub _check_fallback_html ($$$$) {
   my ($self, $context, $disallowed, $container_ln) = @_;
   my $container = $context->owner_document->create_element ($container_ln);
-  
-  my $onerror = $GetNestedOnError->($self->onerror, $context);
+
+  my $value = $context->text_content;
+  my $onerror = $GetNestedOnError->($self->onerror, $context, $value);
   # XXX pos
 
   require Web::DOM::Document;
@@ -9344,7 +9327,7 @@ sub _check_fallback_html ($$$$) {
   $parser->onerror ($onerror);
   $parser->scripting ($self->scripting);
   my $children = $parser->parse_char_string_with_context
-      ($context->text_content, $container => $doc);
+      ($value, $container => $doc);
   
   my $checker = Web::HTML::Validator->new;
   $checker->_init;
@@ -9384,9 +9367,10 @@ $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
     require Web::XML::Parser;
     $parser = Web::XML::Parser->new;
   }
-  my $onerror = $GetNestedOnError->($self->onerror, $attr);
+  my $value = $attr->value;
+  my $onerror = $GetNestedOnError->($self->onerror, $attr, $value);
   $parser->onerror ($onerror);
-  $parser->parse_char_string ($attr->value => $doc);
+  $parser->parse_char_string ($value => $doc);
   
   my $checker = Web::HTML::Validator->new;
   $checker->onerror ($onerror);
@@ -9405,7 +9389,7 @@ $CheckDIVContent = sub {
   require Web::HTML::Parser;
   my $parser = Web::HTML::Parser->new;
   $parser->scripting ($self->scripting);
-  my $onerror = $GetNestedOnError->($self->onerror, $node);
+  my $onerror = $GetNestedOnError->($self->onerror, $node, $value);
   $parser->onerror ($onerror);
   for (@{$parser->parse_char_string_with_context ($value, $div => $doc)}) {
     $div->append_child ($_);
@@ -9539,8 +9523,8 @@ $Element->{+HTML_NS}->{template} = {
 
 ## ------ CSS ------
 
-sub _css_parser ($$) {
-  my ($self, $node) = @_;
+sub _css_parser ($$$) {
+  my ($self, $node, $value) = @_;
   require Web::CSS::Parser;
   require Web::CSS::Context;
   my $parser = Web::CSS::Parser->new;
@@ -9552,24 +9536,26 @@ sub _css_parser ($$) {
   $context->base_url ($node->base_uri);
   $parser->context ($context);
   $parser->media_resolver->set_supported (all => 1);
-  $parser->onerror ($GetNestedOnError->($self->onerror, $node));
+  $parser->onerror ($GetNestedOnError->($self->onerror, $node, $value));
   #$parser->init_parser;
   return $parser;
-} # _create_css_parser
+} # _css_parser
 
 ## CSS styling attribute [HTML] [CSSSTYLEATTR]
 $CheckerByType->{'CSS styling'} = sub {
   my ($self, $attr) = @_;
-  my $parser = $self->_css_parser ($attr);
-  my $props = $parser->parse_char_string_as_prop_decls ($attr->value);
+  my $value = $attr->value;
+  my $parser = $self->_css_parser ($attr, $value);
+  my $props = $parser->parse_char_string_as_prop_decls ($value);
   # XXX Web::CSS::Checker->new->check_props ($props);
 }; # CSS styling
 
 ## Media query list [MQ]
 $CheckerByType->{'media query list'} = sub {
   my ($self, $attr) = @_;
-  my $parser = $self->_css_parser ($attr);
-  my $mqs = $parser->parse_char_string_as_mq_list ($attr->value);
+  my $value = $attr->value;
+  my $parser = $self->_css_parser ($attr, $value);
+  my $mqs = $parser->parse_char_string_as_mq_list ($value);
 
   require Web::CSS::MediaQueries::Checker;
   my $checker = Web::CSS::MediaQueries::Checker->new;

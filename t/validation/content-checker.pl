@@ -71,7 +71,7 @@ sub _test ($$) {
       } else {
         warn $opt{type} unless ref $opt{node};
         push @error,
-          (defined $opt{line} ? $opt{line} . ';' .$opt{column} . ';' : '') .
+          (($opt{di} || 0) == 0 ? (defined $opt{line} ? $opt{line} . ';' .$opt{column} . ';' : '') : '') .
           get_node_path ($opt{node}) . ';' . $opt{type} .
           (defined $opt{text} ? ';' . $opt{text} : '') .
           (defined $opt{level} ? ';'.$opt{level} : '');
