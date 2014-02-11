@@ -1,6 +1,7 @@
 package Web::HTML::SourceMap;
 use strict;
 use warnings;
+no warnings 'utf8';
 our $VERSION = '1.0';
 use Exporter::Lite;
 
