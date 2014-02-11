@@ -2,7 +2,7 @@ package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '8.0';
+our $VERSION = '9.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -98,10 +98,6 @@ sub _initialize_tokenizer ($) {
   undef $self->{ca}; # current attribute
   if ($self->{state} == ATTR_VALUE_ENTITY_STATE) {
     $self->{ca}->{value} = '';
-    $self->{ca}->{cl} = 1;
-    $self->{ca}->{cc} = 1;
-    $self->{ca}->{cpos} = 0;
-    $self->{ca}->{pos} = [];
     $self->{ca}->{sps} = [];
   }
   undef $self->{last_stag_name}; # last emitted start tag name
@@ -143,7 +139,6 @@ sub _initialize_tokenizer ($) {
 ##        ->{value}
 ##        ->{has_reference} == 1 or 0
 ##        ->{index}: Index of the attribute in a tag.
-##        ->{pos} XXXpos
 ##        ->{sps}: Source positions
 ##   ->{data} (COMMENT_TOKEN, CHARACTER_TOKEN, PI_TOKEN)
 ##   ->{has_reference} == 1 or 0 (CHARACTER_TOKEN)
@@ -1186,17 +1181,8 @@ sub _get_next_token ($) {
         
         if ($self->{state} == ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE or
             $self->{state} == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE) {
-          $self->{ca}->{cl} = 1;
-          $self->{ca}->{cc} = 1;
-          $self->{ca}->{cpos} = 0;
-          $self->{ca}->{pos} = [];
           $self->{ca}->{sps} = [];
         } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
-          $self->{ca}->{cl} = 1;
-          $self->{ca}->{cc} = 1;
-          $self->{ca}->{cpos} = 0;
-          $self->{ca}->{pos} = [[$self->{ca}->{cl}, $self->{ca}->{cc}
-                                     => $self->{line}, $self->{column}]];
           $self->{ca}->{sps} = [[0, 1, $self->{line}, $self->{column}]];
         } elsif ($self->{state} == ENTITY_STATE) {
           if ($self->{is_xml} and
@@ -1465,19 +1451,11 @@ sub _get_next_token ($) {
                $state == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE ? 0x0027 :
                NEVER_CHAR;
       if ($nc == $ec) { # " '
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if not @{$self->{ca}->{pos} ||= []} and
-                   ($self->{ca}->{cc} != $self->{column} or
-                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
         if ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          
           ## XML5: "DOCTYPE ATTLIST name after state".
           push @{$self->{ct}->{attrdefs}}, $self->{ca};
           $self->{state} = AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE;
         } else {
-          
           ## XML5: "Tag attribute name before state".
           $self->{state} = AFTER_ATTRIBUTE_VALUE_QUOTED_STATE;
         }
@@ -1486,15 +1464,7 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ($nc == 0x0026) { # &
-        
         ## XML5: Not defined yet.
-
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if not @{$self->{ca}->{pos} ||= []} and
-                   ($self->{ca}->{cc} != $self->{column} or
-                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
 
         ## NOTE: In the spec, the tokenizer is switched to the 
         ## "entity in attribute value state".  In this implementation, the
@@ -1554,21 +1524,6 @@ sub _get_next_token ($) {
           
         }
 
-        my $new_cpos = length $self->{ca}->{value};
-        if ($nc == 0x000A) {
-          $self->{ca}->{cl}++;
-          $self->{ca}->{cc} = 0;
-        } else {
-          $self->{ca}->{cc} += $new_cpos - $self->{ca}->{cpos};
-        }
-        $self->{ca}->{cpos} = $new_cpos;
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if $self->{ca}->{cc} != $self->{column} or
-                   (not @{$self->{ca}->{pos} ||= []} and
-                    $self->{ca}->{cc} == 0);
-
         my $offset = length $self->{ca}->{value};
         my $l = $self->{line};
         my $c = $self->{column};
@@ -1604,16 +1559,7 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ($nc == 0x0026) { # &
-        
-
         ## XML5: Not defined yet.
-
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if not @{$self->{ca}->{pos} ||= []} and
-                   ($self->{ca}->{cc} != $self->{column} or
-                    ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0));
 
         ## NOTE: In the spec, the tokenizer is switched to the
         ## "character reference in attribute value state".  In this
@@ -1704,21 +1650,9 @@ sub _get_next_token ($) {
           0x003C => 1, # <
           0x0060 => 1, # `
         }->{$nc}) {
-          
           ## XML5: Not a parse error.
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad attribute value');
-        } else {
-          
         }
-
-        my $new_cpos = length $self->{ca}->{value};
-        $self->{ca}->{cc} += $new_cpos - $self->{ca}->{cpos};
-        $self->{ca}->{cpos} = $new_cpos;
-        push @{$self->{ca}->{pos} ||= []},
-            [$self->{ca}->{cl}, $self->{ca}->{cc}
-                 => $self->{line}, $self->{column}]
-                if $self->{ca}->{cc} != $self->{column} or
-                   ($self->{ca}->{cl} == 1 and $self->{ca}->{cc} == 0);
 
         my $l = $self->{line};
         my $c = $self->{column};
@@ -3672,17 +3606,9 @@ sub _get_next_token ($) {
         ## Reconsume.
         return  ({type => CHARACTER_TOKEN, data => chr $code,
                   has_reference => 1,
-                  line => $l, column => $c,
-                 });
+                  line => $l, column => $c});
         redo A;
       } else {
-        if ($code == 0x000A or $code == 0x000D) {
-          $self->{ca}->{cl}++;
-          $self->{ca}->{cc} = 0;
-          $self->{ca}->{cpos} = length $self->{ca}->{value};
-          push @{$self->{ca}->{pos} ||= []},
-              [$self->{ca}->{cl}, $self->{ca}->{cc} => $l, $c];
-        }
         push @{$self->{ca}->{sps}}, [length $self->{ca}->{value}, 1, $l, $c];
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
@@ -3798,13 +3724,6 @@ sub _get_next_token ($) {
                   line => $l, column => $c});
         redo A;
       } else {
-        if ($code == 0x000A or $code == 0x000D) {
-          $self->{ca}->{cl}++;
-          $self->{ca}->{cc} = 0;
-          $self->{ca}->{cpos} = length $self->{ca}->{value};
-          push @{$self->{ca}->{pos} ||= []},
-              [$self->{ca}->{cl}, $self->{ca}->{cc} => $l, $c];
-        }
         push @{$self->{ca}->{sps}}, [length $self->{ca}->{value}, 1, $l, $c];
         $self->{ca}->{value} .= chr $code;
         $self->{ca}->{has_reference} = 1;
@@ -4985,10 +4904,6 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
@@ -4999,10 +4914,6 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
@@ -5067,10 +4978,6 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0022) { # "
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
@@ -5080,10 +4987,6 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0027) { # '
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
@@ -5112,10 +5015,6 @@ sub _get_next_token ($) {
         ## XML5: Switch to the "DOCTYPE bogus comment state".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
@@ -5284,10 +5183,6 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0022) { # "
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
@@ -5297,10 +5192,6 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0027) { # '
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
@@ -5326,10 +5217,6 @@ sub _get_next_token ($) {
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
@@ -5350,10 +5237,6 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0022) { # "
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
@@ -5362,10 +5245,6 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0027) { # '
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
@@ -5391,10 +5270,6 @@ sub _get_next_token ($) {
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         ## Reconsume.
@@ -5411,10 +5286,6 @@ sub _get_next_token ($) {
         # XXX parse error?
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
@@ -5425,10 +5296,6 @@ sub _get_next_token ($) {
         # XXX parse error?
         ## XML5: Same as "anything else".
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
@@ -5472,10 +5339,6 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
@@ -5486,10 +5349,6 @@ sub _get_next_token ($) {
         ## XML5: Same as "anything else".
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
@@ -5532,10 +5391,6 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0022) { # "
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
         
@@ -5544,10 +5399,6 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0027) { # '
         $self->{ca}->{value} = '';
-        $self->{ca}->{cl} = 1;
-        $self->{ca}->{cc} = 1;
-        $self->{ca}->{cpos} = 0;
-        $self->{ca}->{pos} = [];
         $self->{ca}->{sps} = [];
         $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
         
@@ -5576,10 +5427,6 @@ sub _get_next_token ($) {
         ## XML5: Not defined yet.
         if ($self->{ca}->{default} eq 'FIXED') {
           $self->{ca}->{value} = '';
-          $self->{ca}->{cl} = 1;
-          $self->{ca}->{cc} = 1;
-          $self->{ca}->{cpos} = 0;
-          $self->{ca}->{pos} = [];
           $self->{ca}->{sps} = [];
           $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
         } else {
