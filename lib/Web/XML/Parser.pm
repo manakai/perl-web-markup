@@ -508,38 +508,8 @@ sub _construct_tree ($) {
         while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
           $onerror->(level => 'm', type => 'NULL', token => $self->{t});
         }
-
         my $parent = _insert_point $self->{open_elements}->[-1]->[0];
-        my $text = $parent->last_child;
-        if (defined $text and $text->node_type == 3) { # TEXT_NODE
-          my $pos_list = $text->get_user_data ('manakai_sps');
-          $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
-          if (defined $self->{t}->{sps}) {
-            my $delta = length $text->data;
-            push @$pos_list, map { my $v = [@$_]; $v->[0] += $delta; $v } @{$self->{t}->{sps}};
-          } else {
-            push @$pos_list,
-                [length $text->data,
-                 length $self->{t}->{data},
-                 $self->{t}->{line},
-                 $self->{t}->{column} + ($self->{t}->{char_delta} || 0)];
-          }
-          $text->set_user_data (manakai_sps => $pos_list);
-          $text->manakai_append_text ($self->{t}->{data});
-        } else {
-          $text = $parent->owner_document->create_text_node
-              ($self->{t}->{data});
-          if (defined $self->{t}->{sps}) {
-            $text->set_user_data (manakai_sps => $self->{t}->{sps});
-          } else {
-            $text->set_user_data
-                (manakai_sps => [[0,
-                                  length $self->{t}->{data},
-                                  $self->{t}->{line},
-                                  $self->{t}->{column} + ($self->{t}->{char_delta} || 0)]]);
-          }
-          $parent->append_child ($text);
-        }
+        $self->_append_text_by_token ($self->{t} => $parent);
         
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;

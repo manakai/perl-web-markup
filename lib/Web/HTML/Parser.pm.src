@@ -207,7 +207,6 @@ my $el_category = {
   code => FORMATTING_EL,
   col => MISC_SPECIAL_EL,
   colgroup => COLGROUP_EL,
-  #datagrid => MISC_SPECIAL_EL,
   dd => DTDD_EL,
   details => MISC_SPECIAL_EL,
   dir => MISC_SPECIAL_EL,
@@ -808,7 +807,7 @@ sub _create_el ($$$$) {
       $attr->value ($attr_t->{value});
       $attr->set_user_data (manakai_source_line => $attr_t->{line});
       $attr->set_user_data (manakai_source_column => $attr_t->{column});
-      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos}; # XXXpos
       $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
       $el->[0]->set_attribute_node_ns ($attr);
     } # $attr_name
@@ -843,7 +842,7 @@ sub _create_el ($$$$) {
       $attr->value ($attr_t->{value});
       $attr->set_user_data (manakai_source_line => $attr_t->{line});
       $attr->set_user_data (manakai_source_column => $attr_t->{column});
-      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
+      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos}; # XXXpos
       $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
       $el->[0]->set_attribute_node_ns ($attr);
     } # $attr_name
@@ -908,7 +907,7 @@ sub _get_insertion_location ($;$) {
     } else {
       ## 5.
       $adjusted_ref = $self->{open_elements}->[$last_table_i]->[0];
-      $adjusted_parent = $adjusted_ref->parent_node; ## "parent element" in the spec, which seems wrong
+      $adjusted_parent = $adjusted_ref->parent_node;
 
       unless (defined $adjusted_parent) {
         ## 6.-7.
@@ -923,7 +922,10 @@ sub _get_insertion_location ($;$) {
   }
 
   ## 3.
-  ## ->content - skipped here (see lines marked as TEMPLATECONTENT)
+  if ($adjusted_parent->node_type == 1 and
+      $adjusted_parent->manakai_element_type_match (HTML_NS, 'template')) {
+    $adjusted_parent = $adjusted_parent->content;
+  }
 
   ## 4.
   return ($adjusted_parent, $adjusted_ref);
@@ -965,18 +967,12 @@ sub _insert_el ($;$$$$) {
     my $err;
     if (defined $ref) {
       local $@;
-      $parent = $parent->content
-          if $parent->node_type == 1 and # ELEMENT_NODE
-             $parent->manakai_element_type_match (HTML_NS, 'template');
       eval { $parent->insert_before ($el->[0], $ref) };
     } else {
       local $@;
-      eval { $parent->manakai_append_content ($el->[0]) };
+      eval { $parent->append_child ($el->[0]) };
       $err = $@;
     }
-        ## TEMPLATECONTENT - If the element were inserted into an HTML
-        ## |template| element, it is inserted into the template
-        ## content instead.
     if ($err and
         not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
              $err->name eq 'HierarchyRequestError')) {
@@ -1302,18 +1298,12 @@ sub _aaa ($$) {
       my $err;
       if (defined $ref) {
         local $@;
-        $parent = $parent->content
-            if $parent->node_type == 1 and # ELEMENT_NODE
-               $parent->manakai_element_type_match (HTML_NS, 'template');
         eval { $parent->insert_before ($last_node->[0], $ref) }; # CHILD
       } else {
         local $@;
-        eval { $parent->manakai_append_content ($last_node->[0]) }; # CHILD
+        eval { $parent->append_child ($last_node->[0]) }; # CHILD
         $err = $@;
       }
-          ## TEMPLATECONTENT - If the element were inserted into an
-          ## HTML |template| element, it is inserted into the template
-          ## content instead.
       if ($err and
           not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
                $err->name eq 'HierarchyRequestError')) {
@@ -2152,15 +2142,15 @@ sub _construct_tree ($) {
 
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         ## "In foreign content", character tokens.
-        my $data = $self->{t}->{data};
-        if ($data =~ /[^\x00\x09\x0A\x0C\x0D\x20]/) {
-          delete $self->{frameset_ok};
-        }
-        while ($data =~ s/\x00/\x{FFFD}/) {
+        delete $self->{frameset_ok}
+            if $self->{t}->{data} =~ /[^\x00\x09\x0A\x0C\x0D\x20]/;
+        while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
           !!!parse-error (type => 'NULL', token => $self->{t});
         }
-        $self->{open_elements}->[-1]->[0]->manakai_append_content ($data);
-        
+        my $parent = $self->{open_elements}->[-1]->[0];
+        $parent = $parent->content
+            if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+        $self->_append_text_by_token ($self->{t} => $parent);
         !!!next-token;
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
@@ -2404,14 +2394,18 @@ sub _construct_tree ($) {
     if ($self->{insertion_mode} & TABLE_IMS and
         not $self->{insertion_mode} & IN_CDATA_RCDATA_IM) {
       C: {
-        my $s;
+        my $pending_chars;
         if ($self->{t}->{type} == CHARACTER_TOKEN) {
-          if (($self->{open_elements}->[-1]->[0]->namespace_uri || '') eq HTML_NS and
-              {table => 1, tbody => 1, thead => 1, tfoot => 1, tr => 1}->{$self->{open_elements}->[-1]->[0]->local_name}) {
-            ## The "in table text" insertion mode, any other character
-            ## token
-            $self->{pending_chars} ||= [];
-            push @{$self->{pending_chars}}, $self->{t};
+          if ($self->{open_elements}->[-1]->[1] & TABLE_ROWS_EL) {
+            ## The "in table text" insertion mode, U+0000 or any other
+            ## character token.
+            if ($self->{t}->{data} eq "\x00") {
+              ## Tokenizer always emits U+0000 as a standalone token.
+              !!!parse-error (type => 'NULL', token => $self->{t});
+            } else {
+              $self->{pending_chars} ||= [];
+              push @{$self->{pending_chars}}, $self->{t};
+            }
             !!!next-token;
             next B;
           } else {
@@ -2420,28 +2414,26 @@ sub _construct_tree ($) {
             last C;
           }
         } else {
-          ## The "in table text" insertion mode, anything else
-
-          ## There is an "insert pending chars" code clone.
-          if ($self->{pending_chars}) {
-            $s = join '', map { $_->{data} } @{$self->{pending_chars}};
-            delete $self->{pending_chars};
-            while ($s =~ s/\x00//) {
-              ## The "in table text" insertion mode, non U+0000
-              ## character token
-              !!!parse-error (type => 'NULL', token => $self->{t});
+          ## The "in table text" insertion mode, anything else.
+          if (defined $self->{pending_chars}) {
+            $pending_chars = delete $self->{pending_chars};
+            my $has_non_space;
+            for my $t (@$pending_chars) {
+              if ($t->{data} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+                $has_non_space = 1;
+                last;
+              }
             }
-            if ($s eq '') {
-              last C;
-            } elsif ($s =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+            if ($has_non_space) {
               #
             } else {
-              !!!cp ('t195.1');
-              $self->{open_elements}->[-1]->[0]->manakai_append_content ($s);
+              my $parent = $self->{open_elements}->[-1]->[0];
+              $parent = $parent->content
+                  if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+              $self->_append_text_by_token ($_ => $parent) for @$pending_chars;
               last C;
             }
           } else {
-            !!!cp ('t195.2');
             last C;
           }
         }
@@ -2450,6 +2442,8 @@ sub _construct_tree ($) {
         ## "in table" insertion mode, "anything else" (pending table
         ## character tokens)
 
+        ## At this point, there is always non-empty @$pending_chars.
+
         !!!parse-error (type => 'in table:#text', token => $self->{t});
 
         ## Process the character tokens in the pending table character
@@ -2457,7 +2451,7 @@ sub _construct_tree ($) {
         ## mode, with foster parenting enabled.
         local $self->{foster_parenting} = 1;
 
-        ## The "in body" insertion mode, U+0000 - U+0000 is already
+        ## The "in body" insertion mode, U+0000 -- U+0000 is already
         ## ignored.
 
         $self->_reconstruct_afe;
@@ -2465,16 +2459,14 @@ sub _construct_tree ($) {
         ## Insert the token's character.
         {
           ## 1.
-          #$s
+          #$pending_chars
 
           ## 2.
           my ($parent, $ref) = $self->_get_insertion_location;
               ## no /target override/
 
           ## 3.
-          if ($parent->node_type == 9) { # DOCUMENT_NODE) {
-            last;
-          }
+          last if $parent->node_type == 9; # DOCUMENT_NODE
           
           ## 4.
           {
@@ -2484,32 +2476,22 @@ sub _construct_tree ($) {
             if (defined $ref) {
               my $prev = $ref->previous_sibling;
               if (defined $prev and $prev->node_type == 3) { # TEXT_NODE
-                $prev->manakai_append_text ($s);
-                # XXX manakai_pos
+                $self->_append_token_data_and_sps ($_ => $prev)
+                    for @$pending_chars;
               } else {
+                my $text = $parent->owner_document->create_text_node ('');
+                $self->_append_token_data_and_sps ($_ => $text)
+                    for @$pending_chars;
                 local $@;
-                $parent = $parent->content
-                    if $parent->node_type == 1 and # ELEMENT_NODE
-                       $parent->manakai_element_type_match (HTML_NS, 'template');
-                my $text = $parent->owner_document->create_text_node ($s);
-                # XXX
-                #$text->set_user_data (manakai_source_line => $token->{line})
-                #    if defined $token->{line};
-                #$text->set_user_data (manakai_source_column => $token->{column})
-                #    if defined $token->{column};
-                #$text->set_user_data (manakai_pos => $attr_t->{pos})
-                #    if defined $token->{pos};
                 eval { $parent->insert_before ($text, $ref) };
+                $err = $@;
               }
             } else {
               local $@;
-              # XXX manakai_pos
-              eval { $parent->manakai_append_content ($s) };
+              eval { $self->_append_text_by_token ($_ => $parent)
+                         for @$pending_chars };
               $err = $@;
             }
-                ## TEMPLATECONTENT - If the element were inserted into
-                ## an HTML |template| element, it is inserted into the
-                ## template content instead.
             if ($err and
                 not (UNIVERSAL::isa ($err, 'Web::DOM::Exception') and
                      $err->name eq 'HierarchyRequestError')) {
@@ -2593,15 +2575,15 @@ sub _construct_tree ($) {
       next B;
     } elsif ($self->{insertion_mode} & IN_CDATA_RCDATA_IM) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        $self->{t}->{data} =~ s/^\x0A// if $self->{ignore_newline};
-        delete $self->{ignore_newline};
-
+        if (delete $self->{ignore_newline}) {
+          $self->{t}->{char_delta} = 1
+              if $self->{t}->{data} =~ s/^\x0A//;
+        }
         if (length $self->{t}->{data}) {
-          !!!cp ('t43');
-          ## NOTE: NULLs are replaced into U+FFFDs in tokenizer.
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{t}->{data});
-        } else {
-          !!!cp ('t43.1');
+          my $parent = $self->{open_elements}->[-1]->[0];
+          $parent = $parent->content
+              if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+          $self->_append_text_by_token ($self->{t} => $parent);
         }
         !!!next-token;
         next B;
@@ -2668,19 +2650,20 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           unless ($self->{insertion_mode} == BEFORE_HEAD_IM) {
-            !!!cp ('t88.2');
-            $self->{open_elements}->[-1]->[0]->manakai_append_content ($1);
+            my $parent = $self->{open_elements}->[-1]->[0];
+            $parent = $parent->content
+                if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+            $self->_append_text_by_token
+                ({%{$self->{t}}, data => $1} => $parent);
+            $self->{t}->{char_delta} = length $1;
           } else {
-            !!!cp ('t88.1');
             ## Ignore the token.
             #
           }
           unless (length $self->{t}->{data}) {
-            !!!cp ('t88');
             !!!next-token;
             next B;
           }
-## TODO: set $self->{t}->{column} appropriately
         }
 
         #
@@ -2915,7 +2898,10 @@ sub _construct_tree ($) {
 
         $self->_reconstruct_afe;
         
-        $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{t}->{data});
+        my $parent = $self->{open_elements}->[-1]->[0];
+        $parent = $parent->content
+            if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+        $self->_append_text_by_token ($self->{t} => $parent);
 
         if ($self->{frameset_ok} and
             $self->{t}->{data} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
@@ -3304,7 +3290,10 @@ sub _construct_tree ($) {
 
           $self->_reconstruct_afe;
           
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($self->{t}->{data});
+          my $parent = $self->{open_elements}->[-1]->[0];
+          $parent = $parent->content
+              if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+          $self->_append_text_by_token ($self->{t} => $parent);
 
           if ($self->{frameset_ok} and
               $self->{t}->{data} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
@@ -3899,7 +3888,12 @@ sub _construct_tree ($) {
       COLGROUP: {
         if ($self->{t}->{type} == CHARACTER_TOKEN) {
           if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
-            $self->{open_elements}->[-1]->[0]->manakai_append_content ($1);
+            my $parent = $self->{open_elements}->[-1]->[0];
+            $parent = $parent->content
+                if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+            $self->_append_text_by_token
+                ({%{$self->{t}}, data => $1} => $parent);
+            $self->{t}->{char_delta} = length $1;
             unless (length $self->{t}->{data}) {
               !!!next-token;
               next B;
@@ -3992,13 +3986,17 @@ sub _construct_tree ($) {
       #
     } elsif ($self->{insertion_mode} & SELECT_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        !!!cp ('t271');
-        my $data = $self->{t}->{data};
-        while ($data =~ s/\x00//) {
+        ## U+0000 is always emitted as one token.
+        if ($self->{t}->{data} eq "\x00") {
           !!!parse-error (type => 'NULL', token => $self->{t});
+          !!!next-token;
+          next B;
         }
-        $self->{open_elements}->[-1]->[0]->manakai_append_content ($data)
-            if $data ne '';
+
+        my $parent = $self->{open_elements}->[-1]->[0];
+        $parent = $parent->content
+            if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+        $self->_append_text_by_token ($self->{t} => $parent);
         !!!next-token;
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
@@ -4226,25 +4224,27 @@ sub _construct_tree ($) {
     } elsif ($self->{insertion_mode} & BODY_AFTER_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
-          my $data = $1;
           ## As if in body
           $self->_reconstruct_afe;
           
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($data);
+          my $parent = $self->{open_elements}->[-1]->[0];
+          $parent = $parent->content
+              if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+          $self->_append_text_by_token
+              ({%{$self->{t}}, data => $1} => $parent);
           
           unless (length $self->{t}->{data}) {
-            !!!cp ('t300');
             !!!next-token;
             next B;
           }
+
+          $self->{t}->{char_delta} = length $1;
         }
         
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-          !!!cp ('t301');
           !!!parse-error (type => 'after html:#text', token => $self->{t});
           #
         } else {
-          !!!cp ('t302');
           ## "after body" insertion mode
           !!!parse-error (type => 'after body:#text', token => $self->{t});
           #
@@ -4255,12 +4255,10 @@ sub _construct_tree ($) {
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-          !!!cp ('t303');
           !!!parse-error (type => 'after html',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           #
         } else {
-          !!!cp ('t304');
           ## "after body" insertion mode
           !!!parse-error (type => 'after body',
                           text => $self->{t}->{tag_name}, token => $self->{t});
@@ -4319,16 +4317,20 @@ sub _construct_tree ($) {
     } elsif ($self->{insertion_mode} & FRAME_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
-          $self->{open_elements}->[-1]->[0]->manakai_append_content ($1);
+          my $parent = $self->{open_elements}->[-1]->[0];
+          $parent = $parent->content
+              if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
+          $self->_append_text_by_token
+              ({%{$self->{t}}, data => $1} => $parent);
+          $self->{t}->{char_delta} += length $1;
           
           unless (length $self->{t}->{data}) {
-            !!!cp ('t310');
             !!!next-token;
             next B;
           }
         }
         
-        if ($self->{t}->{data} =~ s/^[^\x09\x0A\x0C\x20]+//) {
+        if ($self->{t}->{data} =~ s/^([^\x09\x0A\x0C\x20]+)//) {
           ## Note that the number of parse errors for character tokens
           ## is different from the spec .
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
@@ -4344,10 +4346,9 @@ sub _construct_tree ($) {
           
           ## Ignore the token.
           if (length $self->{t}->{data}) {
-            !!!cp ('t314');
+            $self->{t}->{char_delta} += length $1;
             ## reprocess the rest of characters
           } else {
-            !!!cp ('t315');
             !!!next-token;
           }
           next B;

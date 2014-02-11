@@ -469,6 +469,9 @@ my $CommonStoppers = {
   "\x{FFFFE}" => 1, "\x{FFFFF}" => 1,
   "\x{10FFFE}" => 1, "\x{10FFFF}" => 1,
   "\x{000C}" => 1,
+
+  ## For convinience in HTML parser's source position reporting
+  "\x{0000}" => 1,
 };
 $CommonStoppers->{chr $_} = 1
     for 0x0001..0x0008, 0x000E..0x001F, 0x007F..0x009F, 0xFDD0..0xFDEF,

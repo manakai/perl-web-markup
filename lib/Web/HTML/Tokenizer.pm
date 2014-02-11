@@ -130,7 +130,8 @@ sub _initialize_tokenizer ($) {
 
 ## A token has:
 ##   ->{type} == DOCTYPE_TOKEN, START_TAG_TOKEN, END_TAG_TOKEN, COMMENT_TOKEN,
-##       CHARACTER_TOKEN, END_OF_FILE_TOKEN, PI_TOKEN, or ABORT_TOKEN
+##       CHARACTER_TOKEN, END_OF_FILE_TOKEN, PI_TOKEN, ABORT_TOKEN, or
+##       ENTITY_SUBTREE_TOKEN
 ##   ->{name} (DOCTYPE_TOKEN)
 ##   ->{tag_name} (START_TAG_TOKEN, END_TAG_TOKEN)
 ##   ->{target} (PI_TOKEN)
@@ -142,13 +143,17 @@ sub _initialize_tokenizer ($) {
 ##        ->{value}
 ##        ->{has_reference} == 1 or 0
 ##        ->{index}: Index of the attribute in a tag.
-##        ->{pos}
+##        ->{pos} XXXpos
 ##        ->{sps}: Source positions
 ##   ->{data} (COMMENT_TOKEN, CHARACTER_TOKEN, PI_TOKEN)
 ##   ->{has_reference} == 1 or 0 (CHARACTER_TOKEN)
 ##   ->{last_index} (ELEMENT_TOKEN): Next attribute's index - 1.
 ##   ->{has_internal_subset} = 1 or 0 (DOCTYPE_TOKEN)
-##   ->{sps}: Source positions
+##   ->{di}: Source document index
+##   ->{line}: Line number of the first character
+##   ->{column}: Column number of the first character
+##   ->{char_delta}: Number of characters in prefix construct (e.g. <![CDATA[)
+##   ->{sps} (CHARACTER_TOKEN): Source positions
 
 ## NOTE: The "self-closing flag" is hold as |$self->{self_closing}|.
 ##     |->{self_closing}| is used to save the value of |$self->{self_closing}|
@@ -6286,8 +6291,41 @@ sub _expand_ge_in_attr ($$) {
   }
 } # _expand_ge_in_attr
 
-# XXX manakai_pos user data for Text nodes and entities
-# XXX entity refs should also set pos c.f. style="&amp;foo"
+sub _token_sps ($) {
+  my $token = $_[0];
+  return $token->{sps} if defined $token->{sps};
+  return [] if not defined $token->{column};
+  return [[0,
+           length $token->{data},
+           $token->{line},
+           $token->{column} + ($token->{char_delta} || 0)]];
+} # _token_sps
+
+sub _append_token_data_and_sps ($$$) {
+  my ($self, $token => $node) = @_;
+  my $pos_list = $node->get_user_data ('manakai_sps');
+  $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
+  my $delta = length $node->text_content;
+  push @$pos_list, map {
+    my $v = [@$_];
+    $v->[0] += $delta;
+    $v;
+  } @{_token_sps $token};
+  $node->set_user_data (manakai_sps => $pos_list);
+  $node->manakai_append_text ($token->{data});
+} # _append_token_data_with_sps
+
+sub _append_text_by_token ($$$) {
+  my ($self, $token => $parent) = @_;
+  my $text = $parent->last_child;
+  if (defined $text and $text->node_type == 3) { # TEXT_NODE
+    $self->_append_token_data_and_sps ($token => $text);
+  } else {
+    $text = $parent->owner_document->create_text_node ($token->{data});
+    $text->set_user_data (manakai_sps => _token_sps $token);
+    $parent->append_child ($text);
+  }
+} # _append_text_by_token
 
 1;
 
