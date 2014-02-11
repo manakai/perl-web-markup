@@ -33,11 +33,11 @@ sub onerror ($;$) {
   };
 } # onerror
 
-my $GetNestedOnError = sub ($$$) {
-  my ($onerror, $node) = @_; # , $value
+my $GetNestedOnError = sub ($$$;$) {
+  my ($onerror, $node, undef, $sps) = @_;
 
   my $map_parsed = create_pos_lc_map $_[2];
-  my $map_source = $node->get_user_data ('manakai_sps') || [];
+  my $map_source = $sps || $node->get_user_data ('manakai_sps') || [];
   unless (@$map_source) {
     my $sp = [0, 0,
               $node->get_user_data ('manakai_source_line'),
@@ -3823,7 +3823,6 @@ $Element->{+HTML_NS}->{style} = {
   %AnyChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
-    $element_state->{text} = '';
     $element_state->{content_type} = do {
       require Web::MIME::Type;
       Web::MIME::Type->parse_web_mime_type ('text/css');
@@ -3869,26 +3868,31 @@ $Element->{+HTML_NS}->{style} = {
                          level => 'm');
     }
   }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{text} .= $child_node->data;
-  },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
 
-    my $tc = $item->{node}->text_content;
-    $tc =~ s/.*<!--.*?-->//gs;
-    if ($tc =~ /<!--/) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'style:unclosed cdo',
-                         level => 'm');
+    my ($text, $tc, $text_sps, $tc_sps)
+        = node_to_text_and_tc_and_sps $item->{node};
+
+    {
+      my $length = length $tc;
+      $tc =~ s/.*<!--.*?-->//gs;
+      $length -= length $tc;
+      if ($tc =~ /<!--/) {
+        $length += $-[0];
+        my $p = pos_to_lc $tc_sps, $length;
+        $self->{onerror}->(node => $item->{node},
+                           %$p,
+                           type => 'style:unclosed cdo',
+                           level => 'm');
+      }
     }
 
     if (defined $element_state->{content_type} and
         ($element_state->{content_type}->as_valid_mime_type || '') eq 'text/css') {
-      my $parser = $self->_css_parser ($item->{node}, $element_state->{text});
+      my $parser = $self->_css_parser ($item->{node}, $text, $text_sps);
       # XXX $parser->context->scoped (has_attribute ('scoped'));
-      my $ss = $parser->parse_char_string_as_ss ($element_state->{text});
+      my $ss = $parser->parse_char_string_as_ss ($text);
       # XXX Web::CSS::Checker->new->check_ss ($ss);
     } elsif (defined $element_state->{content_type}) {
       $self->{onerror}->(node => $item->{node},
@@ -3912,10 +3916,6 @@ sub scripting ($;$) {
 
 $Element->{+HTML_NS}->{script} = {
   %AnyChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{text} = '';
-  }, # check_start
   check_attrs2 => sub {
     my ($self, $item, $element_state) = @_;
     my $el = $item->{node};
@@ -3966,25 +3966,31 @@ $Element->{+HTML_NS}->{script} = {
                          level => 'm');
     }
   }, # check_child_element
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{text} .= $child_node->data;
-  },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
 
-    my $tc = $item->{node}->text_content;
-    $tc =~ s{.*<!--(.*?)-->}{
-      if ($1 =~ /<[Ss][Cc][Rr][Ii][Pp][Tt][\x09\x0A\x0C\x0D\x20\x2F>]/) {
+    my ($text, $tc, $text_sps, $tc_sps)
+        = node_to_text_and_tc_and_sps $item->{node};
+
+    my $length = length $tc;
+    $tc =~ s{\G(.*?<!--)(.*?)-->}{
+      my $pos = length $1;
+      if ($2 =~ /<[Ss][Cc][Rr][Ii][Pp][Tt][\x09\x0A\x0C\x0D\x20\x2F>]/) {
+        $pos += $-[0];
+        my $p = pos_to_lc $tc_sps, $pos;
         $self->{onerror}->(node => $item->{node},
+                           %$p,
                            type => 'script:nested <script>',
                            level => 'm');
       }
       '';
     }gse;
+    $length -= length $tc;
     if ($tc =~ /<!--/) {
+      my $p = pos_to_lc $tc_sps, $length + $-[0];
       $self->{onerror}->(node => $item->{node},
-                         type => 'style:unclosed cdo',
+                         %$p,
+                         type => 'style:unclosed cdo', # sic
                          level => 'm');
     }
 
@@ -3997,7 +4003,7 @@ $Element->{+HTML_NS}->{script} = {
                            type => 'script:external data block',
                            level => 'm');
       }
-      unless ($element_state->{text} =~ m{\A(?>(?>[\x20\x09]|/\*(?>[^*]|\*[^/])*\*+/)*(?>//[^\x0A]*)?\x0A)*\z}) {
+      unless ($text =~ m{\A(?>(?>[\x20\x09]|/\*(?>[^*]|\*[^/])*\*+/)*(?>//[^\x0A]*)?\x0A)*\z}) {
         ## Non-Unicode character error is detected by other place.
         $self->{onerror}->(node => $item->{node},
                            type => 'script:inline doc:invalid',
@@ -4005,7 +4011,7 @@ $Element->{+HTML_NS}->{script} = {
       }
     } elsif (defined $element_state->{content_type} and
              $element_state->{content_type}->is_javascript) {
-      # XXX validate $element_state->{text} as JavaScript
+      # XXX validate $text as JavaScript
       $self->{onerror}->(node => $item->{node},
                          value => $element_state->{content_type}->as_valid_mime_type,
                          type => 'unknown script lang',
@@ -8165,7 +8171,6 @@ my %AtomTextConstruct = (
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{type} = 'text';
-    $element_state->{value} = '';
   },
   check_attrs => $GetAtomAttrsChecker->({
     type => sub {
@@ -8222,8 +8227,7 @@ my %AtomTextConstruct = (
     if ($element_state->{type} eq 'text') {
       #
     } elsif ($element_state->{type} eq 'html') {
-      $element_state->{value} .= $child_node->text_content;
-      ## NOTE: Markup MUST be escaped.
+      #
     } elsif ($element_state->{type} eq 'xhtml') {
       if ($has_significant) {
         $self->{onerror}->(node => $child_node,
@@ -8244,7 +8248,7 @@ my %AtomTextConstruct = (
                            level => 'm');
       }
     } elsif ($element_state->{type} eq 'html') {
-      $CheckDIVContent->($self, $item->{node}, $element_state->{value});
+      $CheckDIVContent->($self, $item->{node});
     }
 
     $AtomChecker{check_end}->(@_);
@@ -8735,7 +8739,6 @@ $Element->{+ATOM_NS}->{content} = {
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{type} = 'text';
-    $element_state->{value} = '';
   },
   check_attrs => $GetAtomAttrsChecker->({
     src => sub {
@@ -8841,8 +8844,6 @@ $Element->{+ATOM_NS}->{content} = {
       }
     }
 
-    $element_state->{value} .= $child_node->data;
-
     ## NOTE: type=text/* has no further restriction (i.e. the content don't
     ## have to conform to the definition of the type).
   },
@@ -8872,7 +8873,7 @@ $Element->{+ATOM_NS}->{content} = {
                            level => 'm');
       }
     } elsif ($element_state->{type} eq 'html') {
-      $CheckDIVContent->($self, $item->{node}, $element_state->{value});
+      $CheckDIVContent->($self, $item->{node});
     } elsif ($element_state->{type} eq 'xml') {
       ## NOTE: SHOULD be suitable for handling as $value.
       ## If no @src, this would normally mean it contains a 
@@ -9314,9 +9315,8 @@ sub _check_fallback_html ($$$$) {
   my ($self, $context, $disallowed, $container_ln) = @_;
   my $container = $context->owner_document->create_element ($container_ln);
 
-  my $value = $context->text_content;
-  my $onerror = $GetNestedOnError->($self->onerror, $context, $value);
-  # XXX pos
+  my (undef, $value, undef, $sps) = node_to_text_and_tc_and_sps $context;
+  my $onerror = $GetNestedOnError->($self->onerror, $context, $value, $sps);
 
   require Web::DOM::Document;
   my $doc = new Web::DOM::Document;
@@ -9381,7 +9381,7 @@ $ElementAttrChecker->{(HTML_NS)}->{iframe}->{''}->{srcdoc} = sub {
 ## For Atom Text construct with type=html and <atom:content type=html>
 ## elements
 $CheckDIVContent = sub {
-  my ($self, $node, $value) = @_;
+  my ($self, $node) = @_;
   require Web::DOM::Document;
   my $doc = new Web::DOM::Document;
   my $div = $doc->create_element ('div');
@@ -9389,8 +9389,11 @@ $CheckDIVContent = sub {
   require Web::HTML::Parser;
   my $parser = Web::HTML::Parser->new;
   $parser->scripting ($self->scripting);
-  my $onerror = $GetNestedOnError->($self->onerror, $node, $value);
+
+  my ($value, undef, $sps, undef) = node_to_text_and_tc_and_sps $node;
+  my $onerror = $GetNestedOnError->($self->onerror, $node, $value, $sps);
   $parser->onerror ($onerror);
+
   for (@{$parser->parse_char_string_with_context ($value, $div => $doc)}) {
     $div->append_child ($_);
   }
@@ -9523,8 +9526,8 @@ $Element->{+HTML_NS}->{template} = {
 
 ## ------ CSS ------
 
-sub _css_parser ($$$) {
-  my ($self, $node, $value) = @_;
+sub _css_parser ($$$;$) {
+  my ($self, $node, $value, $sps) = @_;
   require Web::CSS::Parser;
   require Web::CSS::Context;
   my $parser = Web::CSS::Parser->new;
@@ -9536,7 +9539,7 @@ sub _css_parser ($$$) {
   $context->base_url ($node->base_uri);
   $parser->context ($context);
   $parser->media_resolver->set_supported (all => 1);
-  $parser->onerror ($GetNestedOnError->($self->onerror, $node, $value));
+  $parser->onerror ($GetNestedOnError->($self->onerror, $node, $value, $sps));
   #$parser->init_parser;
   return $parser;
 } # _css_parser

@@ -68,6 +68,9 @@ for my $test (
   [qq{<frameset>ab </frameset>}, 'frameset', [[0, 1, 1,13]]],
   [qq{<frameset>ab c </frameset>}, 'frameset', [[0, 1, 1,13], [1, 1, 1,15]]],
   [qq{<frameset> c </frameset>}, 'frameset', [[0, 1, 1,11], [1, 1, 1,13]]],
+  [q{<svg><![CDATA[x]]></svg>}, 'svg', [[0, 1, 1,15]]],
+  [qq{<svg><![CDATA[\x0Ax]]></svg>}, 'svg', [[0, 2, 2,0]]],
+  [qq{<svg><![CDATA[\x0Ax\x0Ab]]></svg>}, 'svg', [[0, 2, 2,0], [2, 2, 3,0]]],
 ) {
   test {
     my $c = shift;

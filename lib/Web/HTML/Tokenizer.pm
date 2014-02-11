@@ -380,12 +380,14 @@ $Action->[SCRIPT_DATA_LT_STATE]->[0x0021] = {
   state => SCRIPT_DATA_ESCAPE_START_STATE,
   emit => CHARACTER_TOKEN,
   emit_data => '<!',
+  emit_delta => 1,
 };
 $Action->[SCRIPT_DATA_ESCAPED_LT_STATE]->[KEY_ULATIN_CHAR] = {
   name => 'script data escaped lt uc',
   emit => CHARACTER_TOKEN,
   emit_data => '<',
   emit_data_append => 1,
+  emit_delta => 1,
   buffer => {clear => 1, append => 0x0020}, # UC -> lc
   state => SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE,
 };
@@ -394,6 +396,7 @@ $Action->[SCRIPT_DATA_ESCAPED_LT_STATE]->[KEY_LLATIN_CHAR] = {
   emit => CHARACTER_TOKEN,
   emit_data => '<',
   emit_data_append => 1,
+  emit_delta => 1,
   buffer => {clear => 1, append => 0x0000},
   state => SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE,
 };
@@ -403,6 +406,7 @@ $Action->[RCDATA_LT_STATE]->[KEY_ELSE_CHAR] = {
   reconsume => 1,
   emit => CHARACTER_TOKEN,
   emit_data => '<',
+  emit_delta => 1,
 };
 $Action->[RAWTEXT_LT_STATE]->[KEY_ELSE_CHAR] = {
   name => 'rawtext lt else',
@@ -410,6 +414,7 @@ $Action->[RAWTEXT_LT_STATE]->[KEY_ELSE_CHAR] = {
   reconsume => 1,
   emit => CHARACTER_TOKEN,
   emit_data => '<',
+  emit_delta => 1,
 };
 $Action->[SCRIPT_DATA_LT_STATE]->[KEY_ELSE_CHAR] = {
   name => 'script data lt else',
@@ -417,6 +422,7 @@ $Action->[SCRIPT_DATA_LT_STATE]->[KEY_ELSE_CHAR] = {
   reconsume => 1,
   emit => CHARACTER_TOKEN,
   emit_data => '<',
+  emit_delta => 1,
 };
 $Action->[SCRIPT_DATA_ESCAPED_LT_STATE]->[KEY_ELSE_CHAR] = {
   name => 'script data escaped lt else',
@@ -424,6 +430,7 @@ $Action->[SCRIPT_DATA_ESCAPED_LT_STATE]->[KEY_ELSE_CHAR] = {
   reconsume => 1,
   emit => CHARACTER_TOKEN,
   emit_data => '<',
+  emit_delta => 1,
 };
 ## XXX "End tag token" in latest HTML5 and in XML5.
 $Action->[CLOSE_TAG_OPEN_STATE]->[KEY_ULATIN_CHAR] = {
@@ -1970,7 +1977,8 @@ sub _get_next_token ($) {
                        data => '',
                        line => $self->{line_prev},
                        column => $self->{column_prev} - 7,
-                       char_delta => 9}; # <![CDATA[
+                       char_delta => 9, # <![CDATA[
+                       sps => []};
         $self->{state} = CDATA_SECTION_STATE;
         
     $self->_set_nc;
@@ -3349,7 +3357,6 @@ sub _get_next_token ($) {
 
         redo A;
       } elsif ($self->{is_xml} and $nc == 0x005B) { # [
-        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = 1;
@@ -3359,7 +3366,6 @@ sub _get_next_token ($) {
         return  ($self->{ct}); # DOCTYPE
         redo A;
       } elsif ($nc == -1) {
-        
         $self->{state} = DATA_STATE;
         ## reconsume
 
@@ -3367,10 +3373,8 @@ sub _get_next_token ($) {
 
         redo A;
       } else {
-        
         my $s = '';
         $self->_read_chars ({"[" => 1, ">" => 1});
-        #$self->{read_until}->($s, q{>[}, 0);
 
         ## Stay in the state
         
@@ -3386,7 +3390,6 @@ sub _get_next_token ($) {
       ## XML5: "CDATA state".
       
       if ($nc == 0x005D) { # ]
-        
         $self->{state} = CDATA_SECTION_MSE1_STATE;
         
     $self->_set_nc;
@@ -3394,30 +3397,24 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == -1) {
         if ($self->{is_xml}) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no mse'); ## TODO: type
-        } else {
-          
         }
 
         $self->{state} = DATA_STATE;
         ## Reconsume.
         if (length $self->{ct}->{data}) { # character
-          
           return  ($self->{ct}); # character
         } else {
-          
           ## No token to emit. $self->{ct} is discarded.
-        }        
+        }
         redo A;
       } else {
-        
+        my $pos = length $self->{ct}->{data};
+        push @{$self->{ct}->{sps}}, [$pos, 0, $self->{line}, $self->{column}];
         $self->{ct}->{data} .= chr $nc;
         $self->{ct}->{data} .= $self->_read_chars
             ({"\x00" => 1, "]" => 1});
-        #$self->{read_until}->($self->{ct}->{data},
-        #                      qq<\x00]>,
-        #                      length $self->{ct}->{data});
+        $self->{ct}->{sps}->[-1]->[1] = (length $self->{ct}->{data}) - $pos;
 
         ## NOTE: NULLs are left as is (see spec's comment).  However,
         ## a token cannot contain more than one U+0000 NULL character
@@ -3435,15 +3432,15 @@ sub _get_next_token ($) {
       ## XML5: "CDATA bracket state".
 
       if ($nc == 0x005D) { # ]
-        
         $self->{state} = CDATA_SECTION_MSE2_STATE;
         
     $self->_set_nc;
   
         redo A;
       } else {
-        
         ## XML5: If EOF, "]" is not appended and changed to the data state.
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{data}, 1,
+                                     $self->{line_prev}, $self->{column_prev}];
         $self->{ct}->{data} .= ']';
         $self->{state} = CDATA_SECTION_STATE; ## XML5: Stay in the state.
         ## Reconsume.
@@ -3458,15 +3455,15 @@ sub _get_next_token ($) {
     $self->_set_nc;
   
         if (length $self->{ct}->{data}) { # character
-          
           return  ($self->{ct}); # character
         } else {
-          
           ## No token to emit. $self->{ct} is discarded.
         }
         redo A;
       } elsif ($nc == 0x005D) { # ]
-         # character
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{data}, 1,
+                                     $self->{line_prev},
+                                     $self->{column_prev} - 1];
         $self->{ct}->{data} .= ']'; ## Add first "]" of "]]]".
         ## Stay in the state.
         
@@ -3474,7 +3471,9 @@ sub _get_next_token ($) {
   
         redo A;
       } else {
-        
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{data}, 1,
+                                     $self->{line_prev},
+                                     $self->{column_prev} - 1];
         $self->{ct}->{data} .= ']]'; # character
         $self->{state} = CDATA_SECTION_STATE;
         ## Reconsume. ## XML5: Emit.
@@ -3650,7 +3649,7 @@ sub _get_next_token ($) {
         #
       }
 
-      my $code = 0+$self->{kwd};
+      my $code = 0+$self->{kwd}; # XXXoverflow
       my $l = $self->{line_prev};
       my $c = $self->{column_prev} - 2 - length $self->{kwd}; # '&#'
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
@@ -3774,7 +3773,7 @@ sub _get_next_token ($) {
         #
       }
 
-      my $code = hex $self->{kwd};
+      my $code = hex $self->{kwd}; # XXXoverflow
       my $l = $self->{line_prev};
       my $c = $self->{column_prev} - 3 - length $self->{kwd}; # '&#x'
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {

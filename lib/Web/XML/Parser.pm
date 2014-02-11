@@ -467,8 +467,6 @@ sub _terminate_tree_constructor ($) {
 
 # XXXsps
 #   - drop manakai_pos
-#   - manakai_sps for element content in HTML
-#   - validator sps for element content
 #   - docid
 #   - errors.txt
 

@@ -1051,7 +1051,8 @@ test {
       [{type => 'css:prop:unknown',
         value => 'hoge',
         level => 'm',
-        node => $el->attributes->[0]}];
+        node => $el->attributes->[0],
+        line => 1, column => 1, di => -1}];
   done $c;
 } n => 1, name => ['check_node', 'style="" with no line data'];
 
@@ -1105,8 +1106,10 @@ for my $test (
     eq_or_diff [grep { $_->{type} !~ /^status:/ } @error],
         [{type => $test->[1],
           level => 'm',
-          node => $el2},
+          node => $el2,
+          line => 1, column => 1, di => -1},
          ($test->[2] ? ({type => $test->[2],
+                         line => 1, column => 11, di => -1,
                          level => 'm',
                          node => $el2}) : ())];
     done $c;

@@ -307,6 +307,39 @@ for my $test (
   } n => 4, name => 'attr value';
 }
 
+for my $test (
+  [q{<svg>abc</svg>}, 'svg', [[0, 3, 1,6]]],
+  [qq{<svg>a\x00c</svg>}, 'svg', [[0, 1, 1,6], [1, 1, 1,7], [2, 1, 1,8]]],
+  [qq{<svg>\x00\x00c</svg>}, 'svg', [[0, 1, 1,6], [1, 1, 1,7], [2, 1, 1,8]]],
+  [q{<svg>  c</svg>}, 'svg', [[0, 3, 1,6]]],
+  [q{<svg>a&amp;x</svg>}, 'svg', [[0, 1, 1,6], [1, 1, 1,7], [2, 1, 1,12]]],
+  [q{<svg>ab</x>c</svg>}, 'svg', [[0, 2, 1,6], [2, 1, 1,12]]],
+  [q{<svg><g>ab</x>c</g></svg>}, 'g', [[0, 2, 1,9], [2, 1, 1,15]]],
+  [qq{<frameset> </frameset>}, 'frameset', [[0, 1, 1,11]]],
+  [q{<svg><![CDATA[x]]></svg>}, 'svg', [[0, 1, 1,15]]],
+  [qq{<svg><![CDATA[\x0Ax]]></svg>}, 'svg', [[0, 2, 2,0]]],
+  [qq{<svg><![CDATA[\x0Ax\x0Ab]]></svg>}, 'svg', [[0, 2, 2,0], [2, 2, 3,0]]],
+) {
+  test {
+    my $c = shift;
+
+    my $doc = new Web::DOM::Document;
+    my $p = Web::XML::Parser->new;
+    $p->onerror (sub { });
+    $p->parse_char_string ($test->[0] => $doc);
+
+    $test->[1] =~ s/\s+(\d+)$//;
+    my $index = $1 || 0;
+    my $el = $doc->query_selector ($test->[1]);
+    my $text = ($el->local_name eq 'template' ? $el->content : $el)
+        ->child_nodes->[$index];
+    my $pos = $text->get_user_data ('manakai_sps');
+    eq_or_diff $pos, $test->[2];
+
+    done $c;
+  } n => 1, name => 'a text node';
+}
+
 run_tests;
 
 =head1 LICENSE
