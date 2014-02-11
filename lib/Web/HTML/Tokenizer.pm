@@ -3638,18 +3638,17 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x003B) { # ;
         
-        
     $self->_set_nc;
   
         #
       } else {
-        
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
         ## Reconsume.
         #
       }
 
-      my $code = 0+$self->{kwd}; # XXXoverflow
+      my $code = $self->{kwd} =~ /\A0*[0-9]{1,10}\z/
+          ? 0+$self->{kwd} : 0xFFFFFFFF;
       my $l = $self->{line_prev};
       my $c = $self->{column_prev} - 2 - length $self->{kwd}; # '&#'
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
@@ -3669,7 +3668,6 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
-        
         $self->{state} = $self->{prev_state};
         ## Reconsume.
         return  ({type => CHARACTER_TOKEN, data => chr $code,
@@ -3678,7 +3676,6 @@ sub _get_next_token ($) {
                  });
         redo A;
       } else {
-        
         if ($code == 0x000A or $code == 0x000D) {
           $self->{ca}->{cl}++;
           $self->{ca}->{cc} = 0;
@@ -3773,7 +3770,8 @@ sub _get_next_token ($) {
         #
       }
 
-      my $code = hex $self->{kwd}; # XXXoverflow
+      my $code = $self->{kwd} =~ /\A0*[0-9A-Fa-f]{1,8}\z/
+          ? hex $self->{kwd} : 0xFFFFFFFF;
       my $l = $self->{line_prev};
       my $c = $self->{column_prev} - 3 - length $self->{kwd}; # '&#x'
       if (my $replace = $InvalidCharRefs->{$self->{is_xml} || 0}->{$code}) {
