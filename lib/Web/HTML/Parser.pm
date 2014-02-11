@@ -807,7 +807,6 @@ sub _create_el ($$$$) {
       $attr->value ($attr_t->{value});
       $attr->set_user_data (manakai_source_line => $attr_t->{line});
       $attr->set_user_data (manakai_source_column => $attr_t->{column});
-      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos}; # XXXpos
       $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
       $el->[0]->set_attribute_node_ns ($attr);
     } # $attr_name
@@ -842,7 +841,6 @@ sub _create_el ($$$$) {
       $attr->value ($attr_t->{value});
       $attr->set_user_data (manakai_source_line => $attr_t->{line});
       $attr->set_user_data (manakai_source_column => $attr_t->{column});
-      $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos}; # XXXpos
       $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
       $el->[0]->set_attribute_node_ns ($attr);
     } # $attr_name

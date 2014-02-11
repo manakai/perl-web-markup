@@ -253,7 +253,8 @@ sub _check_data ($$) {
   my ($self, $node, $method) = @_;
   my $value = $node->$method;
 
-  # XXX line/column by manakai_pos
+  # XXX line/column by manakai_sps
+
   while ($value =~ /($InvalidChar)/og) {
     my $char = ord $1;
     if ($char == 0x000D) {

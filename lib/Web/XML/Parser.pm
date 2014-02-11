@@ -465,16 +465,12 @@ sub _terminate_tree_constructor ($) {
 
 ## XML5: The spec does not support entity expansion.
 
-# XXXsps
-#   - drop manakai_pos
-#   - docid
-#   - errors.txt
-
 # XXX spec external entity in element content
 # XXX text declarations in external GEs
 # XXX param refs
 # XXX external subset
 # XXX entref depth limitation
+# XXX external entities document id
 # XXX PE pos
 # XXX well-formedness of entity decls
 # XXX double-escaped entity value
@@ -626,7 +622,6 @@ sub _construct_tree ($) {
           }
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
           $el->set_attribute_node_ns ($attr);
           $attr->specified (0) if $attr_t->{not_specified};
@@ -825,7 +820,6 @@ sub _construct_tree ($) {
                   ($at->{name});
               $node->set_user_data (manakai_source_line => $at->{line});
               $node->set_user_data (manakai_source_column => $at->{column});
-              $node->set_user_data (manakai_pos => $at->{pos}) if $at->{pos};
               $node->set_user_data (manakai_sps => $at->{sps}) if $at->{sps};
               
               my $type = defined $at->{type} ? {
@@ -1222,7 +1216,6 @@ sub _construct_tree ($) {
           }
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
-          $attr->set_user_data (manakai_pos => $attr_t->{pos}) if $attr_t->{pos};
           $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
           $el->set_attribute_node_ns ($attr);
           $attr->specified (0) if $attr_t->{not_specified};
