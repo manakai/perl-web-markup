@@ -265,8 +265,106 @@ test {
   });
 } n => 2, name => 'default namespace, outside of root element';
 
-# XXX namespaces in external entity
-# XXX recursive entref
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    a => 'f<a:p>b;x</a:p>',
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "a"> ]><a xmlns="http://hoge/." xmlns:a="http://a/">c&x;v</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cf<a:p>b;x</a:p>v</a>};
+      is $doc->document_element->first_element_child->namespace_uri, q{http://a/};
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'namespace prefix';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    a => 'f&x;j',
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->di (1);
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "a"> ]><a xmlns="http://hoge/." xmlns:a="http://a/">c&x;v</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cf&amp;x;jv</a>};
+      eq_or_diff \@error, [{type => 'entity not declared',
+                            di => 1, line => 1, column => 2,
+                            value => 'x;',
+                            level => 'm'}];
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'recursive entity ref';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    a => 'f&x;j',
+    b => 'd&y;x',
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->di ($ent->{extent}->{sysid} eq 'a' ? 10 : 2);
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "b"><!ENTITY y SYSTEM "a"> ]><a xmlns="http://hoge/." xmlns:a="http://a/">c&x;v</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cdf&amp;x;jxv</a>};
+      eq_or_diff \@error, [{type => 'entity not declared',
+                            di => 10, line => 1, column => 2,
+                            value => 'x;',
+                            level => 'm'}];
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'recursive entity ref';
 
 run_tests;
 

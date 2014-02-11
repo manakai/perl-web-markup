@@ -360,13 +360,19 @@ sub _parse_bytes_subparser_done ($$$) {
   sub new_from_parser ($$) {
     my $self = $_[0]->new;
     my $main_parser = $_[1];
-    $self->{ge} = $main_parser->{ge};
+    $self->{ge} = {%{$main_parser->{ge}}};
+    delete $self->{ge}->{$main_parser->{t}->{extent}->{name}.';'};
     $self->{pe} = $main_parser->{pe};
     $self->{document} = $main_parser->{document}->implementation->create_document;
     $self->{context_element} = @{$main_parser->{open_elements}}
         ? $main_parser->{open_elements}->[-1]->[0]
         : $self->{document}->create_element_ns (undef, 'dummy');
-    $self->onerror ($main_parser->onerror);
+    my $onerror = $main_parser->onerror;
+    $self->onerror (sub {
+      my %args = @_;
+      $args{di} = $self->di if not defined $args{di};
+      $onerror->(%args);
+    });
     $self->onextentref ($main_parser->onextentref);
     my $t = $main_parser->{t};
     $self->onparsed (sub { $main_parser->_parse_bytes_subparser_done ($_[1], $t) });
@@ -388,6 +394,13 @@ sub _on_terminate ($) {
   $_[0]->_terminate_tree_constructor;
   $_[0]->_clear_refs;
 } # _on_terminate
+
+sub di ($;$) {
+  if (@_ > 1) {
+    $_[0]->{di} = $_[1];
+  }
+  return $_[0]->{di} || 0;
+} # di
 
 sub onextentref ($;$) {
   if (@_ > 1) {
@@ -470,7 +483,6 @@ sub _terminate_tree_constructor ($) {
 # XXX param refs
 # XXX external subset
 # XXX entref depth limitation
-# XXX external entities document id
 # XXX PE pos
 # XXX well-formedness of entity decls
 # XXX double-escaped entity value
@@ -936,7 +948,8 @@ sub _construct_tree ($) {
             $self->{t}->{only_text} = 1;
           }
           if (defined $self->{t}->{sps}) {
-            $_->[4] = 0 for @{$self->{t}->{sps}}; # XXX di
+            my $di = $self->di;
+            $_->[4] = $di for @{$self->{t}->{sps}};
           }
           
           ## For DOM.
