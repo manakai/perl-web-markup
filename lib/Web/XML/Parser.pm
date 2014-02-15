@@ -269,7 +269,8 @@ sub _parse_bytes_start_parsing ($;%) {
     push @{$self->{open_elements}},
         [$root, $self->{inner_html_tag_name}, $nsmap];
     $self->{document}->append_child ($root);
-    $self->{insertion_mode} = IN_ELEMENT_IM;
+    $self->{insertion_mode} = BEFORE_XML_DECL_IM;
+    $self->{next_im} = IN_ELEMENT_IM;
   } # $context
 
   push @{$self->{chars}}, split //,
@@ -340,6 +341,7 @@ sub _parse_bytes_run ($) {
 
   ## XML only
   if ($self->{t}->{type} == ABORT_TOKEN and defined $self->{t}->{extent}) {
+    # XXX URL resolution
     my $subparser = Web::XML::Parser::SubParser->new_from_parser ($self);
     $self->onextentref->($self, $self->{t}, $subparser);
   }
@@ -453,7 +455,8 @@ sub _initialize_tree_constructor ($) {
   delete $self->{tainted};
   $self->{open_elements} = [];
   $self->{insertion_mode} = BEFORE_XML_DECL_IM;
-  $self->{next_im} = BEFORE_DOCTYPE_IM;
+  $self->{next_im} = defined $self->{initial_next_im}
+      ? $self->{initial_next_im} : BEFORE_DOCTYPE_IM;
 } # _initialize_tree_constructor
 
 sub _terminate_tree_constructor ($) {
@@ -474,29 +477,22 @@ sub _terminate_tree_constructor ($) {
 ## Differences from the XML5 spec (not documented in DOMDTDEF spec)
 ## are marked as "XML5:".
 
-## XML5: The spec has no namespace support.
-
-## XML5: The spec does not support entity expansion.
-
-# XXX text declarations in external GEs
 # XXX param refs
 # XXX external subset
 # XXX entref depth limitation
 # XXX PE pos
 # XXX well-formedness of entity decls
 # XXX double-escaped entity value
+# XXX validation hook for PUBLIC
+# XXX validation hook for URLs in SYSTEM
+# XXX BOM
+# XXX warn by external ref
 
 # XXX external entity support
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
 
 # XXX elemsnts in GEref vs script execution, stack of open elements
 # considerations...
-
-# XXX GEref: 
-#       If internal entity, expanded.
-#       If unparsed entity, a well-formedness error.
-#       If external entity, expanded to the empty string.
-#       Otherwise, a well-formedness error.
 
 # XXX expose DTD content flag
 
@@ -1330,7 +1326,6 @@ sub _construct_tree ($) {
 
     } elsif ($self->{insertion_mode} == BEFORE_DOCTYPE_IM) {
       ## XML5: DOCTYPE is not supported.
-
       if ($self->{t}->{type} == DOCTYPE_TOKEN) {
         my $doctype = $self->{document}->create_document_type_definition
             (defined $self->{t}->{name} ? $self->{t}->{name} : '');

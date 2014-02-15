@@ -5,6 +5,7 @@ use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use Encode;
 use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
@@ -54,17 +55,10 @@ my $dom_class = $ENV{DOM_IMPL_CLASS} || 'Web::DOM::Implementation';
 eval qq{ require $dom_class } or die $@;
 my $dom = $dom_class->new;
 
-sub _test ($) {
-  my $test = shift;
+sub _test ($$) {
+  my ($test, $c) = @_;
   my $data = $test->{data}->[0];
-
-  if ($test->{skip}->[1]->[0]) {
-#line 1 "HTML-tree.t test () skip"
-    SKIP: {
-      skip "", 1;
-    }
-    return;
-  }
+  warn "No #errors section ($test->{data}->[0])" unless $test->{errors};
 
   if ($test->{'document-fragment'}) {
     if (@{$test->{'document-fragment'}->[1]}) {
@@ -78,20 +72,15 @@ sub _test ($) {
   }
 
   my $doc = $dom->create_document;
-  my @errors;
-  
-  local $SIG{INT} = sub {
-    print scalar dumptree ($doc);
-    exit;
-  };
-
   my $p = Web::XML::Parser->new;
   my $ges = $p->{ge} ||= {};
   my $pes = $p->{pe} ||= {};
+
+  my @errors;
   $p->onerror (sub {
     my %opt = @_;
     push @errors, join ';',
-        $opt{line} || $opt{token}->{line},
+        ($opt{di} ? "[$opt{di}]" : '') . ($opt{line} || $opt{token}->{line}),
         $opt{column} || $opt{token}->{column},
         $opt{type},
         defined $opt{text} ? $opt{text} : '',
@@ -100,9 +89,88 @@ sub _test ($) {
   }); # onerror
 
   my $result;
-  unless (defined $test->{element}) {
+  my $code = sub {
+    @errors = sort {$a cmp $b} @errors;
+    @{$test->{errors}->[0]} = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};
+    eq_or_diff \@errors, $test->{errors}->[0] || [], 'Parse error';
+
+    is $doc->xml_version, ($test->{'xml-version'} or ['1.0'])->[0], 'version';
+
+    my $enc = ($test->{'xml-encoding'} or ['null']);
+    $enc = $enc->[0] || $enc->[1]->[0] || '';
+    is $doc->xml_encoding, $enc eq 'null' ? undef : $enc, 'encoding';
+
+    my $standalone = ($test->{'xml-standalone'} or ['no']);
+    $standalone = $standalone->[0] || $standalone->[1]->[0];
+    is $doc->xml_standalone ? 1 : 0, $standalone eq 'true' ? 1 : 0, 'standalone';
+
+    if ($test->{entities}) {
+      my @e;
+      for (sort { $a cmp $b } keys %$ges) {
+        my $ent = $ges->{$_};
+        my $v = '<!ENTITY ' . $ent->{name} . ' "'; 
+        $v .= $ent->{value} if defined $ent->{value};
+        $v .= '" "';
+        $v .= $ent->{pubid} if defined $ent->{pubid};
+        $v .= '" "';
+        $v .= $ent->{sysid} if defined $ent->{sysid};
+        $v .= '" ';
+        $v .= $ent->{notation} if defined $ent->{notation};
+        $v .= '>';
+        push @e, $v;
+      }
+      for (sort { $a cmp $b } keys %$pes) {
+        my $ent = $pes->{$_};
+        my $v = '<!ENTITY % ' . $ent->{name} . ' "'; 
+        $v .= $ent->{value} if defined $ent->{value};
+        $v .= '" "';
+        $v .= $ent->{pubid} if defined $ent->{pubid};
+        $v .= '" "';
+        $v .= $ent->{sysid} if defined $ent->{sysid};
+        $v .= '" ';
+        $v .= $ent->{notation} if defined $ent->{notation};
+        $v .= '>';
+        push @e, $v;
+      }
+      eq_or_diff join ("\x0A", @e), $test->{entities}->[0], 'Entities';
+    } else {
+      ok 1;
+    }
+    
+    $test->{document}->[0] .= "\x0A" if length $test->{document}->[0];
+    eq_or_diff $result, $test->{document}->[0], 'Document tree';
+    done $c;
+    undef $c;
+  }; # $code
+
+  if (defined $test->{resource}) {
+    my %res;
+    my $i = 0;
+    for (@{$test->{resource}}) {
+      $res{defined $_->[1]->[0] ? $_->[1]->[0] : ''} = [++$i, $_->[0]];
+    }
+    $p->onextentref (sub {
+      my ($parser, $ent, $subparser) = @_;
+      my $e = $res{$ent->{extent}->{sysid}}; # XXX
+      $subparser->di ($e->[0]) if defined $e;
+      $subparser->parse_bytes_start ('utf-8');
+      $subparser->parse_bytes_feed (encode 'utf-8', $e->[1]) if defined $e;
+      $subparser->parse_bytes_end;
+    });
+    $p->onparsed (sub {
+      test {
+        $result = dumptree ($doc);
+        $code->();
+      } $c;
+    });
+
+    $p->parse_bytes_start (undef, $doc);
+    $p->parse_bytes_feed (encode 'utf-8', $test->{data}->[0]);
+    $p->parse_bytes_end;
+  } elsif (not defined $test->{element}) {
     $p->parse_char_string ($test->{data}->[0] => $doc);
     $result = dumptree ($doc);
+    $code->();
   } else {
     my $el;
     if ($test->{element} =~ s/^svg\s*//) {
@@ -121,82 +189,14 @@ sub _test ($) {
         ($test->{data}->[0], $el, $dom->create_document);
     $el->append_child ($_) for $children->to_list;
     $result = dumptree ($el);
+    $code->();
   }
-  
-  warn "No #errors section ($test->{data}->[0])" unless $test->{errors};
-
-  @errors = sort {$a cmp $b} @errors;
-  @{$test->{errors}->[0]} = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};
-  
-#line 60 "HTML-tree.t test () skip"
-  eq_or_diff join ("\n", @errors), join ("\n", @{$test->{errors}->[0] or []}),
-      'Parse error';
-
-  if ($test->{'xml-version'}) {
-    is $doc->xml_version,
-        $test->{'xml-version'}->[0], 'XML version';
-  } else {
-    is $doc->xml_version, '1.0', 'XML version';
-  }
-
-  if ($test->{'xml-encoding'}) {
-    if (($test->{'xml-encoding'}->[1]->[0] || '') eq 'null') {
-      is $doc->xml_encoding, undef, 'XML encoding';
-    } else {
-      is $doc->xml_encoding, $test->{'xml-encoding'}->[0], 'XML encoding';
-    }
-  } else {
-    is $doc->xml_encoding, undef, 'XML encoding';
-  }
-
-  if ($test->{'xml-standalone'}) {
-    is $doc->xml_standalone ? 1 : 0,
-        ($test->{'xml-standalone'}->[0] || $test->{'xml-standalone'}->[1]->[0])
-            eq 'true' ? 1 : 0, 'XML standalone';
-  } else {
-    is $doc->xml_standalone ? 1 : 0, 0, 'XML standalone';
-  }
-
-  if ($test->{entities}) {
-    my @e;
-    for (sort { $a cmp $b } keys %$ges) {
-      my $ent = $ges->{$_};
-      my $v = '<!ENTITY ' . $ent->{name} . ' "'; 
-      $v .= $ent->{value} if defined $ent->{value};
-      $v .= '" "';
-      $v .= $ent->{pubid} if defined $ent->{pubid};
-      $v .= '" "';
-      $v .= $ent->{sysid} if defined $ent->{sysid};
-      $v .= '" ';
-      $v .= $ent->{notation} if defined $ent->{notation};
-      $v .= '>';
-      push @e, $v;
-    }
-    for (sort { $a cmp $b } keys %$pes) {
-      my $ent = $pes->{$_};
-      my $v = '<!ENTITY % ' . $ent->{name} . ' "'; 
-      $v .= $ent->{value} if defined $ent->{value};
-      $v .= '" "';
-      $v .= $ent->{pubid} if defined $ent->{pubid};
-      $v .= '" "';
-      $v .= $ent->{sysid} if defined $ent->{sysid};
-      $v .= '" ';
-      $v .= $ent->{notation} if defined $ent->{notation};
-      $v .= '>';
-      push @e, $v;
-    }
-    eq_or_diff join ("\x0A", @e), $test->{entities}->[0], 'Entities';
-  } else {
-    ok 1;
-  }
-  
-  $test->{document}->[0] .= "\x0A" if length $test->{document}->[0];
-  eq_or_diff $result, $test->{document}->[0], 'Document tree';
 } # _test
 
 for my $file_name (@FILES) {
   for_each_test ($file_name, {
     data => {is_prefixed => 1},
+    resource => {multiple => 1, is_prefixed => 1},
     errors => {is_list => 1},
     document => {is_prefixed => 1},
     'document-fragment' => {is_prefixed => 1},
@@ -205,8 +205,7 @@ for my $file_name (@FILES) {
     my $test = $_[0];
     test {
       my $c = shift;
-      _test ($test);
-      done $c;
+      _test ($test, $c);
     } n => 6, name => [$file_name, $test->{data}->[0]];
   });
 }
