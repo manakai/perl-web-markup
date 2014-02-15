@@ -4088,6 +4088,7 @@ sub _get_next_token ($) {
         redo A;
       } else {
         $self->{state} = PI_DATA_STATE;
+        $self->{sps} = [];
         ## Reprocess.
         redo A;
       }
@@ -4117,11 +4118,11 @@ sub _get_next_token ($) {
         if ($nc == 0x0000) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
         }
+        my $length = length $self->{ct}->{data};
+        push @{$self->{ct}->{sps}}, [$length, 0, $self->{line}, $self->{column}];
         $self->{ct}->{data} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # pi
-        $self->{ct}->{data} .= $self->_read_chars
-            ({"\x00" => 1, "?" => 1});
-        #$self->{read_until}->($self->{ct}->{data}, qq[\x00?],
-        #                      length $self->{ct}->{data});
+        $self->{ct}->{data} .= $self->_read_chars ({"\x00" => 1, "?" => 1});
+        $self->{ct}->{sps}->[-1]->[1] = (length $self->{ct}->{data}) - $length;
 
         ## Stay in the state.
         
@@ -4149,6 +4150,8 @@ sub _get_next_token ($) {
                         line => $self->{line_prev},
                         column => $self->{column_prev}); ## XML5: no error
         $self->{ct}->{data} .= '?';
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{data}, 1,
+                                     $self->{line_prev}, $self->{column_prev}];
         $self->{state} = PI_DATA_AFTER_STATE;
         
     $self->_set_nc;
@@ -4159,6 +4162,8 @@ sub _get_next_token ($) {
                         line => $self->{line_prev},
                         column => $self->{column_prev}); ## XML5: no error
         $self->{ct}->{data} .= '?'; ## XML5: not appended
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{data}, 1,
+                                     $self->{line_prev}, $self->{column_prev}];
         $self->{state} = PI_DATA_STATE;
         ## Reprocess.
         redo A;
@@ -4185,6 +4190,8 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x003F) { # ?
         $self->{ct}->{data} .= '?';
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{data}, 1,
+                                     $self->{line_prev}, $self->{column_prev}];
         ## Stay in the state.
         
     $self->_set_nc;
@@ -4192,6 +4199,8 @@ sub _get_next_token ($) {
         redo A;
       } else {
         $self->{ct}->{data} .= '?'; ## XML5: not appended
+        push @{$self->{ct}->{sps}}, [length $self->{ct}->{data}, 1,
+                                     $self->{line_prev}, $self->{column_prev}];
         $self->{state} = PI_DATA_STATE;
         ## Reprocess.
         redo A;

@@ -11,13 +11,15 @@ use Web::HTML::Tokenizer;
 use Web::HTML::SourceMap;
 push our @ISA, qw(Web::HTML::Tokenizer);
 
-## Insertion modes
-sub BEFORE_XML_DECL_IM () { 0 }
-sub AFTER_XML_DECL_IM () { 1 }
-sub BEFORE_ROOT_ELEMENT_IM () { 2 }
-sub IN_ELEMENT_IM () { 3 }
-sub AFTER_ROOT_ELEMENT_IM () { 4 }
-sub IN_SUBSET_IM () { 5 }
+## Insertion modes - Tree construction stage's phases in XML5 and
+## DOMDTDEF specs are represented as insertion mdes in this
+## implementation.
+sub BEFORE_XML_DECL_IM     () { 0 } ## Before XML declaration phase [DOMDTDEF]
+sub BEFORE_DOCTYPE_IM      () { 1 } ## Before document type phase [DOMDTDEF]
+sub BEFORE_ROOT_ELEMENT_IM () { 2 } ## Start phase [XML5]
+sub IN_ELEMENT_IM          () { 3 } ## Main phase [XML5]
+sub AFTER_ROOT_ELEMENT_IM  () { 4 } ## End phase [XML5]
+sub IN_SUBSET_IM           () { 5 } ## Document type phase [DOMDTDEF]
 
 sub parse_char_string ($$$) {
   #my ($self, $string, $document) = @_;
@@ -451,6 +453,7 @@ sub _initialize_tree_constructor ($) {
   delete $self->{tainted};
   $self->{open_elements} = [];
   $self->{insertion_mode} = BEFORE_XML_DECL_IM;
+  $self->{next_im} = BEFORE_DOCTYPE_IM;
 } # _initialize_tree_constructor
 
 sub _terminate_tree_constructor ($) {
@@ -468,17 +471,13 @@ sub _terminate_tree_constructor ($) {
 
 ## Tree construction stage
 
-## Differences from the XML5 spec are marked as "XML5:".
+## Differences from the XML5 spec (not documented in DOMDTDEF spec)
+## are marked as "XML5:".
 
 ## XML5: The spec has no namespace support.
 
-## XML5: Start, main, end phases in the spec are represented as
-## insertion modes.  BEFORE_XML_DECL_IM and AFTER_XML_DECL_IM are not
-## defined in the spec.
-
 ## XML5: The spec does not support entity expansion.
 
-# XXX spec external entity in element content
 # XXX text declarations in external GEs
 # XXX param refs
 # XXX external subset
@@ -498,6 +497,8 @@ sub _terminate_tree_constructor ($) {
 #       If unparsed entity, a well-formedness error.
 #       If external entity, expanded to the empty string.
 #       Otherwise, a well-formedness error.
+
+# XXX expose DTD content flag
 
 sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
@@ -708,6 +709,8 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == PI_TOKEN) {
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
+        $pi->set_user_data (manakai_sps => $self->{t}->{sps})
+            if defined $self->{t}->{sps};
         (_insert_point $self->{open_elements}->[-1]->[0])
             ->append_child ($pi);
 
@@ -1020,6 +1023,8 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == PI_TOKEN) {
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
+        $pi->set_user_data (manakai_sps => $self->{t}->{sps})
+            if defined $self->{t}->{sps};
         $self->{doctype}->append_child ($pi);
         ## TODO: line/col
         
@@ -1057,6 +1062,8 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == PI_TOKEN) {
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
+        $pi->set_user_data (manakai_sps => $self->{t}->{sps})
+            if defined $self->{t}->{sps};
         $self->{document}->append_child ($pi);
 
         ## Stay in the mode.
@@ -1258,6 +1265,8 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == PI_TOKEN) {
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
+        $pi->set_user_data (manakai_sps => $self->{t}->{sps})
+            if defined $self->{t}->{sps};
         $self->{document}->append_child ($pi);
 
         ## Stay in the mode.
@@ -1319,7 +1328,7 @@ sub _construct_tree ($) {
         die "$0: XML parser initial: Unknown token type $self->{t}->{type}";
       }
 
-    } elsif ($self->{insertion_mode} == AFTER_XML_DECL_IM) {
+    } elsif ($self->{insertion_mode} == BEFORE_DOCTYPE_IM) {
       ## XML5: DOCTYPE is not supported.
 
       if ($self->{t}->{type} == DOCTYPE_TOKEN) {
@@ -1363,6 +1372,8 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == PI_TOKEN) {
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
+        $pi->set_user_data (manakai_sps => $self->{t}->{sps})
+            if defined $self->{t}->{sps};
         $self->{document}->append_child ($pi);
 
         ## Stay in the mode.
@@ -1393,33 +1404,110 @@ sub _construct_tree ($) {
       }
 
     } elsif ($self->{insertion_mode} == BEFORE_XML_DECL_IM) {
-      ## XML5: No support for the XML declaration
-
-      if ($self->{t}->{type} == PI_TOKEN and
-          $self->{t}->{target} eq 'xml' and
-          $self->{t}->{data} =~ /\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                         (?>"([^"]*)"|'([^']*)')
-                         (?:[\x09\x0A\x20]+
-                            encoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                            (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*)?
-                         (?:[\x09\x0A\x20]+
-                            standalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                            (?>"(yes|no)"|'(yes|no)'))?
-                         [\x09\x0A\x20]*\z/x) {
-        $self->{document}->xml_version (defined $1 ? $1 : $2);
-        # XXX drop XML 1.1 support?
-        $self->{is_xml} = 1.1 if defined $1 and $1 eq '1.1';
-        $self->{document}->xml_encoding (defined $3 ? $3 : $4); # or undef
-        $self->{document}->xml_standalone (($5 || $6 || 'no') ne 'no');
-
-        $self->{insertion_mode} = AFTER_XML_DECL_IM;
+      ## The before XML declaration phase [DOMDTDEF]
+      if ($self->{t}->{type} == PI_TOKEN and $self->{t}->{target} eq 'xml') {
+        my $pos = 0;
+        my $map_source = $self->{t}->{sps} || [];
+        my $req_sp = 0;
+        if ($self->{t}->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                         (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $onerror->(level => 'm',
+                     type => 'XML version:syntax error',
+                     token => $self->{t},
+                     %$p,
+                     value => $v)
+              unless $v =~ /\A1\.[0-9]+\z/;
+          if ($self->{next_im} == BEFORE_DOCTYPE_IM) {
+            $self->{document}->xml_version ($v);
+            # XXX drop XML 1.1 support?
+            $self->{is_xml} = 1.1 if $v eq '1.1';
+          } else {
+            # XXX version mismatch error
+          }
+        } elsif ($self->{next_im} == BEFORE_DOCTYPE_IM) {
+          my $p = pos_to_lc $map_source, $pos;
+          $onerror->(level => 'm',
+                     type => 'attribute missing:version',
+                     token => $self->{t},
+                     %$p);
+        }
+        if ($self->{t}->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                    (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            my $p = pos_to_lc $map_source, $pos;
+            $onerror->(level => 'm',
+                       type => 'no space before attr name',
+                       token => $self->{t},
+                       %$p);
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          $onerror->(level => 'm',
+                     type => 'XML encoding:syntax error',
+                     token => $self->{t},
+                     value => $v,
+                     %$p)
+              unless $v =~ /\A[A-Za-z][A-Za-z0-9._-]*\z/;
+          if ($self->{next_im} == BEFORE_DOCTYPE_IM) {
+            $self->{document}->xml_encoding ($v);
+          } else {
+            # XXX validate charset name
+          }
+        } elsif ($self->{next_im} != BEFORE_DOCTYPE_IM) {
+          my $p = pos_to_lc $map_source, $pos;
+          $onerror->(level => 'm',
+                     type => 'attribute missing:encoding',
+                     token => $self->{t},
+                     %$p);
+        }
+        if ($self->{t}->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                    (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            my $p = pos_to_lc $map_source, $pos;
+            $onerror->(level => 'm',
+                       type => 'no space before attr name',
+                       token => $self->{t},
+                       %$p);
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if ($self->{next_im} == BEFORE_DOCTYPE_IM) {
+              $self->{document}->xml_standalone ($v ne 'no');
+            } else {
+              my $p = pos_to_lc $map_source, $pos;
+              $onerror->(level => 'm',
+                         type => 'attribute not allowed:standalone',
+                         token => $self->{t},
+                         %$p);
+            }
+          } else {
+            my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
+            $onerror->(level => 'm',
+                       type => 'XML standalone:syntax error',
+                       token => $self->{t},
+                       value => $v,
+                       %$p);
+          }
+          $pos += $+[0] - $-[0];
+        }
+        if (length $self->{t}->{data}) {
+          my $p = pos_to_lc $map_source, $pos;
+          $onerror->(level => 'm',
+                     type => 'bogus XML declaration',
+                     token => $self->{t},
+                     %$p);
+        }
+        $self->{insertion_mode} = $self->{next_im};
         $self->{t} = $self->_get_next_token;
         redo B;
       } else {
-        $self->{document}->xml_version ('1.0');
-        $self->{document}->xml_encoding (undef);
-        $self->{document}->xml_standalone (0);
-        $self->{insertion_mode} = AFTER_XML_DECL_IM;
+        $self->{insertion_mode} = $self->{next_im};
         ## Reconsume the token,
         redo B;
       }

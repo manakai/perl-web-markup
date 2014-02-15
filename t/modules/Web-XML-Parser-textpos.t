@@ -340,6 +340,41 @@ for my $test (
   } n => 1, name => 'a text node';
 }
 
+for my $test (
+  [q{<svg><?x?></svg>}, 'svg', undef],
+  [q{<svg><?x ?></svg>}, 'svg', undef],
+  [q{<svg><?x a?></svg>}, 'svg', [[0, 1, 1,10]]],
+  [q{<svg><?x   a?></svg>}, 'svg', [[0, 1, 1,12]]],
+  [q{<svg><?x abc?></svg>}, 'svg', [[0, 3, 1,10]]],
+  [q{<svg><?x abc  ?></svg>}, 'svg', [[0, 5, 1,10]]],
+  [q{<svg><?x abc  ??></svg>}, 'svg', [[0, 5, 1,10], [6, 1, 1,15]]],
+  [q{<svg><?x abc  ???></svg>}, 'svg', [[0, 5, 1,10], [6, 1, 1,15], [7, 1, 1,16]]],
+  [qq{<svg><?x abc\x0Ab?></svg>}, 'svg', [[0, 3, 1,10], [3, 2, 2,0]]],
+  [qq{<?x abc\x0Ab?><svg/>}, 'X 0', [[0, 3, 1,5], [3, 2, 2,0]]],
+  [qq{<?xml version="1.0"?>\x0A<?x abc\x0Ab?><svg/>}, 'X 0', [[0, 3, 2,5], [3, 2, 3,0]]],
+  [qq{<svg/><?x abc\x0Ab?>}, 'X 1', [[0, 3, 1,11], [3, 2, 2,0]]],
+  [qq{<!DOCTYPE a[<?x abc\x0Ab?>]>}, 'doctype 0', [[0, 3, 1,17], [3, 2, 2,0]]],
+) {
+  test {
+    my $c = shift;
+
+    my $doc = new Web::DOM::Document;
+    my $p = Web::XML::Parser->new;
+    $p->onerror (sub { });
+    $p->parse_char_string ($test->[0] => $doc);
+
+    $test->[1] =~ s/\s+(\d+)$//;
+    my $index = $1 || 0;
+    my $el = $test->[1] eq 'doctype' ? $doc->doctype : $doc->query_selector ($test->[1]) || $doc;
+    my $text = (($el->local_name || '') eq 'template' ? $el->content : $el)
+        ->child_nodes->[$index];
+    my $pos = $text->get_user_data ('manakai_sps');
+    eq_or_diff $pos, $test->[2];
+
+    done $c;
+  } n => 1, name => 'a pi node';
+}
+
 run_tests;
 
 =head1 LICENSE
