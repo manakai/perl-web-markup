@@ -269,8 +269,9 @@ sub _parse_bytes_start_parsing ($;%) {
     push @{$self->{open_elements}},
         [$root, $self->{inner_html_tag_name}, $nsmap];
     $self->{document}->append_child ($root);
-    $self->{insertion_mode} = BEFORE_XML_DECL_IM;
     $self->{next_im} = IN_ELEMENT_IM;
+  } elsif ($self->{in_subset}) {
+    $self->{next_im} = IN_SUBSET_IM;
   } # $context
 
   push @{$self->{chars}}, split //,
@@ -364,13 +365,24 @@ sub _parse_bytes_subparser_done ($$$) {
   sub new_from_parser ($$) {
     my $self = $_[0]->new;
     my $main_parser = $_[1];
-    $self->{ge} = {%{$main_parser->{ge}}};
-    delete $self->{ge}->{$main_parser->{t}->{extent}->{name}.';'};
-    $self->{pe} = $main_parser->{pe};
     $self->{document} = $main_parser->{document}->implementation->create_document;
-    $self->{context_element} = @{$main_parser->{open_elements}}
-        ? $main_parser->{open_elements}->[-1]->[0]
-        : $self->{document}->create_element_ns (undef, 'dummy');
+    if ($main_parser->{t}->{extent}->{external_subset}) {
+      $self->{doctype} = $main_parser->{doctype};
+      $self->{pe} = $main_parser->{pe};
+      $self->{ge} = $main_parser->{ge};
+      $self->{has_element_decl} = $main_parser->{has_element_decl} ||= {};
+      $self->{attrdef} = $main_parser->{attrdef} ||= {};
+      $self->{has_attlist} = $main_parser->{has_attlist} ||= {};
+      # XXX $self->{stop_processing}
+      $self->{in_subset} = {external => 1};
+      $self->{tokenizer_initial_state} = Web::HTML::Defs::DOCTYPE_INTERNAL_SUBSET_STATE;
+    } else { ## General entity
+      $self->{ge} = {%{$main_parser->{ge}}};
+      delete $self->{ge}->{$main_parser->{t}->{extent}->{name}.';'};
+      $self->{context_element} = @{$main_parser->{open_elements}}
+          ? $main_parser->{open_elements}->[-1]->[0]
+          : $self->{document}->create_element_ns (undef, 'dummy');
+    }
     my $onerror = $main_parser->onerror;
     $self->onerror (sub {
       my %args = @_;
@@ -446,11 +458,13 @@ sub _initialize_tree_constructor ($) {
   $self->{document}->set_user_data (manakai_source_line => 1);
   $self->{document}->set_user_data (manakai_source_column => 1);
 
-  $self->{ge}->{'amp;'} = {value => '&', only_text => 1};
-  $self->{ge}->{'apos;'} = {value => "'", only_text => 1};
-  $self->{ge}->{'gt;'} = {value => '>', only_text => 1};
-  $self->{ge}->{'lt;'} = {value => '<', only_text => 1};
-  $self->{ge}->{'quot;'} = {value => '"', only_text => 1};
+  unless ($self->{in_subset}) {
+    $self->{ge}->{'amp;'} = {value => '&', only_text => 1};
+    $self->{ge}->{'apos;'} = {value => "'", only_text => 1};
+    $self->{ge}->{'gt;'} = {value => '>', only_text => 1};
+    $self->{ge}->{'lt;'} = {value => '<', only_text => 1};
+    $self->{ge}->{'quot;'} = {value => '"', only_text => 1};
+  }
 
   delete $self->{tainted};
   $self->{open_elements} = [];
@@ -477,24 +491,23 @@ sub _terminate_tree_constructor ($) {
 ## Differences from the XML5 spec (not documented in DOMDTDEF spec)
 ## are marked as "XML5:".
 
-# XXX param refs
-# XXX external subset
-# XXX entref depth limitation
-# XXX PE pos
-# XXX well-formedness of entity decls
-# XXX double-escaped entity value
-# XXX validation hook for PUBLIC
-# XXX validation hook for URLs in SYSTEM
-# XXX BOM
-# XXX warn by external ref
-
+# XXX PUBLIC for external subset
 # XXX external entity support
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
-
+# XXX marked sections
+# XXX param refs between decls
+# XXX param refs in decls and marked section keywords
+# XXX entref depth limitation
+# XXX well-formedness of entity decls
+# XXX validation hook for PUBLIC
+# XXX validation hook for URLs in SYSTEM
+# XXX warn by external ref
+# XXX warn external subset
 # XXX elemsnts in GEref vs script execution, stack of open elements
 # considerations...
-
 # XXX expose DTD content flag
+# XXX parse error if PI target is "xml"
+# XXX BOM and encoding sniffing
 
 sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
@@ -1027,12 +1040,34 @@ sub _construct_tree ($) {
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
-      } elsif ($self->{t}->{type} == END_OF_DOCTYPE_TOKEN) {
-        $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+      } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
+        # XX
+
+        ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
+      } elsif ($self->{t}->{type} == END_OF_DOCTYPE_TOKEN) {
+        my $dt = $self->{doctype};
+        my $sysid = $dt->system_id;
+        if (length $sysid) {
+          # XXX resolve
+          $self->{parser_pause} = 1;
+          $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+          $self->{t} = {type => ABORT_TOKEN,
+                        extent => {external_subset => 1, sysid => $sysid},
+                        line => $dt->get_user_data ('manakai_source_line'),
+                        column => $dt->get_user_data ('manakai_source_column')};
+          return;
+        } else {
+          $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        }
+      } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
+        return $self->_stop_parsing;
       } else {
-        die "$0: XML parser subset im: Unknown token type $self->{t}->{type}";
+        require Data::Dumper;
+        die "$0: XML parser subset im: Unknown token type - " . Data::Dumper::Dumper ($self->{t});
       }
 
     } elsif ($self->{insertion_mode} == AFTER_ROOT_ELEMENT_IM) { ## End phase
@@ -1327,27 +1362,41 @@ sub _construct_tree ($) {
     } elsif ($self->{insertion_mode} == BEFORE_DOCTYPE_IM) {
       ## XML5: DOCTYPE is not supported.
       if ($self->{t}->{type} == DOCTYPE_TOKEN) {
-        my $doctype = $self->{document}->create_document_type_definition
+        my $dt = $self->{document}->create_document_type_definition
             (defined $self->{t}->{name} ? $self->{t}->{name} : '');
         
         ## NOTE: Default value for both |public_id| and |system_id|
         ## attributes are empty strings, so that we don't set any
         ## value in missing cases.
-        $doctype->public_id ($self->{t}->{pubid}) if defined $self->{t}->{pubid};
-        $doctype->system_id ($self->{t}->{sysid}) if defined $self->{t}->{sysid};
+        $dt->public_id ($self->{t}->{pubid}) if defined $self->{t}->{pubid};
+        my $sysid = $self->{t}->{sysid};
+        $dt->system_id ($sysid) if defined $sysid;
+
+        $dt->set_user_data (manakai_source_line => $self->{t}->{line});
+        $dt->set_user_data (manakai_source_column => $self->{t}->{column});
         
-        ## TODO: internal_subset
-        
-        $self->{document}->append_child ($doctype);
+        $self->{document}->append_child ($dt);
 
         %{$self->{ge}} = ();
 
         ## XML5: No "has internal subset" flag.
         if ($self->{t}->{has_internal_subset}) {
-          $self->{doctype} = $doctype;
+          $self->{doctype} = $dt;
           $self->{insertion_mode} = IN_SUBSET_IM;
         } else {
-          $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+          if (defined $sysid and length $sysid) {
+            # XXX resolve
+            $self->{doctype} = $dt;
+            $self->{parser_pause} = 1;
+            $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+            $self->{t} = {type => ABORT_TOKEN,
+                          extent => {external_subset => 1, sysid => $sysid},
+                          line => $self->{t}->{line},
+                          column => $self->{t}->{column}};
+            return;
+          } else {
+            $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+          }
         }
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -1502,8 +1551,9 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } else {
+        ## Anything other than XML or text declaration.
         $self->{insertion_mode} = $self->{next_im};
-        ## Reconsume the token,
+        ## Reconsume the token
         redo B;
       }
     } else {

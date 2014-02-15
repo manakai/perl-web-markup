@@ -1155,7 +1155,7 @@ sub _get_next_token ($) {
 
     my $state = $self->{state};
 
-    !!!tdebug { printf STDERR "U+%04X\t%d\n", $nc, $state };
+    !!!tdebug { printf STDERR "U+%04X (%s)\t%d\n", $nc, chr $nc, $state };
 
     my $c = $nc > 0x007F ? KEY_ELSE_CHAR : $c_to_key->[$nc];
     my $action = $self->{action_set}->[$state]->[$c]
@@ -1689,12 +1689,10 @@ sub _get_next_token ($) {
 
         !!!emit ($self->{ct}); # comment
         redo A;
-      } elsif ($nc == -1) { 
+      } elsif ($nc == EOF_CHAR) {
         if ($self->{in_subset}) {
-          !!!cp (125.1);
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (125);
           $self->{state} = DATA_STATE;
         }
         ## reconsume
@@ -2194,7 +2192,7 @@ sub _get_next_token ($) {
         !!!parse-error (type => 'no DOCTYPE name');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -2251,7 +2249,7 @@ sub _get_next_token ($) {
         !!!cp (163.1);
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -2343,7 +2341,7 @@ sub _get_next_token ($) {
         !!!cp (167.3);
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -2537,7 +2535,7 @@ sub _get_next_token ($) {
         !!!parse-error (type => 'no PUBLIC literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -2738,7 +2736,7 @@ sub _get_next_token ($) {
         !!!parse-error (type => 'no SYSTEM literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -2825,7 +2823,7 @@ sub _get_next_token ($) {
 
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -3001,7 +2999,7 @@ sub _get_next_token ($) {
         !!!cp (218.1);
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -3065,7 +3063,7 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and $nc == 0x005B) { # [
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         !!!next-input-character;
         !!!emit ($self->{ct}); # DOCTYPE
         redo A;
@@ -3915,6 +3913,10 @@ sub _get_next_token ($) {
       }
 
     } elsif ($state == DOCTYPE_INTERNAL_SUBSET_STATE) {
+      ## Internal subset, external subset, or parameter entity.
+
+      ## XML5: Internal entity only.
+
       if ($nc == 0x003C) { # <
         $self->{state} = DOCTYPE_TAG_STATE;
         !!!next-input-character;
@@ -3933,7 +3935,7 @@ sub _get_next_token ($) {
 
         !!!next-input-character;
         redo A;
-      } elsif ($nc == 0x005D) { # ]
+      } elsif ($nc == 0x005D and $self->{in_subset}->{internal}) { # ]
         delete $self->{in_subset};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_AFTER_STATE;
         !!!next-input-character;
@@ -3943,16 +3945,23 @@ sub _get_next_token ($) {
         !!!next-input-character;
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed internal subset'); ## TODO: type
-        delete $self->{in_subset};
-        $self->{state} = DATA_STATE;
-        ## Reconsume.
-        !!!emit ({type => END_OF_DOCTYPE_TOKEN});
-        redo A;
+        if ($self->{in_subset}->{internal}) {
+          !!!parse-error (type => 'unclosed internal subset'); ## TODO: type
+          delete $self->{in_subset};
+          $self->{state} = DATA_STATE;
+          ## Reconsume.
+          !!!emit ({type => END_OF_DOCTYPE_TOKEN});
+          redo A;
+        } else {
+          ## Reconsume.
+          !!!emit ({type => END_OF_FILE_TOKEN,
+                    line => $self->{line}, column => $self->{column}});
+          redo A;
+        }
       } else {
         unless ($self->{internal_subset_tainted}) {
           ## XML5: No parse error.
-          !!!parse-error (type => 'string in internal subset');
+          !!!parse-error (type => 'string in internal subset'); # XXXdoc
           $self->{internal_subset_tainted} = 1;
         }
         ## Stay in the state.
@@ -4006,7 +4015,12 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == EOF_CHAR) {
         !!!parse-error (type => 'bare stago');
-        $self->{state} = DATA_STATE;
+        if ($self->{in_subset}) {
+          ## XML5: DATA_STATE.
+          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+        } else {
+          $self->{state} = DATA_STATE;
+        }
         ## Reconsume.
         redo A;
       } else {

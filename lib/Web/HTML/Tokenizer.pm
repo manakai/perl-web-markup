@@ -1723,12 +1723,10 @@ sub _get_next_token ($) {
 
         return  ($self->{ct}); # comment
         redo A;
-      } elsif ($nc == -1) { 
+      } elsif ($nc == EOF_CHAR) {
         if ($self->{in_subset}) {
-          
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          
           $self->{state} = DATA_STATE;
         }
         ## reconsume
@@ -2292,7 +2290,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE name');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -2361,7 +2359,7 @@ sub _get_next_token ($) {
         
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -2471,7 +2469,7 @@ sub _get_next_token ($) {
         
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -2685,7 +2683,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -2914,7 +2912,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -3013,7 +3011,7 @@ sub _get_next_token ($) {
 
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -3215,7 +3213,7 @@ sub _get_next_token ($) {
         
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -3293,7 +3291,7 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and $nc == 0x005B) { # [
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = 1;
+        $self->{in_subset} = {internal => 1};
         
     $self->_set_nc;
   
@@ -4207,6 +4205,10 @@ sub _get_next_token ($) {
       }
 
     } elsif ($state == DOCTYPE_INTERNAL_SUBSET_STATE) {
+      ## Internal subset, external subset, or parameter entity.
+
+      ## XML5: Internal entity only.
+
       if ($nc == 0x003C) { # <
         $self->{state} = DOCTYPE_TAG_STATE;
         
@@ -4229,7 +4231,7 @@ sub _get_next_token ($) {
     $self->_set_nc;
   
         redo A;
-      } elsif ($nc == 0x005D) { # ]
+      } elsif ($nc == 0x005D and $self->{in_subset}->{internal}) { # ]
         delete $self->{in_subset};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_AFTER_STATE;
         
@@ -4243,16 +4245,23 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed internal subset'); ## TODO: type
-        delete $self->{in_subset};
-        $self->{state} = DATA_STATE;
-        ## Reconsume.
-        return  ({type => END_OF_DOCTYPE_TOKEN});
-        redo A;
+        if ($self->{in_subset}->{internal}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed internal subset'); ## TODO: type
+          delete $self->{in_subset};
+          $self->{state} = DATA_STATE;
+          ## Reconsume.
+          return  ({type => END_OF_DOCTYPE_TOKEN});
+          redo A;
+        } else {
+          ## Reconsume.
+          return  ({type => END_OF_FILE_TOKEN,
+                    line => $self->{line}, column => $self->{column}});
+          redo A;
+        }
       } else {
         unless ($self->{internal_subset_tainted}) {
           ## XML5: No parse error.
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'string in internal subset');
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'string in internal subset'); # XXXdoc
           $self->{internal_subset_tainted} = 1;
         }
         ## Stay in the state.
@@ -4320,7 +4329,12 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare stago');
-        $self->{state} = DATA_STATE;
+        if ($self->{in_subset}) {
+          ## XML5: DATA_STATE.
+          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+        } else {
+          $self->{state} = DATA_STATE;
+        }
         ## Reconsume.
         redo A;
       } else {
