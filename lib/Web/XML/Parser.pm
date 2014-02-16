@@ -204,7 +204,7 @@ sub parse_char_string_with_context ($$$$) {
 
 sub parse_bytes_start ($$$) {
   my ($self, $charset_name, $doc) = @_;
-  $self->{document} = $doc;
+  $self->{document} = delete $self->{initial_document} || $doc;
   
   $self->{chars_pull_next} = sub { 1 };
   $self->{restart_parser} = sub {
@@ -393,14 +393,15 @@ sub _parse_bytes_subparser_done ($$$) {
   sub new_from_parser ($$) {
     my $self = $_[0]->new;
     my $main_parser = $_[1];
+    $self->{initial_document} =
     $self->{document} = $main_parser->{document}->implementation->create_document;
     my $xe = $main_parser->{t}->{extent};
     if ($xe->{external_subset} or
         $xe->{type} == Web::HTML::Defs::PARAMETER_ENTITY_TOKEN) {
-      $self->{doctype} = $main_parser->{doctype};
       $self->{pe} = $main_parser->{pe};
       $self->{pe}->{$xe->{name} . ';'}->{open} = 1 if defined $xe->{name};
       $self->{ge} = $main_parser->{ge};
+      $self->{doctype} = $main_parser->{doctype};
       $self->{has_element_decl} = $main_parser->{has_element_decl} ||= {};
       $self->{attrdef} = $main_parser->{attrdef} ||= {};
       $self->{has_attlist} = $main_parser->{has_attlist} ||= {};
@@ -428,10 +429,6 @@ sub _parse_bytes_subparser_done ($$$) {
     });
     return $self;
   } # new_from_parser
-
-  sub parse_bytes_start ($$$) {
-    return $_[0]->SUPER::parse_bytes_start ($_[1], $_[0]->{document});
-  } # parse_bytes_start
 }
 
 sub _stop_parsing ($) {
@@ -526,11 +523,12 @@ sub _terminate_tree_constructor ($) {
 ## are marked as "XML5:".
 
 # XXX PUBLIC for external subset
-# XXX external entity support
+# XXX external entity for character entities
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
 # XXX marked sections
-# XXX param refs between decls
+# XXX internal param refs between decls
 # XXX param refs in decls and marked section keywords
+# XXX external parameter entity fetch error
 # XXX entref depth limitation
 # XXX well-formedness of entity decls
 # XXX validation hook for PUBLIC
@@ -1611,8 +1609,9 @@ sub _parse_entity_subtree_token ($) {
       ? $self->{open_elements}->[-1]->[0]
       : $self->{document}->create_element_ns (undef, 'dummy');
 
-  my $map_parsed = create_pos_lc_map $self->{ge}->{$t->{name}}->{value};
-  my $map_source = $self->{ge}->{$t->{name}}->{sps} || [];
+  my $entdef = $t->{param} ? $self->{pe}->{$t->{name}} : $self->{ge}->{$t->{name}};
+  my $map_parsed = create_pos_lc_map $entdef->{value};
+  my $map_source = $entdef->{sps} || [];
 
   my $doc = $self->{document}->implementation->create_document;
   my $parser = (ref $self)->new;
@@ -1621,11 +1620,85 @@ sub _parse_entity_subtree_token ($) {
     lc_lc_mapper $map_parsed => $map_source, \%args;
     $self->onerror->(%args);
   });
+  $parser->{pe} = $self->{pe};
   $parser->{ge} = $self->{ge};
-  local $parser->{ge}->{$t->{name}}->{open} = 1;
-  $parser->{invoked_by_geref} = 1;
-  my $list = $parser->parse_char_string_with_context
-      ($self->{ge}->{$t->{name}}->{value}, $context, $doc);
+
+  my $list = [];
+  if (defined $t->{param}) {
+    local $parser->{pe}->{$t->{name}}->{open} = 1;
+    $parser->{in_subset} = {external => 1, param => 1};
+
+    # XXX
+  } else {
+    local $parser->{ge}->{$t->{name}}->{open} = 1;
+    $parser->{invoked_by_geref} = 1;
+
+    $parser->{document} = $doc;
+    $parser->{confident} = 1;
+
+    $parser->{line_prev} = $parser->{line} = 1;
+    $parser->{column_prev} = -1;
+    $parser->{column} = 0;
+
+    $parser->{chars} = [split //, $entdef->{value}];
+    $parser->{chars_pos} = 0;
+    $parser->{chars_pull_next} = sub { 0 };
+    delete $parser->{chars_was_cr};
+
+    my $onerror = $parser->onerror;
+    $parser->{parse_error} = sub {
+      $onerror->(line => $parser->{line}, column => $parser->{column}, @_);
+    };
+
+    $parser->{is_xml} = 1;
+
+    $parser->_initialize_tokenizer;
+    $parser->_initialize_tree_constructor; # strict_error_checking (0)
+
+    my $root;
+    $parser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
+    $root = $doc->create_element_ns
+        ($context->namespace_uri, [$context->prefix, $context->local_name]);
+
+    push @{$parser->{open_elements}},
+        [$root,
+         $self->{open_elements}->[-1]->[1],
+         $self->{open_elements}->[-1]->[2]];
+    $doc->append_child ($root); # XXX
+    $parser->{insertion_mode} = IN_ELEMENT_IM;
+
+    {
+      $parser->{t} = $parser->_get_next_token;
+      $parser->_construct_tree;
+      if (defined $parser->{t} and
+          $parser->{t}->{type} == ABORT_TOKEN and
+          defined $parser->{t}->{extent}) {
+        $onerror->(type => 'external entref',
+                   value => $parser->{t}->{name},
+                   line => $parser->{t}->{line},
+                   column => $parser->{t}->{column},
+                   level => 'i');
+        if ($parser->{in_subset}) {
+          if (not $parser->{stop_processing} and
+              not $parser->{document}->xml_standalone) {
+            $onerror->(type => 'stop processing',
+                       line => $parser->{t}->{line},
+                       column => $parser->{t}->{column},
+                       level => 'i');
+            $parser->{stop_processing} = 1;
+          }
+        }
+        unshift @{$parser->{token}}, {%{$parser->{t}},
+                                      type => ENTITY_SUBTREE_TOKEN,
+                                      parsed_nodes => []};
+        delete $parser->{parser_pause};
+        redo;
+      }
+    }
+
+    $list = $root->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template')
+        ? $root->content->child_nodes : $root->child_nodes;
+  } # geref
 
   my @node = @$list;
   while (@node) {
@@ -1645,7 +1718,7 @@ sub _parse_entity_subtree_token ($) {
     }
 
     unshift @node, @{$node->attributes or []}, @{$node->child_nodes};
-  }
+  } # $node
 
   return $list;
 } # _parse_entity_subtree_token

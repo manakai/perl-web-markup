@@ -150,6 +150,7 @@ sub _initialize_tokenizer ($) {
 ##   ->{column}: Column number of the first character
 ##   ->{char_delta}: Number of characters in prefix construct (e.g. <![CDATA[)
 ##   ->{sps} (CHARACTER_TOKEN): Source positions
+##   ->{open} (GENERAL_ENTITY_TOKEN, PARAMETER_ENTITY_TOKEN): Entity is open
 
 ## NOTE: The "self-closing flag" is hold as |$self->{self_closing}|.
 ##     |->{self_closing}| is used to save the value of |$self->{self_closing}|
@@ -3967,6 +3968,7 @@ sub _get_next_token ($) {
             $self->{state} = $self->{prev_state};
             ## Reconsume the current input character.
             return  ({type => ENTITY_SUBTREE_TOKEN,
+                      #param => 0,
                       name => $self->{kwd},
                       line => $self->{line_prev},
                       column => $self->{column_prev} - length $self->{kwd}});
@@ -6126,7 +6128,19 @@ sub _get_next_token ($) {
                               line => $self->{line_prev},
                               column => $self->{column_prev} - length $self->{kwd});
               #
+            } elsif (defined $pedef->{value}) {
+              ## Internal entity
+              $self->{state} = $self->{prev_state};
+              
+    $self->_set_nc;
+  
+              return  ({type => ENTITY_SUBTREE_TOKEN,
+                        param => 1,
+                        name => $self->{kwd},
+                        line => $self->{line_prev},
+                        column => $self->{column_prev} - length $self->{kwd}});
             } else {
+              ## External entity
               $self->{parser_pause} = 1;
               $self->{state} = $self->{prev_state};
               
