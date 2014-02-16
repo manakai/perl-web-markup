@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use warnings FATAL => 'recursion';
 use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
@@ -247,10 +248,8 @@ test {
       $subparser->parse_bytes_end;
     };
   });
-  $parser->parse_bytes_start (undef, $doc);
-  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "a"> ]>&x;});
-  $parser->parse_bytes_end;
   $parser->onparsed (sub {
+warn "parsed";
     test {
       is $doc->inner_html, q{<!DOCTYPE a>};
       eq_or_diff \@error, [{type => 'ref outside of root element',
@@ -263,6 +262,9 @@ test {
       undef $c;
     } $c;
   });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a [ <!ENTITY x SYSTEM "a"> ]>&x;});
+  $parser->parse_bytes_end;
 } n => 2, name => 'default namespace, outside of root element';
 
 test {

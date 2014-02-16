@@ -67,6 +67,7 @@ sub _clear_refs ($) {
   delete $self->{ge};
   delete $self->{pe};
   delete $self->{tokenizer_initial_state};
+  delete $self->{sps_transformer};
 } # _clear_refs
 
 ## ------ Error handling ------

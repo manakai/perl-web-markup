@@ -261,35 +261,9 @@ sub _parse_bytes_start_parsing ($;%) {
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
 
-  my $context = $self->{context_element};
-  if (defined $context) {
-    # 4., 6. (Fake end tag)
-    $self->{inner_html_tag_name} = $context->manakai_tag_name;
-
-    # 2. Fake start tag
-    my $root = $self->{document}->create_element_ns
-        ($context->namespace_uri, [$context->prefix, $context->local_name]);
-    my $nsmap = {};
-    {
-      my $prefixes = {};
-      my $p = $context;
-      while ($p and $p->node_type == 1) { # ELEMENT_NODE
-        $prefixes->{$_->local_name} = 1 for grep {
-          ($_->namespace_uri || '') eq Web::HTML::ParserData::XMLNS_NS;
-        } @{$p->attributes or []};
-        my $prefix = $p->prefix;
-        $prefixes->{$prefix} = 1 if defined $prefix;
-        $p = $p->parent_node;
-      }
-      for ('', keys %$prefixes) {
-        $nsmap->{$_} = $context->lookup_namespace_uri ($_);
-      }
-      $nsmap->{xml} = Web::HTML::ParserData::XML_NS;
-      $nsmap->{xmlns} = Web::HTML::ParserData::XMLNS_NS;
-    }
-    push @{$self->{open_elements}},
-        [$root, $self->{inner_html_tag_name}, $nsmap];
-    $self->{document}->append_child ($root);
+  if (defined $self->{context_element}) {
+    $self->{inner_html_tag_name} = $self->{context_element}->[0]->manakai_tag_name;
+    push @{$self->{open_elements}}, $self->{context_element};
     $self->{next_im} = IN_ELEMENT_IM;
   } elsif ($self->{in_subset}) {
     $self->{next_im} = IN_SUBSET_IM;
@@ -381,7 +355,7 @@ sub _parse_bytes_subparser_done ($$$) {
   }
   unshift @{$self->{token}}, {%$token,
                               type => ENTITY_SUBTREE_TOKEN,
-                              parsed_nodes => $node->child_nodes};
+                              parsed_nodes => []};
   delete $self->{parser_pause};
   $self->_parse_bytes_run;
 } # _parse_bytes_subparser_done
@@ -411,9 +385,7 @@ sub _parse_bytes_subparser_done ($$$) {
     } else { ## General entity
       $self->{ge} = $main_parser->{ge};
       $self->{ge}->{$xe->{name} . ';'}->{open} = 1;
-      $self->{context_element} = @{$main_parser->{open_elements}}
-          ? $main_parser->{open_elements}->[-1]->[0]
-          : $self->{document}->create_element_ns (undef, 'dummy');
+      $self->{context_element} = $main_parser->{open_elements}->[-1];
     }
     my $onerror = $main_parser->onerror;
     $self->onerror (sub {
@@ -558,6 +530,7 @@ sub _construct_tree ($) {
           $onerror->(level => 'm', type => 'NULL', token => $self->{t});
         }
         my $parent = _insert_point $self->{open_elements}->[-1]->[0];
+        $self->{sps_transformer}->($self->{t}) if defined $self->{sps_transformer};
         $self->_append_text_by_token ($self->{t} => $parent);
         
         ## Stay in the mode.
@@ -633,8 +606,10 @@ sub _construct_tree ($) {
         }
 
         my $el = $self->{document}->create_element_ns ($ns, [$prefix, $ln]);
+        $self->{sps_transformer}->($self->{t}) if defined $self->{sps_transformer};
         $el->set_user_data (manakai_source_line => $self->{t}->{line});
         $el->set_user_data (manakai_source_column => $self->{t}->{column});
+        $el->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
 
         my $has_attr;
         for my $attr_name (sort {$attrs->{$a}->{index} <=> $attrs->{$b}->{index}}
@@ -675,8 +650,10 @@ sub _construct_tree ($) {
           } else {
             $attr->manakai_attribute_type (11); # unknown
           }
+          $self->{sps_transformer}->($attr_t) if defined $self->{sps_transformer};
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_di => $attr_t->{di}) if defined $attr_t->{di};
           $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
           $el->set_attribute_node_ns ($attr);
           $attr->specified (0) if $attr_t->{not_specified};
@@ -751,6 +728,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == PI_TOKEN) {
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
+        $self->{sps_transformer}->($self->{t}) if defined $self->{sps_transformer};
         $pi->set_user_data (manakai_sps => $self->{t}->{sps})
             if defined $self->{t}->{sps};
         (_insert_point $self->{open_elements}->[-1]->[0])
@@ -774,29 +752,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-        my $list = $self->_parse_entity_subtree_token;
-        my $parent = _insert_point $self->{open_elements}->[-1]->[0];
-        my $lc = $parent->last_child;
-        for (@$list) {
-          if ($_->node_type == 3) { # TEXT_NODE
-            if (defined $lc and $lc->node_type == 3) { # TEXT_NODE
-              my $sp2 = $_->get_user_data ('manakai_sps');
-              my $sp = $lc->get_user_data ('manakai_sps');
-              $sp = [] unless defined $sp and ref $sp eq 'ARRAY';
-              my $delta = length $lc->data;
-              $_->[0] += $delta for @$sp2;
-              push @$sp, @$sp2;
-              $lc->set_user_data (manakai_sps => $sp);
-              $lc->manakai_append_text ($_->data);
-            } else {
-              $parent->append_child ($lc = $_);
-            }
-          } else {
-            $parent->append_child ($_);
-            $lc = $_;
-          }
-        }
-
+        $self->_parse_entity_subtree_token;
         ## Stay in the state.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -831,7 +787,8 @@ sub _construct_tree ($) {
           
           $node->set_user_data (manakai_source_line => $self->{t}->{line});
           $node->set_user_data (manakai_source_column => $self->{t}->{column});
-          
+          $node->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
+
           $node->content_model_text (join '', @{$self->{t}->{content}})
               if $self->{t}->{content};
         } else {
@@ -857,6 +814,7 @@ sub _construct_tree ($) {
                 ($self->{t}->{name});
             $ed->set_user_data (manakai_source_line => $self->{t}->{line});
             $ed->set_user_data (manakai_source_column => $self->{t}->{column});
+            $ed->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
             $self->{doctype}->set_element_type_definition_node ($ed);
           } elsif ($self->{has_attlist}->{$self->{t}->{name}}) {
             $onerror->(level => 'w', type => 'duplicate attlist decl', ## TODO: type
@@ -877,6 +835,7 @@ sub _construct_tree ($) {
                   ($at->{name});
               $node->set_user_data (manakai_source_line => $at->{line});
               $node->set_user_data (manakai_source_column => $at->{column});
+              $node->set_user_data (manakai_di => $at->{di}) if defined $at->{di};
               $node->set_user_data (manakai_sps => $at->{sps}) if $at->{sps};
               
               my $type = defined $at->{type} ? {
@@ -1002,6 +961,7 @@ sub _construct_tree ($) {
             my $node = $self->{document}->create_general_entity ($self->{t}->{name});
             $node->set_user_data (manakai_source_line => $self->{t}->{line});
             $node->set_user_data (manakai_source_column => $self->{t}->{column});
+            $node->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
             
             $node->public_id ($self->{t}->{pubid}); # may be undef
             $node->system_id ($self->{t}->{sysid}); # may be undef
@@ -1046,6 +1006,7 @@ sub _construct_tree ($) {
           my $node = $self->{document}->create_notation ($self->{t}->{name});
           $node->set_user_data (manakai_source_line => $self->{t}->{line});
           $node->set_user_data (manakai_source_column => $self->{t}->{column});
+          $node->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
           
           $node->public_id ($self->{t}->{pubid}); # may be undef
           $node->system_id ($self->{t}->{sysid}); # may be undef
@@ -1089,7 +1050,8 @@ sub _construct_tree ($) {
           $self->{t} = {type => ABORT_TOKEN,
                         extent => {external_subset => 1, sysid => $sysid},
                         line => $dt->get_user_data ('manakai_source_line'),
-                        column => $dt->get_user_data ('manakai_source_column')};
+                        column => $dt->get_user_data ('manakai_source_column'),
+                        di => $dt->get_user_data ('manakai_di')};
           return;
         } else {
           $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
@@ -1258,6 +1220,7 @@ sub _construct_tree ($) {
         my $el = $self->{document}->create_element_ns ($ns, [$prefix, $ln]);
         $el->set_user_data (manakai_source_line => $self->{t}->{line});
         $el->set_user_data (manakai_source_column => $self->{t}->{column});
+        $el->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
 
         my $has_attr;
         for my $attr_name (sort {$attrs->{$a}->{index} <=> $attrs->{$b}->{index}}
@@ -1300,6 +1263,7 @@ sub _construct_tree ($) {
           }
           $attr->set_user_data (manakai_source_line => $attr_t->{line});
           $attr->set_user_data (manakai_source_column => $attr_t->{column});
+          $attr->set_user_data (manakai_di => $attr_t->{di}) if defined $attr_t->{di};
           $attr->set_user_data (manakai_sps => $attr_t->{sps}) if $attr_t->{sps};
           $el->set_attribute_node_ns ($attr);
           $attr->specified (0) if $attr_t->{not_specified};
@@ -1407,6 +1371,7 @@ sub _construct_tree ($) {
 
         $dt->set_user_data (manakai_source_line => $self->{t}->{line});
         $dt->set_user_data (manakai_source_column => $self->{t}->{column});
+        $dt->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
         
         $self->{document}->append_child ($dt);
 
@@ -1603,12 +1568,6 @@ sub _parse_entity_subtree_token ($) {
   ## Internal entity with "&" and/or "<" in entity value, referenced
   ## from element content.
 
-  return $t->{parsed_nodes} if defined $t->{parsed_nodes};
-
-  my $context = @{$self->{open_elements}}
-      ? $self->{open_elements}->[-1]->[0]
-      : $self->{document}->create_element_ns (undef, 'dummy');
-
   my $entdef = $t->{param} ? $self->{pe}->{$t->{name}} : $self->{ge}->{$t->{name}};
   my $map_parsed = create_pos_lc_map $entdef->{value};
   my $map_source = $entdef->{sps} || [];
@@ -1624,13 +1583,16 @@ sub _parse_entity_subtree_token ($) {
   $parser->{ge} = $self->{ge};
 
   my $list = [];
+  my $ent_name = $t->{name};
   if (defined $t->{param}) {
-    local $parser->{pe}->{$t->{name}}->{open} = 1;
+    $parser->{pe}->{$ent_name}->{open} = 1;
     $parser->{in_subset} = {external => 1, param => 1};
 
     # XXX
+
+    delete $self->{pe}->{$ent_name}->{open};
   } else {
-    local $parser->{ge}->{$t->{name}}->{open} = 1;
+    $parser->{ge}->{$ent_name}->{open} = 1;
     $parser->{invoked_by_geref} = 1;
 
     $parser->{document} = $doc;
@@ -1655,17 +1617,17 @@ sub _parse_entity_subtree_token ($) {
     $parser->_initialize_tokenizer;
     $parser->_initialize_tree_constructor; # strict_error_checking (0)
 
-    my $root;
     $parser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
-    $root = $doc->create_element_ns
-        ($context->namespace_uri, [$context->prefix, $context->local_name]);
 
-    push @{$parser->{open_elements}},
-        [$root,
-         $self->{open_elements}->[-1]->[1],
-         $self->{open_elements}->[-1]->[2]];
-    $doc->append_child ($root); # XXX
+    push @{$parser->{open_elements}}, $self->{open_elements}->[-1];
     $parser->{insertion_mode} = IN_ELEMENT_IM;
+
+    $parser->{sps_transformer} = sub {
+      my $token = $_[0];
+      lc_lc_mapper_for_sps $map_parsed => $map_source, $token->{sps}
+          if defined $token->{sps};
+      lc_lc_mapper $map_parsed => $map_source, $token;
+    };
 
     {
       $parser->{t} = $parser->_get_next_token;
@@ -1696,31 +1658,8 @@ sub _parse_entity_subtree_token ($) {
       }
     }
 
-    $list = $root->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template')
-        ? $root->content->child_nodes : $root->child_nodes;
+    delete $self->{ge}->{$ent_name}->{open};
   } # geref
-
-  my @node = @$list;
-  while (@node) {
-    my $node = shift @node;
-    lc_lc_mapper_for_sps $map_parsed => $map_source,
-        $node->get_user_data ('manakai_sps');
-
-    if (not defined $node->get_user_data ('manakai_di')) {
-      my $p = {line => $node->get_user_data ('manakai_source_line'),
-               column => $node->get_user_data ('manakai_source_column')};
-      if (defined $p->{column}) {
-        lc_lc_mapper $map_parsed => $map_source, $p;
-        $node->set_user_data (manakai_source_line => $p->{line});
-        $node->set_user_data (manakai_source_column => $p->{column});
-        $node->set_user_data (manakai_di => $p->{di});
-      }
-    }
-
-    unshift @node, @{$node->attributes or []}, @{$node->child_nodes};
-  } # $node
-
-  return $list;
 } # _parse_entity_subtree_token
 
 1;

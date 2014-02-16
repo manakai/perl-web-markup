@@ -1187,11 +1187,13 @@ sub _get_next_token ($) {
         } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
           $self->{ca}->{sps} = [[0, 1, $self->{line}, $self->{column}]];
         } elsif ($self->{state} == ENTITY_STATE) {
+# XXX
           if ($self->{is_xml} and
-              not $self->{tainted} and
+#XXX              not $self->{tainted} and
               @{$self->{open_elements} or []} == 0) {
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'ref outside of root element',
                             line => $self->{line}, column => $self->{column});
+            $self->{tainted} = 1;
           }
         }
         
@@ -3759,7 +3761,14 @@ sub _get_next_token ($) {
           if ($nc == 0x003B) { # ;
             if (defined $self->{ge}->{$self->{kwd}}) {
               ## A declared XML entity.
-              if ($self->{ge}->{$self->{kwd}}->{only_text}) {
+              if (not @{$self->{open_elements}} and
+                  ($self->{prev_state} == DATA_STATE or
+                   $self->{prev_state} == RCDATA_STATE)) {
+                # XXX
+                $self->{entity__value} = '&' . $self->{kwd};
+                delete $self->{entity__is_tree};
+                delete $self->{entity__sps};
+              } elsif ($self->{ge}->{$self->{kwd}}->{only_text}) {
                 ## Internal entity with no "&" or "<" in value
                 $self->{entity__value} = $self->{ge}->{$self->{kwd}}->{value};
                 delete $self->{entity__is_tree};
@@ -3929,6 +3938,7 @@ sub _get_next_token ($) {
         $data = '&' . $self->{kwd};
         #
       }
+
   
       ## NOTE: In these cases, when a character reference is found,
       ## it is consumed and a character token is returned, or, otherwise,
