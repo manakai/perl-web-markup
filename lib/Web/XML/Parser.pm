@@ -1565,6 +1565,8 @@ sub _parse_entity_subtree_token ($) {
   my $self = $_[0];
   my $t = $self->{t};
 
+  return $t->{parsed_nodes} if defined $t->{parsed_nodes};
+
   ## Internal entity with "&" and/or "<" in entity value, referenced
   ## from element content.
 

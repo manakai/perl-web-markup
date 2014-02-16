@@ -1186,15 +1186,6 @@ sub _get_next_token ($) {
           $self->{ca}->{sps} = [];
         } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
           $self->{ca}->{sps} = [[0, 1, $self->{line}, $self->{column}]];
-        } elsif ($self->{state} == ENTITY_STATE) {
-# XXX
-          if ($self->{is_xml} and
-#XXX              not $self->{tainted} and
-              @{$self->{open_elements} or []} == 0) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'ref outside of root element',
-                            line => $self->{line}, column => $self->{column});
-            $self->{tainted} = 1;
-          }
         }
         
         if ($action->{state_set}) {
@@ -3604,6 +3595,12 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
+        if ($self->{is_xml} and not @{$self->{open_elements}}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'ref outside of root element',
+                          value => '#'.$self->{kwd}.';',
+                          line => $l, column => $c);
+          $self->{tainted} = 1;
+        }
         $self->{state} = $self->{prev_state};
         ## Reconsume.
         return  ({type => CHARACTER_TOKEN, data => chr $code,
@@ -3719,6 +3716,12 @@ sub _get_next_token ($) {
 
       if ($self->{prev_state} == DATA_STATE or
           $self->{prev_state} == RCDATA_STATE) {
+        if ($self->{is_xml} and not @{$self->{open_elements}}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'ref outside of root element',
+                          value => '#x'.$self->{kwd}.';',
+                          line => $l, column => $c);
+          $self->{tainted} = 1;
+        }
         $self->{state} = $self->{prev_state};
         ## Reconsume.
         return  ({type => CHARACTER_TOKEN, data => chr $code,
@@ -3764,7 +3767,6 @@ sub _get_next_token ($) {
               if (not @{$self->{open_elements}} and
                   ($self->{prev_state} == DATA_STATE or
                    $self->{prev_state} == RCDATA_STATE)) {
-                # XXX
                 $self->{entity__value} = '&' . $self->{kwd};
                 delete $self->{entity__is_tree};
                 delete $self->{entity__sps};
@@ -3805,7 +3807,6 @@ sub _get_next_token ($) {
               ## An HTML character reference.
               if ($self->{is_xml}) {
                 ## Not a declared XML entity.
-                
                 $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## TODO: type
                                 value => $self->{kwd},
                                 level => {
@@ -3818,8 +3819,6 @@ sub _get_next_token ($) {
                                          $self->{level}->{must},
                                 line => $self->{line},
                                 column => $self->{column} - length $self->{kwd});
-              } else {
-                
               }
               $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
               delete $self->{entity__is_tree};
@@ -3831,7 +3830,6 @@ sub _get_next_token ($) {
   
             #
           } else {
-            
             $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
             delete $self->{entity__is_tree};
             delete $self->{entity__sps};
@@ -3848,13 +3846,12 @@ sub _get_next_token ($) {
             ## XML entity reference.
 
             if ($self->{is_xml} or
-                (($self->{prev_state} == DATA_STATE or # in content (!= attr)
+                (($self->{prev_state} == DATA_STATE or
                   $self->{prev_state} == RCDATA_STATE) and
                  $self->{entity__match} == 0)) {
               ## A parse error in XML or in HTML content
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## XXXtype
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared',
                               value => $self->{kwd},
-                              level => $self->{level}->{must},
                               line => $self->{line},
                               column => $self->{column} - length $self->{kwd});
             }
@@ -3867,7 +3864,6 @@ sub _get_next_token ($) {
   
             #
           } else {
-            
             $self->{entity__value} .= chr $nc;
             delete $self->{entity__is_tree};
             delete $self->{entity__sps};
@@ -3928,12 +3924,9 @@ sub _get_next_token ($) {
         }
       } else { ## Unmatched string.
         if ($self->{is_xml} and not $self->{kwd} =~ /;$/) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare ero',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - length $self->{kwd});
-        } else {
-          
         }
         $data = '&' . $self->{kwd};
         #
@@ -3985,6 +3978,16 @@ sub _get_next_token ($) {
             redo A;
           }
         } else {
+          if ($self->{is_xml} and not @{$self->{open_elements}}) {
+            if ($self->{kwd} =~ /;/) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'ref outside of root element',
+                              value => $self->{kwd},
+                              line => $self->{line_prev},
+                              column => $self->{column_prev} - length $self->{kwd});
+              $self->{tainted} = 1;
+            }
+          }
+
           ## An XML unexpanded entity, an HTML character reference
           ## (defined or not defined), an XML internal parsed entity
           ## without "&" and "<"
