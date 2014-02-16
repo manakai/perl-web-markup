@@ -1,6 +1,7 @@
 package Web::HTML::Tokenizer; # -*- Perl -*-
 use strict;
 use warnings;
+use warnings FATAL => 'recursion';
 no warnings 'utf8';
 our $VERSION = '9.0';
 use Web::HTML::Defs;
@@ -191,7 +192,7 @@ sub KEY_SPACE_CHAR () { 251 }
 $Action->[DATA_STATE]->[0x0026] = {
   name => 'data &',
   state => ENTITY_STATE, # "entity data state" + "consume a character reference"
-  state_set => {entity_add => -1, prev_state => DATA_STATE},
+  state_set => {entity_add => NEVER_CHAR, prev_state => DATA_STATE},
 };
 $Action->[DATA_STATE]->[0x003C] = {
   name => 'data <',
@@ -225,7 +226,7 @@ $Action->[DATA_STATE]->[KEY_ELSE_CHAR] = {
 $Action->[RCDATA_STATE]->[0x0026] = {
   name => 'rcdata &',
   state => ENTITY_STATE, # "entity data state" + "consume a character reference"
-  state_set => {entity_add => -1, prev_state => RCDATA_STATE},
+  state_set => {entity_add => NEVER_CHAR, prev_state => RCDATA_STATE},
 };
 $Action->[RCDATA_STATE]->[0x003C] = {
   name => 'rcdata <',
@@ -3740,7 +3741,7 @@ sub _get_next_token ($) {
           ($self->{is_xml} and
            not ($is_space->{$nc} or
                 {
-                  0x003C => 1, 0x0026 => 1, -1 => 1, # <, &
+                  0x003C => 1, 0x0026 => 1, (EOF_CHAR) => 1, # <, &
 
                   ## See comment in the |ENTITY_STATE|'s |if|
                   ## statement for the rationale of addition of these
@@ -3766,6 +3767,14 @@ sub _get_next_token ($) {
                 ## Unparsed entity
                 $self->{parse_error}->(level => $self->{level}->{must}, type => 'unparsed entity',
                                 value => $self->{kwd},
+                                line => $self->{line},
+                                column => $self->{column} - length $self->{kwd});
+                $self->{entity__value} = '&' . $self->{kwd};
+                delete $self->{entity__is_tree};
+                delete $self->{entity__sps};
+              } elsif ($self->{ge}->{$self->{kwd}}->{open}) {
+                $self->{parse_error}->(level => $self->{level}->{must}, type => 'WFC:No Recursion',
+                                value => '&' . $self->{kwd},
                                 line => $self->{line},
                                 column => $self->{column} - length $self->{kwd});
                 $self->{entity__value} = '&' . $self->{kwd};
@@ -3941,7 +3950,7 @@ sub _get_next_token ($) {
             $self->{state} = $self->{prev_state};
             $self->{parser_pause} = 1;
             ## Reconsume the current input character (after the
-            ## exteral entity is expanded).
+            ## external entity is expanded).
             return {type => ABORT_TOKEN,
 
                     extent => $gedef,
@@ -4217,16 +4226,9 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0025) { # %
         ## XML5: Not defined yet.
-
-        ## TODO: parameter entity expansion
-
-        if (not $self->{stop_processing} and
-            not $self->{document}->xml_standalone) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'stop processing', ## TODO: type
-                          level => $self->{level}->{info});
-          $self->{stop_processing} = 1;
-        }
-
+        $self->{prev_state} = $state;
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
         
     $self->_set_nc;
   
@@ -6093,6 +6095,92 @@ sub _get_next_token ($) {
   
         redo A;
       }
+    } elsif ($state == PARAMETER_ENTITY_NAME_STATE) {
+      if ($is_space->{$nc} or {
+        0x003C => 1, 0x003E => 1, # < >
+        0x0022 => 1, 0x0027 => 1, 0x0060 => 1, # " ' `
+        0x0025 => 1, 0x0026 => 1, # % &
+        0x003D => 1, # =
+        (EOF_CHAR) => 1,
+      }->{$nc}) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
+        if (not $self->{stop_processing} and
+            not $self->{document}->xml_standalone) {
+          $self->{parse_error}->(level => $self->{level}->{must}, level => 'i',
+                          type => 'stop processing',
+                          line => $self->{line_prev},
+                          column => $self->{column_prev} - length $self->{kwd});
+          $self->{stop_processing} = 1;
+        }
+        # XXX within entity value, ...
+        $self->{state} = $self->{prev_state};
+        ## Reconsume the current input character.
+        redo A;
+      } elsif ($nc == 0x003B) { # ;
+        if (length $self->{kwd}) {
+          my $pedef = $self->{pe}->{$self->{kwd} . ';'};
+          if (defined $pedef) {
+            if ($pedef->{open}) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'WFC:No Recursion',
+                              value => '%' . $self->{kwd} . ';',
+                              line => $self->{line_prev},
+                              column => $self->{column_prev} - length $self->{kwd});
+              #
+            } else {
+              $self->{parser_pause} = 1;
+              $self->{state} = $self->{prev_state};
+              
+    $self->_set_nc;
+  
+              return {type => ABORT_TOKEN,
+                      extent => $pedef,
+                      line => $self->{line_prev},
+                      column => $self->{column_prev} - 1 - length $self->{kwd}};
+            }
+          } else {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'pe not declared',
+                            value => $self->{kwd} . ';',
+                            level => 'm',
+                            line => $self->{line_prev},
+                            column => $self->{column_prev} - length $self->{kwd});
+            #
+          }
+
+          if (not $self->{stop_processing} and
+              not $self->{document}->xml_standalone) {
+            $self->{parse_error}->(level => $self->{level}->{must}, level => 'i',
+                            type => 'stop processing',
+                            line => $self->{line_prev},
+                            column => $self->{column_prev} - length $self->{kwd});
+            $self->{stop_processing} = 1;
+          }
+          #
+        } else {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare pero',
+                          line => $self->{line_prev},
+                          column => $self->{column_prev});
+          #
+        }
+
+        $self->{state} = $self->{prev_state};
+        # XXX within entity value, ...
+        
+    $self->_set_nc;
+  
+        redo A;
+      } else {
+        if ($nc == 0x0000) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
+          $self->{kwd} .= "\x{FFFD}";
+        } else {
+          $self->{kwd} .= chr $nc;
+        }
+        ## Stay in the state.
+        
+    $self->_set_nc;
+  
+        redo A;
+      }
     } else {
       die "$0: $state: Unknown state";
     }
@@ -6143,8 +6231,8 @@ sub _expand_ge_in_attr ($$) {
       lc_lc_mapper $map_parsed => $map_source, \%args;
       $self->onerror->(%args);
     });
-    $parser->{ge} = {%{$self->{ge}}};
-    delete $parser->{ge}->{$name};
+    $parser->{ge} = $self->{ge};
+    local $parser->{ge}->{$name}->{open} = 1;
     my $list = $parser->parse_char_string_with_context
         ($self->{ge}->{$name}->{value}, $context, $doc);
     for (@$list) {

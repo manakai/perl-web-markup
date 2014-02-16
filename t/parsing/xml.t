@@ -81,7 +81,7 @@ sub _test ($$) {
     my %opt = @_;
     push @errors, join ';',
         ($opt{di} ? "[$opt{di}]" : '') . ($opt{line} || $opt{token}->{line}),
-        $opt{column} || $opt{token}->{column},
+        defined $opt{column} ? $opt{column} : $opt{token}->{column},
         $opt{type},
         defined $opt{text} ? $opt{text} : '',
         defined $opt{value} ? $opt{value} : '',

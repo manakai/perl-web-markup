@@ -1,5 +1,6 @@
 package Web::HTML::Parser; # -*- Perl -*-
 use strict;
+use warnings FATAL => 'recursion';
 #use warnings;
 no warnings 'utf8';
 our $VERSION = '6.0';

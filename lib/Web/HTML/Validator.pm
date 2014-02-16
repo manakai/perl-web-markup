@@ -1,6 +1,7 @@
 package Web::HTML::Validator;
 use strict;
 use warnings;
+use warnings FATAL => 'recursion';
 no warnings 'utf8';
 our $VERSION = '128.0';
 use Scalar::Util qw(refaddr);

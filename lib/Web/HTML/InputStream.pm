@@ -1,6 +1,7 @@
 package Web::HTML::InputStream;
 use strict;
 use warnings;
+use warnings FATAL => 'recursion';
 no warnings 'utf8';
 our $VERSION = '6.0';
 use Web::Encoding ();

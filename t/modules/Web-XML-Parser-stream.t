@@ -318,10 +318,11 @@ test {
   $parser->parse_bytes_end;
   $parser->onparsed (sub {
     test {
-      is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cf&amp;x;jv</a>};
-      eq_or_diff \@error, [{type => 'entity not declared',
+      is $doc->inner_html,
+          q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cf&amp;x;jv</a>};
+      eq_or_diff \@error, [{type => 'WFC:No Recursion',
                             di => 1, line => 1, column => 2,
-                            value => 'x;',
+                            value => '&x;',
                             level => 'm'}];
       done $c;
       undef $c;
@@ -356,9 +357,9 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cdf&amp;x;jxv</a>};
-      eq_or_diff \@error, [{type => 'entity not declared',
+      eq_or_diff \@error, [{type => 'WFC:No Recursion',
                             di => 10, line => 1, column => 2,
-                            value => 'x;',
+                            value => '&x;',
                             level => 'm'}];
       done $c;
       undef $c;
