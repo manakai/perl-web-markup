@@ -125,8 +125,7 @@ sub _initialize_tokenizer ($) {
 
 ## A token has:
 ##   ->{type} == DOCTYPE_TOKEN, START_TAG_TOKEN, END_TAG_TOKEN, COMMENT_TOKEN,
-##       CHARACTER_TOKEN, END_OF_FILE_TOKEN, PI_TOKEN, ABORT_TOKEN, or
-##       ENTITY_SUBTREE_TOKEN
+##       CHARACTER_TOKEN, END_OF_FILE_TOKEN, PI_TOKEN, ABORT_TOKEN
 ##   ->{name} (DOCTYPE_TOKEN)
 ##   ->{tag_name} (START_TAG_TOKEN, END_TAG_TOKEN)
 ##   ->{target} (PI_TOKEN)
@@ -3682,13 +3681,7 @@ sub _get_next_token ($) {
           ## Reconsume the current input character (after the entity
           ## is expanded).
           return {type => ABORT_TOKEN,
-
                   entdef => $self->{ge}->{$self->{kwd}},
-
-                  ## Used to construct the next token
-                  #type => ENTITY_SUBTREE_TOKEN,
-                  name => $self->{kwd}, # with ";" suffix
-                  #parsed_nodes => $parsed,
                   line => $self->{line_prev},
                   column => $self->{column_prev} - length $self->{kwd}};
           redo A;

@@ -370,9 +370,6 @@ sub _parse_stream_subparser_done ($$$) {
       delete $self->{ge}->{$token->{entdef}->{name} . ';'}->{open};
     }
   }
-  unshift @{$self->{token}}, {%$token,
-                              type => ENTITY_SUBTREE_TOKEN,
-                              parsed_nodes => []};
   delete $self->{parser_pause};
   $self->_parse_stream_run;
 } # _parse_stream_subparser_done
@@ -435,7 +432,7 @@ sub onextentref ($;$) {
   return $_[0]->{onextentref} ||= sub {
     my ($self, $t, $subparser) = @_;
     $self->{parse_error}->(type => 'external entref',
-                           value => $t->{name},
+                           value => defined $t->{entdef}->{name} ? $t->{entdef}->{name} . ';' : undef,
                            line => $t->{line},
                            column => $t->{column},
                            level => 'i');
@@ -758,10 +755,6 @@ sub _construct_tree ($) {
         $self->{insertion_mode} = AFTER_ROOT_ELEMENT_IM;
         $self->{t} = $self->_get_next_token;
         redo B;
-      } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) { # XXX rename token
-        ## Stay in the state.
-        $self->{t} = $self->_get_next_token;
-        redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
         $onerror->(level => 'm', type => 'in html:#doctype',
                         token => $self->{t});
@@ -1040,12 +1033,6 @@ sub _construct_tree ($) {
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
-      } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-        # XXX
-
-        ## Stay in the mode.
-        $self->{t} = $self->_get_next_token;
-        redo B;
       } elsif ($self->{t}->{type} == END_OF_DOCTYPE_TOKEN) {
         my $dt = $self->{doctype};
         my $sysid = $dt->system_id;
@@ -1132,12 +1119,6 @@ sub _construct_tree ($) {
 
         ## Ignore the token.
         ## Stay in the mode.
-        $self->{t} = $self->_get_next_token;
-        redo B;
-      } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-# XXXdie
-        ## Ignore the token.
-        ## Stay in the state.
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
@@ -1346,12 +1327,6 @@ sub _construct_tree ($) {
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
-      } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-# XXXdie
-        ## Ignore the token.
-        ## Stay in the mode.
-        $self->{t} = $self->_get_next_token;
-        redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
         $onerror->(level => 'm', type => 'second doctype', # XXXdoc
                    token => $self->{t});
@@ -1407,8 +1382,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN or
-               $self->{t}->{type} == END_OF_FILE_TOKEN or
-               $self->{t}->{type} == ENTITY_SUBTREE_TOKEN) { # XXXdie
+               $self->{t}->{type} == END_OF_FILE_TOKEN) {
         $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
         ## Reprocess the token.
         redo B;
