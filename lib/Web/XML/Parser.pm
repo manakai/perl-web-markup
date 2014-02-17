@@ -55,7 +55,7 @@ sub parse_char_string ($$$) {
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
   local $self->{onextentref};
-  $self->_parse_stream_run;
+  $self->_parse_run;
 
   return {};
 } # parse_char_string
@@ -136,7 +136,7 @@ sub parse_char_string_with_context ($$$$) {
   # XXX and well-formedness errors not detected by this parser
 
   local $self->{onextentref};
-  $self->_parse_stream_run;
+  $self->_parse_run;
 
   # 7.
   return defined $context
@@ -220,7 +220,7 @@ sub _parse_bytes_start_parsing ($;%) {
   push @{$self->{chars}}, split //,
       decode $self->{input_encoding}, $self->{byte_buffer}, # XXX Encoding Standard
           Encode::FB_QUIET;
-  $self->_parse_stream_run;
+  $self->_parse_run;
 } # _parse_bytes_start_parsing
 
 ## The $args{start_parsing} flag should be set true if it has taken
@@ -242,7 +242,7 @@ sub parse_bytes_feed ($$;%) {
               Encode::FB_QUIET; # XXX Encoding Standard
       $i++;
     }
-    $self->_parse_stream_run;
+    $self->_parse_run;
   } else {
     $self->{byte_buffer} .= $_[1];
     $self->{byte_buffer_orig} .= $_[1];
@@ -264,10 +264,10 @@ sub parse_bytes_end ($) {
     $self->{byte_buffer} = '';
   }
   $self->{chars_pull_next} = sub { 0 };
-  $self->_parse_stream_run;
+  $self->_parse_run;
 } # parse_bytes_end
 
-sub _parse_stream_run ($) {
+sub _parse_run ($) {
   my $self = $_[0];
 
   ## This is either the first invocation of the |_get_next_token|
@@ -301,10 +301,9 @@ sub _parse_stream_run ($) {
         lc_lc_mapper $map_parsed => $map_source, \%args;
         $onerror->(%args);
       });
-      my $t = $self->{t}; # XXX
       $subparser->onparsed (sub {
         $self->{stop_processing} = 1 if $_[0]->{stop_processing};
-        $self->_parse_stream_subparser_done ($_[1], $t);
+        $self->_parse_subparser_done ($_[1], $entdef);
       });
 
       $subparser->{confident} = 1;
@@ -315,11 +314,12 @@ sub _parse_stream_run ($) {
       $subparser->{chars_pos} = 0;
       $subparser->{chars_pull_next} = sub { 0 };
       delete $subparser->{chars_was_cr};
-
-      my $onerror = $subparser->onerror;
-      $subparser->{parse_error} = sub {
-        $onerror->(line => $subparser->{line}, column => $subparser->{column}, @_);
-      };
+      {
+        my $onerror = $subparser->onerror;
+        $subparser->{parse_error} = sub {
+          $onerror->(line => $subparser->{line}, column => $subparser->{column}, @_);
+        };
+      }
 
       $subparser->{is_xml} = 1;
       $subparser->_initialize_tokenizer;
@@ -340,7 +340,7 @@ sub _parse_stream_run ($) {
             if defined $token->{sps};
         lc_lc_mapper $map_parsed => $map_source, $token;
       };
-      $subparser->_parse_stream_run;
+      $subparser->_parse_run;
     } else {
       ## An external entity
       my $onerror = $self->onerror;
@@ -350,29 +350,27 @@ sub _parse_stream_run ($) {
         $onerror->(%args);
       });
       # XXX sps_transformer to set default |di|
-      my $t = $self->{t}; # XXX
       $subparser->onparsed (sub {
         $self->{stop_processing} = 1 if $_[0]->{stop_processing};
-        $self->_parse_stream_subparser_done ($_[1], $t);
+        $self->_parse_subparser_done ($_[1], $entdef);
       });
       $self->onextentref->($self, $self->{t}, $subparser);
     }
   }
-} # _parse_stream_run
+} # _parse_run
 
-sub _parse_stream_subparser_done ($$$) {
-  my ($self, $node, $token) = @_;
-  ## |$token| is an |ABORT_TOKEN| requesting the external entity.
-  if (defined $token->{entdef}->{name}) {
-    if ($token->{entdef}->{type} == PARAMETER_ENTITY_TOKEN) {
-      delete $self->{pe}->{$token->{entdef}->{name} . ';'}->{open};
+sub _parse_subparser_done ($$$) {
+  my ($self, $node, $entdef) = @_;
+  if (defined $entdef->{name}) {
+    if ($entdef->{type} == PARAMETER_ENTITY_TOKEN) {
+      delete $self->{pe}->{$entdef->{name} . ';'}->{open};
     } else {
-      delete $self->{ge}->{$token->{entdef}->{name} . ';'}->{open};
+      delete $self->{ge}->{$entdef->{name} . ';'}->{open};
     }
   }
   delete $self->{parser_pause};
-  $self->_parse_stream_run;
-} # _parse_stream_subparser_done
+  $self->_parse_run;
+} # _parse_subparser_done
 
 {
   package Web::XML::Parser::SubParser;
