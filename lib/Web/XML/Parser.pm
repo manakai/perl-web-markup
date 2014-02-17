@@ -987,6 +987,10 @@ sub _construct_tree ($) {
         } elsif (not $self->{pe}->{$self->{t}->{name} . ';'}) {
           ## For parser.
           $self->{pe}->{$self->{t}->{name} . ';'} = $self->{t};
+          if (defined $self->{t}->{sps}) {
+            my $di = $self->di;
+            $_->[4] = $di for @{$self->{t}->{sps}};
+          }
 
           ## TODO: syntax validation
         } else {
