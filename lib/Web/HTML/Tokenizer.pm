@@ -3850,7 +3850,7 @@ sub _get_next_token ($) {
                   $self->{prev_state} == RCDATA_STATE) and
                  $self->{entity__match} == 0)) {
               ## A parse error in XML or in HTML content
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared',
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', # XXXtype
                               value => $self->{kwd},
                               line => $self->{line},
                               column => $self->{column} - length $self->{kwd});
@@ -3947,36 +3947,23 @@ sub _get_next_token ($) {
           $self->{prev_state} == RCDATA_STATE) {
         ## An entity reference in an element content
         if ($self->{entity__is_tree}) {
-          my $gedef = $self->{ge}->{$self->{kwd}};
-          if (not defined $gedef->{value}) {
-            ## An external entity
+          ## An external entity or an internal parsed entity with "&"
+          ## and/or "<" in entity value.
+          $self->{state} = $self->{prev_state};
+          $self->{parser_pause} = 1;
+          ## Reconsume the current input character (after the entity
+          ## is expanded).
+          return {type => ABORT_TOKEN,
 
-            $self->{state} = $self->{prev_state};
-            $self->{parser_pause} = 1;
-            ## Reconsume the current input character (after the
-            ## external entity is expanded).
-            return {type => ABORT_TOKEN,
+                  entdef => $self->{ge}->{$self->{kwd}},
 
-                    extent => $gedef,
-
-                    ## Used to construct the next token
-                    #type => ENTITY_SUBTREE_TOKEN,
-                    name => $self->{kwd},
-                    #parsed_nodes => $parsed,
-                    line => $self->{line_prev},
-                    column => $self->{column_prev} - length $self->{kwd}};
-            redo A;
-          } else {
-            ## An XML internal parsed entity with "&" and/or "<"
-            $self->{state} = $self->{prev_state};
-            ## Reconsume the current input character.
-            return  ({type => ENTITY_SUBTREE_TOKEN,
-                      #param => 0,
-                      name => $self->{kwd},
-                      line => $self->{line_prev},
-                      column => $self->{column_prev} - length $self->{kwd}});
-            redo A;
-          }
+                  ## Used to construct the next token
+                  #type => ENTITY_SUBTREE_TOKEN,
+                  name => $self->{kwd}, # with ";" suffix
+                  #parsed_nodes => $parsed,
+                  line => $self->{line_prev},
+                  column => $self->{column_prev} - length $self->{kwd}};
+          redo A;
         } else {
           if ($self->{is_xml} and not @{$self->{open_elements}}) {
             if ($self->{kwd} =~ /;/) {
@@ -6141,26 +6128,14 @@ sub _get_next_token ($) {
                               line => $self->{line_prev},
                               column => $self->{column_prev} - length $self->{kwd});
               #
-            } elsif (defined $pedef->{value}) {
-              ## Internal entity
-              $self->{state} = $self->{prev_state};
-              
-    $self->_set_nc;
-  
-              return  ({type => ENTITY_SUBTREE_TOKEN,
-                        param => 1,
-                        name => $self->{kwd},
-                        line => $self->{line_prev},
-                        column => $self->{column_prev} - length $self->{kwd}});
             } else {
-              ## External entity
               $self->{parser_pause} = 1;
               $self->{state} = $self->{prev_state};
               
     $self->_set_nc;
   
               return {type => ABORT_TOKEN,
-                      extent => $pedef,
+                      entdef => $pedef,
                       line => $self->{line_prev},
                       column => $self->{column_prev} - 1 - length $self->{kwd}};
             }

@@ -151,7 +151,7 @@ sub _test ($$) {
     }
     $p->onextentref (sub {
       my ($parser, $ent, $subparser) = @_;
-      my $e = $res{$ent->{extent}->{sysid}}; # XXX
+      my $e = $res{$ent->{entdef}->{sysid}}; # XXX
       $subparser->di ($e->[0]) if defined $e;
       $subparser->parse_bytes_start ('utf-8');
       $subparser->parse_bytes_feed (encode 'utf-8', $e->[1]) if defined $e;

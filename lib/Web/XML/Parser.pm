@@ -54,34 +54,8 @@ sub parse_char_string ($$$) {
 
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
-  {
-    $self->{t} = $self->_get_next_token;
-    $self->_construct_tree;
-    if (defined $self->{t} and
-        $self->{t}->{type} == ABORT_TOKEN and
-        defined $self->{t}->{extent}) {
-      $onerror->(type => 'external entref',
-                 value => $self->{t}->{name},
-                 line => $self->{t}->{line},
-                 column => $self->{t}->{column},
-                 level => 'i');
-      if ($self->{in_subset}) {
-        if (not $self->{stop_processing} and
-            not $self->{document}->xml_standalone) {
-          $onerror->(type => 'stop processing',
-                     line => $self->{t}->{line},
-                     column => $self->{t}->{column},
-                     level => 'i');
-          $self->{stop_processing} = 1;
-        }
-      }
-      unshift @{$self->{token}}, {%{$self->{t}},
-                                  type => ENTITY_SUBTREE_TOKEN,
-                                  parsed_nodes => []};
-      delete $self->{parser_pause};
-      redo;
-    }
-  }
+  local $self->{onextentref};
+  $self->_parse_stream_run;
 
   return {};
 } # parse_char_string
@@ -161,34 +135,8 @@ sub parse_char_string_with_context ($$$$) {
 
   # XXX and well-formedness errors not detected by this parser
 
-  {
-    $self->{t} = $self->_get_next_token;
-    $self->_construct_tree;
-    if (defined $self->{t} and
-        $self->{t}->{type} == ABORT_TOKEN and
-        defined $self->{t}->{extent}) {
-      $onerror->(type => 'external entref',
-                 value => $self->{t}->{name},
-                 line => $self->{t}->{line},
-                 column => $self->{t}->{column},
-                 level => 'i');
-      if ($self->{in_subset}) {
-        if (not $self->{stop_processing} and
-            not $self->{document}->xml_standalone) {
-          $onerror->(type => 'stop processing',
-                     line => $self->{t}->{line},
-                     column => $self->{t}->{column},
-                     level => 'i');
-          $self->{stop_processing} = 1;
-        }
-      }
-      unshift @{$self->{token}}, {%{$self->{t}},
-                                  type => ENTITY_SUBTREE_TOKEN,
-                                  parsed_nodes => []};
-      delete $self->{parser_pause};
-      redo;
-    }
-  }
+  local $self->{onextentref};
+  $self->_parse_stream_run;
 
   # 7.
   return defined $context
@@ -272,7 +220,7 @@ sub _parse_bytes_start_parsing ($;%) {
   push @{$self->{chars}}, split //,
       decode $self->{input_encoding}, $self->{byte_buffer}, # XXX Encoding Standard
           Encode::FB_QUIET;
-  $self->_parse_bytes_run;
+  $self->_parse_stream_run;
 } # _parse_bytes_start_parsing
 
 ## The $args{start_parsing} flag should be set true if it has taken
@@ -294,7 +242,7 @@ sub parse_bytes_feed ($$;%) {
               Encode::FB_QUIET; # XXX Encoding Standard
       $i++;
     }
-    $self->_parse_bytes_run;
+    $self->_parse_stream_run;
   } else {
     $self->{byte_buffer} .= $_[1];
     $self->{byte_buffer_orig} .= $_[1];
@@ -316,10 +264,10 @@ sub parse_bytes_end ($) {
     $self->{byte_buffer} = '';
   }
   $self->{chars_pull_next} = sub { 0 };
-  $self->_parse_bytes_run;
+  $self->_parse_stream_run;
 } # parse_bytes_end
 
-sub _parse_bytes_run ($) {
+sub _parse_stream_run ($) {
   my $self = $_[0];
 
   ## This is either the first invocation of the |_get_next_token|
@@ -329,47 +277,116 @@ sub _parse_bytes_run ($) {
   $self->_construct_tree;
   return unless defined $self->{t}; ## _stop_parsing is invoked
 
-  ## HTML only
+  ## HTML only; byte mode only
   if ($self->{embedded_encoding_name}) {
     ## Restarting the parser
     $self->_parse_bytes_start_parsing;
   }
 
   ## XML only
-  if ($self->{t}->{type} == ABORT_TOKEN and defined $self->{t}->{extent}) {
+  if ($self->{t}->{type} == ABORT_TOKEN and defined $self->{t}->{entdef}) {
+    my $entdef = $self->{t}->{entdef};
     # XXX URL resolution
-    my $subparser = Web::XML::Parser::SubParser->new_from_parser ($self);
-    $self->onextentref->($self, $self->{t}, $subparser);
-  }
-} # _parse_bytes_run
+    my $subparser = Web::XML::Parser::SubParser->new_from_parser ($self, $entdef);
+    if (defined $entdef->{value}) {
+      ## Internal entity with "&" and/or "<" in entity value,
+      ## referenced from element content.
 
-sub _parse_bytes_subparser_done ($$$) {
+      my $map_parsed = create_pos_lc_map $entdef->{value};
+      my $map_source = $entdef->{sps} || [];
+
+      my $onerror = $self->onerror;
+      $subparser->onerror (sub {
+        my %args = @_;
+        lc_lc_mapper $map_parsed => $map_source, \%args;
+        $onerror->(%args);
+      });
+      my $t = $self->{t}; # XXX
+      $subparser->onparsed (sub {
+        $self->{stop_processing} = 1 if $_[0]->{stop_processing};
+        $self->_parse_stream_subparser_done ($_[1], $t);
+      });
+
+      $subparser->{confident} = 1;
+      $subparser->{line_prev} = $subparser->{line} = 1;
+      $subparser->{column_prev} = -1;
+      $subparser->{column} = 0;
+      $subparser->{chars} = [split //, $entdef->{value}];
+      $subparser->{chars_pos} = 0;
+      $subparser->{chars_pull_next} = sub { 0 };
+      delete $subparser->{chars_was_cr};
+
+      my $onerror = $subparser->onerror;
+      $subparser->{parse_error} = sub {
+        $onerror->(line => $subparser->{line}, column => $subparser->{column}, @_);
+      };
+
+      $subparser->{is_xml} = 1;
+      $subparser->_initialize_tokenizer;
+      $subparser->_initialize_tree_constructor; # strict_error_checking (0)
+
+      if ($entdef->{type} == Web::HTML::Defs::PARAMETER_ENTITY_TOKEN) {
+        # XXX
+        $subparser->{insertion_mode} = IN_SUBSET_IM;
+      } else {
+        $subparser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
+        push @{$subparser->{open_elements}}, $self->{open_elements}->[-1];
+        $subparser->{insertion_mode} = IN_ELEMENT_IM;
+      }
+
+      $subparser->{sps_transformer} = sub {
+        my $token = $_[0];
+        lc_lc_mapper_for_sps $map_parsed => $map_source, $token->{sps}
+            if defined $token->{sps};
+        lc_lc_mapper $map_parsed => $map_source, $token;
+      };
+      $subparser->_parse_stream_run;
+    } else {
+      ## An external entity
+      my $onerror = $self->onerror;
+      $subparser->onerror (sub {
+        my %args = @_;
+        $args{di} = $subparser->di if not defined $args{di};
+        $onerror->(%args);
+      });
+      # XXX sps_transformer to set default |di|
+      my $t = $self->{t}; # XXX
+      $subparser->onparsed (sub {
+        $self->{stop_processing} = 1 if $_[0]->{stop_processing};
+        $self->_parse_stream_subparser_done ($_[1], $t);
+      });
+      $self->onextentref->($self, $self->{t}, $subparser);
+    }
+  }
+} # _parse_stream_run
+
+sub _parse_stream_subparser_done ($$$) {
   my ($self, $node, $token) = @_;
   ## |$token| is an |ABORT_TOKEN| requesting the external entity.
-  if (defined $token->{extent}->{name}) {
-    if ($token->{extent}->{type} == PARAMETER_ENTITY_TOKEN) {
-      delete $self->{pe}->{$token->{extent}->{name} . ';'}->{open};
+  if (defined $token->{entdef}->{name}) {
+    if ($token->{entdef}->{type} == PARAMETER_ENTITY_TOKEN) {
+      delete $self->{pe}->{$token->{entdef}->{name} . ';'}->{open};
     } else {
-      delete $self->{ge}->{$token->{extent}->{name} . ';'}->{open};
+      delete $self->{ge}->{$token->{entdef}->{name} . ';'}->{open};
     }
   }
   unshift @{$self->{token}}, {%$token,
                               type => ENTITY_SUBTREE_TOKEN,
                               parsed_nodes => []};
   delete $self->{parser_pause};
-  $self->_parse_bytes_run;
-} # _parse_bytes_subparser_done
+  $self->_parse_stream_run;
+} # _parse_stream_subparser_done
 
 {
   package Web::XML::Parser::SubParser;
   push our @ISA, qw(Web::XML::Parser);
 
-  sub new_from_parser ($$) {
+  sub new_from_parser ($$$) {
     my $self = $_[0]->new;
     my $main_parser = $_[1];
+    my $xe = $_[2];
     $self->{initial_document} =
     $self->{document} = $main_parser->{document}->implementation->create_document;
-    my $xe = $main_parser->{t}->{extent};
     if ($xe->{external_subset} or
         $xe->{type} == Web::HTML::Defs::PARAMETER_ENTITY_TOKEN) {
       $self->{pe} = $main_parser->{pe};
@@ -386,19 +403,9 @@ sub _parse_bytes_subparser_done ($$$) {
       $self->{ge} = $main_parser->{ge};
       $self->{ge}->{$xe->{name} . ';'}->{open} = 1;
       $self->{context_element} = $main_parser->{open_elements}->[-1];
+      $self->{invoked_by_geref} = 1; # XXX replace by context_elemenet ??
     }
-    my $onerror = $main_parser->onerror;
-    $self->onerror (sub {
-      my %args = @_;
-      $args{di} = $self->di if not defined $args{di};
-      $onerror->(%args);
-    });
     $self->onextentref ($main_parser->onextentref);
-    my $t = $main_parser->{t};
-    $self->onparsed (sub {
-      $main_parser->{stop_processing} = 1 if $_[0]->{stop_processing};
-      $main_parser->_parse_bytes_subparser_done ($_[1], $t);
-    });
     return $self;
   } # new_from_parser
 }
@@ -751,8 +758,7 @@ sub _construct_tree ($) {
         $self->{insertion_mode} = AFTER_ROOT_ELEMENT_IM;
         $self->{t} = $self->_get_next_token;
         redo B;
-      } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-        $self->_parse_entity_subtree_token;
+      } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) { # XXX rename token
         ## Stay in the state.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -1035,7 +1041,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
-        # XX
+        # XXX
 
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
@@ -1048,7 +1054,7 @@ sub _construct_tree ($) {
           $self->{parser_pause} = 1;
           $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
           $self->{t} = {type => ABORT_TOKEN,
-                        extent => {external_subset => 1, sysid => $sysid},
+                        entdef => {external_subset => 1, sysid => $sysid},
                         line => $dt->get_user_data ('manakai_source_line'),
                         column => $dt->get_user_data ('manakai_source_column'),
                         di => $dt->get_user_data ('manakai_di')};
@@ -1129,6 +1135,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
+# XXXdie
         ## Ignore the token.
         ## Stay in the state.
         $self->{t} = $self->_get_next_token;
@@ -1340,6 +1347,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
+# XXXdie
         ## Ignore the token.
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
@@ -1388,7 +1396,7 @@ sub _construct_tree ($) {
             $self->{parser_pause} = 1;
             $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
             $self->{t} = {type => ABORT_TOKEN,
-                          extent => {external_subset => 1, sysid => $sysid},
+                          entdef => {external_subset => 1, sysid => $sysid},
                           line => $self->{t}->{line},
                           column => $self->{t}->{column}};
             return;
@@ -1400,7 +1408,7 @@ sub _construct_tree ($) {
         redo B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN or
                $self->{t}->{type} == END_OF_FILE_TOKEN or
-               $self->{t}->{type} == ENTITY_SUBTREE_TOKEN) {
+               $self->{t}->{type} == ENTITY_SUBTREE_TOKEN) { # XXXdie
         $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
         ## Reprocess the token.
         redo B;
@@ -1560,109 +1568,6 @@ sub _construct_tree ($) {
     die;
   } # B
 } # _construct_tree
-
-sub _parse_entity_subtree_token ($) {
-  my $self = $_[0];
-  my $t = $self->{t};
-
-  return $t->{parsed_nodes} if defined $t->{parsed_nodes};
-
-  ## Internal entity with "&" and/or "<" in entity value, referenced
-  ## from element content.
-
-  my $entdef = $t->{param} ? $self->{pe}->{$t->{name}} : $self->{ge}->{$t->{name}};
-  my $map_parsed = create_pos_lc_map $entdef->{value};
-  my $map_source = $entdef->{sps} || [];
-
-  my $doc = $self->{document}->implementation->create_document;
-  my $parser = (ref $self)->new;
-  $parser->onerror (sub {
-    my %args = @_;
-    lc_lc_mapper $map_parsed => $map_source, \%args;
-    $self->onerror->(%args);
-  });
-  $parser->{pe} = $self->{pe};
-  $parser->{ge} = $self->{ge};
-
-  my $list = [];
-  my $ent_name = $t->{name};
-  if (defined $t->{param}) {
-    $parser->{pe}->{$ent_name}->{open} = 1;
-    $parser->{in_subset} = {external => 1, param => 1};
-
-    # XXX
-
-    delete $self->{pe}->{$ent_name}->{open};
-  } else {
-    $parser->{ge}->{$ent_name}->{open} = 1;
-    $parser->{invoked_by_geref} = 1;
-
-    $parser->{document} = $doc;
-    $parser->{confident} = 1;
-
-    $parser->{line_prev} = $parser->{line} = 1;
-    $parser->{column_prev} = -1;
-    $parser->{column} = 0;
-
-    $parser->{chars} = [split //, $entdef->{value}];
-    $parser->{chars_pos} = 0;
-    $parser->{chars_pull_next} = sub { 0 };
-    delete $parser->{chars_was_cr};
-
-    my $onerror = $parser->onerror;
-    $parser->{parse_error} = sub {
-      $onerror->(line => $parser->{line}, column => $parser->{column}, @_);
-    };
-
-    $parser->{is_xml} = 1;
-
-    $parser->_initialize_tokenizer;
-    $parser->_initialize_tree_constructor; # strict_error_checking (0)
-
-    $parser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
-
-    push @{$parser->{open_elements}}, $self->{open_elements}->[-1];
-    $parser->{insertion_mode} = IN_ELEMENT_IM;
-
-    $parser->{sps_transformer} = sub {
-      my $token = $_[0];
-      lc_lc_mapper_for_sps $map_parsed => $map_source, $token->{sps}
-          if defined $token->{sps};
-      lc_lc_mapper $map_parsed => $map_source, $token;
-    };
-
-    {
-      $parser->{t} = $parser->_get_next_token;
-      $parser->_construct_tree;
-      if (defined $parser->{t} and
-          $parser->{t}->{type} == ABORT_TOKEN and
-          defined $parser->{t}->{extent}) {
-        $onerror->(type => 'external entref',
-                   value => $parser->{t}->{name},
-                   line => $parser->{t}->{line},
-                   column => $parser->{t}->{column},
-                   level => 'i');
-        if ($parser->{in_subset}) {
-          if (not $parser->{stop_processing} and
-              not $parser->{document}->xml_standalone) {
-            $onerror->(type => 'stop processing',
-                       line => $parser->{t}->{line},
-                       column => $parser->{t}->{column},
-                       level => 'i');
-            $parser->{stop_processing} = 1;
-          }
-        }
-        unshift @{$parser->{token}}, {%{$parser->{t}},
-                                      type => ENTITY_SUBTREE_TOKEN,
-                                      parsed_nodes => []};
-        delete $parser->{parser_pause};
-        redo;
-      }
-    }
-
-    delete $self->{ge}->{$ent_name}->{open};
-  } # geref
-} # _parse_entity_subtree_token
 
 1;
 

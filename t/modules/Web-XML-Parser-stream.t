@@ -186,7 +186,7 @@ test {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
       $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
       $subparser->parse_bytes_end;
     };
   });
@@ -213,7 +213,7 @@ test {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
       $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
       $subparser->parse_bytes_end;
     };
   });
@@ -244,16 +244,16 @@ test {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
       $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
       $subparser->parse_bytes_end;
     };
   });
   $parser->onparsed (sub {
-warn "parsed";
     test {
       is $doc->inner_html, q{<!DOCTYPE a>};
       eq_or_diff \@error, [{type => 'ref outside of root element',
                             line => 1, column => 40,
+                            value => 'x;',
                             level => 'm'},
                            {type => 'no root element',
                             token => {type => 5, line => 1, column => 43},
@@ -278,7 +278,7 @@ test {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
       $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
       $subparser->parse_bytes_end;
     };
   });
@@ -307,7 +307,7 @@ test {
     AE::postpone {
       $subparser->di (1);
       $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
       $subparser->parse_bytes_end;
     };
   });
@@ -343,9 +343,9 @@ test {
   $parser->onextentref (sub {
     my ($parser, $ent, $subparser) = @_;
     AE::postpone {
-      $subparser->di ($ent->{extent}->{sysid} eq 'a' ? 10 : 2);
+      $subparser->di ($ent->{entdef}->{sysid} eq 'a' ? 10 : 2);
       $subparser->parse_bytes_start (undef);
-      $subparser->parse_bytes_feed ($ents->{$ent->{extent}->{sysid}});
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
       $subparser->parse_bytes_end;
     };
   });
