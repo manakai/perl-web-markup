@@ -302,8 +302,7 @@ sub _parse_run ($) {
         $onerror->(%args);
       });
       $subparser->onparsed (sub {
-        $self->{stop_processing} = 1 if $_[0]->{stop_processing};
-        $self->_parse_subparser_done ($_[1], $entdef);
+        $self->_parse_subparser_done ($_[0], $_[1], $entdef);
       });
 
       $subparser->{confident} = 1;
@@ -325,9 +324,15 @@ sub _parse_run ($) {
       $subparser->_initialize_tokenizer;
       $subparser->_initialize_tree_constructor; # strict_error_checking (0)
 
-      if ($entdef->{type} == Web::HTML::Defs::PARAMETER_ENTITY_TOKEN) {
-        # XXX
+      if ($entdef->{type} == PARAMETER_ENTITY_TOKEN) {
         $subparser->{insertion_mode} = IN_SUBSET_IM;
+# XXX in entity value
+        unless ($self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+          ## In a markup declaration
+          $subparser->{state} = $self->{state};
+          $subparser->{ct} = $self->{ct};
+          $subparser->{in_pe_in_markup_decl} = 1;
+        }
       } else {
         $subparser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
         push @{$subparser->{open_elements}}, $self->{open_elements}->[-1];
@@ -351,23 +356,30 @@ sub _parse_run ($) {
       });
       # XXX sps_transformer to set default |di|
       $subparser->onparsed (sub {
-        $self->{stop_processing} = 1 if $_[0]->{stop_processing};
-        $self->_parse_subparser_done ($_[1], $entdef);
+        $self->_parse_subparser_done ($_[0], $_[1], $entdef);
       });
       $self->onextentref->($self, $self->{t}, $subparser);
+# XXX parameter entity in markup declaration
     }
   }
 } # _parse_run
 
-sub _parse_subparser_done ($$$) {
-  my ($self, $node, $entdef) = @_;
+sub _parse_subparser_done ($$$$) {
+  my ($self, $subparser, $node, $entdef) = @_;
   if (defined $entdef->{name}) {
     if ($entdef->{type} == PARAMETER_ENTITY_TOKEN) {
+# XXX in entity value
+      unless ($self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+        ## In a markup declaration
+        $self->{state} = $subparser->{state};
+        $self->{ct} = $subparser->{ct};
+      }
       delete $self->{pe}->{$entdef->{name} . ';'}->{open};
     } else {
       delete $self->{ge}->{$entdef->{name} . ';'}->{open};
     }
   }
+  $self->{stop_processing} = 1 if $subparser->{stop_processing};
   delete $self->{parser_pause};
   $self->_parse_run;
 } # _parse_subparser_done

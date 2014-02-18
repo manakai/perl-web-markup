@@ -1101,6 +1101,53 @@ $Action->[MD_HYPHEN_STATE]->[KEY_ELSE_CHAR] = {
   ct => {type => COMMENT_TOKEN, data => '-', delta => 3},
 };
 
+$Action->[DOCTYPE_MD_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'md: before - space',
+  state => BEFORE_MD_NAME_STATE, ## XML5: [NOTATION] Switch to the "DOCTYPE NOTATION identifier state"
+};
+$Action->[BEFORE_MD_NAME_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'md: before name - space',
+};
+$Action->[DOCTYPE_MD_STATE]->[0x003E] = ## XML5: Switch to the "DOCTYPE bogus comment state"
+$Action->[BEFORE_MD_NAME_STATE]->[0x003E] = { ## XML5: Same as KEY_ELSE_CHAR
+  name => 'md before name - >',
+  ignore_in_pe => 1,
+  error => 'no md name', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+};
+$Action->[DOCTYPE_MD_STATE]->[KEY_EOF_CHAR] =
+$Action->[BEFORE_MD_NAME_STATE]->[KEY_EOF_CHAR] = {
+  name => 'md before name - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE, ## XML5: "Data state"
+  reconsume => 1,
+};
+$Action->[DOCTYPE_MD_STATE]->[0x0025] = ## Not in XML5
+$Action->[BEFORE_MD_NAME_STATE]->[0x0025] = { ## Not in XML5
+  name => 'md: before name - %',
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[DOCTYPE_MD_STATE]->[KEY_ELSE_CHAR] = { ## XML5: Switch to the "DOCTYPE bogus comment state"
+  name => 'md before - else',
+  error => 'no space before md name', # XXXdoc
+  state => BEFORE_MD_NAME_STATE,
+  reconsume => 1,
+};
+$Action->[BEFORE_MD_NAME_STATE]->[0x0000] = { ## XML5: Not defined for ATTLIST
+  name => 'md: before name - NULL',
+  error => 'NULL',
+  ct => {append_name => 0xFFFD},
+  state => MD_NAME_STATE,
+};
+$Action->[BEFORE_MD_NAME_STATE]->[KEY_ELSE_CHAR] = { ## XML5: Not defined for ATTLIST
+  name => 'md: before name - else',
+  ct => {append_name => 0x0000},
+  state => MD_NAME_STATE,
+};
+
 ## This class method can be used to create a custom tokenizer based on
 ## the HTML tokenizer.  The argument to the method must be an
 ## (incomplete) action set, whose missing definitions are completed by
@@ -1165,6 +1212,19 @@ sub _get_next_token ($) {
     if ($action and not $action->{skip}) {
       !!!tdebug { warn "ACTION: $action->{name}\n" };
 
+      if ($self->{in_pe_in_markup_decl}) {
+        if ($action->{ignore_in_pe}) {
+          !!!parse-error (type => 'mdc in pe in md');
+          $self->{state} = BOGUS_COMMENT_STATE;
+          $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+          !!!next-input-character;
+          redo A;
+        }
+        if ($action->{end_in_pe}) {
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'};
+        }
+      }
+
       if (defined $action->{error}) {
         if ($action->{error_delta}) {
           !!!parse-error (type => $action->{error},
@@ -1176,6 +1236,7 @@ sub _get_next_token ($) {
       }
 
       if (defined $action->{state}) {
+        $self->{prev_state} = $self->{state} if $action->{preserve_state};
         $self->{state} = $action->{state};
         
         if ($self->{state} == ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE or
@@ -1207,6 +1268,9 @@ sub _get_next_token ($) {
         
         if (defined $act->{append_tag_name}) {
           $self->{ct}->{tag_name} .= chr ($nc + $act->{append_tag_name});
+        }
+        if (defined $act->{append_name}) {
+          $self->{ct}->{name} .= chr ($nc + $act->{append_name});
         }
       }
       
@@ -1671,12 +1735,11 @@ sub _get_next_token ($) {
       ## NOTE: Unlike spec's "bogus comment state", this implementation
       ## consumes characters one-by-one basis.
       
-      if ($nc == 0x003E) { # >
+      if ($nc == 0x003E and # >
+          not $self->{in_pe_in_markup_decl}) {
         if ($self->{in_subset}) {
-          !!!cp (123);
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
-          !!!cp (124);
           $self->{state} = DATA_STATE;
         }
         !!!next-input-character;
@@ -1685,6 +1748,8 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == EOF_CHAR) {
         if ($self->{in_subset}) {
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         } else {
           $self->{state} = DATA_STATE;
@@ -1699,13 +1764,9 @@ sub _get_next_token ($) {
         !!!next-input-character;
         redo A;
       } else {
-        !!!cp (126);
         $self->{ct}->{data} .= chr ($nc); # comment
         $self->{ct}->{data} .= $self->_read_chars
             ({"\x00" => 1, ">" => 1});
-        #$self->{read_until}->($self->{ct}->{data},
-        #                      qq[\x00>],
-        #                      length $self->{ct}->{data});
 
         ## Stay in the state.
         !!!next-input-character;
@@ -4285,73 +4346,6 @@ sub _get_next_token ($) {
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
         redo A;
       }
-    } elsif ($state == DOCTYPE_MD_STATE) {
-      ## XML5: "DOCTYPE ENTITY state", "DOCTYPE ATTLIST state", and
-      ## "DOCTYPE NOTATION state".
-
-      if ($is_space->{$nc}) {
-        ## XML5: [NOTATION] Switch to the "DOCTYPE NOTATION identifier state".
-        $self->{state} = BEFORE_MD_NAME_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN and 
-               $nc == 0x0025) { # %
-        ## XML5: Switch to the "DOCTYPE bogus comment state".
-        !!!parse-error (type => 'no space before md name'); ## TODO: type
-        $self->{state} = DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        ## Reconsume.
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Switch to the "DOCTYPE bogus comment state".
-        !!!parse-error (type => 'no md name'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        redo A;
-      } else {
-        ## XML5: Switch to the "DOCTYPE bogus comment state".
-        !!!parse-error (type => 'no space before md name'); ## TODO: type
-        $self->{state} = BEFORE_MD_NAME_STATE;
-        redo A;
-      }
-    } elsif ($state == BEFORE_MD_NAME_STATE) {
-      ## XML5: "DOCTYPE ENTITY parameter state", "DOCTYPE ENTITY type
-      ## before state", "DOCTYPE ATTLIST name before state".
-
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
-      } elsif ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN and 
-               $nc == 0x0025) { # %
-        $self->{state} = DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "Anything else".
-        !!!parse-error (type => 'no md name'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        ## Reconsume.
-        redo A;
-      } else {
-        ## XML5: [ATTLIST] Not defined yet.
-        if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
-        }
-        $self->{ct}->{name} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
-        $self->{state} = MD_NAME_STATE;
-        !!!next-input-character;
-        redo A;
-      }
     } elsif ($state == DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE) {
       if ($is_space->{$nc}) {
         ## XML5: Switch to the "DOCTYPE ENTITY parameter state".
@@ -5464,6 +5458,20 @@ sub _get_next_token ($) {
         0x003D => 1, # =
         (EOF_CHAR) => 1,
       }->{$nc}) {
+        if (($self->{prev_state} == DOCTYPE_MD_STATE or
+             $self->{prev_state} == BEFORE_MD_NAME_STATE) and
+            $self->{ct}->{type} == GENERAL_ENTITY_TOKEN and
+            $self->{kwd} eq '') {
+          if ($self->{prev_state} == DOCTYPE_MD_STATE) {
+            !!!parse-error (type => 'no space before md name',
+                            line => $self->{line_prev},
+                            column => $self->{column_prev});
+          }
+          $self->{state} = DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE;
+          ## Reconsume the current input character.
+          redo A;
+        }
+
         !!!parse-error (type => 'no refc');
         if (not $self->{stop_processing} and
             not $self->{document}->xml_standalone) {
@@ -5487,7 +5495,9 @@ sub _get_next_token ($) {
                               line => $self->{line_prev},
                               column => $self->{column_prev} - length $self->{kwd});
               #
+# XXX in internal subset, markup declaration
             } else {
+              ## Parameter entity is to be expanded...
               $self->{parser_pause} = 1;
               $self->{state} = $self->{prev_state};
               !!!next-input-character;
