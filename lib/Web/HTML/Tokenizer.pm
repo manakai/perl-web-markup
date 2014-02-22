@@ -875,11 +875,11 @@ $XMLAction->[ATTRIBUTE_NAME_STATE]->[0x003E] = {
 };
 $Action->[ATTRIBUTE_NAME_STATE]->[KEY_ULATIN_CHAR] = {
   name => 'attr name uc',
-  ca => {name => 0x0020}, # UC -> lc
+  ca => {append_name => 0x0020}, # UC -> lc
 };
 $XMLAction->[ATTRIBUTE_NAME_STATE]->[KEY_ULATIN_CHAR] = {
   name => 'attr name uc',
-  ca => {name => 0x0000},
+  ca => {append_name => 0x0000},
 };
 $Action->[ATTRIBUTE_NAME_STATE]->[0x002F] = {
   name => 'attr name /',
@@ -904,16 +904,16 @@ $Action->[ATTRIBUTE_NAME_STATE]->[0x0027] =
 $Action->[ATTRIBUTE_NAME_STATE]->[0x003C] = {
   name => q[attr name "'<],
   error => 'bad attribute name', ## XML5: Not a parse error.
-  ca => {name => 0x0000},
+  ca => {append_name => 0x0000},
 };
 $Action->[ATTRIBUTE_NAME_STATE]->[0x0000] = {
   name => 'attr name null',
-  ca => {name => 0xFFFD},
+  ca => {append_name => 0xFFFD},
   error => 'NULL',
 };
 $Action->[ATTRIBUTE_NAME_STATE]->[KEY_ELSE_CHAR] = {
   name => 'attr name else',
-  ca => {name => 0x0000},
+  ca => {append_name => 0x0000},
 };
       ## XML5: "Tag attribute name after state".
 $Action->[AFTER_ATTRIBUTE_NAME_STATE]->[KEY_SPACE_CHAR] = {
@@ -1107,10 +1107,16 @@ $Action->[DOCTYPE_MD_STATE]->[KEY_SPACE_CHAR] = {
   name => 'md: before - space',
   state => BEFORE_MD_NAME_STATE, ## XML5: [NOTATION] Switch to the "DOCTYPE NOTATION identifier state"
 };
+$Action->[DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE]->[KEY_SPACE_CHAR] = {
+  name => '!entity %',
+  ct => {set_type => PARAMETER_ENTITY_TOKEN},
+  state => BEFORE_MD_NAME_STATE, ## XML5: Switch to the "DOCTYPE ENTITY parameter state".
+};
 $Action->[BEFORE_MD_NAME_STATE]->[KEY_SPACE_CHAR] = {
   name => 'md: before name - space',
 };
 $Action->[DOCTYPE_MD_STATE]->[0x003E] = ## XML5: Switch to the "DOCTYPE bogus comment state"
+$Action->[DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE]->[0x003E] = ## XML5: Same as "Anything else"
 $Action->[BEFORE_MD_NAME_STATE]->[0x003E] = { ## XML5: Same as KEY_ELSE_CHAR
   name => 'md before name - >',
   ignore_in_pe => 1,
@@ -1118,6 +1124,7 @@ $Action->[BEFORE_MD_NAME_STATE]->[0x003E] = { ## XML5: Same as KEY_ELSE_CHAR
   state => DOCTYPE_INTERNAL_SUBSET_STATE,
 };
 $Action->[DOCTYPE_MD_STATE]->[KEY_EOF_CHAR] =
+$Action->[DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE]->[KEY_EOF_CHAR] =
 $Action->[BEFORE_MD_NAME_STATE]->[KEY_EOF_CHAR] = {
   name => 'md before name - EOF',
   end_in_pe => 1,
@@ -1125,7 +1132,13 @@ $Action->[BEFORE_MD_NAME_STATE]->[KEY_EOF_CHAR] = {
   state => DOCTYPE_INTERNAL_SUBSET_STATE, ## XML5: "Data state"
   reconsume => 1,
 };
-$Action->[DOCTYPE_MD_STATE]->[0x0025] = ## Not in XML5
+$Action->[DOCTYPE_MD_STATE]->[0x0025] = { ## Not in XML5
+  name => 'md before - %',
+  prev_state => BEFORE_MD_NAME_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE]->[0x0025] = ## Not in XML5
 $Action->[BEFORE_MD_NAME_STATE]->[0x0025] = { ## Not in XML5
   name => 'md: before name - %',
   preserve_state => 1,
@@ -1138,6 +1151,13 @@ $Action->[DOCTYPE_MD_STATE]->[KEY_ELSE_CHAR] = { ## XML5: Switch to the "DOCTYPE
   state => BEFORE_MD_NAME_STATE,
   reconsume => 1,
 };
+$Action->[DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE]->[KEY_ELSE_CHAR] = {
+  name => '!entity % - else',
+  error => 'no space after ENTITY percent', # XXXdoc
+  state => BOGUS_COMMENT_STATE,
+  reconsume => 1,
+  ct => {type => COMMENT_TOKEN, data => ''},
+};
 $Action->[BEFORE_MD_NAME_STATE]->[0x0000] = { ## XML5: Not defined for ATTLIST
   name => 'md: before name - NULL',
   error => 'NULL',
@@ -1149,6 +1169,397 @@ $Action->[BEFORE_MD_NAME_STATE]->[KEY_ELSE_CHAR] = { ## XML5: Not defined for AT
   ct => {append_name => 0x0000},
   state => MD_NAME_STATE,
 };
+
+$Action->[MD_NAME_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'md name - space',
+  state => AFTER_DOCTYPE_NAME_STATE,
+};
+$Action->[MD_NAME_STATE]->[0x003E] = { # >
+  name => 'md name - >',
+  ignore_in_pe => 1,
+  error => 'no md def', # XXXdoc
+  error_unless_ct_type => ATTLIST_TOKEN,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[MD_NAME_STATE]->[KEY_EOF_CHAR] = {
+  name => 'md name - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc ## XML5: [ATTLIST] No parse error.
+  state => DOCTYPE_INTERNAL_SUBSET_STATE, ## XML5: "Data state"
+  reconsume => 1,
+};
+$Action->[MD_NAME_STATE]->[0x0000] = { ## XML5: Not defined for ATTLIST
+  name => 'md name - NULL',
+  error => 'NULL',
+  ct => {append_name => 0xFFFD},
+};
+$Action->[MD_NAME_STATE]->[KEY_ELSE_CHAR] = { ## XML5: Not defined for ATTLIST
+  name => 'md name - else',
+  ct => {append_name => 0x0000},
+};
+$Action->[MD_NAME_STATE]->[0x0025] = { ## Not in XML5
+  name => 'md name - %',
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+
+$Action->[DOCTYPE_ATTLIST_NAME_AFTER_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'attlist name after - space',
+};
+$Action->[DOCTYPE_ATTLIST_NAME_AFTER_STATE]->[0x003E] = { # >
+  name => 'attlist name after - >',
+  ignore_in_pe => 1,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[DOCTYPE_ATTLIST_NAME_AFTER_STATE]->[KEY_EOF_CHAR] = {
+  name => 'attlist name after - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc ## XML5: No parse error.
+  state => DOCTYPE_INTERNAL_SUBSET_STATE, ## XML5: "Data state"
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[DOCTYPE_ATTLIST_NAME_AFTER_STATE]->[0x0000] = { ## XML5: Not defined
+  name => 'attlist name after - NULL',
+  error => 'NULL',
+  ca => {set_name => 0xFFFD},
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_NAME_AFTER_STATE]->[KEY_ELSE_CHAR] = { ## XML5: Not defined
+  name => 'attlist name after - else',
+  ca => {set_name => 0x0000, tokens => []},
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_NAME_AFTER_STATE]->[0x0025] = { ## Not in XML5
+  name => 'attlist name after - %',
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'attlist attr name - space',
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'attlist attr name after - space',
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE]->[0x003E] = # >
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE]->[0x003E] = {
+  name => 'attlist attr name - >', ## XML5: Same as "anything else"
+  ignore_in_pe => 1,
+  error => 'no attr type', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE]->[0x0028] = { # (
+  name => 'attlist attr name - (', ## XML5: Same as "anything else"
+  error => 'no space before paren', # XXXdoc
+  state => BEFORE_ALLOWED_TOKEN_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE]->[0x0028] = { # (
+  name => 'attlist attr name after - (', ## XML5: Same as "anything else"
+  state => BEFORE_ALLOWED_TOKEN_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE]->[KEY_EOF_CHAR] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE]->[KEY_EOF_CHAR] = {
+  name => 'attlist attr name - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc ## XML5: No parse error.
+  state => DOCTYPE_INTERNAL_SUBSET_STATE, ## XML5: "Data state"
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE]->[0x0000] = { ## XML5: Not defined
+  name => 'attlist attr name - NULL',
+  error => 'NULL',
+  ca => {append_name => 0xFFFD},
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE]->[KEY_ELSE_CHAR] = { ## XML5: Not defined
+  name => 'attlist attr name - else',
+  ca => {append_name => 0x0000},
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'attlist attr name after - else', ## XML5: Not defined
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE,
+  ca => {set_type => 0x0000},
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE]->[0x0025] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE]->[0x0025] = {
+  name => 'attlist attr name - %', ## Not in XML5
+  prev_state => DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'attlist attr type - space',
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE,
+};
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'after allowed tokens - space',
+  state => BEFORE_ATTR_DEFAULT_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[KEY_SPACE_CHAR] =
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[KEY_SPACE_CHAR] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'attr default - space',
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'attr decl before - space',
+  error => 'no default type', # XXXdoc ## XML5: No parse error.
+  state => BOGUS_MD_STATE,
+  reconsume => 1,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'attr decl - space',
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[0x0023] = # #
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[0x0023] = { # #
+  name => 'attlist attr type - #', ## XML5: Same as "anything else".
+  error => 'no space before default value', # XXXdoc
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[0x0023] = # #
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[0x0023] = { # #
+  name => 'before attr default - #',
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[0x0022] = # "
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[0x0022] = # "
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE]->[0x0022] = { # "
+  name => 'attlist - "', ## XML5 [attr type]: Same as "anything else"
+  error => 'no space before default value', # XXXdoc
+  state => ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[0x0022] = # "
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[0x0022] = # "
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE]->[0x0022] = # " # XXX parse error??
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE]->[0x0022] = { # "
+  name => 'attlist - "', ## XML5: Same as "anything else"
+  state => ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[0x0027] = # '
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[0x0027] = # '
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE]->[0x0027] = { # '
+  name => "attlist attr type - '", ## XML5: Same as "anything else".
+  error => 'no space before default value', # XXXdoc
+  state => ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[0x0027] = # '
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[0x0027] = # '
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE]->[0x0027] = # ' # XXX parse error??
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE]->[0x0027] = { # '
+  name => "attlist - '", ## XML5: Same as "anything else".
+  state => ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[0x003E] = # >
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[0x003E] = # >
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[0x003E] = # >
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[0x003E] = # >
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE]->[0x003E] = { # >
+  name => 'attlist - >', ## XML5: Same as "anything else".
+  ignore_in_pe => 1,
+  error => 'no attr default', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE]->[0x003E] = # >
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE]->[0x003E] = { # >
+  name => 'attlist attr decl - >', ## XML5: Same as "anything else".
+  ignore_in_pe => 1,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  ca => {leave_def => 1},
+  emit => '',
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[0x0028] = { # (
+  name => 'attlist attr type - (', ## XML5: Same as "anything else"
+  error => 'no space before paren', ## XXXdoc
+  state => BEFORE_ALLOWED_TOKEN_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[0x0028] = { # (
+  name => 'attlist attr type - (', ## XML5: Same as "anything else"
+  state => BEFORE_ALLOWED_TOKEN_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[KEY_EOF_CHAR] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[KEY_EOF_CHAR] =
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[KEY_EOF_CHAR] =
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[KEY_EOF_CHAR] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE]->[KEY_EOF_CHAR] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE]->[KEY_EOF_CHAR] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE]->[KEY_EOF_CHAR] = {
+  name => 'attlist - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc ## XML5: No parse error.
+  state => DOCTYPE_INTERNAL_SUBSET_STATE, ## XML5: "Data state"
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'attlist attr type - else', ## XML5: Not defined.
+  ca => {append_type => 0x0000},
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'attr decl before - else',
+  state => DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE,
+  ca => {set_default => 0x0000},
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'attr decl - else',
+  ca => {append_default => 0x0000},
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[KEY_ELSE_CHAR] =
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[KEY_ELSE_CHAR] =
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'attrlist attr type after - else',
+  error => 'unquoted attr value', # XXXdoc
+  state => ATTRIBUTE_VALUE_UNQUOTED_STATE, ## XML5: Switch to the "DOCTYPE bogus comment state".
+  reconsume => 1,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'attr decl after - else', ## XML5: Not defined
+  state => DOCTYPE_ATTLIST_NAME_AFTER_STATE,
+  ca => {leave_def => 1},
+  fixed_default_state => ATTRIBUTE_VALUE_UNQUOTED_STATE,
+  reconsume => 1,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE]->[0x0025] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE]->[0x0025] = {
+  name => 'attlist attr type - %', ## Not in XML5
+  prev_state => DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[AFTER_ALLOWED_TOKENS_STATE]->[0x0025] =
+$Action->[BEFORE_ATTR_DEFAULT_STATE]->[0x0025] = {
+  name => 'after allowed tokens - %', ## Not in XML5
+  prev_state => BEFORE_ATTR_DEFAULT_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE]->[0x0025] = {
+  name => 'attr decl before - %', ## Not in XML5
+  error => 'no default type', # XXXdoc
+  state => BOGUS_MD_STATE,
+};
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE]->[0x0025] =
+$Action->[DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE]->[0x0025] = {
+  name => 'attr decl - %', ## Not in XML5
+  prev_state => DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[KEY_SPACE_CHAR] =
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'arround allowed token - space',
+};
+$Action->[ALLOWED_TOKEN_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'allowed token - space',
+  state => AFTER_ALLOWED_TOKEN_STATE,
+};
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[0x007C] = { # |
+  name => 'before allowed token - |',
+  error => 'empty allowed token', # XXXdoc
+};
+$Action->[ALLOWED_TOKEN_STATE]->[0x007C] = # |
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[0x007C] = { # |
+  name => 'allowed token - |',
+  state => BEFORE_ALLOWED_TOKEN_STATE,
+};
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[0x0029] = { # )
+  name => 'before allowed token - )',
+  error => 'empty allowed token', # XXXdoc
+  state => AFTER_ALLOWED_TOKENS_STATE,
+};
+$Action->[ALLOWED_TOKEN_STATE]->[0x0029] = # )
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[0x0029] = { # )
+  name => 'allowed token - )',
+  state => AFTER_ALLOWED_TOKENS_STATE,
+};
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[0x003E] = # >
+$Action->[ALLOWED_TOKEN_STATE]->[0x003E] = # >
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[0x003E] = { # >
+  name => 'allowed token - >',
+  ignore_in_pe => 1,
+  error => 'unclosed allowed tokens', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[KEY_EOF_CHAR] =
+$Action->[ALLOWED_TOKEN_STATE]->[KEY_EOF_CHAR] =
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[KEY_EOF_CHAR] = {
+  name => 'allowed token - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc ## XML5: No parse error.
+  state => DOCTYPE_INTERNAL_SUBSET_STATE, ## XML5: "Data state"
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[0x0000] = {
+  name => 'before allowed token - NULL',
+  error => 'NULL',
+  state => ALLOWED_TOKEN_STATE,
+  ca => {set_token => 0xFFFD},
+};
+$Action->[ALLOWED_TOKEN_STATE]->[0x0000] = {
+  name => 'allowed token - NULL',
+  error => 'NULL',
+  ca => {append_token => 0xFFFD},
+};
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[0x0000] = {
+  name => 'after allowed token - NULL',
+  error => 'space in allowed token', # XXXdoc
+  error_delta => 1,
+  error2 => 'NULL',
+  state => ALLOWED_TOKEN_STATE,
+  ca => {append_token_sp => 1, append_token => 0xFFFD},
+};
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'before allowed token - else',
+  state => ALLOWED_TOKEN_STATE,
+  ca => {set_token => 0x0000},
+};
+$Action->[ALLOWED_TOKEN_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'allowed token - else',
+  ca => {append_token => 0x0000},
+};
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'after allowed token - else',
+  error => 'space in allowed token', # XXXdoc
+  error_delta => 1,
+  state => ALLOWED_TOKEN_STATE,
+  ca => {append_token_sp => 1, append_token => 0x0000},
+};
+$Action->[BEFORE_ALLOWED_TOKEN_STATE]->[0x0025] =
+$Action->[ALLOWED_TOKEN_STATE]->[0x0025] =
+$Action->[AFTER_ALLOWED_TOKEN_STATE]->[0x0025] = {
+  name => 'allowed token - %', ## Not in XML5
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+
+$Action->[AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE]->[KEY_SPACE_CHAR] =
+$Action->[AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE]->[KEY_EOF_CHAR] =
+$Action->[AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE]->[0x003E] = {
+  name => 'after attlist attr value quoted - delim',
+  state => DOCTYPE_ATTLIST_NAME_AFTER_STATE,
+  reconsume => 1,
+};
+$Action->[AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'after attlist attr value quoted - else',
+  state => DOCTYPE_ATTLIST_NAME_AFTER_STATE,
+  error => 'no space before attr name',
+  reconsume => 1,
+};
+
+
+# XXXtokenizer
 
 ## This class method can be used to create a custom tokenizer based on
 ## the HTML tokenizer.  The argument to the method must be an
@@ -1230,17 +1641,36 @@ sub _get_next_token ($) {
       }
 
       if (defined $action->{error}) {
-        if ($action->{error_delta}) {
+        if (defined $action->{error_unless_ct_type} and
+            $action->{error_unless_ct_type} == $self->{ct}->{type}) {
+          #
+        } elsif ($action->{error_delta}) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => $action->{error},
                           line => $self->{line_prev},
                           column => $self->{column_prev} - $action->{error_delta} + 1);
         } else {
           $self->{parse_error}->(level => $self->{level}->{must}, type => $action->{error});
         }
-      }
+      } # error
+      if (defined $action->{error2}) {
+        if (defined $action->{error2_unless_ct_type} and
+            $action->{error2_unless_ct_type} == $self->{ct}->{type}) {
+          #
+        } elsif ($action->{error2_delta}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => $action->{error2},
+                          line => $self->{line_prev},
+                          column => $self->{column_prev} - $action->{error2_delta} + 1);
+        } else {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => $action->{error2});
+        }
+      } # error2
 
       if (defined $action->{state}) {
-        $self->{prev_state} = $self->{state} if $action->{preserve_state};
+        if ($action->{preserve_state}) {
+          $self->{prev_state} = $self->{state};
+        } elsif (defined $action->{prev_state}) {
+          $self->{prev_state} = $action->{prev_state};
+        }
         $self->{state} = $action->{state};
         
         if ($self->{state} == ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE or
@@ -1248,6 +1678,18 @@ sub _get_next_token ($) {
           $self->{ca}->{sps} = [];
         } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
           $self->{ca}->{sps} = [[0, 1, $self->{line}, $self->{column}]];
+        } elsif ($self->{state} == AFTER_DOCTYPE_NAME_STATE) {
+          if ($self->{ct}->{type} == ATTLIST_TOKEN) {
+            $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
+          } elsif ($self->{ct}->{type} == ELEMENT_TOKEN) {
+            $self->{state} = AFTER_ELEMENT_NAME_STATE;
+          }
+          ## Otherwise, $self->{ct} is a DOCTYPE, ENTITY, or NOTATION token.
+        }
+        if (defined $action->{fixed_default_state}) {
+          if ($self->{ca}->{default} eq 'FIXED') {
+            $self->{state} = $action->{fixed_default_state};
+          }
         }
         
         if ($action->{state_set}) {
@@ -1268,6 +1710,8 @@ sub _get_next_token ($) {
             $self->{ct}->{line} = $self->{line};
             $self->{ct}->{column} = $self->{column};
           }
+        } elsif (defined $act->{set_type}) {
+          $self->{ct}->{type} = $act->{set_type};
         }
         
         if (defined $act->{append_tag_name}) {
@@ -1281,26 +1725,45 @@ sub _get_next_token ($) {
       if (my $aca = $action->{ca}) {
         if ($aca->{value}) {
           $self->{ca}->{value} .= $aca->{value} ne '1' ? $aca->{value} : chr $nc;
-        } elsif (defined $aca->{name}) {
-          $self->{ca}->{name} .= chr ($nc + $aca->{name});
+        } elsif (defined $aca->{append_name}) {
+          $self->{ca}->{name} .= chr ($nc + $aca->{append_name});
         } elsif (defined $aca->{set_name}) {
           $self->{ca} = {
             name => chr ($nc + $aca->{set_name}),
             value => '',
             line => $self->{line}, column => $self->{column},
           };
+        } elsif (defined $aca->{append_type}) {
+          $self->{ca}->{type} .= chr ($nc + $aca->{append_type});
+        } elsif (defined $aca->{set_type}) {
+          $self->{ca}->{type} = chr ($nc + $aca->{set_type});
+        } elsif (defined $aca->{set_token}) {
+          push @{$self->{ca}->{tokens} ||= []}, chr ($nc + $aca->{set_token});
+        } elsif (defined $aca->{append_token}) {
+          $self->{ca}->{tokens}->[-1] .= ' ' if $aca->{append_token_sp};
+          $self->{ca}->{tokens}->[-1] .= chr ($nc + $aca->{append_token});
+        } elsif (defined $aca->{set_default}) {
+          $self->{ca}->{default} = chr ($nc + $aca->{set_default});
+        } elsif (defined $aca->{append_default}) {
+          $self->{ca}->{default} .= chr ($nc + $aca->{append_default});
         } elsif ($aca->{leave}) {
           if (exists $self->{ct}->{attributes}->{$self->{ca}->{name}}) {
-            
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'duplicate attribute', text => $self->{ca}->{name}, line => $self->{ca}->{line}, column => $self->{ca}->{column});
             ## Discard $self->{ca}.
           } else {
-            
             $self->{ct}->{attributes}->{$self->{ca}->{name}} = $self->{ca};
             $self->{ca}->{index} = ++$self->{ct}->{last_index};
           }
+        } elsif ($aca->{leave_def}) {
+          if (defined $action->{fixed_default_state} and
+              $self->{ca}->{default} eq 'FIXED') {
+            #
+          } else {
+            push @{$self->{ct}->{attrdefs}}, $self->{ca};
+            ## Discard $self->{ca};
+          }
         }
-      }
+      } # $aca
 
       if (defined $action->{buffer}) {
         $self->{kwd} = '' if $action->{buffer}->{clear};
@@ -1313,17 +1776,11 @@ sub _get_next_token ($) {
       if (defined $action->{emit}) {
         if ($action->{emit} eq '') {
           if ($self->{ct}->{type} == START_TAG_TOKEN) {
-            
             $self->{last_stag_name} = $self->{ct}->{tag_name};
           } elsif ($self->{ct}->{type} == END_TAG_TOKEN) {
             if ($self->{ct}->{attributes}) {
-              
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'end tag attribute');
-            } else {
-              
             }
-          } else {
-            die "$0: $self->{ct}->{type}: Unknown token type";
           }
           
           if ($action->{reconsume}) {
@@ -2452,10 +2909,8 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{state} = DATA_STATE;
         } else {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md def'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
@@ -4692,765 +5147,6 @@ sub _get_next_token ($) {
         $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
         redo A;
       }
-    } elsif ($state == DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE) {
-      if ($is_space->{$nc}) {
-        ## XML5: Switch to the "DOCTYPE ENTITY parameter state".
-        $self->{ct}->{type} = PARAMETER_ENTITY_TOKEN;
-        $self->{state} = BEFORE_MD_NAME_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "Anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md name'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md');
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        ## Reconsume.
-        redo A;
-      } else {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space after ENTITY percent'); ## TODO: type
-        $self->{state} = BOGUS_COMMENT_STATE;
-        $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
-        ## Reconsume.
-        redo A;
-      }
-    } elsif ($state == MD_NAME_STATE) {
-      ## XML5: "DOCTYPE ENTITY name state" and "DOCTYPE ATTLIST name state".
-      
-      if ($is_space->{$nc}) {
-        if ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
-        } elsif ($self->{ct}->{type} == ELEMENT_TOKEN) {
-          $self->{state} = AFTER_ELEMENT_NAME_STATE;
-        } else { # ENTITY/NOTATION
-          $self->{state} = AFTER_DOCTYPE_NAME_STATE;
-        }
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        if ($self->{ct}->{type} == ATTLIST_TOKEN) {
-          #
-        } else {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md def'); ## TODO: type
-        }
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ELEMENT/ENTITY/ATTLIST/NOTATION
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: [ATTLIST] No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md');
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        ## Reconsume.
-        redo A;
-      } else {
-        ## XML5: [ATTLIST] Not defined yet.
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        $self->{ct}->{name} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_NAME_AFTER_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        ## Discard the current token.
-        redo A;
-      } else {
-        ## XML5: Not defined yet.
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        $self->{ca} = {name => $nc == 0x0000 ? "\x{FFFD}" : chr $nc, # attrdef
-                       tokens => [],
-                       line => $self->{line}, column => $self->{column}};
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr type'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == 0x0028) { # (
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before paren'); ## TODO: type
-        $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        ## XML5: Not defined yet.
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        $self->{ca}->{name} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr type'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == 0x0028) { # (
-        ## XML5: Same as "anything else".
-        $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the token.
-        redo A;
-      } else {
-        ## XML5: Not defined yet.
-        $self->{ca}->{type} = chr $nc;
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0023) { # #
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0022) { # "
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0027) { # '
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == 0x0028) { # (
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before paren'); ## TODO: type
-        $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the token.
-        redo A;
-      } else {
-        ## XML5: Not defined yet.
-        $self->{ca}->{type} .= chr $nc;
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0028) { # (
-        ## XML5: Same as "anything else".
-        $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0023) { # #
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0022) { # "
-        ## XML5: Same as "anything else".
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0027) { # '
-        ## XML5: Same as "anything else".
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        ## XML5: Switch to the "DOCTYPE bogus comment state".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
-        ## Reconsume.
-        redo A;
-      }
-    } elsif ($state == BEFORE_ALLOWED_TOKEN_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x007C) { # |
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'empty allowed token'); ## TODO: type
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0029) { # )
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'empty allowed token'); ## TODO: type
-        $self->{state} = AFTER_ALLOWED_TOKENS_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed allowed tokens'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        if ($nc == 0x000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        push @{$self->{ca}->{tokens}}, $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
-        $self->{state} = ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == ALLOWED_TOKEN_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = AFTER_ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x007C) { # |
-        $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0029) { # )
-        $self->{state} = AFTER_ALLOWED_TOKENS_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed allowed tokens'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        $self->{ca}->{tokens}->[-1] .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == AFTER_ALLOWED_TOKEN_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x007C) { # |
-        $self->{state} = BEFORE_ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0029) { # )
-        $self->{state} = AFTER_ALLOWED_TOKENS_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed allowed tokens'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'space in allowed token', ## TODO: type
-                        line => $self->{line_prev},
-                        column => $self->{column_prev});
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        $self->{ca}->{tokens}->[-1] .= ' ' . ($nc == 0x0000 ? "\x{FFFD}" : chr $nc);
-        $self->{state} = ALLOWED_TOKEN_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == AFTER_ALLOWED_TOKENS_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = BEFORE_ATTR_DEFAULT_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0023) { # #
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0022) { # "
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0027) { # '
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
-        ## Reconsume.
-        redo A;
-      }
-    } elsif ($state == BEFORE_ATTR_DEFAULT_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0023) { # #
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0022) { # "
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0027) { # '
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unquoted attr value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
-        ## Reconsume.
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE) {
-      if ($is_space->{$nc}) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no default type'); ## TODO: type
-        $self->{state} = BOGUS_MD_STATE;
-        ## Reconsume.
-        redo A;
-      } elsif ($nc == 0x0022) { # "
-        # XXX parse error?
-        ## XML5: Same as "anything else".
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0027) { # '
-        # XXX parse error?
-        ## XML5: Same as "anything else".
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no attr default'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        $self->{ca}->{default} = chr $nc;
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0022) { # "
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0027) { # '
-        ## XML5: Same as "anything else".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before default value'); ## TODO: type
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        ## XML5: Same as "anything else".
-        push @{$self->{ct}->{attrdefs}}, $self->{ca};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        push @{$self->{ct}->{attrdefs}}, $self->{ca};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        $self->{ca}->{default} .= chr $nc;
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_AFTER_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0022) { # "
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0027) { # '
-        $self->{ca}->{value} = '';
-        $self->{ca}->{sps} = [];
-        $self->{state} = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        push @{$self->{ct}->{attrdefs}}, $self->{ca};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        ## XML5: No parse error.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        push @{$self->{ct}->{attrdefs}}, $self->{ca};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state".
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        ## XML5: Not defined yet.
-        if ($self->{ca}->{default} eq 'FIXED') {
-          $self->{ca}->{value} = '';
-          $self->{ca}->{sps} = [];
-          $self->{state} = ATTRIBUTE_VALUE_UNQUOTED_STATE;
-        } else {
-          push @{$self->{ct}->{attrdefs}}, $self->{ca};
-          $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
-        }
-        ## Reconsume.
-        redo A;
-      }
-    } elsif ($state == AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE) {
-      if ($is_space->{$nc} or
-          $nc == EOF_CHAR or
-          $nc == 0x003E) { # >
-        $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
-        ## Reconsume.
-        redo A;
-      } else {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before attr name'); ## TODO: type
-        $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
-        ## Reconsume.
-        redo A;
-      }
     } elsif ($state == NDATA_STATE) {
       ## ASCII case-insensitive
       if ($nc == [
@@ -5467,7 +5163,6 @@ sub _get_next_token ($) {
             0x0074, # t
             NEVER_CHAR, # (a)
           ]->[length $self->{kwd}]) {
-        
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
         
@@ -5478,13 +5173,10 @@ sub _get_next_token ($) {
                ($nc == 0x0041 or # A
                 $nc == 0x0061)) { # a
         if ($self->{kwd} ne 'NDAT' or $nc == 0x0061) { # a
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'NDATA',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 4);
-        } else {
-          
         }
         $self->{state} = AFTER_NDATA_STATE;
         
@@ -5496,11 +5188,11 @@ sub _get_next_token ($) {
                         line => $self->{line_prev},
                         column => $self->{column_prev} + 1
                             - length $self->{kwd});
-        
         $self->{state} = BOGUS_MD_STATE;
         ## Reconsume.
         redo A;
       }
+# XXXtokenizer
     } elsif ($state == AFTER_NDATA_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = BEFORE_NOTATION_NAME_STATE;
@@ -5750,6 +5442,7 @@ sub _get_next_token ($) {
   
         redo A;
       }
+# XXX BEFORE_ELEMENT_CONTENT_STATE
     } elsif ($state == CONTENT_KEYWORD_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = AFTER_MD_DEF_STATE;

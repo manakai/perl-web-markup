@@ -331,7 +331,21 @@ sub _parse_run ($) {
           ## In a markup declaration
           $subparser->{state} = $self->{state};
           $subparser->{ct} = $self->{ct};
+          $subparser->{ca} = $self->{ca};
           $subparser->{in_pe_in_markup_decl} = 1;
+          ## Implied space before parameter entity reference (most
+          ## cases are handled by |prev_state| of action definitions
+          ## in tokenizer).
+          if ($subparser->{state} == MD_NAME_STATE) {
+# XXX
+            $subparser->{state} = AFTER_DOCTYPE_NAME_STATE;
+            if ($subparser->{ct}->{type} == ATTLIST_TOKEN) {
+              $subparser->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
+            } elsif ($subparser->{ct}->{type} == ELEMENT_TOKEN) {
+              $subparser->{state} = AFTER_ELEMENT_NAME_STATE;
+            }
+            ## Otherwise, $subparser->{ct} is a DOCTYPE, ENTITY, or NOTATION token.
+          }
         }
       } else {
         $subparser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
@@ -373,6 +387,32 @@ sub _parse_subparser_done ($$$$) {
         ## In a markup declaration
         $self->{state} = $subparser->{state};
         $self->{ct} = $subparser->{ct};
+        $self->{ca} = $subparser->{ca};
+        ## Emulate state change by implied space after the parameter
+        ## entity reference.
+        if ($self->{state} == MD_NAME_STATE) {
+          $self->{state} = AFTER_DOCTYPE_NAME_STATE;
+          if ($self->{ct}->{type} == ATTLIST_TOKEN) {
+            $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
+          } elsif ($self->{ct}->{type} == ELEMENT_TOKEN) {
+            $self->{state} = AFTER_ELEMENT_NAME_STATE;
+          }
+          ## Otherwise, $self->{ct} is a DOCTYPE, ENTITY, or NOTATION token.
+        } elsif ($self->{state} == DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE) {
+          $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_NAME_AFTER_STATE;
+        } elsif ($self->{state} == DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_STATE) {
+          $self->{state} = DOCTYPE_ATTLIST_ATTRIBUTE_TYPE_AFTER_STATE;
+        } elsif ($self->{state} == ALLOWED_TOKEN_STATE) {
+          $self->{state} = AFTER_ALLOWED_TOKEN_STATE;
+        } elsif ($self->{state} == AFTER_ALLOWED_TOKENS_STATE) {
+          $self->{state} = BEFORE_ATTR_DEFAULT_STATE;
+        } elsif ($self->{state} == DOCTYPE_ATTLIST_ATTRIBUTE_DECLARATION_BEFORE_STATE) {
+          $subparser->{onerror}->(level => 'm',
+                                  type => 'no default type', # XXXdoc
+                                  line => $subparser->{line},
+                                  column => $subparser->{column});
+          $self->{state} = BOGUS_MD_STATE;
+        }
       }
       delete $self->{pe}->{$entdef->{name} . ';'}->{open};
     } else {
@@ -514,18 +554,20 @@ sub _terminate_tree_constructor ($) {
 # XXX marked sections
 # XXX internal param refs between decls
 # XXX param refs in decls and marked section keywords
+# XXX disallow param refs in markup declarations in internal subset
+# XXX param refs in entity values
+# XXX stop processing
+# XXX standalone
 # XXX external parameter entity fetch error
 # XXX entref depth limitation
 # XXX well-formedness of entity decls
 # XXX validation hook for PUBLIC
 # XXX validation hook for URLs in SYSTEM
-# XXX validation hook for entity names
+# XXX validation hook for entity names and notation names
+# XXX validation hooks for elements, attrs, PI targets
 # XXX warn by external ref
 # XXX warn external subset
-# XXX elemsnts in GEref vs script execution, stack of open elements
-# considerations...
-# XXX expose DTD content flag
-# XXX parse error if PI target is "xml"
+# XXX "expose DTD content" flag
 # XXX BOM and encoding sniffing
 
 sub _insert_point ($) {
@@ -859,7 +901,7 @@ sub _construct_tree ($) {
                                 token => $at);
               }
               
-              push @{$node->allowed_tokens}, @{$at->{tokens}};
+              push @{$node->allowed_tokens}, @{$at->{tokens} or []};
               
               my $default = defined $at->{default} ? {
                 FIXED => 1, REQUIRED => 2, IMPLIED => 3,

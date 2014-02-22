@@ -164,6 +164,8 @@ sub BEFORE_MD_NAME_STATE () { 68 }
   ## XML5: "DOCTYPE ENTITY parameter state", "DOCTYPE ENTITY type
   ## before state", "DOCTYPE ATTLIST name before state".
 sub MD_NAME_STATE () { 69 }
+  ## XML5: "DOCTYPE ENTITY name state" and "DOCTYPE ATTLIST name
+  ## state".
 sub DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE () { 70 }
 sub DOCTYPE_ATTLIST_NAME_AFTER_STATE () { 71 }
 sub DOCTYPE_ATTLIST_ATTRIBUTE_NAME_STATE () { 72 }
