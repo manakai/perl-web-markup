@@ -4857,20 +4857,29 @@ sub _get_next_token ($) {
       if ($is_space->{$nc} or
           $nc == 0x003F or # ?
           $nc == EOF_CHAR) {
-        ## XML5: U+003F: "pi state": Same as "Anything else"; "DOCTYPE
-        ## pi state": Switch to the "DOCTYPE pi after state".  EOF:
-        ## "DOCTYPE pi state": Parse error, switch to the "data
-        ## state".
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare pio', ## TODO: type
-                        line => $self->{line_prev},
-                        column => $self->{column_prev} - 1);
-        $self->{state} = BOGUS_COMMENT_STATE;
-        ## Reconsume.
-        $self->{ct} = {type => COMMENT_TOKEN,
-                       data => '?',
-                       line => $self->{line_prev},
-                       column => $self->{column_prev} - 1};
-        redo A;
+        if ($self->{next_state} == ENTITY_ENTITY_VALUE_STATE) {
+          $self->{state} = $self->{next_state};
+          $self->{ct} = $self->{next_ct};
+          push @{$self->{ct}->{sps}}, [length $self->{ct}->{value}, 2, 1, 1];
+          $self->{ct}->{value} .= '<?';
+          ## Reconsume the current input character.
+          redo A;
+        } else {
+          ## XML5: U+003F: "pi state": Same as "Anything else";
+          ## "DOCTYPE pi state": Switch to the "DOCTYPE pi after
+          ## state".  EOF: "DOCTYPE pi state": Parse error, switch to
+          ## the "data state".
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare pio', ## TODO: type
+                          line => $self->{line_prev},
+                          column => $self->{column_prev} - 1);
+          $self->{state} = BOGUS_COMMENT_STATE;
+          ## Reconsume.
+          $self->{ct} = {type => COMMENT_TOKEN,
+                         data => '?',
+                         line => $self->{line_prev},
+                         column => $self->{column_prev} - 1};
+          redo A;
+        }
       } else {
         ## XML5: "DOCTYPE pi state": Stay in the state.
         if ($nc == 0x0000) {
@@ -4905,6 +4914,13 @@ sub _get_next_token ($) {
           if (defined $self->{next_state}) {
             $self->{ct} = $self->{next_ct};
             $self->{state} = $self->{next_state};
+            if ($self->{state} == ENTITY_ENTITY_VALUE_STATE) {
+              push @{$self->{ct}->{sps}},
+                  [length $self->{ct}->{value}, 1 + length $ct->{data}, 1, 1];
+              $self->{ct}->{value} .= '<' . $ct->{data};
+              ## Reconsume the current input character.
+              redo A;
+            }
           } else {
             $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
           }
@@ -4965,6 +4981,13 @@ sub _get_next_token ($) {
           if (defined $self->{next_state}) {
             $self->{ct} = $self->{next_ct};
             $self->{state} = $self->{next_state};
+            if ($self->{state} == ENTITY_ENTITY_VALUE_STATE) {
+              push @{$self->{ct}->{sps}},
+                  [length $self->{ct}->{value}, 1 + length $ct->{data}, 1, 1];
+              $self->{ct}->{value} .= '<' . $ct->{data};
+              ## Reconsume the current input character.
+              redo A;
+            }
           } else {
             $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state"
           }
@@ -5000,6 +5023,19 @@ sub _get_next_token ($) {
           if (defined $self->{next_state}) {
             $self->{ct} = $self->{next_ct};
             $self->{state} = $self->{next_state};
+            if ($self->{state} == ENTITY_ENTITY_VALUE_STATE and
+                not $ct->{target} eq 'xml') {
+              push @{$self->{ct}->{sps}}, [length $self->{ct}->{value}, 0, 1, 1];
+              $self->{ct}->{value} .= '<?' . $ct->{target} .
+                      $self->{kwd} . # "temporary buffer"
+                      $ct->{data} . '?>';
+              $self->{ct}->{sps}->[-1]->[1]
+                  = (length $self->{ct}->{value}) - $self->{ct}->{sps}->[-1]->[0];
+              
+    $self->_set_nc;
+  
+              redo A;
+            }
           } else {
             $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
           }
@@ -5043,6 +5079,19 @@ sub _get_next_token ($) {
           if (defined $self->{next_state}) {
             $self->{ct} = $self->{next_ct};
             $self->{state} = $self->{next_state};
+            if ($self->{state} == ENTITY_ENTITY_VALUE_STATE and
+                not $ct->{target} eq 'xml') {
+              push @{$self->{ct}->{sps}}, [length $self->{ct}->{value}, 0, 1, 1];
+              $self->{ct}->{value} .= '<?' . $ct->{target} .
+                      $self->{kwd} . # "temporary buffer"
+                      $ct->{data} . '?>';
+              $self->{ct}->{sps}->[-1]->[1]
+                  = (length $self->{ct}->{value}) - $self->{ct}->{sps}->[-1]->[0];
+              
+    $self->_set_nc;
+  
+              redo A;
+            }
           } else {
             $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
           }
@@ -5544,8 +5593,13 @@ sub _get_next_token ($) {
         ## Reconsume.
         redo A;
       }
-    } elsif ($state == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE) {
-      if ($nc == 0x0022) { # "
+    } elsif ($state == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE or
+             $state == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE or
+             $state == ENTITY_ENTITY_VALUE_STATE) {
+      my $delim = $state == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE ? 0x0022 :
+                  $state == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE ? 0x0027 :
+                      NEVER_CHAR;
+      if ($nc == $delim) { # " or ' or NEVER_CHAR
         $self->{state} = AFTER_MD_DEF_STATE;
         
     $self->_set_nc;
@@ -5554,16 +5608,26 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0026) { # &
         $self->{prev_state} = $state;
         $self->{state} = ENTITY_VALUE_ENTITY_STATE;
-        $self->{entity_add} = 0x0022; # "
+        $self->{entity_add} = $delim; # " or ' or NEVER_CHAR
         
     $self->_set_nc;
   
         redo A;
-## TODO: %
+      } elsif ($nc == 0x0025) { # %
+        ## XML5: Same as "anything else".
+        $self->{prev_state} = $state;
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
+        
+    $self->_set_nc;
+  
+        redo A;
       } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed entity value'); ## TODO: type
-        return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
-            if $self->{in_pe_in_markup_decl};
+        unless ($state == ENTITY_ENTITY_VALUE_STATE) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed entity value'); ## TODO: type
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
+        }
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         ## Reconsume.
         ## Discard the current token.
@@ -5577,48 +5641,8 @@ sub _get_next_token ($) {
                                      $self->{line}, $self->{column}];
         $self->{ct}->{value} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
         $self->{ct}->{value} .= $self->_read_chars
-            ({"\x00" => 1, "&" => 1, "%" => 1, q<"> => 1});
-        $self->{ct}->{sps}->[-1]->[1]
-            = (length $self->{ct}->{value}) - $self->{ct}->{sps}->[-1]->[0];
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE) {
-      if ($nc == 0x0027) { # '
-        $self->{state} = AFTER_MD_DEF_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x0026) { # &
-        $self->{prev_state} = $state;
-        $self->{state} = ENTITY_VALUE_ENTITY_STATE;
-        $self->{entity_add} = 0x0027; # '
-        
-    $self->_set_nc;
-  
-        redo A;
-## TODO: %
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed entity value'); ## TODO: type
-        return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
-            if $self->{in_pe_in_markup_decl};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        ## Reconsume.
-        ## Discard the current token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        push @{$self->{ct}->{sps}}, [length $self->{ct}->{value},
-                                     0,
-                                     $self->{line}, $self->{column}];
-        $self->{ct}->{value} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
-        $self->{ct}->{value} .= $self->_read_chars
-            ({"\x00" => 1, "&" => 1, "%" => 1, q<'> => 1});
+            ({"\x00" => 1, "&" => 1, "%" => 1,
+              (($delim == NEVER_CHAR) ? () : ((chr $delim) => 1))});
         $self->{ct}->{sps}->[-1]->[1]
             = (length $self->{ct}->{value}) - $self->{ct}->{sps}->[-1]->[0];
         
@@ -5756,8 +5780,15 @@ sub _get_next_token ($) {
         (EOF_CHAR) => 1,
       }->{$nc}) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
-        # XXX within entity value, ...
-        if ($self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+        if ($self->{prev_state} == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE or
+            $self->{prev_state} == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE or
+            $self->{prev_state} == ENTITY_ENTITY_VALUE_STATE) {
+          push @{$self->{ct}->{sps}},
+              [length $self->{ct}->{value}, 1 + length $self->{kwd},
+               $self->{line_prev}, $self->{column_prev} - length $self->{kwd}];
+          $self->{ct}->{value} .= '%' . $self->{kwd};
+          $self->{state} = $self->{prev_state};
+        } elsif ($self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
           $self->{state} = $self->{prev_state};
         } else {
           ## In markup declaration
@@ -5814,7 +5845,6 @@ sub _get_next_token ($) {
         }
 
         $self->{state} = $self->{prev_state};
-        # XXX within entity value, ...
         
     $self->_set_nc;
   
@@ -5878,12 +5908,24 @@ sub _get_next_token ($) {
   
         redo A;
       } else {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare stago',
-                        line => $self->{line_prev},
-                        column => $self->{column_prev});
-        $self->{state} = BOGUS_MD_STATE;
-        ## Reconsume the current input character.
-        redo A;
+        if ($self->{next_state} == ENTITY_ENTITY_VALUE_STATE) {
+          $self->{state} = $self->{next_state};
+          $self->{ct} = $self->{next_ct};
+          if ($self->{state} == ENTITY_ENTITY_VALUE_STATE) {
+            push @{$self->{ct}->{sps}},
+                [length $self->{ct}->{value}, 1, 1, 1];
+            $self->{ct}->{value} .= '<';
+          }
+          ## Reconsume the current input character.
+          redo A;
+        } else {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare stago',
+                          line => $self->{line_prev},
+                          column => $self->{column_prev});
+          $self->{state} = BOGUS_MD_STATE;
+          ## Reconsume the current input character.
+          redo A;
+        }
       }
     } else {
       die "$0: $state: Unknown state";

@@ -288,9 +288,21 @@ sub _parse_run ($) {
       if ($entdef->{external_subset} or
           $entdef->{type} == PARAMETER_ENTITY_TOKEN) {
         $subparser->{$im_key} = IN_SUBSET_IM;
-# XXX in entity value
-        if (defined $self->{prev_state} and
-            not $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+        if (not defined $self->{prev_state}) {
+          #
+        } elsif ($self->{prev_state} == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE or
+                 $self->{prev_state} == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE or
+                 $self->{prev_state} == ENTITY_ENTITY_VALUE_STATE) {
+          ## In an entity value
+          $subparser->{state} = ENTITY_ENTITY_VALUE_STATE;
+          $subparser->{ct} = $self->{ct};
+          if ($im_key eq 'next_im') { ## External entity
+            $subparser->{next_state} = $subparser->{state};
+            $subparser->{next_ct} = $subparser->{ct};
+            $subparser->{state} = EXTERNAL_PARAM_ENTITY_STATE;
+            $subparser->{insertion_mode} = BEFORE_TEXT_DECL_IM;
+          }
+        } elsif (not $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
           ## In a markup declaration
           $subparser->{state} = $self->{state};
           $subparser->{ct} = $self->{ct};
@@ -387,8 +399,14 @@ sub _parse_subparser_done ($$$) {
   my ($self, $subparser, $entdef) = @_;
   if (defined $entdef->{name}) {
     if ($entdef->{type} == PARAMETER_ENTITY_TOKEN) {
-# XXX in entity value
-      unless ($self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+      if (not defined $self->{prev_state}) {
+        #
+      } elsif ($self->{prev_state} == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE or
+               $self->{prev_state} == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE or
+               $self->{prev_state} == ENTITY_ENTITY_VALUE_STATE) {
+        ## In an entity value
+        #
+      } elsif (not $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
         ## In a markup declaration
         $self->{state} = $subparser->{state};
         $self->{ct} = $subparser->{ct};
@@ -577,7 +595,6 @@ sub _terminate_tree_constructor ($) {
 # XXX marked sections
 # XXX param refs and marked section keywords
 # XXX disallow param refs in markup declarations in internal subset
-# XXX param refs in entity values
 # XXX param refs expansion spec
 # XXX stop processing
 # XXX standalone
