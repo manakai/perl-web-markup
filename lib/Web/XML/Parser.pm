@@ -21,6 +21,7 @@ sub BEFORE_ROOT_ELEMENT_IM () { 2 } ## Start phase [XML5]
 sub IN_ELEMENT_IM          () { 3 } ## Main phase [XML5]
 sub AFTER_ROOT_ELEMENT_IM  () { 4 } ## End phase [XML5]
 sub IN_SUBSET_IM           () { 5 } ## Document type phase [DOMDTDEF]
+sub BEFORE_TEXT_DECL_IM    () { 6 } ## Before text declaration phase [DOMDTDEF]
 
 sub parse_char_string ($$$) {
   #my ($self, $string, $document) = @_;
@@ -208,14 +209,7 @@ sub _parse_bytes_start_parsing ($;%) {
   
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
-
-  if (defined $self->{context_element}) {
-    $self->{inner_html_tag_name} = $self->{context_element}->[0]->manakai_tag_name;
-    push @{$self->{open_elements}}, $self->{context_element};
-    $self->{next_im} = IN_ELEMENT_IM;
-  } elsif ($self->{in_subset}) {
-    $self->{next_im} = IN_SUBSET_IM;
-  } # $context
+  $self->{init_subparser}->($self) if $self->{init_subparser};
 
   push @{$self->{chars}}, split //,
       decode $self->{input_encoding}, $self->{byte_buffer}, # XXX Encoding Standard
@@ -288,6 +282,46 @@ sub _parse_run ($) {
     my $entdef = $self->{t}->{entdef};
     # XXX URL resolution
     my $subparser = Web::XML::Parser::SubParser->new_from_parser ($self, $entdef);
+    my $im_key = 'insertion_mode';
+    $subparser->{init_subparser} = sub {
+      my $subparser = $_[0];
+      if ($entdef->{external_subset} or
+          $entdef->{type} == PARAMETER_ENTITY_TOKEN) {
+        $subparser->{$im_key} = IN_SUBSET_IM;
+# XXX in entity value
+        if (defined $self->{prev_state} and
+            not $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+          ## In a markup declaration
+          $subparser->{state} = $self->{state};
+          $subparser->{ct} = $self->{ct};
+          $subparser->{ca} = $self->{ca};
+          $subparser->{in_pe_in_markup_decl} = 1;
+          ## Implied space before parameter entity reference (most
+          ## cases are handled by |prev_state| of action definitions
+          ## in tokenizer).
+          if ($subparser->{state} == MD_NAME_STATE) {
+            $subparser->{state} = AFTER_DOCTYPE_NAME_STATE;
+            if ($subparser->{ct}->{type} == ATTLIST_TOKEN) {
+              $subparser->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
+            } elsif ($subparser->{ct}->{type} == ELEMENT_TOKEN) {
+              $subparser->{state} = AFTER_ELEMENT_NAME_STATE;
+            }
+            ## Otherwise, $subparser->{ct} is a DOCTYPE, ENTITY, or NOTATION token.
+          }
+          if ($im_key eq 'next_im') { ## External entity
+            $subparser->{next_state} = $subparser->{state};
+            $subparser->{next_ct} = $subparser->{ct};
+            $subparser->{state} = EXTERNAL_PARAM_ENTITY_STATE;
+            $subparser->{insertion_mode} = BEFORE_TEXT_DECL_IM;
+          }
+        }
+      } else { ## General entity
+        $subparser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
+        push @{$subparser->{open_elements}}, $self->{open_elements}->[-1];
+        $subparser->{$im_key} = IN_ELEMENT_IM;
+      }
+    }; # init_subparser
+
     if (defined $entdef->{value}) {
       ## Internal entity with "&" and/or "<" in entity value,
       ## referenced from element content.
@@ -302,7 +336,7 @@ sub _parse_run ($) {
         $onerror->(%args);
       });
       $subparser->onparsed (sub {
-        $self->_parse_subparser_done ($_[0], $_[1], $entdef);
+        $self->_parse_subparser_done ($_[0], $entdef);
       });
 
       $subparser->{confident} = 1;
@@ -323,36 +357,7 @@ sub _parse_run ($) {
       $subparser->{is_xml} = 1;
       $subparser->_initialize_tokenizer;
       $subparser->_initialize_tree_constructor; # strict_error_checking (0)
-
-      if ($entdef->{type} == PARAMETER_ENTITY_TOKEN) {
-        $subparser->{insertion_mode} = IN_SUBSET_IM;
-# XXX in entity value
-        unless ($self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
-          ## In a markup declaration
-          $subparser->{state} = $self->{state};
-          $subparser->{ct} = $self->{ct};
-          $subparser->{ca} = $self->{ca};
-          $subparser->{in_pe_in_markup_decl} = 1;
-          ## Implied space before parameter entity reference (most
-          ## cases are handled by |prev_state| of action definitions
-          ## in tokenizer).
-          if ($subparser->{state} == MD_NAME_STATE) {
-# XXX
-            $subparser->{state} = AFTER_DOCTYPE_NAME_STATE;
-            if ($subparser->{ct}->{type} == ATTLIST_TOKEN) {
-              $subparser->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
-            } elsif ($subparser->{ct}->{type} == ELEMENT_TOKEN) {
-              $subparser->{state} = AFTER_ELEMENT_NAME_STATE;
-            }
-            ## Otherwise, $subparser->{ct} is a DOCTYPE, ENTITY, or NOTATION token.
-          }
-        }
-      } else {
-        $subparser->{inner_html_tag_name} = $self->{open_elements}->[-1]->[1];
-        push @{$subparser->{open_elements}}, $self->{open_elements}->[-1];
-        $subparser->{insertion_mode} = IN_ELEMENT_IM;
-      }
-
+      $subparser->{init_subparser}->($subparser);
       $subparser->{sps_transformer} = sub {
         my $token = $_[0];
         lc_lc_mapper_for_sps $map_parsed => $map_source, $token->{sps}
@@ -362,6 +367,7 @@ sub _parse_run ($) {
       $subparser->_parse_run;
     } else {
       ## An external entity
+      $im_key = 'next_im';
       my $onerror = $self->onerror;
       $subparser->onerror (sub {
         my %args = @_;
@@ -370,16 +376,15 @@ sub _parse_run ($) {
       });
       # XXX sps_transformer to set default |di|
       $subparser->onparsed (sub {
-        $self->_parse_subparser_done ($_[0], $_[1], $entdef);
+        $self->_parse_subparser_done ($_[0], $entdef);
       });
       $self->onextentref->($self, $self->{t}, $subparser);
-# XXX parameter entity in markup declaration
     }
   }
 } # _parse_run
 
-sub _parse_subparser_done ($$$$) {
-  my ($self, $subparser, $node, $entdef) = @_;
+sub _parse_subparser_done ($$$) {
+  my ($self, $subparser, $entdef) = @_;
   if (defined $entdef->{name}) {
     if ($entdef->{type} == PARAMETER_ENTITY_TOKEN) {
 # XXX in entity value
@@ -468,8 +473,7 @@ sub _parse_subparser_done ($$$$) {
     } else { ## General entity
       $self->{ge} = $main_parser->{ge};
       $self->{ge}->{$xe->{name} . ';'}->{open} = 1;
-      $self->{context_element} = $main_parser->{open_elements}->[-1];
-      $self->{invoked_by_geref} = 1; # XXX replace by context_elemenet ??
+      $self->{invoked_by_geref} = 1;
     }
     $self->onextentref ($main_parser->onextentref);
     return $self;
@@ -482,7 +486,7 @@ sub _stop_parsing ($) {
 } # _stop_parsing
 
 sub _on_terminate ($) {
-  $_[0]->onparsed->($_[0], $_[0]->{context_element} ? $_[0]->{document}->document_element : $_[0]->{document});
+  $_[0]->onparsed->($_[0]);
   $_[0]->_terminate_tree_constructor;
   $_[0]->_clear_refs;
 } # _on_terminate
@@ -572,7 +576,6 @@ sub _terminate_tree_constructor ($) {
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
 # XXX marked sections
 # XXX param refs and marked section keywords
-# XXX external param refs in markup decls and sections
 # XXX disallow param refs in markup declarations in internal subset
 # XXX param refs in entity values
 # XXX param refs expansion spec
@@ -585,6 +588,7 @@ sub _terminate_tree_constructor ($) {
 # XXX validation hook for URLs in SYSTEM
 # XXX validation hook for entity names and notation names
 # XXX validation hooks for elements, attrs, PI targets
+# XXX text declaration validation
 # XXX warn by external ref
 # XXX warn external subset
 # XXX "expose DTD content" flag
@@ -1613,6 +1617,32 @@ sub _construct_tree ($) {
         ## Anything other than XML or text declaration.
         $self->{insertion_mode} = $self->{next_im};
         ## Reconsume the token
+        redo B;
+      }
+
+    } elsif ($self->{insertion_mode} == BEFORE_TEXT_DECL_IM) {
+      ## Not in XML5.
+      if ($self->{t}->{type} == PI_TOKEN) {
+        if ($self->{t}->{target} eq 'xml') {
+          # XXX text decl validation
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        } else {
+          ## Ignore the token.
+          $self->{parse_error}->(level => 'm',
+                                 type => 'pi in pe in decl'); # XXXdoc
+          $self->{state} = BOGUS_MD_STATE;
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        }
+      } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
+        ## Ignore the token.
+        $self->{state} = BOGUS_MD_STATE;
+        $self->{t} = $self->_get_next_token;
+        redo B;
+      } else {
+        $self->{insertion_mode} = IN_SUBSET_IM;
+        ## Reconsume the token.
         redo B;
       }
     } else {

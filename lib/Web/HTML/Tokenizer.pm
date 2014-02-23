@@ -2523,8 +2523,14 @@ sub _get_next_token ($) {
       
       if ($nc == 0x003E and # >
           not $self->{in_pe_in_markup_decl}) {
+        my $ct = $self->{ct};
         if ($self->{in_subset}) {
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if (defined $self->{next_state}) {
+            $self->{ct} = $self->{next_ct};
+            $self->{state} = $self->{next_state};
+          } else {
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         } else {
           $self->{state} = DATA_STATE;
         }
@@ -2532,19 +2538,25 @@ sub _get_next_token ($) {
     $self->_set_nc;
   
 
-        return  ($self->{ct}); # comment
+        return  ($ct); # comment
         redo A;
       } elsif ($nc == EOF_CHAR) {
+        my $ct = $self->{ct};
         if ($self->{in_subset}) {
-          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
-              if $self->{in_pe_in_markup_decl};
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if (defined $self->{next_state}) {
+            $self->{ct} = $self->{next_ct};
+            $self->{state} = $self->{next_state};
+          } else {
+            return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+                if $self->{in_pe_in_markup_decl};
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         } else {
           $self->{state} = DATA_STATE;
         }
         ## reconsume
 
-        return  ($self->{ct}); # comment
+        return  ($ct); # comment
         redo A;
       } elsif ($nc == 0x0000) {
         $self->{ct}->{data} .= "\x{FFFD}"; # comment
@@ -4885,16 +4897,22 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no pic'); ## TODO: type
+        my $ct = {type => COMMENT_TOKEN,
+                  data => '?' . $self->{ct}->{target},
+                  line => $self->{ct}->{line},
+                  column => $self->{ct}->{column}};
         if ($self->{in_subset}) {
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if (defined $self->{next_state}) {
+            $self->{ct} = $self->{next_ct};
+            $self->{state} = $self->{next_state};
+          } else {
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         } else {
           $self->{state} = DATA_STATE;
         }
         ## Reconsume.
-        return  ({type => COMMENT_TOKEN,
-                  data => '?' . $self->{ct}->{target},
-                  line => $self->{ct}->{line},
-                  column => $self->{ct}->{column}});
+        return  ($ct);
         redo A;
       } elsif ($nc == 0x003F) { # ?
         $self->{state} = PI_AFTER_STATE;
@@ -4937,18 +4955,24 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no pic'); ## TODO: type
-        if ($self->{in_subset}) {
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state"
-        } else {
-          $self->{state} = DATA_STATE;
-        }
-        ## Reprocess.
-        return  ({type => COMMENT_TOKEN,
+        my $ct = {type => COMMENT_TOKEN,
                   data => '?' . $self->{ct}->{target} .
                       $self->{kwd} . # "temporary buffer"
                       $self->{ct}->{data},
                   line => $self->{ct}->{line},
-                  column => $self->{ct}->{column}});
+                  column => $self->{ct}->{column}};
+        if ($self->{in_subset}) {
+          if (defined $self->{next_state}) {
+            $self->{ct} = $self->{next_ct};
+            $self->{state} = $self->{next_state};
+          } else {
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE; ## XML5: "Data state"
+          }
+        } else {
+          $self->{state} = DATA_STATE;
+        }
+        ## Reprocess.
+        return  ($ct);
         redo A;
       } else {
         if ($nc == 0x0000) {
@@ -4971,15 +4995,21 @@ sub _get_next_token ($) {
       ## XML5: Part of "Pi after state".
 
       if ($nc == 0x003E) { # >
+        my $ct = $self->{ct};
         if ($self->{in_subset}) {
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if (defined $self->{next_state}) {
+            $self->{ct} = $self->{next_ct};
+            $self->{state} = $self->{next_state};
+          } else {
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         } else {
           $self->{state} = DATA_STATE;
         }
         
     $self->_set_nc;
   
-        return  ($self->{ct}); # pi
+        return  ($ct); # pi
         redo A;
       } elsif ($nc == 0x003F) { # ?
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no s after target', ## TODO: type
@@ -5008,8 +5038,14 @@ sub _get_next_token ($) {
       ## XML5: Same as "pi after state" and "DOCTYPE pi after state".
 
       if ($nc == 0x003E) { # >
+        my $ct = $self->{ct};
         if ($self->{in_subset}) {
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if (defined $self->{next_state}) {
+            $self->{ct} = $self->{next_ct};
+            $self->{state} = $self->{next_state};
+          } else {
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         } else {
           $self->{state} = DATA_STATE;
         }
@@ -5022,7 +5058,7 @@ sub _get_next_token ($) {
         $self->{line_prev} = $self->{line};
         $self->{column_prev} = $self->{column};
         $self->{column}++;
-        return  ($self->{ct}); # pi
+        return  ($ct); # pi
         redo A;
       } elsif ($nc == 0x003F) { # ?
         $self->{ct}->{data} .= '?';
@@ -5721,7 +5757,12 @@ sub _get_next_token ($) {
       }->{$nc}) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
         # XXX within entity value, ...
-        $self->{state} = BOGUS_MD_STATE;
+        if ($self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+          $self->{state} = $self->{prev_state};
+        } else {
+          ## In markup declaration
+          $self->{state} = BOGUS_MD_STATE;
+        }
         ## Reconsume the current input character.
         redo A;
       } elsif ($nc == 0x003B) { # ;
@@ -5814,11 +5855,40 @@ sub _get_next_token ($) {
         ## Reconsume the current input character.
         redo A;
       }
+    } elsif ($state == EXTERNAL_PARAM_ENTITY_STATE) {
+      ## Not in XML5
+      if ($nc == 0x003C) { # <
+        $self->{state} = EXTERNAL_PARAM_ENTITY_TAG_STATE;
+        
+    $self->_set_nc;
+  
+        redo A;
+      } else {
+        $self->{ct} = $self->{next_ct};
+        $self->{state} = $self->{next_state};
+        ## Reconsume the current input character.
+        redo A;
+      }
+    } elsif ($state == EXTERNAL_PARAM_ENTITY_TAG_STATE) {
+      ## Not in XML5
+      if ($nc == 0x003F) { # ?
+        $self->{state} = PI_STATE;
+        
+    $self->_set_nc;
+  
+        redo A;
+      } else {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'bare stago',
+                        line => $self->{line_prev},
+                        column => $self->{column_prev});
+        $self->{state} = BOGUS_MD_STATE;
+        ## Reconsume the current input character.
+        redo A;
+      }
     } else {
       die "$0: $state: Unknown state";
     }
-  } # A   
-
+  } # A
   die "$0: _get_next_token: unexpected case";
 } # _get_next_token
 
