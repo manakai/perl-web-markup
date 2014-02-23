@@ -418,6 +418,10 @@ sub _parse_subparser_done ($$$$) {
           $self->{state} = BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
         } elsif ($self->{state} == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE) {
           $self->{state} = BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
+        } elsif ($self->{state} == CONTENT_KEYWORD_STATE) {
+          $self->{state} = AFTER_MD_DEF_STATE;
+        } elsif ($self->{state} == CM_ELEMENT_NAME_STATE) {
+          $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
         } elsif ($self->{state} == DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE or
                  $self->{state} == DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE or
                  $self->{state} == DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE or
@@ -567,10 +571,11 @@ sub _terminate_tree_constructor ($) {
 # XXX external entity for character entities
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
 # XXX marked sections
-# XXX internal param refs between decls
-# XXX param refs in decls and marked section keywords
+# XXX param refs and marked section keywords
+# XXX external param refs in markup decls and sections
 # XXX disallow param refs in markup declarations in internal subset
 # XXX param refs in entity values
+# XXX param refs expansion spec
 # XXX stop processing
 # XXX standalone
 # XXX external parameter entity fetch error
@@ -583,6 +588,9 @@ sub _terminate_tree_constructor ($) {
 # XXX warn by external ref
 # XXX warn external subset
 # XXX "expose DTD content" flag
+# XXX content model data structure
+# XXX content model wfness validations and warnings
+# XXX content model parsing spec
 # XXX BOM and encoding sniffing
 
 sub _insert_point ($) {

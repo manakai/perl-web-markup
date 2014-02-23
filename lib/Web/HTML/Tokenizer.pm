@@ -1768,7 +1768,26 @@ $Action->[AFTER_CM_ELEMENT_NAME_STATE]->[KEY_ELSE_CHAR] = {
   error => 'after element name', # XXXdoc
   state => BOGUS_MD_STATE,
 };
-# XXX 0x0025 AFTER_ELEMENT_NAME_STATE CONTENT_KEYWORD_STATE AFTER_CM_GROUP_OPEN_STATE CM_ELEMENT_NAME_STATE AFTER_CM_ELEMENT_NAME_STATE
+$Action->[AFTER_ELEMENT_NAME_STATE]->[0x0025] = # %
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[0x0025] = # %
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[0x0025] = { # %
+  name => 'content model - %', ## Not in XML5
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[CONTENT_KEYWORD_STATE]->[0x0025] = { # %
+  name => 'content keyword - %', ## Not in XML5
+  prev_state => AFTER_MD_DEF_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[CM_ELEMENT_NAME_STATE]->[0x0025] = { # %
+  name => 'cm el name - %', ## Not in XML5
+  prev_state => AFTER_CM_ELEMENT_NAME_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
 
 $Action->[AFTER_MD_DEF_STATE]->[KEY_SPACE_CHAR] = {
   name => 'after md def - space',
@@ -5641,8 +5660,14 @@ sub _get_next_token ($) {
           redo A;
         }
       } elsif ($nc == 0x003E) { # >
-# XXXmd
-        if ($self->{ct}->{_group_depth}) {
+        if ($self->{in_pe_in_markup_decl}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md'); # XXXdoc
+          $self->{state} = BOGUS_MD_STATE;
+          
+    $self->_set_nc;
+  
+          redo A;
+        } elsif ($self->{ct}->{_group_depth}) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed cm group'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
           
@@ -5658,15 +5683,24 @@ sub _get_next_token ($) {
           redo A;
         }
       } elsif ($nc == EOF_CHAR) {
+        return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+            if $self->{in_pe_in_markup_decl};
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-# XXXmd
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         
     $self->_set_nc;
   
         ## Discard the current token.
         redo A;
-# XXX %
+      } elsif ($nc == 0x0025) { # %
+        ## XML5: Not defined yet.
+        $self->{prev_state} = $state;
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
+        
+    $self->_set_nc;
+  
+        redo A;
       } else {
         if ($self->{ct}->{_group_depth}) {
           $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
