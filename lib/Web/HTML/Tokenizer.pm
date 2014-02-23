@@ -1133,14 +1133,19 @@ $Action->[BEFORE_MD_NAME_STATE]->[KEY_EOF_CHAR] = {
   reconsume => 1,
 };
 $Action->[DOCTYPE_MD_STATE]->[0x0025] = { ## Not in XML5
-  name => 'md before - %',
-  prev_state => BEFORE_MD_NAME_STATE,
-  state => PARAMETER_ENTITY_NAME_STATE,
+  name => 'doctype md - %',
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_DECL_OR_NAME_STATE,
   buffer => {clear => 1},
 };
-$Action->[DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE]->[0x0025] = ## Not in XML5
 $Action->[BEFORE_MD_NAME_STATE]->[0x0025] = { ## Not in XML5
-  name => 'md: before name - %',
+  name => 'before md name - %',
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_DECL_OR_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE]->[0x0025] = { ## Not in XML5
+  name => 'entity param before - %',
   preserve_state => 1,
   state => PARAMETER_ENTITY_NAME_STATE,
   buffer => {clear => 1},
@@ -1558,7 +1563,127 @@ $Action->[AFTER_ATTLIST_ATTR_VALUE_QUOTED_STATE]->[KEY_ELSE_CHAR] = {
   reconsume => 1,
 };
 
+$Action->[AFTER_NDATA_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'after ndata - space',
+  state => BEFORE_NOTATION_NAME_STATE,
+};
+$Action->[BEFORE_NOTATION_NAME_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'before notation name - space',
+};
+$Action->[NOTATION_NAME_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'notation name - space',
+  state => AFTER_MD_DEF_STATE,
+};
+$Action->[AFTER_NDATA_STATE]->[0x003E] = # >
+$Action->[BEFORE_NOTATION_NAME_STATE]->[0x003E] = { # >
+  name => 'ndata - >',
+  ignore_in_pe => 1,
+  error => 'no notation name', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[NOTATION_NAME_STATE]->[0x003E] = { # >
+  name => 'notation name - >',
+  ignore_in_pe => 1,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[AFTER_NDATA_STATE]->[KEY_EOF_CHAR] =
+$Action->[BEFORE_NOTATION_NAME_STATE]->[KEY_EOF_CHAR] =
+$Action->[NOTATION_NAME_STATE]->[KEY_EOF_CHAR] = {
+  name => 'ndata - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[BEFORE_NOTATION_NAME_STATE]->[0x0000] = {
+  name => 'before notation name - NULL',
+  error => 'NULL',
+  state => NOTATION_NAME_STATE,
+  ct => {set_notation => 0xFFFD},
+};
+$Action->[NOTATION_NAME_STATE]->[0x0000] = {
+  name => 'notation name - NULL',
+  error => 'NULL',
+  ct => {append_notation => 0xFFFD},
+};
+$Action->[AFTER_NDATA_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'after ndata - else',
+  error => 'no space after keyword', # XXXdoc
+  state => BOGUS_MD_STATE,
+  reconsume => 1,
+};
+$Action->[BEFORE_NOTATION_NAME_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'before notation name - else',
+  state => NOTATION_NAME_STATE,
+  ct => {set_notation => 0x0000},
+};
+$Action->[NOTATION_NAME_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'notation name - else',
+  ct => {append_notation => 0x0000},
+};
+$Action->[AFTER_NDATA_STATE]->[0x0025] = # %
+$Action->[BEFORE_NOTATION_NAME_STATE]->[0x0025] = { # %
+  name => 'ndata - %', ## Not in XML5
+  prev_state => BEFORE_NOTATION_NAME_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[NOTATION_NAME_STATE]->[0x0025] = { # %
+  name => 'notation name - %', ## Not in XML5
+  prev_state => AFTER_MD_DEF_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
 
+$Action->[AFTER_MD_DEF_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'after md def - space',
+};
+$Action->[AFTER_MD_DEF_STATE]->[0x003E] = { # >
+  name => 'after md def - >',
+  ignore_in_pe => 1,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[AFTER_MD_DEF_STATE]->[KEY_EOF_CHAR] = {
+  name => 'after md def - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[AFTER_MD_DEF_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'after md def - else',
+  error => 'string after md def', # XXXdoc
+  state => BOGUS_MD_STATE,
+};
+$Action->[AFTER_MD_DEF_STATE]->[0x0025] = { # %
+  name => 'after md def - %', ## Not in XML5
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+
+$Action->[BOGUS_MD_STATE]->[0x003E] = { # >
+  name => 'bogus md - >',
+  ignore_in_pe => 1,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  ## Discard the current token.
+};
+$Action->[BOGUS_MD_STATE]->[KEY_EOF_CHAR] = {
+  name => 'bogus md - EOF',
+  end_in_pe => 1,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[BOGUS_MD_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'bogus md - else',
+};
+## Parameter entity references are ignored in |BOGUS_MD_STATE|.
 # XXXtokenizer
 
 ## This class method can be used to create a custom tokenizer based on
@@ -1712,6 +1837,10 @@ sub _get_next_token ($) {
           }
         } elsif (defined $act->{set_type}) {
           $self->{ct}->{type} = $act->{set_type};
+        } elsif (defined $act->{append_notation}) {
+          $self->{ct}->{notation} .= chr ($nc + $act->{append_notation});
+        } elsif (defined $act->{set_notation}) {
+          $self->{ct}->{notation} = chr ($nc + $act->{set_notation});
         }
         
         if (defined $act->{append_tag_name}) {
@@ -2900,8 +3029,9 @@ sub _get_next_token ($) {
       ## XML5: Corresponding to XML5's "DOCTYPE root name after
       ## state", but implemented differently.
 
+      ## Also used for XML5 ENTITY and NOTATION states.
+
       if ($is_space->{$nc}) {
-        
         ## Stay in the state
         
     $self->_set_nc;
@@ -2911,8 +3041,14 @@ sub _get_next_token ($) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
           $self->{state} = DATA_STATE;
         } else {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md def'); ## TODO: type
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if ($self->{in_pe_in_markup_decl}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+            $self->{state} = BOGUS_COMMENT_STATE;
+            $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+          } else {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'no md def'); ## TODO: type
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         }
         
         
@@ -2920,14 +3056,14 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
-      } elsif ($nc == -1) {
+      } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
@@ -2937,7 +3073,6 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0050 or # P
                $nc == 0x0070) { # p
-        
         $self->{state} = PUBLIC_STATE;
         $self->{kwd} = chr $nc;
         
@@ -2946,7 +3081,6 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0053 or # S
                $nc == 0x0073) { # s
-        
         $self->{state} = SYSTEM_STATE;
         $self->{kwd} = chr $nc;
         
@@ -2956,7 +3090,6 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0022 and # "
                ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN or
                 $self->{ct}->{type} == PARAMETER_ENTITY_TOKEN)) {
-        
         $self->{state} = DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE;
         $self->{ct}->{value} = ''; # ENTITY
         $self->{ct}->{sps} = [];
@@ -2967,7 +3100,6 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x0027 and # '
                ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN or
                 $self->{ct}->{type} == PARAMETER_ENTITY_TOKEN)) {
-        
         $self->{state} = DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE;
         $self->{ct}->{value} = ''; # ENTITY
         $self->{ct}->{sps} = [];
@@ -2978,7 +3110,6 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = {internal => 1};
@@ -2987,15 +3118,23 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE
         redo A;
+      } elsif (not $self->{ct}->{type} == DOCTYPE_TOKEN and
+               $nc == 0x0025) { # %
+        ## Not in XML5.
+        $self->{prev_state} = $self->{state};
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
+        
+    $self->_set_nc;
+  
+        redo A;
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after DOCTYPE name'); ## TODO: type
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          
           $self->{state} = BOGUS_MD_STATE;
         }
 
@@ -3022,7 +3161,6 @@ sub _get_next_token ($) {
             0x0069, # i
             NEVER_CHAR, # (c)
           ]->[length $self->{kwd}]) {
-        
         ## Stay in the state.
         $self->{kwd} .= chr $nc;
         
@@ -3034,13 +3172,10 @@ sub _get_next_token ($) {
                 $nc == 0x0063)) { # c
         if ($self->{is_xml} and
             ($self->{kwd} ne 'PUBLI' or $nc == 0x0063)) { # c
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'lowercase keyword', ## TODO: type
                           text => 'PUBLIC',
                           line => $self->{line_prev},
                           column => $self->{column_prev} - 4);
-        } else {
-          
         }
         $self->{state} = AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE;
         
@@ -3052,11 +3187,9 @@ sub _get_next_token ($) {
                         line => $self->{line_prev},
                         column => $self->{column_prev} + 1 - length $self->{kwd});
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          
           $self->{state} = BOGUS_MD_STATE;
         }
         ## Reconsume.
@@ -3123,7 +3256,6 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE or
              $state == BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE) {
       if ($is_space->{$nc}) {
-        
         ## Stay in or switch to the state.
         $self->{state} = BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
         
@@ -3132,10 +3264,7 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0022) { # "
         if ($state == AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before pubid literal'); # XXX documentation
-        } else {
-          
         }
         $self->{ct}->{pubid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE;
@@ -3145,10 +3274,7 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0027) { # '
         if ($state == AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before pubid literal'); # XXX documentation
-        } else {
-          
         }
         $self->{ct}->{pubid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE;
@@ -3157,15 +3283,19 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
-        
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if ($self->{in_pe_in_markup_decl}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+            $self->{state} = BOGUS_COMMENT_STATE;
+            $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+          } else {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         }
         
         
@@ -3175,12 +3305,12 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
@@ -3191,7 +3321,6 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
@@ -3201,15 +3330,23 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE
         redo A;
+      } elsif (not $self->{ct}->{type} == DOCTYPE_TOKEN and
+               $nc == 0x0025) { # %
+        ## Not in XML5.
+        $self->{prev_state} = BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
+        
+    $self->_set_nc;
+  
+        redo A;
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after PUBLIC');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          
           $self->{state} = BOGUS_MD_STATE;
         }
 
@@ -3220,22 +3357,25 @@ sub _get_next_token ($) {
       }
     } elsif ($state == DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE) {
       if ($nc == 0x0022) { # "
-        
         $self->{state} = AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
         
     $self->_set_nc;
   
         redo A;
       } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
-
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if ($self->{in_pe_in_markup_decl}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+            $self->{state} = BOGUS_COMMENT_STATE;
+            $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+          } else {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         }
 
         
@@ -3243,15 +3383,15 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
-      } elsif ($nc == -1) {
+      } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
@@ -3267,12 +3407,9 @@ sub _get_next_token ($) {
   
         redo A;
       } else {
-        
         $self->{ct}->{pubid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{pubid} .= $self->_read_chars
             ({"\x00" => 1, q<"> => 1, ">" => 1});
-        #$self->{read_until}->($self->{ct}->{pubid}, qq[\x00">],
-        #                      length $self->{ct}->{pubid});
 
         ## Stay in the state.
         
@@ -3282,22 +3419,25 @@ sub _get_next_token ($) {
       }
     } elsif ($state == DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE) {
       if ($nc == 0x0027) { # '
-        
         $self->{state} = AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
         
     $self->_set_nc;
   
         redo A;
       } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
-
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if ($self->{in_pe_in_markup_decl}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+            $self->{state} = BOGUS_COMMENT_STATE;
+            $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+          } else {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         }
 
         
@@ -3305,15 +3445,15 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
-      } elsif ($nc == -1) {
+      } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
       
@@ -3329,12 +3469,9 @@ sub _get_next_token ($) {
   
         redo A;
       } else {
-        
         $self->{ct}->{pubid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{pubid} .= $self->_read_chars
             ({"\x00" => 1, "'" => 1, ">" => 1});
-        #$self->{read_until}->($self->{ct}->{pubid}, qq[\x00'>],
-        #                      length $self->{ct}->{pubid});
 
         ## Stay in the state
         
@@ -3345,7 +3482,6 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE or
              $state == BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE) {
       if ($is_space->{$nc}) {
-        
         ## Stay in or switch to the state.
         $self->{state} = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
         
@@ -3354,10 +3490,7 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0022) { # "
         if ($state == AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
-        } else {
-          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE/ENTITY/NOTATION
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE;
@@ -3367,10 +3500,7 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0027) { # '
         if ($state == AFTER_DOCTYPE_PUBLIC_IDENTIFIER_STATE) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
-        } else {
-          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE/ENTITY/NOTATION
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE;
@@ -3381,20 +3511,20 @@ sub _get_next_token ($) {
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
           if ($self->{is_xml}) {
-            
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
-          } else {
-            
           }
           $self->{state} = DATA_STATE;
         } else {
-          if ($self->{ct}->{type} == NOTATION_TOKEN) {
-            
+          if ($self->{in_pe_in_markup_decl}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+            $self->{state} = BOGUS_COMMENT_STATE;
+            $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
           } else {
-            
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');            
+            unless ($self->{ct}->{type} == NOTATION_TOKEN) {
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
+            }
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
           }
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
         
@@ -3404,12 +3534,13 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
@@ -3420,7 +3551,6 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
@@ -3430,15 +3560,23 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE
         redo A;
+      } elsif (not $self->{ct}->{type} == DOCTYPE_TOKEN and
+               $nc == 0x0025) { # %
+        ## Not in XML5.
+        $self->{prev_state} = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
+        
+    $self->_set_nc;
+  
+        redo A;
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after PUBLIC literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          
           $self->{state} = BOGUS_MD_STATE;
         }
 
@@ -3450,7 +3588,6 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE or
              $state == BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE) {
       if ($is_space->{$nc}) {
-        
         ## Stay in or switch to the state.
         $self->{state} = BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
         
@@ -3459,10 +3596,7 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0022) { # "
         if ($state == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
-        } else {
-          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE;
@@ -3472,10 +3606,7 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x0027) { # '
         if ($state == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before system literal'); # XXX documentation
-        } else {
-          
         }
         $self->{ct}->{sysid} = ''; # DOCTYPE
         $self->{state} = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE;
@@ -3484,30 +3615,34 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
-        
-    $self->_set_nc;
-  
-
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if ($self->{in_pe_in_markup_decl}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+            $self->{state} = BOGUS_COMMENT_STATE;
+            $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+          } else {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         }
 
+        
+    $self->_set_nc;
+  
         return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
         redo A;
       } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
@@ -3518,7 +3653,6 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
 
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
@@ -3529,15 +3663,23 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE
         redo A;
+      } elsif (not $self->{ct}->{type} == DOCTYPE_TOKEN and
+               $nc == 0x0025) { # %
+        ## Not in XML5.
+        $self->{prev_state} = BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
+        
+    $self->_set_nc;
+  
+        redo A;
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after SYSTEM');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-                    
           $self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          
           $self->{state} = BOGUS_MD_STATE;
         }
 
@@ -3548,7 +3690,6 @@ sub _get_next_token ($) {
       }
     } elsif ($state == DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE) {
       if ($nc == 0x0022) { # "
-        
         $self->{state} = AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
         
     $self->_set_nc;
@@ -3557,29 +3698,23 @@ sub _get_next_token ($) {
       } elsif (not $self->{is_xml} and $nc == 0x003E) { # >
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
-        if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
-          $self->{state} = DATA_STATE;
-          $self->{ct}->{quirks} = 1;
-        } else {
-          
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        }
+        $self->{state} = DATA_STATE;
+        $self->{ct}->{quirks} = 1;
         
         
     $self->_set_nc;
   
-        return  ($self->{ct}); # DOCTYPE/ENTITY/NOTATION
+        return  ($self->{ct}); # DOCTYPE
         redo A;
-      } elsif ($nc == -1) {
+      } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
         
@@ -3595,12 +3730,9 @@ sub _get_next_token ($) {
   
         redo A;
       } else {
-        
         $self->{ct}->{sysid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{sysid} .= $self->_read_chars
             ({"\x00" => 1, q<"> => 1, ">" => 1});
-        #$self->{read_until}->($self->{ct}->{sysid}, qq[\x00">],
-        #                      length $self->{ct}->{sysid});
 
         ## Stay in the state
         
@@ -3610,34 +3742,32 @@ sub _get_next_token ($) {
       }
     } elsif ($state == DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE) {
       if ($nc == 0x0027) { # '
-        
         $self->{state} = AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
         
     $self->_set_nc;
   
         redo A;
       } elsif (not $self->{is_xml} and $nc == 0x003E) { # >
-        
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
         $self->{state} = DATA_STATE;
+        $self->{ct}->{quirks} = 1;
+
         
     $self->_set_nc;
   
-
-        $self->{ct}->{quirks} = 1;
         return  ($self->{ct}); # DOCTYPE
 
         redo A;
-      } elsif ($nc == -1) {
+      } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed SYSTEM literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
 
@@ -3653,12 +3783,9 @@ sub _get_next_token ($) {
   
         redo A;
       } else {
-        
         $self->{ct}->{sysid} .= chr $nc; # DOCTYPE/ENTITY/NOTATION
         $self->{ct}->{sysid} .= $self->_read_chars
             ({"\x00" => 1, "'" => 1, ">" => 1});
-        #$self->{read_until}->($self->{ct}->{sysid}, qq[\x00'>],
-        #                      length $self->{ct}->{sysid});
 
         ## Stay in the state
         
@@ -3669,10 +3796,8 @@ sub _get_next_token ($) {
     } elsif ($state == AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE) {
       if ($is_space->{$nc}) {
         if ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN) {
-          
           $self->{state} = BEFORE_NDATA_STATE;
         } else {
-          
           ## Stay in the state
         }
         
@@ -3681,11 +3806,15 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x003E) { # >
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{state} = DATA_STATE;
         } else {
-          
-          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          if ($self->{in_pe_in_markup_decl}) {
+            $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+            $self->{state} = BOGUS_COMMENT_STATE;
+            $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+          } else {
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          }
         }
 
         
@@ -3696,7 +3825,6 @@ sub _get_next_token ($) {
       } elsif ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN and
                ($nc == 0x004E or # N
                 $nc == 0x006E)) { # n
-        
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before NDATA'); ## TODO: type
         $self->{state} = NDATA_STATE;
         $self->{kwd} = chr $nc;
@@ -3704,14 +3832,14 @@ sub _get_next_token ($) {
     $self->_set_nc;
   
         redo A;
-      } elsif ($nc == -1) {
+      } elsif ($nc == EOF_CHAR) {
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed DOCTYPE');
           $self->{state} = DATA_STATE;
           $self->{ct}->{quirks} = 1;
         } else {
-          
+          return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+              if $self->{in_pe_in_markup_decl};
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
           $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         }
@@ -3722,7 +3850,6 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and
                $self->{ct}->{type} == DOCTYPE_TOKEN and
                $nc == 0x005B) { # [
-        
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
         $self->{in_subset} = {internal => 1};
@@ -3731,15 +3858,26 @@ sub _get_next_token ($) {
   
         return  ($self->{ct}); # DOCTYPE
         redo A;
+      } elsif (not $self->{ct}->{type} == DOCTYPE_TOKEN and $nc == 0x0025) { # %
+        ## Not in XML5.
+        if ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN) {
+          $self->{prev_state} = BEFORE_NDATA_STATE;
+        } else {
+          $self->{prev_state} = $self->{state};
+        }
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
+        
+    $self->_set_nc;
+  
+        redo A;
       } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after SYSTEM literal');
 
         if ($self->{ct}->{type} == DOCTYPE_TOKEN) {
-          
           #$self->{ct}->{quirks} = 1;
           $self->{state} = BOGUS_DOCTYPE_STATE;
         } else {
-          
           $self->{state} = BOGUS_MD_STATE;
         }
 
@@ -3750,15 +3888,19 @@ sub _get_next_token ($) {
       }
     } elsif ($state == BEFORE_NDATA_STATE) {
       if ($is_space->{$nc}) {
-        
         ## Stay in the state.
         
     $self->_set_nc;
   
         redo A;
       } elsif ($nc == 0x003E) { # >
-        
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+        if ($self->{in_pe_in_markup_decl}) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'mdc in pe in md');
+          $self->{state} = BOGUS_COMMENT_STATE;
+          $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
+        } else {
+          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+        }
         
     $self->_set_nc;
   
@@ -3766,22 +3908,30 @@ sub _get_next_token ($) {
         redo A;
       } elsif ($nc == 0x004E or # N
                $nc == 0x006E) { # n
-        
         $self->{state} = NDATA_STATE;
         $self->{kwd} = chr $nc;
         
     $self->_set_nc;
   
         redo A;
-      } elsif ($nc == -1) {
-        
+      } elsif ($nc == EOF_CHAR) {
+        return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+            if $self->{in_pe_in_markup_decl};
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         ## reconsume
         return  ($self->{ct}); # ENTITY
         redo A;
-      } else {
+      } elsif (not $self->{ct}->{type} == DOCTYPE_TOKEN and $nc == 0x0025) { # %
+        ## Not in XML5.
+        $self->{prev_state} = $self->{state};
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        $self->{kwd} = '';
         
+    $self->_set_nc;
+  
+        redo A;
+      } else {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after SYSTEM literal');
         $self->{state} = BOGUS_MD_STATE;
         
@@ -5192,106 +5342,6 @@ sub _get_next_token ($) {
         ## Reconsume.
         redo A;
       }
-# XXXtokenizer
-    } elsif ($state == AFTER_NDATA_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = BEFORE_NOTATION_NAME_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no notation name'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ENTITY
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after literal', ## TODO: type
-                        line => $self->{line_prev},
-                        column => $self->{column_prev} + 1
-                            - length $self->{kwd});
-        $self->{state} = BOGUS_MD_STATE;
-        ## Reconsume.
-        redo A;
-      }
-    } elsif ($state == BEFORE_NOTATION_NAME_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no notation name'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ENTITY
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        $self->{ct}->{notation} = $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
-        $self->{state} = NOTATION_NAME_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
-    } elsif ($state == NOTATION_NAME_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = AFTER_MD_DEF_STATE;
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ENTITY
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        ## The current token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
-        }
-        $self->{ct}->{notation} .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ENTITY
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
     } elsif ($state == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE) {
       if ($nc == 0x0022) { # "
         $self->{state} = AFTER_MD_DEF_STATE;
@@ -5310,6 +5360,8 @@ sub _get_next_token ($) {
 ## TODO: %
       } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed entity value'); ## TODO: type
+        return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+            if $self->{in_pe_in_markup_decl};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         ## Reconsume.
         ## Discard the current token.
@@ -5349,6 +5401,8 @@ sub _get_next_token ($) {
 ## TODO: %
       } elsif ($nc == EOF_CHAR) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed entity value'); ## TODO: type
+        return {type => END_OF_FILE_TOKEN, debug => 'end of pe'}
+            if $self->{in_pe_in_markup_decl};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         ## Reconsume.
         ## Discard the current token.
@@ -5400,6 +5454,7 @@ sub _get_next_token ($) {
       $self->{state} = $self->{prev_state};
       ## Reconsume.
       redo A;
+#XXXtokenizer
     } elsif ($state == AFTER_ELEMENT_NAME_STATE) {
       if ($is_space->{$nc}) {
         $self->{state} = BEFORE_ELEMENT_CONTENT_STATE;
@@ -5717,54 +5772,6 @@ sub _get_next_token ($) {
         ## Reconsume.
         redo A;
       }
-    } elsif ($state == AFTER_MD_DEF_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ENTITY/ELEMENT
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        ## Discard the current token.
-        redo A;
-      } else {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'string after md def'); ## TODO: type
-        $self->{state} = BOGUS_MD_STATE;
-        ## Reconsume.
-        redo A;
-      }
-    } elsif ($state == BOGUS_MD_STATE) {
-      if ($nc == 0x003E) { # >
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        
-    $self->_set_nc;
-  
-        return  ($self->{ct}); # ATTLIST/ENTITY/NOTATION
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        ## Reconsume.
-        ## Discard the current token.
-        redo A;
-      } else {
-        ## Stay in the state.
-        
-    $self->_set_nc;
-  
-        redo A;
-      }
     } elsif ($state == PARAMETER_ENTITY_NAME_STATE) {
       if ($is_space->{$nc} or {
         0x003C => 1, 0x003E => 1, # < >
@@ -5773,31 +5780,9 @@ sub _get_next_token ($) {
         0x003D => 1, # =
         (EOF_CHAR) => 1,
       }->{$nc}) {
-        if (($self->{prev_state} == DOCTYPE_MD_STATE or
-             $self->{prev_state} == BEFORE_MD_NAME_STATE) and
-            $self->{ct}->{type} == GENERAL_ENTITY_TOKEN and
-            $self->{kwd} eq '') {
-          if ($self->{prev_state} == DOCTYPE_MD_STATE) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before md name',
-                            line => $self->{line_prev},
-                            column => $self->{column_prev});
-          }
-          $self->{state} = DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE;
-          ## Reconsume the current input character.
-          redo A;
-        }
-
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
-        if (not $self->{stop_processing} and
-            not $self->{document}->xml_standalone) {
-          $self->{parse_error}->(level => $self->{level}->{must}, level => 'i',
-                          type => 'stop processing',
-                          line => $self->{line_prev},
-                          column => $self->{column_prev} - length $self->{kwd});
-          $self->{stop_processing} = 1;
-        }
         # XXX within entity value, ...
-        $self->{state} = $self->{prev_state};
+        $self->{state} = BOGUS_MD_STATE;
         ## Reconsume the current input character.
         redo A;
       } elsif ($nc == 0x003B) { # ;
@@ -5865,6 +5850,29 @@ sub _get_next_token ($) {
         
     $self->_set_nc;
   
+        redo A;
+      }
+    } elsif ($state == PARAMETER_ENTITY_DECL_OR_NAME_STATE) {
+      if ($self->{ct}->{type} == GENERAL_ENTITY_TOKEN and
+          ($is_space->{$nc} or {
+             0x003C => 1, 0x003E => 1, # < >
+             0x0022 => 1, 0x0027 => 1, 0x0060 => 1, # " ' `
+             0x0025 => 1, 0x0026 => 1, # % &
+             0x003D => 1, # =
+             (EOF_CHAR) => 1,
+           }->{$nc})) {
+        if ($self->{prev_state} == DOCTYPE_MD_STATE) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no space before md name',
+                          line => $self->{line_prev},
+                          column => $self->{column_prev});
+        }
+        $self->{state} = DOCTYPE_ENTITY_PARAMETER_BEFORE_STATE;
+        ## Reconsume the current input character.
+        redo A;
+      } else {
+        $self->{prev_state} = BEFORE_MD_NAME_STATE;
+        $self->{state} = PARAMETER_ENTITY_NAME_STATE;
+        ## Reconsume the current input character.
         redo A;
       }
     } else {

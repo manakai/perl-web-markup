@@ -412,6 +412,21 @@ sub _parse_subparser_done ($$$$) {
                                   line => $subparser->{line},
                                   column => $subparser->{column});
           $self->{state} = BOGUS_MD_STATE;
+        } elsif ($self->{state} == AFTER_NDATA_STATE) {
+          $self->{state} = BEFORE_NOTATION_NAME_STATE;
+        } elsif ($self->{state} == AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE) {
+          $self->{state} = BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
+        } elsif ($self->{state} == AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE) {
+          $self->{state} = BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
+        } elsif ($self->{state} == DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE or
+                 $self->{state} == DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE or
+                 $self->{state} == DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE or
+                 $self->{state} == DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE or
+                 $self->{state} == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE or
+                 $self->{state} == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE) {
+          $self->{state} = BOGUS_MD_STATE;
+          $self->{state} = BOGUS_COMMENT_STATE;  #XXX
+          $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded
         }
       }
       delete $self->{pe}->{$entdef->{name} . ';'}->{open};
