@@ -1636,6 +1636,138 @@ $Action->[NOTATION_NAME_STATE]->[0x0025] = { # %
   buffer => {clear => 1},
 };
 
+$Action->[AFTER_ELEMENT_NAME_STATE]->[KEY_SPACE_CHAR] =
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[KEY_SPACE_CHAR] =
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'content model - space',
+};
+$Action->[CONTENT_KEYWORD_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'content keyword - space',
+  state => AFTER_MD_DEF_STATE,
+};
+$Action->[CM_ELEMENT_NAME_STATE]->[KEY_SPACE_CHAR] = {
+  name => 'cm el name - space',
+  state => AFTER_CM_ELEMENT_NAME_STATE,
+};
+$Action->[AFTER_ELEMENT_NAME_STATE]->[0x0028] = { # (
+  name => 'after el name - (',
+  ct => {open_group => 1},
+  state => AFTER_CM_GROUP_OPEN_STATE,
+};
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[0x0028] = { # (
+  name => 'after cm group open - (',
+  ct => {open_group => 1},
+};
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[0x007C] = # |
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[0x002C] = { # ,
+  name => 'after cm group open - connector',
+  error => 'empty element name', # XXXdoc
+};
+$Action->[CM_ELEMENT_NAME_STATE]->[0x007C] = # |
+$Action->[CM_ELEMENT_NAME_STATE]->[0x002C] = # ,
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[0x007C] = # |
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[0x002C] = { # ,
+  name => 'cm el name - connector',
+  state => AFTER_CM_GROUP_OPEN_STATE,
+  ct => {add_connector => 1},
+};
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[0x0029] = { # )
+  name => 'after cm group open - )',
+  error => 'empty element name', # XXXdoc
+  state => AFTER_CM_GROUP_CLOSE_STATE,
+  ct => {close_group => 1},
+};
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[0x0029] = { # )
+  name => 'after cm el name open - )',
+  state => AFTER_CM_GROUP_CLOSE_STATE,
+  ct => {close_group => 1},
+};
+$Action->[CM_ELEMENT_NAME_STATE]->[0x0029] = { # )
+  name => 'cm el name - )',
+  state => AFTER_CM_GROUP_CLOSE_STATE,
+  ct => {close_group => 1},
+};
+$Action->[CM_ELEMENT_NAME_STATE]->[0x002A] = # *
+$Action->[CM_ELEMENT_NAME_STATE]->[0x002B] = # +
+$Action->[CM_ELEMENT_NAME_STATE]->[0x003F] = { # ?
+  name => 'cm el name - occur',
+  state => AFTER_CM_ELEMENT_NAME_STATE,
+  ct => {add_occur => 1},
+};
+$Action->[AFTER_ELEMENT_NAME_STATE]->[0x003E] = { # >
+  name => 'after el name - >',
+  ignore_in_pe => 1,
+  error => 'no md def', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[CONTENT_KEYWORD_STATE]->[0x003E] = { # >
+  name => 'content model - >',
+  ignore_in_pe => 1,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  emit => '',
+};
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[0x003E] = # >
+$Action->[CM_ELEMENT_NAME_STATE]->[0x003E] = # >
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[0x003E] = { # >
+  name => 'after cm group open - >',
+  ignore_in_pe => 1,
+  error => 'unclosed cm group', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  ## Discard the current token.
+};
+$Action->[AFTER_ELEMENT_NAME_STATE]->[KEY_EOF_CHAR] =
+$Action->[CONTENT_KEYWORD_STATE]->[KEY_EOF_CHAR] =
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[KEY_EOF_CHAR] =
+$Action->[CM_ELEMENT_NAME_STATE]->[KEY_EOF_CHAR] =
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[KEY_EOF_CHAR] = {
+  name => 'content model - EOF',
+  end_in_pe => 1,
+  error => 'unclosed md', # XXXdoc
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+  reconsume => 1,
+  ## Discard the current token.
+};
+$Action->[AFTER_ELEMENT_NAME_STATE]->[0x0000] = {
+  name => 'after el name - NULL',
+  error => 'NULL',
+  state => CONTENT_KEYWORD_STATE,
+  ct => {add_group_token => 0xFFFD},
+};
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[0x0000] = {
+  name => 'after cm group open - NULL',
+  error => 'NULL',
+  state => CM_ELEMENT_NAME_STATE,
+  ct => {add_group_token => 0xFFFD},
+};
+$Action->[CONTENT_KEYWORD_STATE]->[0x0000] =
+$Action->[CM_ELEMENT_NAME_STATE]->[0x0000] = {
+  name => 'content keyword - NULL',
+  error => 'NULL',
+  ct => {append_group_token => 0xFFFD},
+};
+$Action->[AFTER_ELEMENT_NAME_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'after el name - else',
+  state => CONTENT_KEYWORD_STATE,
+  ct => {add_group_token => 0x0000},
+};
+$Action->[AFTER_CM_GROUP_OPEN_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'after cm group open - else',
+  state => CM_ELEMENT_NAME_STATE,
+  ct => {add_group_token => 0x0000},
+};
+$Action->[CONTENT_KEYWORD_STATE]->[KEY_ELSE_CHAR] =
+$Action->[CM_ELEMENT_NAME_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'content keyword - else',
+  ct => {append_group_token => 0x0000},
+};
+$Action->[AFTER_CM_ELEMENT_NAME_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'after cm el name - else',
+  error => 'after element name', # XXXdoc
+  state => BOGUS_MD_STATE,
+};
+# XXX 0x0025 AFTER_ELEMENT_NAME_STATE CONTENT_KEYWORD_STATE AFTER_CM_GROUP_OPEN_STATE CM_ELEMENT_NAME_STATE AFTER_CM_ELEMENT_NAME_STATE
+
 $Action->[AFTER_MD_DEF_STATE]->[KEY_SPACE_CHAR] = {
   name => 'after md def - space',
 };
@@ -1682,7 +1814,6 @@ $Action->[BOGUS_MD_STATE]->[KEY_ELSE_CHAR] = {
   name => 'bogus md - else',
 };
 ## Parameter entity references are ignored in |BOGUS_MD_STATE|.
-# XXXtokenizer
 
 ## This class method can be used to create a custom tokenizer based on
 ## the HTML tokenizer.  The argument to the method must be an
@@ -1844,6 +1975,22 @@ sub _get_next_token ($) {
         }
         if (defined $act->{append_name}) {
           $self->{ct}->{name} .= chr ($nc + $act->{append_name});
+        }
+
+        if ($act->{open_group}) {
+          $self->{ct}->{_group_depth}++;
+          push @{$self->{ct}->{content} ||= []}, '(';
+        } elsif ($act->{close_group}) {
+          $self->{ct}->{_group_depth}--;
+          push @{$self->{ct}->{content}}, chr $nc;
+        } elsif ($act->{add_connector}) {
+          push @{$self->{ct}->{content}}, $nc == 0x007C ? ' | ' : ', ';
+        } elsif ($act->{add_occur}) {
+          push @{$self->{ct}->{content}}, chr $nc;
+        } elsif (defined $act->{add_group_token}) {
+          push @{$self->{ct}->{content}}, chr ($nc + $act->{add_group_token});
+        } elsif (defined $act->{append_group_token}) {
+          $self->{ct}->{content}->[-1] .= chr ($nc + $act->{append_group_token});
         }
       }
       
@@ -5078,200 +5225,9 @@ sub _get_next_token ($) {
       $self->{state} = $self->{prev_state};
       ## Reconsume.
       redo A;
-#XXXtokenizer
-    } elsif ($state == AFTER_ELEMENT_NAME_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = BEFORE_ELEMENT_CONTENT_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x0028) { # (
-        $self->{state} = AFTER_CM_GROUP_OPEN_STATE;
-        $self->{ct}->{content} = ['('];
-        $self->{group_depth} = 1;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'no md def'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        ## Discard the current token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
-        }
-        $self->{ct}->{content} = [$nc == 0x0000 ? "\x{FFFD}" : chr $nc];
-        $self->{state} = CONTENT_KEYWORD_STATE;
-        !!!next-input-character;
-        redo A;
-      }
-# XXX BEFORE_ELEMENT_CONTENT_STATE
-    } elsif ($state == CONTENT_KEYWORD_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = AFTER_MD_DEF_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        ## Discard the current token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
-        }
-        $self->{ct}->{content}->[-1] .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc; # ELEMENT
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
-      }
-    } elsif ($state == AFTER_CM_GROUP_OPEN_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x0028) { # (
-        $self->{group_depth}++;
-        push @{$self->{ct}->{content}}, chr $nc;
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x007C or # |
-               $nc == 0x002C) { # ,
-        !!!parse-error (type => 'empty element name'); ## TODO: type
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x0029) { # )
-        !!!parse-error (type => 'empty element name'); ## TODO: type
-        push @{$self->{ct}->{content}}, chr $nc;
-        $self->{group_depth}--;
-        $self->{state} = AFTER_CM_GROUP_CLOSE_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed cm group'); ## TODO: type
-        push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
-        #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        ## Discard the current token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
-        }
-        push @{$self->{ct}->{content}}, $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
-        $self->{state} = CM_ELEMENT_NAME_STATE;
-        !!!next-input-character;
-        redo A;
-      }
-    } elsif ($state == CM_ELEMENT_NAME_STATE) {
-      if ($is_space->{$nc}) {
-        $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x002A or # *
-               $nc == 0x002B or # +
-               $nc == 0x003F) { # ?
-        push @{$self->{ct}->{content}}, chr $nc;
-        $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x007C or # |
-               $nc == 0x002C) { # ,
-        push @{$self->{ct}->{content}}, $nc == 0x007C ? ' | ' : ', ';
-        $self->{state} = AFTER_CM_GROUP_OPEN_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x0029) { # )
-        $self->{group_depth}--;
-        push @{$self->{ct}->{content}}, chr $nc;
-        $self->{state} = AFTER_CM_GROUP_CLOSE_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed cm group'); ## TODO: type
-        push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
-        #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        ## Discard the token.
-        redo A;
-      } else {
-        if ($nc == 0x0000) {
-          !!!parse-error (type => 'NULL');
-        }
-        $self->{ct}->{content}->[-1] .= $nc == 0x0000 ? "\x{FFFD}" : chr $nc;
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
-      }
-    } elsif ($state == AFTER_CM_ELEMENT_NAME_STATE) {
-      if ($is_space->{$nc}) {
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x007C or # |
-               $nc == 0x002C) { # ,
-        push @{$self->{ct}->{content}}, $nc == 0x007C ? ' | ' : ', ';
-        $self->{state} = AFTER_CM_GROUP_OPEN_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x0029) { # )
-        $self->{group_depth}--;
-        push @{$self->{ct}->{content}}, chr $nc;
-        $self->{state} = AFTER_CM_GROUP_CLOSE_STATE;
-        !!!next-input-character;
-        redo A;
-      } elsif ($nc == 0x003E) { # >
-        !!!parse-error (type => 'unclosed cm group'); ## TODO: type
-        push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
-        redo A;
-      } elsif ($nc == EOF_CHAR) {
-        !!!parse-error (type => 'unclosed md'); ## TODO: type
-        #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        ## Discard the current token.
-        redo A;
-      } else {
-        !!!parse-error (type => 'after element name'); ## TODO: type
-        push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
-        $self->{state} = BOGUS_MD_STATE;
-        !!!next-input-character;
-        redo A;
-      }
     } elsif ($state == AFTER_CM_GROUP_CLOSE_STATE) {
       if ($is_space->{$nc}) {
-        if ($self->{group_depth}) {
+        if ($self->{ct}->{_group_depth}) {
           $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
         } else {
           $self->{state} = AFTER_MD_DEF_STATE;
@@ -5282,7 +5238,7 @@ sub _get_next_token ($) {
                $nc == 0x002B or # +
                $nc == 0x003F) { # ?
         push @{$self->{ct}->{content}}, chr $nc;
-        if ($self->{group_depth}) {
+        if ($self->{ct}->{_group_depth}) {
           $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
         } else {
           $self->{state} = AFTER_MD_DEF_STATE;
@@ -5290,8 +5246,8 @@ sub _get_next_token ($) {
         !!!next-input-character;
         redo A;
       } elsif ($nc == 0x0029) { # )
-        if ($self->{group_depth}) {
-          $self->{group_depth}--;
+        if ($self->{ct}->{_group_depth}) {
+          $self->{ct}->{_group_depth}--;
           push @{$self->{ct}->{content}}, chr $nc;
           ## Stay in the state.
           !!!next-input-character;
@@ -5303,23 +5259,28 @@ sub _get_next_token ($) {
           redo A;
         }
       } elsif ($nc == 0x003E) { # >
-        if ($self->{group_depth}) {
+# XXXmd
+        if ($self->{ct}->{_group_depth}) {
           !!!parse-error (type => 'unclosed cm group'); ## TODO: type
-          push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
+          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          !!!next-input-character;
+          redo A;
+        } else {
+          $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          !!!next-input-character;
+          !!!emit ($self->{ct}); # ELEMENT
+          redo A;
         }
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
-        !!!next-input-character;
-        !!!emit ($self->{ct}); # ELEMENT
-        redo A;
       } elsif ($nc == EOF_CHAR) {
         !!!parse-error (type => 'unclosed md'); ## TODO: type
-        #push @{$self->{ct}->{content}}, (')') x $self->{group_depth};
+# XXXmd
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         !!!next-input-character;
         ## Discard the current token.
         redo A;
+# XXX %
       } else {
-        if ($self->{group_depth}) {
+        if ($self->{ct}->{_group_depth}) {
           $self->{state} = AFTER_CM_ELEMENT_NAME_STATE;
         } else {
           !!!parse-error (type => 'string after md def'); ## TODO: type
