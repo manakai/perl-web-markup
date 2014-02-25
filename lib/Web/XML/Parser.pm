@@ -486,7 +486,13 @@ sub _parse_subparser_done ($$$) {
       $self->{attrdef} = $main_parser->{attrdef} ||= {};
       $self->{has_attlist} = $main_parser->{has_attlist} ||= {};
       $self->{stop_processing} = $main_parser->{stop_processing};
-      $self->{in_subset} = {external => 1, param => not $xe->{external_subset}};
+      my $main_in_subset = $main_parser->{in_subset};
+      $self->{in_subset} = {external_subset => $main_in_subset->{external_subset},
+                            internal_subset => $main_in_subset->{internal_subset},
+                            param_entity => (not $xe->{external_subset}),
+                            in_external_entity => ($main_in_subset->{in_external_entity} or
+                                                   $xe->{external_subset} or
+                                                   not defined $xe->{value})}; ## External entity
       $self->{tokenizer_initial_state} = Web::HTML::Defs::DOCTYPE_INTERNAL_SUBSET_STATE;
     } else { ## General entity
       $self->{ge} = $main_parser->{ge};
@@ -594,7 +600,6 @@ sub _terminate_tree_constructor ($) {
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
 # XXX marked sections
 # XXX param refs and marked section keywords
-# XXX disallow param refs in markup declarations in internal subset
 # XXX param refs expansion spec
 # XXX stop processing
 # XXX standalone
@@ -605,6 +610,7 @@ sub _terminate_tree_constructor ($) {
 # XXX validation hook for URLs in SYSTEM
 # XXX validation hook for entity names and notation names
 # XXX validation hooks for elements, attrs, PI targets
+# XXX attribute normalization based on type
 # XXX text declaration validation
 # XXX warn by external ref
 # XXX warn external subset

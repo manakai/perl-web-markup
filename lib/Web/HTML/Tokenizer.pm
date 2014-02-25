@@ -3111,7 +3111,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE name');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -3180,7 +3180,7 @@ sub _get_next_token ($) {
         
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -3290,7 +3290,7 @@ sub _get_next_token ($) {
                $nc == 0x005B) { # [
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -3502,7 +3502,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no PUBLIC literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -3732,7 +3732,7 @@ sub _get_next_token ($) {
         $self->{parse_error}->(level => $self->{level}->{must}, type => 'no SYSTEM literal');
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -3835,7 +3835,7 @@ sub _get_next_token ($) {
 
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -4030,7 +4030,7 @@ sub _get_next_token ($) {
                $nc == 0x005B) { # [
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -4131,7 +4131,7 @@ sub _get_next_token ($) {
       } elsif ($self->{is_xml} and $nc == 0x005B) { # [
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
         $self->{ct}->{has_internal_subset} = 1; # DOCTYPE
-        $self->{in_subset} = {internal => 1};
+        $self->{in_subset} = {internal_subset => 1};
         
     $self->_set_nc;
   
@@ -5147,7 +5147,9 @@ sub _get_next_token ($) {
     $self->_set_nc;
   
         redo A;
-      } elsif ($nc == 0x005D and $self->{in_subset}->{internal}) { # ]
+      } elsif ($nc == 0x005D and # ]
+               $self->{in_subset}->{internal_subset} and
+               not $self->{in_subset}->{param_entity}) {
         delete $self->{in_subset};
         $self->{state} = DOCTYPE_INTERNAL_SUBSET_AFTER_STATE;
         
@@ -5161,7 +5163,8 @@ sub _get_next_token ($) {
   
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        if ($self->{in_subset}->{internal}) {
+        if ($self->{in_subset}->{internal_subset} and
+            not $self->{in_subset}->{param_entity}) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'unclosed internal subset'); ## TODO: type
           delete $self->{in_subset};
           $self->{state} = DATA_STATE;
@@ -5806,7 +5809,14 @@ sub _get_next_token ($) {
                               line => $self->{line_prev},
                               column => $self->{column_prev} - length $self->{kwd});
               #
-# XXX in internal subset, markup declaration
+            } elsif (not (($self->{in_subset} or {})->{in_external_entity}) and
+                     not $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+              ## In a markup declaration in internal subset
+              $self->{parse_error}->(level => $self->{level}->{must}, type => 'WFC:PEs in Internal Subset',
+                              value => '%' . $self->{kwd} . ';',
+                              line => $self->{line_prev},
+                              column => $self->{column_prev} - length $self->{kwd});
+              #
             } else {
               ## Parameter entity is to be expanded...
               $self->{parser_pause} = 1;
