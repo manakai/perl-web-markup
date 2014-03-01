@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '7.0';
+our $VERSION = '8.0';
 use Encode;
 use Web::HTML::Defs;
 use Web::HTML::ParserData;
@@ -303,10 +303,11 @@ sub _parse_run ($) {
             $subparser->{insertion_mode} = BEFORE_TEXT_DECL_IM;
           }
         } elsif (not $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
-          ## In a markup declaration
+          ## In a markup declaration or a marked section's status
           $subparser->{state} = $self->{state};
           $subparser->{ct} = $self->{ct};
           $subparser->{ca} = $self->{ca};
+          $subparser->{open_sects} = $self->{open_sects};
           $subparser->{in_pe_in_markup_decl} = 1;
           ## Implied space before parameter entity reference (most
           ## cases are handled by |prev_state| of action definitions
@@ -598,8 +599,6 @@ sub _terminate_tree_constructor ($) {
 # XXX PUBLIC for external subset
 # XXX external entity for character entities
 # <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
-# XXX marked sections
-# XXX param refs and marked section keywords
 # XXX param refs expansion spec
 # XXX stop processing
 # XXX standalone
@@ -1146,6 +1145,7 @@ sub _construct_tree ($) {
           # XXX resolve
           $self->{parser_pause} = 1;
           $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+          delete $self->{prev_state};
           $self->{t} = {type => ABORT_TOKEN,
                         entdef => {external_subset => 1, sysid => $sysid},
                         line => $dt->get_user_data ('manakai_source_line'),
@@ -1476,6 +1476,7 @@ sub _construct_tree ($) {
             $self->{doctype} = $dt;
             $self->{parser_pause} = 1;
             $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+            delete $self->{prev_state};
             $self->{t} = {type => ABORT_TOKEN,
                           entdef => {external_subset => 1, sysid => $sysid},
                           line => $self->{t}->{line},

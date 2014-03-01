@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '9.0';
+our $VERSION = '10.0';
 use Web::HTML::Defs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
@@ -115,6 +115,9 @@ sub _initialize_tokenizer ($) {
   !!!next-input-character;
   $self->{token} = [];
   # $self->{escape}
+  delete $self->{open_sects};
+      ## Stack of open sections
+      ##   {type => '' / 'INCLUDE' / 'IGNORE'}
 
   if ($self->{is_xml}) {
     $self->{action_set} = $XMLAction;
@@ -1816,6 +1819,145 @@ $Action->[AFTER_MD_DEF_STATE]->[0x0025] = { # %
   buffer => {clear => 1},
 };
 
+$Action->[AFTER_MSS_STATE]->[KEY_SPACE_CHAR] = {
+  name => '<![ - space',
+  state => BEFORE_STATUS_KEYWORD_STATE,
+};
+$Action->[BEFORE_STATUS_KEYWORD_STATE]->[KEY_SPACE_CHAR] = {
+  name => '<![ before keyword - space',
+};
+$Action->[AFTER_STATUS_KEYWORD_STATE]->[KEY_SPACE_CHAR] = {
+  name => '<![ after keyword - space',
+};
+$Action->[BEFORE_STATUS_KEYWORD_STATE]->[KEY_ULATIN_CHAR] = {
+  name => '<![ before keyword - latin capital',
+  state => STATUS_KEYWORD_STATE,
+  buffer => {clear => 1, append => 0x0000},
+};
+$Action->[STATUS_KEYWORD_STATE]->[KEY_ULATIN_CHAR] = {
+  name => '<![ keyword - latin capital',
+  buffer => {append => 0x0000},
+  sect => {check_keyword => 1},
+};
+$Action->[AFTER_STATUS_KEYWORD_STATE]->[0x005B] = { # [
+  name => '<![ after keyword - [',
+  ignore_in_pe => 1,
+  sect => {reset_state => 1},
+};
+$Action->[BEFORE_STATUS_KEYWORD_STATE]->[KEY_EOF_CHAR] = {
+  name => '<![ before keyword - EOF',
+  end_in_pe => 1,
+  error => 'md:no status keyword', # XXXdoc
+  state => IGNORED_SECTION_STATE,
+  reconsume => 1,
+};
+$Action->[STATUS_KEYWORD_STATE]->[KEY_EOF_CHAR] =
+$Action->[AFTER_STATUS_KEYWORD_STATE]->[KEY_EOF_CHAR] = {
+  name => '<![ keyword - EOF',
+  end_in_pe => 1,
+  error => 'ms:no dso', # XXXdoc
+  state => IGNORED_SECTION_STATE,
+  reconsume => 1,
+};
+$Action->[AFTER_MSS_STATE]->[KEY_ELSE_CHAR] = {
+  name => '<![ - else',
+  state => BEFORE_STATUS_KEYWORD_STATE,
+  reconsume => 1,
+};
+$Action->[BEFORE_STATUS_KEYWORD_STATE]->[KEY_ELSE_CHAR] = {
+  name => '<![ before keyword - else',
+  error => 'ms:no status keyword',
+  state => IGNORED_SECTION_STATE,
+  reconsume => 1,
+};
+$Action->[STATUS_KEYWORD_STATE]->[KEY_ELSE_CHAR] =
+$Action->[AFTER_STATUS_KEYWORD_STATE]->[KEY_ELSE_CHAR] = {
+  name => '<![ keyword - else',
+  error => 'ms:no dso',
+  state => IGNORED_SECTION_STATE,
+  reconsume => 1,
+};
+$Action->[AFTER_MSS_STATE]->[0x0025] = { # %
+  name => '<![ - %', ## Not in XML5
+  prev_state => BEFORE_STATUS_KEYWORD_STATE,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[BEFORE_STATUS_KEYWORD_STATE]->[0x0025] = { # %
+  name => '<![ before keyword - %', ## Not in XML5
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+$Action->[AFTER_STATUS_KEYWORD_STATE]->[0x0025] = { # %
+  name => '<![ after keyword - %', ## Not in XML5
+  preserve_state => 1,
+  state => PARAMETER_ENTITY_NAME_STATE,
+  buffer => {clear => 1},
+};
+
+$Action->[MSC_STATE]->[0x005D] = { # ]
+  name => 'marked section ] - ]',
+  state => AFTER_MSC_STATE,
+};
+$Action->[MSC_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'marked section ] - else',
+  error => 'ms:bare ]',
+  error_delta => 1,
+  sect => {reset_state => 1},
+  reconsume => 1,
+};
+
+$Action->[AFTER_MSC_STATE]->[0x003E] = { # >
+  name => 'marked section ]] - >',
+  sect => {close => 1, reset_state => 1},
+};
+$Action->[AFTER_MSC_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'marked section ]] - else',
+  error => 'ms:bare ]]',
+  error_delta => 2,
+  state => DOCTYPE_INTERNAL_SUBSET_STATE,
+};
+
+$Action->[IGNORED_SECTION_STATE]->[0x003C] = { # <
+  name => 'ignored section - <',
+  state => IGNORED_SECTION_TAG_STATE,
+};
+$Action->[IGNORED_SECTION_STATE]->[0x005D] = { # ]
+  name => 'ignored section - ]',
+  state => MSC_STATE,
+};
+$Action->[IGNORED_SECTION_STATE]->[KEY_EOF_CHAR] = {
+  name => 'ignored section - EOF',
+  error => 'ms:unclosed', # XXX
+  sect => {close_all => 1, reset_state => 1},
+  reconsume => 1,
+};
+$Action->[IGNORED_SECTION_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'ignored section - else',
+};
+
+$Action->[IGNORED_SECTION_TAG_STATE]->[0x0021] = { # !
+  name => 'ignored section < - !',
+  state => IGNORED_SECTION_MD_STATE,
+};
+$Action->[IGNORED_SECTION_TAG_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'ignored section < - else',
+  state => IGNORED_SECTION_STATE,
+  reconsume => 1,
+};
+
+$Action->[IGNORED_SECTION_MD_STATE]->[0x005B] = { # [
+  name => 'ignored section <! - [',
+  state => IGNORED_SECTION_STATE,
+  sect => {open => 'IGNORE'},
+};
+$Action->[IGNORED_SECTION_MD_STATE]->[KEY_ELSE_CHAR] = {
+  name => 'ignored section <! - else',
+  state => IGNORED_SECTION_STATE,
+  reconsume => 1,
+};
+
 $Action->[BOGUS_MD_STATE]->[0x003E] = { # >
   name => 'bogus md - >',
   ignore_in_pe => 1,
@@ -2062,7 +2204,32 @@ sub _get_next_token ($) {
             if defined $action->{buffer}->{append};
 
         !!!tdebug { warn "BUFFER: " . $self->{kwd} . "\n" if defined $self->{kwd} and length $self->{kwd} };
-      }
+      } # buffer
+
+      if (my $sect = $action->{sect}) {
+        if (defined $sect->{open}) {
+          push @{$self->{open_sects} ||= []}, {type => $sect->{open}};
+        }
+
+        if ($sect->{check_keyword}) {
+          if ($self->{kwd} eq 'IGNORE' or $self->{kwd} eq 'INCLUDE') {
+            $self->{open_sects}->[-1]->{type} = $self->{kwd};
+            $self->{state} = AFTER_STATUS_KEYWORD_STATE;
+          }
+        }
+
+        pop @{$self->{open_sects}} if $sect->{close};
+        delete $self->{open_sects} if $sect->{close_all};
+
+        if ($sect->{reset_state}) {
+          if (not @{$self->{open_sects} or []} or
+              $self->{open_sects}->[-1]->{type} eq 'INCLUDE') {
+            $self->{state} = DOCTYPE_INTERNAL_SUBSET_STATE;
+          } else {
+            $self->{state} = IGNORED_SECTION_STATE;
+          }
+        }
+      } # sect
 
       if (defined $action->{emit}) {
         if ($action->{emit} eq '') {
@@ -4833,20 +5000,33 @@ sub _get_next_token ($) {
         $self->{kwd} = '';
         !!!next-input-character;
         redo A;
-      } elsif ($nc == 0x005D and # ]
-               $self->{in_subset}->{internal_subset} and
-               not $self->{in_subset}->{param_entity}) {
-        delete $self->{in_subset};
-        $self->{state} = DOCTYPE_INTERNAL_SUBSET_AFTER_STATE;
-        !!!next-input-character;
-        redo A;
+      } elsif ($nc == 0x005D) { # ]
+        if (@{$self->{open_sects} or []}) {
+          $self->{state} = MSC_STATE;
+          !!!next-input-character;
+          redo A;
+        } elsif ($self->{in_subset}->{internal_subset} and
+                 not $self->{in_subset}->{param_entity}) {
+          delete $self->{in_subset};
+          $self->{state} = DOCTYPE_INTERNAL_SUBSET_AFTER_STATE;
+          !!!next-input-character;
+          redo A;
+        } else {
+          #
+        }
       } elsif ($is_space->{$nc}) {
         ## Stay in the state.
         !!!next-input-character;
         redo A;
       } elsif ($nc == EOF_CHAR) {
-        if ($self->{in_subset}->{internal_subset} and
-            not $self->{in_subset}->{param_entity}) {
+        if (@{$self->{open_sects} or []}) {
+          !!!parse-error (type => 'ms:unclosed');
+          ## Reconsume.
+          !!!emit ({type => END_OF_FILE_TOKEN,
+                    line => $self->{line}, column => $self->{column}});
+          redo A;
+        } elsif ($self->{in_subset}->{internal_subset} and
+                 not $self->{in_subset}->{param_entity}) {
           !!!parse-error (type => 'unclosed internal subset'); ## TODO: type
           delete $self->{in_subset};
           $self->{state} = DATA_STATE;
@@ -4860,15 +5040,17 @@ sub _get_next_token ($) {
           redo A;
         }
       } else {
-        unless ($self->{internal_subset_tainted}) {
-          ## XML5: No parse error.
-          !!!parse-error (type => 'string in internal subset'); # XXXdoc
-          $self->{internal_subset_tainted} = 1;
-        }
-        ## Stay in the state.
-        !!!next-input-character;
-        redo A;
+        #
       }
+
+      unless ($self->{internal_subset_tainted}) {
+        ## XML5: No parse error.
+        !!!parse-error (type => 'string in internal subset'); # XXXdoc
+        $self->{internal_subset_tainted} = 1;
+      }
+      ## Stay in the state.
+      !!!next-input-character;
+      redo A;
     } elsif ($state == DOCTYPE_INTERNAL_SUBSET_AFTER_STATE) {
       if ($nc == 0x003E) { # >
         $self->{state} = DATA_STATE;
@@ -4960,14 +5142,30 @@ sub _get_next_token ($) {
         $self->{kwd} = chr $nc;
         !!!next-input-character;
         redo A;
+      } elsif ($nc == 0x005B) { # [
+        ## XML5: Same as "anything else".
+        if (($self->{in_subset} or {})->{in_external_entity}) {
+          push @{$self->{open_sects} ||= []}, {type => ''};
+          $self->{state} = AFTER_MSS_STATE;
+          !!!next-input-character;
+          redo A;
+        } else {
+          !!!parse-error (type => 'condsect in internal subset', # XXXdoc
+                          line => $self->{line_prev},
+                          column => $self->{column_prev} - 1);
+          push @{$self->{open_sects} ||= []}, {type => 'IGNORE'};
+          $self->{state} = IGNORED_SECTION_STATE;
+          !!!next-input-character;
+          redo A;
+        }
       } else {
+        ## XML5: No parse error.
+        !!!parse-error (type => 'bogus comment',
+                        line => $self->{line_prev},
+                        column => $self->{column_prev} - 1);
         #
       }
-      
-      ## XML5: No parse error.
-      !!!parse-error (type => 'bogus comment',
-                      line => $self->{line_prev},
-                      column => $self->{column_prev} - 1);
+
       ## Reconsume.
       $self->{state} = BOGUS_COMMENT_STATE;
       $self->{ct} = {type => COMMENT_TOKEN, data => ''}; ## Will be discarded.
@@ -5405,6 +5603,7 @@ sub _get_next_token ($) {
           ## In markup declaration
           $self->{state} = BOGUS_MD_STATE;
         }
+# XXX stop processing
         ## Reconsume the current input character.
         redo A;
       } elsif ($nc == 0x003B) { # ;
