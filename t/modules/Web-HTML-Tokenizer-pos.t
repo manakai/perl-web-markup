@@ -150,7 +150,7 @@ for my $test (
           [map { [$_->[0],$_->[1] => $_->[2],($_->[2] == 1 ? $delta : 0)+$_->[3]] } @{$test->[1]}];
     }
     done $c;
-  } n => 1 * 4, name => ['manakai_pos', 'attrdef default', $test->[0]];
+  } n => 1 * 4, name => ['manakai_pos', 'attrdef default unquoted', $test->[0]];
 }
 
 run_tests;

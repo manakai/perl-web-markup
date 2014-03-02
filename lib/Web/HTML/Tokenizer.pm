@@ -2098,7 +2098,7 @@ sub _get_next_token ($) {
             $self->{state} == ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE) {
           $self->{ca}->{sps} = [];
         } elsif ($self->{state} == ATTRIBUTE_VALUE_UNQUOTED_STATE) {
-          $self->{ca}->{sps} = [[0, 1, $self->{line}, $self->{column}]];
+          $self->{ca}->{sps} = [];
         } elsif ($self->{state} == AFTER_DOCTYPE_NAME_STATE) {
           if ($self->{ct}->{type} == ATTLIST_TOKEN) {
             $self->{state} = DOCTYPE_ATTLIST_NAME_AFTER_STATE;
@@ -2165,6 +2165,9 @@ sub _get_next_token ($) {
       
       if (my $aca = $action->{ca}) {
         if ($aca->{value}) {
+          push @{$self->{ca}->{sps}},
+              [length $self->{ca}->{value}, 1, $self->{line}, $self->{column}]
+                  if defined $self->{ca}->{sps};
           $self->{ca}->{value} .= $aca->{value} ne '1' ? $aca->{value} : chr $nc;
         } elsif (defined $aca->{append_name}) {
           $self->{ca}->{name} .= chr ($nc + $aca->{append_name});
