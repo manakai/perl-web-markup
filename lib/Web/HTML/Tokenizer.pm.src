@@ -5,6 +5,7 @@ use warnings FATAL => 'recursion';
 no warnings 'utf8';
 our $VERSION = '10.0';
 use Web::HTML::Defs;
+use Web::HTML::_SyntaxDefs;
 use Web::HTML::InputStream;
 use Web::HTML::ParserData;
 use Web::HTML::SourceMap;
@@ -121,6 +122,9 @@ sub _initialize_tokenizer ($) {
 
   if ($self->{is_xml}) {
     $self->{action_set} = $XMLAction;
+    #$self->{validation};
+        ## ->{need_predefined_decls}
+        ## ->{has_charref_decls}
   } else {
     $self->{action_set} = $Action;
   }
@@ -4540,20 +4544,30 @@ sub _get_next_token ($) {
             } else {
               ## An HTML character reference.
               if ($self->{is_xml}) {
-                ## Not a declared XML entity.
-                !!!parse-error (type => 'entity not declared', ## TODO: type
-                                value => $self->{kwd},
-                                level => {
-                                          'amp;' => $self->{level}->{warn},
-                                          'quot;' => $self->{level}->{warn},
-                                          'lt;' => $self->{level}->{warn},
-                                          'gt;' => $self->{level}->{warn},
-                                          'apos;' => $self->{level}->{warn},
-                                         }->{$self->{kwd}} ||
-                                         $self->{level}->{must},
-                                line => $self->{line},
-                                column => $self->{column} - length $self->{kwd});
-              }
+                if ($self->{validation}->{has_charref_decls} and
+                    defined $Web::HTML::EntityChar->{$self->{kwd}}) {
+                  #
+                } elsif ({
+                  'amp;' => 1, 'quot;' => 1, 'lt;' => 1, 'gt;' => 1, 'apos;' => 1,
+                }->{$self->{kwd}}) {
+                  if ($self->{validation}->{need_predefined_decls} or
+                      $self->{in_subset}) {
+                    !!!parse-error (type => 'entity not declared', ## TODO: type
+                                    value => $self->{kwd},
+                                    level => 'w',
+                                    line => $self->{line},
+                                    column => $self->{column} - length $self->{kwd});
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  !!!parse-error (type => 'entity not declared', ## TODO: type
+                                  value => $self->{kwd},
+                                  level => 'm',
+                                  line => $self->{line},
+                                  column => $self->{column} - length $self->{kwd});
+                }
+              } # xml
               $self->{entity__value} = $Web::HTML::EntityChar->{$self->{kwd}};
               delete $self->{entity__is_tree};
               delete $self->{entity__sps};
@@ -5610,12 +5624,25 @@ sub _get_next_token ($) {
         if (length $self->{kwd}) {
           my $pedef = $self->{pe}->{$self->{kwd} . ';'};
           if (defined $pedef) {
-            if ($pedef->{open}) {
+            if ($self->{stop_processing}) {
+              #
+            } elsif ($pedef->{open}) {
               !!!parse-error (type => 'WFC:No Recursion',
                               value => '%' . $self->{kwd} . ';',
                               line => $self->{line_prev},
                               column => $self->{column_prev} - length $self->{kwd});
               #
+            } elsif (defined $pedef->{pubid} and
+                     $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$pedef->{pubid}} and
+                     $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
+              ## $pedef->{pubid} normalization is intentionally not
+              ## done (Chrome behavior).
+
+              ## In a DeclSep
+              $self->{validation}->{has_charref_decls} = 1;
+              $self->{state} = $self->{prev_state};
+              !!!next-input-character;
+              redo A;
             } elsif (not (($self->{in_subset} or {})->{in_external_entity}) and
                      not $self->{prev_state} == DOCTYPE_INTERNAL_SUBSET_STATE) {
               ## In a markup declaration in internal subset
@@ -5635,11 +5662,13 @@ sub _get_next_token ($) {
                       column => $self->{column_prev} - 1 - length $self->{kwd}};
             }
           } else {
-            !!!parse-error (type => 'pe not declared',
-                            value => $self->{kwd} . ';',
-                            level => 'm',
-                            line => $self->{line_prev},
-                            column => $self->{column_prev} - length $self->{kwd});
+            unless ($self->{stop_processing}) {
+              !!!parse-error (type => 'pe not declared',
+                              value => $self->{kwd} . ';',
+                              level => 'm',
+                              line => $self->{line_prev},
+                              column => $self->{column_prev} - length $self->{kwd});
+            }
             #
           }
 

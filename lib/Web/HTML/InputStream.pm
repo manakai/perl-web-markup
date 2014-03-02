@@ -69,6 +69,7 @@ sub _clear_refs ($) {
   delete $self->{tokenizer_initial_state};
   delete $self->{sps_transformer};
   delete $self->{init_subparser};
+  delete $self->{validation};
 } # _clear_refs
 
 ## ------ Error handling ------

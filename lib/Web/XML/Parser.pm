@@ -7,6 +7,7 @@ our $VERSION = '8.0';
 use Encode;
 use Web::HTML::Defs;
 use Web::HTML::ParserData;
+use Web::HTML::_SyntaxDefs;
 use Web::HTML::InputStream;
 use Web::HTML::Tokenizer;
 use Web::HTML::SourceMap;
@@ -289,6 +290,7 @@ sub _parse_run ($) {
           $entdef->{type} == PARAMETER_ENTITY_TOKEN) {
         $subparser->{$im_key} = IN_SUBSET_IM;
         if (not defined $self->{prev_state}) {
+          ## External subset or in a DeclSep
           #
         } elsif ($self->{prev_state} == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE or
                  $self->{prev_state} == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE or
@@ -401,6 +403,7 @@ sub _parse_subparser_done ($$$) {
   if (defined $entdef->{name}) {
     if ($entdef->{type} == PARAMETER_ENTITY_TOKEN) {
       if (not defined $self->{prev_state}) {
+        ## In a DeclSep
         #
       } elsif ($self->{prev_state} == DOCTYPE_ENTITY_VALUE_DOUBLE_QUOTED_STATE or
                $self->{prev_state} == DOCTYPE_ENTITY_VALUE_SINGLE_QUOTED_STATE or
@@ -461,6 +464,9 @@ sub _parse_subparser_done ($$$) {
     } else {
       delete $self->{ge}->{$entdef->{name} . ';'}->{open};
     }
+  } else {
+    ## External subset
+    #
   }
   $self->{stop_processing} = 1 if $subparser->{stop_processing};
   delete $self->{parser_pause};
@@ -477,6 +483,7 @@ sub _parse_subparser_done ($$$) {
     my $xe = $_[2];
     $self->{initial_document} =
     $self->{document} = $main_parser->{document}->implementation->create_document;
+    $self->{validation} = $main_parser->{validation} ||= {};
     if ($xe->{external_subset} or
         $xe->{type} == Web::HTML::Defs::PARAMETER_ENTITY_TOKEN) {
       $self->{pe} = $main_parser->{pe};
@@ -498,7 +505,6 @@ sub _parse_subparser_done ($$$) {
     } else { ## General entity
       $self->{ge} = $main_parser->{ge};
       $self->{ge}->{$xe->{name} . ';'}->{open} = 1;
-      $self->{invoked_by_geref} = 1;
     }
     $self->onextentref ($main_parser->onextentref);
     return $self;
@@ -563,14 +569,6 @@ sub _initialize_tree_constructor ($) {
   $self->{document}->set_user_data (manakai_source_line => 1);
   $self->{document}->set_user_data (manakai_source_column => 1);
 
-  if (not $self->{in_subset} and not $self->{invoked_by_geref}) {
-    $self->{ge}->{'amp;'} = {value => '&', only_text => 1};
-    $self->{ge}->{'apos;'} = {value => "'", only_text => 1};
-    $self->{ge}->{'gt;'} = {value => '>', only_text => 1};
-    $self->{ge}->{'lt;'} = {value => '<', only_text => 1};
-    $self->{ge}->{'quot;'} = {value => '"', only_text => 1};
-  }
-
   delete $self->{tainted};
   $self->{open_elements} = [];
   $self->{insertion_mode} = BEFORE_XML_DECL_IM;
@@ -596,10 +594,6 @@ sub _terminate_tree_constructor ($) {
 ## Differences from the XML5 spec (not documented in DOMDTDEF spec)
 ## are marked as "XML5:".
 
-# XXX PUBLIC for external subset
-# XXX external entity for character entities
-# <http://www.whatwg.org/specs/web-apps/current-work/#parsing-xhtml-documents>
-# XXX param refs expansion spec
 # XXX stop processing
 # XXX standalone
 # XXX external parameter entity fetch error
@@ -859,11 +853,21 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
         $onerror->(level => 'm', type => 'in html:#doctype',
                         token => $self->{t});
-        ## Ignore the token.
-        
-        ## Stay in the mode.
-        $self->{t} = $self->_get_next_token;
-        redo B;
+
+        if ($self->{t}->{has_internal_subset}) {
+          ## Not in XML5
+          ## Ignore the token.
+          $self->{stop_processing} = 1;
+          $self->{doctype} = $self->{document}->create_document_type_definition ('dummy');
+          $self->{insertion_mode} = IN_SUBSET_IM;
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        } else {
+          ## Ignore the token.
+          ## Stay in the mode.
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        }
       } else {
         die "$0: XML parser initial: Unknown token type $self->{t}->{type}";
       }
@@ -1139,12 +1143,18 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == END_OF_DOCTYPE_TOKEN) {
+        if (@{$self->{open_elements}}) {
+          $self->{insertion_mode} = IN_ELEMENT_IM;
+        } elsif (defined $self->{document}->document_element) {
+          $self->{insertion_mode} = AFTER_ROOT_ELEMENT_IM;
+        } else {
+          $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
+        }
         my $dt = $self->{doctype};
         my $sysid = $dt->system_id;
         if (length $sysid) {
           # XXX resolve
           $self->{parser_pause} = 1;
-          $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
           delete $self->{prev_state};
           $self->{t} = {type => ABORT_TOKEN,
                         entdef => {external_subset => 1, sysid => $sysid},
@@ -1153,7 +1163,6 @@ sub _construct_tree ($) {
                         di => $dt->get_user_data ('manakai_di')};
           return;
         } else {
-          $self->{insertion_mode} = BEFORE_ROOT_ELEMENT_IM;
           $self->{t} = $self->_get_next_token;
           redo B;
         }
@@ -1230,11 +1239,20 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
         $onerror->(level => 'm', type => 'in html:#doctype',
                    token => $self->{t});
-
-        ## Ignore the token.
-        ## Stay in the mode.
-        $self->{t} = $self->_get_next_token;
-        redo B;
+        if ($self->{t}->{has_internal_subset}) {
+          ## Not in XML5
+          ## Ignore the token.
+          $self->{stop_processing} = 1;
+          $self->{doctype} = $self->{document}->create_document_type_definition ('dummy');
+          $self->{insertion_mode} = IN_SUBSET_IM;
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        } else {
+          ## Ignore the token.
+          ## Stay in the mode.
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        }
       } else {
         die "$0: XML parser initial: Unknown token type $self->{t}->{type}";
       }
@@ -1437,10 +1455,20 @@ sub _construct_tree ($) {
         $onerror->(level => 'm', type => 'second doctype', # XXXdoc
                    token => $self->{t});
 
-        ## Ignore the token.
-        ## Stay in the mode.
-        $self->{t} = $self->_get_next_token;
-        redo B;
+        if ($self->{t}->{has_internal_subset}) {
+          ## Not in XML5
+          ## Ignore the token.
+          $self->{stop_processing} = 1;
+          $self->{doctype} = $self->{document}->create_document_type_definition ('dummy');
+          $self->{insertion_mode} = IN_SUBSET_IM;
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        } else {
+          ## Ignore the token.
+          ## Stay in the mode.
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        }
       } else {
         die "$0: XML parser initial: Unknown token type $self->{t}->{type}";
       }
@@ -1454,7 +1482,8 @@ sub _construct_tree ($) {
         ## NOTE: Default value for both |public_id| and |system_id|
         ## attributes are empty strings, so that we don't set any
         ## value in missing cases.
-        $dt->public_id ($self->{t}->{pubid}) if defined $self->{t}->{pubid};
+        my $pubid = $self->{t}->{pubid};
+        $dt->public_id ($pubid) if defined $pubid;
         my $sysid = $self->{t}->{sysid};
         $dt->system_id ($sysid) if defined $sysid;
 
@@ -1464,7 +1493,15 @@ sub _construct_tree ($) {
         
         $self->{document}->append_child ($dt);
 
-        %{$self->{ge}} = ();
+        ## $pubid normalization is intentionally not done (Chrome
+        ## behavior).
+        if (defined $pubid and
+            $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$pubid}) {
+          $self->{validation}->{has_charref_decls} = 1;
+          undef $sysid;
+        } else {
+          $self->{validation}->{need_predefined_decls} = 1;
+        }
 
         ## XML5: No "has internal subset" flag.
         if ($self->{t}->{has_internal_subset}) {
