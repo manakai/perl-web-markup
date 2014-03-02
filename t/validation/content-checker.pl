@@ -83,6 +83,8 @@ sub _test ($$) {
 
     my $actual = join ("\n", sort {$a cmp $b} @error);
     my $expected = join ("\n", sort {$a cmp $b} @{$test->{errors}->[0]});
+    $actual = join "\n", sort { $a cmp $b } split /\n/, join "\n", $actual;
+    $expected = join "\n", sort { $a cmp $b } split /\n/, join "\n", $expected;
     if ($actual eq $expected) {
       is $actual, $expected;
     } else {

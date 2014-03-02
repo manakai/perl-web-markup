@@ -1084,15 +1084,6 @@ $CheckerByType->{'e-mail address list'} = sub {
   }
 }; # e-mail address list
 
-## Event handler content attribute [HTML]
-$CheckerByType->{'event handler'} = sub {
-  my ($self, $attr) = @_;
-  # XXX MUST be JavaScript FunctionBody
-  $self->{onerror}->(node => $attr,
-                     type => 'event handler',
-                     level => 'u');
-}; # event handler
-
 ## Web Applications 1.0 "Valid MIME type"
 our $MIMETypeChecker = sub {
   my ($self, $attr) = @_;
@@ -1550,7 +1541,7 @@ sub _validate_aria ($$) {
           $state->{in_ulol} = 1;
         }
         $state->{is_inert} = 1
-            if $ancestor_state->{is_inert} || $node->has_attribute_ns (undef, 'inert'); # XXX or inert by <dialog>
+            if $ancestor_state->{is_inert} || $node->has_attribute_ns (undef, 'inert'); # XXX or inert by <dialog> or inert by browsing context container
       }
 
       $parents = [@$parents, $node];
@@ -4013,11 +4004,11 @@ $Element->{+HTML_NS}->{script} = {
       }
     } elsif (defined $element_state->{content_type} and
              $element_state->{content_type}->is_javascript) {
-      # XXX validate $text as JavaScript
-      $self->{onerror}->(node => $item->{node},
-                         value => $element_state->{content_type}->as_valid_mime_type,
-                         type => 'unknown script lang',
-                         level => 'u');
+      require Web::JS::Checker;
+      my $jsc = Web::JS::Checker->new;
+      $jsc->impl ('JE');
+      $jsc->onerror ($GetNestedOnError->($self->onerror, $item->{node}, $text, $text_sps));
+      $jsc->check_char_string ($text);
     } elsif (defined $element_state->{content_type}) {
       $self->{onerror}->(node => $item->{node},
                          value => $element_state->{content_type}->as_valid_mime_type,
@@ -4056,6 +4047,54 @@ $ElementAttrChecker->{(HTML_NS)}->{script}->{''}->{language} = sub {
                        level => 'm');
   }
 }; # <script language="">
+
+## Event handler content attribute [HTML]
+$CheckerByType->{'event handler'} = sub {
+  my ($self, $attr) = @_;
+  ## MUST be JavaScript |FunctionBody|.
+  require Web::JS::Checker;
+  my $jsc = Web::JS::Checker->new;
+  $jsc->impl ('JE');
+  $jsc->onerror ($GetNestedOnError->($self->onerror, $attr, $attr->value));
+  $jsc->check_char_string ($attr->value);
+}; # event handler
+
+## JavaScript regular expression [HTML] [ES] [JS]
+$CheckerByType->{'JavaScript Pattern'} = sub {
+  my ($self, $attr) = @_;
+  ## NOTE: "value must match the Pattern production" [HTML].  In
+  ## addition, requirements for the Pattern, as defined in ECMA-262
+  ## specification, are also applied (e.g. {n,m} then n>=m must be
+  ## true).
+
+  require Regexp::Parser::JavaScript;
+  my $parser = Regexp::Parser::JavaScript->new;
+  $parser->onerror (sub {
+    my %opt = @_;
+    if ($opt{code} == [$parser->RPe_BADESC]->[0]) {
+      $opt{type} =~ s{%s%s}{
+        '%s' . (defined $opt{args}->[1] ? $opt{args}->[1] : '')
+      }e;
+    } elsif ($opt{code} == [$parser->RPe_FRANGE]->[0] or
+             $opt{code} == [$parser->RPe_IRANGE]->[0]) {
+      $opt{text} = $opt{args}->[0] . '-';
+      $opt{text} .= $opt{args}->[1] if defined $opt{args}->[1];
+    } elsif ($opt{code} == [$parser->RPe_BADFLG]->[0]) {
+      ## NOTE: Not used by JavaScript regexp parser in fact.
+      $opt{text} = $opt{args}->[0] . $opt{args}->[1];
+    } else {
+      $opt{text} = $opt{args}->[0];
+    }
+    delete $opt{args};
+    my $pos_start = delete $opt{pos_start};
+    my $value = substr ${delete $opt{valueref} or \''}, $pos_start, (delete $opt{pos_end}) - $pos_start;
+    $self->onerror->(%opt, value => $value, node => $attr);
+  }); # onerror
+  eval { $parser->parse ($attr->value) };
+  $parser->onerror (undef);
+
+  ## TODO: Warn if @value does not match @pattern.
+}; # JavaScript Pattern
 
 $Element->{+HTML_NS}->{noscript} = {
   %TransparentChecker,
@@ -9567,45 +9606,6 @@ $CheckerByType->{'media query list'} = sub {
   $checker->onerror ($parser->onerror);
   $checker->check_mq_list ($mqs);
 }; # media query list
-
-## ------ JavaScript ------
-
-## JavaScript regular expression [HTML] [ES] [JS]
-$CheckerByType->{'JavaScript Pattern'} = sub {
-  my ($self, $attr) = @_;
-  ## NOTE: "value must match the Pattern production" [HTML].  In
-  ## addition, requirements for the Pattern, as defined in ECMA-262
-  ## specification, are also applied (e.g. {n,m} then n>=m must be
-  ## true).
-
-  require Regexp::Parser::JavaScript;
-  my $parser = Regexp::Parser::JavaScript->new;
-  $parser->onerror (sub {
-    my %opt = @_;
-    if ($opt{code} == [$parser->RPe_BADESC]->[0]) {
-      $opt{type} =~ s{%s%s}{
-        '%s' . (defined $opt{args}->[1] ? $opt{args}->[1] : '')
-      }e;
-    } elsif ($opt{code} == [$parser->RPe_FRANGE]->[0] or
-             $opt{code} == [$parser->RPe_IRANGE]->[0]) {
-      $opt{text} = $opt{args}->[0] . '-';
-      $opt{text} .= $opt{args}->[1] if defined $opt{args}->[1];
-    } elsif ($opt{code} == [$parser->RPe_BADFLG]->[0]) {
-      ## NOTE: Not used by JavaScript regexp parser in fact.
-      $opt{text} = $opt{args}->[0] . $opt{args}->[1];
-    } else {
-      $opt{text} = $opt{args}->[0];
-    }
-    delete $opt{args};
-    my $pos_start = delete $opt{pos_start};
-    my $value = substr ${delete $opt{valueref} or \''}, $pos_start, (delete $opt{pos_end}) - $pos_start;
-    $self->onerror->(%opt, value => $value, node => $attr);
-  }); # onerror
-  eval { $parser->parse ($attr->value) };
-  $parser->onerror (undef);
-
-  ## TODO: Warn if @value does not match @pattern.
-}; # JavaScript Pattern
 
 ## ------ Documents ------
 

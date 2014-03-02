@@ -34,3 +34,6 @@
 [submodule "t_deps/modules/regexp"]
 	path = t_deps/modules/regexp
 	url = git://github.com/wakaba/perl-regexp-utils
+[submodule "t_deps/modules/web-js"]
+	path = t_deps/modules/web-js
+	url = git://github.com/manakai/perl-web-js

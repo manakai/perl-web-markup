@@ -92,7 +92,8 @@ validation.
 
 In addition to the dependency described in the README file
 <https://github.com/manakai/perl-web-markup/blob/master/README.pod#dependency>,
-following modules are required by this module:
+following modules (and modules required by them) are required by this
+module:
 
 =over 4
 
@@ -107,6 +108,10 @@ following modules are required by this module:
 =item perl-web-url <https://github.com/manakai/perl-web-url>
 
 =item perl-regexp-utils <https://github.com/wakaba/perl-regexp-utils>
+
+=item perl-web-js <https://github.com/manakai/perl-web-js>
+
+In addition, L<JE> is required.
 
 =back
 
