@@ -298,6 +298,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                            "video" => 1
                                                                                                                          }
                                                                                      },
+                                                       "has_additional_rules" => 1,
                                                        "label" => "interactive content",
                                                        "spec" => "HTML"
                                                      },
@@ -689,7 +690,33 @@ $Web::HTML::Validator::_Defs = {
                                                                                  },
                                                                        "attrs" => {
                                                                                     "" => {
+                                                                                            "_base_href" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "base",
+                                                                                                                               "name" => "href",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             }
+                                                                                                            },
+                                                                                            "_moz-rs-heading" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "omit"
+                                                                                                                                  }
+                                                                                                                 },
+                                                                                            "_moz_anonclass" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "omit"
+                                                                                                                                 }
+                                                                                                                },
+                                                                                            "_moz_dirty" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             }
+                                                                                                            },
                                                                                             "about" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "name" => "itemid",
+                                                                                                                          "type" => "html_attr"
+                                                                                                                        },
                                                                                                          "url_role" => "id",
                                                                                                          "value_type" => "any"
                                                                                                        },
@@ -699,6 +726,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
+                                                                                            "active" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "none"
+                                                                                                                         }
+                                                                                                        },
                                                                                             "align" => {},
                                                                                             "aria-activedescendant" => {
                                                                                                                          "conforming" => 1,
@@ -1201,12 +1233,22 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  "conforming" => 1
                                                                                                                                                }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "omit"
+                                                                                                                                  },
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                             "autocapitalize" => {},
                                                                                             "autocorrect" => {},
                                                                                             "autosave" => {},
                                                                                             "border" => {},
+                                                                                            "cite" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "element" => "blockquote",
+                                                                                                                         "name" => "cite",
+                                                                                                                         "type" => "html_attr"
+                                                                                                                       }
+                                                                                                      },
                                                                                             "class" => {
                                                                                                          "conforming" => 1,
                                                                                                          "item_type" => "non-empty",
@@ -1214,6 +1256,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          "value_type" => "set of space-separated tokens"
                                                                                                        },
                                                                                             "content" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "element" => "meta",
+                                                                                                                            "name" => "content",
+                                                                                                                            "type" => "html_attr"
+                                                                                                                          },
                                                                                                            "value_type" => "any"
                                                                                                          },
                                                                                             "contenteditable" => {
@@ -1243,11 +1290,38 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "id_type" => "popup",
                                                                                                                "value_type" => "idref"
                                                                                                              },
+                                                                                            "coords" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "element" => "area",
+                                                                                                                           "name" => "coords",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         }
+                                                                                                        },
+                                                                                            "csclick" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "onclick",
+                                                                                                                            "type" => "html_attr"
+                                                                                                                          }
+                                                                                                         },
+                                                                                            "csover" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "onmouseover",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         }
+                                                                                                        },
                                                                                             "datafld" => {},
                                                                                             "dataformatas" => {},
                                                                                             "datasrc" => {},
                                                                                             "datatype" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "value_type" => "any"
+                                                                                                          },
+                                                                                            "datetime" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           }
                                                                                                           },
                                                                                             "dir" => {
                                                                                                        "conforming" => 1,
@@ -1276,6 +1350,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                      },
                                                                                             "directkey" => {},
                                                                                             "disabled" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "value_type" => "boolean"
                                                                                                           },
                                                                                             "draggable" => {
@@ -1302,7 +1379,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                             "dynsrc" => {},
+                                                                                            "edit" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "none"
+                                                                                                                       }
+                                                                                                      },
                                                                                             "emptyok" => {},
+                                                                                            "encoding" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           }
+                                                                                                          },
                                                                                             "format" => {},
                                                                                             "hidden" => {
                                                                                                           "conforming" => 1,
@@ -1310,9 +1397,54 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           "value_type" => "boolean"
                                                                                                         },
                                                                                             "hidefocus" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "outline-style",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "value_type" => "boolean"
                                                                                                            },
+                                                                                            "href" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "element" => "a",
+                                                                                                                         "name" => "href",
+                                                                                                                         "type" => "html_attr"
+                                                                                                                       }
+                                                                                                      },
+                                                                                            "hreflang" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "a",
+                                                                                                                             "name" => "hreflang",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           }
+                                                                                                          },
+                                                                                            "hrefmedia" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "omit"
+                                                                                                                            }
+                                                                                                           },
+                                                                                            "hreftype" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "a",
+                                                                                                                             "name" => "hreftype",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           }
+                                                                                                          },
                                                                                             "hspace" => {},
+                                                                                            "htign" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "omit"
+                                                                                                                        }
+                                                                                                       },
+                                                                                            "htnames" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "omit"
+                                                                                                                          }
+                                                                                                         },
+                                                                                            "htsupp" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "omit"
+                                                                                                                         }
+                                                                                                        },
                                                                                             "id" => {
                                                                                                       "conforming" => 1,
                                                                                                       "status" => "LC",
@@ -1324,7 +1456,25 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "boolean"
                                                                                                        },
+                                                                                            "instanceof" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "none"
+                                                                                                                             }
+                                                                                                            },
                                                                                             "iprof" => {},
+                                                                                            "irrelevant" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "hidden",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             }
+                                                                                                            },
+                                                                                            "ismap" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "element" => "a",
+                                                                                                                          "name" => "ismap",
+                                                                                                                          "type" => "html_attr"
+                                                                                                                        }
+                                                                                                       },
                                                                                             "istyle" => {},
                                                                                             "itemid" => {
                                                                                                           "conforming" => 1,
@@ -1362,10 +1512,39 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         "translatable" => "partial",
                                                                                                         "value_type" => "language tag or empty"
                                                                                                       },
-                                                                                            "language" => {},
+                                                                                            "language" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "omit"
+                                                                                                                           }
+                                                                                                          },
+                                                                                            "layout" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "pre",
+                                                                                                                           "type" => "html_element"
+                                                                                                                         }
+                                                                                                        },
                                                                                             "loop" => {},
                                                                                             "lowsrc" => {},
+                                                                                            "media" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "element" => "link",
+                                                                                                                          "name" => "media",
+                                                                                                                          "type" => "html_attr"
+                                                                                                                        }
+                                                                                                       },
                                                                                             "mode" => {},
+                                                                                            "nextfocus" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "tabindex",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            }
+                                                                                                           },
+                                                                                            "ng-*" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "name" => "data-*",
+                                                                                                                         "type" => "html_attr"
+                                                                                                                       }
+                                                                                                      },
                                                                                             "onabort" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC",
@@ -1808,20 +1987,80 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                             "precision" => {},
                                                                                             "prefix" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "omit"
+                                                                                                                         },
                                                                                                           "value_type" => "any"
                                                                                                         },
+                                                                                            "prevfocus" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "tabindex",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            }
+                                                                                                           },
                                                                                             "property" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "meta",
+                                                                                                                             "name" => "name",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
                                                                                                             "value_type" => "any"
                                                                                                           },
+                                                                                            "ref" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "type" => "script"
+                                                                                                                      }
+                                                                                                     },
+                                                                                            "registrationmark" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "type" => "script"
+                                                                                                                                   }
+                                                                                                                  },
                                                                                             "rel" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "type" => "none"
+                                                                                                                      },
                                                                                                        "value_type" => "any"
                                                                                                      },
+                                                                                            "repeat" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "script"
+                                                                                                                         }
+                                                                                                        },
+                                                                                            "repeat-max" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             }
+                                                                                                            },
+                                                                                            "repeat-min" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             }
+                                                                                                            },
+                                                                                            "repeat-start" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               }
+                                                                                                              },
+                                                                                            "repeat-template" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "script"
+                                                                                                                                  }
+                                                                                                                 },
                                                                                             "resource" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "link",
+                                                                                                                             "name" => "href",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
                                                                                                             "url_role" => "id",
                                                                                                             "value_type" => "any"
                                                                                                           },
                                                                                             "results" => {},
                                                                                             "rev" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "type" => "none"
+                                                                                                                      },
                                                                                                        "value_type" => "any"
                                                                                                      },
                                                                                             "role" => {
@@ -2111,6 +2350,28 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         "status" => "CR",
                                                                                                         "value_type" => "unordered set of unique space-separated tokens"
                                                                                                       },
+                                                                                            "sdaform" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "omit"
+                                                                                                                          }
+                                                                                                         },
+                                                                                            "sdapref" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "omit"
+                                                                                                                          }
+                                                                                                         },
+                                                                                            "sdasuff" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "omit"
+                                                                                                                          }
+                                                                                                         },
+                                                                                            "shape" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "element" => "area",
+                                                                                                                          "name" => "shape",
+                                                                                                                          "type" => "html_attr"
+                                                                                                                        }
+                                                                                                       },
                                                                                             "soundstart" => {},
                                                                                             "spellcheck" => {
                                                                                                               "conforming" => 1,
@@ -2134,6 +2395,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "status" => "CR",
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
+                                                                                            "src" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "element" => "object",
+                                                                                                                        "name" => "data",
+                                                                                                                        "type" => "html_attr"
+                                                                                                                      }
+                                                                                                     },
+                                                                                            "srctype" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "element" => "object",
+                                                                                                                            "name" => "type",
+                                                                                                                            "type" => "html_attr"
+                                                                                                                          }
+                                                                                                         },
                                                                                             "start" => {},
                                                                                             "style" => {
                                                                                                          "conforming" => 1,
@@ -2145,6 +2420,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "integer"
+                                                                                                          },
+                                                                                            "target" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "element" => "a",
+                                                                                                                           "name" => "target",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         }
+                                                                                                        },
+                                                                                            "template" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "script"
+                                                                                                                           }
                                                                                                           },
                                                                                             "title" => {
                                                                                                          "conforming" => 1,
@@ -2176,6 +2463,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                             "typeof" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "none"
+                                                                                                                         },
                                                                                                           "value_type" => "any"
                                                                                                         },
                                                                                             "unselectable" => {
@@ -2187,13 +2477,26 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "conforming" => 1
                                                                                                                                           }
                                                                                                                                 },
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "user-select",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               },
-                                                                                            "usemap" => {},
+                                                                                            "usemap" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "element" => "img",
+                                                                                                                           "name" => "usemap",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         }
+                                                                                                        },
                                                                                             "vcard_name" => {},
                                                                                             "viblength" => {},
                                                                                             "vibration" => {},
                                                                                             "vocab" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "omit"
+                                                                                                                        },
                                                                                                          "value_type" => "any"
                                                                                                        },
                                                                                             "volume" => {},
@@ -2211,17 +2514,33 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                         "conforming" => 1
                                                                                                                                                       }
                                                                                                                                          },
+                                                                                                                         "preferred" => {
+                                                                                                                                          "type" => "none"
+                                                                                                                                        },
                                                                                                                          "value_type" => "enumerated"
                                                                                                                        },
                                                                                             "xml:lang" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC"
                                                                                                           },
+                                                                                            "xml:space" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "omit"
+                                                                                                                            }
+                                                                                                           },
                                                                                             "xmlns" => {
                                                                                                          "conforming" => 1,
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "omit"
+                                                                                                                        },
                                                                                                          "status" => "LC",
                                                                                                          "url_role" => "id"
-                                                                                                       }
+                                                                                                       },
+                                                                                            "xmlns:fb" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "omit"
+                                                                                                                           }
+                                                                                                          }
                                                                                           }
                                                                                   }
                                                                      },
@@ -2243,24 +2562,46 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           "status" => "LC"
                                                                                                         },
                                                                                             "charset" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "omit"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "character encoding label"
                                                                                                          },
                                                                                             "coords" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "element" => "area",
+                                                                                                                           "name" => "coords",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         },
                                                                                                           "value_type" => "list of integers"
                                                                                                         },
-                                                                                            "cti" => {},
+                                                                                            "cti" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "type" => "none"
+                                                                                                                      }
+                                                                                                     },
                                                                                             "datafld" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "any"
                                                                                                          },
                                                                                             "datasrc" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "url_role" => "resource",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
                                                                                             "directkey" => {
                                                                                                              "item_type" => "char",
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "tabindex",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "value_type" => "ordered set of unique space-separated tokens"
                                                                                                            },
                                                                                             "download" => {
@@ -2270,8 +2611,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "text"
                                                                                                           },
                                                                                             "email" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "vcard"
+                                                                                                                        },
                                                                                                          "value_type" => "e-mail address"
                                                                                                        },
+                                                                                            "eswf" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "script"
+                                                                                                                       }
+                                                                                                      },
                                                                                             "href" => {
                                                                                                         "conforming" => 1,
                                                                                                         "status" => "LC",
@@ -2284,46 +2633,120 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "language tag"
                                                                                                           },
                                                                                             "ib" => {
+                                                                                                      "preferred" => {
+                                                                                                                       "element" => "a",
+                                                                                                                       "name" => "href",
+                                                                                                                       "type" => "html_attr"
+                                                                                                                     },
                                                                                                       "value_type" => "URL potentially surrounded by spaces"
                                                                                                     },
                                                                                             "ifb" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "element" => "a",
+                                                                                                                        "name" => "href",
+                                                                                                                        "type" => "html_attr"
+                                                                                                                      },
                                                                                                        "value_type" => "URL potentially surrounded by spaces"
                                                                                                      },
                                                                                             "ijam" => {
                                                                                                         "id_type" => "object",
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "script"
+                                                                                                                       },
                                                                                                         "value_type" => "idref or hash-ID reference"
                                                                                                       },
                                                                                             "ilet" => {
                                                                                                         "id_type" => "object",
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "script"
+                                                                                                                       },
                                                                                                         "value_type" => "hash-ID reference"
                                                                                                       },
                                                                                             "irst" => {
                                                                                                         "id_type" => "object",
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "script"
+                                                                                                                       },
                                                                                                         "value_type" => "hash-ID reference"
                                                                                                       },
                                                                                             "ista" => {
                                                                                                         "id_type" => "object",
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "script"
+                                                                                                                       },
                                                                                                         "value_type" => "idref"
                                                                                                       },
                                                                                             "iswf" => {
                                                                                                         "id_type" => "object",
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "script"
+                                                                                                                       },
                                                                                                         "value_type" => "hash-ID reference"
                                                                                                       },
                                                                                             "kana" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "vcard"
+                                                                                                                       },
                                                                                                         "value_type" => "text"
                                                                                                       },
                                                                                             "lcs" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "type" => "script"
+                                                                                                                      },
                                                                                                        "value_type" => "boolean"
                                                                                                      },
-                                                                                            "loop" => {},
-                                                                                            "memoryname" => {},
+                                                                                            "loop" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "element" => "video",
+                                                                                                                         "name" => "loop",
+                                                                                                                         "type" => "html_attr"
+                                                                                                                       }
+                                                                                                      },
+                                                                                            "mailbody" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "href",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           }
+                                                                                                          },
+                                                                                            "measure" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          }
+                                                                                                         },
+                                                                                            "media" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "script"
+                                                                                                                        }
+                                                                                                       },
+                                                                                            "memoryname" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "vcard"
+                                                                                                                             }
+                                                                                                            },
                                                                                             "methods" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "omit"
+                                                                                                                          },
                                                                                                            "status" => "LC"
                                                                                                          },
                                                                                             "name" => {
                                                                                                         "obsolete_but_conforming" => 1,
+                                                                                                        "preferred" => {
+                                                                                                                         "name" => "id",
+                                                                                                                         "type" => "html_attr"
+                                                                                                                       },
                                                                                                         "status" => "LC",
                                                                                                         "value_type" => "name"
+                                                                                                      },
+                                                                                            "nonumber" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "css"
+                                                                                                                           }
+                                                                                                          },
+                                                                                            "onto" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "none"
+                                                                                                                       }
                                                                                                       },
                                                                                             "ping" => {
                                                                                                         "conforming" => 1,
@@ -2340,6 +2763,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        "value_type" => "set of space-separated tokens"
                                                                                                      },
                                                                                             "rev" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "name" => "rel",
+                                                                                                                        "type" => "html_attr"
+                                                                                                                      },
                                                                                                        "status" => "LC"
                                                                                                      },
                                                                                             "shape" => {
@@ -2392,6 +2819,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "spec" => "HTML"
                                                                                                                                           }
                                                                                                                          },
+                                                                                                         "preferred" => {
+                                                                                                                          "element" => "area",
+                                                                                                                          "name" => "shape",
+                                                                                                                          "type" => "html_attr"
+                                                                                                                        },
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "enumerated"
                                                                                                        },
@@ -2404,9 +2836,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "video",
+                                                                                                                               "name" => "autoplay",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                             "src" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "element" => "img",
+                                                                                                                        "name" => "src",
+                                                                                                                        "type" => "html_attr"
+                                                                                                                      },
                                                                                                        "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                      },
                                                                                             "target" => {
@@ -2415,6 +2857,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           "value_type" => "browsing context name or keyword"
                                                                                                         },
                                                                                             "telbook" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "vcard"
+                                                                                                                          },
                                                                                                            "value_type" => "text"
                                                                                                          },
                                                                                             "type" => {
@@ -2423,12 +2868,21 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         "value_type" => "MIME type"
                                                                                                       },
                                                                                             "urn" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "type" => "omit"
+                                                                                                                      },
                                                                                                        "status" => "LC"
                                                                                                      },
                                                                                             "utn" => {
+                                                                                                       "preferred" => {
+                                                                                                                        "type" => "none"
+                                                                                                                      },
                                                                                                        "value_type" => "boolean"
                                                                                                      },
                                                                                             "viblength" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "value_type" => "non-negative integer"
                                                                                                            },
                                                                                             "vibration" => {
@@ -2440,6 +2894,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                             "volume" => {
@@ -2454,8 +2911,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "script"
+                                                                                                                         },
                                                                                                           "value_type" => "enumerated"
-                                                                                                        }
+                                                                                                        },
+                                                                                            "z" => {
+                                                                                                     "preferred" => {
+                                                                                                                      "type" => "script"
+                                                                                                                    }
+                                                                                                   }
                                                                                           }
                                                                                   },
                                                                        "conforming" => 1,
@@ -2471,6 +2936,12 @@ $Web::HTML::Validator::_Defs = {
                                                               "abbr" => {
                                                                           "attrs" => {
                                                                                        "" => {
+                                                                                               "full" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "aria-describedby",
+                                                                                                                            "type" => "html_attr"
+                                                                                                                          }
+                                                                                                         },
                                                                                                "title" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC",
@@ -2482,11 +2953,49 @@ $Web::HTML::Validator::_Defs = {
                                                                           "content_model" => "phrasing content",
                                                                           "status" => "REC"
                                                                         },
+                                                              "abbrev" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "abbr",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
+                                                              "above" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "math"
+                                                                                          }
+                                                                         },
+                                                              "abstract" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "name" => "section",
+                                                                                               "type" => "html_element"
+                                                                                             }
+                                                                            },
+                                                              "access" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "accesskey",
+                                                                                             "type" => "html_attr"
+                                                                                           }
+                                                                          },
                                                               "acronym" => {
                                                                              "attrs" => {},
                                                                              "content_model" => "phrasing content",
+                                                                             "preferred" => {
+                                                                                              "name" => "abbr",
+                                                                                              "type" => "html_element"
+                                                                                            },
                                                                              "status" => "LC"
                                                                            },
+                                                              "added" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "name" => "ins",
+                                                                                            "type" => "html_element"
+                                                                                          }
+                                                                         },
                                                               "address" => {
                                                                              "aria" => {
                                                                                          "" => {
@@ -2498,6 +3007,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                        },
                                                                              "attrs" => {
                                                                                           "" => {
+                                                                                                  "align" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "text-align",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              }
+                                                                                                             },
                                                                                                   "clear" => {
                                                                                                                "enumerated" => {
                                                                                                                                  "all" => {
@@ -2516,6 +3031,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "clear",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "enumerated"
                                                                                                              }
                                                                                                 }
@@ -2537,6 +3056,34 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          },
                                                                              "status" => "REC"
                                                                            },
+                                                              "alt" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "element" => "img",
+                                                                                          "name" => "alt",
+                                                                                          "type" => "html_attr"
+                                                                                        }
+                                                                       },
+                                                              "animate" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "name" => "video",
+                                                                                              "type" => "html_element"
+                                                                                            }
+                                                                           },
+                                                              "any" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "none"
+                                                                                        }
+                                                                       },
+                                                              "app" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "object",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "applet" => {
                                                                             "attrs" => {
                                                                                          "" => {
@@ -2573,57 +3120,110 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "float",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                  "alt" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "omit"
+                                                                                                                           },
                                                                                                             "value_type" => "text"
                                                                                                           },
                                                                                                  "archive" => {
                                                                                                                 "item_type" => "non-empty URL",
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "param",
+                                                                                                                                 "type" => "html_element"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "set of comma-separated tokens"
                                                                                                               },
                                                                                                  "code" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "param",
+                                                                                                                              "type" => "html_element"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                  "codebase" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "param",
+                                                                                                                                  "type" => "html_element"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "url_role" => "base",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                  "datafld" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "any"
                                                                                                               },
                                                                                                  "datasrc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "height" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "height",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "hspace" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
                                                                                                  "mayscript" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "param",
+                                                                                                                                   "type" => "html_element"
+                                                                                                                                 },
                                                                                                                   "value_type" => "boolean"
                                                                                                                 },
                                                                                                  "name" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "id",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "value_type" => "name"
                                                                                                            },
                                                                                                  "object" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "param",
+                                                                                                                                "type" => "html_element"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                  "vspace" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
                                                                                                  "width" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "width",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             }
                                                                                                }
@@ -2641,6 +3241,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "transparent" => 1
                                                                                                          }
                                                                                                        ],
+                                                                            "preferred" => {
+                                                                                             "name" => "object",
+                                                                                             "type" => "html_element"
+                                                                                           },
                                                                             "status" => "LC",
                                                                             "transparent" => "semi"
                                                                           },
@@ -2686,6 +3290,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "language tag"
                                                                                                              },
                                                                                                "nohref" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "omit"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "boolean"
                                                                                                            },
@@ -2773,6 +3380,25 @@ $Web::HTML::Validator::_Defs = {
                                                                           "content_model" => "empty",
                                                                           "status" => "LC"
                                                                         },
+                                                              "arg" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "var",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
+                                                              "args" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
+                                                              "array" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "math"
+                                                                                          }
+                                                                         },
                                                               "article" => {
                                                                              "aria" => {
                                                                                          "" => {
@@ -2785,7 +3411,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "default_role" => "article"
                                                                                                }
                                                                                        },
-                                                                             "attrs" => {},
+                                                                             "attrs" => {
+                                                                                          "" => {
+                                                                                                  "cite" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                  "pubdate" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "omit"
+                                                                                                                                }
+                                                                                                               }
+                                                                                                }
+                                                                                        },
                                                                              "conforming" => 1,
                                                                              "content_model" => "flow content",
                                                                              "status" => "CR"
@@ -2813,6 +3452,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        },
                                                                            "status" => "CR"
                                                                          },
+                                                              "atop" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
+                                                              "au" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "span",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
                                                               "audio" => {
                                                                            "aria" => {
                                                                                        "" => {
@@ -2824,6 +3476,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                      },
                                                                            "attrs" => {
                                                                                         "" => {
+                                                                                                "audio" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "autobuffer" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 }
+                                                                                                                },
                                                                                                 "autoplay" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "LC",
@@ -2834,6 +3496,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
+                                                                                                "cross-origin" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "crossorigin",
+                                                                                                                                     "type" => "html_attr"
+                                                                                                                                   }
+                                                                                                                  },
                                                                                                 "crossorigin" => {
                                                                                                                    "conforming" => 1,
                                                                                                                    "enumerated" => {
@@ -2870,11 +3538,26 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
+                                                                                                "end" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          }
+                                                                                                         },
                                                                                                 "loop" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "boolean"
                                                                                                           },
+                                                                                                "loopend" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                "loopstart" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                }
+                                                                                                               },
                                                                                                 "mediagroup" => {
                                                                                                                   "conforming" => 1,
                                                                                                                   "status" => "LC",
@@ -2885,6 +3568,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "boolean"
                                                                                                            },
+                                                                                                "playcount" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                }
+                                                                                                               },
                                                                                                 "preload" => {
                                                                                                                "conforming" => 1,
                                                                                                                "enumerated" => {
@@ -2926,7 +3614,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "status" => "LC",
                                                                                                            "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
-                                                                                                         }
+                                                                                                         },
+                                                                                                "start" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            }
+                                                                                                           }
                                                                                               }
                                                                                       },
                                                                            "conforming" => 1,
@@ -2939,12 +3632,39 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "LC",
                                                                            "transparent" => "semi"
                                                                          },
+                                                              "audioscope" => {
+                                                                                "attrs" => {},
+                                                                                "preferred" => {
+                                                                                                 "name" => "object",
+                                                                                                 "type" => "html_element"
+                                                                                               }
+                                                                              },
+                                                              "author" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "span",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
                                                               "b" => {
                                                                        "attrs" => {},
                                                                        "conforming" => 1,
                                                                        "content_model" => "phrasing content",
                                                                        "status" => "REC"
                                                                      },
+                                                              "banner" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "nav",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
+                                                              "bar" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "math"
+                                                                                        }
+                                                                       },
                                                               "base" => {
                                                                           "aria" => {
                                                                                       "" => {
@@ -2974,10 +3694,48 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "basefont" => {
-                                                                              "attrs" => {},
+                                                                              "attrs" => {
+                                                                                           "" => {
+                                                                                                   "color" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "color",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              },
+                                                                                                   "face" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "font-family",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                   "size" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "font-size",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              }
+                                                                                                             }
+                                                                                                 }
+                                                                                         },
                                                                               "content_model" => "empty",
+                                                                              "preferred" => {
+                                                                                               "type" => "omit"
+                                                                                             },
                                                                               "status" => "LC"
                                                                             },
+                                                              "bb" => {
+                                                                        "attrs" => {
+                                                                                     "" => {
+                                                                                             "type" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "script"
+                                                                                                                        }
+                                                                                                       }
+                                                                                           }
+                                                                                   },
+                                                                        "preferred" => {
+                                                                                         "type" => "script"
+                                                                                       }
+                                                                      },
                                                               "bdi" => {
                                                                          "attrs" => {
                                                                                       "" => {
@@ -3046,16 +3804,40 @@ $Web::HTML::Validator::_Defs = {
                                                                          "content_model" => "phrasing content",
                                                                          "status" => "REC"
                                                                        },
+                                                              "below" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "math"
+                                                                                          }
+                                                                         },
                                                               "bgsound" => {
                                                                              "attrs" => {
                                                                                           "" => {
+                                                                                                  "as" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "script"
+                                                                                                                           }
+                                                                                                          },
                                                                                                   "balance" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "none"
+                                                                                                                                },
                                                                                                                  "value_type" => "integer"
                                                                                                                },
                                                                                                   "loop" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "audio",
+                                                                                                                               "name" => "loop",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "value_type" => "integer"
                                                                                                             },
                                                                                                   "src" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "element" => "audio",
+                                                                                                                              "name" => "src",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
@@ -3074,26 +3856,68 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               }
                                                                                                                                 },
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               }
                                                                                                 }
                                                                                         },
                                                                              "content_model" => "empty",
+                                                                             "preferred" => {
+                                                                                              "name" => "audio",
+                                                                                              "type" => "html_element"
+                                                                                            },
                                                                              "status" => "LC"
                                                                            },
                                                               "big" => {
                                                                          "attrs" => {},
                                                                          "content_model" => "phrasing content",
+                                                                         "preferred" => {
+                                                                                          "name" => "font-size",
+                                                                                          "type" => "css_prop"
+                                                                                        },
                                                                          "status" => "LC"
                                                                        },
+                                                              "bitr" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
+                                                              "blackface" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "name" => "font-family",
+                                                                                                "type" => "css_prop"
+                                                                                              }
+                                                                             },
                                                               "blink" => {
                                                                            "attrs" => {},
                                                                            "content_model" => "phrasing content",
+                                                                           "preferred" => {
+                                                                                            "name" => "text-decoration",
+                                                                                            "type" => "css_prop",
+                                                                                            "value" => "blink"
+                                                                                          },
                                                                            "status" => "LC"
                                                                          },
+                                                              "blockcode" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "name" => "code",
+                                                                                                "type" => "html_element"
+                                                                                              }
+                                                                             },
                                                               "blockquote" => {
                                                                                 "attrs" => {
                                                                                              "" => {
+                                                                                                     "align" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "text-align",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 }
+                                                                                                                },
                                                                                                      "cite" => {
                                                                                                                  "conforming" => 1,
                                                                                                                  "status" => "LC",
@@ -3118,6 +3942,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  "conforming" => 1
                                                                                                                                                }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "clear",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 }
                                                                                                    }
@@ -3139,15 +3967,27 @@ $Web::HTML::Validator::_Defs = {
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "alink" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "color",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "legacy color value"
                                                                                                           },
                                                                                                "background" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "background-image",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "url_role" => "embedded",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                "bgcolor" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "background-color",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "legacy color value"
                                                                                                             },
@@ -3160,33 +4000,82 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "conforming" => 1
                                                                                                                                                 }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "background-attachment",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
+                                                                                               "bottommargin" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "margin-bottom",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  }
+                                                                                                                 },
+                                                                                               "leftmargin" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "margin-left",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                }
+                                                                                                               },
                                                                                                "link" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "color",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "legacy color value"
                                                                                                          },
                                                                                                "marginbottom" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "margin-bottom",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "status" => "LC"
                                                                                                                  },
                                                                                                "marginheight" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "margin",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "non-negative integer"
                                                                                                                  },
                                                                                                "marginleft" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "margin-left",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                },
                                                                                                                  "status" => "LC"
                                                                                                                },
                                                                                                "marginright" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "margin-right",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC"
                                                                                                                 },
                                                                                                "margintop" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "margin-top",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "status" => "LC"
                                                                                                               },
                                                                                                "marginwidth" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "margin",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "non-negative integer"
                                                                                                                 },
                                                                                                "nowrap" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "white-space",
+                                                                                                                              "type" => "css_prop",
+                                                                                                                              "value" => "nowrap"
+                                                                                                                            },
                                                                                                              "value_type" => "boolean"
                                                                                                            },
                                                                                                "onafterprint" => {
@@ -3255,6 +4144,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "event handler"
                                                                                                              },
                                                                                                "rightmargin" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "margin-right",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "value_type" => "non-negative integer"
                                                                                                                 },
                                                                                                "scroll" => {
@@ -3269,16 +4162,32 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "overflow",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                "text" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "color",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "legacy color value"
                                                                                                          },
                                                                                                "topmargin" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "margin-top",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "non-negative integer"
                                                                                                               },
                                                                                                "vlink" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "color",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "legacy color value"
                                                                                                           }
@@ -3288,6 +4197,26 @@ $Web::HTML::Validator::_Defs = {
                                                                           "content_model" => "flow content",
                                                                           "status" => "REC"
                                                                         },
+                                                              "bodytext" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "name" => "div",
+                                                                                               "type" => "html_element"
+                                                                                             }
+                                                                            },
+                                                              "box" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "math"
+                                                                                        }
+                                                                       },
+                                                              "bq" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "blockquote",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
                                                               "br" => {
                                                                         "attrs" => {
                                                                                      "" => {
@@ -3309,6 +4238,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "clear",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         }
@@ -3317,6 +4250,13 @@ $Web::HTML::Validator::_Defs = {
                                                                         "conforming" => 1,
                                                                         "content_model" => "empty",
                                                                         "status" => "REC"
+                                                                      },
+                                                              "bt" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "font-family",
+                                                                                         "type" => "css_prop"
+                                                                                       }
                                                                       },
                                                               "button" => {
                                                                             "aria" => {
@@ -3343,6 +4283,10 @@ $Web::HTML::Validator::_Defs = {
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "action" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "formaction",
+                                                                                                                                "type" => "html_attr"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "submission"
                                                                                                              },
@@ -3352,6 +4296,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   "value_type" => "boolean"
                                                                                                                 },
                                                                                                  "datafld" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "any"
                                                                                                               },
@@ -3367,10 +4314,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                    "conforming" => 1
                                                                                                                                                  }
                                                                                                                                      },
+                                                                                                                     "preferred" => {
+                                                                                                                                      "type" => "script"
+                                                                                                                                    },
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "enumerated"
                                                                                                                    },
                                                                                                  "datasrc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -3380,6 +4333,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "status" => "LC",
                                                                                                                  "value_type" => "boolean"
                                                                                                                },
+                                                                                                 "enctype" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "formenctype",
+                                                                                                                                 "type" => "html_attr"
+                                                                                                                               }
+                                                                                                              },
                                                                                                  "form" => {
                                                                                                              "conforming" => 1,
                                                                                                              "id_type" => "form",
@@ -3468,11 +4427,39 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "idref"
                                                                                                            },
+                                                                                                 "method" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "formmethod",
+                                                                                                                                "type" => "html_attr"
+                                                                                                                              }
+                                                                                                             },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "non-empty"
                                                                                                            },
+                                                                                                 "novalidate" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "formnovalidate",
+                                                                                                                                    "type" => "html_attr"
+                                                                                                                                  }
+                                                                                                                 },
+                                                                                                 "replace" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               }
+                                                                                                              },
+                                                                                                 "target" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "formtarget",
+                                                                                                                                "type" => "html_attr"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                 "template" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                }
+                                                                                                               },
                                                                                                  "type" => {
                                                                                                              "conforming" => 1,
                                                                                                              "enumerated" => {
@@ -3525,6 +4512,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         },
                                                                             "status" => "LC"
                                                                           },
+                                                              "byline" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "footer",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
+                                                              "calendar" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "vevent"
+                                                                                             }
+                                                                            },
                                                               "canvas" => {
                                                                             "attrs" => {
                                                                                          "" => {
@@ -3564,6 +4564,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "conforming" => 1
                                                                                                                                           }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "text-align",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
@@ -3576,6 +4580,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                                 },
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "vertical-align",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               }
                                                                                                 }
@@ -3591,6 +4599,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                          },
                                                                              "status" => "REC"
                                                                            },
+                                                              "card" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "vcard"
+                                                                                         }
+                                                                        },
                                                               "center" => {
                                                                             "attrs" => {
                                                                                          "" => {
@@ -3612,12 +4626,46 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "clear",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "enumerated"
                                                                                                             }
                                                                                                }
                                                                                        },
                                                                             "content_model" => "flow content",
+                                                                            "preferred" => {
+                                                                                             "name" => "text-align",
+                                                                                             "type" => "css_prop"
+                                                                                           },
                                                                             "status" => "LC"
+                                                                          },
+                                                              "centre" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "text-align",
+                                                                                             "type" => "css_prop"
+                                                                                           }
+                                                                          },
+                                                              "certs" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "none"
+                                                                                          }
+                                                                         },
+                                                              "changed" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "name" => "span",
+                                                                                              "type" => "html_element"
+                                                                                            }
+                                                                           },
+                                                              "choose" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "math"
+                                                                                           }
                                                                           },
                                                               "cite" => {
                                                                           "attrs" => {},
@@ -3625,6 +4673,13 @@ $Web::HTML::Validator::_Defs = {
                                                                           "content_model" => "phrasing content",
                                                                           "status" => "REC"
                                                                         },
+                                                              "cmd" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "kbd",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "code" => {
                                                                           "attrs" => {},
                                                                           "conforming" => 1,
@@ -3658,13 +4713,23 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "text-align",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "enumerated"
                                                                                                          },
                                                                                               "char" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "none"
+                                                                                                                         },
                                                                                                           "status" => "LC"
                                                                                                         },
                                                                                               "charoff" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "none"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "dimension value"
                                                                                                            },
@@ -3688,10 +4753,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                             },
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "vertical-align",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "enumerated"
                                                                                                           },
                                                                                               "width" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "width",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "non-negative integer"
                                                                                                          }
@@ -3728,10 +4801,21 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "conforming" => 1
                                                                                                                                              }
                                                                                                                                 },
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "text-align",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               },
-                                                                                                   "char" => {},
+                                                                                                   "char" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "none"
+                                                                                                                              }
+                                                                                                             },
                                                                                                    "charoff" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "none"
+                                                                                                                                 },
                                                                                                                   "value_type" => "dimension value"
                                                                                                                 },
                                                                                                    "span" => {
@@ -3754,9 +4838,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "vertical-align",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                },
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
-                                                                                                   "width" => {}
+                                                                                                   "width" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "width",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              }
                                                                                                  }
                                                                                          },
                                                                               "conforming" => 1,
@@ -3766,12 +4859,149 @@ $Web::HTML::Validator::_Defs = {
                                                               "command" => {
                                                                              "attrs" => {
                                                                                           "" => {
+                                                                                                  "checked" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "element" => "menuitem",
+                                                                                                                                  "name" => "checked",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                }
+                                                                                                               },
+                                                                                                  "default" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "element" => "menuitem",
+                                                                                                                                  "name" => "default",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                }
+                                                                                                               },
+                                                                                                  "disabled" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "element" => "menuitem",
+                                                                                                                                   "name" => "disabled",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 },
+                                                                                                                  "value_type" => "boolean"
+                                                                                                                },
                                                                                                   "icon" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "menuitem",
+                                                                                                                               "name" => "icon",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "url_role" => "embedded"
+                                                                                                            },
+                                                                                                  "label" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "element" => "menuitem",
+                                                                                                                                "name" => "label",
+                                                                                                                                "type" => "html_attr"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                  "radiogroup" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "element" => "menuitem",
+                                                                                                                                     "name" => "radiogroup",
+                                                                                                                                     "type" => "html_attr"
+                                                                                                                                   }
+                                                                                                                  },
+                                                                                                  "type" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "menuitem",
+                                                                                                                               "name" => "type",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             }
                                                                                                             }
                                                                                                 }
-                                                                                        }
+                                                                                        },
+                                                                             "preferred" => {
+                                                                                              "name" => "menuitem",
+                                                                                              "type" => "html_element"
+                                                                                            }
                                                                            },
+                                                              "comment" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "comment"
+                                                                                            }
+                                                                           },
+                                                              "condl" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "none"
+                                                                                          }
+                                                                         },
+                                                              "condr" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "none"
+                                                                                          }
+                                                                         },
+                                                              "cookie" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "none"
+                                                                                           }
+                                                                          },
+                                                              "copy" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
+                                                              "credit" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "footer",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
+                                                              "cryptopts" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "type" => "none"
+                                                                                              }
+                                                                             },
+                                                              "csaction" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "script"
+                                                                                             }
+                                                                            },
+                                                              "csactiondict" => {
+                                                                                  "attrs" => {},
+                                                                                  "preferred" => {
+                                                                                                   "type" => "script"
+                                                                                                 }
+                                                                                },
+                                                              "csactionitem" => {
+                                                                                  "attrs" => {},
+                                                                                  "preferred" => {
+                                                                                                   "type" => "script"
+                                                                                                 }
+                                                                                },
+                                                              "csactions" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "type" => "script"
+                                                                                              }
+                                                                             },
+                                                              "csimport" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "script"
+                                                                                             }
+                                                                            },
+                                                              "csobj" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "script"
+                                                                                          }
+                                                                         },
+                                                              "csscriptdict" => {
+                                                                                  "attrs" => {},
+                                                                                  "preferred" => {
+                                                                                                   "type" => "script"
+                                                                                                 }
+                                                                                },
                                                               "data" => {
                                                                           "attrs" => {
                                                                                        "" => {
@@ -3785,6 +5015,21 @@ $Web::HTML::Validator::_Defs = {
                                                                           "content_model" => "phrasing content",
                                                                           "status" => "LC"
                                                                         },
+                                                              "datagrid" => {
+                                                                              "attrs" => {
+                                                                                           "" => {
+                                                                                                   "multiple" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "script"
+                                                                                                                                  }
+                                                                                                                 }
+                                                                                                 }
+                                                                                         },
+                                                                              "preferred" => {
+                                                                                               "name" => "table",
+                                                                                               "type" => "html_element"
+                                                                                             }
+                                                                            },
                                                               "datalist" => {
                                                                               "aria" => {
                                                                                           "" => {
@@ -3804,6 +5049,9 @@ $Web::HTML::Validator::_Defs = {
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "data" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "resource"
                                                                                                              }
@@ -3813,10 +5061,40 @@ $Web::HTML::Validator::_Defs = {
                                                                               "has_additional_content_constraints" => 1,
                                                                               "status" => "LC"
                                                                             },
+                                                              "datatemplate" => {
+                                                                                  "attrs" => {},
+                                                                                  "preferred" => {
+                                                                                                   "type" => "script"
+                                                                                                 }
+                                                                                },
+                                                              "datatree" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "script"
+                                                                                             }
+                                                                            },
+                                                              "date" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "time",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "dc" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "type" => "none"
+                                                                                       }
+                                                                      },
                                                               "dd" => {
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "nowrap" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "white-space",
+                                                                                                                            "type" => "css_prop",
+                                                                                                                            "value" => "nowrap"
+                                                                                                                          },
                                                                                                            "value_type" => "boolean"
                                                                                                          }
                                                                                            }
@@ -3825,6 +5103,12 @@ $Web::HTML::Validator::_Defs = {
                                                                         "content_model" => "flow content",
                                                                         "status" => "REC"
                                                                       },
+                                                              "ddot" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
                                                               "del" => {
                                                                          "attrs" => {
                                                                                       "" => {
@@ -3943,6 +5227,20 @@ $Web::HTML::Validator::_Defs = {
                                                                              "conforming" => 1,
                                                                              "status" => "LC"
                                                                            },
+                                                              "device" => {
+                                                                            "attrs" => {
+                                                                                         "" => {
+                                                                                                 "type" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            }
+                                                                                                           }
+                                                                                               }
+                                                                                       },
+                                                                            "preferred" => {
+                                                                                             "type" => "script"
+                                                                                           }
+                                                                          },
                                                               "dfn" => {
                                                                          "attrs" => {
                                                                                       "" => {
@@ -4007,10 +5305,24 @@ $Web::HTML::Validator::_Defs = {
                                                               "dir" => {
                                                                          "attrs" => {
                                                                                       "" => {
+                                                                                              "align" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "text-align",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          }
+                                                                                                         },
                                                                                               "compact" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "omit"
+                                                                                                                            },
                                                                                                              "value_type" => "boolean"
                                                                                                            },
-                                                                                              "type" => {}
+                                                                                              "type" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "list-style-type",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         }
+                                                                                                        }
                                                                                             }
                                                                                     },
                                                                          "complex_content_model" => [
@@ -4026,6 +5338,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         "min" => 0
                                                                                                       }
                                                                                                     ],
+                                                                         "preferred" => {
+                                                                                          "name" => "ul",
+                                                                                          "type" => "html_element"
+                                                                                        },
                                                                          "status" => "LC"
                                                                        },
                                                               "div" => {
@@ -4046,10 +5362,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "text-align",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "enumerated"
                                                                                                          },
                                                                                               "datafld" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "any"
                                                                                                            },
@@ -4065,15 +5388,32 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 },
                                                                                               "datasrc" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "url_role" => "resource",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
+                                                                                              "mode" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "white-space",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         }
+                                                                                                        },
                                                                                               "nowrap" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "white-space",
+                                                                                                                             "type" => "css_prop",
+                                                                                                                             "value" => "nowrap"
+                                                                                                                           },
                                                                                                             "value_type" => "boolean"
                                                                                                           }
                                                                                             }
@@ -4082,23 +5422,98 @@ $Web::HTML::Validator::_Defs = {
                                                                          "content_model" => "flow content",
                                                                          "status" => "REC"
                                                                        },
+                                                              "div1" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "div2" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "div3" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "div4" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "div5" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "div6" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
                                                               "dl" => {
                                                                         "attrs" => {
                                                                                      "" => {
+                                                                                             "align" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         }
+                                                                                                        },
                                                                                              "compact" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "display",
+                                                                                                                             "type" => "css_prop",
+                                                                                                                             "value" => "run-in"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "boolean"
-                                                                                                          }
+                                                                                                          },
+                                                                                             "type" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "omit"
+                                                                                                                        }
+                                                                                                       }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
                                                                         "has_additional_content_constraints" => 1,
                                                                         "status" => "REC"
                                                                       },
+                                                              "dot" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "math"
+                                                                                        }
+                                                                       },
+                                                              "ds" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "type" => "none"
+                                                                                       }
+                                                                      },
                                                               "dt" => {
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "nowrap" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "white-space",
+                                                                                                                            "type" => "css_prop",
+                                                                                                                            "value" => "nowrap"
+                                                                                                                          },
                                                                                                            "value_type" => "boolean"
                                                                                                          }
                                                                                            }
@@ -4119,6 +5534,25 @@ $Web::HTML::Validator::_Defs = {
                                                                                                     },
                                                                         "status" => "REC"
                                                                       },
+                                                              "dynamic" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "none"
+                                                                                            }
+                                                                           },
+                                                              "editor" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "span",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
+                                                              "eitr" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
                                                               "em" => {
                                                                         "attrs" => {},
                                                                         "conforming" => 1,
@@ -4139,6 +5573,7 @@ $Web::HTML::Validator::_Defs = {
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "align" => {
+                                                                                                             "browser" => 1,
                                                                                                              "enumerated" => {
                                                                                                                                "abscenter" => {
                                                                                                                                                 "non_conforming" => 1
@@ -4171,10 +5606,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                              },
+                                                                                                             "non_conforming" => 1,
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "float",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "border" => {
+                                                                                                              "browser" => 1,
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "border-width",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "code" => {
@@ -4197,6 +5642,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "non_conforming" => 1
                                                                                                                                               }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "border-width",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                                 "height" => {
@@ -4205,14 +5654,27 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "hspace" => {
+                                                                                                              "browser" => 1,
+                                                                                                              "non_conforming" => 1,
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "margin",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "dimension value"
                                                                                                             },
                                                                                                 "name" => {
+                                                                                                            "browser" => 1,
+                                                                                                            "non_conforming" => 1,
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "id",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "name"
                                                                                                           },
                                                                                                 "palette" => {
+                                                                                                               "browser" => 1,
                                                                                                                "enumerated" => {
                                                                                                                                  "background" => {
                                                                                                                                                    "conforming" => 1
@@ -4221,19 +5683,34 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                    "conforming" => 1
                                                                                                                                                  }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "none"
+                                                                                                                              },
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
                                                                                                 "pluginpage" => {
+                                                                                                                  "browser" => 1,
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 },
                                                                                                                   "status" => "CR",
                                                                                                                   "url_role" => "hyperlink-secondary",
                                                                                                                   "value_type" => "URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "pluginspage" => {
+                                                                                                                   "browser" => 1,
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "script"
+                                                                                                                                  },
                                                                                                                    "status" => "CR",
                                                                                                                    "url_role" => "hyperlink-secondary",
                                                                                                                    "value_type" => "URL potentially surrounded by spaces"
                                                                                                                  },
                                                                                                 "pluginurl" => {
+                                                                                                                 "browser" => 1,
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                },
                                                                                                                  "status" => "CR",
                                                                                                                  "url_role" => "hyperlink-secondary",
                                                                                                                  "value_type" => "URL potentially surrounded by spaces"
@@ -4250,6 +5727,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "MIME type"
                                                                                                           },
                                                                                                 "units" => {
+                                                                                                             "browser" => 1,
                                                                                                              "enumerated" => {
                                                                                                                                "em" => {
                                                                                                                                          "conforming" => 1
@@ -4264,9 +5742,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "margin",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "vspace" => {
+                                                                                                              "browser" => 1,
+                                                                                                              "non_conforming" => 1,
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "margin",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "dimension value"
                                                                                                             },
@@ -4281,23 +5769,55 @@ $Web::HTML::Validator::_Defs = {
                                                                            "content_model" => "empty",
                                                                            "status" => "CR"
                                                                          },
+                                                              "emoji" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "none"
+                                                                                          }
+                                                                         },
+                                                              "emph" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "em",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "epilogue" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "name" => "section",
+                                                                                               "type" => "html_element"
+                                                                                             }
+                                                                            },
                                                               "event-source" => {
                                                                                   "attrs" => {
                                                                                                "" => {
                                                                                                        "src" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 },
                                                                                                                   "url_role" => "resource"
                                                                                                                 }
                                                                                                      }
-                                                                                             }
+                                                                                             },
+                                                                                  "preferred" => {
+                                                                                                   "type" => "script"
+                                                                                                 }
                                                                                 },
                                                               "eventsource" => {
                                                                                  "attrs" => {
                                                                                               "" => {
                                                                                                       "src" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                },
                                                                                                                  "url_role" => "resource"
                                                                                                                }
                                                                                                     }
-                                                                                            }
+                                                                                            },
+                                                                                 "preferred" => {
+                                                                                                  "type" => "script"
+                                                                                                }
                                                                                },
                                                               "fieldset" => {
                                                                               "aria" => {
@@ -4312,6 +5832,9 @@ $Web::HTML::Validator::_Defs = {
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "datafld" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "any"
                                                                                                                 },
@@ -4352,31 +5875,92 @@ $Web::HTML::Validator::_Defs = {
                                                                               "conforming" => 1,
                                                                               "status" => "LC"
                                                                             },
+                                                              "fig" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "figure",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "figcaption" => {
                                                                                 "attrs" => {},
                                                                                 "conforming" => 1,
                                                                                 "content_model" => "flow content",
                                                                                 "status" => "CR"
                                                                               },
+                                                              "figtext" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "name" => "figcaption",
+                                                                                              "type" => "html_element"
+                                                                                            }
+                                                                           },
                                                               "figure" => {
                                                                             "attrs" => {},
                                                                             "conforming" => 1,
                                                                             "has_additional_content_constraints" => 1,
                                                                             "status" => "CR"
                                                                           },
+                                                              "fn" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "type" => "none"
+                                                                                       }
+                                                                      },
+                                                              "fn-contents" => {
+                                                                                 "attrs" => {},
+                                                                                 "preferred" => {
+                                                                                                  "type" => "none"
+                                                                                                }
+                                                                               },
                                                               "font" => {
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "color" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "color",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "value_type" => "legacy color value"
                                                                                                           },
                                                                                                "face" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "font-family",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "value_type" => "any"
                                                                                                          },
-                                                                                               "size" => {}
+                                                                                               "point-size" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "font-size",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                }
+                                                                                                               },
+                                                                                               "pointsize" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "font-size",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              },
+                                                                                               "size" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "font-size",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          }
+                                                                                                         },
+                                                                                               "weight" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "font-weight",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           }
                                                                                              }
                                                                                      },
                                                                           "content_model" => "transparent",
+                                                                          "preferred" => {
+                                                                                           "name" => "span",
+                                                                                           "type" => "html_element"
+                                                                                         },
                                                                           "status" => "LC",
                                                                           "transparent" => 1
                                                                         },
@@ -4403,10 +5987,21 @@ $Web::HTML::Validator::_Defs = {
                                                                                                         },
                                                                             "status" => "CR"
                                                                           },
+                                                              "footnote" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "none"
+                                                                                             }
+                                                                            },
                                                               "form" => {
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "accept" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "element" => "input",
+                                                                                                                              "name" => "accept",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "status" => "LC"
                                                                                                            },
                                                                                                "accept-charset" => {
@@ -4446,6 +6041,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                                "data" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "url_role" => "resource"
                                                                                                          },
@@ -4485,8 +6083,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                "lcs" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "script"
+                                                                                                                         },
                                                                                                           "value_type" => "boolean"
                                                                                                         },
+                                                                                               "measure" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             }
+                                                                                                            },
                                                                                                "method" => {
                                                                                                              "conforming" => 1,
                                                                                                              "enumerated" => {
@@ -4531,14 +6137,27 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "status" => "LC",
                                                                                                                  "value_type" => "boolean"
                                                                                                                },
+                                                                                               "replace" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             }
+                                                                                                            },
                                                                                                "target" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "browsing context name or keyword"
                                                                                                            },
                                                                                                "utn" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "none"
+                                                                                                                         },
                                                                                                           "value_type" => "boolean"
-                                                                                                        }
+                                                                                                        },
+                                                                                               "z" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "type" => "script"
+                                                                                                                       }
+                                                                                                      }
                                                                                              }
                                                                                      },
                                                                           "conforming" => 1,
@@ -4564,6 +6183,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                        "conforming" => 1
                                                                                                                                                      }
                                                                                                                                          },
+                                                                                                                         "preferred" => {
+                                                                                                                                          "name" => "background",
+                                                                                                                                          "type" => "css_prop"
+                                                                                                                                        },
                                                                                                                          "value_type" => "enumerated"
                                                                                                                        },
                                                                                                 "application" => {
@@ -4575,16 +6198,29 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "none"
+                                                                                                                                  },
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                                 "bordercolor" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "border-color",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "value_type" => "legacy color value"
                                                                                                                  },
                                                                                                 "datafld" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "any"
                                                                                                              },
                                                                                                 "datasrc" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -4604,25 +6240,54 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "non_conforming" => 1
                                                                                                                                               }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "border-width",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                                 "framespacing" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "border-width",
+                                                                                                                                     "type" => "css_prop"
+                                                                                                                                   },
                                                                                                                     "value_type" => "non-negative integer"
                                                                                                                   },
                                                                                                 "longdesc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "element" => "a",
+                                                                                                                                 "name" => "href",
+                                                                                                                                 "type" => "html_attr"
+                                                                                                                               },
                                                                                                                 "url_role" => "hyperlink-secondary",
                                                                                                                 "value_type" => "URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                 "marginheight" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "margin",
+                                                                                                                                     "type" => "css_prop"
+                                                                                                                                   },
                                                                                                                     "value_type" => "non-negative integer"
                                                                                                                   },
                                                                                                 "marginwidth" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "margin",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "value_type" => "non-negative integer"
                                                                                                                  },
                                                                                                 "name" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "iframe",
+                                                                                                                             "name" => "name",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
                                                                                                             "value_type" => "browsing context name"
                                                                                                           },
                                                                                                 "noresize" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
                                                                                                 "scrolling" => {
@@ -4649,6 +6314,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "overflow",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                },
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
                                                                                                 "security" => {
@@ -4657,15 +6326,29 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                     "conforming" => 1
                                                                                                                                                   }
                                                                                                                                 },
+                                                                                                                "preferred" => {
+                                                                                                                                 "element" => "iframe",
+                                                                                                                                 "name" => "sandbox",
+                                                                                                                                 "type" => "html_attr"
+                                                                                                                               },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               },
                                                                                                 "src" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "element" => "iframe",
+                                                                                                                            "name" => "src",
+                                                                                                                            "type" => "html_attr"
+                                                                                                                          },
                                                                                                            "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          }
                                                                                               }
                                                                                       },
-                                                                           "content_model" => "empty"
+                                                                           "content_model" => "empty",
+                                                                           "preferred" => {
+                                                                                            "name" => "iframe",
+                                                                                            "type" => "html_element"
+                                                                                          }
                                                                          },
                                                               "frameset" => {
                                                                               "aria" => {
@@ -4680,12 +6363,24 @@ $Web::HTML::Validator::_Defs = {
                                                                               "attrs" => {
                                                                                            "" => {
                                                                                                    "border" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "border-width",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                },
                                                                                                                  "value_type" => "non-negative integer"
                                                                                                                },
                                                                                                    "bordercolor" => {
+                                                                                                                      "preferred" => {
+                                                                                                                                       "name" => "border-color",
+                                                                                                                                       "type" => "css_prop"
+                                                                                                                                     },
                                                                                                                       "value_type" => "legacy color value"
                                                                                                                     },
                                                                                                    "cols" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "iframe",
+                                                                                                                                "type" => "html_element"
+                                                                                                                              },
                                                                                                                "value_type" => "list of dimensions"
                                                                                                              },
                                                                                                    "frameborder" => {
@@ -4703,9 +6398,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                    "non_conforming" => 1
                                                                                                                                                  }
                                                                                                                                       },
+                                                                                                                      "preferred" => {
+                                                                                                                                       "name" => "border-width",
+                                                                                                                                       "type" => "css_prop"
+                                                                                                                                     },
                                                                                                                       "value_type" => "enumerated"
                                                                                                                     },
                                                                                                    "framespacing" => {
+                                                                                                                       "preferred" => {
+                                                                                                                                        "name" => "border-width",
+                                                                                                                                        "type" => "css_prop"
+                                                                                                                                      },
                                                                                                                        "value_type" => "non-negative integer"
                                                                                                                      },
                                                                                                    "onafterprint" => {
@@ -4761,12 +6464,34 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    "value_type" => "event handler"
                                                                                                                  },
                                                                                                    "rows" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "iframe",
+                                                                                                                                "type" => "html_element"
+                                                                                                                              },
                                                                                                                "value_type" => "list of dimensions"
                                                                                                              }
                                                                                                  }
                                                                                          },
-                                                                              "has_additional_content_constraints" => 1
+                                                                              "has_additional_content_constraints" => 1,
+                                                                              "preferred" => {
+                                                                                               "name" => "iframe",
+                                                                                               "type" => "html_element"
+                                                                                             }
                                                                             },
+                                                              "h" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                        "name" => "h1",
+                                                                                        "type" => "html_element"
+                                                                                      }
+                                                                     },
+                                                              "h0" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "h1",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
                                                               "h1" => {
                                                                         "aria" => {
                                                                                     "no-hgroup" => {
@@ -4800,6 +6525,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
@@ -4821,14 +6550,30 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "clear",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "value_type" => "enumerated"
-                                                                                                        }
+                                                                                                        },
+                                                                                             "seqnum" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "counter"
+                                                                                                                          }
+                                                                                                         }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
                                                                         "content_model" => "phrasing content",
                                                                         "status" => "REC"
                                                                       },
+                                                              "h10" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "h1",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "h2" => {
                                                                         "aria" => {
                                                                                     "no-hgroup" => {
@@ -4862,6 +6607,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
@@ -4883,8 +6632,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "clear",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "value_type" => "enumerated"
-                                                                                                        }
+                                                                                                        },
+                                                                                             "seqnum" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "counter"
+                                                                                                                          }
+                                                                                                         }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
@@ -4924,6 +6682,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
@@ -4945,8 +6707,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "clear",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "value_type" => "enumerated"
-                                                                                                        }
+                                                                                                        },
+                                                                                             "seqnum" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "counter"
+                                                                                                                          }
+                                                                                                         }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
@@ -4986,6 +6757,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
@@ -5007,8 +6782,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "clear",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "value_type" => "enumerated"
-                                                                                                        }
+                                                                                                        },
+                                                                                             "seqnum" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "counter"
+                                                                                                                          }
+                                                                                                         }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
@@ -5048,6 +6832,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
@@ -5069,8 +6857,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "clear",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "value_type" => "enumerated"
-                                                                                                        }
+                                                                                                        },
+                                                                                             "seqnum" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "counter"
+                                                                                                                          }
+                                                                                                         }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
@@ -5110,6 +6907,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
@@ -5131,14 +6932,56 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "clear",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "value_type" => "enumerated"
-                                                                                                        }
+                                                                                                        },
+                                                                                             "seqnum" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "counter"
+                                                                                                                          }
+                                                                                                         }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
                                                                         "content_model" => "phrasing content",
                                                                         "status" => "REC"
                                                                       },
+                                                              "h7" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "h1",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
+                                                              "h8" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "h1",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
+                                                              "h9" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "h1",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
+                                                              "handler" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "script"
+                                                                                            }
+                                                                           },
+                                                              "hat" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "math"
+                                                                                        }
+                                                                       },
                                                               "head" => {
                                                                           "aria" => {
                                                                                       "" => {
@@ -5158,6 +7001,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "" => {
                                                                                                "profile" => {
                                                                                                               "item_type" => "non-empty URL",
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "url_role" => "id",
                                                                                                               "value_type" => "set of space-separated tokens"
@@ -5230,6 +7076,26 @@ $Web::HTML::Validator::_Defs = {
                                                                             "conforming" => 1,
                                                                             "status" => "CR"
                                                                           },
+                                                              "hide" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
+                                                              "hp1" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "em",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
+                                                              "hp2" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "em",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "hr" => {
                                                                         "aria" => {
                                                                                     "" => {
@@ -5254,22 +7120,42 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
                                                                                              "color" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "color",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "legacy color value"
                                                                                                         },
                                                                                              "noshade" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "border-style",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "boolean"
                                                                                                           },
                                                                                              "size" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "name" => "border-width",
+                                                                                                                          "type" => "css_prop"
+                                                                                                                        },
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "non-negative integer"
                                                                                                        },
                                                                                              "width" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "width",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "non-negative integer"
                                                                                                         }
@@ -5290,6 +7176,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                     },
                                                                           "attrs" => {
                                                                                        "" => {
+                                                                                               "application" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "element" => "html",
+                                                                                                                                   "name" => "manifest",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 }
+                                                                                                                },
                                                                                                "manifest" => {
                                                                                                                "conforming" => 1,
                                                                                                                "status" => "REC",
@@ -5308,9 +7201,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "overflow",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                "version" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "any"
                                                                                                             }
@@ -5339,6 +7239,26 @@ $Web::HTML::Validator::_Defs = {
                                                                           "conforming" => 1,
                                                                           "root" => 1,
                                                                           "status" => "REC"
+                                                                        },
+                                                              "htmlarea" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "name" => "contenteditable",
+                                                                                               "type" => "html_attr"
+                                                                                             }
+                                                                            },
+                                                              "htmlplus" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "name" => "html",
+                                                                                               "type" => "html_element"
+                                                                                             }
+                                                                            },
+                                                              "hype" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
                                                                         },
                                                               "i" => {
                                                                        "attrs" => {},
@@ -5392,6 +7312,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "float",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
@@ -5409,6 +7333,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                         "conforming" => 1
                                                                                                                                                       }
                                                                                                                                           },
+                                                                                                                          "preferred" => {
+                                                                                                                                           "name" => "background",
+                                                                                                                                           "type" => "css_prop"
+                                                                                                                                         },
                                                                                                                           "status" => "LC",
                                                                                                                           "value_type" => "enumerated"
                                                                                                                         },
@@ -5421,16 +7349,29 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  "conforming" => 1
                                                                                                                                                }
                                                                                                                                     },
+                                                                                                                    "preferred" => {
+                                                                                                                                     "type" => "none"
+                                                                                                                                   },
                                                                                                                     "value_type" => "enumerated"
                                                                                                                   },
                                                                                                  "border" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "border-width",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "datafld" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "any"
                                                                                                               },
                                                                                                  "datasrc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -5450,10 +7391,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  "non_conforming" => 1
                                                                                                                                                }
                                                                                                                                     },
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "border",
+                                                                                                                                     "type" => "css_prop"
+                                                                                                                                   },
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "enumerated"
                                                                                                                   },
                                                                                                  "framespacing" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "border-width",
+                                                                                                                                      "type" => "css_prop"
+                                                                                                                                    },
                                                                                                                      "value_type" => "non-negative integer"
                                                                                                                    },
                                                                                                  "height" => {
@@ -5462,19 +7411,36 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "hspace" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
                                                                                                  "longdesc" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "element" => "a",
+                                                                                                                                  "name" => "href",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "url_role" => "hyperlink-secondary",
                                                                                                                  "value_type" => "URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                  "marginheight" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "margin",
+                                                                                                                                      "type" => "css_prop"
+                                                                                                                                    },
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "non-negative integer"
                                                                                                                    },
                                                                                                  "marginwidth" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "margin",
+                                                                                                                                     "type" => "css_prop"
+                                                                                                                                   },
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "non-negative integer"
                                                                                                                   },
@@ -5484,6 +7450,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "value_type" => "browsing context name"
                                                                                                            },
                                                                                                  "noresize" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                },
                                                                                                                  "value_type" => "boolean"
                                                                                                                },
                                                                                                  "sandbox" => {
@@ -5547,6 +7516,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "conforming" => 1
                                                                                                                                              }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "overflow",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 },
@@ -5561,6 +7534,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                      "conforming" => 1
                                                                                                                                                    }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "element" => "iframe",
+                                                                                                                                  "name" => "sandbox",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                },
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
                                                                                                  "src" => {
@@ -5575,6 +7553,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "translatable" => "partial"
                                                                                                              },
                                                                                                  "vspace" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
@@ -5589,8 +7571,111 @@ $Web::HTML::Validator::_Defs = {
                                                                             "has_additional_content_constraints" => 1,
                                                                             "status" => "LC"
                                                                           },
+                                                              "ilayer" => {
+                                                                            "attrs" => {
+                                                                                         "" => {
+                                                                                                 "above" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "css"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                 "background" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "background-image",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
+                                                                                                                   "url_role" => "resource"
+                                                                                                                 },
+                                                                                                 "below" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "css"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                 "bgcolor" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "background-color",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              },
+                                                                                                 "clip" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "clip",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                 "left" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "left",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                 "name" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "id",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                 "overflow" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "overflow",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                }
+                                                                                                               },
+                                                                                                 "pagex" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "css"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                 "pagey" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "css"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                 "src" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "iframe",
+                                                                                                                             "name" => "src",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
+                                                                                                            "url_role" => "resource"
+                                                                                                          },
+                                                                                                 "top" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "top",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           }
+                                                                                                          },
+                                                                                                 "visibility" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "visibility",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  }
+                                                                                                                 },
+                                                                                                 "width" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "width",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                 "z-index" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "z-index",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              }
+                                                                                               }
+                                                                                       },
+                                                                            "preferred" => {
+                                                                                             "name" => "div",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
                                                               "image" => {
-                                                                           "attrs" => {}
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "name" => "img",
+                                                                                            "type" => "html_element"
+                                                                                          }
                                                                          },
                                                               "img" => {
                                                                          "aria" => {
@@ -5702,6 +7787,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         "conforming" => 1
                                                                                                                                       }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "float",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "enumerated"
                                                                                                          },
@@ -5714,6 +7803,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        },
                                                                                               "border" => {
                                                                                                             "obsolete_but_conforming" => 1,
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "border-width",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "non-negative integer"
                                                                                                           },
@@ -5723,6 +7816,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                     "conforming" => 1
                                                                                                                                                   }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "css"
+                                                                                                                              },
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
                                                                                               "copyright" => {
@@ -5734,8 +7830,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "conforming" => 1
                                                                                                                                           }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "none"
+                                                                                                                              },
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
+                                                                                              "cross-origin" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "crossorigin",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 }
+                                                                                                                },
                                                                                               "crossorigin" => {
                                                                                                                  "conforming" => 1,
                                                                                                                  "enumerated" => {
@@ -5773,15 +7878,26 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
                                                                                               "datafld" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "any"
                                                                                                            },
                                                                                               "datasrc" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "url_role" => "resource",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                               "dynsrc" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "video",
+                                                                                                                             "name" => "src",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -5801,6 +7917,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                                 },
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "none"
+                                                                                                                               },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               },
                                                                                               "guidance-for-markup-generators" => {
@@ -5812,7 +7931,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "non-negative integer"
                                                                                                           },
+                                                                                              "hflip" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "transform",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          }
+                                                                                                         },
                                                                                               "hspace" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "margin",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "dimension value"
                                                                                                           },
@@ -5821,28 +7950,74 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "boolean"
                                                                                                          },
-                                                                                              "localsrc" => {},
+                                                                                              "localsrc" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "img",
+                                                                                                                               "name" => "src",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             }
+                                                                                                            },
                                                                                               "longdesc" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "a",
+                                                                                                                               "name" => "href",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "url_role" => "hyperlink-secondary",
                                                                                                               "value_type" => "URL potentially surrounded by spaces"
                                                                                                             },
+                                                                                              "loop" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "element" => "video",
+                                                                                                                           "name" => "loop",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         }
+                                                                                                        },
                                                                                               "lowsrc" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "progressive"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "url_role" => "embedded",
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
+                                                                                              "mediaout" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "none"
+                                                                                                                             }
+                                                                                                            },
                                                                                               "name" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "id",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "name"
                                                                                                         },
                                                                                               "nosave" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "value_type" => "boolean"
                                                                                                           },
+                                                                                              "orgsrc" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "script"
+                                                                                                                           }
+                                                                                                          },
                                                                                               "oversrc" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
+                                                                                                           },
+                                                                                              "private" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "none"
+                                                                                                                            }
                                                                                                            },
                                                                                               "src" => {
                                                                                                          "conforming" => 1,
@@ -5863,9 +8038,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "element" => "video",
+                                                                                                                            "name" => "autoplay",
+                                                                                                                            "type" => "html_attr"
+                                                                                                                          },
                                                                                                            "value_type" => "enumerated"
                                                                                                          },
                                                                                               "suppress" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "none"
+                                                                                                                             },
                                                                                                               "value_type" => "boolean"
                                                                                                             },
                                                                                               "usemap" => {
@@ -5873,12 +8056,30 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "hash-name reference"
                                                                                                           },
+                                                                                              "viblength" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              }
+                                                                                                             },
+                                                                                              "vibration" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              }
+                                                                                                             },
                                                                                               "vrml" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "object",
+                                                                                                                           "type" => "html_element"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "url_role" => "embedded",
                                                                                                           "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                         },
                                                                                               "vspace" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "margin",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "dimension value"
                                                                                                           },
@@ -5922,7 +8123,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "set of comma-separated tokens"
                                                                                                             },
+                                                                                                "accept-charset" => {
+                                                                                                                      "preferred" => {
+                                                                                                                                       "element" => "form",
+                                                                                                                                       "name" => "accept-charset",
+                                                                                                                                       "type" => "html_attr"
+                                                                                                                                     }
+                                                                                                                    },
                                                                                                 "action" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "formaction",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "url_role" => "submission"
                                                                                                             },
@@ -5959,6 +8171,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "float",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
@@ -5978,6 +8194,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "conforming" => 1
                                                                                                                                                 }
                                                                                                                                       },
+                                                                                                                      "preferred" => {
+                                                                                                                                       "name" => "inputmode",
+                                                                                                                                       "type" => "html_attr"
+                                                                                                                                     },
                                                                                                                       "value_type" => "enumerated"
                                                                                                                     },
                                                                                                 "autocomplete" => {
@@ -5994,6 +8214,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "conforming" => 1
                                                                                                                                              }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "spellcheck",
+                                                                                                                                    "type" => "html_attr"
+                                                                                                                                  },
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                                 "autofocus" => {
@@ -6002,9 +8226,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "value_type" => "boolean"
                                                                                                                },
                                                                                                 "autosave" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "omit"
+                                                                                                                               },
                                                                                                                 "value_type" => "any"
                                                                                                               },
                                                                                                 "border" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "border-width",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "checked" => {
@@ -6013,6 +8244,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "boolean"
                                                                                                              },
                                                                                                 "datafld" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "any"
                                                                                                              },
@@ -6028,16 +8262,26 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "conforming" => 1
                                                                                                                                                 }
                                                                                                                                     },
+                                                                                                                    "preferred" => {
+                                                                                                                                     "type" => "script"
+                                                                                                                                   },
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "enumerated"
                                                                                                                   },
                                                                                                 "datasrc" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                                 "directkey" => {
                                                                                                                  "item_type" => "char",
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "tabindex",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                },
                                                                                                                  "value_type" => "ordered set of unique space-separated tokens"
                                                                                                                },
                                                                                                 "dirname" => {
@@ -6051,6 +8295,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
                                                                                                 "dynsrc" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "video",
+                                                                                                                               "name" => "src",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                             },
                                                                                                 "emptyok" => {
@@ -6062,7 +8311,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "required",
+                                                                                                                                "type" => "html_attr"
+                                                                                                                              },
                                                                                                                "value_type" => "enumerated"
+                                                                                                             },
+                                                                                                "enctype" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "formenctype",
+                                                                                                                                "type" => "html_attr"
+                                                                                                                              }
                                                                                                              },
                                                                                                 "form" => {
                                                                                                             "conforming" => 1,
@@ -6076,6 +8335,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   "url_role" => "submission",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
+                                                                                                "format" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "pattern",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             }
+                                                                                                            },
                                                                                                 "formenctype" => {
                                                                                                                    "conforming" => 1,
                                                                                                                    "enumerated" => {
@@ -6152,10 +8417,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "hspace" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "margin",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "dimension value"
                                                                                                             },
                                                                                                 "incremental" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "omit"
+                                                                                                                                  },
                                                                                                                    "value_type" => "boolean"
                                                                                                                  },
                                                                                                 "inputmode" => {
@@ -6305,9 +8577,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "autocomplete",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "ismap" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "omit"
+                                                                                                                            },
                                                                                                              "status" => "LC"
                                                                                                            },
                                                                                                 "istyle" => {
@@ -6325,6 +8604,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                        "conforming" => 1
                                                                                                                                      }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "inputmode",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                 "list" => {
@@ -6334,9 +8617,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "idref"
                                                                                                           },
                                                                                                 "loop" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "element" => "video",
+                                                                                                                             "name" => "loop",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
                                                                                                             "value_type" => "integer"
                                                                                                           },
                                                                                                 "lowsrc" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "progressive"
+                                                                                                                             },
                                                                                                               "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                             },
                                                                                                 "max" => {
@@ -6348,6 +8639,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "status" => "LC",
                                                                                                                  "value_type" => "non-negative integer"
                                                                                                                },
+                                                                                                "method" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "formmethod",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             }
+                                                                                                            },
                                                                                                 "min" => {
                                                                                                            "conforming" => 1,
                                                                                                            "status" => "LC"
@@ -6375,6 +8672,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                             },
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "inputmode",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           },
                                                                                                             "value_type" => "enumerated"
                                                                                                           },
                                                                                                 "multiple" => {
@@ -6387,6 +8688,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "non-empty"
                                                                                                           },
+                                                                                                "nonumber" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "css"
+                                                                                                                               }
+                                                                                                              },
+                                                                                                "novalidate" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "formnovalidate",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 }
+                                                                                                                },
                                                                                                 "pattern" => {
                                                                                                                "conforming" => 1,
                                                                                                                "status" => "LC",
@@ -6399,17 +8711,30 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    "translatable" => 1,
                                                                                                                    "value_type" => "one-line text"
                                                                                                                  },
+                                                                                                "precision" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "none"
+                                                                                                                                }
+                                                                                                               },
                                                                                                 "readonly" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
+                                                                                                "replace" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              }
+                                                                                                             },
                                                                                                 "required" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
                                                                                                 "results" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "omit"
+                                                                                                                              },
                                                                                                                "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                 "size" => {
@@ -6426,6 +8751,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "conforming" => 1
                                                                                                                                                 }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "element" => "video",
+                                                                                                                                   "name" => "autoplay",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 },
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 },
                                                                                                 "src" => {
@@ -6443,12 +8773,34 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "element" => "video",
+                                                                                                                              "name" => "autoplay",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "step" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC"
                                                                                                           },
+                                                                                                "submit_dir" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "dirname",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 }
+                                                                                                                },
+                                                                                                "target" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "formtarget",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                "template" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               }
+                                                                                                              },
                                                                                                 "title" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
@@ -6606,6 +8958,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "enumerated"
                                                                                                           },
                                                                                                 "usemap" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "element" => "img",
+                                                                                                                               "name" => "usemap",
+                                                                                                                               "type" => "html_attr"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "hash-name reference"
                                                                                                             },
@@ -6704,9 +9061,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                        "conforming" => 1
                                                                                                                                                      }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "autocomplete",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 },
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 },
                                                                                                 "viblength" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                },
                                                                                                                  "value_type" => "non-negative integer"
                                                                                                                },
                                                                                                 "vibration" => {
@@ -6718,6 +9082,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  "conforming" => 1
                                                                                                                                                }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                },
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
                                                                                                 "volume" => {
@@ -6732,12 +9099,23 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             },
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                 "vrml" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "object",
+                                                                                                                             "type" => "html_element"
+                                                                                                                           },
                                                                                                             "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                           },
                                                                                                 "vspace" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "margin",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "dimension value"
                                                                                                             },
@@ -6773,21 +9151,55 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "LC",
                                                                          "transparent" => 1
                                                                        },
+                                                              "isbn" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "code",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
                                                               "isindex" => {
                                                                              "attrs" => {
                                                                                           "" => {
                                                                                                   "action" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "element" => "form",
+                                                                                                                                 "name" => "action",
+                                                                                                                                 "type" => "html_attr"
+                                                                                                                               },
                                                                                                                 "url_role" => "submission"
+                                                                                                              },
+                                                                                                  "prompt" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "text"
+                                                                                                                               }
                                                                                                               }
                                                                                                 }
                                                                                         },
+                                                                             "preferred" => {
+                                                                                              "name" => "form",
+                                                                                              "type" => "html_element"
+                                                                                            },
                                                                              "status" => "LC"
                                                                            },
+                                                              "item" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
                                                               "kbd" => {
                                                                          "attrs" => {},
                                                                          "conforming" => 1,
                                                                          "content_model" => "phrasing content",
                                                                          "status" => "REC"
+                                                                       },
+                                                              "key" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "kbd",
+                                                                                          "type" => "html_element"
+                                                                                        }
                                                                        },
                                                               "keygen" => {
                                                                             "aria" => {
@@ -6834,6 +9246,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "value_type" => "idref"
                                                                                                            },
                                                                                                  "keyparams" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "none"
+                                                                                                                                 },
                                                                                                                   "value_type" => "any"
                                                                                                                 },
                                                                                                  "keytype" => {
@@ -6865,6 +9280,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "value_type" => "non-empty"
                                                                                                            },
                                                                                                  "pqg" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "value_type" => "any"
                                                                                                           }
                                                                                                }
@@ -6873,6 +9291,19 @@ $Web::HTML::Validator::_Defs = {
                                                                             "content_model" => "empty",
                                                                             "status" => "LC"
                                                                           },
+                                                              "kill_sgml" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "type" => "none"
+                                                                                              }
+                                                                             },
+                                                              "l" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                        "name" => "br",
+                                                                                        "type" => "html_element"
+                                                                                      }
+                                                                     },
                                                               "label" => {
                                                                            "aria" => {
                                                                                        "" => {
@@ -6885,6 +9316,9 @@ $Web::HTML::Validator::_Defs = {
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "datafld" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "any"
                                                                                                              },
@@ -6900,10 +9334,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "conforming" => 1
                                                                                                                                                 }
                                                                                                                                     },
+                                                                                                                    "preferred" => {
+                                                                                                                                     "type" => "script"
+                                                                                                                                   },
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "enumerated"
                                                                                                                   },
                                                                                                 "datasrc" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -6934,6 +9374,118 @@ $Web::HTML::Validator::_Defs = {
                                                                            "has_additional_content_constraints" => 1,
                                                                            "status" => "LC"
                                                                          },
+                                                              "lang" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "span",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "layer" => {
+                                                                           "attrs" => {
+                                                                                        "" => {
+                                                                                                "above" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "css"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "background" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "background-image",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
+                                                                                                                  "url_role" => "resource"
+                                                                                                                },
+                                                                                                "below" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "css"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "bgcolor" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-color",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                "clip" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "clip",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           }
+                                                                                                          },
+                                                                                                "left" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "left",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           }
+                                                                                                          },
+                                                                                                "name" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "id",
+                                                                                                                             "type" => "html_attr"
+                                                                                                                           }
+                                                                                                          },
+                                                                                                "overflow" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "overflow",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              },
+                                                                                                "pagex" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "css"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "pagey" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "css"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "src" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "element" => "iframe",
+                                                                                                                            "name" => "src",
+                                                                                                                            "type" => "html_attr"
+                                                                                                                          },
+                                                                                                           "url_role" => "resource"
+                                                                                                         },
+                                                                                                "top" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "top",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          }
+                                                                                                         },
+                                                                                                "visibility" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "visibility",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 }
+                                                                                                                },
+                                                                                                "width" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "width",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "z-index" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "z-index",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              }
+                                                                                                             }
+                                                                                              }
+                                                                                      },
+                                                                           "preferred" => {
+                                                                                            "name" => "div",
+                                                                                            "type" => "html_element"
+                                                                                          }
+                                                                         },
+                                                              "left" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
                                                               "legend" => {
                                                                             "attrs" => {
                                                                                          "" => {
@@ -6949,10 +9501,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "text-align",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                  "datafld" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "any"
                                                                                                               },
@@ -6968,20 +9527,38 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                    "conforming" => 1
                                                                                                                                                  }
                                                                                                                                      },
+                                                                                                                     "preferred" => {
+                                                                                                                                      "type" => "script"
+                                                                                                                                    },
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "enumerated"
                                                                                                                    },
                                                                                                  "datasrc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
-                                                                                                              }
+                                                                                                              },
+                                                                                                 "form" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "none"
+                                                                                                                            }
+                                                                                                           }
                                                                                                }
                                                                                        },
                                                                             "conforming" => 1,
                                                                             "content_model" => "phrasing content",
                                                                             "status" => "LC"
                                                                           },
+                                                              "lh" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "li",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
                                                               "li" => {
                                                                         "aria" => {
                                                                                     "in-ulol" => {
@@ -6998,7 +9575,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                   },
                                                                         "attrs" => {
                                                                                      "" => {
+                                                                                             "align" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         }
+                                                                                                        },
                                                                                              "type" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "name" => "list-style-type",
+                                                                                                                          "type" => "css_prop"
+                                                                                                                        },
                                                                                                          "status" => "LC"
                                                                                                        },
                                                                                              "value" => {
@@ -7012,6 +9599,12 @@ $Web::HTML::Validator::_Defs = {
                                                                         "content_model" => "flow content",
                                                                         "status" => "REC"
                                                                       },
+                                                              "limittext" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "type" => "none"
+                                                                                              }
+                                                                             },
                                                               "link" => {
                                                                           "aria" => {
                                                                                       "hyperlink" => {
@@ -7025,6 +9618,9 @@ $Web::HTML::Validator::_Defs = {
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "charset" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "character encoding label"
                                                                                                             },
@@ -7081,6 +9677,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "media query list"
                                                                                                           },
                                                                                                "methods" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             },
                                                                                                               "status" => "LC"
                                                                                                             },
                                                                                                "rel" => {
@@ -7091,6 +9690,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           "value_type" => "set of space-separated tokens"
                                                                                                         },
                                                                                                "rev" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "rev",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         },
                                                                                                           "status" => "LC"
                                                                                                         },
                                                                                                "sizes" => {
@@ -7099,6 +9702,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                                "target" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "omit"
+                                                                                                                            },
                                                                                                              "status" => "LC"
                                                                                                            },
                                                                                                "title" => {
@@ -7112,6 +9718,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "value_type" => "MIME type"
                                                                                                          },
                                                                                                "urn" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "type" => "omit"
+                                                                                                                         },
                                                                                                           "status" => "LC"
                                                                                                         }
                                                                                              }
@@ -7141,13 +9750,41 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "clear",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "enumerated"
                                                                                                              }
                                                                                                 }
                                                                                         },
                                                                              "content_model" => "text",
+                                                                             "preferred" => {
+                                                                                              "name" => "pre",
+                                                                                              "type" => "html_element"
+                                                                                            },
                                                                              "status" => "LC"
                                                                            },
+                                                              "lit" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "pre",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
+                                                              "m" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                        "name" => "mark",
+                                                                                        "type" => "html_element"
+                                                                                      }
+                                                                     },
+                                                              "madebywz" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "omit"
+                                                                                             }
+                                                                            },
                                                               "main" => {
                                                                           "aria" => {
                                                                                       "" => {
@@ -7177,6 +9814,13 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "LC",
                                                                          "transparent" => 1
                                                                        },
+                                                              "margin" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "div",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
                                                               "mark" => {
                                                                           "attrs" => {},
                                                                           "conforming" => 1,
@@ -7212,13 +9856,24 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  "spec" => "HTML"
                                                                                                                                                }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "animation",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 },
                                                                                                   "bgcolor" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "background-color",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                },
                                                                                                                  "value_type" => "legacy color value"
                                                                                                                },
                                                                                                   "datafld" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "value_type" => "any"
                                                                                                                },
@@ -7234,10 +9889,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                     "conforming" => 1
                                                                                                                                                   }
                                                                                                                                       },
+                                                                                                                      "preferred" => {
+                                                                                                                                       "type" => "script"
+                                                                                                                                     },
                                                                                                                       "status" => "LC",
                                                                                                                       "value_type" => "enumerated"
                                                                                                                     },
                                                                                                   "datasrc" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "url_role" => "resource",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -7274,16 +9935,32 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "spec" => "HTML"
                                                                                                                                              }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "animation",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                                   "height" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "height",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "non-negative integer"
                                                                                                               },
                                                                                                   "hspace" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "margin",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "dimension value"
                                                                                                               },
                                                                                                   "loop" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "animation",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "integer"
                                                                                                             },
                                                                                                   "onbounce" => {
@@ -7299,26 +9976,56 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "value_type" => "event handler"
                                                                                                                },
                                                                                                   "scrollamount" => {
+                                                                                                                      "preferred" => {
+                                                                                                                                       "name" => "animation",
+                                                                                                                                       "type" => "css_prop"
+                                                                                                                                     },
                                                                                                                       "value_type" => "non-negative integer"
                                                                                                                     },
                                                                                                   "scrolldelay" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "animation",
+                                                                                                                                      "type" => "css_prop"
+                                                                                                                                    },
                                                                                                                      "value_type" => "non-negative integer"
                                                                                                                    },
                                                                                                   "truespeed" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "animation",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "boolean"
                                                                                                                  },
                                                                                                   "vspace" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "margin",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "dimension value"
                                                                                                               },
                                                                                                   "width" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "non-negative integer"
                                                                                                              }
                                                                                                 }
                                                                                         },
                                                                              "content_model" => "flow content",
+                                                                             "preferred" => {
+                                                                                              "name" => "animation",
+                                                                                              "type" => "css_prop"
+                                                                                            },
                                                                              "status" => "LC"
                                                                            },
+                                                              "math" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
                                                               "menu" => {
                                                                           "aria" => {
                                                                                       "popup" => {
@@ -7343,7 +10050,21 @@ $Web::HTML::Validator::_Defs = {
                                                                                     },
                                                                           "attrs" => {
                                                                                        "" => {
+                                                                                               "align" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "text-align",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           }
+                                                                                                          },
+                                                                                               "autosubmit" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                }
+                                                                                                               },
                                                                                                "compact" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "boolean"
                                                                                                             },
@@ -7453,6 +10174,12 @@ $Web::HTML::Validator::_Defs = {
                                                                               "conforming" => 1,
                                                                               "content_model" => "empty"
                                                                             },
+                                                              "message" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "none"
+                                                                                            }
+                                                                           },
                                                               "meta" => {
                                                                           "aria" => {
                                                                                       "" => {
@@ -7485,6 +10212,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "status" => "LC"
                                                                                                          },
                                                                                                "scheme" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "omit"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "any"
                                                                                                            }
@@ -7548,11 +10278,67 @@ $Web::HTML::Validator::_Defs = {
                                                                                                        },
                                                                            "status" => "LC"
                                                                          },
+                                                              "mh" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "type" => "none"
+                                                                                       }
+                                                                      },
+                                                              "module" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "none"
+                                                                                           }
+                                                                          },
                                                               "multicol" => {
-                                                                              "attrs" => {},
+                                                                              "attrs" => {
+                                                                                           "" => {
+                                                                                                   "baseline" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "writing-mode",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  }
+                                                                                                                 },
+                                                                                                   "cols" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "column-count",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                   "gutter" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "column-gap",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                }
+                                                                                                               },
+                                                                                                   "height" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "column-width",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                }
+                                                                                                               },
+                                                                                                   "width" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "column-width",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              }
+                                                                                                 }
+                                                                                         },
                                                                               "content_model" => "flow content",
+                                                                              "preferred" => {
+                                                                                               "name" => "columns",
+                                                                                               "type" => "css_prop"
+                                                                                             },
                                                                               "status" => "LC"
                                                                             },
+                                                              "name" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "li",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
                                                               "nav" => {
                                                                          "aria" => {
                                                                                      "" => {
@@ -7575,25 +10361,110 @@ $Web::HTML::Validator::_Defs = {
                                                                                                      },
                                                                          "status" => "CR"
                                                                        },
+                                                              "nest" => {
+                                                                          "attrs" => {
+                                                                                       "" => {
+                                                                                               "filter" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            }
+                                                                                                           },
+                                                                                               "mode" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          }
+                                                                                                         }
+                                                                                             }
+                                                                                     },
+                                                                          "preferred" => {
+                                                                                           "name" => "content",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
                                                               "nextid" => {
-                                                                            "attrs" => {},
+                                                                            "attrs" => {
+                                                                                         "" => {
+                                                                                                 "n" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "data-*",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         }
+                                                                                                        }
+                                                                                               }
+                                                                                       },
+                                                                            "preferred" => {
+                                                                                             "name" => "data-*",
+                                                                                             "type" => "html_attr"
+                                                                                           },
                                                                             "status" => "LC"
                                                                           },
+                                                              "nl" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "name" => "nav",
+                                                                                         "type" => "html_element"
+                                                                                       }
+                                                                      },
                                                               "nobr" => {
                                                                           "attrs" => {},
                                                                           "content_model" => "phrasing content",
+                                                                          "preferred" => {
+                                                                                           "name" => "white-space",
+                                                                                           "type" => "css_prop",
+                                                                                           "value" => "nowrap"
+                                                                                         },
                                                                           "status" => "LC"
+                                                                        },
+                                                              "node" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
                                                                         },
                                                               "noembed" => {
                                                                              "attrs" => {},
                                                                              "has_additional_content_constraints" => 1,
+                                                                             "preferred" => {
+                                                                                              "name" => "object",
+                                                                                              "type" => "html_element"
+                                                                                            },
                                                                              "status" => "LC"
                                                                            },
                                                               "noframes" => {
                                                                               "attrs" => {},
                                                                               "has_additional_content_constraints" => 1,
+                                                                              "preferred" => {
+                                                                                               "name" => "iframe",
+                                                                                               "type" => "html_element"
+                                                                                             },
                                                                               "status" => "LC"
                                                                             },
+                                                              "noindex" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "none"
+                                                                                            }
+                                                                           },
+                                                              "nolayer" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "omit"
+                                                                                            }
+                                                                           },
+                                                              "noloc" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "name" => "translate",
+                                                                                            "type" => "html_attr"
+                                                                                          }
+                                                                         },
+                                                              "norm" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
                                                               "noscript" => {
                                                                               "aria" => {
                                                                                           "" => {
@@ -7615,6 +10486,19 @@ $Web::HTML::Validator::_Defs = {
                                                                               "status" => "LC",
                                                                               "transparent" => "partial"
                                                                             },
+                                                              "nosmartquotes" => {
+                                                                                   "attrs" => {},
+                                                                                   "preferred" => {
+                                                                                                    "type" => "none"
+                                                                                                  }
+                                                                                 },
+                                                              "note" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "name" => "div",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
                                                               "object" => {
                                                                             "aria" => {
                                                                                         "" => {
@@ -7668,38 +10552,70 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "float",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                  "archive" => {
                                                                                                                 "item_type" => "non-empty URL",
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "none"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "set of space-separated tokens"
                                                                                                               },
                                                                                                  "border" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "border-width",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "classid" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "element" => "object",
+                                                                                                                                 "name" => "type",
+                                                                                                                                 "type" => "html_attr"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "embedded",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "code" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "element" => "object",
+                                                                                                                              "name" => "data",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "url_role" => "embedded",
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                  "codebase" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "none"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "url_role" => "base",
                                                                                                                  "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                },
                                                                                                  "codetype" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "none"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "value_type" => "MIME type"
                                                                                                                },
+                                                                                                 "content-length" => {
+                                                                                                                       "preferred" => {
+                                                                                                                                        "type" => "omit"
+                                                                                                                                      }
+                                                                                                                     },
                                                                                                  "copyright" => {
                                                                                                                   "enumerated" => {
                                                                                                                                     "no" => {
@@ -7709,6 +10625,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "conforming" => 1
                                                                                                                                              }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "none"
+                                                                                                                                 },
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 },
                                                                                                  "data" => {
@@ -7718,6 +10637,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                            },
                                                                                                  "datafld" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "any"
                                                                                                               },
@@ -7733,15 +10655,24 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                    "conforming" => 1
                                                                                                                                                  }
                                                                                                                                      },
+                                                                                                                     "preferred" => {
+                                                                                                                                      "type" => "script"
+                                                                                                                                    },
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "enumerated"
                                                                                                                    },
                                                                                                  "datasrc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "declare" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "omit"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
@@ -7757,15 +10688,32 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "non-negative integer"
                                                                                                              },
                                                                                                  "hspace" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
+                                                                                                 "mediaout" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "none"
+                                                                                                                                }
+                                                                                                               },
                                                                                                  "name" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "browsing context name"
                                                                                                            },
+                                                                                                 "private" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "none"
+                                                                                                                               }
+                                                                                                              },
                                                                                                  "standby" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "omit"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "text"
                                                                                                               },
@@ -7785,6 +10733,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "value_type" => "hash-name reference"
                                                                                                              },
                                                                                                  "vspace" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
@@ -7812,6 +10764,12 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC",
                                                                             "transparent" => "semi"
                                                                           },
+                                                              "of" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "type" => "math"
+                                                                                       }
+                                                                      },
                                                               "ol" => {
                                                                         "aria" => {
                                                                                     "" => {
@@ -7831,7 +10789,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                   },
                                                                         "attrs" => {
                                                                                      "" => {
+                                                                                             "align" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         }
+                                                                                                        },
                                                                                              "compact" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "omit"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "boolean"
                                                                                                           },
@@ -7867,6 +10834,13 @@ $Web::HTML::Validator::_Defs = {
                                                                         "conforming" => 1,
                                                                         "status" => "LC"
                                                                       },
+                                                              "opt" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "span",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "optgroup" => {
                                                                               "aria" => {
                                                                                           "" => {
@@ -7985,10 +10959,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                    "conforming" => 1
                                                                                                                                                  }
                                                                                                                                      },
+                                                                                                                     "preferred" => {
+                                                                                                                                      "type" => "script"
+                                                                                                                                    },
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "enumerated"
                                                                                                                    },
                                                                                                  "datasrc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -8006,6 +10986,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "non-empty text"
                                                                                                             },
                                                                                                  "name" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "id",
+                                                                                                                              "type" => "html_attr"
+                                                                                                                            },
                                                                                                              "status" => "LC"
                                                                                                            },
                                                                                                  "selected" => {
@@ -8025,6 +11009,12 @@ $Web::HTML::Validator::_Defs = {
                                                                             "has_additional_content_constraints" => 1,
                                                                             "status" => "LC"
                                                                           },
+                                                              "or" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "type" => "none"
+                                                                                       }
+                                                                      },
                                                               "output" => {
                                                                             "aria" => {
                                                                                         "" => {
@@ -8119,6 +11109,18 @@ $Web::HTML::Validator::_Defs = {
                                                                             "content_model" => "phrasing content",
                                                                             "status" => "LC"
                                                                           },
+                                                              "over" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
+                                                              "overlay" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "math"
+                                                                                            }
+                                                                           },
                                                               "p" => {
                                                                        "attrs" => {
                                                                                     "" => {
@@ -8137,6 +11139,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         "conforming" => 1
                                                                                                                                       }
                                                                                                                          },
+                                                                                                         "preferred" => {
+                                                                                                                          "name" => "text-align",
+                                                                                                                          "type" => "css_prop"
+                                                                                                                        },
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "enumerated"
                                                                                                        },
@@ -8158,8 +11164,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         "conforming" => 1
                                                                                                                                       }
                                                                                                                          },
+                                                                                                         "preferred" => {
+                                                                                                                          "name" => "clear",
+                                                                                                                          "type" => "css_prop"
+                                                                                                                        },
                                                                                                          "value_type" => "enumerated"
-                                                                                                       }
+                                                                                                       },
+                                                                                            "mode" => {
+                                                                                                        "preferred" => {
+                                                                                                                         "name" => "white-space",
+                                                                                                                         "type" => "css_prop"
+                                                                                                                       }
+                                                                                                      }
                                                                                           }
                                                                                   },
                                                                        "conforming" => 1,
@@ -8178,6 +11194,9 @@ $Web::HTML::Validator::_Defs = {
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "datafld" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "any"
                                                                                                              },
@@ -8187,6 +11206,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "any"
                                                                                                           },
                                                                                                 "type" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "omit"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "MIME type"
                                                                                                           },
@@ -8207,6 +11229,9 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                               "conforming" => 1
                                                                                                                                             }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "omit"
+                                                                                                                                },
                                                                                                                  "status" => "LC",
                                                                                                                  "value_type" => "enumerated"
                                                                                                                }
@@ -8216,6 +11241,25 @@ $Web::HTML::Validator::_Defs = {
                                                                            "content_model" => "empty",
                                                                            "status" => "REC"
                                                                          },
+                                                              "peek" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
+                                                              "person" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "span",
+                                                                                             "type" => "html_element"
+                                                                                           }
+                                                                          },
+                                                              "pinhead" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "none"
+                                                                                            }
+                                                                           },
                                                               "plaintext" => {
                                                                                "attrs" => {
                                                                                             "" => {
@@ -8237,13 +11281,27 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "clear",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                },
                                                                                                                  "value_type" => "enumerated"
                                                                                                                }
                                                                                                   }
                                                                                           },
                                                                                "content_model" => "text",
+                                                                               "preferred" => {
+                                                                                                "name" => "pre",
+                                                                                                "type" => "html_element"
+                                                                                              },
                                                                                "status" => "LC"
                                                                              },
+                                                              "poke" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
                                                               "pre" => {
                                                                          "attrs" => {
                                                                                       "" => {
@@ -8265,13 +11323,26 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "clear",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "value_type" => "enumerated"
                                                                                                          },
                                                                                               "width" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "width",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "non-negative integer"
                                                                                                          },
                                                                                               "wrap" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "white-space",
+                                                                                                                           "type" => "css_prop",
+                                                                                                                           "value" => "pre-wrap"
+                                                                                                                         },
                                                                                                           "value_type" => "boolean"
                                                                                                         }
                                                                                             }
@@ -8280,6 +11351,13 @@ $Web::HTML::Validator::_Defs = {
                                                                          "content_model" => "phrasing content",
                                                                          "status" => "REC"
                                                                        },
+                                                              "pre-html" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "name" => "html",
+                                                                                               "type" => "html_element"
+                                                                                             }
+                                                                            },
                                                               "progress" => {
                                                                               "aria" => {
                                                                                           "" => {
@@ -8329,6 +11407,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           },
                                                                               "status" => "CR"
                                                                             },
+                                                              "prologue" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "name" => "section",
+                                                                                               "type" => "html_element"
+                                                                                             }
+                                                                            },
+                                                              "pub" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "cite",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "q" => {
                                                                        "attrs" => {
                                                                                     "" => {
@@ -8344,10 +11436,105 @@ $Web::HTML::Validator::_Defs = {
                                                                        "content_model" => "phrasing content",
                                                                        "status" => "LC"
                                                                      },
+                                                              "quote" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "name" => "q",
+                                                                                            "type" => "html_element"
+                                                                                          }
+                                                                         },
+                                                              "range" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "css"
+                                                                                          }
+                                                                         },
                                                               "rb" => {
                                                                         "attrs" => {},
+                                                                        "preferred" => {
+                                                                                         "type" => "omit"
+                                                                                       },
                                                                         "status" => "LC"
                                                                       },
+                                                              "rbc" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "omit"
+                                                                                        }
+                                                                       },
+                                                              "red" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "none"
+                                                                                        }
+                                                                       },
+                                                              "removed" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "name" => "del",
+                                                                                              "type" => "html_element"
+                                                                                            }
+                                                                           },
+                                                              "render" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "none"
+                                                                                           }
+                                                                          },
+                                                              "repeat" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "script"
+                                                                                           }
+                                                                          },
+                                                              "resource" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "none"
+                                                                                             }
+                                                                            },
+                                                              "restoffile" => {
+                                                                                "attrs" => {},
+                                                                                "preferred" => {
+                                                                                                 "type" => "none"
+                                                                                               }
+                                                                              },
+                                                              "returnable" => {
+                                                                                "attrs" => {},
+                                                                                "preferred" => {
+                                                                                                 "type" => "none"
+                                                                                               }
+                                                                              },
+                                                              "rev" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "none"
+                                                                                        }
+                                                                       },
+                                                              "right" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "math"
+                                                                                          }
+                                                                         },
+                                                              "roach" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "none"
+                                                                                          }
+                                                                         },
+                                                              "root" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
+                                                              "row" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "math"
+                                                                                        }
+                                                                       },
                                                               "rp" => {
                                                                         "attrs" => {},
                                                                         "conforming" => 1,
@@ -8355,17 +11542,59 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                               "rt" => {
-                                                                        "attrs" => {},
+                                                                        "attrs" => {
+                                                                                     "" => {
+                                                                                             "rbspan" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "ruby",
+                                                                                                                            "type" => "html_element"
+                                                                                                                          }
+                                                                                                         }
+                                                                                           }
+                                                                                   },
                                                                         "conforming" => 1,
                                                                         "content_model" => "phrasing content",
                                                                         "status" => "LC"
                                                                       },
+                                                              "rtc" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "ruby",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "ruby" => {
                                                                           "attrs" => {},
                                                                           "conforming" => 1,
                                                                           "has_additional_content_constraints" => 1,
                                                                           "status" => "LC"
                                                                         },
+                                                              "rule" => {
+                                                                          "attrs" => {
+                                                                                       "" => {
+                                                                                               "condition" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               }
+                                                                                                              },
+                                                                                               "mode" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          }
+                                                                                                         }
+                                                                                             }
+                                                                                     },
+                                                                          "preferred" => {
+                                                                                           "name" => "template",
+                                                                                           "type" => "html_element"
+                                                                                         }
+                                                                        },
+                                                              "ruleref" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "none"
+                                                                                            }
+                                                                           },
                                                               "s" => {
                                                                        "attrs" => {},
                                                                        "conforming" => 1,
@@ -8396,6 +11625,9 @@ $Web::HTML::Validator::_Defs = {
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "archive" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "none"
+                                                                                                                               },
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                               },
                                                                                                  "async" => {
@@ -8450,16 +11682,32 @@ $Web::HTML::Validator::_Defs = {
                                                                                                               "value_type" => "boolean"
                                                                                                             },
                                                                                                  "event" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "any"
                                                                                                             },
                                                                                                  "for" => {
                                                                                                             "id_type" => "any",
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "script"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "idref"
                                                                                                           },
+                                                                                                 "implements" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "script"
+                                                                                                                                  }
+                                                                                                                 },
                                                                                                  "language" => {
                                                                                                                  "obsolete_but_conforming" => 1,
+                                                                                                                 "preferred" => {
+                                                                                                                                  "element" => "script",
+                                                                                                                                  "name" => "type",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                },
                                                                                                                  "status" => "LC"
                                                                                                                },
                                                                                                  "src" => {
@@ -8478,6 +11726,12 @@ $Web::HTML::Validator::_Defs = {
                                                                             "conforming" => 1,
                                                                             "has_additional_content_constraints" => 1,
                                                                             "status" => "REC"
+                                                                          },
+                                                              "secret" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "none"
+                                                                                           }
                                                                           },
                                                               "section" => {
                                                                              "aria" => {
@@ -8499,11 +11753,25 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "default_role" => "region"
                                                                                                }
                                                                                        },
-                                                                             "attrs" => {},
+                                                                             "attrs" => {
+                                                                                          "" => {
+                                                                                                  "cite" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             }
+                                                                                                            }
+                                                                                                }
+                                                                                        },
                                                                              "conforming" => 1,
                                                                              "content_model" => "flow content",
                                                                              "status" => "CR"
                                                                            },
+                                                              "sel" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "none"
+                                                                                        }
+                                                                       },
                                                               "select" => {
                                                                             "aria" => {
                                                                                         "" => {
@@ -8577,6 +11845,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                       },
                                                                             "attrs" => {
                                                                                          "" => {
+                                                                                                 "autoactivate" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "autofocus",
+                                                                                                                                      "type" => "html_attr"
+                                                                                                                                    }
+                                                                                                                   },
                                                                                                  "autocomplete" => {
                                                                                                                      "conforming" => 1,
                                                                                                                      "status" => "CR"
@@ -8587,10 +11861,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   "value_type" => "boolean"
                                                                                                                 },
                                                                                                  "data" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "url_role" => "resource"
                                                                                                            },
                                                                                                  "datafld" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "any"
                                                                                                               },
@@ -8606,10 +11886,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                    "conforming" => 1
                                                                                                                                                  }
                                                                                                                                      },
+                                                                                                                     "preferred" => {
+                                                                                                                                      "type" => "script"
+                                                                                                                                    },
                                                                                                                      "status" => "LC",
                                                                                                                      "value_type" => "enumerated"
                                                                                                                    },
                                                                                                  "datasrc" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
                                                                                                                 "status" => "LC",
                                                                                                                 "url_role" => "resource",
                                                                                                                 "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -8664,11 +11950,39 @@ $Web::HTML::Validator::_Defs = {
                                                                             "conforming" => 1,
                                                                             "status" => "LC"
                                                                           },
+                                                              "separator" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "name" => "hr",
+                                                                                                "type" => "html_element"
+                                                                                              }
+                                                                             },
+                                                              "shadow" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "name" => "text-shadow",
+                                                                                             "type" => "css_prop"
+                                                                                           }
+                                                                          },
+                                                              "sidebar" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "name" => "aside",
+                                                                                              "type" => "html_element"
+                                                                                            }
+                                                                           },
                                                               "small" => {
                                                                            "attrs" => {},
                                                                            "conforming" => 1,
                                                                            "content_model" => "phrasing content",
                                                                            "status" => "REC"
+                                                                         },
+                                                              "sound" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "name" => "audio",
+                                                                                            "type" => "html_element"
+                                                                                          }
                                                                          },
                                                               "source" => {
                                                                             "aria" => {
@@ -8682,8 +11996,16 @@ $Web::HTML::Validator::_Defs = {
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "media" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             },
                                                                                                               "status" => "LC"
                                                                                                             },
+                                                                                                 "pixelratio" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "script"
+                                                                                                                                  }
+                                                                                                                 },
                                                                                                  "src" => {
                                                                                                             "conforming" => 1,
                                                                                                             "status" => "LC",
@@ -8702,13 +12024,50 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                               "spacer" => {
-                                                                            "attrs" => {},
+                                                                            "attrs" => {
+                                                                                         "" => {
+                                                                                                 "align" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "css"
+                                                                                                                             }
+                                                                                                            },
+                                                                                                 "height" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "margin-height",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                 "size" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "margin-width",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                 "type" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "css"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                 "width" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "margin-width",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             }
+                                                                                                            }
+                                                                                               }
+                                                                                       },
+                                                                            "preferred" => {
+                                                                                             "type" => "css"
+                                                                                           },
                                                                             "status" => "LC"
                                                                           },
                                                               "span" => {
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "datafld" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "any"
                                                                                                             },
@@ -8724,10 +12083,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  "conforming" => 1
                                                                                                                                                }
                                                                                                                                    },
+                                                                                                                   "preferred" => {
+                                                                                                                                    "type" => "script"
+                                                                                                                                  },
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
                                                                                                "datasrc" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "script"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "url_role" => "resource",
                                                                                                               "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -8738,9 +12103,31 @@ $Web::HTML::Validator::_Defs = {
                                                                           "content_model" => "phrasing content",
                                                                           "status" => "REC"
                                                                         },
+                                                              "spot" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        },
+                                                              "sqrt" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "math"
+                                                                                         }
+                                                                        },
+                                                              "standby" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                              "type" => "none"
+                                                                                            }
+                                                                           },
                                                               "strike" => {
                                                                             "attrs" => {},
                                                                             "content_model" => "phrasing content",
+                                                                            "preferred" => {
+                                                                                             "name" => "s",
+                                                                                             "type" => "html_element"
+                                                                                           },
                                                                             "status" => "LC"
                                                                           },
                                                               "strong" => {
@@ -8766,6 +12153,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                      },
                                                                            "attrs" => {
                                                                                         "" => {
+                                                                                                "disabled" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "type" => "script"
+                                                                                                                               },
+                                                                                                                "value_type" => "boolean"
+                                                                                                              },
                                                                                                 "media" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
@@ -8825,6 +12218,33 @@ $Web::HTML::Validator::_Defs = {
                                                                          "content_model" => "phrasing content",
                                                                          "status" => "REC"
                                                                        },
+                                                              "switch" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "script"
+                                                                                           }
+                                                                          },
+                                                              "symbol" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "none"
+                                                                                           }
+                                                                          },
+                                                              "t" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                        "element" => "a",
+                                                                                        "name" => "href",
+                                                                                        "type" => "html_attr"
+                                                                                      }
+                                                                     },
+                                                              "tab" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "table",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "table" => {
                                                                            "attrs" => {
                                                                                         "" => {
@@ -8849,15 +12269,27 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "conforming" => 1
                                                                                                                                           }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "float",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "background" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "background-image",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-color",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "legacy color value"
                                                                                                              },
@@ -8870,30 +12302,68 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                        "conforming" => 1
                                                                                                                                      }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "border-width",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "enumerated"
                                                                                                             },
                                                                                                 "bordercolor" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "border-color",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "legacy color value"
                                                                                                                  },
                                                                                                 "bordercolordark" => {
+                                                                                                                       "preferred" => {
+                                                                                                                                        "name" => "border-color",
+                                                                                                                                        "type" => "css_prop"
+                                                                                                                                      },
                                                                                                                        "value_type" => "legacy color value"
                                                                                                                      },
                                                                                                 "bordercolorlight" => {
+                                                                                                                        "preferred" => {
+                                                                                                                                         "name" => "border-color",
+                                                                                                                                         "type" => "css_prop"
+                                                                                                                                       },
                                                                                                                         "value_type" => "legacy color value"
                                                                                                                       },
                                                                                                 "cellborder" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "border-width",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "value_type" => "non-negative integer"
                                                                                                                 },
                                                                                                 "cellpadding" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "padding",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "non-negative integer"
                                                                                                                  },
                                                                                                 "cellspacing" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "border-spacing",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "non-negative integer"
                                                                                                                  },
+                                                                                                "cols" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "omit"
+                                                                                                                           }
+                                                                                                          },
+                                                                                                "cool" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "css"
+                                                                                                                           }
+                                                                                                          },
                                                                                                 "dataformatas" => {
                                                                                                                     "enumerated" => {
                                                                                                                                       "html" => {
@@ -8906,14 +12376,23 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "conforming" => 1
                                                                                                                                                 }
                                                                                                                                     },
+                                                                                                                    "preferred" => {
+                                                                                                                                     "type" => "script"
+                                                                                                                                   },
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "enumerated"
                                                                                                                   },
                                                                                                 "datapagesize" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "type" => "script"
+                                                                                                                                   },
                                                                                                                     "status" => "LC",
                                                                                                                     "value_type" => "non-negative integer"
                                                                                                                   },
                                                                                                 "datasrc" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "resource",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -8948,14 +12427,45 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "border-style",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
+                                                                                                "gridx" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "border",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "gridy" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "border",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           },
                                                                                                 "height" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "height",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "non-negative integer"
                                                                                                             },
                                                                                                 "hspace" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "margin",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "dimension value"
+                                                                                                            },
+                                                                                                "nowrap" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "white-space",
+                                                                                                                               "type" => "css_prop",
+                                                                                                                               "value" => "nowrap"
+                                                                                                                             }
                                                                                                             },
                                                                                                 "rules" => {
                                                                                                              "enumerated" => {
@@ -8975,24 +12485,67 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "border-style",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
+                                                                                                "showgridx" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "border",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                }
+                                                                                                               },
+                                                                                                "showgridy" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "border",
+                                                                                                                                  "type" => "css_prop"
+                                                                                                                                }
+                                                                                                               },
                                                                                                 "sortable" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
                                                                                                 "summary" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "omit"
+                                                                                                                              },
                                                                                                                "status" => "LC"
                                                                                                              },
                                                                                                 "tableborder" => {
+                                                                                                                   "preferred" => {
+                                                                                                                                    "name" => "border-width",
+                                                                                                                                    "type" => "css_prop"
+                                                                                                                                  },
                                                                                                                    "value_type" => "non-negative integer"
                                                                                                                  },
+                                                                                                "usegridx" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "border",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              },
+                                                                                                "usegridy" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "border",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               }
+                                                                                                              },
                                                                                                 "vspace" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "margin",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "value_type" => "dimension value"
                                                                                                             },
                                                                                                 "width" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "width",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "non-negative integer"
                                                                                                            }
@@ -9002,6 +12555,13 @@ $Web::HTML::Validator::_Defs = {
                                                                            "has_additional_content_constraints" => 1,
                                                                            "status" => "LC"
                                                                          },
+                                                              "tbl" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "name" => "table",
+                                                                                          "type" => "html_element"
+                                                                                        }
+                                                                       },
                                                               "tbody" => {
                                                                            "attrs" => {
                                                                                         "" => {
@@ -9029,21 +12589,39 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "conforming" => 1
                                                                                                                                           }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "text-align",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "background" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "background-image",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-color",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "legacy color value"
                                                                                                              },
                                                                                                 "char" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "status" => "LC"
                                                                                                           },
                                                                                                 "charoff" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "none"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
@@ -9062,6 +12640,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "vertical-align",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "enumerated"
                                                                                                             }
@@ -9087,6 +12669,9 @@ $Web::HTML::Validator::_Defs = {
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "abbr" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "omit"
+                                                                                                                        },
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "text"
                                                                                                        },
@@ -9114,35 +12699,68 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
                                                                                              "axis" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "omit"
+                                                                                                                        },
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "text"
                                                                                                        },
                                                                                              "background" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-image",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                              "bgcolor" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "background-color",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "legacy color value"
                                                                                                           },
                                                                                              "bordercolor" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "border-color",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "legacy color value"
                                                                                                               },
                                                                                              "bordercolordark" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "border-color",
+                                                                                                                                     "type" => "css_prop"
+                                                                                                                                   },
                                                                                                                     "value_type" => "legacy color value"
                                                                                                                   },
                                                                                              "bordercolorlight" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "border-color",
+                                                                                                                                      "type" => "css_prop"
+                                                                                                                                    },
                                                                                                                      "value_type" => "legacy color value"
                                                                                                                    },
                                                                                              "char" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "none"
+                                                                                                                        },
                                                                                                          "status" => "LC"
                                                                                                        },
                                                                                              "charoff" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "dimension value"
                                                                                                           },
@@ -9151,6 +12769,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "non-negative integer greater than zero"
                                                                                                           },
+                                                                                             "csheight" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "height",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            }
+                                                                                                           },
                                                                                              "headers" => {
                                                                                                             "conforming" => 1,
                                                                                                             "id_type" => "th",
@@ -9159,10 +12783,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                              "height" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "height",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "non-negative integer"
                                                                                                          },
                                                                                              "nowrap" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "white-space",
+                                                                                                                            "type" => "css_prop",
+                                                                                                                            "value" => "nowrap"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "boolean"
                                                                                                          },
@@ -9203,6 +12836,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "spec" => "HTML"
                                                                                                                                           }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "element" => "th",
+                                                                                                                           "name" => "scope",
+                                                                                                                           "type" => "html_attr"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
@@ -9221,13 +12859,26 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         "conforming" => 1
                                                                                                                                       }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "vertical-align",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "enumerated"
                                                                                                          },
                                                                                              "width" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "width",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "non-negative integer"
-                                                                                                        }
+                                                                                                        },
+                                                                                             "xpos" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "css"
+                                                                                                                        }
+                                                                                                       }
                                                                                            }
                                                                                    },
                                                                         "conforming" => 1,
@@ -9291,6 +12942,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                         },
                                                                               "attrs" => {
                                                                                            "" => {
+                                                                                                   "accept" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                }
+                                                                                                               },
+                                                                                                   "accept-charset" => {
+                                                                                                                         "preferred" => {
+                                                                                                                                          "element" => "form",
+                                                                                                                                          "name" => "accept-charset",
+                                                                                                                                          "type" => "html_attr"
+                                                                                                                                        }
+                                                                                                                       },
                                                                                                    "autocapitalize" => {
                                                                                                                          "enumerated" => {
                                                                                                                                            "off" => {
@@ -9300,6 +12963,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                      "conforming" => 1
                                                                                                                                                    }
                                                                                                                                          },
+                                                                                                                         "preferred" => {
+                                                                                                                                          "name" => "inputmode",
+                                                                                                                                          "type" => "html_attr"
+                                                                                                                                        },
                                                                                                                          "value_type" => "enumerated"
                                                                                                                        },
                                                                                                    "autocomplete" => {
@@ -9316,6 +12983,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "conforming" => 1
                                                                                                                                                 }
                                                                                                                                       },
+                                                                                                                      "preferred" => {
+                                                                                                                                       "name" => "spellcheck",
+                                                                                                                                       "type" => "html_attr"
+                                                                                                                                     },
                                                                                                                       "value_type" => "enumerated"
                                                                                                                     },
                                                                                                    "autofocus" => {
@@ -9333,10 +13004,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "url_role" => "resource"
                                                                                                              },
                                                                                                    "datafld" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "value_type" => "any"
                                                                                                                 },
                                                                                                    "datasrc" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "url_role" => "resource",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
@@ -9360,6 +13037,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               }
                                                                                                                                   },
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "required",
+                                                                                                                                   "type" => "html_attr"
+                                                                                                                                 },
                                                                                                                   "value_type" => "enumerated"
                                                                                                                 },
                                                                                                    "form" => {
@@ -9368,7 +13049,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "idref"
                                                                                                              },
-                                                                                                   "format" => {},
+                                                                                                   "format" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "pattern",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                }
+                                                                                                               },
                                                                                                    "inputmode" => {
                                                                                                                     "conforming" => 1,
                                                                                                                     "enumerated" => {
@@ -9510,6 +13196,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "conforming" => 1
                                                                                                                                            }
                                                                                                                                 },
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "autocomplete",
+                                                                                                                                 "type" => "html_attr"
+                                                                                                                               },
                                                                                                                 "value_type" => "enumerated"
                                                                                                               },
                                                                                                    "istyle" => {
@@ -9527,6 +13217,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                                  },
+                                                                                                                 "preferred" => {
+                                                                                                                                  "name" => "inputmode",
+                                                                                                                                  "type" => "html_attr"
+                                                                                                                                },
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
                                                                                                    "maxlength" => {
@@ -9557,6 +13251,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                 "conforming" => 1
                                                                                                                                               }
                                                                                                                                },
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "inputmode",
+                                                                                                                                "type" => "html_attr"
+                                                                                                                              },
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
                                                                                                    "name" => {
@@ -9586,6 +13284,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "non-negative integer greater than zero"
                                                                                                              },
+                                                                                                   "submit_dir" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "dirname",
+                                                                                                                                      "type" => "html_attr"
+                                                                                                                                    }
+                                                                                                                   },
                                                                                                    "wrap" => {
                                                                                                                "conforming" => 1,
                                                                                                                "enumerated" => {
@@ -9625,6 +13329,12 @@ $Web::HTML::Validator::_Defs = {
                                                                               "content_model" => "text content",
                                                                               "status" => "LC"
                                                                             },
+                                                              "textflow" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "omit"
+                                                                                             }
+                                                                            },
                                                               "tfoot" => {
                                                                            "attrs" => {
                                                                                         "" => {
@@ -9652,21 +13362,39 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "conforming" => 1
                                                                                                                                           }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "text-align",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "background" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "background-image",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-color",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "legacy color value"
                                                                                                              },
                                                                                                 "char" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "status" => "LC"
                                                                                                           },
                                                                                                 "charoff" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "none"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
@@ -9685,6 +13413,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "vertical-align",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "enumerated"
                                                                                                             }
@@ -9740,35 +13472,68 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
                                                                                              "axis" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "omit"
+                                                                                                                        },
                                                                                                          "status" => "LC",
                                                                                                          "value_type" => "text"
                                                                                                        },
                                                                                              "background" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-image",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                              "bgcolor" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "background-color",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "legacy color value"
                                                                                                           },
                                                                                              "bordercolor" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "border-color",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "legacy color value"
                                                                                                               },
                                                                                              "bordercolordark" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "border-color",
+                                                                                                                                     "type" => "css_prop"
+                                                                                                                                   },
                                                                                                                     "value_type" => "legacy color value"
                                                                                                                   },
                                                                                              "bordercolorlight" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "border-color",
+                                                                                                                                      "type" => "css_prop"
+                                                                                                                                    },
                                                                                                                      "value_type" => "legacy color value"
                                                                                                                    },
                                                                                              "char" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "none"
+                                                                                                                        },
                                                                                                          "status" => "LC"
                                                                                                        },
                                                                                              "charoff" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "dimension value"
                                                                                                           },
@@ -9785,10 +13550,19 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "value_type" => "unordered set of unique space-separated tokens"
                                                                                                           },
                                                                                              "height" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "height",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "non-negative integer"
                                                                                                          },
                                                                                              "nowrap" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "white-space",
+                                                                                                                            "type" => "css_prop",
+                                                                                                                            "value" => "nowrap"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "boolean"
                                                                                                          },
@@ -9853,10 +13627,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         "conforming" => 1
                                                                                                                                       }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "vertical-align",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "enumerated"
                                                                                                          },
                                                                                              "width" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "width",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "non-negative integer"
                                                                                                         }
@@ -9906,21 +13688,39 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                             "conforming" => 1
                                                                                                                                           }
                                                                                                                              },
+                                                                                                             "preferred" => {
+                                                                                                                              "name" => "text-align",
+                                                                                                                              "type" => "css_prop"
+                                                                                                                            },
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "enumerated"
                                                                                                            },
                                                                                                 "background" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "name" => "background-image",
+                                                                                                                                   "type" => "css_prop"
+                                                                                                                                 },
                                                                                                                   "status" => "LC",
                                                                                                                   "url_role" => "embedded",
                                                                                                                   "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                                 },
                                                                                                 "bgcolor" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-color",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "value_type" => "legacy color value"
                                                                                                              },
                                                                                                 "char" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "status" => "LC"
                                                                                                           },
                                                                                                 "charoff" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "none"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "value_type" => "dimension value"
                                                                                                              },
@@ -9939,6 +13739,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                            "conforming" => 1
                                                                                                                                          }
                                                                                                                               },
+                                                                                                              "preferred" => {
+                                                                                                                               "name" => "vertical-align",
+                                                                                                                               "type" => "css_prop"
+                                                                                                                             },
                                                                                                               "status" => "LC",
                                                                                                               "value_type" => "enumerated"
                                                                                                             }
@@ -9960,13 +13764,24 @@ $Web::HTML::Validator::_Defs = {
                                                                            "conforming" => 1,
                                                                            "status" => "LC"
                                                                          },
+                                                              "tilde" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "math"
+                                                                                          }
+                                                                         },
                                                               "time" => {
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "datetime" => {
                                                                                                                "conforming" => 1,
                                                                                                                "status" => "LC"
-                                                                                                             }
+                                                                                                             },
+                                                                                               "pubdate" => {
+                                                                                                              "preferred" => {
+                                                                                                                               "type" => "omit"
+                                                                                                                             }
+                                                                                                            }
                                                                                              }
                                                                                      },
                                                                           "conforming" => 1,
@@ -10015,35 +13830,74 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                          "conforming" => 1
                                                                                                                                        }
                                                                                                                           },
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         },
                                                                                                           "status" => "LC",
                                                                                                           "value_type" => "enumerated"
                                                                                                         },
                                                                                              "background" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "name" => "background-image",
+                                                                                                                                "type" => "css_prop"
+                                                                                                                              },
                                                                                                                "status" => "LC",
                                                                                                                "url_role" => "embedded",
                                                                                                                "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                              },
                                                                                              "bgcolor" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "name" => "background-color",
+                                                                                                                             "type" => "css_prop"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "legacy color value"
                                                                                                           },
                                                                                              "bordercolor" => {
+                                                                                                                "preferred" => {
+                                                                                                                                 "name" => "border-color",
+                                                                                                                                 "type" => "css_prop"
+                                                                                                                               },
                                                                                                                 "value_type" => "legacy color value"
                                                                                                               },
                                                                                              "bordercolordark" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "border-color",
+                                                                                                                                     "type" => "css_prop"
+                                                                                                                                   },
                                                                                                                     "value_type" => "legacy color value"
                                                                                                                   },
                                                                                              "bordercolorlight" => {
+                                                                                                                     "preferred" => {
+                                                                                                                                      "name" => "border-color",
+                                                                                                                                      "type" => "css_prop"
+                                                                                                                                    },
                                                                                                                      "value_type" => "legacy color value"
                                                                                                                    },
                                                                                              "char" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "none"
+                                                                                                                        },
                                                                                                          "status" => "LC"
                                                                                                        },
                                                                                              "charoff" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "none"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "dimension value"
                                                                                                           },
+                                                                                             "cntrlrow" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "none"
+                                                                                                                            }
+                                                                                                           },
                                                                                              "height" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "height",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "value_type" => "non-negative integer"
                                                                                                          },
                                                                                              "valign" => {
@@ -10061,6 +13915,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                         "conforming" => 1
                                                                                                                                       }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "vertical-align",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "status" => "LC",
                                                                                                            "value_type" => "enumerated"
                                                                                                          }
@@ -10160,6 +14018,11 @@ $Web::HTML::Validator::_Defs = {
                                                               "tt" => {
                                                                         "attrs" => {},
                                                                         "content_model" => "phrasing content",
+                                                                        "preferred" => {
+                                                                                         "name" => "font-family",
+                                                                                         "type" => "css_prop",
+                                                                                         "value" => "monospace"
+                                                                                       },
                                                                         "status" => "LC"
                                                                       },
                                                               "u" => {
@@ -10187,11 +14050,24 @@ $Web::HTML::Validator::_Defs = {
                                                                                   },
                                                                         "attrs" => {
                                                                                      "" => {
+                                                                                             "align" => {
+                                                                                                          "preferred" => {
+                                                                                                                           "name" => "text-align",
+                                                                                                                           "type" => "css_prop"
+                                                                                                                         }
+                                                                                                        },
                                                                                              "compact" => {
+                                                                                                            "preferred" => {
+                                                                                                                             "type" => "omit"
+                                                                                                                           },
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "boolean"
                                                                                                           },
                                                                                              "type" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "name" => "list-style-type",
+                                                                                                                          "type" => "css_prop"
+                                                                                                                        },
                                                                                                          "status" => "LC"
                                                                                                        }
                                                                                            }
@@ -10218,6 +14094,18 @@ $Web::HTML::Validator::_Defs = {
                                                                          "content_model" => "phrasing content",
                                                                          "status" => "REC"
                                                                        },
+                                                              "variable" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                               "type" => "none"
+                                                                                             }
+                                                                            },
+                                                              "vec" => {
+                                                                         "attrs" => {},
+                                                                         "preferred" => {
+                                                                                          "type" => "math"
+                                                                                        }
+                                                                       },
                                                               "video" => {
                                                                            "aria" => {
                                                                                        "" => {
@@ -10229,6 +14117,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                      },
                                                                            "attrs" => {
                                                                                         "" => {
+                                                                                                "audio" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            }
+                                                                                                           },
+                                                                                                "autobuffer" => {
+                                                                                                                  "preferred" => {
+                                                                                                                                   "type" => "script"
+                                                                                                                                 }
+                                                                                                                },
                                                                                                 "autoplay" => {
                                                                                                                 "conforming" => 1,
                                                                                                                 "status" => "LC",
@@ -10239,6 +14137,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                 "status" => "LC",
                                                                                                                 "value_type" => "boolean"
                                                                                                               },
+                                                                                                "cross-origin" => {
+                                                                                                                    "preferred" => {
+                                                                                                                                     "name" => "crossorigin",
+                                                                                                                                     "type" => "html_attr"
+                                                                                                                                   }
+                                                                                                                  },
                                                                                                 "crossorigin" => {
                                                                                                                    "conforming" => 1,
                                                                                                                    "enumerated" => {
@@ -10275,6 +14179,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    "status" => "LC",
                                                                                                                    "value_type" => "enumerated"
                                                                                                                  },
+                                                                                                "end" => {
+                                                                                                           "preferred" => {
+                                                                                                                            "type" => "script"
+                                                                                                                          }
+                                                                                                         },
                                                                                                 "height" => {
                                                                                                               "conforming" => 1,
                                                                                                               "status" => "LC",
@@ -10285,6 +14194,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                             "status" => "LC",
                                                                                                             "value_type" => "boolean"
                                                                                                           },
+                                                                                                "loopend" => {
+                                                                                                               "preferred" => {
+                                                                                                                                "type" => "script"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                "loopstart" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                }
+                                                                                                               },
                                                                                                 "mediagroup" => {
                                                                                                                   "conforming" => 1,
                                                                                                                   "status" => "LC",
@@ -10295,6 +14214,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "status" => "LC",
                                                                                                              "value_type" => "boolean"
                                                                                                            },
+                                                                                                "playcount" => {
+                                                                                                                 "preferred" => {
+                                                                                                                                  "type" => "script"
+                                                                                                                                }
+                                                                                                               },
                                                                                                 "poster" => {
                                                                                                               "conforming" => 1,
                                                                                                               "status" => "LC",
@@ -10343,6 +14267,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "url_role" => "embedded",
                                                                                                            "value_type" => "non-empty URL potentially surrounded by spaces"
                                                                                                          },
+                                                                                                "start" => {
+                                                                                                             "preferred" => {
+                                                                                                                              "type" => "script"
+                                                                                                                            }
+                                                                                                           },
                                                                                                 "width" => {
                                                                                                              "conforming" => 1,
                                                                                                              "status" => "LC",
@@ -10366,15 +14295,79 @@ $Web::HTML::Validator::_Defs = {
                                                                          "content_model" => "empty",
                                                                          "status" => "LC"
                                                                        },
+                                                              "widget" => {
+                                                                            "attrs" => {},
+                                                                            "preferred" => {
+                                                                                             "type" => "none"
+                                                                                           }
+                                                                          },
+                                                              "wired" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                            "type" => "none"
+                                                                                          }
+                                                                         },
+                                                              "x" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                        "element" => "a",
+                                                                                        "name" => "href",
+                                                                                        "type" => "html_attr"
+                                                                                      }
+                                                                     },
+                                                              "x-claris-tagview" => {
+                                                                                      "attrs" => {},
+                                                                                      "preferred" => {
+                                                                                                       "type" => "omit"
+                                                                                                     }
+                                                                                    },
+                                                              "x-claris-window" => {
+                                                                                     "attrs" => {},
+                                                                                     "preferred" => {
+                                                                                                      "type" => "omit"
+                                                                                                    }
+                                                                                   },
+                                                              "x-ms-webview" => {
+                                                                                  "attrs" => {},
+                                                                                  "preferred" => {
+                                                                                                   "name" => "iframe",
+                                                                                                   "type" => "html_element"
+                                                                                                 }
+                                                                                },
+                                                              "x-sas-remotesave" => {
+                                                                                      "attrs" => {},
+                                                                                      "preferred" => {
+                                                                                                       "type" => "script"
+                                                                                                     }
+                                                                                    },
+                                                              "x-sas-window" => {
+                                                                                  "attrs" => {},
+                                                                                  "preferred" => {
+                                                                                                   "type" => "script"
+                                                                                                 }
+                                                                                },
                                                               "xml" => {
                                                                          "attrs" => {
                                                                                       "" => {
                                                                                               "src" => {
+                                                                                                         "preferred" => {
+                                                                                                                          "type" => "script"
+                                                                                                                        },
                                                                                                          "url_role" => "resource"
                                                                                                        }
                                                                                             }
-                                                                                    }
+                                                                                    },
+                                                                         "preferred" => {
+                                                                                          "name" => "script",
+                                                                                          "type" => "html_element"
+                                                                                        }
                                                                        },
+                                                              "xmlreader" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                                "type" => "none"
+                                                                                              }
+                                                                             },
                                                               "xmp" => {
                                                                          "attrs" => {
                                                                                       "" => {
@@ -10396,13 +14389,33 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                           "conforming" => 1
                                                                                                                                         }
                                                                                                                            },
+                                                                                                           "preferred" => {
+                                                                                                                            "name" => "clear",
+                                                                                                                            "type" => "css_prop"
+                                                                                                                          },
                                                                                                            "value_type" => "enumerated"
                                                                                                          }
                                                                                             }
                                                                                     },
                                                                          "content_model" => "text",
+                                                                         "preferred" => {
+                                                                                          "name" => "pre",
+                                                                                          "type" => "html_element"
+                                                                                        },
                                                                          "status" => "LC"
-                                                                       }
+                                                                       },
+                                                              "yogsothoth" => {
+                                                                                "attrs" => {},
+                                                                                "preferred" => {
+                                                                                                 "type" => "none"
+                                                                                               }
+                                                                              },
+                                                              "yomi" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                           "type" => "none"
+                                                                                         }
+                                                                        }
                                                             },
                           "http://www.w3.org/2000/svg" => {
                                                             "*" => {

@@ -419,11 +419,20 @@ sub _check_element_attrs ($$$;%) {
         $attr_ns eq '' and
         $attr_ln !~ /^xml/ and
         $attr_ln !~ /[A-Z]/ and
-        $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/) {
+        $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/ and
+        not $attr_def->{non_conforming}) {
       ## XML-compatible + no uppercase letter
       $checker ||= $CheckerByType->{any};
       $conforming = 1;
       $status = 'REC';
+      if (not $attr_def->{conforming} and
+          ($attr_def->{browser} or
+           (not $ElementAttrChecker->{$el_ns}->{$el_ln}->{$attr_ns}->{$attr_ln} and
+            $ElementAttrChecker->{$el_ns}->{'*'}->{$attr_ns}->{$attr_ln}))) {
+        $self->{onerror}->(node => $attr,
+                           type => 'attr:obsolete',
+                           level => 'w');
+      }
     }
     $checker->($self, $attr, $item, $element_state, $attr_def) if $checker;
 
@@ -455,9 +464,16 @@ sub _check_element_attrs ($$$;%) {
             $el_ln eq 'img') {
           #
         } else {
-          $self->{onerror}->(node => $attr,
-                             type => 'attribute not defined',
-                             level => 'm');
+          if ($attr_def->{preferred}) {
+            $self->{onerror}->(node => $attr,
+                               type => 'attr:obsolete',
+                               level => 'm',
+                               preferred => $attr_def->{preferred});
+          } else {
+            $self->{onerror}->(node => $attr,
+                               type => 'attribute not defined',
+                               level => 'm');
+          }
         }
       }
     }
@@ -5361,12 +5377,12 @@ $Element->{+HTML_NS}->{img} = {
             unless defined $title and length $title;
       }
       $self->{onerror}->(node => $long_attr,
-                         type => 'attribute not defined',
+                         type => 'img:longnameattr',
                          level => 'mh')
           if defined $long_attr;
-    } else {
+    } else { # has alt=""
       $self->{onerror}->(node => $long_attr,
-                         type => 'attribute not defined',
+                         type => 'img:longnameattr:has alt',
                          level => 'm')
           if defined $long_attr;
     }
@@ -5417,14 +5433,6 @@ $Element->{+HTML_NS}->{embed} = {
                            text => 'src',
                            level => 'w');
       }
-    }
-
-    for (qw(align border hspace vspace name)) {
-      my $attr = $item->{node}->get_attribute_node_ns (undef, $_);
-      $self->{onerror}->(node => $attr,
-                         type => 'attribute not defined',
-                         level => $_ eq 'border' ? 'w' : 'm')
-          if $attr;
     }
 
     ## XXXresource: external resource check
@@ -9775,9 +9783,16 @@ sub _check_node ($$) {
           ## "Authors must not use elements, attributes, or attribute
           ## values that are not permitted by this specification or
           ## other applicable specifications" [HTML]
-          $self->{onerror}->(node => $el,
-                             type => 'element not defined',
-                             level => 'm');
+          if ($el_def->{preferred}) {
+            $self->{onerror}->(node => $el,
+                               type => 'element:obsolete',
+                               level => 'm',
+                               preferred => $el_def->{preferred});
+          } else {
+            $self->{onerror}->(node => $el,
+                               type => 'element not defined',
+                               level => 'm');
+          }
         } else {
           $self->{onerror}->(node => $el,
                              type => 'unknown namespace element',

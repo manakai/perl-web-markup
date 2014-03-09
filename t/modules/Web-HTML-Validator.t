@@ -1116,6 +1116,38 @@ for my $test (
   } n => 1, name => ['noscript scripting enabled', $test->[0]];
 }
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('dir');
+  my $val = new Web::HTML::Validator;
+  my $preferred = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$preferred, $args{preferred};
+  });
+  $val->check_node ($el);
+  eq_or_diff $preferred, [{type => 'html_element', name => 'ul'}];
+  done $c;
+} n => 1, name => 'obsolete element preferred';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element ('p');
+  $el->set_attribute (align => 'left');
+  $el->text_content (1);
+  my $val = new Web::HTML::Validator;
+  my $preferred = [];
+  $val->onerror (sub {
+    my %args = @_;
+    push @$preferred, $args{preferred};
+  });
+  $val->check_node ($el);
+  eq_or_diff $preferred, [{type => 'css_prop', name => 'text-align'}];
+  done $c;
+} n => 1, name => 'obsolete attribute preferred';
+
 run_tests;
 
 =head1 LICENSE
