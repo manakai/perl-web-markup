@@ -6,10 +6,16 @@ use Path::Class;
 use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
 use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
 use base qw(Test::Class);
+use Test::More;
 use Test::Differences;
 use JSON 1.07;
 $JSON::UnMapping = 1;
 $JSON::UTF8 = 1;
+
+my $builder = Test::More->builder;
+binmode $builder->output, ":utf8";
+binmode $builder->failure_output, ":utf8";
+binmode $builder->todo_output, ":utf8";
 
 my $DEBUG = $ENV{DEBUG};
 
@@ -186,9 +192,10 @@ sub _tokenize_test ($$) {
           push @token, $test_token;
         }
       }
-      
-      my $expected_dump = Dumper ($test->{output});
-      my $parser_dump = Dumper (\@token);
+
+      my $dumper = Data::Dumper->Useqq (1);
+      my $expected_dump = $dumper->Dump ($test->{output});
+      my $parser_dump = $dumper->Dump (\@token);
 #line 1 "HTML-tokenizer.t ok"
       eq_or_diff $parser_dump, $expected_dump,
         $test->{description} . ': ' . Data::Dumper::qquote ($test->{input});
