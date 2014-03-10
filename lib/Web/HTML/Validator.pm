@@ -1670,6 +1670,9 @@ sub _validate_aria ($$) {
       } elsif ($ln eq 'li') {
         $adef = $aria_defs->{'in-ulol'}
             if $node_context->{refaddr $node}->{in_ulol};
+      } elsif ($ln eq 'th') {
+        # XXX sorting capable ...
+        $adef = $aria_defs->{'not-sort-1'};
       } elsif ($ln eq 'menu') {
         $adef = $aria_defs->{$node->type}; # type=popup or toolbar
       } elsif ($ln =~ /\Ah[1-6]\z/) {
@@ -2159,6 +2162,7 @@ sub _validate_aria ($$) {
     next if $is_root{$node_addr};
     my $roles = $node_to_roles->{$node_addr};
     ROLE: for my $role (keys %$roles) {
+      next if $roles->{$role} eq 'implicit';
       my $role_def = $_Defs->{roles}->{$role};
       my @scope = keys %{$role_def->{scope} or {}};
       if (@scope) {

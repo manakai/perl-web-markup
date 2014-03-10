@@ -12246,6 +12246,21 @@ $Web::HTML::Validator::_Defs = {
                                                                                         }
                                                                        },
                                                               "table" => {
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "attrs" => {
+                                                                                                            "aria-readonly" => {
+                                                                                                                                 "strong" => 1,
+                                                                                                                                 "value_type" => "true"
+                                                                                                                               }
+                                                                                                          },
+                                                                                               "default_role" => "grid",
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "align" => {
@@ -12563,6 +12578,15 @@ $Web::HTML::Validator::_Defs = {
                                                                                         }
                                                                        },
                                                               "tbody" => {
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "default_role" => "rowgroup",
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "align" => {
@@ -12666,6 +12690,15 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "LC"
                                                                          },
                                                               "td" => {
+                                                                        "aria" => {
+                                                                                    "" => {
+                                                                                            "allowed_roles" => {
+                                                                                                                 "presentation" => 1
+                                                                                                               },
+                                                                                            "default_role" => "gridcell",
+                                                                                            "strong_role" => 1
+                                                                                          }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "abbr" => {
@@ -13336,6 +13369,15 @@ $Web::HTML::Validator::_Defs = {
                                                                                              }
                                                                             },
                                                               "tfoot" => {
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "default_role" => "rowgroup",
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "align" => {
@@ -13439,6 +13481,29 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "LC"
                                                                          },
                                                               "th" => {
+                                                                        "aria" => {
+                                                                                    "not-sort-1" => {
+                                                                                                      "allowed_roles" => {
+                                                                                                                           "columnheader" => 1,
+                                                                                                                           "presentation" => 1,
+                                                                                                                           "rowheader" => 1
+                                                                                                                         },
+                                                                                                      "default_role" => "gridcell"
+                                                                                                    },
+                                                                                    "sort-1" => {
+                                                                                                  "allowed_roles" => {
+                                                                                                                       "presentation" => 1
+                                                                                                                     },
+                                                                                                  "attrs" => {
+                                                                                                               "aria-sort" => {
+                                                                                                                                "strong" => 1,
+                                                                                                                                "value_type" => "sort-direction"
+                                                                                                                              }
+                                                                                                             },
+                                                                                                  "default_role" => "columnheader",
+                                                                                                  "strong_role" => 1
+                                                                                                }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "abbr" => {
@@ -13662,6 +13727,15 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                               "thead" => {
+                                                                           "aria" => {
+                                                                                       "" => {
+                                                                                               "allowed_roles" => {
+                                                                                                                    "presentation" => 1
+                                                                                                                  },
+                                                                                               "default_role" => "rowgroup",
+                                                                                               "strong_role" => 1
+                                                                                             }
+                                                                                     },
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "align" => {
@@ -13804,6 +13878,15 @@ $Web::HTML::Validator::_Defs = {
                                                                            "status" => "REC"
                                                                          },
                                                               "tr" => {
+                                                                        "aria" => {
+                                                                                    "" => {
+                                                                                            "allowed_roles" => {
+                                                                                                                 "presentation" => 1
+                                                                                                               },
+                                                                                            "default_role" => "row",
+                                                                                            "strong_role" => 1
+                                                                                          }
+                                                                                  },
                                                                         "attrs" => {
                                                                                      "" => {
                                                                                              "align" => {
