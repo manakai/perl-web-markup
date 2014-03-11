@@ -1557,7 +1557,7 @@ sub _validate_aria ($$) {
           $state->{in_ulol} = 1;
         }
         $state->{is_inert} = 1
-            if $ancestor_state->{is_inert} || $node->has_attribute_ns (undef, 'inert'); # XXX or inert by <dialog> or inert by browsing context container
+            if $ancestor_state->{is_inert}; # XXX or inert by <dialog> or inert by browsing context container
       }
 
       $parents = [@$parents, $node];

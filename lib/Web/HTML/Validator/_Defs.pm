@@ -840,10 +840,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "spec" => "ARIA"
                                                                                                                                              }
                                                                                                                                  },
-                                                                                                                 "preferred" => {
-                                                                                                                                  "name" => "inert",
-                                                                                                                                  "type" => "html-attr"
-                                                                                                                                },
                                                                                                                  "status" => "CR",
                                                                                                                  "value_type" => "enumerated"
                                                                                                                },
@@ -1452,9 +1448,10 @@ $Web::HTML::Validator::_Defs = {
                                                                                                     },
                                                                                             "incremental" => {},
                                                                                             "inert" => {
-                                                                                                         "conforming" => 1,
-                                                                                                         "status" => "LC",
-                                                                                                         "value_type" => "boolean"
+                                                                                                         "preferred" => {
+                                                                                                                          "name" => "dialog",
+                                                                                                                          "type" => "html_element"
+                                                                                                                        }
                                                                                                        },
                                                                                             "instanceof" => {
                                                                                                               "preferred" => {
@@ -2545,6 +2542,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                   }
                                                                      },
                                                               "a" => {
+                                                                       "all_named" => 1,
                                                                        "aria" => {
                                                                                    "hyperlink" => {
                                                                                                     "allowed_roles" => {
@@ -3085,6 +3083,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                         }
                                                                        },
                                                               "applet" => {
+                                                                            "all_named" => 1,
                                                                             "attrs" => {
                                                                                          "" => {
                                                                                                  "align" => {
@@ -4259,6 +4258,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                        }
                                                                       },
                                                               "button" => {
+                                                                            "all_named" => 1,
                                                                             "aria" => {
                                                                                         "" => {
                                                                                                 "allowed_roles" => {
@@ -5560,6 +5560,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "REC"
                                                                       },
                                                               "embed" => {
+                                                                           "all_named" => 1,
                                                                            "aria" => {
                                                                                        "" => {
                                                                                                "allowed_roles" => {
@@ -5994,6 +5995,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                              }
                                                                             },
                                                               "form" => {
+                                                                          "all_named" => 1,
                                                                           "attrs" => {
                                                                                        "" => {
                                                                                                "accept" => {
@@ -6172,6 +6174,7 @@ $Web::HTML::Validator::_Defs = {
                                                                           "status" => "LC"
                                                                         },
                                                               "frame" => {
+                                                                           "all_named" => 1,
                                                                            "attrs" => {
                                                                                         "" => {
                                                                                                 "allowtransparency" => {
@@ -6351,6 +6354,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                           }
                                                                          },
                                                               "frameset" => {
+                                                                              "all_named" => 1,
                                                                               "aria" => {
                                                                                           "the-body" => {
                                                                                                           "allowed_roles" => {
@@ -7267,6 +7271,7 @@ $Web::HTML::Validator::_Defs = {
                                                                        "status" => "REC"
                                                                      },
                                                               "iframe" => {
+                                                                            "all_named" => 1,
                                                                             "aria" => {
                                                                                         "" => {
                                                                                                 "allowed_roles" => {
@@ -7678,6 +7683,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                           }
                                                                          },
                                                               "img" => {
+                                                                         "all_named" => 1,
                                                                          "aria" => {
                                                                                      "empty-alt" => {
                                                                                                       "allowed_roles" => {
@@ -8095,6 +8101,7 @@ $Web::HTML::Validator::_Defs = {
                                                                          "status" => "LC"
                                                                        },
                                                               "input" => {
+                                                                           "all_named" => 1,
                                                                            "aria" => {
                                                                                        "" => {
                                                                                                "attrs" => {
@@ -9801,6 +9808,7 @@ $Web::HTML::Validator::_Defs = {
                                                                           "content_model" => "flow content"
                                                                         },
                                                               "map" => {
+                                                                         "all_named" => 1,
                                                                          "attrs" => {
                                                                                       "" => {
                                                                                               "name" => {
@@ -10181,6 +10189,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             }
                                                                            },
                                                               "meta" => {
+                                                                          "all_named" => 1,
                                                                           "aria" => {
                                                                                       "" => {
                                                                                               "allowed_roles" => {
@@ -10500,6 +10509,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                          }
                                                                         },
                                                               "object" => {
+                                                                            "all_named" => 1,
                                                                             "aria" => {
                                                                                         "" => {
                                                                                                 "allowed_roles" => {
@@ -11773,6 +11783,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                         }
                                                                        },
                                                               "select" => {
+                                                                            "all_named" => 1,
                                                                             "aria" => {
                                                                                         "" => {
                                                                                                 "attrs" => {
@@ -12938,6 +12949,7 @@ $Web::HTML::Validator::_Defs = {
                                                                               "has_additional_content_constraints" => 1
                                                                             },
                                                               "textarea" => {
+                                                                              "all_named" => 1,
                                                                               "aria" => {
                                                                                           "" => {
                                                                                                   "allowed_roles" => {
@@ -14612,10 +14624,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                              "spec" => "ARIA"
                                                                                                                                            }
                                                                                                                                },
-                                                                                                               "preferred" => {
-                                                                                                                                "name" => "inert",
-                                                                                                                                "type" => "html-attr"
-                                                                                                                              },
                                                                                                                "status" => "CR",
                                                                                                                "value_type" => "enumerated"
                                                                                                              },
