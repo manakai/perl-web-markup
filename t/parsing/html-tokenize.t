@@ -26,6 +26,7 @@ my $dir_name = file (__FILE__)->dir->parent->parent->
 
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
+$Data::Dumper::Useperl = 1;
 $Data::Dumper::Sortkeys = 1;
 {
   no warnings 'redefine';
@@ -193,11 +194,7 @@ sub _tokenize_test ($$) {
         }
       }
 
-      my $dumper = Data::Dumper->Useqq (1);
-      my $expected_dump = $dumper->Dump ($test->{output});
-      my $parser_dump = $dumper->Dump (\@token);
-#line 1 "HTML-tokenizer.t ok"
-      eq_or_diff $parser_dump, $expected_dump,
+      eq_or_diff \@token, $test->{output},
         $test->{description} . ': ' . Data::Dumper::qquote ($test->{input});
     }
   }
