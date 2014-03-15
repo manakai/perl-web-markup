@@ -81,6 +81,22 @@ exception, it must not be directly thrown and this method must be used
 instead.  Otherwise resources used by the parser is not destroyed due
 to the unexpected termination.
 
+=item $parser->max_entity_depth ($integer)
+
+=item $integer = $parser->max_entity_depth
+
+Get or set the maximum depth of nested entities to be expanded.  The
+value must be a non-negative integer.
+
+=item $parser->max_entity_expansions ($integer)
+
+=item $integer = $parser->max_entity_expansions
+
+Get or set the maximum number of entity references to be expanded.
+The value must be a non-negative integer.  Note that predefined
+entities and HTML character entities are always expanded and not taken
+into account for the number of entity expansions.
+
 =back
 
 Parsed document structure is reflected to the C<Document> object
@@ -134,16 +150,9 @@ The XML fragment parsing algorithm must return the children of the
 template content of the root element of the resulting C<Document>, in
 tree order, if the /context/ element is an HTML C<template> element.
 
-=item XMLCC
+=item DOMDTDEF
 
-manakai's XML Conformance Checking
-<http://suika.suikawiki.org/www/markup/xml/xmlcc/xmlcc-work>.
-
-XXX This document is out of date.
-
-=item DTDEF
-
-DOM Document Type Definition Module
+XML processing and DOM Document Type Definitions
 <http://suika.suikawiki.org/www/markup/xml/domdtdef/domdtdef-work>.
 
 =item MANAKAI

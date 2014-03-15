@@ -337,7 +337,29 @@ sub _parse_run ($) {
       }
     }; # init_subparser
 
-    if (defined $entdef->{value}) {
+    if (($self->{entity_depth} || 0) > $self->max_entity_depth) {
+      $subparser->onparsed (sub {
+        $self->_parse_subparser_done ($_[0], $entdef);
+      });
+      $self->{parse_error}->(type => 'entity:too deep',
+                             text => $self->max_entity_depth,
+                             line => $self->{t}->{line},
+                             column => $self->{t}->{column},
+                             level => 'm');
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_end;
+    } elsif ((${$self->{entity_expansion_count} || \0}) > $self->max_entity_expansions + 1) {
+      $subparser->onparsed (sub {
+        $self->_parse_subparser_done ($_[0], $entdef);
+      });
+      $self->{parse_error}->(type => 'entity:too many refs',
+                             text => $self->max_entity_expansions,
+                             line => $self->{t}->{line},
+                             column => $self->{t}->{column},
+                             level => 'm');
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_end;
+    } elsif (defined $entdef->{value}) {
       ## Internal entity with "&" and/or "<" in entity value,
       ## referenced from element content.
 
@@ -486,9 +508,9 @@ sub _parse_subparser_done ($$$) {
     $self->{validation} = $main_parser->{validation} ||= {};
     if ($xe->{external_subset} or
         $xe->{type} == Web::HTML::Defs::PARAMETER_ENTITY_TOKEN) {
-      $self->{pe} = $main_parser->{pe};
+      $self->{pe} = $main_parser->{pe} ||= {};
       $self->{pe}->{$xe->{name} . ';'}->{open} = 1 if defined $xe->{name};
-      $self->{ge} = $main_parser->{ge};
+      $self->{ge} = $main_parser->{ge} ||= {};
       $self->{doctype} = $main_parser->{doctype};
       $self->{has_element_decl} = $main_parser->{has_element_decl} ||= {};
       $self->{attrdef} = $main_parser->{attrdef} ||= {};
@@ -503,9 +525,13 @@ sub _parse_subparser_done ($$$) {
                                                    not defined $xe->{value})}; ## External entity
       $self->{tokenizer_initial_state} = Web::HTML::Defs::DOCTYPE_INTERNAL_SUBSET_STATE;
     } else { ## General entity
-      $self->{ge} = $main_parser->{ge};
+      $self->{ge} = $main_parser->{ge} ||= {};
       $self->{ge}->{$xe->{name} . ';'}->{open} = 1;
     }
+    $self->{entity_depth} = ($main_parser->{entity_depth} || 0) + 1;
+    $self->max_entity_depth ($main_parser->max_entity_depth);
+    ${$self->{entity_expansion_count} = $main_parser->{entity_expansion_count} ||= \(my $v = 0)}++;
+    $self->max_entity_expansions ($main_parser->max_entity_expansions);
     $self->onextentref ($main_parser->onextentref);
     return $self;
   } # new_from_parser
@@ -552,6 +578,20 @@ sub onparsed ($;$) {
   return $_[0]->{onparsed} ||= sub { };
 } # onparsed
 
+sub max_entity_depth ($;$) {
+  if (@_ > 1) {
+    $_[0]->{max_entity_depth} = $_[1];
+  }
+  return $_[0]->{max_entity_depth} || 10;
+} # max_entity_depth
+
+sub max_entity_expansions ($;$) {
+  if (@_ > 1) {
+    return $_[0]->{max_entity_expansions} = $_[1];
+  }
+  return $_[0]->{max_entity_expansions} || 1000;
+} # max_entity_expansions
+
 ## ------ Tree construction ------
 
 sub _initialize_tree_constructor ($) {
@@ -597,7 +637,6 @@ sub _terminate_tree_constructor ($) {
 # XXX stop processing
 # XXX standalone
 # XXX external parameter entity fetch error
-# XXX entref depth limitation
 # XXX well-formedness of entity decls
 # XXX validation hook for PUBLIC
 # XXX validation hook for URLs in SYSTEM

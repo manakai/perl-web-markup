@@ -369,6 +369,226 @@ test {
   });
 } n => 2, name => 'recursive entity ref';
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    'http://a/' => q{
+      <!ENTITY % b SYSTEM "http://b/">
+      <!ENTITY % c SYSTEM "http://c/">
+      <!ENTITY % d SYSTEM "http://d/">
+      <!ENTITY % e SYSTEM "http://e/">
+      <!ENTITY % f SYSTEM "http://f/">
+      %b;
+    },
+    'http://b/' => q{%c;}, # di=98
+    'http://c/' => q{%d;}, # di=99
+    'http://d/' => q{ %e;}, # di=100
+    'http://e/' => q{%f;}, # di=101
+    'http://f/' => q{%g;}, # di=102
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->max_entity_depth (3);
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a SYSTEM "http://a/"><a/>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
+      eq_or_diff \@error, [{type => 'entity:too deep',
+                            di => 100, line => 1, column => 2,
+                            text => 3,
+                            level => 'm'}];
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'param entity depth';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    'http://a/' => q{
+      <!ENTITY a "&b;">
+      <!ENTITY b SYSTEM "http://b/">
+      <!ENTITY c SYSTEM "http://c/">
+      <!ENTITY d SYSTEM "http://d/">
+      <!ENTITY e SYSTEM "http://e/">
+      <!ENTITY f SYSTEM "http://f/">
+    },
+    'http://b/' => q{&c;}, # di=98
+    'http://c/' => q{&d;}, # di=99
+    'http://d/' => q{ &e;y}, # di=100
+    'http://e/' => q{&f;}, # di=101
+    'http://f/' => q{&g;}, # di=102
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->max_entity_depth (3);
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a SYSTEM "http://a/"><a>&a;x</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
+      eq_or_diff \@error, [{type => 'entity:too deep',
+                            di => 100, line => 1, column => 2,
+                            text => 3,
+                            level => 'm'}];
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'general entity depth';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    'http://a/' => q{
+      <!ENTITY % b SYSTEM "http://b/">
+      <!ENTITY % c SYSTEM "http://c/">
+      <!ENTITY % d SYSTEM "http://d/">
+      <!ENTITY % e SYSTEM "http://e/">
+      <!ENTITY % f SYSTEM "http://f/">
+      %b;
+    },
+    'http://b/' => q{%c;%c;}, # di=98
+    'http://c/' => q{%d;%d;}, # di=99
+    'http://d/' => q{ %e;%e;}, # di=100
+    'http://e/' => q{%f;%f;}, # di=101
+    'http://f/' => q{x}, # di=102
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->max_entity_expansions (3);
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a SYSTEM "http://a/"><a/>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
+      eq_or_diff \@error, [{type => 'entity:too many refs',
+                            di => 100, line => 1, column => 2,
+                            text => 3,
+                            level => 'm'},
+                           {type => 'entity:too many refs',
+                            di => 100, line => 1, column => 5,
+                            text => 3,
+                            level => 'm'},
+                           {type => 'entity:too many refs',
+                            di => 99, line => 1, column => 4,
+                            text => 3,
+                            level => 'm'},
+                           {type => 'entity:too many refs',
+                            di => 98, line => 1, column => 4,
+                            text => 3,
+                            level => 'm'}];
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'param entity count';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::XML::Parser->new;
+  my $ents = {
+    'http://a/' => q{
+      <!ENTITY a "&b;">
+      <!ENTITY b SYSTEM "http://b/">
+      <!ENTITY c SYSTEM "http://c/">
+      <!ENTITY d SYSTEM "http://d/">
+      <!ENTITY e SYSTEM "http://e/">
+      <!ENTITY f SYSTEM "http://f/">
+    },
+    'http://b/' => q{&c;&c;}, # di=98
+    'http://c/' => q{&d;&d;}, # di=99
+    'http://d/' => q{ &e;&e;y}, # di=100
+    'http://e/' => q{z&f;&f;}, # di=101
+    'http://f/' => q{x}, # di=102
+  };
+  $parser->onextentref (sub {
+    my ($parser, $ent, $subparser) = @_;
+    AE::postpone {
+      $subparser->di (ord substr $ent->{entdef}->{sysid}, 7, 1);
+      $subparser->parse_bytes_start (undef);
+      $subparser->parse_bytes_feed ($ents->{$ent->{entdef}->{sysid}});
+      $subparser->parse_bytes_end;
+    };
+  });
+  my @error;
+  $parser->onerror (sub {
+    push @error, {@_};
+  });
+  $parser->max_entity_expansions (4);
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (q{<!DOCTYPE a SYSTEM "http://a/"><a>&a;x</a>});
+  $parser->parse_bytes_end;
+  $parser->onparsed (sub {
+    test {
+      is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
+      eq_or_diff \@error, [{type => 'entity:too many refs',
+                            di => 100, line => 1, column => 2,
+                            text => 4,
+                            level => 'm'},
+                           {type => 'entity:too many refs',
+                            di => 100, line => 1, column => 5,
+                            text => 4,
+                            level => 'm'},
+                           {type => 'entity:too many refs',
+                            di => 99, line => 1, column => 4,
+                            text => 4,
+                            level => 'm'},
+                           {type => 'entity:too many refs',
+                            di => 98, line => 1, column => 4,
+                            text => 4,
+                            level => 'm'}];
+      done $c;
+      undef $c;
+    } $c;
+  });
+} n => 2, name => 'general entity count';
+
 run_tests;
 
 =head1 LICENSE
