@@ -329,6 +329,7 @@ my $CheckerByType = {};
 my $NamespacedAttrChecker = {};
 my $ElementAttrChecker = {};
 my $ItemValueChecker = {};
+my $ElementTextChecker = {};
 
 sub _check_element_attrs ($$$;%) {
   my ($self, $item, $element_state, %args) = @_;
@@ -953,6 +954,48 @@ $ElementAttrChecker->{(HTML_NS)}->{form}->{''}->{'accept-charset'} = sub {
   }
 }; # <form accept-charset="">
 
+## URL
+$CheckerByType->{URL} = sub {
+  my ($self, $attr) = @_;
+  ## NOTE: There MUST NOT be any white space.
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($attr->value);
+  $chk->onerror (sub {
+    $self->{onerror}->(@_, node => $attr);
+  });
+  $chk->check_iri_reference; # XXX URL Standard
+  $self->{has_uri_attr} = 1;
+}; # URL
+$ElementTextChecker->{URL} = sub {
+  my ($self, $value, $onerror) = @_;
+  ## NOTE: There MUST NOT be any white space.
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($value);
+  $chk->onerror ($onerror);
+  $chk->check_iri_reference; # XXX URL Standard
+}; # URL
+
+## Absolute URL
+$ElementTextChecker->{'absolute URL'} = sub {
+  my ($self, $value, $onerror) = @_;
+  ## NOTE: There MUST NOT be any white space.
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($value);
+  $chk->onerror ($onerror);
+  $chk->check_iri; # XXX URL Standard
+}; # absolute URL
+$CheckerByType->{'absolute URL'} = sub {
+  my ($self, $attr) = @_;
+  ## NOTE: There MUST NOT be any white space.
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($attr->value);
+  $chk->onerror (sub {
+    $self->{onerror}->(@_, node => $attr);
+  });
+  $chk->check_iri; # XXX URL Standard
+  $self->{has_uri_attr} = 1;
+}; # absolute URL
+
 ## URL potentially surrounded by spaces [HTML]
 $CheckerByType->{'URL potentially surrounded by spaces'} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -1082,6 +1125,12 @@ $CheckerByType->{'e-mail address'} = sub {
                      type => 'email:syntax error',
                      level => 'm')
       unless $attr->value =~ qr/\A$ValidEmailAddress\z/o;
+}; # e-mail address
+$ElementTextChecker->{'e-mail address'} = sub {
+  my ($self, $value, $onerror) = @_;
+  $onerror->(type => 'email:syntax error',
+             level => 'm')
+      unless $value =~ qr/\A$ValidEmailAddress\z/o;
 }; # e-mail address
 
 ## E-mail address list [HTML]
@@ -3153,7 +3202,18 @@ my %HTMLTextChecker = (
                          level => 'm');
     }
   },
-);
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    my $el_nsurl = $item->{node}->namespace_uri;
+    my $el_def = $_Defs->{elements}->{defined $el_nsurl ? $el_nsurl : ''}->{$item->{node}->local_name};
+    my $checker = $ElementTextChecker->{$el_def->{text_type} || ''};
+    if (defined $checker) {
+      my ($value, undef, $sps, undef) = node_to_text_and_tc_and_sps $item->{node};
+      my $onerror = $GetNestedOnError->($self->onerror, $item->{node}, $value, $sps);
+      $checker->($self, $value, $onerror);
+    } # $checker
+  }, # check_end
+); # %HTMLTextChecker
 
 my %HTMLFlowContentChecker = (
   %AnyChecker,
@@ -3274,12 +3334,6 @@ my %TransparentChecker = (
   }, # check_child_element
 ); # %TransparentChecker
 
-# ---- Default HTML elements ----
-
-$Element->{+HTML_NS}->{''} = {
-  %AnyChecker,
-};
-
 for my $ns (keys %{$_Defs->{elements}}) {
   for my $ln (keys %{$_Defs->{elements}->{$ns}}) {
     my $cm = $_Defs->{elements}->{$ns}->{$ln}->{content_model} or next;
@@ -3299,6 +3353,10 @@ for my $ns (keys %{$_Defs->{elements}}) {
     }
   }
 }
+
+$Element->{+HTML_NS}->{''} = {
+  %AnyChecker,
+};
 
 # ---- The root element ----
 
@@ -8186,22 +8244,6 @@ sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
 sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
 sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 
-## XXX Comments and PIs are not explicitly allowed in Atom.
-
-# XXX Update checks to align with HTML Standard's reqs and quality
-
-## Atom 1.0 [RFC 4287] cites RFC 4288 (Media Type Registration) for
-## "MIME media type".  However, RFC 4288 only defines syntax of
-## component such as |type|, |subtype|, and |parameter-name| and does
-## not define the whole syntax.  We use Web Applications 1.0's "valid
-## MIME type" definition here.
-
-## XXX Replace IRI by URL Standard
-
-## Any element MAY have xml:base, xml:lang.  Although Atom spec does
-## not explictly specify that unknown attribute cannot be used, HTML
-## Standard does not allow use of unknown attributes.
-
 # XXX
 my $GetAtomAttrsChecker = sub {
   my $element_specific_checker = shift;
@@ -8213,9 +8255,6 @@ my $GetAtomAttrsChecker = sub {
 }; # $GetAtomAttrsChecker
 
 my %AtomChecker = (%AnyChecker);
-
-
-# XXXXXX XXXerrortypes
 
 our $CheckDIVContent; # XXX
 
@@ -8234,7 +8273,7 @@ my %AtomTextConstruct = (
       } else {
         ## NOTE: IMT MUST NOT be used here.
         $self->{onerror}->(node => $attr,
-                           type => 'invalid attribute value',
+                           type => 'invalid attribute value', # XXX
                            level => 'm');
       }
     }, # checked in |checker|
@@ -8259,15 +8298,14 @@ my %AtomTextConstruct = (
           if ($element_state->{has_div}) {
             $self->{onerror}
                 ->(node => $child_el,
-                   type => 'element not allowed:atom|TextConstruct',
+                   type => 'element not allowed:atom|TextConstruct', # XXX
                    level => 'm');
           } else {
             $element_state->{has_div} = 1;
-            ## TODO: SHOULD be suitable for handling as HTML [XHTML10]
           }
         } else {
           $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:atom|TextConstruct',
+                             type => 'element not allowed:atom|TextConstruct', # XXX
                              level => 'm');
         }
       } else {
@@ -8284,7 +8322,7 @@ my %AtomTextConstruct = (
     } elsif ($element_state->{type} eq 'xhtml') {
       if ($has_significant) {
         $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed:atom|TextConstruct',
+                           type => 'character not allowed:atom|TextConstruct', # XXX
                            level => 'm');
       }
     } else {
@@ -8296,7 +8334,7 @@ my %AtomTextConstruct = (
     if ($element_state->{type} eq 'xhtml') {
       unless ($element_state->{has_div}) {
         $self->{onerror}->(node => $item->{node},
-                           type => 'child element missing',
+                           type => 'child element missing', # XXX
                            text => 'div',
                            level => 'm');
       }
@@ -8323,7 +8361,7 @@ my %AtomPersonConstruct = (
         if ($element_state->{has_name}) {
           $self->{onerror}
               ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct',
+                 type => 'element not allowed:atom|PersonConstruct', # XXX
                  level => 'm');
         } else {
           $element_state->{has_name} = 1;
@@ -8332,7 +8370,7 @@ my %AtomPersonConstruct = (
         if ($element_state->{has_uri}) {
           $self->{onerror}
               ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct',
+                 type => 'element not allowed:atom|PersonConstruct', # XXX
                  level => 'm');
         } else {
           $element_state->{has_uri} = 1;
@@ -8341,7 +8379,7 @@ my %AtomPersonConstruct = (
         if ($element_state->{has_email}) {
           $self->{onerror}
               ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct',
+                 type => 'element not allowed:atom|PersonConstruct', # XXX
                  level => 'm');
         } else {
           $element_state->{has_email} = 1;
@@ -8349,22 +8387,21 @@ my %AtomPersonConstruct = (
       } else {
         $self->{onerror}
             ->(node => $child_el,
-               type => 'element not allowed:atom|PersonConstruct',
+               type => 'element not allowed:atom|PersonConstruct', # XXX
                level => 'm');
       }
     } else {
       $self->{onerror}
           ->(node => $child_el,
-             type => 'element not allowed:atom|PersonConstruct',
+             type => 'element not allowed:atom|PersonConstruct', # XXX
              level => 'm');
     }
-    ## TODO: extension element
   },
   check_child_text => sub {
     my ($self, $item, $child_node, $has_significant, $element_state) = @_;
     if ($has_significant) {
       $self->{onerror}->(node => $child_node,
-                         type => 'character not allowed:atom|PersonConstruct',
+                         type => 'character not allowed:atom|PersonConstruct', # XXX
                          level => 'm');
     }
   },
@@ -8373,7 +8410,7 @@ my %AtomPersonConstruct = (
 
     unless ($element_state->{has_name}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'name',
                          level => 'm');
     }
@@ -8381,69 +8418,6 @@ my %AtomPersonConstruct = (
     $AtomChecker{check_end}->(@_);
   },
 ); # %AtomPersonConstruct
-
-$Element->{+ATOM_NS}->{''} = {
-  %AtomChecker,
-};
-
-$Element->{+ATOM_NS}->{name} = {
-  %AtomChecker,
-
-  ## NOTE: Strictly speaking, structure and semantics for atom:name
-  ## element outside of Person construct is not defined.
-
-  ## NOTE: No constraint.
-};
-
-$Element->{+ATOM_NS}->{uri} = {
-  %AtomChecker,
-
-  ## NOTE: Strictly speaking, structure and semantics for atom:uri
-  ## element outside of Person construct is not defined.
-
-  ## NOTE: Elements are not explicitly disallowed.
-
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{value} = '';
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{value} .= $child_node->data;
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-
-    ## NOTE: There MUST NOT be any white space.
-    require Web::URL::Checker;
-    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
-    $chk->onerror (sub {
-      $self->{onerror}->(@_, node => $item->{node});
-    });
-    $chk->check_iri_reference;
-
-    $AtomChecker{check_end}->(@_);
-  },
-};
-
-$Element->{+ATOM_NS}->{email} = {
-  %AtomChecker,
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-    $self->{onerror}->(node => $child_el,
-                       type => 'element not allowed',
-                       level => 'm');
-  }, # check_child_element
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->{onerror}->(node => $item->{node},
-                       type => 'email:syntax error', ## TODO: type
-                       level => 'm')
-        unless $item->{node}->text_content =~ /\A$ValidEmailAddress\z/o;
-    $AtomChecker{check_end}->(@_);
-  },
-}; # atom:email
 
 ## MUST NOT be any white space
 my %AtomDateConstruct = (
@@ -8461,6 +8435,8 @@ my %AtomDateConstruct = (
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
+
+    # XXX Move to Web::DateTime
 
     ## MUST: RFC 3339 |date-time| with uppercase |T| and |Z|
     if ($element_state->{value} =~ /\A([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?>\.[0-9]+)?(?>Z|[+-]([0-9]{2}):([0-9]{2}))\z/) {
@@ -8617,7 +8593,7 @@ $Element->{+ATOM_NS}->{entry} = {
         }
         
         $self->{onerror}->(node => $item->{node},
-                           type => 'child element missing:atom',
+                           type => 'child element missing:atom', # XXX
                            text => 'author',
                            level => 'm');
       } # A
@@ -8631,33 +8607,33 @@ $Element->{+ATOM_NS}->{entry} = {
 
     unless ($element_state->{has_element}->{id}) { # MUST
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'id',
                          level => 'm');
     }
     unless ($element_state->{has_element}->{title}) { # MUST
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'title',
                          level => 'm');
     }
     unless ($element_state->{has_element}->{updated}) { # MUST
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'updated',
                          level => 'm');
     }
     if (not $element_state->{has_element}->{content} and
         not $element_state->{has_element}->{'link.alternate'}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom:link:alternate',
+                         type => 'child element missing:atom:link:alternate', # XXX
                          level => 'm');
     }
 
     if ($element_state->{require_summary} and
         not $element_state->{has_element}->{summary}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'summary',
                          level => 'm');
     }
@@ -8750,7 +8726,7 @@ $Element->{+ATOM_NS}->{feed} = {
     if ($element_state->{has_no_author_entry} and
         not $element_state->{has_element}->{author}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'author',
                          level => 'm');
       ## ISSUE: If there is no |atom:entry| element,
@@ -8761,25 +8737,25 @@ $Element->{+ATOM_NS}->{feed} = {
 
     unless ($element_state->{has_element}->{id}) { # MUST
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'id',
                          level => 'm');
     }
     unless ($element_state->{has_element}->{title}) { # MUST
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'title',
                          level => 'm');
     }
     unless ($element_state->{has_element}->{updated}) { # MUST
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom',
+                         type => 'child element missing:atom', # XXX
                          text => 'updated',
                          level => 'm');
     }
     unless ($element_state->{has_element}->{'link.self'}) {
       $self->{onerror}->(node => $item->{node}, 
-                         type => 'child element missing:atom:link:self',
+                         type => 'child element missing:atom:link:self', # XXX
                          level => 's');
     }
 
@@ -8820,7 +8796,7 @@ $Element->{+ATOM_NS}->{content} = {
         my $type = $MIMETypeChecker->(@_);
         if ($type) {
           if ($type->is_composite_type) {
-            $self->{onerror}->(node => $attr, type => 'IMT:composite',
+            $self->{onerror}->(node => $attr, type => 'IMT:composite', # XXX
                                level => 'm');
           }
 
@@ -8854,12 +8830,12 @@ $Element->{+ATOM_NS}->{content} = {
           $element_state->{type} eq 'mime_text') {
         # MUST NOT
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:atom|content',
+                           type => 'element not allowed:atom|content', # XXX
                            level => 'm');
       } elsif ($element_state->{type} eq 'xhtml') {
         if ($element_state->{has_div}) {
           $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:atom|content',
+                             type => 'element not allowed:atom|content', # XXX
                              level => 'm');
         } else {
           ## TODO: SHOULD be suitable for handling as HTML [XHTML10]
@@ -8869,7 +8845,7 @@ $Element->{+ATOM_NS}->{content} = {
         ## MAY contain elements
         if ($element_state->{has_src}) {
           $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:atom|content',
+                             type => 'element not allowed:atom|content', # XXX
                              level => 'm');
         }
       } else {
@@ -8892,7 +8868,7 @@ $Element->{+ATOM_NS}->{content} = {
       } elsif ($element_state->{type} eq 'xhtml' or
                $element_state->{type} eq 'xml') {
         $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed:atom|content',
+                           type => 'character not allowed:atom|content', # XXX
                            level => 'm');
       }
     }
@@ -8932,7 +8908,7 @@ $Element->{+ATOM_NS}->{content} = {
       ## If no @src, this would normally mean it contains a 
       ## single child element that would serve as the root element.
       $self->{onerror}->(node => $item->{node},
-                         type => 'atom|content not supported',
+                         type => 'atom|content not supported', # XXX
                          text => $item->{node}->get_attribute_ns
                              (undef, 'type'),
                          level => 'u');
@@ -8946,7 +8922,7 @@ $Element->{+ATOM_NS}->{content} = {
 
       ## NOTE: SHOULD be suitable for the indicated media type.
       $self->{onerror}->(node => $item->{node},
-                         type => 'atom|content not supported',
+                         type => 'atom|content not supported', # XXX
                          text => $item->{node}->get_attribute_ns
                              (undef, 'type'),
                          level => 'u');
@@ -8958,223 +8934,70 @@ $Element->{+ATOM_NS}->{content} = {
 
 $Element->{+ATOM_NS}->{author} = \%AtomPersonConstruct;
 
-$Element->{+ATOM_NS}->{category} = {
-  %AtomChecker,
-  check_attrs => $GetAtomAttrsChecker->({
-    label => sub { 1 }, # no value constraint
-    scheme => sub { # NOTE: No MUST.
-      my ($self, $attr) = @_;
-      ## NOTE: There MUST NOT be any white space.
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($attr->value);
-      $chk->onerror (sub {
-        $self->{onerror}->(@_, node => $attr);
-      });
-      $chk->check_iri;
-    },
-    term => sub {
-      my ($self, $attr, $item, $element_state) = @_;
-      
-      ## NOTE: No value constraint.
-      
-      $element_state->{has_term} = 1;
-    },
-  }),
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    unless ($element_state->{has_term}) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'term',
-                         level => 'm');
-    }
-
-    $AtomChecker{check_end}->(@_);
-  },
-  ## NOTE: Meaning of content is not defined.
-};
+$Element->{+ATOM_NS}->{category}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  unless ($item->{node}->has_attribute_ns (undef, 'term')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'term',
+                       level => 'm');
+  }
+}; # <atom:category> check_attrs2
 
 $Element->{+ATOM_NS}->{contributor} = \%AtomPersonConstruct;
 
-## TODO: Anything below does not support <html:nest/> yet.
+## XXXresource: |atom:icon|'s image SHOULD be 1:1 and SHOULD be small.
 
-$Element->{+ATOM_NS}->{generator} = {
-  %AtomChecker,
-  check_attrs => $GetAtomAttrsChecker->({
-    uri => sub { # MUST
-      my ($self, $attr) = @_;
-      ## NOTE: There MUST NOT be any white space.
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($attr->value);
-      $chk->onerror (sub {
-        $self->{onerror}->(@_, node => $attr);
-      });
-      $chk->check_iri_reference;
-      ## NOTE: Dereferencing SHOULD produce a representation
-      ## that is relevant to the agent.
-    },
-    version => sub { 1 }, # no value constraint
-  }),
+## XXX |atom:id| URL SHOULD be normalized.
 
-  ## NOTE: Elements are not explicitly disallowed.
-
-  ## NOTE: Content MUST be a string that is a human-readable name for
-  ## the generating agent.
-};
-
-$Element->{+ATOM_NS}->{icon} = {
-  %AtomChecker,
-  check_start =>  sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{value} = '';
-  },
-  ## NOTE: Elements are not explicitly disallowed.
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{value} .= $child_node->data;
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-
-    ## NOTE: No MUST.
-    ## NOTE: There MUST NOT be any white space.
-    require Web::URL::Checker;
-    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
-    $chk->onerror (sub {
-      $self->{onerror}->(@_, node => $item->{node});
-    });
-    $chk->check_iri_reference;
-
-    ## NOTE: Image SHOULD be 1:1 and SHOULD be small
-
-    $AtomChecker{check_end}->(@_);
-  },
-};
-
-$Element->{+ATOM_NS}->{id} = {
-  %AtomChecker,
-  check_start =>  sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{value} = '';
-  },
-  ## NOTE: Elements are not explicitly disallowed.
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{value} .= $child_node->data;
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-
-    ## NOTE: There MUST NOT be any white space.
-    require Web::URL::Checker;
-    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
-    $chk->onerror (sub {
-      $self->{onerror}->(@_, node => $item->{node});
-    });
-    $chk->check_iri;
-    ## TODO: SHOULD be normalized
-
-    $AtomChecker{check_end}->(@_);
-  },
-};
-
-my $AtomIRIReferenceAttrChecker = sub {
+$ElementAttrChecker->{(ATOM_NS)}->{link}->{''}->{rel} = sub {
   my ($self, $attr) = @_;
+  my $value = $attr->value;
+  if ($value =~ /\A(?>[0-9A-Za-z._~!\$&'()*+,;=\x{A0}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFEF}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}-]|%[0-9A-Fa-f][0-9A-Fa-f]|\@)+\z/) {
+    $value = LINK_REL . $value;
+  }
+
   ## NOTE: There MUST NOT be any white space.
   require Web::URL::Checker;
-  my $chk = Web::URL::Checker->new_from_string ($attr->value);
+  my $chk = Web::URL::Checker->new_from_string ($value);
   $chk->onerror (sub {
     $self->{onerror}->(@_, node => $attr);
   });
-  $chk->check_iri_reference;
-  $self->{has_uri_attr} = 1;
-}; # $AtomIRIReferenceAttrChecker
+  $chk->check_iri; # XXX URL Standard
 
-$Element->{+ATOM_NS}->{link} = {
-  %AtomChecker,
-  check_attrs => $GetAtomAttrsChecker->({
-    href => $AtomIRIReferenceAttrChecker,
-    hreflang => $CheckerByType->{'language tag'},
-    length => sub { }, # No MUST; in octets.
-    rel => sub { # MUST
-      my ($self, $attr) = @_;
-      my $value = $attr->value;
-      if ($value =~ /\A(?>[0-9A-Za-z._~!\$&'()*+,;=\x{A0}-\x{D7FF}\x{F900}-\x{FDCF}\x{FDF0}-\x{FFEF}\x{10000}-\x{1FFFD}\x{20000}-\x{2FFFD}\x{30000}-\x{3FFFD}\x{40000}-\x{4FFFD}\x{50000}-\x{5FFFD}\x{60000}-\x{6FFFD}\x{70000}-\x{7FFFD}\x{80000}-\x{8FFFD}\x{90000}-\x{9FFFD}\x{A0000}-\x{AFFFD}\x{B0000}-\x{BFFFD}\x{C0000}-\x{CFFFD}\x{D0000}-\x{DFFFD}\x{E1000}-\x{EFFFD}-]|%[0-9A-Fa-f][0-9A-Fa-f]|\@)+\z/) {
-        $value = LINK_REL . $value;
-      }
+  ## TODO: Warn if unregistered
 
-      ## NOTE: There MUST NOT be any white space.
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($value);
-      $chk->onerror (sub {
-        $self->{onerror}->(@_, node => $attr);
-      });
-      $chk->check_iri;
+  ## TODO: rel=license [RFC 4946]
+  ## MUST NOT multiple rel=license with same href="",type="" pairs
+  ## href="" SHOULD be dereferencable
+  ## title="" SHOULD be there if multiple rel=license
+  ## MUST NOT "unspecified" and other rel=license
+}; # <atom:link rel="">
 
-      ## TODO: Warn if unregistered
+$Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
 
-      ## TODO: rel=license [RFC 4946]
-      ## MUST NOT multiple rel=license with same href="",type="" pairs
-      ## href="" SHOULD be dereferencable
-      ## title="" SHOULD be there if multiple rel=license
-      ## MUST NOT "unspecified" and other rel=license
-    },
-    title => sub {},
-    type => $MIMETypeChecker,
-  }),
-  check_start =>  sub {
-    my ($self, $item, $element_state) = @_;
+  unless ($item->{node}->has_attribute_ns (undef, 'href')) { # MUST
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'href',
+                       level => 'm');
+  }
 
-    unless ($item->{node}->has_attribute_ns (undef, 'href')) { # MUST
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'href',
-                         level => 'm');
-    }
+  if ($item->{node}->rel eq LINK_REL . 'enclosure' and
+      not $item->{node}->has_attribute_ns (undef, 'length')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'length',
+                       level => 's');
+  }
+}; # <atom:link> check_attrs2
 
-    if ($item->{node}->rel eq LINK_REL . 'enclosure' and
-        not $item->{node}->has_attribute_ns (undef, 'length')) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'length',
-                         level => 's');
-    }
-  },
-};
-
-$Element->{+ATOM_NS}->{logo} = {
-  %AtomChecker,
-  ## NOTE: Child elements are not explicitly disallowed
-  check_start =>  sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{value} = '';
-  },
-  ## NOTE: Elements are not explicitly disallowed.
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{value} .= $child_node->data;
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;  
-
-    ## NOTE: There MUST NOT be any white space.
-    require Web::URL::Checker;
-    my $chk = Web::URL::Checker->new_from_string ($element_state->{value});
-    $chk->onerror (sub {
-      $self->{onerror}->(@_, node => $item->{node});
-    });
-    $chk->check_iri_reference;
-    
-    ## NOTE: Image SHOULD be 2:1
-
-    $AtomChecker{check_end}->(@_);
-  },
-};
+# XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
 
 $Element->{+ATOM_NS}->{published} = \%AtomDateConstruct;
 
 $Element->{+ATOM_NS}->{rights} = \%AtomTextConstruct;
-## NOTE: SHOULD NOT be used to convey machine-readable information.
 
 $Element->{+ATOM_NS}->{source} = {
   %AtomChecker,
@@ -9260,60 +9083,21 @@ $Element->{+ATOM_NS}->{title} = \%AtomTextConstruct;
 
 $Element->{+ATOM_NS}->{updated} = \%AtomDateConstruct;
 
-## TODO: signature element
-
-## TODO: simple extension element and structured extension element
-
 ## -- Atom Threading 1.0 [RFC 4685]
 
-$Element->{+THR_NS}->{''} = {
-  %AtomChecker,
-};
+## TODO: <thr:in-reply-to href=""> MUST be dereferencable.
+# XXX <thr:in-reply-to ref=""> - same rule as |atom:id|
+## TODO: <thr:in-reply-to source=""> MUST be dereferencable.
 
-## ISSUE: Strictly speaking, thr:* element/attribute,
-## where * is an undefined local name, is not disallowed.
-
-$Element->{+THR_NS}->{'in-reply-to'} = {
-  %AtomChecker,
-  check_attrs => $GetAtomAttrsChecker->({
-    href => $AtomIRIReferenceAttrChecker,
-        ## TODO: fact-level.
-        ## TODO: MUST be dereferencable.
-    ref => sub {
-      my ($self, $attr, $item, $element_state) = @_;
-      $element_state->{has_ref} = 1;
-
-      ## NOTE: Same as |atom:id|.
-      ## NOTE: There MUST NOT be any white space.
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($attr->value);
-      $chk->onerror (sub {
-        $self->{onerror}->(@_, node => $attr);
-      });
-      $chk->check_iri;
-      $self->{has_uri_attr} = 1;
-
-      ## TODO: Check against ID guideline...
-    },
-    source => $AtomIRIReferenceAttrChecker,
-        ## TODO: fact-level.
-        ## TODO: MUST be dereferencable.
-    type => $MIMETypeChecker,
-  }),
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-  
-    unless ($element_state->{has_ref}) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'attribute missing',
-                         text => 'ref',
-                         level => 'm');
-    }
-
-    $AtomChecker{check_end}->(@_);
-  },
-  ## NOTE: Content model has no constraint.
-};
+$Element->{+THR_NS}->{'in-reply-to'}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  unless ($item->{node}->has_attribute_ns (undef, 'ref')) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => 'ref',
+                       level => 'm');
+  }
+}; # <thr:in-reply-to> check_attrs2
 
 $Element->{+THR_NS}->{total} = {
   %AtomChecker,
@@ -9344,9 +9128,9 @@ $Element->{+THR_NS}->{total} = {
     my ($self, $item, $element_state) = @_;
 
     ## NOTE: xsd:nonNegativeInteger
-    unless ($element_state->{value} =~ /\A(?>[0-9]+|-0+)\z/) {
+    unless ($element_state->{value} =~ /\A(?>[0-9]+|-0+)\z/) { # XXX
       $self->{onerror}->(node => $item->{node},
-                         type => 'invalid attribute value', 
+                         type => 'invalid attribute value', # XXX
                          level => 'm');
     }
 

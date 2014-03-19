@@ -184,11 +184,13 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_implied_end_tag_at_body}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
 	      delete $$data->{elements}->{$$ns}->{$$ln}->{first_newline_ignored}; #\
+	      delete $$data->{elements}->{$$ns}->{$$ln}->{lang_sensitive}; #\
 	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\
 	        for $$ln2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}}) { #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{spec}; #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{id}; #\
 	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{desc}; #\
+	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{lang_sensitive}; #\
 	        } #\
 	      } #\
 	    } #\

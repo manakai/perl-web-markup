@@ -269,15 +269,17 @@ The C<RDF> element in the RDF namespace is metadata content.
 
 =item ATOM
 
-Atom 1.0, Atom Threading Extension.
+The Atom Syndication Format <http://tools.ietf.org/html/rfc4287>,
+<http://www.rfc-editor.org/errata_search.php?rfc=4287>.
 
-For Atom documents, references to RFC 3066 are replaced by references
-to BCP 47.
+The concepts in the first column of the following table are to be
+interpreted as the second column of the same row:
 
-The content model of the C<atom:email> element is updated as follows:
-The C<atom:email> element MUST NOT contain child elements.  The
-content of the element MUST be text which is a valid e-mail address
-[HTML].  (This is a willful violation of RFC 5322 and RFC 4287.)
+  RFC 3066 language tag  -> BCP 47 language code
+  IRI                    -> absolute URL [URL]
+  IRI reference          -> URL [URL]
+  MIME media type        -> MIME type [MINISNIFF]
+  addr-spec              -> valid e-mail address [HTML]
 
 A C<feed> element in the Atom namespace, when it contains no C<entry>
 element in the Atom namespace as child, can but does not have to
@@ -291,6 +293,69 @@ the content of an element is XHTML, it MUST conform to the relevant
 specifications, using rules for the XHTML documents.  (Per RFC 4287,
 these are SHOULD-level requirements.  Additionally, it references
 obsolete specifications.)
+
+Comments, inter-element whitespaces, and processing instructions MAY
+be inserted anywhere in an Atom element.
+
+Unless explicitly specified, elements and attributes MUST conform to
+requirements described as the RELAX NG schema in the specification.
+(Per RFC 4287, the RELAX NG schema is non-normative.)
+
+Unless explicitly specified, no element or attribute MAY be used
+unless there is any applicable specification for the element or
+attribute, even if it is syntactically an extension element or
+attribute.
+
+=item ATOM03
+
+The Atom Syndication Format 0.3 (PRE-DRAFT)
+<https://github.com/mnot/I-D/blob/master/Published/atom-format/draft-nottingham-atom-format-02.xml>.
+
+The concepts in the first column of the following table are to be
+interpreted as the second column of the same row:
+
+  RFC 3066 language tag  -> BCP 47 language code
+  media type             -> MIME type [MIMESNIFF]
+  W3C Date-Time string   -> RFC 3339 date-time in uppercase
+  e-mail address         -> valid e-mail address [HTML]
+  URI                    -> URL [URL]
+
+=item ATOMTHREADS
+
+Atom Threading Extension <http://tools.ietf.org/html/rfc4685>.
+
+The concepts in the first column of the following table are to be
+interpreted as the second column of the same row:
+
+  media type             -> MIME type [MIMESNIFF]
+  IRI                    -> URL [URL]
+
+Comments and processing instructions MAY be inserted anywhere in an
+Atom threading extension element.
+
+=item ATOMPUB
+
+The Atom Publishing Protocol <https://tools.ietf.org/html/rfc5023>.
+
+The concepts in the first column of the following table are to be
+interpreted as the second column of the same row:
+
+  IRI                    -> URL [URL]
+
+Comments and processing instructions MAY be inserted anywhere in an
+AtomPub element.
+
+=item ATOMDELETED
+
+The Atom "deleted-entry" Element <http://tools.ietf.org/html/rfc6721>.
+
+The concepts in the first column of the following table are to be
+interpreted as the second column of the same row:
+
+  IRI                    -> URL [URL]
+
+Comments and processing instructions MAY be inserted anywhere in an
+Atom deleted-entry element.
 
 =item CSSSTYLEATTR
 
@@ -342,6 +407,14 @@ manakai DOM Extensions
 <http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
 
 Any node MAY be used as orphan node.
+
+=item MIMESNIFF
+
+MIME Sniffing <http://mimesniff.spec.whatwg.org/>.
+
+=item URL
+
+URL <http://url.spec.whatwg.org/>.
 
 =item VALIDLANGS
 
