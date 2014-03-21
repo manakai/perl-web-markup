@@ -240,6 +240,10 @@ sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 sub XSLT_NS () { q<http://www.w3.org/1999/XSL/Transform> }
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 sub RSS1_NS () { q<http://purl.org/rss/1.0/> }
+sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
+sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
+sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
+sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 
 our $_Defs;
 
@@ -3334,6 +3338,229 @@ my %TransparentChecker = (
   }, # check_child_element
 ); # %TransparentChecker
 
+my $AtomTextConstructTypeAttrChecker = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  if ($value eq 'text' or $value eq 'html' or $value eq 'xhtml') { # MUST
+    $element_state->{type} = $value;
+  } else {
+    ## NOTE: IMT MUST NOT be used here.
+    $self->{onerror}->(node => $attr,
+                       type => 'invalid attribute value', # XXX
+                       level => 'm');
+  }
+}; # $AtomTextConstructTypeAttrChecker
+
+our $CheckDIVContent; # XXX
+my %AtomTextConstruct = (
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{type} = 'text';
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed:minus',
+                         level => 'm');
+    } else {
+      if ($element_state->{type} eq 'text' or
+          $element_state->{type} eq 'html') { # MUST NOT
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:atom|TextConstruct',
+                           level => 'm');
+      } elsif ($element_state->{type} eq 'xhtml') {
+        if ($child_nsuri eq q<http://www.w3.org/1999/xhtml> and
+            $child_ln eq 'div') { # MUST
+          if ($element_state->{has_div}) {
+            $self->{onerror}
+                ->(node => $child_el,
+                   type => 'element not allowed:atom|TextConstruct', # XXX
+                   level => 'm');
+          } else {
+            $element_state->{has_div} = 1;
+          }
+        } else {
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:atom|TextConstruct', # XXX
+                             level => 'm');
+        }
+      } else {
+        die "atom:TextConstruct type error: $element_state->{type}";
+      }
+    }
+  },
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($element_state->{type} eq 'text') {
+      #
+    } elsif ($element_state->{type} eq 'html') {
+      #
+    } elsif ($element_state->{type} eq 'xhtml') {
+      if ($has_significant) {
+        $self->{onerror}->(node => $child_node,
+                           type => 'character not allowed:atom|TextConstruct', # XXX
+                           level => 'm');
+      }
+    } else {
+      die "atom:TextConstruct type error: $element_state->{type}";
+    }
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    if ($element_state->{type} eq 'xhtml') {
+      unless ($element_state->{has_div}) {
+        $self->{onerror}->(node => $item->{node},
+                           type => 'child element missing', # XXX
+                           text => 'div',
+                           level => 'm');
+      }
+    } elsif ($element_state->{type} eq 'html') {
+      $CheckDIVContent->($self, $item->{node});
+    }
+
+    $AnyChecker{check_end}->(@_);
+  },
+); # %AtomTextConstruct
+
+my %AtomPersonConstruct = (
+  %AnyChecker,
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed:minus',
+                         level => 'm');
+    } elsif ($child_nsuri eq ATOM_NS) {
+      if ($child_ln eq 'name') {
+        if ($element_state->{has_name}) {
+          $self->{onerror}
+              ->(node => $child_el,
+                 type => 'element not allowed:atom|PersonConstruct', # XXX
+                 level => 'm');
+        } else {
+          $element_state->{has_name} = 1;
+        }
+      } elsif ($child_ln eq 'uri') {
+        if ($element_state->{has_uri}) {
+          $self->{onerror}
+              ->(node => $child_el,
+                 type => 'element not allowed:atom|PersonConstruct', # XXX
+                 level => 'm');
+        } else {
+          $element_state->{has_uri} = 1;
+        }
+      } elsif ($child_ln eq 'email') {
+        if ($element_state->{has_email}) {
+          $self->{onerror}
+              ->(node => $child_el,
+                 type => 'element not allowed:atom|PersonConstruct', # XXX
+                 level => 'm');
+        } else {
+          $element_state->{has_email} = 1;
+        }
+      } else {
+        $self->{onerror}
+            ->(node => $child_el,
+               type => 'element not allowed:atom|PersonConstruct', # XXX
+               level => 'm');
+      }
+    } else {
+      $self->{onerror}
+          ->(node => $child_el,
+             type => 'element not allowed:atom|PersonConstruct', # XXX
+             level => 'm');
+    }
+  },
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($has_significant) {
+      $self->{onerror}->(node => $child_node,
+                         type => 'character not allowed:atom|PersonConstruct', # XXX
+                         level => 'm');
+    }
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    unless ($element_state->{has_name}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'child element missing:atom', # XXX
+                         text => 'name',
+                         level => 'm');
+    }
+
+    $AnyChecker{check_end}->(@_);
+  },
+); # %AtomPersonConstruct
+
+## MUST NOT be any white space
+my %AtomDateConstruct = (
+  %AnyChecker,
+
+  ## NOTE: It does not explicitly say that there MUST NOT be any element.
+
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{value} = '';
+  },
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    $element_state->{value} .= $child_node->data;
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    # XXX Move to Web::DateTime
+
+    ## MUST: RFC 3339 |date-time| with uppercase |T| and |Z|
+    if ($element_state->{value} =~ /\A([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?>\.[0-9]+)?(?>Z|[+-]([0-9]{2}):([0-9]{2}))\z/) {
+      my ($y, $M, $d, $h, $m, $s, $zh, $zm)
+          = ($1, $2, $3, $4, $5, $6, $7 || 0, $8 || 0);
+      my $node = $item->{node};
+
+      ## Check additional constraints described or referenced in
+      ## comments of ABNF rules for |date-time|.
+      if (0 < $M and $M < 13) {      
+        $self->{onerror}->(node => $node, type => 'datetime:bad day',
+                           level => 'm')
+            if $d < 1 or
+                $d > [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]->[$M];
+        $self->{onerror}->(node => $node, type => 'datetime:bad day',
+                           level => 'm')
+            if $M == 2 and $d == 29 and
+                not ($y % 400 == 0 or ($y % 4 == 0 and $y % 100 != 0));
+      } else {
+        $self->{onerror}->(node => $node, type => 'datetime:bad month',
+                           level => 'm');
+      }
+      $self->{onerror}->(node => $node, type => 'datetime:bad hour',
+                         level => 'm') if $h > 23;
+      $self->{onerror}->(node => $node, type => 'datetime:bad minute',
+                         level => 'm') if $m > 59;
+      $self->{onerror}->(node => $node, type => 'datetime:bad second',
+                         level => 'm')
+          if $s > 60; ## NOTE: Validness of leap seconds are not checked.
+      $self->{onerror}->(node => $node, type => 'datetime:bad timezone hour',
+                         level => 'm') if $zh > 23;
+      $self->{onerror}->(node => $node, type => 'datetime:bad timezone minute',
+                         level => 'm') if $zm > 59;
+    } else {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'datetime:syntax error',
+                         level => 'm');
+    }
+    ## NOTE: SHOULD be accurate as possible (cannot be checked)
+
+    $AnyChecker{check_end}->(@_);
+  },
+); # %AtomDateConstruct
+
 for my $ns (keys %{$_Defs->{elements}}) {
   for my $ln (keys %{$_Defs->{elements}->{$ns}}) {
     my $cm = $_Defs->{elements}->{$ns}->{$ln}->{content_model} or next;
@@ -3350,13 +3577,20 @@ for my $ns (keys %{$_Defs->{elements}}) {
     } elsif ($cm eq 'text') {
       $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
           = $HTMLTextChecker{$_} for keys %HTMLTextChecker;
+    } elsif ($cm eq 'atomTextConstruct') {
+      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
+          = $AtomTextConstruct{$_} for keys %AtomTextConstruct;
+      $ElementAttrChecker->{$ns}->{$ln}->{''}->{type}
+          = $AtomTextConstructTypeAttrChecker;
+    } elsif ($cm eq 'atomDateConstruct') {
+      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
+          = $AtomDateConstruct{$_} for keys %AtomDateConstruct;
+    } elsif ($cm eq 'atomPersonConstruct') {
+      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
+          = $AtomPersonConstruct{$_} for keys %AtomPersonConstruct;
     }
   }
 }
-
-$Element->{+HTML_NS}->{''} = {
-  %AnyChecker,
-};
 
 # ---- The root element ----
 
@@ -8239,250 +8473,8 @@ $_Defs->{elements}->{(MML_NS)}->{$_}->{conforming} = 1
 
 ## ------ Atom ------
 
-sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
-sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
-sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
-sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
-
-# XXX
-my $GetAtomAttrsChecker = sub {
-  my $element_specific_checker = shift;
-  return sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_check_element_attrs ($item, $element_state,
-                                 element_specific_checker => $element_specific_checker);
-  };
-}; # $GetAtomAttrsChecker
-
-my %AtomChecker = (%AnyChecker);
-
-our $CheckDIVContent; # XXX
-
-my %AtomTextConstruct = (
-  %AtomChecker,
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{type} = 'text';
-  },
-  check_attrs => $GetAtomAttrsChecker->({
-    type => sub {
-      my ($self, $attr, $item, $element_state) = @_;
-      my $value = $attr->value;
-      if ($value eq 'text' or $value eq 'html' or $value eq 'xhtml') { # MUST
-        $element_state->{type} = $value;
-      } else {
-        ## NOTE: IMT MUST NOT be used here.
-        $self->{onerror}->(node => $attr,
-                           type => 'invalid attribute value', # XXX
-                           level => 'm');
-      }
-    }, # checked in |checker|
-  }),
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:minus',
-                         level => 'm');
-    } else {
-      if ($element_state->{type} eq 'text' or
-          $element_state->{type} eq 'html') { # MUST NOT
-        $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:atom|TextConstruct',
-                           level => 'm');
-      } elsif ($element_state->{type} eq 'xhtml') {
-        if ($child_nsuri eq q<http://www.w3.org/1999/xhtml> and
-            $child_ln eq 'div') { # MUST
-          if ($element_state->{has_div}) {
-            $self->{onerror}
-                ->(node => $child_el,
-                   type => 'element not allowed:atom|TextConstruct', # XXX
-                   level => 'm');
-          } else {
-            $element_state->{has_div} = 1;
-          }
-        } else {
-          $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:atom|TextConstruct', # XXX
-                             level => 'm');
-        }
-      } else {
-        die "atom:TextConstruct type error: $element_state->{type}";
-      }
-    }
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($element_state->{type} eq 'text') {
-      #
-    } elsif ($element_state->{type} eq 'html') {
-      #
-    } elsif ($element_state->{type} eq 'xhtml') {
-      if ($has_significant) {
-        $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed:atom|TextConstruct', # XXX
-                           level => 'm');
-      }
-    } else {
-      die "atom:TextConstruct type error: $element_state->{type}";
-    }
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    if ($element_state->{type} eq 'xhtml') {
-      unless ($element_state->{has_div}) {
-        $self->{onerror}->(node => $item->{node},
-                           type => 'child element missing', # XXX
-                           text => 'div',
-                           level => 'm');
-      }
-    } elsif ($element_state->{type} eq 'html') {
-      $CheckDIVContent->($self, $item->{node});
-    }
-
-    $AtomChecker{check_end}->(@_);
-  },
-); # %AtomTextConstruct
-
-my %AtomPersonConstruct = (
-  %AtomChecker,
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:minus',
-                         level => 'm');
-    } elsif ($child_nsuri eq ATOM_NS) {
-      if ($child_ln eq 'name') {
-        if ($element_state->{has_name}) {
-          $self->{onerror}
-              ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct', # XXX
-                 level => 'm');
-        } else {
-          $element_state->{has_name} = 1;
-        }
-      } elsif ($child_ln eq 'uri') {
-        if ($element_state->{has_uri}) {
-          $self->{onerror}
-              ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct', # XXX
-                 level => 'm');
-        } else {
-          $element_state->{has_uri} = 1;
-        }
-      } elsif ($child_ln eq 'email') {
-        if ($element_state->{has_email}) {
-          $self->{onerror}
-              ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct', # XXX
-                 level => 'm');
-        } else {
-          $element_state->{has_email} = 1;
-        }
-      } else {
-        $self->{onerror}
-            ->(node => $child_el,
-               type => 'element not allowed:atom|PersonConstruct', # XXX
-               level => 'm');
-      }
-    } else {
-      $self->{onerror}
-          ->(node => $child_el,
-             type => 'element not allowed:atom|PersonConstruct', # XXX
-             level => 'm');
-    }
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      $self->{onerror}->(node => $child_node,
-                         type => 'character not allowed:atom|PersonConstruct', # XXX
-                         level => 'm');
-    }
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-
-    unless ($element_state->{has_name}) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'name',
-                         level => 'm');
-    }
-
-    $AtomChecker{check_end}->(@_);
-  },
-); # %AtomPersonConstruct
-
-## MUST NOT be any white space
-my %AtomDateConstruct = (
-  %AtomChecker,
-
-  ## NOTE: It does not explicitly say that there MUST NOT be any element.
-
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{value} = '';
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{value} .= $child_node->data;
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-
-    # XXX Move to Web::DateTime
-
-    ## MUST: RFC 3339 |date-time| with uppercase |T| and |Z|
-    if ($element_state->{value} =~ /\A([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?>\.[0-9]+)?(?>Z|[+-]([0-9]{2}):([0-9]{2}))\z/) {
-      my ($y, $M, $d, $h, $m, $s, $zh, $zm)
-          = ($1, $2, $3, $4, $5, $6, $7 || 0, $8 || 0);
-      my $node = $item->{node};
-
-      ## Check additional constraints described or referenced in
-      ## comments of ABNF rules for |date-time|.
-      if (0 < $M and $M < 13) {      
-        $self->{onerror}->(node => $node, type => 'datetime:bad day',
-                           level => 'm')
-            if $d < 1 or
-                $d > [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]->[$M];
-        $self->{onerror}->(node => $node, type => 'datetime:bad day',
-                           level => 'm')
-            if $M == 2 and $d == 29 and
-                not ($y % 400 == 0 or ($y % 4 == 0 and $y % 100 != 0));
-      } else {
-        $self->{onerror}->(node => $node, type => 'datetime:bad month',
-                           level => 'm');
-      }
-      $self->{onerror}->(node => $node, type => 'datetime:bad hour',
-                         level => 'm') if $h > 23;
-      $self->{onerror}->(node => $node, type => 'datetime:bad minute',
-                         level => 'm') if $m > 59;
-      $self->{onerror}->(node => $node, type => 'datetime:bad second',
-                         level => 'm')
-          if $s > 60; ## NOTE: Validness of leap seconds are not checked.
-      $self->{onerror}->(node => $node, type => 'datetime:bad timezone hour',
-                         level => 'm') if $zh > 23;
-      $self->{onerror}->(node => $node, type => 'datetime:bad timezone minute',
-                         level => 'm') if $zm > 59;
-    } else {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'datetime:syntax error',
-                         level => 'm');
-    }
-    ## NOTE: SHOULD be accurate as possible (cannot be checked)
-
-    $AtomChecker{check_end}->(@_);
-  },
-); # %AtomDateConstruct
-
 $Element->{+ATOM_NS}->{entry} = {
-  %AtomChecker,
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -8641,7 +8633,7 @@ $Element->{+ATOM_NS}->{entry} = {
 };
 
 $Element->{+ATOM_NS}->{feed} = {
-  %AtomChecker,
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -8708,7 +8700,6 @@ $Element->{+ATOM_NS}->{feed} = {
                          level => 'm')
           if $not_allowed;
     } else {
-      ## TODO: extension element
       $self->{onerror}->(node => $child_el, type => 'element not allowed',
                          level => 'm');
     }
@@ -8759,62 +8750,62 @@ $Element->{+ATOM_NS}->{feed} = {
                          level => 's');
     }
 
-    $AtomChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
 };
 
+$ElementAttrChecker->{(ATOM_NS)}->{content}->{''}->{src} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+
+  $element_state->{has_src} = 1;
+  $item->{parent_state}->{require_summary} = 1;
+
+  ## NOTE: There MUST NOT be any white space.
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($attr->value);
+  $chk->onerror (sub {
+    $self->{onerror}->(@_, node => $item->{node});
+  });
+  $chk->check_iri_reference;
+}; # <atom:content src="">
+
+$ElementAttrChecker->{(ATOM_NS)}->{content}->{''}->{type} = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+
+  $element_state->{has_type} = 1;
+
+  my $value = $attr->value;
+  if ($value eq 'text' or $value eq 'html' or $value eq 'xhtml') {
+    # MUST
+  } else {
+    my $type = $MIMETypeChecker->(@_);
+    if ($type) {
+      if ($type->is_composite_type) {
+        $self->{onerror}->(node => $attr, type => 'IMT:composite', # XXX
+                           level => 'm');
+      }
+
+      if ($type->is_xml_mime_type) {
+        $value = 'xml';
+      } elsif ($type->type eq 'text') {
+        $value = 'mime_text';
+      } else {
+        $item->{parent_state}->{require_summary} = 1;
+      }
+    } else {
+      $item->{parent_state}->{require_summary} = 1;
+    }
+  }
+
+  $element_state->{type} = $value;
+}; # <atom:content type="">
+
 $Element->{+ATOM_NS}->{content} = {
-  %AtomChecker,
+  %AnyChecker,
   check_start => sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{type} = 'text';
   },
-  check_attrs => $GetAtomAttrsChecker->({
-    src => sub {
-      my ($self, $attr, $item, $element_state) = @_;
-
-      $element_state->{has_src} = 1;
-      $item->{parent_state}->{require_summary} = 1;
-
-      ## NOTE: There MUST NOT be any white space.
-      require Web::URL::Checker;
-      my $chk = Web::URL::Checker->new_from_string ($attr->value);
-      $chk->onerror (sub {
-        $self->{onerror}->(@_, node => $item->{node});
-      });
-      $chk->check_iri_reference;
-    },
-    type => sub {
-      my ($self, $attr, $item, $element_state) = @_;
-
-      $element_state->{has_type} = 1;
-
-      my $value = $attr->value;
-      if ($value eq 'text' or $value eq 'html' or $value eq 'xhtml') {
-        # MUST
-      } else {
-        my $type = $MIMETypeChecker->(@_);
-        if ($type) {
-          if ($type->is_composite_type) {
-            $self->{onerror}->(node => $attr, type => 'IMT:composite', # XXX
-                               level => 'm');
-          }
-
-          if ($type->is_xml_mime_type) {
-            $value = 'xml';
-          } elsif ($type->type eq 'text') {
-            $value = 'mime_text';
-          } else {
-            $item->{parent_state}->{require_summary} = 1;
-          }
-        } else {
-          $item->{parent_state}->{require_summary} = 1;
-        }
-      }
-
-      $element_state->{type} = $value;
-    },
-  }),
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -8928,11 +8919,9 @@ $Element->{+ATOM_NS}->{content} = {
                          level => 'u');
     }
 
-    $AtomChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
 }; # atom:content
-
-$Element->{+ATOM_NS}->{author} = \%AtomPersonConstruct;
 
 $Element->{+ATOM_NS}->{category}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
@@ -8943,8 +8932,6 @@ $Element->{+ATOM_NS}->{category}->{check_attrs2} = sub {
                        level => 'm');
   }
 }; # <atom:category> check_attrs2
-
-$Element->{+ATOM_NS}->{contributor} = \%AtomPersonConstruct;
 
 ## XXXresource: |atom:icon|'s image SHOULD be 1:1 and SHOULD be small.
 
@@ -8995,12 +8982,8 @@ $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
 
 # XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
 
-$Element->{+ATOM_NS}->{published} = \%AtomDateConstruct;
-
-$Element->{+ATOM_NS}->{rights} = \%AtomTextConstruct;
-
 $Element->{+ATOM_NS}->{source} = {
-  %AtomChecker,
+  %AnyChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
@@ -9075,14 +9058,6 @@ $Element->{+ATOM_NS}->{source} = {
   },
 };
 
-$Element->{+ATOM_NS}->{subtitle} = \%AtomTextConstruct;
-
-$Element->{+ATOM_NS}->{summary} = \%AtomTextConstruct;
-
-$Element->{+ATOM_NS}->{title} = \%AtomTextConstruct;
-
-$Element->{+ATOM_NS}->{updated} = \%AtomDateConstruct;
-
 ## -- Atom Threading 1.0 [RFC 4685]
 
 ## TODO: <thr:in-reply-to href=""> MUST be dereferencable.
@@ -9100,7 +9075,7 @@ $Element->{+THR_NS}->{'in-reply-to'}->{check_attrs2} = sub {
 }; # <thr:in-reply-to> check_attrs2
 
 $Element->{+THR_NS}->{total} = {
-  %AtomChecker,
+  %AnyChecker,
   check_start =>  sub {
     my ($self, $item, $element_state) = @_;
     $element_state->{value} = '';
@@ -9134,7 +9109,7 @@ $Element->{+THR_NS}->{total} = {
                          level => 'm');
     }
 
-    $AtomChecker{check_end}->(@_);
+    $AnyChecker{check_end}->(@_);
   },
 };
 
