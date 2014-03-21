@@ -1672,6 +1672,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "type" => "none"
                                                                                                              }
                                                                                               },
+                                                                                  "defaultAction" => {
+                                                                                                     "preferred" => {
+                                                                                                                    "type" => "script"
+                                                                                                                  }
+                                                                                                   },
                                                                                   "dir" => {
                                                                                            "conforming" => 1,
                                                                                            "enumerated" => {
@@ -1739,7 +1744,22 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                "type" => "none"
                                                                                                              }
                                                                                               },
+                                                                                  "event" => {
+                                                                                             "preferred" => {
+                                                                                                            "type" => "script"
+                                                                                                          }
+                                                                                           },
+                                                                                  "eventTarget" => {
+                                                                                                   "preferred" => {
+                                                                                                                  "type" => "script"
+                                                                                                                }
+                                                                                                 },
                                                                                   "format" => {},
+                                                                                  "handler" => {
+                                                                                               "preferred" => {
+                                                                                                              "type" => "script"
+                                                                                                            }
+                                                                                             },
                                                                                   "hidden" => {
                                                                                               "conforming" => 1,
                                                                                               "status" => "LC",
@@ -1895,6 +1915,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            "type" => "html_attr"
                                                                                                          }
                                                                                           },
+                                                                                  "observer" => {
+                                                                                                "preferred" => {
+                                                                                                               "type" => "script"
+                                                                                                             }
+                                                                                              },
                                                                                   "onabort" => {
                                                                                                "conforming" => 1,
                                                                                                "status" => "LC",
@@ -2335,6 +2360,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "status" => "LC",
                                                                                                  "value_type" => "event handler"
                                                                                                },
+                                                                                  "phase" => {
+                                                                                             "preferred" => {
+                                                                                                            "type" => "script"
+                                                                                                          }
+                                                                                           },
                                                                                   "precision" => {},
                                                                                   "prefix" => {
                                                                                               "preferred" => {
@@ -2346,6 +2376,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  "preferred" => {
                                                                                                                 "name" => "tabindex",
                                                                                                                 "type" => "html_attr"
+                                                                                                              }
+                                                                                               },
+                                                                                  "propagate" => {
+                                                                                                 "preferred" => {
+                                                                                                                "type" => "script"
                                                                                                               }
                                                                                                },
                                                                                   "property" => {
@@ -2377,6 +2412,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "type" => "script"
                                                                                                            }
                                                                                             },
+                                                                                  "repeat-bind" => {
+                                                                                                   "preferred" => {
+                                                                                                                  "type" => "script"
+                                                                                                                }
+                                                                                                 },
                                                                                   "repeat-max" => {
                                                                                                   "preferred" => {
                                                                                                                  "type" => "script"
@@ -2387,11 +2427,36 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  "type" => "script"
                                                                                                                }
                                                                                                 },
+                                                                                  "repeat-model" => {
+                                                                                                    "preferred" => {
+                                                                                                                   "type" => "script"
+                                                                                                                 }
+                                                                                                  },
+                                                                                  "repeat-nodeset" => {
+                                                                                                      "preferred" => {
+                                                                                                                     "type" => "script"
+                                                                                                                   }
+                                                                                                    },
+                                                                                  "repeat-numbef" => {
+                                                                                                     "preferred" => {
+                                                                                                                    "type" => "script"
+                                                                                                                  }
+                                                                                                   },
+                                                                                  "repeat-number" => {
+                                                                                                     "preferred" => {
+                                                                                                                    "type" => "script"
+                                                                                                                  }
+                                                                                                   },
                                                                                   "repeat-start" => {
                                                                                                     "preferred" => {
                                                                                                                    "type" => "script"
                                                                                                                  }
                                                                                                   },
+                                                                                  "repeat-startindex" => {
+                                                                                                         "preferred" => {
+                                                                                                                        "type" => "script"
+                                                                                                                      }
+                                                                                                       },
                                                                                   "repeat-template" => {
                                                                                                        "preferred" => {
                                                                                                                       "type" => "script"
@@ -3340,6 +3405,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                     },
                                                                        "status" => "LC"
                                                                      },
+                                                          "action" => {
+                                                                      "attrs" => {},
+                                                                      "preferred" => {
+                                                                                     "type" => "script"
+                                                                                   }
+                                                                    },
+                                                          "addEventListener" => {
+                                                                                "attrs" => {},
+                                                                                "preferred" => {
+                                                                                               "type" => "script"
+                                                                                             }
+                                                                              },
                                                           "added" => {
                                                                      "attrs" => {},
                                                                      "preferred" => {
@@ -4596,7 +4673,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                            },
                                                                                               "status" => "LC",
                                                                                               "value_type" => "enumerated"
-                                                                                            }
+                                                                                            },
+                                                                                   "type" => {
+                                                                                             "preferred" => {
+                                                                                                            "type" => "none"
+                                                                                                          }
+                                                                                           }
                                                                                  }
                                                                            },
                                                                   "conforming" => 1,
@@ -5483,6 +5565,12 @@ $Web::HTML::Validator::_Defs = {
                                                                    "status" => "LC",
                                                                    "trasparent" => 1
                                                                  },
+                                                          "delete" => {
+                                                                      "attrs" => {},
+                                                                      "preferred" => {
+                                                                                     "type" => "script"
+                                                                                   }
+                                                                    },
                                                           "details" => {
                                                                        "aria" => {
                                                                                  "" => {
@@ -5697,6 +5785,18 @@ $Web::HTML::Validator::_Defs = {
                                                                                 },
                                                                    "status" => "LC"
                                                                  },
+                                                          "dispatch" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                       "type" => "script"
+                                                                                     }
+                                                                      },
+                                                          "dispatchEvent" => {
+                                                                             "attrs" => {},
+                                                                             "preferred" => {
+                                                                                            "type" => "script"
+                                                                                          }
+                                                                           },
                                                           "div" => {
                                                                    "attrs" => {
                                                                               "" => {
@@ -6835,6 +6935,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "type" => "html_element"
                                                                                      }
                                                                       },
+                                                          "group" => {
+                                                                     "attrs" => {},
+                                                                     "preferred" => {
+                                                                                    "type" => "script"
+                                                                                  }
+                                                                   },
                                                           "h" => {
                                                                  "attrs" => {},
                                                                  "preferred" => {
@@ -9529,6 +9635,12 @@ $Web::HTML::Validator::_Defs = {
                                                                    "status" => "LC",
                                                                    "transparent" => 1
                                                                  },
+                                                          "insert" => {
+                                                                      "attrs" => {},
+                                                                      "preferred" => {
+                                                                                     "type" => "script"
+                                                                                   }
+                                                                    },
                                                           "isbn" => {
                                                                     "attrs" => {},
                                                                     "preferred" => {
@@ -10107,6 +10219,12 @@ $Web::HTML::Validator::_Defs = {
                                                                     "content_model" => "empty",
                                                                     "status" => "LC"
                                                                   },
+                                                          "listener" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                       "type" => "script"
+                                                                                     }
+                                                                      },
                                                           "listing" => {
                                                                        "attrs" => {
                                                                                   "" => {
@@ -10150,6 +10268,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                   "type" => "html_element"
                                                                                 }
                                                                  },
+                                                          "load" => {
+                                                                    "attrs" => {},
+                                                                    "preferred" => {
+                                                                                   "type" => "script"
+                                                                                 }
+                                                                  },
                                                           "m" => {
                                                                  "attrs" => {},
                                                                  "preferred" => {
@@ -10556,7 +10680,7 @@ $Web::HTML::Validator::_Defs = {
                                                           "message" => {
                                                                        "attrs" => {},
                                                                        "preferred" => {
-                                                                                      "type" => "none"
+                                                                                      "type" => "script"
                                                                                     }
                                                                      },
                                                           "meta" => {
@@ -10664,10 +10788,17 @@ $Web::HTML::Validator::_Defs = {
                                                                                  "type" => "none"
                                                                                }
                                                                 },
+                                                          "model" => {
+                                                                     "attrs" => {},
+                                                                     "preferred" => {
+                                                                                    "name" => "template",
+                                                                                    "type" => "html_element"
+                                                                                  }
+                                                                   },
                                                           "module" => {
                                                                       "attrs" => {},
                                                                       "preferred" => {
-                                                                                     "type" => "none"
+                                                                                     "type" => "script"
                                                                                    }
                                                                     },
                                                           "multicol" => {
@@ -11740,6 +11871,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "type" => "html_element"
                                                                                      }
                                                                       },
+                                                          "preventDefault" => {
+                                                                              "attrs" => {},
+                                                                              "preferred" => {
+                                                                                             "type" => "script"
+                                                                                           }
+                                                                            },
                                                           "progress" => {
                                                                         "aria" => {
                                                                                   "" => {
@@ -11828,7 +11965,8 @@ $Web::HTML::Validator::_Defs = {
                                                           "range" => {
                                                                      "attrs" => {},
                                                                      "preferred" => {
-                                                                                    "type" => "css"
+                                                                                    "name" => "range",
+                                                                                    "type" => "input"
                                                                                   }
                                                                    },
                                                           "rb" => {
@@ -11844,12 +11982,36 @@ $Web::HTML::Validator::_Defs = {
                                                                                   "type" => "omit"
                                                                                 }
                                                                  },
+                                                          "rebuild" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                      "type" => "script"
+                                                                                    }
+                                                                     },
+                                                          "recalculate" => {
+                                                                           "attrs" => {},
+                                                                           "preferred" => {
+                                                                                          "type" => "script"
+                                                                                        }
+                                                                         },
                                                           "red" => {
                                                                    "attrs" => {},
                                                                    "preferred" => {
                                                                                   "type" => "none"
                                                                                 }
                                                                  },
+                                                          "refresh" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                      "type" => "script"
+                                                                                    }
+                                                                     },
+                                                          "removeEventListener" => {
+                                                                                   "attrs" => {},
+                                                                                   "preferred" => {
+                                                                                                  "type" => "script"
+                                                                                                }
+                                                                                 },
                                                           "removed" => {
                                                                        "attrs" => {},
                                                                        "preferred" => {
@@ -11869,6 +12031,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                      "type" => "script"
                                                                                    }
                                                                     },
+                                                          "reset" => {
+                                                                     "attrs" => {},
+                                                                     "preferred" => {
+                                                                                    "type" => "script"
+                                                                                  }
+                                                                   },
                                                           "resource" => {
                                                                         "attrs" => {},
                                                                         "preferred" => {
@@ -11893,6 +12061,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                   "type" => "none"
                                                                                 }
                                                                  },
+                                                          "revalidate" => {
+                                                                          "attrs" => {},
+                                                                          "preferred" => {
+                                                                                         "type" => "script"
+                                                                                       }
+                                                                        },
                                                           "right" => {
                                                                      "attrs" => {},
                                                                      "preferred" => {
@@ -12112,7 +12286,8 @@ $Web::HTML::Validator::_Defs = {
                                                           "secret" => {
                                                                       "attrs" => {},
                                                                       "preferred" => {
-                                                                                     "type" => "none"
+                                                                                     "name" => "password",
+                                                                                     "type" => "input"
                                                                                    }
                                                                     },
                                                           "section" => {
@@ -12339,6 +12514,19 @@ $Web::HTML::Validator::_Defs = {
                                                                       "conforming" => 1,
                                                                       "status" => "LC"
                                                                     },
+                                                          "select1" => {
+                                                                       "attrs" => {},
+                                                                       "preferred" => {
+                                                                                      "name" => "select",
+                                                                                      "type" => "html_element"
+                                                                                    }
+                                                                     },
+                                                          "send" => {
+                                                                    "attrs" => {},
+                                                                    "preferred" => {
+                                                                                   "type" => "script"
+                                                                                 }
+                                                                  },
                                                           "separator" => {
                                                                          "attrs" => {},
                                                                          "preferred" => {
@@ -12346,6 +12534,24 @@ $Web::HTML::Validator::_Defs = {
                                                                                         "type" => "html_element"
                                                                                       }
                                                                        },
+                                                          "setfocus" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                       "type" => "script"
+                                                                                     }
+                                                                      },
+                                                          "setindex" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                       "type" => "script"
+                                                                                     }
+                                                                      },
+                                                          "setvalue" => {
+                                                                        "attrs" => {},
+                                                                        "preferred" => {
+                                                                                       "type" => "script"
+                                                                                     }
+                                                                      },
                                                           "shadow" => {
                                                                       "attrs" => {},
                                                                       "preferred" => {
@@ -12510,6 +12716,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                       "type" => "none"
                                                                                     }
                                                                      },
+                                                          "stopPropagation" => {
+                                                                               "attrs" => {},
+                                                                               "preferred" => {
+                                                                                              "type" => "script"
+                                                                                            }
+                                                                             },
                                                           "strike" => {
                                                                       "attrs" => {},
                                                                       "content_model" => "phrasing content",
@@ -12580,6 +12792,13 @@ $Web::HTML::Validator::_Defs = {
                                                                    "content_model" => "phrasing content",
                                                                    "status" => "REC"
                                                                  },
+                                                          "submit" => {
+                                                                      "attrs" => {},
+                                                                      "preferred" => {
+                                                                                     "name" => "submit",
+                                                                                     "type" => "input"
+                                                                                   }
+                                                                    },
                                                           "summary" => {
                                                                        "aria" => {
                                                                                  "" => {
@@ -14590,6 +14809,13 @@ $Web::HTML::Validator::_Defs = {
                                                                   "conforming" => 1,
                                                                   "status" => "REC"
                                                                 },
+                                                          "upload" => {
+                                                                      "attrs" => {},
+                                                                      "preferred" => {
+                                                                                     "name" => "file",
+                                                                                     "type" => "input"
+                                                                                   }
+                                                                    },
                                                           "var" => {
                                                                    "attrs" => {},
                                                                    "conforming" => 1,
@@ -15966,6 +16192,15 @@ $Web::HTML::Validator::_Defs = {
                                                          "entry" => {
                                                                     "attrs" => {},
                                                                     "child_elements" => {
+                                                                                        "http://purl.org/syndication/thread/1.0" => {
+                                                                                                                                    "in-reply-to" => {
+                                                                                                                                                     "min" => 0
+                                                                                                                                                   },
+                                                                                                                                    "total" => {
+                                                                                                                                               "max" => 1,
+                                                                                                                                               "min" => 0
+                                                                                                                                             }
+                                                                                                                                  },
                                                                                         "http://www.w3.org/2000/09/xmldsig#" => {
                                                                                                                                 "Signature" => {
                                                                                                                                                "max" => 1,

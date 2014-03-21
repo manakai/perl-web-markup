@@ -3338,6 +3338,62 @@ my %TransparentChecker = (
   }, # check_child_element
 ); # %TransparentChecker
 
+my %PropContainerChecker = (
+  %AnyChecker,
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
+        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed:minus',
+                         level => 'm');
+    } else {
+      my $children = $_Defs->{elements}
+          ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name}
+          ->{child_elements}->{$child_nsuri}->{$child_ln};
+      if (defined $children->{min}) {
+        my $n = ++$element_state->{has_element}->{$child_nsuri}->{$child_ln};
+        if (defined $children->{max}) { # max < +Infinity
+          $self->{onerror}->(node => $child_el,
+                             type => 'element not allowed:duplicate',
+                             level => 'm')
+              if $children->{max} < $n;
+        }
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed',
+                           level => 'm');
+      }
+    }
+  }, # check_child_element
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($has_significant) {
+      $self->{onerror}->(node => $child_node,
+                         type => 'character not allowed',
+                         level => 'm');
+    }
+  },
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    my $children = $_Defs->{elements}
+        ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name}
+        ->{child_elements};
+    for my $ns (keys %$children) {
+      for my $ln (keys %{$children->{$ns} or {}}) {
+        my $min = $children->{$ns}->{$ln}->{min} || 0;
+        my $n = $element_state->{has_element}->{$ns}->{$ln} || 0;
+        $self->{onerror}->(node => $item->{node},
+                           type => 'child element missing:atom',
+                           text => $ln,
+                           level => 'm')
+            if $min > $n;
+      }
+    }
+  }, # check_end
+); # %PropContainerChecker
+
 my $AtomTextConstructTypeAttrChecker = sub {
   my ($self, $attr, $item, $element_state) = @_;
   my $value = $attr->value;
@@ -3346,7 +3402,7 @@ my $AtomTextConstructTypeAttrChecker = sub {
   } else {
     ## NOTE: IMT MUST NOT be used here.
     $self->{onerror}->(node => $attr,
-                       type => 'invalid attribute value', # XXX
+                       type => 'invalid attribute value',
                        level => 'm');
   }
 }; # $AtomTextConstructTypeAttrChecker
@@ -3378,14 +3434,14 @@ my %AtomTextConstruct = (
           if ($element_state->{has_div}) {
             $self->{onerror}
                 ->(node => $child_el,
-                   type => 'element not allowed:atom|TextConstruct', # XXX
+                   type => 'element not allowed:atom|TextConstruct',
                    level => 'm');
           } else {
             $element_state->{has_div} = 1;
           }
         } else {
           $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:atom|TextConstruct', # XXX
+                             type => 'element not allowed:atom|TextConstruct',
                              level => 'm');
         }
       } else {
@@ -3402,7 +3458,7 @@ my %AtomTextConstruct = (
     } elsif ($element_state->{type} eq 'xhtml') {
       if ($has_significant) {
         $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed:atom|TextConstruct', # XXX
+                           type => 'character not allowed:atom|TextConstruct',
                            level => 'm');
       }
     } else {
@@ -3414,7 +3470,7 @@ my %AtomTextConstruct = (
     if ($element_state->{type} eq 'xhtml') {
       unless ($element_state->{has_div}) {
         $self->{onerror}->(node => $item->{node},
-                           type => 'child element missing', # XXX
+                           type => 'child element missing',
                            text => 'div',
                            level => 'm');
       }
@@ -3425,79 +3481,6 @@ my %AtomTextConstruct = (
     $AnyChecker{check_end}->(@_);
   },
 ); # %AtomTextConstruct
-
-my %AtomPersonConstruct = (
-  %AnyChecker,
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:minus',
-                         level => 'm');
-    } elsif ($child_nsuri eq ATOM_NS) {
-      if ($child_ln eq 'name') {
-        if ($element_state->{has_name}) {
-          $self->{onerror}
-              ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct', # XXX
-                 level => 'm');
-        } else {
-          $element_state->{has_name} = 1;
-        }
-      } elsif ($child_ln eq 'uri') {
-        if ($element_state->{has_uri}) {
-          $self->{onerror}
-              ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct', # XXX
-                 level => 'm');
-        } else {
-          $element_state->{has_uri} = 1;
-        }
-      } elsif ($child_ln eq 'email') {
-        if ($element_state->{has_email}) {
-          $self->{onerror}
-              ->(node => $child_el,
-                 type => 'element not allowed:atom|PersonConstruct', # XXX
-                 level => 'm');
-        } else {
-          $element_state->{has_email} = 1;
-        }
-      } else {
-        $self->{onerror}
-            ->(node => $child_el,
-               type => 'element not allowed:atom|PersonConstruct', # XXX
-               level => 'm');
-      }
-    } else {
-      $self->{onerror}
-          ->(node => $child_el,
-             type => 'element not allowed:atom|PersonConstruct', # XXX
-             level => 'm');
-    }
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      $self->{onerror}->(node => $child_node,
-                         type => 'character not allowed:atom|PersonConstruct', # XXX
-                         level => 'm');
-    }
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-
-    unless ($element_state->{has_name}) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'name',
-                         level => 'm');
-    }
-
-    $AnyChecker{check_end}->(@_);
-  },
-); # %AtomPersonConstruct
 
 ## MUST NOT be any white space
 my %AtomDateConstruct = (
@@ -3587,7 +3570,7 @@ for my $ns (keys %{$_Defs->{elements}}) {
           = $AtomDateConstruct{$_} for keys %AtomDateConstruct;
     } elsif ($cm eq 'atomPersonConstruct') {
       $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
-          = $AtomPersonConstruct{$_} for keys %AtomPersonConstruct;
+          = $PropContainerChecker{$_} for keys %PropContainerChecker;
     }
   }
 }
@@ -8474,37 +8457,13 @@ $_Defs->{elements}->{(MML_NS)}->{$_}->{conforming} = 1
 ## ------ Atom ------
 
 $Element->{+ATOM_NS}->{entry} = {
-  %AnyChecker,
+  %PropContainerChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
 
-    ## NOTE: metadata elements, followed by atom:entry* (no explicit MAY)
-
-    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:minus',
-                         level => 'm');
-    } elsif ($child_nsuri eq ATOM_NS) {
-      my $not_allowed;
-      if ({ # MUST (0, 1)
-           content => 1,
-           id => 1,
-           published => 1,
-           rights => 1,
-           source => 1,
-           summary => 1,
-           title => 1,
-           updated => 1,
-          }->{$child_ln}) {
-        unless ($element_state->{has_element}->{$child_ln}) {
-          $element_state->{has_element}->{$child_ln} = 1;
-          $not_allowed = $element_state->{has_element}->{entry};
-        } else {
-          $not_allowed = 1;
-        }
-      } elsif ($child_ln eq 'link') { # MAY
+    if ($child_nsuri eq ATOM_NS) {
+      if ($child_ln eq 'link') {
         if ($child_el->rel eq LINK_REL . 'alternate') {
           my $type = $child_el->get_attribute_ns (undef, 'type');
           $type = '' unless defined $type;
@@ -8512,54 +8471,24 @@ $Element->{+ATOM_NS}->{entry} = {
           $hreflang = '' unless defined $hreflang;
           my $key = 'link:'.(defined $type ? ':'.$type : '').':'.
               (defined $hreflang ? ':'.$hreflang : '');
-          unless ($element_state->{has_element}->{$key}) {
-            $element_state->{has_element}->{$key} = 1;
-            $element_state->{has_element}->{'link.alternate'} = 1;
+          unless ($element_state->{has_link}->{$key}) {
+            $element_state->{has_link}->{$key} = 1;
+            $element_state->{has_link}->{'link.alternate'} = 1;
           } else {
-            $not_allowed = 1;
+            $self->{onerror}->(node => $child_el,
+                               type => 'element not allowed:atom|link rel=alternate',
+                               level => 'm');
           }
         }
-        
-        ## NOTE: MAY
-        $not_allowed ||= $element_state->{has_element}->{entry};
-      } elsif ({ # MAY
-                category => 1,
-                contributor => 1,
-               }->{$child_ln}) {
-        $not_allowed = $element_state->{has_element}->{entry};
-      } elsif ($child_ln eq 'author') { # MAY
-        $not_allowed = $element_state->{has_element}->{entry};
+      } elsif ($child_ln eq 'author') {
         $element_state->{has_author} = 1; # ./author | ./source/author
-        $element_state->{has_element}->{$child_ln} = 1; # ./author
-      } else {
-        $not_allowed = 1;
       }
-      if ($not_allowed) {
-        $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => 'm');
-      }
-    } elsif ($child_nsuri eq THR_NS and $child_ln eq 'in-reply-to') {
-      ## ISSUE: Where |thr:in-reply-to| is allowed is not explicit;y
-      ## defined in RFC 4685.
-      #
-    } elsif ($child_nsuri eq THR_NS and $child_ln eq 'total') {
-      #
-    } else {
-      ## TODO: extension element
-      $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => 'm');
     }
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => 'm');
-    }
-  },
+
+    $PropContainerChecker{check_child_element}->(@_);
+  }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-
     if ($element_state->{has_author}) {
       ## NOTE: There is either a child atom:author element
       ## or a child atom:source element which contains an atom:author
@@ -8567,6 +8496,7 @@ $Element->{+ATOM_NS}->{entry} = {
       #
     } else {
       A: {
+        # XXX
         my $root = $item->{node}->owner_document->document_element;
         if ($root and $root->local_name eq 'feed') {
           my $nsuri = $root->namespace_uri;
@@ -8583,91 +8513,46 @@ $Element->{+ATOM_NS}->{entry} = {
             }
           }
         }
-        
         $self->{onerror}->(node => $item->{node},
-                           type => 'child element missing:atom', # XXX
+                           type => 'child element missing:atom',
                            text => 'author',
                            level => 'm');
       } # A
     }
 
-    unless ($element_state->{has_element}->{author}) {
+    unless ($element_state->{has_element}->{(ATOM_NS)}->{author}) {
       $item->{parent_state}->{has_no_author_entry} = 1; # for atom:feed's check
     }
 
     ## TODO: If entry's with same id, then updated SHOULD be different
 
-    unless ($element_state->{has_element}->{id}) { # MUST
+    if (not $element_state->{has_element}->{(ATOM_NS)}->{content} and
+        not $element_state->{has_link}->{'link.alternate'}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'id',
-                         level => 'm');
-    }
-    unless ($element_state->{has_element}->{title}) { # MUST
-      $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'title',
-                         level => 'm');
-    }
-    unless ($element_state->{has_element}->{updated}) { # MUST
-      $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'updated',
-                         level => 'm');
-    }
-    if (not $element_state->{has_element}->{content} and
-        not $element_state->{has_element}->{'link.alternate'}) {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom:link:alternate', # XXX
+                         type => 'child element missing:atom:link:alternate',
                          level => 'm');
     }
 
     if ($element_state->{require_summary} and
-        not $element_state->{has_element}->{summary}) {
+        not $element_state->{has_element}->{(ATOM_NS)}->{summary}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
+                         type => 'child element missing:atom',
                          text => 'summary',
                          level => 'm');
     }
-  },
-};
 
-$Element->{+ATOM_NS}->{feed} = {
-  %AnyChecker,
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # <atom:entry>
+
+$Element->{(ATOM_NS)}->{source} = {
+  %PropContainerChecker,
   check_child_element => sub {
     my ($self, $item, $child_el, $child_nsuri, $child_ln,
         $child_is_transparent, $element_state) = @_;
-
-    ## NOTE: metadata elements, followed by atom:entry* (no explicit MAY)
-
-    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:minus',
-                         level => 'm');
-    } elsif ($child_nsuri eq ATOM_NS) {
-      my $not_allowed;
-      if ($child_ln eq 'entry') {
-        $element_state->{has_element}->{entry} = 1;
-      } elsif ({ # MUST (0, 1)
-                generator => 1,
-                icon => 1,
-                id => 1,
-                logo => 1,
-                rights => 1,
-                subtitle => 1,
-                title => 1,
-                updated => 1,
-               }->{$child_ln}) {
-        unless ($element_state->{has_element}->{$child_ln}) {
-          $element_state->{has_element}->{$child_ln} = 1;
-          $not_allowed = $element_state->{has_element}->{entry};
-        } else {
-          $not_allowed = 1;
-        }
-      } elsif ($child_ln eq 'link') {
-        my $rel = $child_el->rel;
-        if ($rel eq LINK_REL . 'alternate') {
+    if ($child_nsuri eq ATOM_NS) {
+      if ($child_ln eq 'link') {
+        if ($child_el->rel eq LINK_REL . 'alternate') {
           my $type = $child_el->get_attribute_ns (undef, 'type');
           $type = '' unless defined $type;
           my $hreflang = $child_el->get_attribute_ns (undef, 'hreflang');
@@ -8677,47 +8562,66 @@ $Element->{+ATOM_NS}->{feed} = {
           unless ($element_state->{has_element}->{$key}) {
             $element_state->{has_element}->{$key} = 1;
           } else {
-            $not_allowed = 1;
+            $self->{onerror}->(node => $child_el,
+                               type => 'element not allowed:atom|link rel=alternate',
+                               level => 'm');
+          }
+        }
+      } elsif ($child_ln eq 'author') {
+        $item->{parent_state}->{has_author} = 1; # parent::atom:entry's flag
+      }
+    }
+    $PropContainerChecker{check_child_element}->(@_);
+  }, # check_child_element
+}; # <atom:source>
+
+$Element->{+ATOM_NS}->{feed} = {
+  %PropContainerChecker,
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    ## metadata elements, followed by atom:entry*
+
+    if (not $element_state->{has_non_entry_after_entry} and
+        $element_state->{has_element}->{(ATOM_NS)}->{entry} and
+        not ($child_nsuri eq ATOM_NS and $child_ln eq 'entry')) {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element after entry',
+                         level => 'm');
+      $element_state->{has_non_entry_after_entry} = 1;
+    }
+
+    if ($child_nsuri eq ATOM_NS) {
+      if ($child_ln eq 'link') {
+        my $rel = $child_el->rel;
+        if ($rel eq LINK_REL . 'alternate') {
+          my $type = $child_el->get_attribute_ns (undef, 'type');
+          $type = '' unless defined $type;
+          my $hreflang = $child_el->get_attribute_ns (undef, 'hreflang');
+          $hreflang = '' unless defined $hreflang;
+          my $key = 'link:'.(defined $type ? ':'.$type : '').':'.
+              (defined $hreflang ? ':'.$hreflang : '');
+          unless ($element_state->{has_link}->{$key}) {
+            $element_state->{has_link}->{$key} = 1;
+          } else {
+            $self->{onerror}->(node => $child_el,
+                               type => 'element not allowed:atom|link rel=alternate',
+                               level => 'm');
           }
         } elsif ($rel eq LINK_REL . 'self') {
-          $element_state->{has_element}->{'link.self'} = 1;
+          $element_state->{has_link}->{'link.self'} = 1;
         }
-        
-        ## NOTE: MAY
-        $not_allowed = $element_state->{has_element}->{entry};
-      } elsif ({ # MAY
-                category => 1,
-                contributor => 1,
-               }->{$child_ln}) {
-        $not_allowed = $element_state->{has_element}->{entry};
-      } elsif ($child_ln eq 'author') { # MAY
-        $not_allowed = $element_state->{has_element}->{entry};
-        $element_state->{has_element}->{author} = 1;
-      } else {
-        $not_allowed = 1;
       }
-      $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => 'm')
-          if $not_allowed;
-    } else {
-      $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => 'm');
     }
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => 'm');
-    }
-  },
+    $PropContainerChecker{check_child_element}->(@_);
+  }, # check_child_element
   check_end => sub {
     my ($self, $item, $element_state) = @_;
 
     if ($element_state->{has_no_author_entry} and
-        not $element_state->{has_element}->{author}) {
+        not $element_state->{has_element}->{(ATOM_NS)}->{author}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
+                         type => 'child element missing:atom',
                          text => 'author',
                          level => 'm');
       ## ISSUE: If there is no |atom:entry| element,
@@ -8726,33 +8630,15 @@ $Element->{+ATOM_NS}->{feed} = {
 
     ## TODO: If entry's with same id, then updated SHOULD be different
 
-    unless ($element_state->{has_element}->{id}) { # MUST
+    unless ($element_state->{has_link}->{'link.self'}) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'id',
-                         level => 'm');
-    }
-    unless ($element_state->{has_element}->{title}) { # MUST
-      $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'title',
-                         level => 'm');
-    }
-    unless ($element_state->{has_element}->{updated}) { # MUST
-      $self->{onerror}->(node => $item->{node},
-                         type => 'child element missing:atom', # XXX
-                         text => 'updated',
-                         level => 'm');
-    }
-    unless ($element_state->{has_element}->{'link.self'}) {
-      $self->{onerror}->(node => $item->{node}, 
-                         type => 'child element missing:atom:link:self', # XXX
+                         type => 'child element missing:atom:link:self',
                          level => 's');
     }
 
-    $AnyChecker{check_end}->(@_);
-  },
-};
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # <atom:feed>
 
 $ElementAttrChecker->{(ATOM_NS)}->{content}->{''}->{src} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -8781,7 +8667,9 @@ $ElementAttrChecker->{(ATOM_NS)}->{content}->{''}->{type} = sub {
     my $type = $MIMETypeChecker->(@_);
     if ($type) {
       if ($type->is_composite_type) {
-        $self->{onerror}->(node => $attr, type => 'IMT:composite', # XXX
+        $self->{onerror}->(node => $attr,
+                           type => 'IMT:composite',
+                           value => $type->as_valid_mime_type_with_no_params,
                            level => 'm');
       }
 
@@ -8819,24 +8707,22 @@ $Element->{+ATOM_NS}->{content} = {
       if ($element_state->{type} eq 'text' or
           $element_state->{type} eq 'html' or
           $element_state->{type} eq 'mime_text') {
-        # MUST NOT
         $self->{onerror}->(node => $child_el,
-                           type => 'element not allowed:atom|content', # XXX
+                           type => 'element not allowed:atom|TextConstruct',
                            level => 'm');
       } elsif ($element_state->{type} eq 'xhtml') {
         if ($element_state->{has_div}) {
           $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:atom|content', # XXX
+                             type => 'element not allowed:atom|TextConstruct',
                              level => 'm');
         } else {
-          ## TODO: SHOULD be suitable for handling as HTML [XHTML10]
           $element_state->{has_div} = 1;
         }
       } elsif ($element_state->{type} eq 'xml') {
         ## MAY contain elements
         if ($element_state->{has_src}) {
           $self->{onerror}->(node => $child_el,
-                             type => 'element not allowed:atom|content', # XXX
+                             type => 'element not allowed:empty',
                              level => 'm');
         }
       } else {
@@ -8859,7 +8745,7 @@ $Element->{+ATOM_NS}->{content} = {
       } elsif ($element_state->{type} eq 'xhtml' or
                $element_state->{type} eq 'xml') {
         $self->{onerror}->(node => $child_node,
-                           type => 'character not allowed:atom|content', # XXX
+                           type => 'character not allowed:atom|TextConstruct',
                            level => 'm');
       }
     }
@@ -8881,7 +8767,8 @@ $Element->{+ATOM_NS}->{content} = {
                $element_state->{type} eq 'xhtml') {
         $self->{onerror}
             ->(node => $item->{node}->get_attribute_node_ns (undef, 'type'),
-               type => 'not IMT', level => 'm');
+               type => 'not IMT',
+               level => 'm');
       }
     }
 
@@ -8981,82 +8868,6 @@ $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
 }; # <atom:link> check_attrs2
 
 # XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
-
-$Element->{+ATOM_NS}->{source} = {
-  %AnyChecker,
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
-
-    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:minus',
-                         level => 'm');
-    } elsif ($child_nsuri eq ATOM_NS) {
-      my $not_allowed;
-      if ($child_ln eq 'entry') {
-        $element_state->{has_element}->{entry} = 1;
-      } elsif ({
-                generator => 1,
-                icon => 1,
-                id => 1,
-                logo => 1,
-                rights => 1,
-                subtitle => 1,
-                title => 1,
-                updated => 1,
-               }->{$child_ln}) {
-        unless ($element_state->{has_element}->{$child_ln}) {
-          $element_state->{has_element}->{$child_ln} = 1;
-          $not_allowed = $element_state->{has_element}->{entry};
-        } else {
-          $not_allowed = 1;
-        }
-      } elsif ($child_ln eq 'link') {
-        if ($child_el->rel eq LINK_REL . 'alternate') {
-          my $type = $child_el->get_attribute_ns (undef, 'type');
-          $type = '' unless defined $type;
-          my $hreflang = $child_el->get_attribute_ns (undef, 'hreflang');
-          $hreflang = '' unless defined $hreflang;
-          my $key = 'link:'.(defined $type ? ':'.$type : '').':'.
-              (defined $hreflang ? ':'.$hreflang : '');
-          unless ($element_state->{has_element}->{$key}) {
-            $element_state->{has_element}->{$key} = 1;
-          } else {
-            $not_allowed = 1;
-          }
-        }
-        $not_allowed ||= $element_state->{has_element}->{entry};
-      } elsif ({
-                category => 1,
-                contributor => 1,
-               }->{$child_ln}) {
-        $not_allowed = $element_state->{has_element}->{entry};
-      } elsif ($child_ln eq 'author') {
-        $not_allowed = $element_state->{has_element}->{entry};
-        $item->{parent_state}->{has_author} = 1; # parent::atom:entry's flag
-      } else {
-        $not_allowed = 1;
-      }
-      if ($not_allowed) {
-        $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                           level => 'm');
-      }
-    } else {
-      ## TODO: extension element
-      $self->{onerror}->(node => $child_el, type => 'element not allowed',
-                         level => 'm');
-    }
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    if ($has_significant) {
-      $self->{onerror}->(node => $child_node, type => 'character not allowed',
-                         level => 'm');
-    }
-  },
-};
 
 ## -- Atom Threading 1.0 [RFC 4685]
 

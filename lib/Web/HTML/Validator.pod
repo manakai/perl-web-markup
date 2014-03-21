@@ -333,6 +333,9 @@ interpreted as the second column of the same row:
 Comments and processing instructions MAY be inserted anywhere in an
 Atom threading extension element.
 
+Elements C<thr:in-reply-to> and C<thr:total> MAY be used as children
+of C<atom:entry> elements.
+
 =item ATOMPUB
 
 The Atom Publishing Protocol <https://tools.ietf.org/html/rfc5023>.
