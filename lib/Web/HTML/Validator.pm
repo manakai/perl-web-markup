@@ -241,8 +241,10 @@ sub XSLT_NS () { q<http://www.w3.org/1999/XSL/Transform> }
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 sub RSS1_NS () { q<http://purl.org/rss/1.0/> }
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
+sub APP_NS () { q<http://www.w3.org/2007/app> }
 sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
 sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
+sub AT_NS () { q<http://purl.org/atompub/tombstones/1.0> }
 sub LINK_REL () { q<http://www.iana.org/assignments/relation/> }
 
 our $_Defs;
@@ -333,7 +335,8 @@ my $CheckerByType = {};
 my $NamespacedAttrChecker = {};
 my $ElementAttrChecker = {};
 my $ItemValueChecker = {};
-my $ElementTextChecker = {};
+my $ElementTextCheckerByType = {};
+my $ElementTextCheckerByName = {};
 
 sub _check_element_attrs ($$$;%) {
   my ($self, $item, $element_state, %args) = @_;
@@ -970,7 +973,7 @@ $CheckerByType->{URL} = sub {
   $chk->check_iri_reference; # XXX URL Standard
   $self->{has_uri_attr} = 1;
 }; # URL
-$ElementTextChecker->{URL} = sub {
+$ElementTextCheckerByType->{URL} = sub {
   my ($self, $value, $onerror) = @_;
   ## NOTE: There MUST NOT be any white space.
   require Web::URL::Checker;
@@ -980,7 +983,7 @@ $ElementTextChecker->{URL} = sub {
 }; # URL
 
 ## Absolute URL
-$ElementTextChecker->{'absolute URL'} = sub {
+$ElementTextCheckerByType->{'absolute URL'} = sub {
   my ($self, $value, $onerror) = @_;
   ## NOTE: There MUST NOT be any white space.
   require Web::URL::Checker;
@@ -1130,7 +1133,7 @@ $CheckerByType->{'e-mail address'} = sub {
                      level => 'm')
       unless $attr->value =~ qr/\A$ValidEmailAddress\z/o;
 }; # e-mail address
-$ElementTextChecker->{'e-mail address'} = sub {
+$ElementTextCheckerByType->{'e-mail address'} = sub {
   my ($self, $value, $onerror) = @_;
   $onerror->(type => 'email:syntax error',
              level => 'm')
@@ -3208,9 +3211,11 @@ my %HTMLTextChecker = (
   },
   check_end => sub {
     my ($self, $item, $element_state) = @_;
-    my $el_nsurl = $item->{node}->namespace_uri;
-    my $el_def = $_Defs->{elements}->{defined $el_nsurl ? $el_nsurl : ''}->{$item->{node}->local_name};
-    my $checker = $ElementTextChecker->{$el_def->{text_type} || ''};
+    my $el_nsurl = $item->{node}->namespace_uri || '';
+    my $el_ln = $item->{node}->local_name;
+    my $el_def = $_Defs->{elements}->{$el_nsurl}->{$el_ln};
+    my $checker = $ElementTextCheckerByName->{$el_nsurl}->{$el_ln}
+        || $ElementTextCheckerByType->{$el_def->{text_type} || ''};
     if (defined $checker) {
       my ($value, undef, $sps, undef) = node_to_text_and_tc_and_sps $item->{node};
       my $onerror = $GetNestedOnError->($self->onerror, $item->{node}, $value, $sps);
@@ -3389,7 +3394,10 @@ my %PropContainerChecker = (
         my $min = $children->{$ns}->{$ln}->{min} || 0;
         my $n = $element_state->{has_element}->{$ns}->{$ln} || 0;
         $self->{onerror}->(node => $item->{node},
-                           type => 'child element missing:atom',
+                           type => {
+                             ATOM_NS, 'child element missing:atom',
+                             APP_NS, 'child element missing:app',
+                           }->{$ns} || 'child element missing',
                            text => $ln,
                            level => 'm')
             if $min > $n;
@@ -8549,6 +8557,8 @@ $Element->{+ATOM_NS}->{entry} = {
   }, # check_end
 }; # <atom:entry>
 
+# XXX atom:entry in Collection Document SHOULD have app:edited
+
 $Element->{(ATOM_NS)}->{source} = {
   %PropContainerChecker,
   check_child_element => sub {
@@ -8617,6 +8627,11 @@ $Element->{+ATOM_NS}->{feed} = {
         }
       }
     }
+
+    # XXX no duplicate <at:deleted-entry ref when> (MUST)
+    # XXX warn duplicate <entry><id> (MAY, semantics not defined)
+    # XXX warn if <entry><id> vs <at:deleted-entry ref> (MAY, older ignored)
+
     $PropContainerChecker{check_child_element}->(@_);
   }, # check_child_element
   check_end => sub {
@@ -8874,8 +8889,8 @@ $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
 # XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
 
 ## TODO: <thr:in-reply-to href=""> MUST be dereferencable.
-# XXX <thr:in-reply-to ref=""> - same rule as |atom:id|
 ## TODO: <thr:in-reply-to source=""> MUST be dereferencable.
+# XXX <thr:in-reply-to ref="">, <at:deleted-entry ref=""> - same rule as |atom:id|
 
 $Element->{+THR_NS}->{'in-reply-to'}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
@@ -8887,46 +8902,95 @@ $Element->{+THR_NS}->{'in-reply-to'}->{check_attrs2} = sub {
   }
 }; # <thr:in-reply-to> check_attrs2
 
-$Element->{+THR_NS}->{total} = {
-  %AnyChecker,
-  check_start =>  sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{value} = '';
-  },
-  check_child_element => sub {
-    my ($self, $item, $child_el, $child_nsuri, $child_ln,
-        $child_is_transparent, $element_state) = @_;
+$ElementTextCheckerByName->{(THR_NS)}->{total} = sub {
+  ## NOTE: xsd:nonNegativeInteger
+  my ($self, $value, $onerror) = @_;
+  $onerror->(type => 'xs:nonNegativeInteger:bad value', level => 'm')
+      unless $value =~ /\A(?>[0-9]+|[+][0-9]+|[+-]0+)\z/;
+}; # <thr:total> text
 
-    if ($self->{minus_elements}->{$child_nsuri}->{$child_ln} and
-        $self->_is_minus_element ($child_el, $child_nsuri, $child_ln)) {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed:minus',
-                         level => 'm');
-    } else {
-      $self->{onerror}->(node => $child_el,
-                         type => 'element not allowed',
-                         level => 'm');
-    }
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{value} .= $child_node->data;
-  },
+$Element->{(APP_NS)}->{categories} = {
+  %PropContainerChecker,
   check_end => sub {
     my ($self, $item, $element_state) = @_;
+    if ($item->{node}->has_attribute_ns (undef, 'href')) {
+      for (qw(fixed scheme)) {
+        my $attr = $item->{node}->get_attribute_node_ns (undef, $_);
+        $self->{onerror}->(node => $attr,
+                           type => 'attribute not allowed',
+                           level => 'm')
+            if defined $attr;
+      }
+      if ($element_state->{has_element}->{(ATOM_NS)}->{category}) {
+        $self->{onerror}->(node => $_,
+                           type => 'element not allowed:empty',
+                           level => 'm')
+            for grep { $_->manakai_element_type_match (ATOM_NS, 'category') }
+                $item->{node}->children->to_list;
+      }
+    }
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # <app:categories>
 
-    ## NOTE: xsd:nonNegativeInteger
-    unless ($element_state->{value} =~ /\A(?>[0-9]+|-0+)\z/) { # XXX
+$ElementAttrChecker->{(APP_NS)}->{categories}->{''}->{fixed} = sub {
+  my ($self, $attr, $item) = @_;
+  my $value = $attr->value;
+  $self->{onerror}->(node => $item->{node},
+                     type => 'invalid attribute value',
+                     level => 'm')
+      unless $value eq 'yes' or $value eq 'no';
+}; # <app:categories fixed="">
+
+$Element->{(APP_NS)}->{service} = {%PropContainerChecker};
+$Element->{(APP_NS)}->{workspace} = {%PropContainerChecker};
+
+$Element->{(APP_NS)}->{collection} = {
+  %PropContainerChecker,
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    unless ($item->{node}->has_attribute_ns (undef, 'href')) {
       $self->{onerror}->(node => $item->{node},
-                         type => 'invalid attribute value', # XXX
+                         type => 'attribute missing',
+                         text => 'href',
                          level => 'm');
     }
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # <app:collection>
 
-    $AnyChecker{check_end}->(@_);
-  },
+$ElementTextCheckerByName->{(APP_NS)}->{accept} = sub {
+  # XXX
+}; # <app:accept> text
+
+$Element->{(APP_NS)}->{control} = {%PropContainerChecker};
+
+$ElementTextCheckerByName->{(APP_NS)}->{draft} = sub {
+  my ($self, $value, $onerror) = @_;
+  $onerror->(type => 'app:draft:bad value', level => 'm')
+      unless $value eq 'yes' or $value eq 'no';
+}; # <app:draft> text
+
+$Element->{(AT_NS)}->{'deleted-entry'} = {
+  %PropContainerChecker,
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    for (qw(ref when)) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => $_,
+                         level => 'm')
+          unless $item->{node}->has_attribute_ns (undef, $_);
+    }
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # <at:deleted-entry>
+
+$ElementAttrChecker->{(AT_NS)}->{'deleted-entry'}->{''}->{when} = sub {
+# XXX
 };
 
-## TODO: APP [RFC 5023]
+# XXX Atom 0.3
 
 ## ------ Nested document ------
 

@@ -32,6 +32,7 @@ sub _test ($$) {
         if $test->{data}->[1] and
            $test->{data}->[1]->[0] and
            $test->{data}->[1]->[0] eq 'html';
+    my $check_as_doc = $test->{'is-document'};
 
     unless ($test->{data}) {
       warn "No #data field\n";
@@ -79,7 +80,7 @@ sub _test ($$) {
     });
     $val->scripting (not $test->{noscript});
     $val->image_viewable ($test->{'image-viewable'});
-    $val->check_node ($doc->document_element);
+    $val->check_node ($check_as_doc ? $doc : $doc->document_element);
 
     my $actual = join ("\n", sort {$a cmp $b} @error);
     my $expected = join ("\n", sort {$a cmp $b} @{$test->{errors}->[0]});
@@ -88,7 +89,6 @@ sub _test ($$) {
     if ($actual eq $expected) {
       is $actual, $expected;
     } else {
-#line 1 "content-checker-test-ok"
       eq_or_diff $actual, $expected, $test->{data}->[0];
     }
     done $c;

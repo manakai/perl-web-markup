@@ -876,7 +876,14 @@ $Web::HTML::Validator::_Defs = {
                                                                             "status" => "LC"
                                                                           },
                                                                     "comment" => {
-                                                                                 "attrs" => {},
+                                                                                 "attrs" => {
+                                                                                            "" => {
+                                                                                                  "type" => {
+                                                                                                            "conforming" => 1,
+                                                                                                            "status" => "LC"
+                                                                                                          }
+                                                                                                }
+                                                                                          },
                                                                                  "conforming" => 1,
                                                                                  "content_model" => "atomTextConstruct",
                                                                                  "status" => "LC"
@@ -16665,7 +16672,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                             "http://www.w3.org/2005/Atom" => {
                                                                                                                              "title" => {
                                                                                                                                         "max" => 1,
-                                                                                                                                        "min" => 0
+                                                                                                                                        "min" => 1
                                                                                                                                       }
                                                                                                                            },
                                                                                             "http://www.w3.org/2007/app" => {
@@ -16727,7 +16734,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                            "http://www.w3.org/2005/Atom" => {
                                                                                                                             "title" => {
                                                                                                                                        "max" => 1,
-                                                                                                                                       "min" => 0
+                                                                                                                                       "min" => 1
                                                                                                                                      }
                                                                                                                           },
                                                                                            "http://www.w3.org/2007/app" => {
