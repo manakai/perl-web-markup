@@ -853,6 +853,7 @@ $Web::HTML::Validator::_Defs = {
                                                     },
                         "http://purl.org/atompub/tombstones/1.0" => {
                                                                     "by" => {
+                                                                            "atom_extensible" => 1,
                                                                             "attrs" => {},
                                                                             "child_elements" => {
                                                                                                 "http://www.w3.org/2005/Atom" => {
@@ -881,6 +882,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                  "status" => "LC"
                                                                                },
                                                                     "deleted-entry" => {
+                                                                                       "atom_extensible" => 1,
                                                                                        "attrs" => {
                                                                                                   "" => {
                                                                                                         "ref" => {
@@ -16112,6 +16114,7 @@ $Web::HTML::Validator::_Defs = {
                                                                 "attrs" => {}
                                                               },
                                                          "author" => {
+                                                                     "atom_extensible" => 1,
                                                                      "attrs" => {},
                                                                      "child_elements" => {
                                                                                          "http://www.w3.org/2005/Atom" => {
@@ -16175,6 +16178,7 @@ $Web::HTML::Validator::_Defs = {
                                                                       "status" => "LC"
                                                                     },
                                                          "contributor" => {
+                                                                          "atom_extensible" => 1,
                                                                           "attrs" => {},
                                                                           "child_elements" => {
                                                                                               "http://www.w3.org/2005/Atom" => {
@@ -16204,6 +16208,7 @@ $Web::HTML::Validator::_Defs = {
                                                                     "text_type" => "e-mail address"
                                                                   },
                                                          "entry" => {
+                                                                    "atom_extensible" => 1,
                                                                     "attrs" => {},
                                                                     "child_elements" => {
                                                                                         "http://purl.org/syndication/thread/1.0" => {
@@ -16283,6 +16288,7 @@ $Web::HTML::Validator::_Defs = {
                                                                     "status" => "LC"
                                                                   },
                                                          "feed" => {
+                                                                   "atom_extensible" => 1,
                                                                    "attrs" => {},
                                                                    "child_elements" => {
                                                                                        "http://purl.org/atompub/tombstones/1.0" => {
@@ -16490,6 +16496,7 @@ $Web::HTML::Validator::_Defs = {
                                                                      "status" => "LC"
                                                                    },
                                                          "source" => {
+                                                                     "atom_extensible" => 1,
                                                                      "attrs" => {},
                                                                      "child_elements" => {
                                                                                          "http://www.w3.org/2005/Atom" => {
@@ -16643,6 +16650,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                         "collection" => {
+                                                                        "atom_extensible" => 1,
                                                                         "attrs" => {
                                                                                    "" => {
                                                                                          "href" => {
@@ -16673,6 +16681,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "status" => "LC"
                                                                       },
                                                         "control" => {
+                                                                     "atom_extensible" => 1,
                                                                      "attrs" => {},
                                                                      "child_elements" => {
                                                                                          "http://www.w3.org/2007/app" => {
@@ -16698,6 +16707,7 @@ $Web::HTML::Validator::_Defs = {
                                                                     "status" => "LC"
                                                                   },
                                                         "service" => {
+                                                                     "atom_extensible" => 1,
                                                                      "attrs" => {},
                                                                      "child_elements" => {
                                                                                          "http://www.w3.org/2007/app" => {
@@ -16711,6 +16721,7 @@ $Web::HTML::Validator::_Defs = {
                                                                      "status" => "LC"
                                                                    },
                                                         "workspace" => {
+                                                                       "atom_extensible" => 1,
                                                                        "attrs" => {},
                                                                        "child_elements" => {
                                                                                            "http://www.w3.org/2005/Atom" => {
@@ -33132,24 +33143,28 @@ $Web::HTML::Validator::_Defs = {
                 },
           "namespaces" => {
                           "http://purl.org/atom/ns#" => {
+                                                        "atom_family" => 1,
                                                         "label" => "Atom 0.3",
                                                         "prefix" => "atom",
                                                         "status" => "Obsolete",
                                                         "supported" => 1
                                                       },
                           "http://purl.org/atompub/tombstones/1.0" => {
+                                                                      "atom_family" => 1,
                                                                       "label" => "Atom deleted-entry",
                                                                       "prefix" => "at",
                                                                       "status" => "LC",
                                                                       "supported" => 1
                                                                     },
                           "http://purl.org/syndication/history/1.0" => {
+                                                                       "atom_family" => 1,
                                                                        "label" => "Atom Feed Paging and Archiving",
                                                                        "prefix" => "fh",
                                                                        "status" => "LC",
                                                                        "supported" => 1
                                                                      },
                           "http://purl.org/syndication/thread/1.0" => {
+                                                                      "atom_family" => 1,
                                                                       "label" => "Atom Threading Extension",
                                                                       "prefix" => "thr",
                                                                       "status" => "LC",
@@ -33194,12 +33209,14 @@ $Web::HTML::Validator::_Defs = {
                                                              "supported" => 1
                                                            },
                           "http://www.w3.org/2005/Atom" => {
+                                                           "atom_family" => 1,
                                                            "label" => "Atom",
                                                            "prefix" => "atom",
                                                            "status" => "LC",
                                                            "supported" => 1
                                                          },
                           "http://www.w3.org/2007/app" => {
+                                                          "atom_family" => 1,
                                                           "label" => "Atom Publishing Protocol",
                                                           "prefix" => "app",
                                                           "status" => "LC",

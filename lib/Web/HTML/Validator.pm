@@ -3349,9 +3349,9 @@ my %PropContainerChecker = (
                          type => 'element not allowed:minus',
                          level => 'm');
     } else {
-      my $children = $_Defs->{elements}
-          ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name}
-          ->{child_elements}->{$child_nsuri}->{$child_ln};
+      my $el_def = $_Defs->{elements}
+          ->{$item->{node}->namespace_uri || ''}->{$item->{node}->local_name};
+      my $children = $el_def->{child_elements}->{$child_nsuri}->{$child_ln};
       if (defined $children->{min}) {
         my $n = ++$element_state->{has_element}->{$child_nsuri}->{$child_ln};
         if (defined $children->{max}) { # max < +Infinity
@@ -3360,6 +3360,10 @@ my %PropContainerChecker = (
                              level => 'm')
               if $children->{max} < $n;
         }
+      } elsif ($el_def->{atom_extensible} and
+               length $child_nsuri and
+               not $_Defs->{namespaces}->{$child_nsuri}->{supported}) {
+        #
       } else {
         $self->{onerror}->(node => $child_el,
                            type => 'element not allowed',
