@@ -927,6 +927,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                        "status" => "LC"
                                                                                      }
                                                                   },
+                        "http://purl.org/syndication/history/1.0" => {
+                                                                     "archive" => {
+                                                                                  "attrs" => {},
+                                                                                  "conforming" => 1,
+                                                                                  "content_model" => "empty",
+                                                                                  "status" => "LC"
+                                                                                },
+                                                                     "complete" => {
+                                                                                   "attrs" => {},
+                                                                                   "conforming" => 1,
+                                                                                   "content_model" => "empty",
+                                                                                   "status" => "LC"
+                                                                                 }
+                                                                   },
                         "http://purl.org/syndication/thread/1.0" => {
                                                                     "*" => {
                                                                            "attrs" => {}
@@ -16276,6 +16290,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                       "min" => 0
                                                                                                                                                     }
                                                                                                                                  },
+                                                                                       "http://purl.org/syndication/history/1.0" => {
+                                                                                                                                    "archive" => {
+                                                                                                                                                 "max" => 1,
+                                                                                                                                                 "min" => 0
+                                                                                                                                               },
+                                                                                                                                    "complete" => {
+                                                                                                                                                  "max" => 1,
+                                                                                                                                                  "min" => 0
+                                                                                                                                                }
+                                                                                                                                  },
                                                                                        "http://www.w3.org/2000/09/xmldsig#" => {
                                                                                                                                "Signature" => {
                                                                                                                                               "max" => 1,
@@ -33109,16 +33133,25 @@ $Web::HTML::Validator::_Defs = {
           "namespaces" => {
                           "http://purl.org/atom/ns#" => {
                                                         "label" => "Atom 0.3",
+                                                        "prefix" => "atom",
                                                         "status" => "Obsolete",
                                                         "supported" => 1
                                                       },
                           "http://purl.org/atompub/tombstones/1.0" => {
                                                                       "label" => "Atom deleted-entry",
+                                                                      "prefix" => "at",
                                                                       "status" => "LC",
                                                                       "supported" => 1
                                                                     },
+                          "http://purl.org/syndication/history/1.0" => {
+                                                                       "label" => "Atom Feed Paging and Archiving",
+                                                                       "prefix" => "fh",
+                                                                       "status" => "LC",
+                                                                       "supported" => 1
+                                                                     },
                           "http://purl.org/syndication/thread/1.0" => {
                                                                       "label" => "Atom Threading Extension",
+                                                                      "prefix" => "thr",
                                                                       "status" => "LC",
                                                                       "supported" => 1
                                                                     },
@@ -33129,6 +33162,7 @@ $Web::HTML::Validator::_Defs = {
                                                                 },
                           "http://www.w3.org/1999/02/22-rdf-syntax-ns#" => {
                                                                            "label" => "RDF",
+                                                                           "prefix" => "rdf",
                                                                            "status" => "REC",
                                                                            "supported" => 1
                                                                          },
@@ -33144,6 +33178,7 @@ $Web::HTML::Validator::_Defs = {
                                                           },
                           "http://www.w3.org/1999/xlink" => {
                                                             "label" => "XLink",
+                                                            "prefix" => "xlink",
                                                             "status" => "REC",
                                                             "supported" => 1
                                                           },
@@ -33154,21 +33189,25 @@ $Web::HTML::Validator::_Defs = {
                                                         },
                           "http://www.w3.org/2000/xmlns/" => {
                                                              "label" => "XMLNS",
+                                                             "prefix" => "xmlns",
                                                              "status" => "REC",
                                                              "supported" => 1
                                                            },
                           "http://www.w3.org/2005/Atom" => {
                                                            "label" => "Atom",
+                                                           "prefix" => "atom",
                                                            "status" => "LC",
                                                            "supported" => 1
                                                          },
                           "http://www.w3.org/2007/app" => {
                                                           "label" => "Atom Publishing Protocol",
+                                                          "prefix" => "app",
                                                           "status" => "LC",
                                                           "supported" => 1
                                                         },
                           "http://www.w3.org/XML/1998/namespace" => {
                                                                     "label" => "XML",
+                                                                    "prefix" => "xml",
                                                                     "status" => "REC",
                                                                     "supported" => 1
                                                                   }

@@ -8869,8 +8869,6 @@ $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
 
 # XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
 
-## -- Atom Threading 1.0 [RFC 4685]
-
 ## TODO: <thr:in-reply-to href=""> MUST be dereferencable.
 # XXX <thr:in-reply-to ref=""> - same rule as |atom:id|
 ## TODO: <thr:in-reply-to source=""> MUST be dereferencable.
@@ -8923,12 +8921,6 @@ $Element->{+THR_NS}->{total} = {
     $AnyChecker{check_end}->(@_);
   },
 };
-
-## TODO: fh:complete
-
-## TODO: fh:archive
-
-## TODO: Check as archive document, page feed document, ...
 
 ## TODO: APP [RFC 5023]
 
