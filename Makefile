@@ -84,7 +84,7 @@ local/bin/jq:
 	chmod u+x $@
 
 local/aria-html-map.json: local/aria.json local/bin/jq
-	cat local/aria.json | local/bin/jq '.attrs | to_entries | map(select(.value.preferred.type == "html-attr")) | map([.key, .value.preferred.name])' > $@
+	cat local/aria.json | local/bin/jq '.attrs | to_entries | map(select(.value.preferred.type == "html_attr")) | map([.key, .value.preferred.name])' > $@
 
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
     local/html-syntax.json local/xml-syntax.json local/bin/pmbp.pl Makefile

@@ -1,10 +1,6 @@
 $Web::HTML::Validator::_Defs = {
           "aria_to_html" => [
                             [
-                              "aria-disabled",
-                              "inert"
-                            ],
-                            [
                               "aria-dropeffect",
                               "dropzone"
                             ],
@@ -574,54 +570,133 @@ $Web::HTML::Validator::_Defs = {
                         "http://purl.org/atom/ns#" => {
                                                       "author" => {
                                                                   "attrs" => {},
-                                                                  "content_model" => "atom09PersonConstruct",
+                                                                  "child_elements" => {
+                                                                                      "http://purl.org/atom/ns#" => {
+                                                                                                                    "email" => {
+                                                                                                                               "max" => 1,
+                                                                                                                               "min" => 0
+                                                                                                                             },
+                                                                                                                    "name" => {
+                                                                                                                              "max" => 1,
+                                                                                                                              "min" => 1
+                                                                                                                            },
+                                                                                                                    "url" => {
+                                                                                                                             "max" => 1,
+                                                                                                                             "min" => 0
+                                                                                                                           }
+                                                                                                                  }
+                                                                                    },
+                                                                  "content_model" => "atom03PersonConstruct",
+                                                                  "preferred" => {
+                                                                                 "name" => "author",
+                                                                                 "type" => "atom_element"
+                                                                               },
                                                                   "status" => "Obsolete"
                                                                 },
                                                       "content" => {
                                                                    "attrs" => {
                                                                               "" => {
                                                                                     "mode" => {
+                                                                                              "preferred" => {
+                                                                                                             "element" => "content",
+                                                                                                             "name" => "type",
+                                                                                                             "type" => "atom_attr"
+                                                                                                           },
                                                                                               "status" => "Obsolete"
                                                                                             },
                                                                                     "type" => {
-                                                                                              "status" => "Obsolete"
+                                                                                              "preferred" => {
+                                                                                                             "element" => "content",
+                                                                                                             "name" => "type",
+                                                                                                             "type" => "atom_attr"
+                                                                                                           },
+                                                                                              "status" => "Obsolete",
+                                                                                              "value_type" => "MIME type"
                                                                                             }
                                                                                   }
                                                                             },
-                                                                   "content_model" => "atom09ContentConstruct",
+                                                                   "content_model" => "atom03ContentConstruct",
+                                                                   "preferred" => {
+                                                                                  "name" => "content",
+                                                                                  "type" => "atom_element"
+                                                                                },
                                                                    "status" => "Obsolete"
                                                                  },
                                                       "contributor" => {
                                                                        "attrs" => {},
-                                                                       "content_model" => "atom09PersonConstruct",
+                                                                       "child_elements" => {
+                                                                                           "http://purl.org/atom/ns#" => {
+                                                                                                                         "email" => {
+                                                                                                                                    "max" => 1,
+                                                                                                                                    "min" => 0
+                                                                                                                                  },
+                                                                                                                         "name" => {
+                                                                                                                                   "max" => 1,
+                                                                                                                                   "min" => 1
+                                                                                                                                 },
+                                                                                                                         "url" => {
+                                                                                                                                  "max" => 1,
+                                                                                                                                  "min" => 0
+                                                                                                                                }
+                                                                                                                       }
+                                                                                         },
+                                                                       "content_model" => "atom03PersonConstruct",
+                                                                       "preferred" => {
+                                                                                      "name" => "contributor",
+                                                                                      "type" => "atom_element"
+                                                                                    },
                                                                        "status" => "Obsolete"
                                                                      },
                                                       "copyright" => {
                                                                      "attrs" => {
                                                                                 "" => {
                                                                                       "mode" => {
+                                                                                                "preferred" => {
+                                                                                                               "element" => "license",
+                                                                                                               "name" => "type",
+                                                                                                               "type" => "atom_attr"
+                                                                                                             },
                                                                                                 "status" => "Obsolete"
                                                                                               },
                                                                                       "type" => {
-                                                                                                "status" => "Obsolete"
+                                                                                                "preferred" => {
+                                                                                                               "element" => "license",
+                                                                                                               "name" => "type",
+                                                                                                               "type" => "atom_attr"
+                                                                                                             },
+                                                                                                "status" => "Obsolete",
+                                                                                                "value_type" => "MIME type"
                                                                                               }
                                                                                     }
                                                                               },
-                                                                     "content_model" => "atom09ContentConstruct",
+                                                                     "content_model" => "atom03ContentConstruct",
+                                                                     "preferred" => {
+                                                                                    "name" => "license",
+                                                                                    "type" => "atom_element"
+                                                                                  },
                                                                      "status" => "Obsolete"
                                                                    },
                                                       "created" => {
                                                                    "attrs" => {},
-                                                                   "content_model" => "atom09DateConstruct",
+                                                                   "content_model" => "atom03DateConstruct",
+                                                                   "preferred" => {
+                                                                                  "name" => "created",
+                                                                                  "type" => "atom_element"
+                                                                                },
                                                                    "status" => "Obsolete"
                                                                  },
                                                       "email" => {
                                                                  "attrs" => {},
                                                                  "content_model" => "text",
+                                                                 "preferred" => {
+                                                                                "name" => "email",
+                                                                                "type" => "atom_element"
+                                                                              },
                                                                  "status" => "Obsolete",
                                                                  "text_type" => "e-mail address"
                                                                },
                                                       "entry" => {
+                                                                 "atom_extensible" => 1,
                                                                  "attrs" => {},
                                                                  "child_elements" => {
                                                                                      "http://purl.org/atom/ns#" => {
@@ -630,7 +705,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                "min" => 0
                                                                                                                              },
                                                                                                                    "content" => {
-                                                                                                                                "max" => 1,
                                                                                                                                 "min" => 0
                                                                                                                               },
                                                                                                                    "contributor" => {
@@ -665,12 +739,20 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                             }
                                                                                                                  }
                                                                                    },
+                                                                 "preferred" => {
+                                                                                "name" => "entry",
+                                                                                "type" => "atom_element"
+                                                                              },
                                                                  "status" => "Obsolete"
                                                                },
                                                       "feed" => {
+                                                                "atom_extensible" => 1,
                                                                 "attrs" => {
                                                                            "" => {
                                                                                  "version" => {
+                                                                                              "preferred" => {
+                                                                                                             "type" => "none"
+                                                                                                           },
                                                                                               "status" => "Obsolete"
                                                                                             }
                                                                                }
@@ -720,28 +802,50 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                            }
                                                                                                                 }
                                                                                   },
+                                                                "preferred" => {
+                                                                               "name" => "feed",
+                                                                               "type" => "atom_element"
+                                                                             },
                                                                 "status" => "Obsolete"
                                                               },
                                                       "generator" => {
                                                                      "attrs" => {
                                                                                 "" => {
                                                                                       "url" => {
+                                                                                               "preferred" => {
+                                                                                                              "element" => "generator",
+                                                                                                              "name" => "uri",
+                                                                                                              "type" => "atom_attr"
+                                                                                                            },
                                                                                                "status" => "Obsolete",
                                                                                                "url_role" => "hyperlink-secondary",
                                                                                                "value_type" => "URL"
                                                                                              },
                                                                                       "version" => {
+                                                                                                   "preferred" => {
+                                                                                                                  "element" => "generator",
+                                                                                                                  "name" => "version",
+                                                                                                                  "type" => "atom_attr"
+                                                                                                                },
                                                                                                    "status" => "Obsolete"
                                                                                                  }
                                                                                     }
                                                                               },
                                                                      "content_model" => "text",
+                                                                     "preferred" => {
+                                                                                    "name" => "generator",
+                                                                                    "type" => "atom_element"
+                                                                                  },
                                                                      "status" => "Obsolete",
                                                                      "text_type" => "text"
                                                                    },
                                                       "id" => {
                                                               "attrs" => {},
                                                               "content_model" => "text",
+                                                              "preferred" => {
+                                                                             "name" => "id",
+                                                                             "type" => "atom_element"
+                                                                           },
                                                               "status" => "Obsolete",
                                                               "text_type" => "URL",
                                                               "url_role" => "id"
@@ -750,54 +854,100 @@ $Web::HTML::Validator::_Defs = {
                                                                 "attrs" => {
                                                                            "" => {
                                                                                  "mode" => {
+                                                                                           "preferred" => {
+                                                                                                          "type" => "none"
+                                                                                                        },
                                                                                            "status" => "Obsolete"
                                                                                          },
                                                                                  "type" => {
-                                                                                           "status" => "Obsolete"
+                                                                                           "preferred" => {
+                                                                                                          "type" => "none"
+                                                                                                        },
+                                                                                           "status" => "Obsolete",
+                                                                                           "value_type" => "MIME type"
                                                                                          }
                                                                                }
                                                                          },
-                                                                "content_model" => "atom09ContentConstruct",
+                                                                "content_model" => "atom03ContentConstruct",
+                                                                "preferred" => {
+                                                                               "type" => "none"
+                                                                             },
                                                                 "status" => "Obsolete"
                                                               },
                                                       "issued" => {
                                                                   "attrs" => {},
-                                                                  "content_model" => "atom09DateConstruct",
+                                                                  "content_model" => "atom03DateConstruct",
+                                                                  "preferred" => {
+                                                                                 "name" => "created",
+                                                                                 "type" => "atom_element"
+                                                                               },
                                                                   "status" => "Obsolete"
                                                                 },
                                                       "link" => {
                                                                 "attrs" => {
                                                                            "" => {
                                                                                  "href" => {
+                                                                                           "preferred" => {
+                                                                                                          "element" => "link",
+                                                                                                          "name" => "href",
+                                                                                                          "type" => "atom_attr"
+                                                                                                        },
                                                                                            "status" => "Obsolete",
                                                                                            "url_role" => "contextual",
                                                                                            "value_type" => "URL"
                                                                                          },
                                                                                  "rel" => {
+                                                                                          "preferred" => {
+                                                                                                         "element" => "link",
+                                                                                                         "name" => "rel",
+                                                                                                         "type" => "atom_attr"
+                                                                                                       },
                                                                                           "status" => "Obsolete",
                                                                                           "url_role" => "id"
                                                                                         },
                                                                                  "title" => {
+                                                                                            "preferred" => {
+                                                                                                           "element" => "link",
+                                                                                                           "name" => "title",
+                                                                                                           "type" => "atom_attr"
+                                                                                                         },
                                                                                             "status" => "Obsolete",
                                                                                             "value_type" => "text"
                                                                                           },
                                                                                  "type" => {
+                                                                                           "preferred" => {
+                                                                                                          "element" => "link",
+                                                                                                          "name" => "type",
+                                                                                                          "type" => "atom_attr"
+                                                                                                        },
                                                                                            "status" => "Obsolete",
                                                                                            "value_type" => "MIME type"
                                                                                          }
                                                                                }
                                                                          },
                                                                 "content_model" => "empty",
+                                                                "preferred" => {
+                                                                               "name" => "link",
+                                                                               "type" => "atom_element"
+                                                                             },
                                                                 "status" => "Obsolete"
                                                               },
                                                       "modified" => {
                                                                     "attrs" => {},
-                                                                    "content_model" => "atom09DateConstruct",
+                                                                    "content_model" => "atom03DateConstruct",
+                                                                    "preferred" => {
+                                                                                   "name" => "updated",
+                                                                                   "type" => "atom_element"
+                                                                                 },
                                                                     "status" => "Obsolete"
                                                                   },
                                                       "name" => {
                                                                 "attrs" => {},
                                                                 "content_model" => "text",
+                                                                "preferred" => {
+                                                                               "name" => "name",
+                                                                               "type" => "atom_element"
+                                                                             },
                                                                 "status" => "Obsolete",
                                                                 "text_type" => "text"
                                                               },
@@ -805,47 +955,96 @@ $Web::HTML::Validator::_Defs = {
                                                                    "attrs" => {
                                                                               "" => {
                                                                                     "mode" => {
+                                                                                              "preferred" => {
+                                                                                                             "element" => "summary",
+                                                                                                             "name" => "type",
+                                                                                                             "type" => "atom_attr"
+                                                                                                           },
                                                                                               "status" => "Obsolete"
                                                                                             },
                                                                                     "type" => {
-                                                                                              "status" => "Obsolete"
+                                                                                              "preferred" => {
+                                                                                                             "element" => "summary",
+                                                                                                             "name" => "type",
+                                                                                                             "type" => "atom_attr"
+                                                                                                           },
+                                                                                              "status" => "Obsolete",
+                                                                                              "value_type" => "MIME type"
                                                                                             }
                                                                                   }
                                                                             },
-                                                                   "content_model" => "atom09ContentConstruct",
+                                                                   "content_model" => "atom03ContentConstruct",
+                                                                   "preferred" => {
+                                                                                  "name" => "summary",
+                                                                                  "type" => "atom_element"
+                                                                                },
                                                                    "status" => "Obsolete"
                                                                  },
                                                       "tagline" => {
                                                                    "attrs" => {
                                                                               "" => {
                                                                                     "mode" => {
+                                                                                              "preferred" => {
+                                                                                                             "element" => "subtitle",
+                                                                                                             "name" => "type",
+                                                                                                             "type" => "atom_attr"
+                                                                                                           },
                                                                                               "status" => "Obsolete"
                                                                                             },
                                                                                     "type" => {
-                                                                                              "status" => "Obsolete"
+                                                                                              "preferred" => {
+                                                                                                             "element" => "subtitle",
+                                                                                                             "name" => "type",
+                                                                                                             "type" => "atom_attr"
+                                                                                                           },
+                                                                                              "status" => "Obsolete",
+                                                                                              "value_type" => "MIME type"
                                                                                             }
                                                                                   }
                                                                             },
-                                                                   "content_model" => "atom09ContentConstruct",
+                                                                   "content_model" => "atom03ContentConstruct",
+                                                                   "preferred" => {
+                                                                                  "name" => "subtitle",
+                                                                                  "type" => "atom_element"
+                                                                                },
                                                                    "status" => "Obsolete"
                                                                  },
                                                       "title" => {
                                                                  "attrs" => {
                                                                             "" => {
                                                                                   "mode" => {
+                                                                                            "preferred" => {
+                                                                                                           "element" => "title",
+                                                                                                           "name" => "type",
+                                                                                                           "type" => "atom_attr"
+                                                                                                         },
                                                                                             "status" => "Obsolete"
                                                                                           },
                                                                                   "type" => {
-                                                                                            "status" => "Obsolete"
+                                                                                            "preferred" => {
+                                                                                                           "element" => "title",
+                                                                                                           "name" => "type",
+                                                                                                           "type" => "atom_attr"
+                                                                                                         },
+                                                                                            "status" => "Obsolete",
+                                                                                            "value_type" => "MIME type"
                                                                                           }
                                                                                 }
                                                                           },
-                                                                 "content_model" => "atom09ContentConstruct",
+                                                                 "content_model" => "atom03ContentConstruct",
+                                                                 "preferred" => {
+                                                                                "name" => "title",
+                                                                                "type" => "atom_element"
+                                                                              },
                                                                  "status" => "Obsolete"
                                                                },
                                                       "url" => {
                                                                "attrs" => {},
                                                                "content_model" => "text",
+                                                               "preferred" => {
+                                                                              "name" => "uri",
+                                                                              "type" => "atom_element"
+                                                                            },
                                                                "status" => "Obsolete",
                                                                "text_type" => "URL",
                                                                "url_role" => "contextual"
@@ -915,12 +1114,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                                     "min" => 0
                                                                                                                                                                   }
                                                                                                                                                      },
-                                                                                                           "http://www.w3.org/2000/09/xmldsig#" => {
-                                                                                                                                                   "Signature" => {
-                                                                                                                                                                  "max" => 1,
-                                                                                                                                                                  "min" => 0
-                                                                                                                                                                }
-                                                                                                                                                 },
                                                                                                            "http://www.w3.org/2005/Atom" => {
                                                                                                                                             "link" => {
                                                                                                                                                       "min" => 0
@@ -1249,7 +1442,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    },
                                                                                                        "preferred" => {
                                                                                                                       "name" => "dropzone",
-                                                                                                                      "type" => "html-attr"
+                                                                                                                      "type" => "html_attr"
                                                                                                                     },
                                                                                                        "status" => "CR",
                                                                                                        "value_type" => "unordered set of unique space-separated tokens"
@@ -1313,7 +1506,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                    },
                                                                                                      "preferred" => {
                                                                                                                     "name" => "contextmenu",
-                                                                                                                    "type" => "html-attr"
+                                                                                                                    "type" => "html_attr"
                                                                                                                   },
                                                                                                      "status" => "CR",
                                                                                                      "value_type" => "enumerated"
@@ -1332,7 +1525,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                                    "preferred" => {
                                                                                                                   "name" => "hidden",
-                                                                                                                  "type" => "html-attr"
+                                                                                                                  "type" => "html_attr"
                                                                                                                 },
                                                                                                    "status" => "CR",
                                                                                                    "value_type" => "enumerated"
@@ -15313,7 +15506,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                                      "preferred" => {
                                                                                                                     "name" => "dropzone",
-                                                                                                                    "type" => "html-attr"
+                                                                                                                    "type" => "html_attr"
                                                                                                                   },
                                                                                                      "status" => "CR",
                                                                                                      "value_type" => "unordered set of unique space-separated tokens"
@@ -15377,7 +15570,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                  },
                                                                                                    "preferred" => {
                                                                                                                   "name" => "contextmenu",
-                                                                                                                  "type" => "html-attr"
+                                                                                                                  "type" => "html_attr"
                                                                                                                 },
                                                                                                    "status" => "CR",
                                                                                                    "value_type" => "enumerated"
@@ -15396,7 +15589,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                },
                                                                                                  "preferred" => {
                                                                                                                 "name" => "hidden",
-                                                                                                                "type" => "html-attr"
+                                                                                                                "type" => "html_attr"
                                                                                                               },
                                                                                                  "status" => "CR",
                                                                                                  "value_type" => "enumerated"
@@ -16227,12 +16420,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                "min" => 0
                                                                                                                                              }
                                                                                                                                   },
-                                                                                        "http://www.w3.org/2000/09/xmldsig#" => {
-                                                                                                                                "Signature" => {
-                                                                                                                                               "max" => 1,
-                                                                                                                                               "min" => 0
-                                                                                                                                             }
-                                                                                                                              },
                                                                                         "http://www.w3.org/2005/Atom" => {
                                                                                                                          "author" => {
                                                                                                                                      "has_additional_rules" => 1,
@@ -16313,12 +16500,6 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                   "min" => 0
                                                                                                                                                 }
                                                                                                                                   },
-                                                                                       "http://www.w3.org/2000/09/xmldsig#" => {
-                                                                                                                               "Signature" => {
-                                                                                                                                              "max" => 1,
-                                                                                                                                              "min" => 0
-                                                                                                                                            }
-                                                                                                                             },
                                                                                        "http://www.w3.org/2005/Atom" => {
                                                                                                                         "author" => {
                                                                                                                                     "has_additional_rules" => 1,
@@ -33286,7 +33467,7 @@ $Web::HTML::Validator::_Defs = {
                                            },
                                   "preferred" => {
                                                  "name" => "article",
-                                                 "type" => "html-element"
+                                                 "type" => "html_element"
                                                },
                                   "subclass_of" => {
                                                    "document" => 1,
@@ -33315,7 +33496,7 @@ $Web::HTML::Validator::_Defs = {
                                           },
                                  "preferred" => {
                                                 "name" => "button",
-                                                "type" => "html-element"
+                                                "type" => "html_element"
                                               },
                                  "subclass_of" => {
                                                   "command" => 1,
@@ -33475,7 +33656,7 @@ $Web::HTML::Validator::_Defs = {
                                           },
                                  "preferred" => {
                                                 "name" => "dialog",
-                                                "type" => "html-element"
+                                                "type" => "html_element"
                                               },
                                  "subclass_of" => {
                                                   "roletype" => 2,
@@ -33525,7 +33706,7 @@ $Web::HTML::Validator::_Defs = {
                                         },
                                "preferred" => {
                                               "name" => "form",
-                                              "type" => "html-element"
+                                              "type" => "html_element"
                                             },
                                "subclass_of" => {
                                                 "landmark" => 1,
@@ -33549,7 +33730,7 @@ $Web::HTML::Validator::_Defs = {
                                                },
                                "preferred" => {
                                               "name" => "table",
-                                              "type" => "html-element"
+                                              "type" => "html_element"
                                             },
                                "scope_of" => {
                                              "row" => 1,
@@ -33576,7 +33757,7 @@ $Web::HTML::Validator::_Defs = {
                                             },
                                    "preferred" => {
                                                   "name" => "td",
-                                                  "type" => "html-element"
+                                                  "type" => "html_element"
                                                 },
                                    "scope" => {
                                               "row" => 1
@@ -33599,7 +33780,7 @@ $Web::HTML::Validator::_Defs = {
                                          },
                                 "preferred" => {
                                                "name" => "fieldset",
-                                               "type" => "html-element"
+                                               "type" => "html_element"
                                              },
                                 "scope_of" => {
                                               "treeitem" => 1
@@ -33630,7 +33811,7 @@ $Web::HTML::Validator::_Defs = {
                                            },
                                   "preferred" => {
                                                  "name" => "h1",
-                                                 "type" => "html-element"
+                                                 "type" => "html_element"
                                                },
                                   "subclass_of" => {
                                                    "roletype" => 3,
@@ -33644,7 +33825,7 @@ $Web::HTML::Validator::_Defs = {
                                        },
                               "preferred" => {
                                              "name" => "figure",
-                                             "type" => "html-element"
+                                             "type" => "html_element"
                                            },
                               "subclass_of" => {
                                                "roletype" => 3,
@@ -33707,7 +33888,7 @@ $Web::HTML::Validator::_Defs = {
                                         },
                                "preferred" => {
                                               "name" => "a",
-                                              "type" => "html-element"
+                                              "type" => "html_element"
                                             },
                                "subclass_of" => {
                                                 "command" => 1,
@@ -33725,7 +33906,7 @@ $Web::HTML::Validator::_Defs = {
                                                },
                                "preferred" => {
                                               "name" => "ul",
-                                              "type" => "html-element"
+                                              "type" => "html_element"
                                             },
                                "scope_of" => {
                                              "listitem" => 1,
@@ -33759,7 +33940,7 @@ $Web::HTML::Validator::_Defs = {
                                                   },
                                   "preferred" => {
                                                  "name" => "select",
-                                                 "type" => "html-element"
+                                                 "type" => "html_element"
                                                },
                                   "subclass_of" => {
                                                    "composite" => 2,
@@ -33783,7 +33964,7 @@ $Web::HTML::Validator::_Defs = {
                                             },
                                    "preferred" => {
                                                   "name" => "li",
-                                                  "type" => "html-element"
+                                                  "type" => "html_element"
                                                 },
                                    "scope" => {
                                               "list" => 1
@@ -33814,7 +33995,7 @@ $Web::HTML::Validator::_Defs = {
                                         },
                                "preferred" => {
                                               "name" => "main",
-                                              "type" => "html-element"
+                                              "type" => "html_element"
                                             },
                                "subclass_of" => {
                                                 "landmark" => 1,
@@ -33861,7 +34042,7 @@ $Web::HTML::Validator::_Defs = {
                                                },
                                "preferred" => {
                                               "name" => "menu",
-                                              "type" => "html-element"
+                                              "type" => "html_element"
                                             },
                                "scope_of" => {
                                              "menuitem" => 1,
@@ -33898,7 +34079,7 @@ $Web::HTML::Validator::_Defs = {
                                                   },
                                   "preferred" => {
                                                  "name" => "menu",
-                                                 "type" => "html-element"
+                                                 "type" => "html_element"
                                                },
                                   "scope_of" => {
                                                 "menuitem" => 1,
@@ -33922,7 +34103,7 @@ $Web::HTML::Validator::_Defs = {
                      "menuitem" => {
                                    "preferred" => {
                                                   "name" => "menuitem",
-                                                  "type" => "html-element"
+                                                  "type" => "html_element"
                                                 },
                                    "scope" => {
                                               "menu" => 1,
@@ -33946,7 +34127,7 @@ $Web::HTML::Validator::_Defs = {
                                                     },
                                            "preferred" => {
                                                           "name" => "menuitem",
-                                                          "type" => "html-element"
+                                                          "type" => "html_element"
                                                         },
                                            "scope" => {
                                                       "menu" => 1,
@@ -33975,7 +34156,7 @@ $Web::HTML::Validator::_Defs = {
                                                  },
                                         "preferred" => {
                                                        "name" => "menuitem",
-                                                       "type" => "html-element"
+                                                       "type" => "html_element"
                                                      },
                                         "scope" => {
                                                    "menu" => 1,
@@ -33999,7 +34180,7 @@ $Web::HTML::Validator::_Defs = {
                                               },
                                      "preferred" => {
                                                     "name" => "nav",
-                                                    "type" => "html-element"
+                                                    "type" => "html_element"
                                                   },
                                      "subclass_of" => {
                                                       "landmark" => 1,
@@ -34028,7 +34209,7 @@ $Web::HTML::Validator::_Defs = {
                                           },
                                  "preferred" => {
                                                 "name" => "option",
-                                                "type" => "html-element"
+                                                "type" => "html_element"
                                               },
                                  "subclass_of" => {
                                                   "input" => 1,
@@ -34056,7 +34237,7 @@ $Web::HTML::Validator::_Defs = {
                                                },
                                       "preferred" => {
                                                      "name" => "progress",
-                                                     "type" => "html-element"
+                                                     "type" => "html_element"
                                                    },
                                       "subclass_of" => {
                                                        "range" => 1,
@@ -34273,7 +34454,7 @@ $Web::HTML::Validator::_Defs = {
                                               },
                               "preferred" => {
                                              "name" => "tr",
-                                             "type" => "html-element"
+                                             "type" => "html_element"
                                            },
                               "scope" => {
                                          "grid" => 1,
@@ -34303,7 +34484,7 @@ $Web::HTML::Validator::_Defs = {
                                                    },
                                    "preferred" => {
                                                   "name" => "tbody",
-                                                  "type" => "html-element"
+                                                  "type" => "html_element"
                                                 },
                                    "scope" => {
                                               "grid" => 1
@@ -34700,7 +34881,7 @@ $Web::HTML::Validator::_Defs = {
                                            },
                                   "preferred" => {
                                                  "name" => "menu",
-                                                 "type" => "html-element"
+                                                 "type" => "html_element"
                                                },
                                   "subclass_of" => {
                                                    "group" => 1,

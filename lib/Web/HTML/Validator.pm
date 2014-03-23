@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '128.0';
+our $VERSION = '129.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
@@ -241,6 +241,7 @@ sub XSLT_NS () { q<http://www.w3.org/1999/XSL/Transform> }
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 sub RSS1_NS () { q<http://purl.org/rss/1.0/> }
 sub ATOM_NS () { q<http://www.w3.org/2005/Atom> }
+sub ATOM03_NS () { q<http://purl.org/atom/ns#> }
 sub APP_NS () { q<http://www.w3.org/2007/app> }
 sub THR_NS () { q<http://purl.org/syndication/thread/1.0> }
 sub FH_NS () { q<http://purl.org/syndication/history/1.0> }
@@ -1793,7 +1794,7 @@ sub _validate_aria ($$) {
 
       my $preferred = $_Defs->{roles}->{$role}->{preferred};
       if ($preferred) {
-        if ($preferred->{type} eq 'html-element' and
+        if ($preferred->{type} eq 'html_element' and
             $ns eq HTML_NS and
             $ln eq $preferred->{name}) {
           $self->{onerror}->(node => $role_attr,
@@ -1811,8 +1812,10 @@ sub _validate_aria ($$) {
                              level => 'w')
               unless $conflict_error;
         } else {
+          my $type = $preferred->{type};
+          $type =~ tr/_/-/;
           $self->{onerror}->(node => $role_attr,
-                             type => 'aria:not preferred markup:' . $preferred->{type},
+                             type => 'aria:not preferred markup:' . $type,
                              text => $preferred->{name} || $preferred->{scope}, # or undef
                              value => $role,
                              level => 'w')
@@ -1870,7 +1873,7 @@ sub _validate_aria ($$) {
                            type => 'attribute not allowed',
                            level => 'w');
       } elsif ($attr_def->{preferred}) {
-        if ($attr_def->{preferred}->{type} eq 'html-attr' and
+        if ($attr_def->{preferred}->{type} eq 'html_attr' and
             ($node->namespace_uri || '') eq HTML_NS) {
           if ($node->has_attribute_ns (undef, $attr_def->{preferred}->{name})) {
             $self->{onerror}->(node => $attr,
@@ -3396,6 +3399,7 @@ my %PropContainerChecker = (
         $self->{onerror}->(node => $item->{node},
                            type => {
                              ATOM_NS, 'child element missing:atom',
+                             ATOM03_NS, 'child element missing:atom',
                              APP_NS, 'child element missing:app',
                            }->{$ns} || 'child element missing',
                            text => $ln,
@@ -3418,6 +3422,16 @@ my $AtomTextConstructTypeAttrChecker = sub {
                        level => 'm');
   }
 }; # $AtomTextConstructTypeAttrChecker
+
+my $Atom03ContentConstructModeAttrChecker = sub {
+  my ($self, $attr, $item, $element_state) = @_;
+  my $value = $attr->value;
+  unless ($value eq 'xml' or $value eq 'escaped' or $value eq 'base64') {
+    $self->{onerror}->(node => $attr,
+                       type => 'invalid attribute value',
+                       level => 'm');
+  }
+}; # $Atom03ContentConstructModeAttrChecker
 
 our $CheckDIVContent; # XXX
 my %AtomTextConstruct = (
@@ -3577,12 +3591,15 @@ for my $ns (keys %{$_Defs->{elements}}) {
           = $AtomTextConstruct{$_} for keys %AtomTextConstruct;
       $ElementAttrChecker->{$ns}->{$ln}->{''}->{type}
           = $AtomTextConstructTypeAttrChecker;
-    } elsif ($cm eq 'atomDateConstruct') {
+    } elsif ($cm eq 'atomDateConstruct' or $cm eq 'atom03DateConstruct') {
       $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
           = $AtomDateConstruct{$_} for keys %AtomDateConstruct;
-    } elsif ($cm eq 'atomPersonConstruct') {
+    } elsif ($cm eq 'atomPersonConstruct' or $cm eq 'atom03PersonConstruct') {
       $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
           = $PropContainerChecker{$_} for keys %PropContainerChecker;
+    } elsif ($cm eq 'atom03ContentConstruct') {
+      $ElementAttrChecker->{$ns}->{$ln}->{''}->{mode}
+          = $Atom03ContentConstructModeAttrChecker;
     }
   }
 }
@@ -8559,6 +8576,64 @@ $Element->{+ATOM_NS}->{entry} = {
 
 # XXX atom:entry in Collection Document SHOULD have app:edited
 
+$Element->{(ATOM03_NS)}->{entry} = {
+  %PropContainerChecker,
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+
+    if ($child_nsuri eq ATOM03_NS) {
+      if ($child_ln eq 'link') {
+        my $rel = $child_el->get_attribute_ns (undef, 'rel');
+        if ($rel eq 'alternate') {
+          my $type = $child_el->get_attribute_ns (undef, 'type');
+          $type = '' unless defined $type;
+          my $hreflang = '';
+          my $key = 'link:'.(defined $type ? ':'.$type : '').':'.
+              (defined $hreflang ? ':'.$hreflang : '');
+          unless ($element_state->{has_link}->{$key}) {
+            $element_state->{has_link}->{$key} = 1;
+          } else {
+            $self->{onerror}->(node => $child_el,
+                               type => 'element not allowed:atom|link rel=alternate',
+                               level => 'm');
+          }
+          $element_state->{has_link}->{'link.alternate'} = 1;
+        } elsif ($rel eq 'self') {
+          $element_state->{has_link}->{'link.self'} = 1;
+        }
+      }
+    }
+
+    $PropContainerChecker{check_child_element}->(@_);
+  }, # check_child_element
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+
+    unless ($element_state->{has_element}->{(ATOM03_NS)}->{author}) {
+      $item->{parent_state}->{has_no_author_entry} = 1; # for atom:feed's check
+    }
+
+    if (not $item->{parent_state}->{is_atom_feed} and
+        not $element_state->{has_element}->{(ATOM03_NS)}->{author}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'child element missing:atom',
+                         text => 'author',
+                         level => 'm');
+      ## Note that if there is no |atom:entry| element, |atom:author|
+      ## element is not required.
+    }
+
+    unless ($element_state->{has_link}->{'link.alternate'}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'child element missing:atom:link:alternate',
+                         level => 'm');
+    }
+
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # <atom03:entry>
+
 $Element->{(ATOM_NS)}->{source} = {
   %PropContainerChecker,
   check_child_element => sub {
@@ -8643,8 +8718,8 @@ $Element->{+ATOM_NS}->{feed} = {
                          type => 'child element missing:atom',
                          text => 'author',
                          level => 'm');
-      ## ISSUE: If there is no |atom:entry| element,
-      ## there should be an |atom:author| element?
+      ## Note that if there is no |atom:entry| element, |atom:author|
+      ## element is not required.
     }
 
     ## TODO: If entry's with same id, then updated SHOULD be different
@@ -8658,6 +8733,84 @@ $Element->{+ATOM_NS}->{feed} = {
     $PropContainerChecker{check_end}->(@_);
   }, # check_end
 }; # <atom:feed>
+
+$Element->{(ATOM03_NS)}->{feed} = {
+  %PropContainerChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{is_atom_feed} = 1; # for atom:entry checker
+  }, # check_start
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+
+    if ($child_nsuri eq ATOM03_NS) {
+      if ($child_ln eq 'link') {
+        my $rel = $child_el->get_attribute_ns (undef, 'rel');
+        if ($rel eq 'alternate') {
+          my $type = $child_el->get_attribute_ns (undef, 'type');
+          $type = '' unless defined $type;
+          my $hreflang = '';
+          my $key = 'link:'.(defined $type ? ':'.$type : '').':'.
+              (defined $hreflang ? ':'.$hreflang : '');
+          unless ($element_state->{has_link}->{$key}) {
+            $element_state->{has_link}->{$key} = 1;
+          } else {
+            $self->{onerror}->(node => $child_el,
+                               type => 'element not allowed:atom|link rel=alternate',
+                               level => 'm');
+          }
+          $element_state->{has_link}->{'link.alternate'} = 1;
+        } elsif ($rel eq 'self') {
+          $element_state->{has_link}->{'link.self'} = 1;
+        }
+      }
+    }
+
+    $PropContainerChecker{check_child_element}->(@_);
+  }, # check_child_element
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    unless ($item->{node}->has_attribute_ns (undef, 'version')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'version',
+                         level => 'm');
+    }
+    unless ($item->{node}->has_attribute_ns (XML_NS, 'lang')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'xml:lang',
+                         level => 's');
+    }
+
+    if ($element_state->{has_no_author_entry} and
+        not $element_state->{has_element}->{(ATOM03_NS)}->{author}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'child element missing:atom',
+                         text => 'author',
+                         level => 'm');
+      ## Note that if there is no |atom:entry| element, |atom:author|
+      ## element is not required.
+    }
+
+    unless ($element_state->{has_link}->{'link.alternate'}) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'child element missing:atom:link:alternate',
+                         level => 'm');
+    }
+
+    $PropContainerChecker{check_end}->(@_);
+  }, # check_end
+}; # <atom03:feed>
+
+$ElementAttrChecker->{(ATOM03_NS)}->{feed}->{''}->{version} = sub {
+  my ($self, $attr, $item) = @_;
+  $self->{onerror}->(node => $attr,
+                     type => 'invalid attribute value',
+                     level => 'm')
+      unless $attr->value eq '0.3';
+}; # <atom03:feed version="">
 
 $ElementAttrChecker->{(ATOM_NS)}->{content}->{''}->{src} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -8829,6 +8982,8 @@ $Element->{+ATOM_NS}->{content} = {
   },
 }; # atom:content
 
+# XXX Atom 0.3 Content construct content validation
+
 $Element->{+ATOM_NS}->{category}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
   unless ($item->{node}->has_attribute_ns (undef, 'term')) {
@@ -8867,6 +9022,11 @@ $ElementAttrChecker->{(ATOM_NS)}->{link}->{''}->{rel} = sub {
   ## MUST NOT "unspecified" and other rel=license
 }; # <atom:link rel="">
 
+$ElementAttrChecker->{(ATOM03_NS)}->{link}->{''}->{rel} = sub {
+  my ($self, $attr) = @_;
+  # XXX
+}; # <atom03:link rel="">
+
 $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
 
@@ -8886,11 +9046,23 @@ $Element->{(ATOM_NS)}->{link}->{check_attrs2} = sub {
   }
 }; # <atom:link> check_attrs2
 
+$Element->{(ATOM03_NS)}->{link}->{check_attrs2} = sub {
+  my ($self, $item, $element_state) = @_;
+  for (qw(rel href)) {
+    $self->{onerror}->(node => $item->{node},
+                       type => 'attribute missing',
+                       text => $_,
+                       level => 'm')
+        unless $item->{node}->has_attribute_ns (undef, $_);
+  }
+}; # <atom03:link> check_attrs2
+
 # XXXresource dimension of |atom:logo|'s image SHOULD be 2:1.
 
 ## TODO: <thr:in-reply-to href=""> MUST be dereferencable.
 ## TODO: <thr:in-reply-to source=""> MUST be dereferencable.
 # XXX <thr:in-reply-to ref="">, <at:deleted-entry ref=""> - same rule as |atom:id|
+# XXX <atom03:generator url=""> SHOULD be dereferencable.
 
 $Element->{+THR_NS}->{'in-reply-to'}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
@@ -8989,8 +9161,6 @@ $Element->{(AT_NS)}->{'deleted-entry'} = {
 $ElementAttrChecker->{(AT_NS)}->{'deleted-entry'}->{''}->{when} = sub {
 # XXX
 };
-
-# XXX Atom 0.3
 
 ## ------ Nested document ------
 
