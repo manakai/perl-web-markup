@@ -567,6 +567,7 @@ sub onextentref ($;$) {
                            column => $t->{column},
                            level => 'i');
     $subparser->parse_bytes_start (undef);
+    $subparser->parse_bytes_feed ('<?xml encoding="utf-8"?>');
     $subparser->parse_bytes_end;
   };
 } # onextentref
@@ -638,10 +639,9 @@ sub _terminate_tree_constructor ($) {
 # XXX standalone
 # XXX external parameter entity fetch error
 # XXX well-formedness of entity decls
-# XXX validation hook for PUBLIC
 # XXX validation hook for URLs in SYSTEM
 # XXX validation hook for entity names and notation names
-# XXX validation hooks for elements, attrs, PI targets
+# XXX validation hooks for elements, attrs
 # XXX attribute normalization based on type
 # XXX text declaration validation
 # XXX warn by external ref
@@ -651,6 +651,11 @@ sub _terminate_tree_constructor ($) {
 # XXX content model wfness validations and warnings
 # XXX content model parsing spec
 # XXX BOM and encoding sniffing
+# XXX parser validation hooks:
+#    PubidChar
+#    PITarget
+# XXX DTD validator:
+#    warn if PITarget is not declared
 
 sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
@@ -1667,6 +1672,7 @@ sub _construct_tree ($) {
             # XXX validate charset name
           }
         } elsif ($self->{next_im} != BEFORE_DOCTYPE_IM) {
+          ## A text declaration
           my $p = pos_to_lc $map_source, $pos;
           $onerror->(level => 'm',
                      type => 'attribute missing:encoding',
@@ -1715,6 +1721,9 @@ sub _construct_tree ($) {
         redo B;
       } else {
         ## Anything other than XML or text declaration.
+        $onerror->(level => 's',
+                   type => 'no XML decl',
+                   line => 1, column => 1);
         $self->{insertion_mode} = $self->{next_im};
         ## Reconsume the token
         redo B;
@@ -1726,21 +1735,34 @@ sub _construct_tree ($) {
         if ($self->{t}->{target} eq 'xml') {
           # XXX text decl validation
           $self->{t} = $self->_get_next_token;
+          $self->{before_text_decl_first}++;
           redo B;
         } else {
+          $onerror->(level => 's',
+                     type => 'no XML decl',
+                     line => 1, column => 1)
+              unless $self->{before_text_decl_first}++;
           ## Ignore the token.
           $self->{parse_error}->(level => 'm',
-                                 type => 'pi in pe in decl'); # XXXdoc
+                                 type => 'pi in pe in decl');
           $self->{state} = BOGUS_MD_STATE;
           $self->{t} = $self->_get_next_token;
           redo B;
         }
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
+        $onerror->(level => 's',
+                   type => 'no XML decl',
+                   line => 1, column => 1)
+            unless $self->{before_text_decl_first}++;
         ## Ignore the token.
         $self->{state} = BOGUS_MD_STATE;
         $self->{t} = $self->_get_next_token;
         redo B;
       } else {
+        $onerror->(level => 's',
+                   type => 'no XML decl',
+                   line => 1, column => 1)
+            unless $self->{before_text_decl_first}++;
         $self->{insertion_mode} = IN_SUBSET_IM;
         ## Reconsume the token.
         redo B;

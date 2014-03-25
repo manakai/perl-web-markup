@@ -5041,7 +5041,8 @@ sub _get_next_token ($) {
       if ($is_space->{$nc} or
           $nc == 0x003F or # ?
           $nc == EOF_CHAR) {
-        if ($self->{next_state} == ENTITY_ENTITY_VALUE_STATE) {
+        if (defined $self->{next_state} and
+            $self->{next_state} == ENTITY_ENTITY_VALUE_STATE) {
           $self->{state} = $self->{next_state};
           $self->{ct} = $self->{next_ct};
           push @{$self->{ct}->{sps}}, [length $self->{ct}->{value}, 2, 1, 1];

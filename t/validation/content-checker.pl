@@ -43,7 +43,9 @@ sub _test ($$) {
     my $doc;
     if ($test->{parse_as} eq 'xml') {
       $doc = Web::DOM::Document->new;
-      Web::XML::Parser->new->parse_char_string ($test->{data}->[0] => $doc);
+      my $parser = Web::XML::Parser->new;
+      $parser->onerror (sub { });
+      $parser->parse_char_string ($test->{data}->[0] => $doc);
       ## NOTE: There should be no well-formedness error; if there is,
       ## then it is an error of the test case itself.
     } else {

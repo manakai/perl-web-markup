@@ -57,7 +57,10 @@ test {
       qq{<foo xmlns="">\x{4500}<bar xy="zb"></bar>\x{0400}abc</foo><!---->};
   is scalar @{$doc->child_nodes}, 2;
   delete $error[0]->{token};
-  eq_or_diff \@error, [{type => 'unquoted attr value',
+  eq_or_diff \@error, [{type => 'no XML decl',
+                        level => 's',
+                        line => 1, column => 1},
+                       {type => 'unquoted attr value',
                         level => 'm',
                         line => 1, column => 15}];
   done $c;
@@ -75,7 +78,10 @@ test {
   });
   $parser->parse_char_string ($s => $doc);
   eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BC</a>};
-  eq_or_diff \@error, [{type => 'external entref',
+  eq_or_diff \@error, [{type => 'no XML decl',
+                        level => 's',
+                        line => 1, column => 1},
+                       {type => 'external entref',
                         level => 'i', value => 'x;',
                         line => 1, column => 40}];
   done $c;
@@ -93,7 +99,10 @@ test {
   });
   $parser->parse_char_string ($s => $doc);
   eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BCD</a>};
-  eq_or_diff \@error, [{type => 'external entref',
+  eq_or_diff \@error, [{type => 'no XML decl',
+                        level => 's',
+                        line => 1, column => 1},
+                       {type => 'external entref',
                         level => 'i', value => 'x;',
                         line => 1, column => 40},
                        {type => 'external entref',
@@ -329,7 +338,10 @@ test {
   });
   $parser->parse_char_string_with_context ($s, undef, $doc);
   eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BC</a>};
-  eq_or_diff \@error, [{type => 'external entref',
+  eq_or_diff \@error, [{type => 'no XML decl',
+                        level => 's',
+                        line => 1, column => 1},
+                       {type => 'external entref',
                         level => 'i', value => 'x;',
                         line => 1, column => 40}];
   done $c;
@@ -347,7 +359,10 @@ test {
   });
   $parser->parse_char_string_with_context ($s, undef, $doc);
   eq_or_diff $doc->inner_html, q{<!DOCTYPE a><a xmlns="">BCD</a>};
-  eq_or_diff \@error, [{type => 'external entref',
+  eq_or_diff \@error, [{type => 'no XML decl',
+                        level => 's',
+                        line => 1, column => 1},
+                       {type => 'external entref',
                         level => 'i', value => 'x;',
                         line => 1, column => 40},
                        {type => 'external entref',

@@ -251,7 +251,10 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a>};
-      eq_or_diff \@error, [{type => 'ref outside of root element',
+      eq_or_diff \@error, [{type => 'no XML decl',
+                            level => 's',
+                            line => 1, column => 1},
+                           {type => 'ref outside of root element',
                             line => 1, column => 40,
                             value => 'x;',
                             level => 'm'},
@@ -322,7 +325,13 @@ test {
     test {
       is $doc->inner_html,
           q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cf&amp;x;jv</a>};
-      eq_or_diff \@error, [{type => 'WFC:No Recursion',
+      eq_or_diff \@error, [{type => 'no XML decl',
+                            level => 's',
+                            line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 1, line => 1, column => 1},
+                           {type => 'WFC:No Recursion',
                             di => 1, line => 1, column => 2,
                             value => '&x;',
                             level => 'm'}];
@@ -359,7 +368,16 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns="http://hoge/." xmlns:a="http://a/">cdf&amp;x;jxv</a>};
-      eq_or_diff \@error, [{type => 'WFC:No Recursion',
+      eq_or_diff \@error, [{type => 'no XML decl',
+                            level => 's',
+                            line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 2, line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 10, line => 1, column => 1},
+                           {type => 'WFC:No Recursion',
                             di => 10, line => 1, column => 2,
                             value => '&x;',
                             level => 'm'}];
@@ -408,10 +426,25 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
-      eq_or_diff \@error, [{type => 'entity:too deep',
+      eq_or_diff \@error, [{type => 'no XML decl',
+                            level => 's',
+                            line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 97, line => 1, column => 1},
+                           {type => 'entity:too deep',
                             di => 100, line => 1, column => 2,
                             text => 3,
-                            level => 'm'}];
+                            level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 100, line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 99, line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 98, line => 1, column => 1}];
       done $c;
       undef $c;
     } $c;
@@ -457,10 +490,25 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
-      eq_or_diff \@error, [{type => 'entity:too deep',
+      eq_or_diff \@error, [{type => 'no XML decl',
+                            level => 's',
+                            line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 97, line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 100, line => 1, column => 1},
+                           {type => 'entity:too deep',
                             di => 100, line => 1, column => 2,
                             text => 3,
-                            level => 'm'}];
+                            level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 99, line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 98, line => 1, column => 1}];
       done $c;
       undef $c;
     } $c;
@@ -506,7 +554,13 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
-      eq_or_diff \@error, [{type => 'entity:too many refs',
+      eq_or_diff \@error, [{type => 'no XML decl',
+                            level => 's',
+                            line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 97, line => 1, column => 1},
+                           {type => 'entity:too many refs',
                             di => 100, line => 1, column => 2,
                             text => 3,
                             level => 'm'},
@@ -514,14 +568,23 @@ test {
                             di => 100, line => 1, column => 5,
                             text => 3,
                             level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 100, line => 1, column => 1},
                            {type => 'entity:too many refs',
                             di => 99, line => 1, column => 4,
                             text => 3,
                             level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 99, line => 1, column => 1},
                            {type => 'entity:too many refs',
                             di => 98, line => 1, column => 4,
                             text => 3,
-                            level => 'm'}];
+                            level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 98, line => 1, column => 1}];
       done $c;
       undef $c;
     } $c;
@@ -567,7 +630,16 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
-      eq_or_diff \@error, [{type => 'entity:too many refs',
+      eq_or_diff \@error, [{type => 'no XML decl',
+                            level => 's',
+                            line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 97, line => 1, column => 1},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 100, line => 1, column => 1},
+                           {type => 'entity:too many refs',
                             di => 100, line => 1, column => 2,
                             text => 4,
                             level => 'm'},
@@ -579,10 +651,16 @@ test {
                             di => 99, line => 1, column => 4,
                             text => 4,
                             level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 99, line => 1, column => 1},
                            {type => 'entity:too many refs',
                             di => 98, line => 1, column => 4,
                             text => 4,
-                            level => 'm'}];
+                            level => 'm'},
+                           {type => 'no XML decl',
+                            level => 's',
+                            di => 98, line => 1, column => 1}];
       done $c;
       undef $c;
     } $c;

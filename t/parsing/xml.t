@@ -90,9 +90,9 @@ sub _test ($$) {
 
   my $result;
   my $code = sub {
+    my @expected = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};
     @errors = sort {$a cmp $b} @errors;
-    @{$test->{errors}->[0]} = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};
-    eq_or_diff \@errors, $test->{errors}->[0] || [], 'Parse error';
+    eq_or_diff \@errors, \@expected, 'Parse error';
 
     is $doc->xml_version, ($test->{'xml-version'} or ['1.0'])->[0], 'version';
 
@@ -154,7 +154,7 @@ sub _test ($$) {
       my $e = $res{$ent->{entdef}->{sysid}}; # XXX
       $subparser->di ($e->[0]) if defined $e;
       $subparser->parse_bytes_start ('utf-8');
-      $subparser->parse_bytes_feed (encode 'utf-8', $e->[1]) if defined $e;
+      $subparser->parse_bytes_feed (encode 'utf-8', defined $e->[1] ? $e->[1] : '<?xml encoding="utf-8"?>'); # XXX
       $subparser->parse_bytes_end;
     });
     $p->onparsed (sub {
