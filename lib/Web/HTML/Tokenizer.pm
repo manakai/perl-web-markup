@@ -4792,6 +4792,7 @@ sub _get_next_token ($) {
               } elsif ($self->{ge}->{$self->{kwd}}->{only_text}) {
                 ## Internal entity with no "&" or "<" in value
                 $self->{entity__value} = $self->{ge}->{$self->{kwd}}->{value};
+                $self->{entity__value} =~ tr/\x09\x0A\x0D/   /; # normalization
                 delete $self->{entity__is_tree};
                 $self->{entity__sps} = $self->{ge}->{$self->{kwd}}->{sps};
               } elsif (defined $self->{ge}->{$self->{kwd}}->{notation}) {
@@ -6019,7 +6020,6 @@ sub _get_next_token ($) {
           ## In markup declaration
           $self->{state} = BOGUS_MD_STATE;
         }
-# XXX stop processing
         ## Reconsume the current input character.
         redo A;
       } elsif ($nc == 0x003B) { # ;

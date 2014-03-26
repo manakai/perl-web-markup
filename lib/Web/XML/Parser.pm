@@ -636,7 +636,6 @@ sub _terminate_tree_constructor ($) {
 ## are marked as "XML5:".
 
 # XXX external parameter entity fetch error
-# XXX attribute normalization based on type
 # XXX warn by external ref
 # XXX warn external subset
 # XXX "expose DTD content" flag
@@ -656,7 +655,7 @@ sub _terminate_tree_constructor ($) {
 #      if standalone=yes and element content in ext and has white space
 #    warn
 #      if element in ATTLIST is not declared
-#      if attr type is tokenized type and value is normalized
+#      if attr type is tokenized type in ext and value is normalized
 #    tag Name
 #    reserved tag name
 #    attr Name
@@ -710,6 +709,32 @@ sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
 } # _insert_point
 
+sub _tokenize_attr_value ($) {
+  my $token = $_[0];
+  return unless $token->{value} =~ / /;
+  my @value;
+  my @pos = ([0, 0]);
+  my $pos = 0;
+  my @v = split /( +)/, $token->{value}, -1;
+  shift @v if @v and $v[0] =~ / /;
+  pop @v if @v and $v[-1] =~ / /;
+  for (@v) {
+    if (/ /) {
+      $pos[-1]->[1] += 1;
+      $pos += length $_;
+      push @pos, [$pos, 0] if 1 != length $_;
+    } else {
+      $pos[-1]->[1] += length $_;
+      push @value, $_;
+      $pos += length $_;
+    }
+  }
+  $token->{value} = join ' ', @value;
+  return unless $token->{sps};
+
+  # XXX sps transformation
+} # _tokenize_attr_value
+
 sub _construct_tree ($) {
   my ($self) = @_;
   my $onerror = $self->onerror;
@@ -737,9 +762,7 @@ sub _construct_tree ($) {
           if ($attrs->{$attr_name}) {
             $attrs->{$attr_name}->{type} = $attrdefs->{$attr_name}->{type} || 0;
             if ($attrdefs->{$attr_name}->{tokenize}) {
-              $attrs->{$attr_name}->{value} =~ s/  +/ /g;
-              $attrs->{$attr_name}->{value} =~ s/\A //;
-              $attrs->{$attr_name}->{value} =~ s/ \z//;
+              _tokenize_attr_value $attrs->{$attr_name};
             }
           } elsif (defined $attrdefs->{$attr_name}->{default}) {
             $attrs->{$attr_name} = {
@@ -1097,9 +1120,7 @@ sub _construct_tree ($) {
 
               if (defined $at->{value}) {
                 if ($tokenize) {
-                  $at->{value} =~ s/  +/ /g;
-                  $at->{value} =~ s/\A //;
-                  $at->{value} =~ s/ \z//;
+                  _tokenize_attr_value $at;
                 }
                 $node->text_content ($at->{value});
               }
@@ -1415,9 +1436,7 @@ sub _construct_tree ($) {
           if ($attrs->{$attr_name}) {
             $attrs->{$attr_name}->{type} = $attrdefs->{$attr_name}->{type} || 0;
             if ($attrdefs->{$attr_name}->{tokenize}) {
-              $attrs->{$attr_name}->{value} =~ s/  +/ /g;
-              $attrs->{$attr_name}->{value} =~ s/\A //;
-              $attrs->{$attr_name}->{value} =~ s/ \z//;
+              _tokenize_attr_value $attrs->{$attr_name};
             }
           } elsif (defined $attrdefs->{$attr_name}->{default}) {
             $attrs->{$attr_name} = {

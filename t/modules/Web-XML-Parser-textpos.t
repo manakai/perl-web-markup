@@ -375,6 +375,27 @@ for my $test (
   } n => 1, name => 'a pi node';
 }
 
+for my $test (
+  [q{abc} => [[0, 3, 3, 13]]],
+  [q{a b} => [[0, 1, 3, 13], [1, 2, 3, 14]]],
+  #[q{a  b} => [[0, 1, 3, 13], [1, 1, 3, 14], [2, 1, 3, 16]], q{a b}],
+) {
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    my $parser = new Web::XML::Parser;
+    $parser->onerror (sub { });
+    $parser->parse_char_string ((sprintf q{<!DOCTYPE a[
+      <!ATTLIST a b ID #IMPLIED>
+    ]><a b="%s"/>}, $test->[0]) => $doc);
+    my $attr = $doc->document_element->attributes->[0];
+    my $sps = $attr->get_user_data ('manakai_sps');
+    eq_or_diff $sps, $test->[1];
+    is $attr->value, $test->[2] || $test->[0];
+    done $c;
+  } n => 2, name => 'attr tokenized';
+}
+
 run_tests;
 
 =head1 LICENSE
