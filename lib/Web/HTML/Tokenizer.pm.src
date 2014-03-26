@@ -5621,7 +5621,6 @@ sub _get_next_token ($) {
           ## In markup declaration
           $self->{state} = BOGUS_MD_STATE;
         }
-# XXX stop processing
         ## Reconsume the current input character.
         redo A;
       } elsif ($nc == 0x003B) { # ;

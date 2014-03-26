@@ -635,27 +635,78 @@ sub _terminate_tree_constructor ($) {
 ## Differences from the XML5 spec (not documented in DOMDTDEF spec)
 ## are marked as "XML5:".
 
-# XXX stop processing
-# XXX standalone
 # XXX external parameter entity fetch error
-# XXX well-formedness of entity decls
-# XXX validation hook for URLs in SYSTEM
-# XXX validation hook for entity names and notation names
-# XXX validation hooks for elements, attrs
 # XXX attribute normalization based on type
-# XXX text declaration validation
 # XXX warn by external ref
 # XXX warn external subset
 # XXX "expose DTD content" flag
 # XXX content model data structure
-# XXX content model wfness validations and warnings
-# XXX content model parsing spec
 # XXX BOM and encoding sniffing
 # XXX parser validation hooks:
 #    PubidChar
 #    PITarget
+#    reserved PI name
+#    xmlVersion SHOULD
+#    text declaration
+#    DOCTYPE name
+#    VC:Standalone Document Declaration
+#      if standalone=yes and default attr in ext is set to element
+#      if standalone=yes and entity is declared in ext and refed
+#      if standalone=yes and attr type is in ext and value is normalized
+#      if standalone=yes and element content in ext and has white space
+#    warn
+#      if external markup declaration
+#      if PI in DTD
+#      if element in ATTLIST is not declared
+#      if attr type is tokenized type and value is normalized
+#    tag Name
+#    reserved tag name
+#    attr Name
+#    reserved attr name
+#    <!ELEMENT> name
+#    Name in content model and #PCDATA
+#    SHOULD for PEs in content model
+#    <!ATTLIST> name
+#    <!ATTLIST> attr name
+#    multiple <!ATTLIST> for same Name
+#    enumerated / notation name in ATTLIST
+#    reference Name
+#    WFC/VC: Entity Declared
+#    NDATA Name
+#    system ID
+#    encoding="" in text declaration
+#    unparsed entity reference in EntityValue is error
+#    predefined entities SHOULd be declered
+#    predefined entity decl MUST be internal
+#    <!ENTITY> Name
+#    <!NOTATION> name
+#    fully-normalizedness
 # XXX DTD validator:
 #    warn if PITarget is not declared
+#    VC:Root Element Type
+#    xml:space type MUST be (default|preserve)
+#    VC:Element Valid
+#    VC:Attr Value Type
+#    empty element tag SHOULD only be used for EMPTY element
+#    error if content model is not deterministic
+#    VC:No Duplicate Types
+#    VC:ID
+#    VC:One ID per Element Type
+#    VC:ID Attribute Default
+#    VC:IDREF
+#    VC:Entity Name
+#    VC:Name Token
+#    VC:Notation Attribute
+#    VC:One Notation Per Element Type
+#    VC:No Notation on Empty Element
+#    VC:No Duplicate Tokens
+#    VC:Enumeration
+#    VC:Required Attribute
+#    VC:Attribute Default Value Syntactically Correct
+#    VC:Fixed Attribute Default
+#    VC:Notation Name
+#    pubid normalization
+# XXX suggested name rule (warn)
 
 sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
@@ -895,13 +946,15 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
-        $onerror->(level => 'm', type => 'in html:#doctype',
-                        token => $self->{t});
+        ## DOCTYPE in element
+        $onerror->(level => 'm',
+                   type => 'in html:#doctype',
+                   token => $self->{t});
 
         if ($self->{t}->{has_internal_subset}) {
           ## Not in XML5
           ## Ignore the token.
-          $self->{stop_processing} = 1;
+          $self->{stop_processing} = 1; # disable internal subset processing
           $self->{doctype} = $self->{document}->create_document_type_definition ('dummy');
           $self->{insertion_mode} = IN_SUBSET_IM;
           $self->{t} = $self->_get_next_token;
@@ -924,6 +977,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ELEMENT_TOKEN) {
+        ## <!ELEMENT> in DTD
         unless ($self->{has_element_decl}->{$self->{t}->{name}}) {
           my $node = $self->{doctype}->get_element_type_definition_node
               ($self->{t}->{name});
@@ -952,7 +1006,11 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ATTLIST_TOKEN) {
+        ## <!ATTLIST> in DTD
         if ($self->{stop_processing}) {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:attlist ignored',
+                     token => $self->{t});
           ## TODO: syntax validation
         } else {
           my $ed = $self->{doctype}->get_element_type_definition_node
@@ -1063,7 +1121,11 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == GENERAL_ENTITY_TOKEN) {
+        ## <!ENTITY> (general entity) in DTD
         if ($self->{stop_processing}) {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:entity ignored',
+                     token => $self->{t});
           ## TODO: syntax validation
         } elsif ({
           amp => 1, apos => 1, quot => 1, lt => 1, gt => 1,
@@ -1131,7 +1193,11 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == PARAMETER_ENTITY_TOKEN) {
+        ## <!ENTITY %> in DTD
         if ($self->{stop_processing}) {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:entity ignored',
+                     token => $self->{t});
           ## TODO: syntax validation
         } elsif (not $self->{pe}->{$self->{t}->{name} . ';'}) {
           ## For parser.
@@ -1154,6 +1220,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == NOTATION_TOKEN) {
+        ## <!NOTATION> in DTD
         unless ($self->{doctype}->get_notation_node ($self->{t}->{name})) {
           my $node = $self->{document}->create_notation ($self->{t}->{name});
           $node->set_user_data (manakai_source_line => $self->{t}->{line});
@@ -1176,6 +1243,7 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == PI_TOKEN) {
+        ## PI in DTD
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
         $pi->set_user_data (manakai_sps => $self->{t}->{sps})
@@ -1281,12 +1349,13 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
+        ## <!DOCTYPE> after root element
         $onerror->(level => 'm', type => 'in html:#doctype',
                    token => $self->{t});
         if ($self->{t}->{has_internal_subset}) {
           ## Not in XML5
           ## Ignore the token.
-          $self->{stop_processing} = 1;
+          $self->{stop_processing} = 1; # disable DTD processing
           $self->{doctype} = $self->{document}->create_document_type_definition ('dummy');
           $self->{insertion_mode} = IN_SUBSET_IM;
           $self->{t} = $self->_get_next_token;
@@ -1496,13 +1565,14 @@ sub _construct_tree ($) {
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
+        ## <!DOCTYPE> after <!DOCTYPE>
         $onerror->(level => 'm', type => 'second doctype', # XXXdoc
                    token => $self->{t});
 
         if ($self->{t}->{has_internal_subset}) {
           ## Not in XML5
           ## Ignore the token.
-          $self->{stop_processing} = 1;
+          $self->{stop_processing} = 1; # disable DTD processing
           $self->{doctype} = $self->{document}->create_document_type_definition ('dummy');
           $self->{insertion_mode} = IN_SUBSET_IM;
           $self->{t} = $self->_get_next_token;
