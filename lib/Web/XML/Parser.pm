@@ -655,8 +655,6 @@ sub _terminate_tree_constructor ($) {
 #      if standalone=yes and attr type is in ext and value is normalized
 #      if standalone=yes and element content in ext and has white space
 #    warn
-#      if external markup declaration
-#      if PI in DTD
 #      if element in ATTLIST is not declared
 #      if attr type is tokenized type and value is normalized
 #    tag Name
@@ -979,6 +977,12 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == ELEMENT_TOKEN) {
         ## <!ELEMENT> in DTD
         unless ($self->{has_element_decl}->{$self->{t}->{name}}) {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:ext decl',
+                     token => $self->{t})
+              unless $self->{in_subset}->{internal_subset} and
+                  not $self->{in_subset}->{param_entity};
+
           my $node = $self->{doctype}->get_element_type_definition_node
               ($self->{t}->{name});
           unless ($node) {
@@ -1013,6 +1017,12 @@ sub _construct_tree ($) {
                      token => $self->{t});
           ## TODO: syntax validation
         } else {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:ext decl',
+                     token => $self->{t})
+              unless $self->{in_subset}->{internal_subset} and
+                  not $self->{in_subset}->{param_entity};
+
           my $ed = $self->{doctype}->get_element_type_definition_node
               ($self->{t}->{name});
           unless ($ed) {
@@ -1155,6 +1165,12 @@ sub _construct_tree ($) {
             only_text => 1,
           };
         } elsif (not $self->{ge}->{$self->{t}->{name}.';'}) {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:ext decl',
+                     token => $self->{t})
+              unless $self->{in_subset}->{internal_subset} and
+                  not $self->{in_subset}->{param_entity};
+
           ## For parser.
           $self->{ge}->{$self->{t}->{name}.';'} = $self->{t};
           if (defined $self->{t}->{value} and
@@ -1200,6 +1216,12 @@ sub _construct_tree ($) {
                      token => $self->{t});
           ## TODO: syntax validation
         } elsif (not $self->{pe}->{$self->{t}->{name} . ';'}) {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:ext decl',
+                     token => $self->{t})
+              unless $self->{in_subset}->{internal_subset} and
+                  not $self->{in_subset}->{param_entity};
+
           ## For parser.
           $self->{pe}->{$self->{t}->{name} . ';'} = $self->{t};
           if (defined $self->{t}->{sps}) {
@@ -1222,6 +1244,12 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == NOTATION_TOKEN) {
         ## <!NOTATION> in DTD
         unless ($self->{doctype}->get_notation_node ($self->{t}->{name})) {
+          $onerror->(level => 'w',
+                     type => 'xml:dtd:ext decl',
+                     token => $self->{t})
+              unless $self->{in_subset}->{internal_subset} and
+                  not $self->{in_subset}->{param_entity};
+
           my $node = $self->{document}->create_notation ($self->{t}->{name});
           $node->set_user_data (manakai_source_line => $self->{t}->{line});
           $node->set_user_data (manakai_source_column => $self->{t}->{column});
@@ -1244,6 +1272,10 @@ sub _construct_tree ($) {
         redo B;
       } elsif ($self->{t}->{type} == PI_TOKEN) {
         ## PI in DTD
+        $onerror->(level => 'w',
+                   type => 'xml:dtd:pi',
+                   token => $self->{t});
+
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
         $pi->set_user_data (manakai_sps => $self->{t}->{sps})
