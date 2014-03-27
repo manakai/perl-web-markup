@@ -144,6 +144,8 @@ sub _initialize_tokenizer ($) {
 ##        ->{value}
 ##        ->{has_reference} == 1 or 0
 ##        ->{index}: Index of the attribute in a tag.
+##        ->{line}
+##        ->{column}
 ##        ->{sps}: Source positions
 ##   ->{data} (COMMENT_TOKEN, CHARACTER_TOKEN, PI_TOKEN)
 ##   ->{has_reference} == 1 or 0 (CHARACTER_TOKEN)
@@ -4549,12 +4551,27 @@ sub _get_next_token ($) {
                 $self->{entity__is_tree} = '&' . $self->{kwd} . ';';
                 delete $self->{entity__sps};
               }
+
+              if (my $ext = $self->{ge}->{$self->{kwd}}->{external}) {
+                if (not $ext->{vc_error_reported} and
+                    $self->{document}->xml_standalone) {
+                  $self->{onerror}->(level => 'm',
+                                     type => 'VC:Standalone Document Declaration:entity',
+                                     token => $self->{ge}->{$self->{kwd}});
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
             } else {
               ## An HTML character reference.
               if ($self->{is_xml}) {
                 if ($self->{validation}->{has_charref_decls} and
                     defined $Web::HTML::EntityChar->{$self->{kwd}}) {
-                  #
+                  if ($self->{validation}->{charref_vc_error}) {
+                    $self->{onerror}->(level => 'm',
+                                       type => 'VC:Standalone Document Declaration:entity',
+                                       line => $self->{line},
+                                       column => $self->{column} - length $self->{kwd});
+                  }
                 } elsif ({
                   'amp;' => 1, 'quot;' => 1, 'lt;' => 1, 'gt;' => 1, 'apos;' => 1,
                 }->{$self->{kwd}}) {
@@ -5648,6 +5665,8 @@ sub _get_next_token ($) {
 
               ## In a DeclSep
               $self->{validation}->{has_charref_decls} = 1;
+              $self->{validation}->{charref_vc_error} = 1
+                  if $self->{document}->xml_standalone;
               $self->{state} = $self->{prev_state};
               !!!next-input-character;
               redo A;

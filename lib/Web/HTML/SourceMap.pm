@@ -40,7 +40,9 @@ sub create_pos_lc_map ($) {
 
 push @EXPORT, qw(sps_set_di);
 sub sps_set_di ($$) {
-  $_->[4] = $_[1] for @{$_[0]};
+  for (@{$_[0]}) {
+    $_->[4] = $_[1] if not defined $_->[5];
+  }
 } # sps_set_di
 
 push @EXPORT, qw(sps_with_offset);
@@ -69,6 +71,7 @@ sub lc_lc_mapper ($$$) {
   } elsif (defined $args->{token}) {
     $line = $args->{token}->{line};
     $column = $args->{token}->{column};
+    return if defined $args->{token}->{di};
   }
   return unless defined $column;
 

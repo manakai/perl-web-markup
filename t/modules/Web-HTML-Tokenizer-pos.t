@@ -98,9 +98,10 @@ for my $test (
     my $c = shift;
     my $doc = new Web::DOM::Document;
     my $parser = Web::XML::Parser->new;
+    $parser->onerror (sub { });
     for my $prefix (
-      q{<!DOCTYPE a[<!ATTLIST b c CDATA},
-      q{<!DOCTYPE a[<!ATTLIST b c CDATA },
+      q{<!DOCTYPE a[<!ATTLIST b c NMTOKEN},
+      q{<!DOCTYPE a[<!ATTLIST b c NMTOKEN },
       q{<!DOCTYPE a[<!ATTLIST b c (x)},
       q{<!DOCTYPE a[<!ATTLIST b c (x) },
       q{<!DOCTYPE a[<!ATTLIST b c (x) #FIXED},
@@ -110,8 +111,9 @@ for my $test (
       my $delta = length $prefix;
       my $attr = $doc->doctype->get_element_type_definition_node ('b')
           ->get_attribute_definition_node ('c');
-      eq_or_diff $attr->get_user_data ('manakai_sps'),
-          [map { [$_->[0],$_->[1] => $_->[2],($_->[2] == 1 ? $delta : 0)+$_->[3]] } @{$test->[1]}];
+      eq_or_diff [map { $_->[4] ||= 0; $_ } @{$attr->get_user_data ('manakai_sps')}],
+          [map { [$_->[0],$_->[1] => $_->[2],($_->[2] == 1 ? $delta : 0)+$_->[3], 0] } @{$test->[1]}],
+          $prefix;
     }
     done $c;
   } n => 1 * 6, name => ['manakai_pos', 'attrdef default', $test->[0]];
@@ -136,6 +138,7 @@ for my $test (
     my $c = shift;
     my $doc = new Web::DOM::Document;
     my $parser = Web::XML::Parser->new;
+    $parser->onerror (sub { });
     for my $prefix (
       q{<!DOCTYPE a[<!ATTLIST b c CDATA },
       q{<!DOCTYPE a[<!ATTLIST b c (x)},
@@ -147,7 +150,7 @@ for my $test (
       my $attr = $doc->doctype->get_element_type_definition_node ('b')
           ->get_attribute_definition_node ('c');
       eq_or_diff $attr->get_user_data ('manakai_sps'),
-          [map { [$_->[0],$_->[1] => $_->[2],($_->[2] == 1 ? $delta : 0)+$_->[3]] } @{$test->[1]}];
+          [map { [$_->[0],$_->[1] => $_->[2],($_->[2] == 1 ? $delta : 0)+$_->[3], 0] } @{$test->[1]}];
     }
     done $c;
   } n => 1 * 4, name => ['manakai_pos', 'attrdef default unquoted', $test->[0]];
@@ -157,7 +160,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

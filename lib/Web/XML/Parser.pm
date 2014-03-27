@@ -648,9 +648,6 @@ sub _terminate_tree_constructor ($) {
 #    text declaration
 #    DOCTYPE name
 #    VC:Standalone Document Declaration
-#      if standalone=yes and default attr in ext is set to element
-#      if standalone=yes and entity is declared in ext and refed
-#      if standalone=yes and attr type is in ext and value is normalized
 #      if standalone=yes and element content in ext and has white space
 #    warn
 #      if element in ATTLIST is not declared
@@ -710,7 +707,7 @@ sub _insert_point ($) {
 
 sub _tokenize_attr_value ($) {
   my $token = $_[0];
-  return unless $token->{value} =~ / /;
+  return 0 unless $token->{value} =~ / /;
   my @value;
   my @pos;
   my $old_pos = 0;
@@ -728,17 +725,17 @@ sub _tokenize_attr_value ($) {
   shift @value, shift @pos if @value and $value[-1] eq '';
   $pos[-1]->[2]-- if @pos;
 
+  my $old_value = $token->{value};
+  $token->{value} = join ' ', @value;
   if (defined $token->{sps}) {
-    my $old_map = create_pos_lc_map $token->{value};
+    my $old_map = create_pos_lc_map $old_value;
     my $old_sps = $token->{sps};
-    $token->{value} = join ' ', @value;
     $token->{sps} = [map {
       my $lc = pos_to_lc $old_map, $_->[0];
       [$_->[1], $_->[2], $lc->{line}, $lc->{column}, $lc->{di}, $old_map => $old_sps];
     } @pos];
-  } else {
-    $token->{value} = join ' ', @value;
   }
+  return not $old_value eq $token->{value};
 } # _tokenize_attr_value
 
 sub _construct_tree ($) {
@@ -765,21 +762,40 @@ sub _construct_tree ($) {
         my $attrs = $self->{t}->{attributes};
         my $attrdefs = $self->{attrdef}->{$self->{t}->{tag_name}};
         for my $attr_name (keys %{$attrdefs}) {
+          my $def = $attrdefs->{$attr_name};
           if ($attrs->{$attr_name}) {
-            $attrs->{$attr_name}->{type} = $attrdefs->{$attr_name}->{type} || 0;
-            if ($attrdefs->{$attr_name}->{tokenize}) {
-              _tokenize_attr_value $attrs->{$attr_name};
+            $attrs->{$attr_name}->{type} = $def->{type} || 0;
+            if ($def->{tokenize}) {
+              if (_tokenize_attr_value $attrs->{$attr_name} and
+                  $def->{external} and
+                  not $def->{external}->{vc_error_reported} and
+                  $self->{document}->xml_standalone) {
+                $onerror->(level => 'm',
+                           type => 'VC:Standalone Document Declaration:attr',
+                           token => $def);
+                $def->{external}->{vc_error_reported} = 1;
+              }
             }
-          } elsif (defined $attrdefs->{$attr_name}->{default}) {
+          } elsif (defined $def->{default}) {
             $attrs->{$attr_name} = {
-              value => $attrdefs->{$attr_name}->{default},
-              type => $attrdefs->{$attr_name}->{type} || 0,
+              value => $def->{default},
+              type => $def->{type} || 0,
               not_specified => 1,
-              line => $attrdefs->{$attr_name}->{line},
-              column => $attrdefs->{$attr_name}->{column},
+              line => $def->{line},
+              column => $def->{column},
+              di => $def->{di},
               index => 1 + keys %{$attrs},
-              sps => $attrdefs->{$attr_name}->{sps},
+              sps => $def->{sps},
             };
+
+            if ($def->{external} and
+                not $def->{external}->{vc_error_reported} and
+                $self->{document}->xml_standalone) {
+              $onerror->(level => 'm',
+                         type => 'VC:Standalone Document Declaration:attr',
+                         token => $def);
+              $def->{external}->{vc_error_reported} = 1;
+            }
           }
         }
         
@@ -1046,11 +1062,12 @@ sub _construct_tree ($) {
                      token => $self->{t});
           ## TODO: syntax validation
         } else {
+          my $is_external = not ($self->{in_subset}->{internal_subset} and
+                                 not $self->{in_subset}->{param_entity});
           $onerror->(level => 'w',
                      type => 'xml:dtd:ext decl',
                      token => $self->{t})
-              unless $self->{in_subset}->{internal_subset} and
-                  not $self->{in_subset}->{param_entity};
+              if $is_external;
 
           my $ed = $self->{doctype}->get_element_type_definition_node
               ($self->{t}->{name});
@@ -1134,7 +1151,7 @@ sub _construct_tree ($) {
               $ed->set_attribute_definition_node ($node);
 
               ## For tree construction
-              $self->{attrdef}->{$self->{t}->{name}}->{$at->{name}} = {
+              my $def = $self->{attrdef}->{$self->{t}->{name}}->{$at->{name}} = {
                 type => $type,
                 tokenize => $tokenize,
                 default => (($default and ($default == 1 or $default == 4))
@@ -1142,8 +1159,11 @@ sub _construct_tree ($) {
                               : undef),
                 line => $at->{line},
                 column => $at->{column},
+                di => $self->di,
                 sps => $at->{sps},
               };
+              sps_set_di $def->{sps}, $self->di;
+              $def->{external} = {} if $is_external;
             } else {
               $onerror->(level => 'w', type => 'duplicate attrdef', ## TODO: type
                               value => $at->{name},
@@ -1192,11 +1212,12 @@ sub _construct_tree ($) {
             only_text => 1,
           };
         } elsif (not $self->{ge}->{$self->{t}->{name}.';'}) {
+          my $is_external = not ($self->{in_subset}->{internal_subset} and
+                                 not $self->{in_subset}->{param_entity});
           $onerror->(level => 'w',
                      type => 'xml:dtd:ext decl',
                      token => $self->{t})
-              unless $self->{in_subset}->{internal_subset} and
-                  not $self->{in_subset}->{param_entity};
+              if $is_external;
 
           ## For parser.
           $self->{ge}->{$self->{t}->{name}.';'} = $self->{t};
@@ -1204,9 +1225,12 @@ sub _construct_tree ($) {
               $self->{t}->{value} !~ /[&<]/) {
             $self->{t}->{only_text} = 1;
           }
+          $self->{sps_transformer}->($self->{t}) if defined $self->{sps_transformer};
           if (defined $self->{t}->{sps}) {
             sps_set_di $self->{t}->{sps}, $self->di;
           }
+          $self->{t}->{di} = $self->di;
+          $self->{t}->{external} = {} if $is_external;
           
           ## For DOM.
           if (defined $self->{t}->{notation}) {
@@ -1437,21 +1461,40 @@ sub _construct_tree ($) {
         my $attrs = $self->{t}->{attributes};
         my $attrdefs = $self->{attrdef}->{$self->{t}->{tag_name}};
         for my $attr_name (keys %{$attrdefs}) {
+          my $def = $attrdefs->{$attr_name};
           if ($attrs->{$attr_name}) {
-            $attrs->{$attr_name}->{type} = $attrdefs->{$attr_name}->{type} || 0;
-            if ($attrdefs->{$attr_name}->{tokenize}) {
-              _tokenize_attr_value $attrs->{$attr_name};
+            $attrs->{$attr_name}->{type} = $def->{type} || 0;
+            if ($def->{tokenize}) {
+              if (_tokenize_attr_value $attrs->{$attr_name} and
+                  $def->{external} and
+                  not $def->{external}->{vc_error_reported} and
+                  $self->{document}->xml_standalone) {
+                $onerror->(level => 'm',
+                           type => 'VC:Standalone Document Declaration:attr',
+                           token => $def);
+                $def->{vc_error_reported} = 1;
+              }
             }
-          } elsif (defined $attrdefs->{$attr_name}->{default}) {
+          } elsif (defined $def->{default}) {
             $attrs->{$attr_name} = {
-              value => $attrdefs->{$attr_name}->{default},
-              type => $attrdefs->{$attr_name}->{type} || 0,
+              value => $def->{default},
+              type => $def->{type} || 0,
               not_specified => 1,
-              line => $attrdefs->{$attr_name}->{line},
-              column => $attrdefs->{$attr_name}->{column},
+              line => $def->{line},
+              column => $def->{column},
+              di => $def->{di},
               index => 1 + keys %{$attrs},
-              sps => $attrdefs->{$attr_name}->{sps},
+              sps => $def->{sps},
             };
+
+            if ($def->{external} and
+                not $def->{external}->{vc_error_reported} and
+                $self->{document}->xml_standalone) {
+              $onerror->(level => 'm',
+                         type => 'VC:Standalone Document Declaration:attr',
+                         token => $def);
+              $def->{vc_error_reported} = 1;
+            }
           }
         }
         

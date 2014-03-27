@@ -79,8 +79,10 @@ sub _test ($$) {
   my @errors;
   $p->onerror (sub {
     my %opt = @_;
+    my $di = $opt{di};
+    $di = $opt{token}->{di} if not defined $di and defined $opt{token};
     push @errors, join ';',
-        ($opt{di} ? "[$opt{di}]" : '') . ($opt{line} || $opt{token}->{line}),
+        ($di ? "[$di]" : '') . ($opt{line} || $opt{token}->{line}),
         defined $opt{column} ? $opt{column} : $opt{token}->{column},
         $opt{type},
         defined $opt{text} ? $opt{text} : '',
