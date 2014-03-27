@@ -639,49 +639,45 @@ sub _terminate_tree_constructor ($) {
 # XXX warn external subset
 # XXX "expose DTD content" flag
 # XXX content model data structure
+#    SHOULD for PEs in content model
 # XXX BOM and encoding sniffing
 # XXX parser validation hooks:
-#    PubidChar
-#    PITarget
-#    reserved PI name
-#    xmlVersion SHOULD
-#    text declaration
-#    DOCTYPE name
-#    VC:Standalone Document Declaration
-#      if standalone=yes and element content in ext and has white space
-#    warn
-#      if element in ATTLIST is not declared
-#      if attr type is tokenized type in ext and value is normalized
-#    tag Name
-#    reserved tag name
-#    attr Name
-#    reserved attr name
-#    <!ELEMENT> name
-#    Name in content model and #PCDATA
-#    SHOULD for PEs in content model
-#    <!ATTLIST> name
-#    <!ATTLIST> attr name
 #    multiple <!ATTLIST> for same Name
-#    enumerated / notation name in ATTLIST
+#    enumerated / notation name in ignored ATTLIST
+#    entity value in ignored ENTITY
+#    pubid / sysid in ignored ENTITY
 #    reference Name
+#    parsed <!ENTITY> Name
 #    WFC/VC: Entity Declared
-#    NDATA Name
-#    system ID
+#    parsed <!ENTITY> system ID
+#    version="" in text declaration
 #    encoding="" in text declaration
 #    unparsed entity reference in EntityValue is error
 #    predefined entities SHOULd be declered
-#    predefined entity decl MUST be internal
-#    <!ENTITY> Name
-#    <!NOTATION> name
-#    fully-normalizedness
+#    PubidChar in parsed ENTITY
+#    fully-normalizedness for ENTITY (should)
+#    suggested names rule (warn)
 # XXX DTD validator:
-#    warn if PITarget is not declared
+#  wfness:
+#    PITarget
+#    xmlVersion SHOULD
+#    DOCTYPE name
+#    tag Name
+#    attr Name
+#    <!ELEMENT> name
+#    Name in content model and #PCDATA
+#    <!ATTLIST> name
+#    <!ATTLIST> attr name
+#    enumerated / notation name in ATTLIST
+#    unparsed <!ENTITY> Name
+#    <!NOTATION> name
+#    NDATA Name
+#    PubidChar in DOCTYPE
+#    PubidChar in unparsed ENTITY / NOTATION
+#  validness:
 #    VC:Root Element Type
-#    xml:space type MUST be (default|preserve)
 #    VC:Element Valid
 #    VC:Attr Value Type
-#    empty element tag SHOULD only be used for EMPTY element
-#    error if content model is not deterministic
 #    VC:No Duplicate Types
 #    VC:ID
 #    VC:One ID per Element Type
@@ -698,8 +694,22 @@ sub _terminate_tree_constructor ($) {
 #    VC:Attribute Default Value Syntactically Correct
 #    VC:Fixed Attribute Default
 #    VC:Notation Name
+#    VC:Standalone Document Declaration if standalone=yes and element content in ext and has white space
+#  other:
+#    warn if PITarget is not declared
+#    xml:space type MUST be (default|preserve)
+#    empty element tag SHOULD only be used for EMPTY element
+#    error if content model is not deterministic
 #    pubid normalization
-# XXX suggested name rule (warn)
+#    warn if element in ATTLIST is not declared
+#    fully-normalizedness (SHOULD)
+#    suggested name rule (warn)
+#    <!DOCTYPE> system ID validation
+#    unparsed <!ENTITY> system ID validation
+#    NOTATION system ID validation
+#    reserved PI name
+#    reserved tag name
+#    reserved attr name
 
 sub _insert_point ($) {
   return $_[0]->manakai_element_type_match (Web::HTML::ParserData::HTML_NS, 'template') ? $_[0]->content : $_[0];
@@ -752,6 +762,8 @@ sub _construct_tree ($) {
         my $parent = _insert_point $self->{open_elements}->[-1]->[0];
         $self->{sps_transformer}->($self->{t}) if defined $self->{sps_transformer};
         $self->_append_text_by_token ($self->{t} => $parent);
+        $parent->set_user_data (manakai_has_struct => 1)
+            if $self->{t}->{has_reference} or $self->{t}->{cdata};
         
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
@@ -1783,129 +1795,131 @@ sub _construct_tree ($) {
         die "$0: XML parser initial: Unknown token type $self->{t}->{type}";
       }
 
-    } elsif ($self->{insertion_mode} == BEFORE_XML_DECL_IM) {
+    } elsif ($self->{insertion_mode} == BEFORE_XML_DECL_IM or
+             $self->{insertion_mode} == BEFORE_TEXT_DECL_IM) {
+      ## Not in XML5:
       ## The before XML declaration phase [DOMDTDEF]
-      if ($self->{t}->{type} == PI_TOKEN and $self->{t}->{target} eq 'xml') {
-        my $pos = 0;
-        my $map_source = $self->{t}->{sps} || [];
-        my $req_sp = 0;
-        if ($self->{t}->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                         (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          $onerror->(level => 'm',
-                     type => 'XML version:syntax error',
-                     token => $self->{t},
-                     %$p,
-                     value => $v)
-              unless $v =~ /\A1\.[0-9]+\z/;
-          if ($self->{next_im} == BEFORE_DOCTYPE_IM) {
-            $self->{document}->xml_version ($v);
-            # XXX drop XML 1.1 support?
-            $self->{is_xml} = 1.1 if $v eq '1.1';
-          } else {
-            # XXX version mismatch error
-          }
-        } elsif ($self->{next_im} == BEFORE_DOCTYPE_IM) {
-          my $p = pos_to_lc $map_source, $pos;
-          $onerror->(level => 'm',
-                     type => 'attribute missing:version',
-                     token => $self->{t},
-                     %$p);
-        }
-        if ($self->{t}->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                    (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
-          my $v = defined $1 ? $1 : $2;
-          my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
-          if ($req_sp) {
-            my $p = pos_to_lc $map_source, $pos;
+      ## The before text declaration phase [DOMDTDEF]
+      if ($self->{t}->{type} == PI_TOKEN) {
+        if ($self->{t}->{target} eq 'xml') {
+          my $pos = 0;
+          my $map_source = $self->{t}->{sps} || [];
+          my $req_sp = 0;
+          if ($self->{t}->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                      (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+            my $v = defined $1 ? $1 : $2;
+            my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
+            $pos += $+[0] - $-[0];
+            $req_sp = not length $3;
             $onerror->(level => 'm',
-                       type => 'no space before attr name',
+                       type => 'XML version:syntax error',
                        token => $self->{t},
-                       %$p);
-          }
-          $pos += $+[0] - $-[0];
-          $req_sp = not length $3;
-          $onerror->(level => 'm',
-                     type => 'XML encoding:syntax error',
-                     token => $self->{t},
-                     value => $v,
-                     %$p)
-              unless $v =~ /\A[A-Za-z][A-Za-z0-9._-]*\z/;
-          if ($self->{next_im} == BEFORE_DOCTYPE_IM) {
-            $self->{document}->xml_encoding ($v);
-          } else {
-            # XXX validate charset name
-          }
-        } elsif ($self->{next_im} != BEFORE_DOCTYPE_IM) {
-          ## A text declaration
-          my $p = pos_to_lc $map_source, $pos;
-          $onerror->(level => 'm',
-                     type => 'attribute missing:encoding',
-                     token => $self->{t},
-                     %$p);
-        }
-        if ($self->{t}->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
-                                    (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
-          my $v = defined $1 ? $1 : $2;
-          if ($req_sp) {
-            my $p = pos_to_lc $map_source, $pos;
-            $onerror->(level => 'm',
-                       type => 'no space before attr name',
-                       token => $self->{t},
-                       %$p);
-          }
-          if ($v eq 'yes' or $v eq 'no') {
-            if ($self->{next_im} == BEFORE_DOCTYPE_IM) {
-              $self->{document}->xml_standalone ($v ne 'no');
+                       %$p,
+                       value => $v)
+                unless $v =~ /\A1\.[0-9]+\z/;
+            if (not $self->{insertion_mode} == BEFORE_TEXT_DECL_IM and
+                $self->{next_im} == BEFORE_DOCTYPE_IM) {
+              $self->{document}->xml_version ($v);
+              # XXX drop XML 1.1 support?
+              $self->{is_xml} = 1.1 if $v eq '1.1';
             } else {
+              # XXX version mismatch error
+            }
+          } elsif (not $self->{insertion_mode} == BEFORE_TEXT_DECL_IM and
+                   $self->{next_im} == BEFORE_DOCTYPE_IM) {
+            my $p = pos_to_lc $map_source, $pos;
+            $onerror->(level => 'm',
+                       type => 'attribute missing:version',
+                       token => $self->{t},
+                       %$p);
+          }
+          if ($self->{t}->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                      (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+            my $v = defined $1 ? $1 : $2;
+            my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
+            if ($req_sp) {
               my $p = pos_to_lc $map_source, $pos;
               $onerror->(level => 'm',
-                         type => 'attribute not allowed:standalone',
+                         type => 'no space before attr name',
                          token => $self->{t},
                          %$p);
             }
-          } else {
-            my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
+            $pos += $+[0] - $-[0];
+            $req_sp = not length $3;
             $onerror->(level => 'm',
-                       type => 'XML standalone:syntax error',
+                       type => 'XML encoding:syntax error',
                        token => $self->{t},
                        value => $v,
+                       %$p)
+                unless $v =~ /\A[A-Za-z][A-Za-z0-9._-]*\z/;
+            if (not $self->{insertion_mode} == BEFORE_TEXT_DECL_IM and
+                $self->{next_im} == BEFORE_DOCTYPE_IM) {
+              $self->{document}->xml_encoding ($v);
+            } else {
+              # XXX validate charset name
+            }
+          } elsif ($self->{insertion_mode} == BEFORE_TEXT_DECL_IM or
+                   $self->{next_im} != BEFORE_DOCTYPE_IM) {
+            ## A text declaration
+            my $p = pos_to_lc $map_source, $pos;
+            $onerror->(level => 'm',
+                       type => 'attribute missing:encoding',
+                       token => $self->{t},
                        %$p);
           }
-          $pos += $+[0] - $-[0];
-        }
-        if (length $self->{t}->{data}) {
-          my $p = pos_to_lc $map_source, $pos;
-          $onerror->(level => 'm',
-                     type => 'bogus XML declaration',
-                     token => $self->{t},
-                     %$p);
-        }
-        $self->{insertion_mode} = $self->{next_im};
-        $self->{t} = $self->_get_next_token;
-        redo B;
-      } else {
-        ## Anything other than XML or text declaration.
-        $onerror->(level => 's',
-                   type => 'no XML decl',
-                   line => 1, column => 1);
-        $self->{insertion_mode} = $self->{next_im};
-        ## Reconsume the token
-        redo B;
-      }
-
-    } elsif ($self->{insertion_mode} == BEFORE_TEXT_DECL_IM) {
-      ## Not in XML5.
-      if ($self->{t}->{type} == PI_TOKEN) {
-        if ($self->{t}->{target} eq 'xml') {
-          # XXX text decl validation
-          $self->{t} = $self->_get_next_token;
+          if ($self->{t}->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                      (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+            my $v = defined $1 ? $1 : $2;
+            if ($req_sp) {
+              my $p = pos_to_lc $map_source, $pos;
+              $onerror->(level => 'm',
+                         type => 'no space before attr name',
+                         token => $self->{t},
+                         %$p);
+            }
+            if ($v eq 'yes' or $v eq 'no') {
+              if (not $self->{insertion_mode} == BEFORE_TEXT_DECL_IM and
+                  $self->{next_im} == BEFORE_DOCTYPE_IM) {
+                $self->{document}->xml_standalone ($v ne 'no');
+              } else {
+                my $p = pos_to_lc $map_source, $pos;
+                $onerror->(level => 'm',
+                           type => 'attribute not allowed:standalone',
+                           token => $self->{t},
+                           %$p);
+              }
+            } else {
+              my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
+              $onerror->(level => 'm',
+                         type => 'XML standalone:syntax error',
+                         token => $self->{t},
+                         value => $v,
+                         %$p);
+            }
+            $pos += $+[0] - $-[0];
+          }
+          if (length $self->{t}->{data}) {
+            my $p = pos_to_lc $map_source, $pos;
+            $onerror->(level => 'm',
+                       type => 'bogus XML declaration',
+                       token => $self->{t},
+                       %$p);
+          }
+          $self->{insertion_mode} = $self->{next_im}
+              unless $self->{insertion_mode} == BEFORE_TEXT_DECL_IM;
           $self->{before_text_decl_first}++;
+          $self->{t} = $self->_get_next_token;
           redo B;
         } else {
+          #
+        }
+      } else {
+        #
+      }
+
+      ## Anything other than XML or text declaration.
+      if ($self->{insertion_mode} == BEFORE_TEXT_DECL_IM) {
+        if ($self->{t}->{type} == PI_TOKEN) {
           $onerror->(level => 's',
                      type => 'no XML decl',
                      line => 1, column => 1)
@@ -1916,25 +1930,33 @@ sub _construct_tree ($) {
           $self->{state} = BOGUS_MD_STATE;
           $self->{t} = $self->_get_next_token;
           redo B;
+        } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
+          $onerror->(level => 's',
+                     type => 'no XML decl',
+                     line => 1, column => 1)
+              unless $self->{before_text_decl_first}++;
+          ## Ignore the token.
+          $self->{state} = BOGUS_MD_STATE;
+          $self->{t} = $self->_get_next_token;
+          redo B;
+        } else {
+          $onerror->(level => 's',
+                     type => 'no XML decl',
+                     line => 1, column => 1)
+              unless $self->{before_text_decl_first}++;
+          $self->{insertion_mode} = IN_SUBSET_IM;
+          ## Reconsume the token.
+          redo B;
         }
-      } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
-        $onerror->(level => 's',
-                   type => 'no XML decl',
-                   line => 1, column => 1)
-            unless $self->{before_text_decl_first}++;
-        ## Ignore the token.
-        $self->{state} = BOGUS_MD_STATE;
-        $self->{t} = $self->_get_next_token;
-        redo B;
       } else {
         $onerror->(level => 's',
                    type => 'no XML decl',
-                   line => 1, column => 1)
-            unless $self->{before_text_decl_first}++;
-        $self->{insertion_mode} = IN_SUBSET_IM;
-        ## Reconsume the token.
+                   line => 1, column => 1);
+        $self->{insertion_mode} = $self->{next_im};
+        ## Reconsume the token
         redo B;
       }
+
     } else {
       die "$0: Unknown XML insertion mode: $self->{insertion_mode}";
     }
