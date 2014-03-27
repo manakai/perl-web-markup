@@ -426,6 +426,7 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
+      @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's',
                             line => 1, column => 1},
@@ -490,6 +491,7 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
+      @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's',
                             line => 1, column => 1},
@@ -554,6 +556,7 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""></a>};
+      @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's',
                             line => 1, column => 1},
@@ -630,6 +633,7 @@ test {
   $parser->onparsed (sub {
     test {
       is $doc->inner_html, q{<!DOCTYPE a><a xmlns=""> yx</a>};
+      @error = grep { not $_->{type} eq 'xml:dtd:ext decl' } @error;
       eq_or_diff \@error, [{type => 'no XML decl',
                             level => 's',
                             line => 1, column => 1},

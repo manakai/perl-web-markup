@@ -375,7 +375,6 @@ sub _parse_run ($) {
       $subparser->onparsed (sub {
         $self->_parse_subparser_done ($_[0], $entdef);
       });
-
       $subparser->{confident} = 1;
       $subparser->{line_prev} = $subparser->{line} = 1;
       $subparser->{column_prev} = -1;
@@ -397,7 +396,7 @@ sub _parse_run ($) {
       $subparser->{init_subparser}->($subparser);
       $subparser->{sps_transformer} = sub {
         my $token = $_[0];
-        $token->{sps} = combined_sps $token->{sps}, $map_source
+        $token->{sps} = combined_sps $token->{sps}, $map_parsed => $map_source
             if defined $token->{sps};
         lc_lc_mapper $map_parsed => $map_source, $token;
       };
@@ -713,26 +712,33 @@ sub _tokenize_attr_value ($) {
   my $token = $_[0];
   return unless $token->{value} =~ / /;
   my @value;
-  my @pos = ([0, 0]);
-  my $pos = 0;
+  my @pos;
+  my $old_pos = 0;
+  my $new_pos = 0;
   my @v = grep { length } split /( +)/, $token->{value}, -1;
-  shift @v if @v and $v[0] =~ / /;
-  pop @v if @v and $v[-1] =~ / /;
   for (@v) {
-    if (/ /) {
-      $pos[-1]->[1] += 1;
-      $pos += length $_;
-      push @pos, [$pos, 0] if 1 != length $_;
-    } else {
-      $pos[-1]->[1] += length $_;
+    unless (/ /) {
       push @value, $_;
-      $pos += length $_;
+      push @pos, [$old_pos, $new_pos, 1 + length $_];
+      $new_pos += 1 + length $_;
     }
+    $old_pos += length $_;
   }
-  $token->{value} = join ' ', @value;
-  return unless $token->{sps};
+  pop @value, pop @pos if @value and $value[-1] eq '';
+  shift @value, shift @pos if @value and $value[-1] eq '';
+  $pos[-1]->[2]-- if @pos;
 
-  # XXX sps transformation
+  if (defined $token->{sps}) {
+    my $old_map = create_pos_lc_map $token->{value};
+    my $old_sps = $token->{sps};
+    $token->{value} = join ' ', @value;
+    $token->{sps} = [map {
+      my $lc = pos_to_lc $old_map, $_->[0];
+      [$_->[1], $_->[2], $lc->{line}, $lc->{column}, $lc->{di}, $old_map => $old_sps];
+    } @pos];
+  } else {
+    $token->{value} = join ' ', @value;
+  }
 } # _tokenize_attr_value
 
 sub _construct_tree ($) {

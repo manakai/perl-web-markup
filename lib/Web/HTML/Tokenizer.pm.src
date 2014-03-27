@@ -163,15 +163,16 @@ sub _initialize_tokenizer ($) {
 ## "sps" - Source positions structure is an array reference of "sp"s.
 ##         Items are sorted by their 0th values.
 ## "sp" - Source position structure is an array reference of:
-##     0    Offset of the substring in the parsed value
-##     1    Length of the substring in the parsed value
+##     0    Offset of the substring in the *parsed* value
+##     1    Length of the substring in the *parsed* value
 ##     2    Line number of the substring in the source text
 ##     3    Column number of the substring in the source text
 ##     4    Document index of the source text; If the source text
 ##          is a parsed value in another source text, |undef|
-##     5    Nested "sps" structure, which should be recursively applied to
-##          the di/line/column tupple obtained from this "sp" structure;
-##          If no such "sps" structure, |undef|
+##     5,6  Nested "sps" structures, which should be recursively applied to
+##          the di/line/column tupple obtained using items of
+##          /this/ "sp" structure; Item 5 is used as "from" map and
+##          item 6 is used as "to" map; If no such "sps" structures, |undef|
 
 ## Before each step, UA MAY check to see if either one of the scripts in
 ## "list of scripts that will execute as soon as possible" or the first
@@ -5521,9 +5522,9 @@ sub _get_next_token ($) {
         #
       }
 
-      $self->{ct}->{value} .= '&';
       push @{$self->{ct}->{sps}}, [length $self->{ct}->{value}, 1,
-                                   $self->{line}, $self->{column}];
+                                   $self->{line_prev}, $self->{column_prev}];
+      $self->{ct}->{value} .= '&';
       $self->{state} = $self->{prev_state};
       ## Reconsume.
       redo A;
@@ -5785,23 +5786,23 @@ sub _expand_ge_in_attr ($$) {
 
   if (not defined $self->{ge}->{$name}->{value}) {
     ## An external entity
-    my $c = $self->{column} - 1 - length $name;
+    my $c = $self->{column_prev} - length $name;
     !!!parse-error (type => 'WFC:No External Entity References',
-                    line => $self->{line},
+                    line => $self->{line_prev},
                     column => $c,
                     value => $name);
     push @{$ca->{sps}}, [length $ca->{value}, 1 + length $name,
-                         $self->{line}, $c];
+                         $self->{line_prev}, $c];
     $ca->{value} .= '&' . $name;
   } elsif ($self->{ge}->{$name}->{value} =~ /</) {
     ## If the entity value contains a "<" character, referencing the
     ## entity in an attribute value is a well-formedness error.
-    my $c = $self->{column} - 1 - length $name;
+    my $c = $self->{column_prev} - length $name;
     !!!parse-error (type => 'entref in attr has element',
-                    line => $self->{line},
+                    line => $self->{line_prev},
                     column => $c);
     push @{$ca->{sps}}, [length $ca->{value}, 1 + length $name,
-                         $self->{line}, $c];
+                         $self->{line_prev}, $c];
     $ca->{value} .= '&' . $name;
   } else {
     ## If the entity value contains a "&" character...
@@ -5824,7 +5825,8 @@ sub _expand_ge_in_attr ($$) {
     my $list = $parser->parse_char_string_with_context
         ($self->{ge}->{$name}->{value}, $context, $doc);
     for (@$list) {
-      my $sps = combined_sps $_->get_user_data ('manakai_sps') || [], $map_source;
+      my $sps = combined_sps $_->get_user_data ('manakai_sps') || [],
+          $map_parsed => $map_source;
       push @{$ca->{sps}}, @{sps_with_offset $sps, length $ca->{value}};
     }
     $ca->{value} .= join '', map { $_->text_content } @$list;

@@ -91,18 +91,23 @@ sub lc_lc_mapper ($$$) {
     $q = $_;
   }
   if (defined $q and $pos <= $q->[0] + $q->[1]) {
+    #print STDERR "$line.$column is index $pos (@{[join ' ', map { $_ // '' } @$p]}) is ";
     $args->{line} = $q->[2];
     $args->{column} = $q->[3] + $pos - $q->[0];
     $args->{di} = $q->[4];
-
-    lc_lc_mapper $to_map => $q->[5], $args if defined $q->[5]
+    #print STDERR "$args->{line}.$args->{column}#@{[$args->{di} // -1]} (@{[join ' ', map { $_ // '' } @$q]})\n";
+    lc_lc_mapper $q->[5] => $q->[6], $args if defined $q->[5]
   }
 } # lc_lc_mapper
 
 push @EXPORT, qw(combined_sps);
-sub combined_sps ($$) {
-  my ($sps1, $sps2) = @_;
-  return [map { my $v = [@$_]; $v->[5] = $sps2 unless defined $v->[4]; $v } @$sps1];
+sub combined_sps ($$$) {
+  my ($sps, $from_map, $to_map) = @_;
+  return [map {
+    my $v = [@$_];
+    $v->[5] = $from_map, $v->[6] = $to_map unless defined $v->[4];
+    $v;
+  } @$sps];
 } # combined_sps
 
 push @EXPORT, qw(pos_to_lc);
