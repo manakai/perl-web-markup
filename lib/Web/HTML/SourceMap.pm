@@ -32,6 +32,17 @@ sub create_pos_lc_map ($) {
   return \@map;
 } # create_pos_lc_map
 
+push @EXPORT, qw(sps_set_di);
+sub sps_set_di ($$) {
+  $_->[4] = $_[1] for @{$_[0]};
+} # sps_set_di
+
+push @EXPORT, qw(sps_with_offset);
+sub sps_with_offset ($$) {
+  my $delta = $_[1];
+  return [map { my $v = [@$_]; $v->[0] += $delta; $v } @{$_[0]}];
+} # sps_add_offset
+
 push @EXPORT, qw(lc_lc_mapper);
 sub lc_lc_mapper ($$$) {
   my ($from_map => $to_map, $args) = @_;

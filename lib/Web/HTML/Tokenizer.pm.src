@@ -4733,7 +4733,7 @@ sub _get_next_token ($) {
         } else {
           if (defined $self->{entity__sps}) {
             my $delta = length $self->{ca}->{value};
-            push @{$self->{ca}->{sps}}, map { my $v = [@$_]; $v->[0] += $delta; $v } @{$self->{entity__sps}};
+            push @{$self->{ca}->{sps}}, @{sps_with_offset $self->{entity__sps}, $delta};
           } else { 
             push @{$self->{ca}->{sps}},
                 [length $self->{ca}->{value}, length $data,
@@ -5823,9 +5823,7 @@ sub _expand_ge_in_attr ($$) {
     for (@$list) {
       my $sps = [@{$_->get_user_data ('manakai_sps') || []}];
       lc_lc_mapper_for_sps $map_parsed => $map_source, $sps;
-      my $delta = length $ca->{value};
-      $_->[0] += $delta for @$sps;
-      push @{$ca->{sps}}, @$sps;
+      push @{$ca->{sps}}, @{sps_with_offset $sps, length $ca->{value}};
     }
     $ca->{value} .= join '', map { $_->text_content } @$list;
   }
@@ -5846,11 +5844,7 @@ sub _append_token_data_and_sps ($$$) {
   my $pos_list = $node->get_user_data ('manakai_sps');
   $pos_list = [] if not defined $pos_list or not ref $pos_list eq 'ARRAY';
   my $delta = length $node->text_content;
-  push @$pos_list, map {
-    my $v = [@$_];
-    $v->[0] += $delta;
-    $v;
-  } @{_token_sps $token};
+  push @$pos_list, @{sps_with_offset _token_sps $token, $delta};
   $node->set_user_data (manakai_sps => $pos_list);
   $node->manakai_append_text ($token->{data});
 } # _append_token_data_with_sps

@@ -1199,8 +1199,7 @@ sub _construct_tree ($) {
             $self->{t}->{only_text} = 1;
           }
           if (defined $self->{t}->{sps}) {
-            my $di = $self->di;
-            $_->[4] = $di for @{$self->{t}->{sps}};
+            sps_set_di $self->{t}->{sps}, $self->di;
           }
           
           ## For DOM.
@@ -1246,8 +1245,7 @@ sub _construct_tree ($) {
           ## For parser.
           $self->{pe}->{$self->{t}->{name} . ';'} = $self->{t};
           if (defined $self->{t}->{sps}) {
-            my $di = $self->di;
-            $_->[4] = $di for @{$self->{t}->{sps}};
+            sps_set_di $self->{t}->{sps}, $self->di;
           }
 
           ## TODO: syntax validation
