@@ -2,8 +2,14 @@ package Web::HTML::SourceMap;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '1.0';
+our $VERSION = '2.0';
 use Exporter::Lite;
+
+## See |Web::HTML::Tokenizer| (search for |"sps"|) for description of
+## data structures.
+
+## Tests are included in |t/modules/Web-HTML-Parser-textpos.t|,
+## |t/modules/Web-XML-Parser-textpos.t|, and other test scripts.
 
 our @EXPORT;
 
@@ -38,16 +44,23 @@ sub sps_set_di ($$) {
 } # sps_set_di
 
 push @EXPORT, qw(sps_with_offset);
+sub sps_with_offset ($$);
 sub sps_with_offset ($$) {
   my $delta = $_[1];
   return [map { my $v = [@$_]; $v->[0] += $delta; $v } @{$_[0]}];
 } # sps_add_offset
 
+push @EXPORT, qw(sps_is_empty);
+sub sps_is_empty ($) {
+  return not @{$_[0] or []};
+} # sps_is_empty
+
 push @EXPORT, qw(lc_lc_mapper);
+sub lc_lc_mapper ($$$);
 sub lc_lc_mapper ($$$) {
   my ($from_map => $to_map, $args) = @_;
   return if defined $args->{di}; # absolute
-  
+
   my $line;
   my $column;
   if (defined $args->{column}) {
@@ -81,21 +94,16 @@ sub lc_lc_mapper ($$$) {
     $args->{line} = $q->[2];
     $args->{column} = $q->[3] + $pos - $q->[0];
     $args->{di} = $q->[4];
+
+    lc_lc_mapper $to_map => $q->[5], $args if defined $q->[5]
   }
 } # lc_lc_mapper
 
-push @EXPORT, qw(lc_lc_mapper_for_sps);
-sub lc_lc_mapper_for_sps ($$$) {
-  my ($from_map => $to_map, $sps) = @_;
-  for (@{$sps or []}) {
-    next if defined $_->[4];
-    my $p = {line => $_->[2], column => $_->[3]};
-    lc_lc_mapper $from_map => $to_map, $p;
-    $_->[2] = $p->{line};
-    $_->[3] = $p->{column};
-    $_->[4] = $p->{di} if defined $p->{di};
-  }
-} # lc_lc_mapper_for_sps
+push @EXPORT, qw(combined_sps);
+sub combined_sps ($$) {
+  my ($sps1, $sps2) = @_;
+  return [map { my $v = [@$_]; $v->[5] = $sps2 unless defined $v->[4]; $v } @$sps1];
+} # combined_sps
 
 push @EXPORT, qw(pos_to_lc);
 sub pos_to_lc ($$) {
@@ -110,6 +118,7 @@ sub pos_to_lc ($$) {
     $sp{line} = $p->[2];
     $sp{column} = $p->[3] + $pos - $p->[0];
     $sp{di} = $p->[4];
+    lc_lc_mapper $map => $p->[5], \%sp if defined $p->[5];
   }
   return \%sp;
 } # pos_to_lc
@@ -133,9 +142,7 @@ sub node_to_text_and_tc_and_sps ($) {
         if ($nt == 1) { # ELEMENT_NODE
           unshift @node, @{$node->child_nodes};
         } elsif ($nt == 3) { # TEXT_NODE
-          push @tc_sps, map {
-            my $v = [@$_]; $v->[0] += $tc_delta; $v;
-          } @{$node->get_user_data ('manakai_sps') or []};
+          push @tc_sps, @{sps_with_offset $node->get_user_data ('manakai_sps') || [], $tc_delta};
           for ($node->data) {
             push @tc, $_;
             $tc_delta += length $_;
@@ -143,12 +150,8 @@ sub node_to_text_and_tc_and_sps ($) {
         }
       }
     } elsif ($nt == 3) { # TEXT_NODE
-      push @text_sps, map {
-        my $v = [@$_]; $v->[0] += $text_delta; $v;
-      } @{$node->get_user_data ('manakai_sps') || []};
-      push @tc_sps, map {
-        my $v = [@$_]; $v->[0] += $tc_delta; $v;
-      } @{$node->get_user_data ('manakai_sps') || []};
+      push @text_sps, @{sps_with_offset $node->get_user_data ('manakai_sps') || [], $text_delta};
+      push @tc_sps, @{sps_with_offset $node->get_user_data ('manakai_sps') || [], $tc_delta};
       for ($node->data) {
         push @text, $_;
         push @tc, $_;

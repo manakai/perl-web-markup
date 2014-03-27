@@ -39,12 +39,12 @@ my $GetNestedOnError = sub ($$$;$) {
 
   my $map_parsed = create_pos_lc_map $_[2];
   my $map_source = $sps || $node->get_user_data ('manakai_sps') || [];
-  unless (@$map_source) {
+  if (sps_is_empty $map_source) {
     my $sp = [0, 0,
               $node->get_user_data ('manakai_source_line'),
               $node->get_user_data ('manakai_source_column'),
               $node->get_user_data ('manakai_di')];
-    unshift @$map_source, $sp if defined $sp->[3];
+    $map_source = [$sp] if defined $sp->[3];
   }
 
   return sub {

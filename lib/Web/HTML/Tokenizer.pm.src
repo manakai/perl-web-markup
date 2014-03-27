@@ -169,6 +169,9 @@ sub _initialize_tokenizer ($) {
 ##     3    Column number of the substring in the source text
 ##     4    Document index of the source text; If the source text
 ##          is a parsed value in another source text, |undef|
+##     5    Nested "sps" structure, which should be recursively applied to
+##          the di/line/column tupple obtained from this "sp" structure;
+##          If no such "sps" structure, |undef|
 
 ## Before each step, UA MAY check to see if either one of the scripts in
 ## "list of scripts that will execute as soon as possible" or the first
@@ -5821,8 +5824,7 @@ sub _expand_ge_in_attr ($$) {
     my $list = $parser->parse_char_string_with_context
         ($self->{ge}->{$name}->{value}, $context, $doc);
     for (@$list) {
-      my $sps = [@{$_->get_user_data ('manakai_sps') || []}];
-      lc_lc_mapper_for_sps $map_parsed => $map_source, $sps;
+      my $sps = combined_sps $_->get_user_data ('manakai_sps') || [], $map_source;
       push @{$ca->{sps}}, @{sps_with_offset $sps, length $ca->{value}};
     }
     $ca->{value} .= join '', map { $_->text_content } @$list;

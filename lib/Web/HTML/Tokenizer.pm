@@ -6231,8 +6231,7 @@ sub _expand_ge_in_attr ($$) {
     my $list = $parser->parse_char_string_with_context
         ($self->{ge}->{$name}->{value}, $context, $doc);
     for (@$list) {
-      my $sps = [@{$_->get_user_data ('manakai_sps') || []}];
-      lc_lc_mapper_for_sps $map_parsed => $map_source, $sps;
+      my $sps = combined_sps $_->get_user_data ('manakai_sps') || [], $map_source;
       push @{$ca->{sps}}, @{sps_with_offset $sps, length $ca->{value}};
     }
     $ca->{value} .= join '', map { $_->text_content } @$list;

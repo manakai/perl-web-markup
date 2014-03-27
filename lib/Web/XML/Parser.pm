@@ -397,7 +397,7 @@ sub _parse_run ($) {
       $subparser->{init_subparser}->($subparser);
       $subparser->{sps_transformer} = sub {
         my $token = $_[0];
-        lc_lc_mapper_for_sps $map_parsed => $map_source, $token->{sps}
+        $token->{sps} = combined_sps $token->{sps}, $map_source
             if defined $token->{sps};
         lc_lc_mapper $map_parsed => $map_source, $token;
       };
@@ -715,7 +715,7 @@ sub _tokenize_attr_value ($) {
   my @value;
   my @pos = ([0, 0]);
   my $pos = 0;
-  my @v = split /( +)/, $token->{value}, -1;
+  my @v = grep { length } split /( +)/, $token->{value}, -1;
   shift @v if @v and $v[0] =~ / /;
   pop @v if @v and $v[-1] =~ / /;
   for (@v) {
