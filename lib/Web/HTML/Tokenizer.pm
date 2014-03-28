@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '10.0';
+our $VERSION = '11.0';
 use Web::HTML::Defs;
 use Web::HTML::_SyntaxDefs;
 use Web::HTML::InputStream;
@@ -4866,6 +4866,7 @@ sub _get_next_token ($) {
                   ## If the document has no DOCTYPE, skip warning.
                 } else {
                   ## Not a declared XML entity.
+                  ## $self->{kwd} is always an XML Name.
                   $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## TODO: type
                                   value => $self->{kwd},
                                   level => 'm',
@@ -4903,10 +4904,14 @@ sub _get_next_token ($) {
                   $self->{prev_state} == RCDATA_STATE) and
                  $self->{entity__match} == 0)) {
               ## A parse error in XML or in HTML content
+              $self->{entity_names}->{$self->{kwd}}
+                  ||= {line => $self->{line_prev},
+                       column => $self->{column_prev} + 1 - length $self->{kwd},
+                       di => $self->di};
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', # XXXtype
                               value => $self->{kwd},
-                              line => $self->{line},
-                              column => $self->{column} - length $self->{kwd});
+                              line => $self->{line_prev},
+                              column => $self->{column_prev} + 1 - length $self->{kwd});
             }
             $self->{entity__value} .= chr $nc;
             delete $self->{entity__is_tree};
@@ -6129,6 +6134,10 @@ sub _get_next_token ($) {
                       column => $self->{column_prev} - 1 - length $self->{kwd}};
             }
           } else {
+            $self->{entity_names}->{$self->{kwd}}
+                ||= {line => $self->{line_prev},
+                     column => $self->{column_prev} - length $self->{kwd},
+                     di => $self->di};
             unless ($self->{stop_processing}) {
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'pe not declared',
                               value => $self->{kwd} . ';',

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '8.0';
+our $VERSION = '9.0';
 use Encode;
 use Web::HTML::Defs;
 use Web::HTML::ParserData;
@@ -536,6 +536,7 @@ sub _parse_subparser_done ($$$) {
     $self->{entity_names_in_entity_values}
         = $main_parser->{entity_names_in_entity_values} ||= {};
     $self->{el_ncnames} = $main_parser->{el_ncnames} ||= {};
+    $self->{entity_names} = $main_parser->{entity_names} ||= {};
     return $self;
   } # new_from_parser
 
@@ -567,6 +568,11 @@ sub _check_before_terminate ($) {
   }
   $self->_sc->check_ncnames (names => $self->{el_ncnames} || {},
                              onerror => sub { $self->{onerror}->(@_) });
+  for my $en (keys %{$self->{entity_names} || {}}) {
+    $self->_sc->check_hidden_name (name => $en, onerror => sub {
+      $self->{onerror}->(%{$self->{entity_names}->{$en}}, @_);
+    });
+  }
 } # _check_before_terminate
 
 sub _on_terminate ($) {
@@ -677,17 +683,14 @@ sub _terminate_tree_constructor ($) {
 ## Differences from the XML5 spec (not documented in DOMDTDEF spec)
 ## are marked as "XML5:".
 
+# XXX error type documentation
 # XXX external parameter entity fetch error
 # XXX warn by external ref
-# XXX warn external subset
 # XXX "expose DTD content" flag
 # XXX content model data structure
 #    SHOULD for PEs in content model
-# XXX BOM and encoding sniffing
 # XXX parser validation hooks:
 #    cm in ignored ELEMENT
-#    WFC/VC: Entity Declared
-#      WFC if reference Name is not Name
 #    fully-normalizedness for ENTITY (should)
 # XXX DTD validator:
 #  wfness:
