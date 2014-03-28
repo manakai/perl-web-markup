@@ -4907,7 +4907,8 @@ sub _get_next_token ($) {
               $self->{entity_names}->{$self->{kwd}}
                   ||= {line => $self->{line_prev},
                        column => $self->{column_prev} + 1 - length $self->{kwd},
-                       di => $self->di};
+                       di => $self->di}
+                      if $self->{is_xml};
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', # XXXtype
                               value => $self->{kwd},
                               line => $self->{line_prev},
