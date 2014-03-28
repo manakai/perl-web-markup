@@ -592,6 +592,21 @@ sub max_entity_expansions ($;$) {
   return $_[0]->{max_entity_expansions} || 1000;
 } # max_entity_expansions
 
+sub strict_checker ($;$) {
+  if (@_ > 1) {
+    $_[0]->{strict_checker} = $_[1];
+  }
+  return $_[0]->{strict_checker} || 'Web::XML::Parser::MinimumChecker';
+} # strict_checker
+
+sub _sc ($) {
+  return $_[0]->{_sc} ||= do {
+    my $sc = $_[0]->strict_checker;
+    eval qq{ require $sc } or die $@;
+    $sc;
+  };
+} # _sc
+
 ## ------ Tree construction ------
 
 sub _initialize_tree_constructor ($) {
@@ -642,38 +657,21 @@ sub _terminate_tree_constructor ($) {
 #    SHOULD for PEs in content model
 # XXX BOM and encoding sniffing
 # XXX parser validation hooks:
-#    multiple <!ATTLIST> for same Name
-#    enumerated / notation name in ignored ATTLIST
-#    entity value in ignored ENTITY
-#    pubid / sysid in ignored ENTITY
-#    reference Name
-#    parsed <!ENTITY> Name
+#    element and attr names
+#    cm in ignored ELEMENT
 #    WFC/VC: Entity Declared
-#    parsed <!ENTITY> system ID
-#    version="" in text declaration
-#    encoding="" in text declaration
+#      WFC if reference Name is not Name
 #    unparsed entity reference in EntityValue is error
 #    predefined entities SHOULd be declered
-#    PubidChar in parsed ENTITY
 #    fully-normalizedness for ENTITY (should)
-#    suggested names rule (warn)
 # XXX DTD validator:
 #  wfness:
 #    PITarget
 #    xmlVersion SHOULD
-#    DOCTYPE name
 #    tag Name
 #    attr Name
-#    <!ELEMENT> name
+#    Names and NMTokens and PubidChar in DTDEF
 #    Name in content model and #PCDATA
-#    <!ATTLIST> name
-#    <!ATTLIST> attr name
-#    enumerated / notation name in ATTLIST
-#    unparsed <!ENTITY> Name
-#    <!NOTATION> name
-#    NDATA Name
-#    PubidChar in DOCTYPE
-#    PubidChar in unparsed ENTITY / NOTATION
 #  validness:
 #    VC:Root Element Type
 #    VC:Element Valid
@@ -700,12 +698,11 @@ sub _terminate_tree_constructor ($) {
 #    xml:space type MUST be (default|preserve)
 #    empty element tag SHOULD only be used for EMPTY element
 #    error if content model is not deterministic
-#    pubid normalization
+#    pubid normalization (warn)
+#    sysid validation
 #    warn if element in ATTLIST is not declared
 #    fully-normalizedness (SHOULD)
 #    suggested name rule (warn)
-#    <!DOCTYPE> system ID validation
-#    unparsed <!ENTITY> system ID validation
 #    NOTATION system ID validation
 #    reserved PI name
 #    reserved tag name
@@ -1039,6 +1036,9 @@ sub _construct_tree ($) {
                      token => $self->{t})
               unless $self->{in_subset}->{internal_subset} and
                   not $self->{in_subset}->{param_entity};
+          $self->_sc->check_hidden_name
+              (name => $self->{t}->{name},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
           my $node = $self->{doctype}->get_element_type_definition_node
               ($self->{t}->{name});
@@ -1054,34 +1054,36 @@ sub _construct_tree ($) {
 
           $node->content_model_text (join '', @{$self->{t}->{content}})
               if $self->{t}->{content};
+          $self->{has_element_decl}->{$self->{t}->{name}} = 1;
         } else {
           $onerror->(level => 'm', type => 'duplicate element decl', ## TODO: type
                           value => $self->{t}->{name},
                           token => $self->{t});
-          
-          ## TODO: $self->{t}->{content} syntax check.
         }
-        $self->{has_element_decl}->{$self->{t}->{name}} = 1;
+        ## TODO: $self->{t}->{content} syntax check.
 
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == ATTLIST_TOKEN) {
         ## <!ATTLIST> in DTD
+        my $is_external = not ($self->{in_subset}->{internal_subset} and
+                               not $self->{in_subset}->{param_entity});
+        my $ed;
+        $self->_sc->check_hidden_name
+            (name => $self->{t}->{name},
+             onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         if ($self->{stop_processing}) {
           $onerror->(level => 'w',
                      type => 'xml:dtd:attlist ignored',
                      token => $self->{t});
-          ## TODO: syntax validation
         } else {
-          my $is_external = not ($self->{in_subset}->{internal_subset} and
-                                 not $self->{in_subset}->{param_entity});
           $onerror->(level => 'w',
                      type => 'xml:dtd:ext decl',
                      token => $self->{t})
               if $is_external;
-
-          my $ed = $self->{doctype}->get_element_type_definition_node
+          
+          $ed = $self->{doctype}->get_element_type_definition_node
               ($self->{t}->{name});
           unless ($ed) {
             $ed = $self->{document}->create_element_type_definition
@@ -1090,76 +1092,79 @@ sub _construct_tree ($) {
             $ed->set_user_data (manakai_source_column => $self->{t}->{column});
             $ed->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
             $self->{doctype}->set_element_type_definition_node ($ed);
+            $self->{has_attlist}->{$self->{t}->{name}} = 1;
           } elsif ($self->{has_attlist}->{$self->{t}->{name}}) {
             $onerror->(level => 'w', type => 'duplicate attlist decl', ## TODO: type
-                            value => $self->{t}->{name},
-                            token => $self->{t});
+                       value => $self->{t}->{name},
+                       token => $self->{t});
           }
-          $self->{has_attlist}->{$self->{t}->{name}} = 1;
           
           unless (@{$self->{t}->{attrdefs}}) {
             $onerror->(level => 'w', type => 'empty attlist decl', ## TODO: type
                             value => $self->{t}->{name},
                             token => $self->{t});
           }
+        }
+        
+        for my $at (@{$self->{t}->{attrdefs}}) {
+          my $node = $self->{document}->create_attribute_definition
+              ($at->{name});
+          $node->set_user_data (manakai_source_line => $at->{line});
+          $node->set_user_data (manakai_source_column => $at->{column});
+          $node->set_user_data (manakai_di => $at->{di}) if defined $at->{di};
+          $node->set_user_data (manakai_sps => $at->{sps}) if $at->{sps};
           
-          for my $at (@{$self->{t}->{attrdefs}}) {
+          my $type = defined $at->{type} ? {
+            CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,
+            ENTITIES => 6, NMTOKEN => 7, NMTOKENS => 8, NOTATION => 9,
+          }->{$at->{type}} : 10;
+          if (defined $type) {
+            $node->declared_type ($type);
+          } else {
+            $onerror->(level => 'm', type => 'unknown declared type', ## TODO: type
+                       value => $at->{type},
+                       token => $at);
+          }
+          
+          push @{$node->allowed_tokens}, @{$at->{tokens} or []};
+          
+          my $default = defined $at->{default} ? {
+            FIXED => 1, REQUIRED => 2, IMPLIED => 3,
+          }->{$at->{default}} : 4;
+          if (defined $default) {
+            $node->default_type ($default);
+            if (defined $at->{value}) {
+              if ($default == 1 or $default == 4) {
+                #
+              } elsif (length $at->{value}) {
+                $onerror->(level => 'm',
+                           type => 'default value not allowed', ## TODO: type
+                           token => $at);
+              }
+            } else {
+              if ($default == 1 or $default == 4) {
+                $onerror->(level => 'm',
+                           type => 'default value not provided', ## TODO: type
+                           token => $at);
+              }
+            }
+          } else {
+            $onerror->(level => 'm',
+                       type => 'unknown default type', ## TODO: type
+                       value => $at->{default},
+                       token => $at);
+          }
+
+          $type ||= 0;
+          my $tokenize = (2 <= $type and $type <= 10);
+
+          if (defined $at->{value}) {
+            _tokenize_attr_value $at if $tokenize;
+            $node->text_content ($at->{value});
+          }
+
+          if (defined $ed) {
             unless ($ed->get_attribute_definition_node ($at->{name})) {
-              my $node = $self->{document}->create_attribute_definition
-                  ($at->{name});
-              $node->set_user_data (manakai_source_line => $at->{line});
-              $node->set_user_data (manakai_source_column => $at->{column});
-              $node->set_user_data (manakai_di => $at->{di}) if defined $at->{di};
-              $node->set_user_data (manakai_sps => $at->{sps}) if $at->{sps};
-              
-              my $type = defined $at->{type} ? {
-                CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,
-                ENTITIES => 6, NMTOKEN => 7, NMTOKENS => 8, NOTATION => 9,
-              }->{$at->{type}} : 10;
-              if (defined $type) {
-                $node->declared_type ($type);
-              } else {
-                $onerror->(level => 'm', type => 'unknown declared type', ## TODO: type
-                                value => $at->{type},
-                                token => $at);
-              }
-              
-              push @{$node->allowed_tokens}, @{$at->{tokens} or []};
-              
-              my $default = defined $at->{default} ? {
-                FIXED => 1, REQUIRED => 2, IMPLIED => 3,
-              }->{$at->{default}} : 4;
-              if (defined $default) {
-                $node->default_type ($default);
-                if (defined $at->{value}) {
-                  if ($default == 1 or $default == 4) {
-                    #
-                  } elsif (length $at->{value}) {
-                    $onerror->(level => 'm', type => 'default value not allowed', ## TODO: type
-                                    token => $at);
-                  }
-                } else {
-                  if ($default == 1 or $default == 4) {
-                    $onerror->(level => 'm', type => 'default value not provided', ## TODO: type
-                                    token => $at);
-                  }
-                }
-              } else {
-                $onerror->(level => 'm', type => 'unknown default type', ## TODO: type
-                                value => $at->{default},
-                                token => $at);
-              }
-
-              $type ||= 0;
-              my $tokenize = (2 <= $type and $type <= 10);
-
-              if (defined $at->{value}) {
-                if ($tokenize) {
-                  _tokenize_attr_value $at;
-                }
-                $node->text_content ($at->{value});
-              }
-              
               $ed->set_attribute_definition_node ($node);
 
               ## For tree construction
@@ -1180,11 +1185,21 @@ sub _construct_tree ($) {
               $onerror->(level => 'w', type => 'duplicate attrdef', ## TODO: type
                               value => $at->{name},
                               token => $at);
-              
-              ## TODO: syntax validation
+              my $onerror = sub { $onerror->(token => $at, @_) };
+              if ($type == 10) { # ENUMERATION
+                for (@{$at->{tokens} or []}) {
+                  $self->_sc->check_hidden_nmtoken
+                      (name => $_, onerror => $onerror);
+                }
+              } elsif ($type == 9) { # NOTATION
+                for (@{$at->{tokens} or []}) {
+                  $self->_sc->check_hidden_name
+                      (name => $_, onerror => $onerror);
+                }
+              }
             }
-          } # $at
-        }
+          } # $ed
+        } # $at
 
         ## Stay in the mode.
         $self->{t} = $self->_get_next_token;
@@ -1195,11 +1210,13 @@ sub _construct_tree ($) {
           $onerror->(level => 'w',
                      type => 'xml:dtd:entity ignored',
                      token => $self->{t});
-          ## TODO: syntax validation
+          $self->_sc->check_hidden_name
+              (name => $self->{t}->{name},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         } elsif ({
           amp => 1, apos => 1, quot => 1, lt => 1, gt => 1,
         }->{$self->{t}->{name}}) {
-          if (not defined $self->{t}->{value} or
+          if (not defined $self->{t}->{value} or # external entity
               not $self->{t}->{value} =~ {
                 amp => qr/\A&#(?:x0*26|0*38);\z/,
                 lt => qr/\A&#(?:x0*3[Cc]|0*60);\z/,
@@ -1230,6 +1247,9 @@ sub _construct_tree ($) {
                      type => 'xml:dtd:ext decl',
                      token => $self->{t})
               if $is_external;
+          $self->_sc->check_hidden_name
+              (name => $self->{t}->{name},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
           ## For parser.
           $self->{ge}->{$self->{t}->{name}.';'} = $self->{t};
@@ -1256,15 +1276,27 @@ sub _construct_tree ($) {
             $node->notation_name ($self->{t}->{notation});
             
             $self->{doctype}->set_general_entity_node ($node);
-          } else {
-            ## TODO: syntax validation
           }
         } else {
           $onerror->(level => 'w', type => 'duplicate general entity decl', ## TODO: type
                           value => $self->{t}->{name},
                           token => $self->{t});
 
-          ## TODO: syntax validation        
+        }
+        if (defined $self->{t}->{pubid}) {
+          $self->_sc->check_hidden_pubid
+              (name => $self->{t}->{pubid},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        }
+        if (defined $self->{t}->{sysid}) {
+          $self->_sc->check_hidden_sysid
+              (name => $self->{t}->{sysid},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        }
+        if (defined $self->{t}->{notation}) {
+          $self->_sc->check_hidden_name
+              (name => $self->{t}->{notation},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         }
 
         ## Stay in the mode.
@@ -1276,27 +1308,38 @@ sub _construct_tree ($) {
           $onerror->(level => 'w',
                      type => 'xml:dtd:entity ignored',
                      token => $self->{t});
-          ## TODO: syntax validation
+          $self->_sc->check_hidden_name
+              (name => $self->{t}->{name},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         } elsif (not $self->{pe}->{$self->{t}->{name} . ';'}) {
           $onerror->(level => 'w',
                      type => 'xml:dtd:ext decl',
                      token => $self->{t})
               unless $self->{in_subset}->{internal_subset} and
                   not $self->{in_subset}->{param_entity};
+          $self->_sc->check_hidden_name
+              (name => $self->{t}->{name},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
           ## For parser.
           $self->{pe}->{$self->{t}->{name} . ';'} = $self->{t};
           if (defined $self->{t}->{sps}) {
             sps_set_di $self->{t}->{sps}, $self->di;
           }
-
-          ## TODO: syntax validation
         } else {
           $onerror->(level => 'w', type => 'duplicate para entity decl', ## TODO: type
                           value => $self->{t}->{name},
                           token => $self->{t});
-
-          ## TODO: syntax validation        
+        }
+        if (defined $self->{t}->{pubid}) {
+          $self->_sc->check_hidden_pubid
+              (name => $self->{t}->{pubid},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        }
+        if (defined $self->{t}->{sysid}) {
+          $self->_sc->check_hidden_sysid
+              (name => $self->{t}->{sysid},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         }
         
         ## Stay in the mode.
@@ -1310,6 +1353,9 @@ sub _construct_tree ($) {
                      token => $self->{t})
               unless $self->{in_subset}->{internal_subset} and
                   not $self->{in_subset}->{param_entity};
+          $self->_sc->check_hidden_name
+              (name => $self->{t}->{name},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
           my $node = $self->{document}->create_notation ($self->{t}->{name});
           $node->set_user_data (manakai_source_line => $self->{t}->{line});
@@ -1324,8 +1370,16 @@ sub _construct_tree ($) {
           $onerror->(level => 'm', type => 'duplicate notation decl', ## TODO: type
                           value => $self->{t}->{name},
                           token => $self->{t});
-
-          ## TODO: syntax validation
+        }
+        if (defined $self->{t}->{pubid}) {
+          $self->_sc->check_hidden_pubid
+              (name => $self->{t}->{pubid},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        }
+        if (defined $self->{t}->{sysid}) {
+          $self->_sc->check_hidden_sysid
+              (name => $self->{t}->{sysid},
+               onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         }
 
         ## Stay in the mode.
@@ -1336,6 +1390,9 @@ sub _construct_tree ($) {
         $onerror->(level => 'w',
                    type => 'xml:dtd:pi',
                    token => $self->{t});
+        $self->_sc->check_hidden_pi_target
+            (name => $self->{t}->{target},
+             onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
         my $pi = $self->{document}->create_processing_instruction
             ($self->{t}->{target}, $self->{t}->{data});
@@ -1811,19 +1868,18 @@ sub _construct_tree ($) {
             my $p = pos_to_lc $map_source, $pos + (defined $-[1] ? $-[1] : $-[2]);
             $pos += $+[0] - $-[0];
             $req_sp = not length $3;
-            $onerror->(level => 'm',
-                       type => 'XML version:syntax error',
-                       token => $self->{t},
-                       %$p,
-                       value => $v)
-                unless $v =~ /\A1\.[0-9]+\z/;
             if (not $self->{insertion_mode} == BEFORE_TEXT_DECL_IM and
                 $self->{next_im} == BEFORE_DOCTYPE_IM) {
               $self->{document}->xml_version ($v);
               # XXX drop XML 1.1 support?
               $self->{is_xml} = 1.1 if $v eq '1.1';
+              $self->_sc->check_version (name => $v, onerror => sub {
+                $onerror->(token => $self->{t}, %$p, @_);
+              });
             } else {
-              # XXX version mismatch error
+              $self->_sc->check_hidden_version (name => $v, onerror => sub {
+                $onerror->(token => $self->{t}, %$p, @_);
+              });
             }
           } elsif (not $self->{insertion_mode} == BEFORE_TEXT_DECL_IM and
                    $self->{next_im} == BEFORE_DOCTYPE_IM) {
@@ -1846,17 +1902,13 @@ sub _construct_tree ($) {
             }
             $pos += $+[0] - $-[0];
             $req_sp = not length $3;
-            $onerror->(level => 'm',
-                       type => 'XML encoding:syntax error',
-                       token => $self->{t},
-                       value => $v,
-                       %$p)
-                unless $v =~ /\A[A-Za-z][A-Za-z0-9._-]*\z/;
+            $self->_sc->check_hidden_encoding
+                (name => $v, onerror => sub {
+                   $onerror->(token => $self->{t}, %$p, @_);
+                 });
             if (not $self->{insertion_mode} == BEFORE_TEXT_DECL_IM and
                 $self->{next_im} == BEFORE_DOCTYPE_IM) {
               $self->{document}->xml_encoding ($v);
-            } else {
-              # XXX validate charset name
             }
           } elsif ($self->{insertion_mode} == BEFORE_TEXT_DECL_IM or
                    $self->{next_im} != BEFORE_DOCTYPE_IM) {

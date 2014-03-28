@@ -90,6 +90,11 @@ sub _test ($$) {
         $opt{level};
   }); # onerror
 
+  if ($test->{checker}) {
+    $p->strict_checker
+        ('Web::XML::Parser::' . $test->{checker}->[1]->[-1] . 'Checker');
+  }
+
   my $result;
   my $code = sub {
     my @expected = sort {$a cmp $b} @{$test->{errors}->[0] ||= []};

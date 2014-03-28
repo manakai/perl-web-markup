@@ -5926,9 +5926,44 @@ sub _get_next_token ($) {
       push @{$self->{ct}->{sps}}, [length $self->{ct}->{value}, 1,
                                    $self->{line_prev}, $self->{column_prev}];
       $self->{ct}->{value} .= '&';
-      $self->{state} = $self->{prev_state};
+      $self->{kwd} = '';
+      $self->{state} = ENTITY_VALUE_ENTITY_NAME_STATE;
       ## Reconsume.
       redo A;
+    } elsif ($state == ENTITY_VALUE_ENTITY_NAME_STATE) {
+      if ($is_space->{$nc} or {
+        0x003C => 1, 0x003E => 1, # < >
+        0x0022 => 1, 0x0027 => 1, 0x0060 => 1, # " ' `
+        0x0025 => 1, 0x0026 => 1, # % &
+        0x003D => 1, # =
+        (EOF_CHAR) => 1,
+      }->{$nc}) {
+        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no refc');
+        $self->{state} = $self->{prev_state};
+        ## Reconsume.
+        redo A;
+      } elsif ($nc == 0x003B) { # ;
+        my $oe = sub { $self->{onerror}->(line => $self->{line_prev}, column => $self->{column_prev} + 1 - length $self->{kwd}, @_) };
+        $self->_sc->check_hidden_name (name => $self->{kwd}, onerror => $oe);
+        $self->{ct}->{value} .= chr $nc;
+        $self->{ct}->{sps}->[-1]->[1]++;
+        $self->{state} = $self->{prev_state};
+        
+    $self->_set_nc;
+  
+        redo A;
+      } else {
+        if ($nc == 0x0000) {
+          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL');
+        }
+        $self->{kwd} .= chr $nc;
+        $self->{ct}->{value} .= chr $nc;
+        $self->{ct}->{sps}->[-1]->[1]++;
+        
+    $self->_set_nc;
+  
+        redo A;
+      }
     } elsif ($state == AFTER_CM_GROUP_CLOSE_STATE) {
       if ($is_space->{$nc}) {
         if ($self->{ct}->{_group_depth}) {
