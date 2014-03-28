@@ -32,10 +32,11 @@ sub check_hidden_nmtoken ($%) {
 
 sub check_pi_target ($%) {
   # skip
+  return shift->check_hidden_pi_target (@_);
 } # check_pi_target
 
 sub check_hidden_pi_target ($%) {
-  return shift->check_pi_target (@_);
+  # skip
 } # check_hidden_pi_target
 
 sub check_hidden_pubid ($%) {
@@ -86,5 +87,9 @@ sub check_hidden_encoding ($%) {
   return shift->check_encoding (@_);
   # XXX Encoding Standard
 } # check_hidden_encoding
+
+sub check_ncnames ($%) {
+  # skip
+} # check_ncnames
 
 1;

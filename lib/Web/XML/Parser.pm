@@ -532,14 +532,42 @@ sub _parse_subparser_done ($$$) {
     ${$self->{entity_expansion_count} = $main_parser->{entity_expansion_count} ||= \(my $v = 0)}++;
     $self->max_entity_expansions ($main_parser->max_entity_expansions);
     $self->onextentref ($main_parser->onextentref);
+    $self->{_sc} = $main_parser->_sc;
+    $self->{entity_names_in_entity_values}
+        = $main_parser->{entity_names_in_entity_values} ||= {};
+    $self->{el_ncnames} = $main_parser->{el_ncnames} ||= {};
     return $self;
   } # new_from_parser
+
+  sub _check_before_terminate ($) {
+    #
+  } # _check_before_terminate
 }
 
 sub _stop_parsing ($) {
   # XXX stop parsing
+  $_[0]->_check_before_terminate;
   $_[0]->_on_terminate;
 } # _stop_parsing
+
+sub _check_before_terminate ($) {
+  my $self = $_[0];
+  for (keys %{$self->{entity_names_in_entity_values} || {}}) {
+    my $vt = $self->{entity_names_in_entity_values}->{$_};
+    my $oe = sub { $self->{onerror}->(%$vt, column => $vt->{column} + 1, @_) };
+    $self->_sc->check_hidden_name (name => $_, onerror => $oe);
+
+    my $def = $self->{ge}->{$_ . ';'};
+    if (defined $def->{notation}) {
+      $self->onerror->(type => 'xml:dtd:entity value:unparsed entref',
+                       value => $_ . ';',
+                       level => 'w',
+                       %$vt);
+    }
+  }
+  $self->_sc->check_ncnames (names => $self->{el_ncnames} || {},
+                             onerror => sub { $self->{onerror}->(@_) });
+} # _check_before_terminate
 
 sub _on_terminate ($) {
   $_[0]->onparsed->($_[0]);
@@ -657,12 +685,9 @@ sub _terminate_tree_constructor ($) {
 #    SHOULD for PEs in content model
 # XXX BOM and encoding sniffing
 # XXX parser validation hooks:
-#    element and attr names
 #    cm in ignored ELEMENT
 #    WFC/VC: Entity Declared
 #      WFC if reference Name is not Name
-#    unparsed entity reference in EntityValue is error
-#    predefined entities SHOULd be declered
 #    fully-normalizedness for ENTITY (should)
 # XXX DTD validator:
 #  wfness:
@@ -856,6 +881,8 @@ sub _construct_tree ($) {
         $el->set_user_data (manakai_source_line => $self->{t}->{line});
         $el->set_user_data (manakai_source_column => $self->{t}->{column});
         $el->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
+        $self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
+        $self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
 
         my $has_attr;
         for my $attr_name (sort {$attrs->{$a}->{index} <=> $attrs->{$b}->{index}}
@@ -888,6 +915,8 @@ sub _construct_tree ($) {
 
           my $attr_t = $attrs->{$attr_name};
           my $attr = $self->{document}->create_attribute_ns ($ns, [$p, $l]);
+          $self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
+          $self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
           $attr->value ($attr_t->{value});
           if (defined $attr_t->{type}) {
             $attr->manakai_attribute_type ($attr_t->{type});
@@ -977,6 +1006,9 @@ sub _construct_tree ($) {
         $self->{sps_transformer}->($self->{t}) if defined $self->{sps_transformer};
         $pi->set_user_data (manakai_sps => $self->{t}->{sps})
             if defined $self->{t}->{sps};
+        $self->_sc->check_pi_target
+            (name => $self->{t}->{target},
+             onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         (_insert_point $self->{open_elements}->[-1]->[0])
             ->append_child ($pi);
 
@@ -1460,6 +1492,9 @@ sub _construct_tree ($) {
             ($self->{t}->{target}, $self->{t}->{data});
         $pi->set_user_data (manakai_sps => $self->{t}->{sps})
             if defined $self->{t}->{sps};
+        $self->_sc->check_pi_target
+            (name => $self->{t}->{target},
+             onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         $self->{document}->append_child ($pi);
 
         ## Stay in the mode.
@@ -1613,6 +1648,8 @@ sub _construct_tree ($) {
         $el->set_user_data (manakai_source_line => $self->{t}->{line});
         $el->set_user_data (manakai_source_column => $self->{t}->{column});
         $el->set_user_data (manakai_di => $self->{t}->{di}) if defined $self->{t}->{di};
+        $self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
+        $self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
 
         my $has_attr;
         for my $attr_name (sort {$attrs->{$a}->{index} <=> $attrs->{$b}->{index}}
@@ -1645,6 +1682,8 @@ sub _construct_tree ($) {
           
           my $attr_t = $attrs->{$attr_name};
           my $attr = $self->{document}->create_attribute_ns ($ns, [$p, $l]);
+          $self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
+          $self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
           $attr->value ($attr_t->{value});
           if (defined $attr_t->{type}) {
             $attr->manakai_attribute_type ($attr_t->{type});
@@ -1687,6 +1726,9 @@ sub _construct_tree ($) {
             ($self->{t}->{target}, $self->{t}->{data});
         $pi->set_user_data (manakai_sps => $self->{t}->{sps})
             if defined $self->{t}->{sps};
+        $self->_sc->check_pi_target
+            (name => $self->{t}->{target},
+             onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         $self->{document}->append_child ($pi);
 
         ## Stay in the mode.
@@ -1823,6 +1865,9 @@ sub _construct_tree ($) {
             ($self->{t}->{target}, $self->{t}->{data});
         $pi->set_user_data (manakai_sps => $self->{t}->{sps})
             if defined $self->{t}->{sps};
+        $self->_sc->check_pi_target
+            (name => $self->{t}->{target},
+             onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         $self->{document}->append_child ($pi);
 
         ## Stay in the mode.

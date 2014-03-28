@@ -4859,7 +4859,7 @@ sub _get_next_token ($) {
                       $self->{in_subset}) {
                     $self->{parse_error}->(level => $self->{level}->{must}, type => 'entity not declared', ## TODO: type
                                     value => $self->{kwd},
-                                    level => 'w',
+                                    level => 's',
                                     line => $self->{line},
                                     column => $self->{column} - length $self->{kwd});
                   }
@@ -5943,8 +5943,9 @@ sub _get_next_token ($) {
         ## Reconsume.
         redo A;
       } elsif ($nc == 0x003B) { # ;
-        my $oe = sub { $self->{onerror}->(line => $self->{line_prev}, column => $self->{column_prev} + 1 - length $self->{kwd}, @_) };
-        $self->_sc->check_hidden_name (name => $self->{kwd}, onerror => $oe);
+        my $c = $self->{column_prev} - length $self->{kwd};
+        $self->{entity_names_in_entity_values}->{$self->{kwd}}
+            ||= {line => $self->{line_prev}, column => $c, di => $self->di};
         $self->{ct}->{value} .= chr $nc;
         $self->{ct}->{sps}->[-1]->[1]++;
         $self->{state} = $self->{prev_state};

@@ -4,6 +4,7 @@ use warnings;
 our $VERSION = '1.0';
 use Web::XML::Parser::MinimumChecker;
 push our @ISA, qw(Web::XML::Parser::MinimumChecker);
+use Char::Class::XML qw(InXMLNCNameChar InXMLNCNameStartChar);
 
 sub check_hidden_name ($%) {
   my $class = shift;
@@ -39,5 +40,18 @@ sub check_hidden_pubid ($%) {
 
 # XXX validate system ID
 # XXX suggested name rules
+# XXX Name MUST be NCName
+
+sub check_ncnames ($%) {
+  my ($class, %args) = @_;
+  for (keys %{$args{names}}) {
+    if (not /\A\p{InXMLNCNameStartChar}\p{InXMLNCNameChar}*\z/) {
+      $args{onerror}->(type => 'xml:not ncname',
+                       token => $args{names}->{$_},
+                       value => $_,
+                       level => 'm');
+    }
+  }
+} # check_ncnames
 
 1;
