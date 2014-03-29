@@ -100,7 +100,6 @@ $Web::HTML::_SyntaxDefs = {
                                        "diffuseconstant" => "diffuseConstant",
                                        "edgemode" => "edgeMode",
                                        "externalresourcesrequired" => "externalResourcesRequired",
-                                       "filterres" => "filterRes",
                                        "filterunits" => "filterUnits",
                                        "glyphref" => "glyphRef",
                                        "gradienttransform" => "gradientTransform",
