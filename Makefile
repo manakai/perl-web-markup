@@ -7,7 +7,7 @@ clean:
 
 updatenightly: dataautoupdate-commit
 	curl https://gist.githubusercontent.com/motemen/667573/raw/git-submodule-track | sh
-	git add modules
+	git add modules t_deps/modules
 	git commit -m submodules
 
 dataautoupdate-commit: clean all
