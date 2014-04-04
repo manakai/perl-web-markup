@@ -11,6 +11,7 @@ updatenightly: dataautoupdate-commit
 	git commit -m submodules
 
 dataautoupdate-commit: clean all
+	git add lib
 	git commit -m data
 
 PERL = ./perl
