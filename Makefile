@@ -5,9 +5,13 @@ all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
 clean:
 	rm -fr local/*.json
 
-updatenightly:
+updatenightly: dataautoupdate-commit
 	curl https://gist.githubusercontent.com/motemen/667573/raw/git-submodule-track | sh
 	git add modules
+	git commit -m submodules
+
+dataautoupdate-commit: clean all
+	git commit -m data
 
 PERL = ./perl
 PROVE = ./prove
