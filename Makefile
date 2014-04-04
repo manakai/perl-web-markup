@@ -7,7 +7,7 @@ clean:
 
 updatenightly: dataautoupdate-commit local/bin/pmbp.pl
 	curl https://gist.githubusercontent.com/motemen/667573/raw/git-submodule-track | sh
-	git add modules t_deps/modules
+	git add modules t_deps/modules t_deps/tests
 	perl local/bin/pmbp.pl --update
 	git add config
 	git commit -m modules
