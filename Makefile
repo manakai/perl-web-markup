@@ -5,6 +5,10 @@ all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
 clean:
 	rm -fr local/*.json
 
+updatenightly:
+	curl https://gist.githubusercontent.com/motemen/667573/raw/git-submodule-track | sh
+	git add modules
+
 PERL = ./perl
 PROVE = ./prove
 
