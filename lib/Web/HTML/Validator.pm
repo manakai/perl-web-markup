@@ -8035,6 +8035,13 @@ $Element->{+HTML_NS}->{dialog} = {
     delete $self->{flag}->{has_autofocus}
         unless $element_state->{has_autofocus_original};
 
+    my $tabindex_attr = $item->{node}->get_attribute_node_ns
+        (undef, 'tabindex');
+    $self->{onerror}->(node => $tabindex_attr,
+                       type => 'attribute not allowed:dialog tabindex',
+                       level => 'm')
+        if defined $tabindex_attr;
+
     $HTMLFlowContentChecker{check_end}->(@_);
   }, # check_end
 }; # dialog
