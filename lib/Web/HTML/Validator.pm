@@ -2412,7 +2412,7 @@ sub _is_minus_element ($$$$) {
       $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
       if ($self->{flag}->{no_interactive} or not $self->{flag}->{in_canvas}) {
         return ($value ne 'hidden');
-      } else {
+      } else { ## in canvas
         return not {
           hidden => 1,
           checkbox => 1,
@@ -2420,7 +2420,13 @@ sub _is_minus_element ($$$$) {
           submit => 1, image => 1, reset => 1, button => 1,
         }->{$value};
       }
-    } elsif ($ln eq 'img' or $ln eq 'object') {
+    } elsif ($ln eq 'img') {
+      if ($self->{flag}->{no_interactive} or not $self->{flag}->{in_canvas}) {
+        return $el->has_attribute_ns (undef, 'usemap');
+      } else { ## in canvas
+        return 0;
+      }
+    } elsif ($ln eq 'object') {
       return $el->has_attribute_ns (undef, 'usemap');
     } elsif ($ln eq 'video' or $ln eq 'audio') {
       ## No media element is allowed as a descendant of a media
@@ -2430,6 +2436,15 @@ sub _is_minus_element ($$$$) {
       return $el->has_attribute_ns (undef, 'controls');
     } elsif ($ln eq 'a' or $ln eq 'button') {
       return $self->{flag}->{no_interactive} || !$self->{flag}->{in_canvas};
+    } elsif ($ln eq 'select') {
+      if ($self->{flag}->{no_interactive} or not $self->{flag}->{in_canvas}) {
+        return 1;
+      } else { ## in canvas
+        return not ($el->multiple || $el->size > 1);
+      }
+    } elsif ($ln eq 'th') {
+      # XXX disallow sorting interface th element
+      return 0;
     } else {
       return 1;
     }
