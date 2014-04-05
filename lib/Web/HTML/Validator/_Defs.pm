@@ -3173,7 +3173,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              }
                                                                                               }
                                                                                 }
-                                                                          }
+                                                                          },
+                                                                 "states" => {
+                                                                             "interactive-by-tabindex" => {
+                                                                                                          "canvas_fallback" => 1,
+                                                                                                          "supported_canvas_fallback" => 1
+                                                                                                        }
+                                                                           }
                                                                },
                                                           "a" => {
                                                                  "all_named" => 1,
@@ -3555,6 +3561,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                        }
                                                                                 }
                                                                           },
+                                                                 "canvas_fallback" => 1,
                                                                  "conforming" => 1,
                                                                  "content_model" => "transparent",
                                                                  "disallowed_descendants" => {
@@ -3562,6 +3569,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              "interactive content" => 1
                                                                                                            }
                                                                                            },
+                                                                 "states" => {
+                                                                             "hyperlink-noimage" => {
+                                                                                                    "supported_canvas_fallback" => 1
+                                                                                                  }
+                                                                           },
                                                                  "status" => "LC",
                                                                  "transparent" => 1
                                                                },
@@ -5154,6 +5166,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 }
                                                                                      }
                                                                                },
+                                                                      "button" => 1,
+                                                                      "canvas_fallback" => 1,
                                                                       "conforming" => 1,
                                                                       "content_model" => "phrasing content",
                                                                       "disallowed_descendants" => {
@@ -5161,7 +5175,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                   "interactive content" => 1
                                                                                                                 }
                                                                                                 },
-                                                                      "status" => "LC"
+                                                                      "states" => {
+                                                                                  "submit-button" => {
+                                                                                                     "submit_button" => 1
+                                                                                                   }
+                                                                                },
+                                                                      "status" => "LC",
+                                                                      "supported_canvas_fallback" => 1
                                                                     },
                                                           "byline" => {
                                                                       "attrs" => {},
@@ -5248,7 +5268,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                                                                  }
                                                                                                                }
                                                                                                  },
-                                                                       "status" => "REC"
+                                                                       "status" => "REC",
+                                                                       "supported_canvas_fallback" => 1
                                                                      },
                                                           "card" => {
                                                                     "attrs" => {},
@@ -8786,6 +8807,11 @@ $Web::HTML::Validator::_Defs = {
                                                                             },
                                                                    "conforming" => 1,
                                                                    "content_model" => "empty",
+                                                                   "states" => {
+                                                                               "usemap-attr" => {
+                                                                                                "canvas_fallback" => 1
+                                                                                              }
+                                                                             },
                                                                    "status" => "LC"
                                                                  },
                                                           "input" => {
@@ -9373,6 +9399,11 @@ $Web::HTML::Validator::_Defs = {
                                                                                                              },
                                                                                                 "value_type" => "enumerated"
                                                                                               },
+                                                                                      "moznofilter" => {
+                                                                                                       "preferred" => {
+                                                                                                                      "type" => "none"
+                                                                                                                    }
+                                                                                                     },
                                                                                       "multiple" => {
                                                                                                     "conforming" => 1,
                                                                                                     "status" => "LC",
@@ -11735,6 +11766,11 @@ $Web::HTML::Validator::_Defs = {
                                                                       "conforming" => 1,
                                                                       "content_model" => "text",
                                                                       "has_additional_content_constraints" => 1,
+                                                                      "states" => {
+                                                                                  "in-select-listbox" => {
+                                                                                                         "supported_canvas_fallback" => 1
+                                                                                                       }
+                                                                                },
                                                                       "status" => "LC",
                                                                       "text_type" => "text"
                                                                     },
@@ -12728,6 +12764,12 @@ $Web::HTML::Validator::_Defs = {
                                                                                                  }
                                                                                                ],
                                                                       "conforming" => 1,
+                                                                      "states" => {
+                                                                                  "listbox" => {
+                                                                                               "canvas_fallback" => 1,
+                                                                                               "supported_canvas_fallback" => 1
+                                                                                             }
+                                                                                },
                                                                       "status" => "LC"
                                                                     },
                                                           "select1" => {
@@ -13392,7 +13434,8 @@ $Web::HTML::Validator::_Defs = {
                                                                               },
                                                                      "conforming" => 1,
                                                                      "has_additional_content_constraints" => 1,
-                                                                     "status" => "LC"
+                                                                     "status" => "LC",
+                                                                     "supported_canvas_fallback" => 1
                                                                    },
                                                           "tbl" => {
                                                                    "attrs" => {},
@@ -13511,7 +13554,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 }
                                                                                               ],
                                                                      "conforming" => 1,
-                                                                     "status" => "LC"
+                                                                     "status" => "LC",
+                                                                     "supported_canvas_fallback" => 1
                                                                    },
                                                           "td" => {
                                                                   "aria" => {
@@ -13740,7 +13784,8 @@ $Web::HTML::Validator::_Defs = {
                                                                            },
                                                                   "conforming" => 1,
                                                                   "content_model" => "flow content",
-                                                                  "status" => "LC"
+                                                                  "status" => "LC",
+                                                                  "supported_canvas_fallback" => 1
                                                                 },
                                                           "template" => {
                                                                         "aria" => {
@@ -14331,7 +14376,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 }
                                                                                               ],
                                                                      "conforming" => 1,
-                                                                     "status" => "LC"
+                                                                     "status" => "LC",
+                                                                     "supported_canvas_fallback" => 1
                                                                    },
                                                           "th" => {
                                                                   "aria" => {
@@ -14577,7 +14623,13 @@ $Web::HTML::Validator::_Defs = {
                                                                                                           }
                                                                                             },
                                                                   "has_additional_content_constraints" => 1,
-                                                                  "status" => "LC"
+                                                                  "states" => {
+                                                                              "sorting-interface" => {
+                                                                                                     "canvas_fallback" => 1
+                                                                                                   }
+                                                                            },
+                                                                  "status" => "LC",
+                                                                  "supported_canvas_fallback" => 1
                                                                 },
                                                           "thead" => {
                                                                      "aria" => {
@@ -14689,7 +14741,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                                 }
                                                                                               ],
                                                                      "conforming" => 1,
-                                                                     "status" => "LC"
+                                                                     "status" => "LC",
+                                                                     "supported_canvas_fallback" => 1
                                                                    },
                                                           "tilde" => {
                                                                      "attrs" => {},
@@ -14876,7 +14929,8 @@ $Web::HTML::Validator::_Defs = {
                                                                                              }
                                                                                            ],
                                                                   "conforming" => 1,
-                                                                  "status" => "LC"
+                                                                  "status" => "LC",
+                                                                  "supported_canvas_fallback" => 1
                                                                 },
                                                           "track" => {
                                                                      "attrs" => {
@@ -17667,7 +17721,38 @@ $Web::HTML::Validator::_Defs = {
                                 "width" => {
                                            "image" => 1
                                          }
-                              }
+                              },
+                     "states" => {
+                                 "button" => {
+                                             "button" => 1,
+                                             "canvas_fallback" => 1,
+                                             "supported_canvas_fallback" => 1
+                                           },
+                                 "checkbox" => {
+                                               "canvas_fallback" => 1,
+                                               "supported_canvas_fallback" => 1
+                                             },
+                                 "image" => {
+                                            "button" => 1,
+                                            "canvas_fallback" => 1,
+                                            "submit_button" => 1
+                                          },
+                                 "radio" => {
+                                            "canvas_fallback" => 1,
+                                            "supported_canvas_fallback" => 1
+                                          },
+                                 "reset" => {
+                                            "button" => 1,
+                                            "canvas_fallback" => 1,
+                                            "supported_canvas_fallback" => 1
+                                          },
+                                 "submit" => {
+                                             "button" => 1,
+                                             "canvas_fallback" => 1,
+                                             "submit_button" => 1,
+                                             "supported_canvas_fallback" => 1
+                                           }
+                               }
                    },
           "md" => {
                   "http://data-vocabulary.org/Address" => {
@@ -19422,7 +19507,26 @@ $Web::HTML::Validator::_Defs = {
                                                      "use_itemid" => 1,
                                                      "vocab" => "http://schema.org/"
                                                    },
+                  "http://schema.org/Airline" => {
+                                                 "props" => {
+                                                            "iataCode" => {
+                                                                          "value" => "text"
+                                                                        }
+                                                          },
+                                                 "spec" => "SCHEMAORG",
+                                                 "subclass_of" => {
+                                                                  "http://schema.org/Organization" => 1,
+                                                                  "http://schema.org/Thing" => 2
+                                                                },
+                                                 "use_itemid" => 1,
+                                                 "vocab" => "http://schema.org/"
+                                               },
                   "http://schema.org/Airport" => {
+                                                 "props" => {
+                                                            "iataCode" => {
+                                                                          "value" => "text"
+                                                                        }
+                                                          },
                                                  "spec" => "SCHEMAORG",
                                                  "subclass_of" => {
                                                                   "http://schema.org/CivicStructure" => 1,
@@ -19635,6 +19739,31 @@ $Web::HTML::Validator::_Defs = {
                                                        "use_itemid" => 1,
                                                        "vocab" => "http://schema.org/"
                                                      },
+                  "http://schema.org/Answer" => {
+                                                "props" => {
+                                                           "downvoteCount" => {
+                                                                              "value" => "integer"
+                                                                            },
+                                                           "parentItem" => {
+                                                                           "is_url" => 1,
+                                                                           "item" => {
+                                                                                     "types" => {
+                                                                                                "http://schema.org/Question" => 1
+                                                                                              }
+                                                                                   }
+                                                                         },
+                                                           "upvoteCount" => {
+                                                                            "value" => "integer"
+                                                                          }
+                                                         },
+                                                "spec" => "SCHEMAORG",
+                                                "subclass_of" => {
+                                                                 "http://schema.org/CreativeWork" => 1,
+                                                                 "http://schema.org/Thing" => 2
+                                                               },
+                                                "use_itemid" => 1,
+                                                "vocab" => "http://schema.org/"
+                                              },
                   "http://schema.org/ApartmentComplex" => {
                                                           "spec" => "SCHEMAORG",
                                                           "subclass_of" => {
@@ -20382,6 +20511,16 @@ $Web::HTML::Validator::_Defs = {
                                                         "use_itemid" => 1,
                                                         "vocab" => "http://schema.org/"
                                                       },
+                  "http://schema.org/BusReservation" => {
+                                                        "spec" => "SCHEMAORG",
+                                                        "subclass_of" => {
+                                                                         "http://schema.org/Intangible" => 2,
+                                                                         "http://schema.org/Reservation" => 1,
+                                                                         "http://schema.org/Thing" => 3
+                                                                       },
+                                                        "use_itemid" => 1,
+                                                        "vocab" => "http://schema.org/"
+                                                      },
                   "http://schema.org/BusStation" => {
                                                     "spec" => "SCHEMAORG",
                                                     "subclass_of" => {
@@ -20398,6 +20537,56 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/CivicStructure" => 1,
                                                                   "http://schema.org/Place" => 2,
                                                                   "http://schema.org/Thing" => 3
+                                                                },
+                                                 "use_itemid" => 1,
+                                                 "vocab" => "http://schema.org/"
+                                               },
+                  "http://schema.org/BusTrip" => {
+                                                 "props" => {
+                                                            "arrivalBusStop" => {
+                                                                                "is_url" => 1,
+                                                                                "item" => {
+                                                                                          "types" => {
+                                                                                                     "http://schema.org/BusStation" => 1,
+                                                                                                     "http://schema.org/BusStop" => 1
+                                                                                                   }
+                                                                                        }
+                                                                              },
+                                                            "arrivalTime" => {
+                                                                             "value" => "global or local date and time string"
+                                                                           },
+                                                            "busName" => {
+                                                                         "value" => "text"
+                                                                       },
+                                                            "busNumber" => {
+                                                                           "value" => "text"
+                                                                         },
+                                                            "departureBusStop" => {
+                                                                                  "is_url" => 1,
+                                                                                  "item" => {
+                                                                                            "types" => {
+                                                                                                       "http://schema.org/BusStation" => 1,
+                                                                                                       "http://schema.org/BusStop" => 1
+                                                                                                     }
+                                                                                          }
+                                                                                },
+                                                            "departureTime" => {
+                                                                               "value" => "global or local date and time string"
+                                                                             },
+                                                            "provider" => {
+                                                                          "is_url" => 1,
+                                                                          "item" => {
+                                                                                    "types" => {
+                                                                                               "http://schema.org/Organization" => 1,
+                                                                                               "http://schema.org/Person" => 1
+                                                                                             }
+                                                                                  }
+                                                                        }
+                                                          },
+                                                 "spec" => "SCHEMAORG",
+                                                 "subclass_of" => {
+                                                                  "http://schema.org/Intangible" => 1,
+                                                                  "http://schema.org/Thing" => 2
                                                                 },
                                                  "use_itemid" => 1,
                                                  "vocab" => "http://schema.org/"
@@ -20540,6 +20729,16 @@ $Web::HTML::Validator::_Defs = {
                                                       "use_itemid" => 1,
                                                       "vocab" => "http://schema.org/"
                                                     },
+                  "http://schema.org/Car" => {
+                                             "spec" => "SCHEMAORG",
+                                             "subclass_of" => {
+                                                              "http://schema.org/Product" => 2,
+                                                              "http://schema.org/Thing" => 3,
+                                                              "http://schema.org/Vehicle" => 1
+                                                            },
+                                             "use_itemid" => 1,
+                                             "vocab" => "http://schema.org/"
+                                           },
                   "http://schema.org/Casino" => {
                                                 "spec" => "SCHEMAORG",
                                                 "subclass_of" => {
@@ -20905,6 +21104,22 @@ $Web::HTML::Validator::_Defs = {
                                                      "vocab" => "http://schema.org/"
                                                    },
                   "http://schema.org/Comment" => {
+                                                 "props" => {
+                                                            "downvoteCount" => {
+                                                                               "value" => "integer"
+                                                                             },
+                                                            "parentItem" => {
+                                                                            "is_url" => 1,
+                                                                            "item" => {
+                                                                                      "types" => {
+                                                                                                 "http://schema.org/Question" => 1
+                                                                                               }
+                                                                                    }
+                                                                          },
+                                                            "upvoteCount" => {
+                                                                             "value" => "integer"
+                                                                           }
+                                                          },
                                                  "spec" => "SCHEMAORG",
                                                  "subclass_of" => {
                                                                   "http://schema.org/CreativeWork" => 1,
@@ -21310,10 +21525,14 @@ $Web::HTML::Validator::_Defs = {
                                                                               "is_url" => 1,
                                                                               "item" => {
                                                                                         "types" => {
+                                                                                                   "http://schema.org/Comment" => 1,
                                                                                                    "http://schema.org/UserComments" => 1
                                                                                                  }
                                                                                       }
                                                                             },
+                                                                 "commentCount" => {
+                                                                                   "value" => "integer"
+                                                                                 },
                                                                  "contentLocation" => {
                                                                                       "is_url" => 1,
                                                                                       "item" => {
@@ -21525,6 +21744,7 @@ $Web::HTML::Validator::_Defs = {
                                                       "superclass_of" => {
                                                                          "http://schema.org/APIReference" => 3,
                                                                          "http://schema.org/AboutPage" => 2,
+                                                                         "http://schema.org/Answer" => 1,
                                                                          "http://schema.org/Article" => 1,
                                                                          "http://schema.org/AudioObject" => 2,
                                                                          "http://schema.org/Blog" => 1,
@@ -21540,6 +21760,7 @@ $Web::HTML::Validator::_Defs = {
                                                                          "http://schema.org/DataDownload" => 2,
                                                                          "http://schema.org/Dataset" => 1,
                                                                          "http://schema.org/Diet" => 1,
+                                                                         "http://schema.org/EmailMessage" => 1,
                                                                          "http://schema.org/Episode" => 1,
                                                                          "http://schema.org/ExercisePlan" => 1,
                                                                          "http://schema.org/ImageGallery" => 3,
@@ -21560,6 +21781,8 @@ $Web::HTML::Validator::_Defs = {
                                                                          "http://schema.org/Painting" => 1,
                                                                          "http://schema.org/Photograph" => 1,
                                                                          "http://schema.org/ProfilePage" => 2,
+                                                                         "http://schema.org/QAPage" => 2,
+                                                                         "http://schema.org/Question" => 1,
                                                                          "http://schema.org/RadioClip" => 2,
                                                                          "http://schema.org/RadioEpisode" => 2,
                                                                          "http://schema.org/RadioSeason" => 2,
@@ -22769,6 +22992,15 @@ $Web::HTML::Validator::_Defs = {
                                                           "use_itemid" => 1,
                                                           "vocab" => "http://schema.org/"
                                                         },
+                  "http://schema.org/EmailMessage" => {
+                                                      "spec" => "SCHEMAORG",
+                                                      "subclass_of" => {
+                                                                       "http://schema.org/CreativeWork" => 1,
+                                                                       "http://schema.org/Thing" => 2
+                                                                     },
+                                                      "use_itemid" => 1,
+                                                      "vocab" => "http://schema.org/"
+                                                    },
                   "http://schema.org/Embassy" => {
                                                  "spec" => "SCHEMAORG",
                                                  "subclass_of" => {
@@ -22883,6 +23115,7 @@ $Web::HTML::Validator::_Defs = {
                                                                         "http://schema.org/ParcelService" => 2,
                                                                         "http://schema.org/PaymentMethod" => 1,
                                                                         "http://schema.org/QualitativeValue" => 1,
+                                                                        "http://schema.org/ReservationStatusType" => 1,
                                                                         "http://schema.org/Specialty" => 1,
                                                                         "http://schema.org/WarrantyScope" => 1
                                                                       },
@@ -23147,6 +23380,16 @@ $Web::HTML::Validator::_Defs = {
                                                "use_itemid" => 1,
                                                "vocab" => "http://schema.org/"
                                              },
+                  "http://schema.org/EventReservation" => {
+                                                          "spec" => "SCHEMAORG",
+                                                          "subclass_of" => {
+                                                                           "http://schema.org/Intangible" => 2,
+                                                                           "http://schema.org/Reservation" => 1,
+                                                                           "http://schema.org/Thing" => 3
+                                                                         },
+                                                          "use_itemid" => 1,
+                                                          "vocab" => "http://schema.org/"
+                                                        },
                   "http://schema.org/EventStatusType" => {
                                                          "spec" => "SCHEMAORG",
                                                          "subclass_of" => {
@@ -23400,6 +23643,120 @@ $Web::HTML::Validator::_Defs = {
                                                      "use_itemid" => 1,
                                                      "vocab" => "http://schema.org/"
                                                    },
+                  "http://schema.org/Flight" => {
+                                                "props" => {
+                                                           "aircraft" => {
+                                                                         "is_url" => 1,
+                                                                         "item" => {
+                                                                                   "types" => {
+                                                                                              "http://schema.org/Vehicle" => 1
+                                                                                            }
+                                                                                 },
+                                                                         "value" => "text"
+                                                                       },
+                                                           "arrivalAirport" => {
+                                                                               "is_url" => 1,
+                                                                               "item" => {
+                                                                                         "types" => {
+                                                                                                    "http://schema.org/Airport" => 1
+                                                                                                  }
+                                                                                       }
+                                                                             },
+                                                           "arrivalGate" => {
+                                                                            "value" => "text"
+                                                                          },
+                                                           "arrivalTerminal" => {
+                                                                                "value" => "text"
+                                                                              },
+                                                           "arrivalTime" => {
+                                                                            "value" => "global or local date and time string"
+                                                                          },
+                                                           "carrier" => {
+                                                                        "is_url" => 1,
+                                                                        "item" => {
+                                                                                  "types" => {
+                                                                                             "http://schema.org/Airline" => 1,
+                                                                                             "http://schema.org/Organization" => 1
+                                                                                           }
+                                                                                }
+                                                                      },
+                                                           "departureAirport" => {
+                                                                                 "is_url" => 1,
+                                                                                 "item" => {
+                                                                                           "types" => {
+                                                                                                      "http://schema.org/Airport" => 1
+                                                                                                    }
+                                                                                         }
+                                                                               },
+                                                           "departureGate" => {
+                                                                              "value" => "text"
+                                                                            },
+                                                           "departureTerminal" => {
+                                                                                  "value" => "text"
+                                                                                },
+                                                           "departureTime" => {
+                                                                              "value" => "global or local date and time string"
+                                                                            },
+                                                           "estimatedFlightDuration" => {
+                                                                                        "is_url" => 1,
+                                                                                        "item" => {
+                                                                                                  "types" => {
+                                                                                                             "http://schema.org/Duration" => 1
+                                                                                                           }
+                                                                                                },
+                                                                                        "value" => "text"
+                                                                                      },
+                                                           "flightDistance" => {
+                                                                               "is_url" => 1,
+                                                                               "item" => {
+                                                                                         "types" => {
+                                                                                                    "http://schema.org/Distance" => 1
+                                                                                                  }
+                                                                                       },
+                                                                               "value" => "text"
+                                                                             },
+                                                           "flightNumber" => {
+                                                                             "value" => "text"
+                                                                           },
+                                                           "mealService" => {
+                                                                            "value" => "text"
+                                                                          },
+                                                           "provider" => {
+                                                                         "is_url" => 1,
+                                                                         "item" => {
+                                                                                   "types" => {
+                                                                                              "http://schema.org/Organization" => 1,
+                                                                                              "http://schema.org/Person" => 1
+                                                                                            }
+                                                                                 }
+                                                                       },
+                                                           "webCheckinTime" => {
+                                                                               "value" => "global or local date and time string"
+                                                                             }
+                                                         },
+                                                "spec" => "SCHEMAORG",
+                                                "subclass_of" => {
+                                                                 "http://schema.org/Intangible" => 1,
+                                                                 "http://schema.org/Thing" => 2
+                                                               },
+                                                "use_itemid" => 1,
+                                                "vocab" => "http://schema.org/"
+                                              },
+                  "http://schema.org/FlightReservation" => {
+                                                           "props" => {
+                                                                      "boardingGroup" => {
+                                                                                         "value" => "text"
+                                                                                       }
+                                                                    },
+                                                           "spec" => "SCHEMAORG",
+                                                           "subclass_of" => {
+                                                                            "http://schema.org/Intangible" => 2,
+                                                                            "http://schema.org/Reservation" => 1,
+                                                                            "http://schema.org/Thing" => 3
+                                                                          },
+                                                           "use_itemid" => 1,
+                                                           "vocab" => "http://schema.org/"
+                                                         },
                   "http://schema.org/Float" => {
                                                "spec" => "SCHEMAORG",
                                                "subclass_of" => {
@@ -23474,6 +23831,30 @@ $Web::HTML::Validator::_Defs = {
                                                            "use_itemid" => 1,
                                                            "vocab" => "http://schema.org/"
                                                          },
+                  "http://schema.org/FoodEstablishmentReservation" => {
+                                                                      "props" => {
+                                                                                 "partySize" => {
+                                                                                                "is_url" => 1,
+                                                                                                "item" => {
+                                                                                                          "types" => {
+                                                                                                                     "http://schema.org/QuantitativeValue" => 1
+                                                                                                                   }
+                                                                                                        },
+                                                                                                "value" => "integer"
+                                                                                              },
+                                                                                 "startTime" => {
+                                                                                                "value" => "global or local date and time string"
+                                                                                              }
+                                                                               },
+                                                                      "spec" => "SCHEMAORG",
+                                                                      "subclass_of" => {
+                                                                                       "http://schema.org/Intangible" => 2,
+                                                                                       "http://schema.org/Reservation" => 1,
+                                                                                       "http://schema.org/Thing" => 3
+                                                                                     },
+                                                                      "use_itemid" => 1,
+                                                                      "vocab" => "http://schema.org/"
+                                                                    },
                   "http://schema.org/FoodEvent" => {
                                                    "spec" => "SCHEMAORG",
                                                    "subclass_of" => {
@@ -24129,6 +24510,8 @@ $Web::HTML::Validator::_Defs = {
                                                                        "http://schema.org/Audience" => 1,
                                                                        "http://schema.org/BookFormatType" => 2,
                                                                        "http://schema.org/Brand" => 1,
+                                                                       "http://schema.org/BusReservation" => 2,
+                                                                       "http://schema.org/BusTrip" => 1,
                                                                        "http://schema.org/BusinessAudience" => 2,
                                                                        "http://schema.org/BusinessEntityType" => 2,
                                                                        "http://schema.org/BusinessFunction" => 2,
@@ -24144,7 +24527,11 @@ $Web::HTML::Validator::_Defs = {
                                                                        "http://schema.org/EducationalAudience" => 2,
                                                                        "http://schema.org/Energy" => 2,
                                                                        "http://schema.org/Enumeration" => 1,
+                                                                       "http://schema.org/EventReservation" => 2,
                                                                        "http://schema.org/EventStatusType" => 2,
+                                                                       "http://schema.org/Flight" => 1,
+                                                                       "http://schema.org/FlightReservation" => 2,
+                                                                       "http://schema.org/FoodEstablishmentReservation" => 2,
                                                                        "http://schema.org/GeoCoordinates" => 2,
                                                                        "http://schema.org/GeoShape" => 2,
                                                                        "http://schema.org/GovernmentPermit" => 2,
@@ -24153,6 +24540,7 @@ $Web::HTML::Validator::_Defs = {
                                                                        "http://schema.org/JobPosting" => 1,
                                                                        "http://schema.org/Language" => 1,
                                                                        "http://schema.org/LockerDelivery" => 3,
+                                                                       "http://schema.org/LodgingReservation" => 2,
                                                                        "http://schema.org/Mass" => 2,
                                                                        "http://schema.org/MedicalAudience" => 2,
                                                                        "http://schema.org/MedicalSpecialty" => 3,
@@ -24173,14 +24561,25 @@ $Web::HTML::Validator::_Defs = {
                                                                        "http://schema.org/Permit" => 1,
                                                                        "http://schema.org/PostalAddress" => 3,
                                                                        "http://schema.org/PriceSpecification" => 2,
+                                                                       "http://schema.org/ProgramMembership" => 1,
                                                                        "http://schema.org/QualitativeValue" => 2,
                                                                        "http://schema.org/QuantitativeValue" => 2,
                                                                        "http://schema.org/Quantity" => 1,
                                                                        "http://schema.org/Rating" => 1,
+                                                                       "http://schema.org/RentalCarReservation" => 2,
+                                                                       "http://schema.org/Reservation" => 1,
+                                                                       "http://schema.org/ReservationPackage" => 2,
+                                                                       "http://schema.org/ReservationStatusType" => 2,
+                                                                       "http://schema.org/Seat" => 1,
                                                                        "http://schema.org/Service" => 1,
                                                                        "http://schema.org/ServiceChannel" => 1,
                                                                        "http://schema.org/Specialty" => 2,
                                                                        "http://schema.org/StructuredValue" => 1,
+                                                                       "http://schema.org/Taxi" => 2,
+                                                                       "http://schema.org/TaxiReservation" => 2,
+                                                                       "http://schema.org/Ticket" => 1,
+                                                                       "http://schema.org/TrainReservation" => 2,
+                                                                       "http://schema.org/TrainTrip" => 1,
                                                                        "http://schema.org/TypeAndQuantityNode" => 2,
                                                                        "http://schema.org/UnitPriceSpecification" => 3,
                                                                        "http://schema.org/WarrantyPromise" => 2,
@@ -24809,6 +25208,54 @@ $Web::HTML::Validator::_Defs = {
                                                          "use_itemid" => 1,
                                                          "vocab" => "http://schema.org/"
                                                        },
+                  "http://schema.org/LodgingReservation" => {
+                                                            "props" => {
+                                                                       "checkinTime" => {
+                                                                                        "value" => "global or local date and time string"
+                                                                                      },
+                                                                       "checkoutTime" => {
+                                                                                         "value" => "global or local date and time string"
+                                                                                       },
+                                                                       "lodgingUnitDescription" => {
+                                                                                                   "value" => "text"
+                                                                                                 },
+                                                                       "lodgingUnitType" => {
+                                                                                            "is_url" => 1,
+                                                                                            "item" => {
+                                                                                                      "types" => {
+                                                                                                                 "http://schema.org/QualitativeValue" => 1
+                                                                                                               }
+                                                                                                    },
+                                                                                            "value" => "text"
+                                                                                          },
+                                                                       "numAdults" => {
+                                                                                      "is_url" => 1,
+                                                                                      "item" => {
+                                                                                                "types" => {
+                                                                                                           "http://schema.org/QuantitativeValue" => 1
+                                                                                                         }
+                                                                                              },
+                                                                                      "value" => "integer"
+                                                                                    },
+                                                                       "numChildren" => {
+                                                                                        "is_url" => 1,
+                                                                                        "item" => {
+                                                                                                  "types" => {
+                                                                                                             "http://schema.org/QuantitativeValue" => 1
+                                                                                                           }
+                                                                                                },
+                                                                                        "value" => "integer"
+                                                                                      }
+                                                                     },
+                                                            "spec" => "SCHEMAORG",
+                                                            "subclass_of" => {
+                                                                             "http://schema.org/Intangible" => 2,
+                                                                             "http://schema.org/Reservation" => 1,
+                                                                             "http://schema.org/Thing" => 3
+                                                                           },
+                                                            "use_itemid" => 1,
+                                                            "vocab" => "http://schema.org/"
+                                                          },
                   "http://schema.org/LoseAction" => {
                                                     "props" => {
                                                                "winner" => {
@@ -27616,6 +28063,7 @@ $Web::HTML::Validator::_Defs = {
                                                       "superclass_of" => {
                                                                          "http://schema.org/AccountingService" => 3,
                                                                          "http://schema.org/AdultEntertainment" => 3,
+                                                                         "http://schema.org/Airline" => 1,
                                                                          "http://schema.org/AmusementPark" => 3,
                                                                          "http://schema.org/AnimalShelter" => 2,
                                                                          "http://schema.org/ArtGallery" => 3,
@@ -27862,6 +28310,7 @@ $Web::HTML::Validator::_Defs = {
                                                                                 "is_url" => 1,
                                                                                 "item" => {
                                                                                           "types" => {
+                                                                                                     "http://schema.org/Airline" => 1,
                                                                                                      "http://schema.org/Organization" => 1
                                                                                                    }
                                                                                         }
@@ -29425,9 +29874,11 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/Thing" => 1
                                                                 },
                                                  "superclass_of" => {
+                                                                    "http://schema.org/Car" => 2,
                                                                     "http://schema.org/IndividualProduct" => 1,
                                                                     "http://schema.org/ProductModel" => 1,
-                                                                    "http://schema.org/SomeProducts" => 1
+                                                                    "http://schema.org/SomeProducts" => 1,
+                                                                    "http://schema.org/Vehicle" => 1
                                                                   },
                                                  "use_itemid" => 1,
                                                  "vocab" => "http://schema.org/"
@@ -29500,6 +29951,40 @@ $Web::HTML::Validator::_Defs = {
                                                      "use_itemid" => 1,
                                                      "vocab" => "http://schema.org/"
                                                    },
+                  "http://schema.org/ProgramMembership" => {
+                                                           "props" => {
+                                                                      "hostingOrganization" => {
+                                                                                               "is_url" => 1,
+                                                                                               "item" => {
+                                                                                                         "types" => {
+                                                                                                                    "http://schema.org/Organization" => 1
+                                                                                                                  }
+                                                                                                       }
+                                                                                             },
+                                                                      "member" => {
+                                                                                  "is_url" => 1,
+                                                                                  "item" => {
+                                                                                            "types" => {
+                                                                                                       "http://schema.org/Organization" => 1,
+                                                                                                       "http://schema.org/Person" => 1
+                                                                                                     }
+                                                                                          }
+                                                                                },
+                                                                      "membershipNumber" => {
+                                                                                            "value" => "text"
+                                                                                          },
+                                                                      "programName" => {
+                                                                                       "value" => "text"
+                                                                                     }
+                                                                    },
+                                                           "spec" => "SCHEMAORG",
+                                                           "subclass_of" => {
+                                                                            "http://schema.org/Intangible" => 1,
+                                                                            "http://schema.org/Thing" => 2
+                                                                          },
+                                                           "use_itemid" => 1,
+                                                           "vocab" => "http://schema.org/"
+                                                         },
                   "http://schema.org/Property" => {
                                                   "props" => {
                                                              "domain" => {},
@@ -29576,6 +30061,16 @@ $Web::HTML::Validator::_Defs = {
                                                           "use_itemid" => 1,
                                                           "vocab" => "http://schema.org/"
                                                         },
+                  "http://schema.org/QAPage" => {
+                                                "spec" => "SCHEMAORG",
+                                                "subclass_of" => {
+                                                                 "http://schema.org/CreativeWork" => 2,
+                                                                 "http://schema.org/Thing" => 3,
+                                                                 "http://schema.org/WebPage" => 1
+                                                               },
+                                                "use_itemid" => 1,
+                                                "vocab" => "http://schema.org/"
+                                              },
                   "http://schema.org/QualitativeValue" => {
                                                           "props" => {
                                                                      "equal" => {
@@ -29690,6 +30185,42 @@ $Web::HTML::Validator::_Defs = {
                                                                      "http://schema.org/Energy" => 1,
                                                                      "http://schema.org/Mass" => 1
                                                                    },
+                                                  "use_itemid" => 1,
+                                                  "vocab" => "http://schema.org/"
+                                                },
+                  "http://schema.org/Question" => {
+                                                  "props" => {
+                                                             "acceptedAnswer" => {
+                                                                                 "is_url" => 1,
+                                                                                 "item" => {
+                                                                                           "types" => {
+                                                                                                      "http://schema.org/Answer" => 1
+                                                                                                    }
+                                                                                         }
+                                                                               },
+                                                             "answerCount" => {
+                                                                              "value" => "integer"
+                                                                            },
+                                                             "downvoteCount" => {
+                                                                                "value" => "integer"
+                                                                              },
+                                                             "suggestedAnswer" => {
+                                                                                  "is_url" => 1,
+                                                                                  "item" => {
+                                                                                            "types" => {
+                                                                                                       "http://schema.org/Answer" => 1
+                                                                                                     }
+                                                                                          }
+                                                                                },
+                                                             "upvoteCount" => {
+                                                                              "value" => "integer"
+                                                                            }
+                                                           },
+                                                  "spec" => "SCHEMAORG",
+                                                  "subclass_of" => {
+                                                                   "http://schema.org/CreativeWork" => 1,
+                                                                   "http://schema.org/Thing" => 2
+                                                                 },
                                                   "use_itemid" => 1,
                                                   "vocab" => "http://schema.org/"
                                                 },
@@ -30239,6 +30770,40 @@ $Web::HTML::Validator::_Defs = {
                                                     "use_itemid" => 1,
                                                     "vocab" => "http://schema.org/"
                                                   },
+                  "http://schema.org/RentalCarReservation" => {
+                                                              "props" => {
+                                                                         "dropoffLocation" => {
+                                                                                              "is_url" => 1,
+                                                                                              "item" => {
+                                                                                                        "types" => {
+                                                                                                                   "http://schema.org/Place" => 1
+                                                                                                                 }
+                                                                                                      }
+                                                                                            },
+                                                                         "dropoffTime" => {
+                                                                                          "value" => "global or local date and time string"
+                                                                                        },
+                                                                         "pickupLocation" => {
+                                                                                             "is_url" => 1,
+                                                                                             "item" => {
+                                                                                                       "types" => {
+                                                                                                                  "http://schema.org/Place" => 1
+                                                                                                                }
+                                                                                                     }
+                                                                                           },
+                                                                         "pickupTime" => {
+                                                                                         "value" => "global or local date and time string"
+                                                                                       }
+                                                                       },
+                                                              "spec" => "SCHEMAORG",
+                                                              "subclass_of" => {
+                                                                               "http://schema.org/Intangible" => 2,
+                                                                               "http://schema.org/Reservation" => 1,
+                                                                               "http://schema.org/Thing" => 3
+                                                                             },
+                                                              "use_itemid" => 1,
+                                                              "vocab" => "http://schema.org/"
+                                                            },
                   "http://schema.org/ReplaceAction" => {
                                                        "props" => {
                                                                   "replacee" => {
@@ -30289,6 +30854,138 @@ $Web::HTML::Validator::_Defs = {
                                                               "use_itemid" => 1,
                                                               "vocab" => "http://schema.org/"
                                                             },
+                  "http://schema.org/Reservation" => {
+                                                     "props" => {
+                                                                "bookingAgent" => {
+                                                                                  "is_url" => 1,
+                                                                                  "item" => {
+                                                                                            "types" => {
+                                                                                                       "http://schema.org/Organization" => 1,
+                                                                                                       "http://schema.org/Person" => 1
+                                                                                                     }
+                                                                                          }
+                                                                                },
+                                                                "bookingTime" => {
+                                                                                 "value" => "global or local date and time string"
+                                                                               },
+                                                                "modifiedTime" => {
+                                                                                  "value" => "global or local date and time string"
+                                                                                },
+                                                                "priceCurrency" => {
+                                                                                   "value" => "text"
+                                                                                 },
+                                                                "programMembershipUsed" => {
+                                                                                           "is_url" => 1,
+                                                                                           "item" => {
+                                                                                                     "types" => {
+                                                                                                                "http://schema.org/ProgramMembership" => 1
+                                                                                                              }
+                                                                                                   }
+                                                                                         },
+                                                                "provider" => {
+                                                                              "is_url" => 1,
+                                                                              "item" => {
+                                                                                        "types" => {
+                                                                                                   "http://schema.org/Organization" => 1,
+                                                                                                   "http://schema.org/Person" => 1
+                                                                                                 }
+                                                                                      }
+                                                                            },
+                                                                "reservationFor" => {
+                                                                                    "is_url" => 1,
+                                                                                    "item" => {
+                                                                                              "types" => {
+                                                                                                         "http://schema.org/Thing" => 1
+                                                                                                       }
+                                                                                            }
+                                                                                  },
+                                                                "reservationId" => {
+                                                                                   "value" => "text"
+                                                                                 },
+                                                                "reservationStatus" => {
+                                                                                       "is_url" => 1,
+                                                                                       "item" => {
+                                                                                                 "types" => {
+                                                                                                            "http://schema.org/ReservationStatusType" => 1
+                                                                                                          }
+                                                                                               }
+                                                                                     },
+                                                                "reservedTicket" => {
+                                                                                    "is_url" => 1,
+                                                                                    "item" => {
+                                                                                              "types" => {
+                                                                                                         "http://schema.org/Ticket" => 1
+                                                                                                       }
+                                                                                            }
+                                                                                  },
+                                                                "totalPrice" => {
+                                                                                "is_url" => 1,
+                                                                                "item" => {
+                                                                                          "types" => {
+                                                                                                     "http://schema.org/PriceSpecification" => 1
+                                                                                                   }
+                                                                                        },
+                                                                                "value" => "text"
+                                                                              },
+                                                                "underName" => {
+                                                                               "is_url" => 1,
+                                                                               "item" => {
+                                                                                         "types" => {
+                                                                                                    "http://schema.org/Organization" => 1,
+                                                                                                    "http://schema.org/Person" => 1
+                                                                                                  }
+                                                                                       }
+                                                                             }
+                                                              },
+                                                     "spec" => "SCHEMAORG",
+                                                     "subclass_of" => {
+                                                                      "http://schema.org/Intangible" => 1,
+                                                                      "http://schema.org/Thing" => 2
+                                                                    },
+                                                     "superclass_of" => {
+                                                                        "http://schema.org/BusReservation" => 1,
+                                                                        "http://schema.org/EventReservation" => 1,
+                                                                        "http://schema.org/FlightReservation" => 1,
+                                                                        "http://schema.org/FoodEstablishmentReservation" => 1,
+                                                                        "http://schema.org/LodgingReservation" => 1,
+                                                                        "http://schema.org/RentalCarReservation" => 1,
+                                                                        "http://schema.org/ReservationPackage" => 1,
+                                                                        "http://schema.org/TaxiReservation" => 1,
+                                                                        "http://schema.org/TrainReservation" => 1
+                                                                      },
+                                                     "use_itemid" => 1,
+                                                     "vocab" => "http://schema.org/"
+                                                   },
+                  "http://schema.org/ReservationPackage" => {
+                                                            "props" => {
+                                                                       "subReservation" => {
+                                                                                           "is_url" => 1,
+                                                                                           "item" => {
+                                                                                                     "types" => {
+                                                                                                                "http://schema.org/Reservation" => 1
+                                                                                                              }
+                                                                                                   }
+                                                                                         }
+                                                                     },
+                                                            "spec" => "SCHEMAORG",
+                                                            "subclass_of" => {
+                                                                             "http://schema.org/Intangible" => 2,
+                                                                             "http://schema.org/Reservation" => 1,
+                                                                             "http://schema.org/Thing" => 3
+                                                                           },
+                                                            "use_itemid" => 1,
+                                                            "vocab" => "http://schema.org/"
+                                                          },
+                  "http://schema.org/ReservationStatusType" => {
+                                                               "spec" => "SCHEMAORG",
+                                                               "subclass_of" => {
+                                                                                "http://schema.org/Enumeration" => 1,
+                                                                                "http://schema.org/Intangible" => 2,
+                                                                                "http://schema.org/Thing" => 3
+                                                                              },
+                                                               "use_itemid" => 1,
+                                                               "vocab" => "http://schema.org/"
+                                                             },
                   "http://schema.org/ReserveAction" => {
                                                        "props" => {
                                                                   "scheduledTime" => {
@@ -30621,6 +31318,35 @@ $Web::HTML::Validator::_Defs = {
                                                 "use_itemid" => 1,
                                                 "vocab" => "http://schema.org/"
                                               },
+                  "http://schema.org/Seat" => {
+                                              "props" => {
+                                                         "seatNumber" => {
+                                                                         "value" => "text"
+                                                                       },
+                                                         "seatRow" => {
+                                                                      "value" => "text"
+                                                                    },
+                                                         "seatSection" => {
+                                                                          "value" => "text"
+                                                                        },
+                                                         "seatingType" => {
+                                                                          "is_url" => 1,
+                                                                          "item" => {
+                                                                                    "types" => {
+                                                                                               "http://schema.org/QualitativeValue" => 1
+                                                                                             }
+                                                                                  },
+                                                                          "value" => "text"
+                                                                        }
+                                                       },
+                                              "spec" => "SCHEMAORG",
+                                              "subclass_of" => {
+                                                               "http://schema.org/Intangible" => 1,
+                                                               "http://schema.org/Thing" => 2
+                                                             },
+                                              "use_itemid" => 1,
+                                              "vocab" => "http://schema.org/"
+                                            },
                   "http://schema.org/SelfStorage" => {
                                                      "spec" => "SCHEMAORG",
                                                      "subclass_of" => {
@@ -30867,7 +31593,8 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/Thing" => 2
                                                                 },
                                                  "superclass_of" => {
-                                                                    "http://schema.org/GovernmentService" => 1
+                                                                    "http://schema.org/GovernmentService" => 1,
+                                                                    "http://schema.org/Taxi" => 1
                                                                   },
                                                  "use_itemid" => 1,
                                                  "vocab" => "http://schema.org/"
@@ -31708,6 +32435,48 @@ $Web::HTML::Validator::_Defs = {
                                                       "use_itemid" => 1,
                                                       "vocab" => "http://schema.org/"
                                                     },
+                  "http://schema.org/Taxi" => {
+                                              "spec" => "SCHEMAORG",
+                                              "subclass_of" => {
+                                                               "http://schema.org/Intangible" => 2,
+                                                               "http://schema.org/Service" => 1,
+                                                               "http://schema.org/Thing" => 3
+                                                             },
+                                              "use_itemid" => 1,
+                                              "vocab" => "http://schema.org/"
+                                            },
+                  "http://schema.org/TaxiReservation" => {
+                                                         "props" => {
+                                                                    "partySize" => {
+                                                                                   "is_url" => 1,
+                                                                                   "item" => {
+                                                                                             "types" => {
+                                                                                                        "http://schema.org/QuantitativeValue" => 1
+                                                                                                      }
+                                                                                           },
+                                                                                   "value" => "integer"
+                                                                                 },
+                                                                    "pickupLocation" => {
+                                                                                        "is_url" => 1,
+                                                                                        "item" => {
+                                                                                                  "types" => {
+                                                                                                             "http://schema.org/Place" => 1
+                                                                                                           }
+                                                                                                }
+                                                                                      },
+                                                                    "pickupTime" => {
+                                                                                    "value" => "global or local date and time string"
+                                                                                  }
+                                                                  },
+                                                         "spec" => "SCHEMAORG",
+                                                         "subclass_of" => {
+                                                                          "http://schema.org/Intangible" => 2,
+                                                                          "http://schema.org/Reservation" => 1,
+                                                                          "http://schema.org/Thing" => 3
+                                                                        },
+                                                         "use_itemid" => 1,
+                                                         "vocab" => "http://schema.org/"
+                                                       },
                   "http://schema.org/TaxiStand" => {
                                                    "spec" => "SCHEMAORG",
                                                    "subclass_of" => {
@@ -31841,6 +32610,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/AggregateOffer" => 3,
                                                                   "http://schema.org/AggregateRating" => 3,
                                                                   "http://schema.org/AgreeAction" => 4,
+                                                                  "http://schema.org/Airline" => 2,
                                                                   "http://schema.org/Airport" => 3,
                                                                   "http://schema.org/AlignmentObject" => 2,
                                                                   "http://schema.org/AllocateAction" => 3,
@@ -31848,6 +32618,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/AnatomicalStructure" => 2,
                                                                   "http://schema.org/AnatomicalSystem" => 2,
                                                                   "http://schema.org/AnimalShelter" => 3,
+                                                                  "http://schema.org/Answer" => 2,
                                                                   "http://schema.org/ApartmentComplex" => 3,
                                                                   "http://schema.org/AppendAction" => 5,
                                                                   "http://schema.org/ApplyAction" => 3,
@@ -31897,8 +32668,10 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/BroadcastEvent" => 3,
                                                                   "http://schema.org/BroadcastService" => 1,
                                                                   "http://schema.org/BuddhistTemple" => 4,
+                                                                  "http://schema.org/BusReservation" => 3,
                                                                   "http://schema.org/BusStation" => 3,
                                                                   "http://schema.org/BusStop" => 3,
+                                                                  "http://schema.org/BusTrip" => 2,
                                                                   "http://schema.org/BusinessAudience" => 3,
                                                                   "http://schema.org/BusinessEntityType" => 3,
                                                                   "http://schema.org/BusinessEvent" => 2,
@@ -31908,6 +32681,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/Campground" => 3,
                                                                   "http://schema.org/Canal" => 4,
                                                                   "http://schema.org/CancelAction" => 4,
+                                                                  "http://schema.org/Car" => 3,
                                                                   "http://schema.org/Casino" => 4,
                                                                   "http://schema.org/CatholicChurch" => 4,
                                                                   "http://schema.org/Cemetery" => 3,
@@ -31996,6 +32770,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/Electrician" => 4,
                                                                   "http://schema.org/ElectronicsStore" => 4,
                                                                   "http://schema.org/ElementarySchool" => 3,
+                                                                  "http://schema.org/EmailMessage" => 2,
                                                                   "http://schema.org/Embassy" => 4,
                                                                   "http://schema.org/EmergencyService" => 3,
                                                                   "http://schema.org/EmploymentAgency" => 3,
@@ -32005,6 +32780,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/Enumeration" => 2,
                                                                   "http://schema.org/Episode" => 2,
                                                                   "http://schema.org/Event" => 1,
+                                                                  "http://schema.org/EventReservation" => 3,
                                                                   "http://schema.org/EventStatusType" => 3,
                                                                   "http://schema.org/EventVenue" => 3,
                                                                   "http://schema.org/ExerciseAction" => 3,
@@ -32016,9 +32792,12 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/FinancialService" => 3,
                                                                   "http://schema.org/FindAction" => 2,
                                                                   "http://schema.org/FireStation" => 3,
+                                                                  "http://schema.org/Flight" => 2,
+                                                                  "http://schema.org/FlightReservation" => 3,
                                                                   "http://schema.org/Florist" => 4,
                                                                   "http://schema.org/FollowAction" => 3,
                                                                   "http://schema.org/FoodEstablishment" => 3,
+                                                                  "http://schema.org/FoodEstablishmentReservation" => 3,
                                                                   "http://schema.org/FoodEvent" => 2,
                                                                   "http://schema.org/FurnitureStore" => 4,
                                                                   "http://schema.org/GardenStore" => 4,
@@ -32090,6 +32869,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/LockerDelivery" => 4,
                                                                   "http://schema.org/Locksmith" => 4,
                                                                   "http://schema.org/LodgingBusiness" => 3,
+                                                                  "http://schema.org/LodgingReservation" => 3,
                                                                   "http://schema.org/LoseAction" => 3,
                                                                   "http://schema.org/LymphaticVessel" => 4,
                                                                   "http://schema.org/Map" => 2,
@@ -32230,13 +33010,16 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/ProductModel" => 2,
                                                                   "http://schema.org/ProfessionalService" => 3,
                                                                   "http://schema.org/ProfilePage" => 3,
+                                                                  "http://schema.org/ProgramMembership" => 2,
                                                                   "http://schema.org/Property" => 1,
                                                                   "http://schema.org/PsychologicalTreatment" => 3,
                                                                   "http://schema.org/PublicSwimmingPool" => 4,
                                                                   "http://schema.org/PublicationEvent" => 2,
+                                                                  "http://schema.org/QAPage" => 3,
                                                                   "http://schema.org/QualitativeValue" => 3,
                                                                   "http://schema.org/QuantitativeValue" => 3,
                                                                   "http://schema.org/Quantity" => 2,
+                                                                  "http://schema.org/Question" => 2,
                                                                   "http://schema.org/QuoteAction" => 3,
                                                                   "http://schema.org/RVPark" => 3,
                                                                   "http://schema.org/RadiationTherapy" => 3,
@@ -32256,9 +33039,13 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/RegisterAction" => 3,
                                                                   "http://schema.org/RejectAction" => 4,
                                                                   "http://schema.org/RentAction" => 3,
+                                                                  "http://schema.org/RentalCarReservation" => 3,
                                                                   "http://schema.org/ReplaceAction" => 3,
                                                                   "http://schema.org/ReplyAction" => 4,
                                                                   "http://schema.org/ReportedDoseSchedule" => 4,
+                                                                  "http://schema.org/Reservation" => 2,
+                                                                  "http://schema.org/ReservationPackage" => 3,
+                                                                  "http://schema.org/ReservationStatusType" => 3,
                                                                   "http://schema.org/ReserveAction" => 4,
                                                                   "http://schema.org/Reservoir" => 4,
                                                                   "http://schema.org/Residence" => 2,
@@ -32278,6 +33065,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/SearchAction" => 2,
                                                                   "http://schema.org/SearchResultsPage" => 3,
                                                                   "http://schema.org/Season" => 2,
+                                                                  "http://schema.org/Seat" => 2,
                                                                   "http://schema.org/SelfStorage" => 3,
                                                                   "http://schema.org/SellAction" => 3,
                                                                   "http://schema.org/SendAction" => 3,
@@ -32314,6 +33102,8 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/Table" => 3,
                                                                   "http://schema.org/TakeAction" => 3,
                                                                   "http://schema.org/TattooParlor" => 4,
+                                                                  "http://schema.org/Taxi" => 3,
+                                                                  "http://schema.org/TaxiReservation" => 3,
                                                                   "http://schema.org/TaxiStand" => 3,
                                                                   "http://schema.org/TechArticle" => 3,
                                                                   "http://schema.org/TelevisionStation" => 3,
@@ -32321,6 +33111,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/TheaterEvent" => 2,
                                                                   "http://schema.org/TheaterGroup" => 3,
                                                                   "http://schema.org/TherapeuticProcedure" => 3,
+                                                                  "http://schema.org/Ticket" => 2,
                                                                   "http://schema.org/TieAction" => 3,
                                                                   "http://schema.org/TipAction" => 3,
                                                                   "http://schema.org/TireShop" => 4,
@@ -32329,7 +33120,9 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/ToyStore" => 4,
                                                                   "http://schema.org/TrackAction" => 3,
                                                                   "http://schema.org/TradeAction" => 2,
+                                                                  "http://schema.org/TrainReservation" => 3,
                                                                   "http://schema.org/TrainStation" => 3,
+                                                                  "http://schema.org/TrainTrip" => 2,
                                                                   "http://schema.org/TransferAction" => 2,
                                                                   "http://schema.org/TravelAction" => 3,
                                                                   "http://schema.org/TravelAgency" => 3,
@@ -32349,6 +33142,7 @@ $Web::HTML::Validator::_Defs = {
                                                                   "http://schema.org/UserPlays" => 3,
                                                                   "http://schema.org/UserPlusOnes" => 3,
                                                                   "http://schema.org/UserTweets" => 3,
+                                                                  "http://schema.org/Vehicle" => 2,
                                                                   "http://schema.org/Vein" => 4,
                                                                   "http://schema.org/Vessel" => 3,
                                                                   "http://schema.org/VeterinaryCare" => 4,
@@ -32380,6 +33174,63 @@ $Web::HTML::Validator::_Defs = {
                                                "use_itemid" => 1,
                                                "vocab" => "http://schema.org/"
                                              },
+                  "http://schema.org/Ticket" => {
+                                                "props" => {
+                                                           "dateIssued" => {
+                                                                           "value" => "global or local date and time string"
+                                                                         },
+                                                           "issuedBy" => {
+                                                                         "is_url" => 1,
+                                                                         "item" => {
+                                                                                   "types" => {
+                                                                                              "http://schema.org/Organization" => 1
+                                                                                            }
+                                                                                 }
+                                                                       },
+                                                           "priceCurrency" => {
+                                                                              "value" => "text"
+                                                                            },
+                                                           "ticketNumber" => {
+                                                                             "value" => "text"
+                                                                           },
+                                                           "ticketToken" => {
+                                                                            "value" => "text"
+                                                                          },
+                                                           "ticketedSeat" => {
+                                                                             "is_url" => 1,
+                                                                             "item" => {
+                                                                                       "types" => {
+                                                                                                  "http://schema.org/Seat" => 1
+                                                                                                }
+                                                                                     }
+                                                                           },
+                                                           "totalPrice" => {
+                                                                           "is_url" => 1,
+                                                                           "item" => {
+                                                                                     "types" => {
+                                                                                                "http://schema.org/PriceSpecification" => 1
+                                                                                              }
+                                                                                   },
+                                                                           "value" => "text"
+                                                                         },
+                                                           "underName" => {
+                                                                          "is_url" => 1,
+                                                                          "item" => {
+                                                                                    "types" => {
+                                                                                               "http://schema.org/Organization" => 1,
+                                                                                               "http://schema.org/Person" => 1
+                                                                                             }
+                                                                                  }
+                                                                        }
+                                                         },
+                                                "spec" => "SCHEMAORG",
+                                                "subclass_of" => {
+                                                                 "http://schema.org/Intangible" => 1,
+                                                                 "http://schema.org/Thing" => 2
+                                                               },
+                                                "use_itemid" => 1,
+                                                "vocab" => "http://schema.org/"
+                                              },
                   "http://schema.org/TieAction" => {
                                                    "spec" => "SCHEMAORG",
                                                    "subclass_of" => {
@@ -32508,6 +33359,16 @@ $Web::HTML::Validator::_Defs = {
                                                      "use_itemid" => 1,
                                                      "vocab" => "http://schema.org/"
                                                    },
+                  "http://schema.org/TrainReservation" => {
+                                                          "spec" => "SCHEMAORG",
+                                                          "subclass_of" => {
+                                                                           "http://schema.org/Intangible" => 2,
+                                                                           "http://schema.org/Reservation" => 1,
+                                                                           "http://schema.org/Thing" => 3
+                                                                         },
+                                                          "use_itemid" => 1,
+                                                          "vocab" => "http://schema.org/"
+                                                        },
                   "http://schema.org/TrainStation" => {
                                                       "spec" => "SCHEMAORG",
                                                       "subclass_of" => {
@@ -32518,6 +33379,60 @@ $Web::HTML::Validator::_Defs = {
                                                       "use_itemid" => 1,
                                                       "vocab" => "http://schema.org/"
                                                     },
+                  "http://schema.org/TrainTrip" => {
+                                                   "props" => {
+                                                              "arrivalPlatform" => {
+                                                                                   "value" => "text"
+                                                                                 },
+                                                              "arrivalStation" => {
+                                                                                  "is_url" => 1,
+                                                                                  "item" => {
+                                                                                            "types" => {
+                                                                                                       "http://schema.org/TrainStation" => 1
+                                                                                                     }
+                                                                                          }
+                                                                                },
+                                                              "arrivalTime" => {
+                                                                               "value" => "global or local date and time string"
+                                                                             },
+                                                              "departurePlatform" => {
+                                                                                     "value" => "text"
+                                                                                   },
+                                                              "departureStation" => {
+                                                                                    "is_url" => 1,
+                                                                                    "item" => {
+                                                                                              "types" => {
+                                                                                                         "http://schema.org/TrainStation" => 1
+                                                                                                       }
+                                                                                            }
+                                                                                  },
+                                                              "departureTime" => {
+                                                                                 "value" => "global or local date and time string"
+                                                                               },
+                                                              "provider" => {
+                                                                            "is_url" => 1,
+                                                                            "item" => {
+                                                                                      "types" => {
+                                                                                                 "http://schema.org/Organization" => 1,
+                                                                                                 "http://schema.org/Person" => 1
+                                                                                               }
+                                                                                    }
+                                                                          },
+                                                              "trainName" => {
+                                                                             "value" => "text"
+                                                                           },
+                                                              "trainNumber" => {
+                                                                               "value" => "text"
+                                                                             }
+                                                            },
+                                                   "spec" => "SCHEMAORG",
+                                                   "subclass_of" => {
+                                                                    "http://schema.org/Intangible" => 1,
+                                                                    "http://schema.org/Thing" => 2
+                                                                  },
+                                                   "use_itemid" => 1,
+                                                   "vocab" => "http://schema.org/"
+                                                 },
                   "http://schema.org/TransferAction" => {
                                                         "props" => {
                                                                    "fromLocation" => {
@@ -32856,6 +33771,18 @@ $Web::HTML::Validator::_Defs = {
                                                     "use_itemid" => 1,
                                                     "vocab" => "http://schema.org/"
                                                   },
+                  "http://schema.org/Vehicle" => {
+                                                 "spec" => "SCHEMAORG",
+                                                 "subclass_of" => {
+                                                                  "http://schema.org/Product" => 1,
+                                                                  "http://schema.org/Thing" => 2
+                                                                },
+                                                 "superclass_of" => {
+                                                                    "http://schema.org/Car" => 1
+                                                                  },
+                                                 "use_itemid" => 1,
+                                                 "vocab" => "http://schema.org/"
+                                               },
                   "http://schema.org/Vein" => {
                                               "props" => {
                                                          "drainsTo" => {
@@ -33231,6 +34158,7 @@ $Web::HTML::Validator::_Defs = {
                                                                     "http://schema.org/ItemPage" => 1,
                                                                     "http://schema.org/MedicalWebPage" => 1,
                                                                     "http://schema.org/ProfilePage" => 1,
+                                                                    "http://schema.org/QAPage" => 1,
                                                                     "http://schema.org/SearchResultsPage" => 1,
                                                                     "http://schema.org/VideoGallery" => 2
                                                                   },
@@ -33396,6 +34324,27 @@ $Web::HTML::Validator::_Defs = {
                                                              "status" => "REC",
                                                              "supported" => 1
                                                            },
+                          "http://www.w3.org/2002/06/hlink" => {
+                                                               "label" => "HLink",
+                                                               "status" => "Obsolete",
+                                                               "supported" => 1
+                                                             },
+                          "http://www.w3.org/2002/06/xhtml2" => {
+                                                                "label" => "XHTML 2.0",
+                                                                "status" => "Obsolete",
+                                                                "supported" => 1
+                                                              },
+                          "http://www.w3.org/2002/06/xhtml2/" => {
+                                                                 "label" => "XHTML 2.0",
+                                                                 "status" => "Obsolete",
+                                                                 "supported" => 1
+                                                               },
+                          "http://www.w3.org/2005/07/aaa" => {
+                                                             "label" => "Accessible, Adaptable Applications (AAA) States and Adaptable Properties",
+                                                             "prefix" => "aaa",
+                                                             "status" => "Obsolete",
+                                                             "supported" => 1
+                                                           },
                           "http://www.w3.org/2005/Atom" => {
                                                            "atom_family" => 1,
                                                            "label" => "Atom",
@@ -33410,12 +34359,21 @@ $Web::HTML::Validator::_Defs = {
                                                           "status" => "LC",
                                                           "supported" => 1
                                                         },
+                          "http://www.w3.org/TR/xhtml2" => {
+                                                           "label" => "XHTML 2.0",
+                                                           "supported" => 1
+                                                         },
                           "http://www.w3.org/XML/1998/namespace" => {
                                                                     "label" => "XML",
                                                                     "prefix" => "xml",
                                                                     "status" => "REC",
                                                                     "supported" => 1
-                                                                  }
+                                                                  },
+                          "http://www.w3.org/ns/xbl" => {
+                                                        "label" => "XBL 2.0",
+                                                        "status" => "Obsolete",
+                                                        "supported" => 1
+                                                      }
                         },
           "roles" => {
                      "alert" => {
@@ -35044,6 +36002,7 @@ $Web::HTML::Validator::_Defs = {
                    },
           "schemaorg_props" => {
                                "about" => {},
+                               "acceptedAnswer" => {},
                                "acceptedOffer" => {},
                                "acceptedPaymentMethod" => {},
                                "acceptsReservations" => {},
@@ -35075,6 +36034,7 @@ $Web::HTML::Validator::_Defs = {
                                "affiliation" => {},
                                "agent" => {},
                                "aggregateRating" => {},
+                               "aircraft" => {},
                                "album" => {},
                                "albums" => {},
                                "alcoholWarning" => {},
@@ -35085,6 +36045,7 @@ $Web::HTML::Validator::_Defs = {
                                "alumni" => {},
                                "alumniOf" => {},
                                "amountOfThisGood" => {},
+                               "answerCount" => {},
                                "antagonist" => {},
                                "applicableLocation" => {},
                                "applicationCategory" => {},
@@ -35094,6 +36055,13 @@ $Web::HTML::Validator::_Defs = {
                                "appliesToPaymentMethod" => {},
                                "area" => {},
                                "areaServed" => {},
+                               "arrivalAirport" => {},
+                               "arrivalBusStop" => {},
+                               "arrivalGate" => {},
+                               "arrivalPlatform" => {},
+                               "arrivalStation" => {},
+                               "arrivalTerminal" => {},
+                               "arrivalTime" => {},
                                "arterialBranch" => {},
                                "articleBody" => {},
                                "articleSection" => {},
@@ -35137,9 +36105,12 @@ $Web::HTML::Validator::_Defs = {
                                "blogPost" => {},
                                "blogPosts" => {},
                                "bloodSupply" => {},
+                               "boardingGroup" => {},
                                "bodyLocation" => {},
                                "bookEdition" => {},
                                "bookFormat" => {},
+                               "bookingAgent" => {},
+                               "bookingTime" => {},
                                "borrower" => {},
                                "box" => {},
                                "branch" => {},
@@ -35149,6 +36120,8 @@ $Web::HTML::Validator::_Defs = {
                                "breastfeedingWarning" => {},
                                "broadcaster" => {},
                                "browserRequirements" => {},
+                               "busName" => {},
+                               "busNumber" => {},
                                "businessFunction" => {},
                                "buyer" => {},
                                "byArtist" => {},
@@ -35162,6 +36135,8 @@ $Web::HTML::Validator::_Defs = {
                                "category" => {},
                                "cause" => {},
                                "causeOf" => {},
+                               "checkinTime" => {},
+                               "checkoutTime" => {},
                                "childMaxAge" => {},
                                "childMinAge" => {},
                                "children" => {},
@@ -35180,6 +36155,7 @@ $Web::HTML::Validator::_Defs = {
                                "collection" => {},
                                "color" => {},
                                "comment" => {},
+                               "commentCount" => {},
                                "commentText" => {},
                                "commentTime" => {},
                                "comprisedOf" => {},
@@ -35213,6 +36189,7 @@ $Web::HTML::Validator::_Defs = {
                                "customer" => {},
                                "dataset" => {},
                                "dateCreated" => {},
+                               "dateIssued" => {},
                                "dateModified" => {},
                                "datePosted" => {},
                                "datePublished" => {},
@@ -35224,6 +36201,13 @@ $Web::HTML::Validator::_Defs = {
                                "deliveryMethod" => {},
                                "deliveryStatus" => {},
                                "department" => {},
+                               "departureAirport" => {},
+                               "departureBusStop" => {},
+                               "departureGate" => {},
+                               "departurePlatform" => {},
+                               "departureStation" => {},
+                               "departureTerminal" => {},
+                               "departureTime" => {},
                                "dependencies" => {},
                                "depth" => {},
                                "description" => {},
@@ -35251,7 +36235,10 @@ $Web::HTML::Validator::_Defs = {
                                "doseUnit" => {},
                                "doseValue" => {},
                                "downloadUrl" => {},
+                               "downvoteCount" => {},
                                "drainsTo" => {},
+                               "dropoffLocation" => {},
+                               "dropoffTime" => {},
                                "drug" => {},
                                "drugClass" => {},
                                "drugUnit" => {},
@@ -35290,6 +36277,7 @@ $Web::HTML::Validator::_Defs = {
                                "episodeNumber" => {},
                                "episodes" => {},
                                "equal" => {},
+                               "estimatedFlightDuration" => {},
                                "estimatesRiskOf" => {},
                                "event" => {},
                                "eventStatus" => {},
@@ -35312,6 +36300,8 @@ $Web::HTML::Validator::_Defs = {
                                "fiberContent" => {},
                                "fileFormat" => {},
                                "fileSize" => {},
+                               "flightDistance" => {},
+                               "flightNumber" => {},
                                "followee" => {},
                                "follows" => {},
                                "followup" => {},
@@ -35351,8 +36341,10 @@ $Web::HTML::Validator::_Defs = {
                                "honorificPrefix" => {},
                                "honorificSuffix" => {},
                                "hospitalAffiliation" => {},
+                               "hostingOrganization" => {},
                                "hoursAvailable" => {},
                                "howPerformed" => {},
+                               "iataCode" => {},
                                "identifyingExam" => {},
                                "identifyingTest" => {},
                                "illustrator" => {},
@@ -35416,6 +36408,8 @@ $Web::HTML::Validator::_Defs = {
                                "lesserOrEqual" => {},
                                "line" => {},
                                "location" => {},
+                               "lodgingUnitDescription" => {},
+                               "lodgingUnitType" => {},
                                "logo" => {},
                                "longitude" => {},
                                "loser" => {},
@@ -35428,12 +36422,14 @@ $Web::HTML::Validator::_Defs = {
                                "maxPrice" => {},
                                "maxValue" => {},
                                "maximumIntake" => {},
+                               "mealService" => {},
                                "mechanismOfAction" => {},
                                "medicalSpecialty" => {},
                                "medicineSystem" => {},
                                "member" => {},
                                "memberOf" => {},
                                "members" => {},
+                               "membershipNumber" => {},
                                "memoryRequirements" => {},
                                "mentions" => {},
                                "menu" => {},
@@ -35441,6 +36437,7 @@ $Web::HTML::Validator::_Defs = {
                                "minPrice" => {},
                                "minValue" => {},
                                "model" => {},
+                               "modifiedTime" => {},
                                "mpn" => {},
                                "musicBy" => {},
                                "musicGroupMember" => {},
@@ -35453,6 +36450,8 @@ $Web::HTML::Validator::_Defs = {
                                "nonEqual" => {},
                                "nonProprietaryName" => {},
                                "normalRange" => {},
+                               "numAdults" => {},
+                               "numChildren" => {},
                                "numTracks" => {},
                                "numberOfEpisodes" => {},
                                "numberOfPages" => {},
@@ -35483,6 +36482,7 @@ $Web::HTML::Validator::_Defs = {
                                "ownedThrough" => {},
                                "owns" => {},
                                "parent" => {},
+                               "parentItem" => {},
                                "parentService" => {},
                                "parents" => {},
                                "partOfEpisode" => {},
@@ -35492,6 +36492,7 @@ $Web::HTML::Validator::_Defs = {
                                "partOfSystem" => {},
                                "partOfTVSeries" => {},
                                "participant" => {},
+                               "partySize" => {},
                                "pathophysiology" => {},
                                "paymentAccepted" => {},
                                "paymentDue" => {},
@@ -35507,6 +36508,8 @@ $Web::HTML::Validator::_Defs = {
                                "photo" => {},
                                "photos" => {},
                                "physiologicalBenefits" => {},
+                               "pickupLocation" => {},
+                               "pickupTime" => {},
                                "playerType" => {},
                                "polygon" => {},
                                "population" => {},
@@ -35547,6 +36550,8 @@ $Web::HTML::Validator::_Defs = {
                                "productSupported" => {},
                                "productionCompany" => {},
                                "proficiencyLevel" => {},
+                               "programMembershipUsed" => {},
+                               "programName" => {},
                                "programmingLanguage" => {},
                                "programmingModel" => {},
                                "proprietaryName" => {},
@@ -35598,6 +36603,10 @@ $Web::HTML::Validator::_Defs = {
                                "requiredMinAge" => {},
                                "requirements" => {},
                                "requiresSubscription" => {},
+                               "reservationFor" => {},
+                               "reservationId" => {},
+                               "reservationStatus" => {},
+                               "reservedTicket" => {},
                                "responsibilities" => {},
                                "restPeriods" => {},
                                "result" => {},
@@ -35622,6 +36631,10 @@ $Web::HTML::Validator::_Defs = {
                                "season" => {},
                                "seasonNumber" => {},
                                "seasons" => {},
+                               "seatNumber" => {},
+                               "seatRow" => {},
+                               "seatSection" => {},
+                               "seatingType" => {},
                                "secondaryPrevention" => {},
                                "seeks" => {},
                                "seller" => {},
@@ -35679,12 +36692,14 @@ $Web::HTML::Validator::_Defs = {
                                "subEvent" => {},
                                "subEvents" => {},
                                "subOrganization" => {},
+                               "subReservation" => {},
                                "subStageSuffix" => {},
                                "subStructure" => {},
                                "subTest" => {},
                                "subtype" => {},
                                "successorOf" => {},
                                "sugarContent" => {},
+                               "suggestedAnswer" => {},
                                "suggestedGender" => {},
                                "suggestedMaxAge" => {},
                                "suggestedMinAge" => {},
@@ -35703,16 +36718,22 @@ $Web::HTML::Validator::_Defs = {
                                "thumbnail" => {},
                                "thumbnailUrl" => {},
                                "tickerSymbol" => {},
+                               "ticketNumber" => {},
+                               "ticketToken" => {},
+                               "ticketedSeat" => {},
                                "timeRequired" => {},
                                "tissueSample" => {},
                                "title" => {},
                                "toLocation" => {},
+                               "totalPrice" => {},
                                "totalTime" => {},
                                "track" => {},
                                "trackingNumber" => {},
                                "trackingUrl" => {},
                                "tracks" => {},
                                "trailer" => {},
+                               "trainName" => {},
+                               "trainNumber" => {},
                                "transFatContent" => {},
                                "transcript" => {},
                                "transmissionMethod" => {},
@@ -35721,9 +36742,11 @@ $Web::HTML::Validator::_Defs = {
                                "typeOfGood" => {},
                                "typicalAgeRange" => {},
                                "typicalTest" => {},
+                               "underName" => {},
                                "unitCode" => {},
                                "unsaturatedFatContent" => {},
                                "uploadDate" => {},
+                               "upvoteCount" => {},
                                "url" => {},
                                "usedToDiagnose" => {},
                                "usesDevice" => {},
@@ -35745,6 +36768,7 @@ $Web::HTML::Validator::_Defs = {
                                "warranty" => {},
                                "warrantyPromise" => {},
                                "warrantyScope" => {},
+                               "webCheckinTime" => {},
                                "weight" => {},
                                "width" => {},
                                "winner" => {},
