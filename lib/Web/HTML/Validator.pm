@@ -2428,10 +2428,6 @@ sub _is_minus_element ($$$$) {
       return 1 if $self->{flag}->{in_media};
 
       return $el->has_attribute_ns (undef, 'controls');
-    } elsif ($ln eq 'menu') {
-      my $value = $el->get_attribute_ns (undef, 'type') || '';
-      $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
-      return ($value eq 'toolbar');
     } elsif ($ln eq 'a' or $ln eq 'button') {
       return $self->{flag}->{no_interactive} || !$self->{flag}->{in_canvas};
     } else {
@@ -9511,8 +9507,11 @@ sub _check_node ($$) {
       $self->_remove_minus_elements ($item->{element_state});
     } elsif ($item->{type} eq 'check_child_element') {
       my $args = $item->{args};
-      if ($self->{minus_elements}->{$args->[3]}->{$args->[4]} and
-          $self->_is_minus_element ($args->[2], $args->[3], $args->[4])) {
+      if (($self->{minus_elements}->{$args->[3]}->{$args->[4]} and
+           $self->_is_minus_element ($args->[2], $args->[3], $args->[4])) or
+          ($self->{flag}->{no_interactive} and
+           $args->[3] eq HTML_NS and
+           $args->[2]->has_attribute_ns (undef, 'tabindex'))) {
         $self->{onerror}->(node => $args->[2],
                            type => 'element not allowed:minus',
                            level => 'm');
