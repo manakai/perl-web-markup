@@ -2176,6 +2176,16 @@ $Web::HTML::Validator::_Defs = {
                                                                                   "onafterupdate" => {
                                                                                                      "value_type" => "event handler"
                                                                                                    },
+                                                                                  "onautocomplete" => {
+                                                                                                      "conforming" => 1,
+                                                                                                      "status" => "LC",
+                                                                                                      "value_type" => "event handler"
+                                                                                                    },
+                                                                                  "onautocompleteerror" => {
+                                                                                                           "conforming" => 1,
+                                                                                                           "status" => "LC",
+                                                                                                           "value_type" => "event handler"
+                                                                                                         },
                                                                                   "onbeforeactivate" => {
                                                                                                         "value_type" => "event handler"
                                                                                                       },
