@@ -202,6 +202,7 @@ $Web::HTML::_SyntaxDefs = {
                                "-//WAPFORUM//DTD XHTML Mobile 1.0//EN" => 1
                              },
           "prompt" => {
+                      "ach" => "Man en aye obedo namba ma yenye. Ket yeny lok mapire tek: ",
                       "af" => "Hierdie is 'n soekbare indeks. Tik soeksleutelwoorde in: ",
                       "ak" => "Wo tumi hwehw\x{25b} ind\x{25b}ks yi mu. Kyer\x{25b}w wo nkasafua-titiriw: ",
                       "am" => "\x{12ed}\x{1205} \x{120a}\x{1348}\x{1208}\x{130d} \x{12e8}\x{121a}\x{127d}\x{120d} \x{1218}\x{1228}\x{1303} \x{1320}\x{124b}\x{121a} \x{1290}\x{12cd}\x{1362} \x{12e8}\x{134d}\x{1208}\x{130b} \x{1241}\x{120d}\x{134d} \x{1243}\x{120b}\x{1275} \x{12a0}\x{1235}\x{1308}\x{1263}\x{1366}",
@@ -267,6 +268,7 @@ $Web::HTML::_SyntaxDefs = {
                       "ml" => "\x{d07}\x{d24}\x{d4d} \x{d24}\x{d3f}\x{d30}\x{d2f}\x{d3e}\x{d35}\x{d41}\x{d28}\x{d4d}\x{d28} \x{d38}\x{d42}\x{d1a}\x{d3f}\x{d15}\x{d2f}\x{d3e}\x{d23}\x{d4d}. \x{d24}\x{d3f}\x{d30}\x{d2f}\x{d32}\x{d4d}\x{200d} \x{d15}\x{d40}\x{d35}\x{d47}\x{d21}\x{d41}\x{d15}\x{d33}\x{d4d}\x{200d} \x{d28}\x{d32}\x{d4d}\x{200d}\x{d15}\x{d41}\x{d15}: ",
                       "mr" => "\x{939}\x{940} \x{936}\x{94b}\x{927} \x{918}\x{947}\x{923}\x{94d}\x{92f}\x{93e}\x{92f}\x{94b}\x{917}\x{94d}\x{92f} \x{905}\x{928}\x{941}\x{915}\x{94d}\x{930}\x{92e}\x{923}\x{93f}\x{915}\x{93e} \x{906}\x{939}\x{947}. \x{936}\x{94b}\x{927} \x{915}\x{940}\x{935}\x{930}\x{94d}\x{921} \x{92a}\x{94d}\x{930}\x{935}\x{93f}\x{937}\x{94d}\x{91f} \x{915}\x{930}\x{93e}: ",
                       "ms" => "Ini adalah indeks boleh dicari. Masukkan kata kunci carian: ",
+                      "my" => "\x{101b}\x{103e}\x{102c}\x{1016}\x{103d}\x{1031}\x{1014}\x{102d}\x{102f}\x{1004}\x{103a}\x{101e}\x{1031}\x{102c}\x{1014}\x{1031}\x{101b}\x{102c}\x{1010}\x{1005}\x{103a}\x{1001}\x{102f}\x{1016}\x{103c}\x{1005}\x{103a}\x{101e}\x{100a}\x{103a}\x{1011}\x{102d}\x{102f}\x{1037}\x{1000}\x{103c}\x{1031}\x{102c}\x{1004}\x{1037}\x{103a}\x{1005}\x{102c}\x{101c}\x{102d}\x{102f}\x{101e}\x{1031}\x{102c}\x{1005}\x{102c}\x{101c}\x{102f}\x{1036}\x{1038}\x{1011}\x{100a}\x{1037}\x{103a}\x{1000}\x{102c}\x{101b}\x{103e}\x{102c}\x{1015}\x{102b}: ",
                       "nb" => "Dette er en s\x{f8}kbar indeks. Skriv s\x{f8}keord: ",
                       "nb-no" => "Dette er en s\x{f8}kbar indeks. Skriv s\x{f8}keord: ",
                       "nl" => "Dit is een doorzoekbare index. Geef zoekwoorden op: ",
