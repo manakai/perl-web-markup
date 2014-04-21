@@ -1,20 +1,18 @@
-# -*- Makefile -*-
-
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm
 clean:
 	rm -fr local/*.json
 
-updatenightly: dataautoupdate-commit local/bin/pmbp.pl
+updatenightly: update-submodules dataautoupdate-commit
+
+update-submodules: local/bin/pmbp.pl
 	curl https://gist.githubusercontent.com/motemen/667573/raw/git-submodule-track | sh
 	git add modules t_deps/modules t_deps/tests
 	perl local/bin/pmbp.pl --update
 	git add config
-	git commit -m modules
 
 dataautoupdate-commit: clean all
 	git add lib
-	git commit -m data
 
 PERL = ./perl
 PROVE = ./prove
