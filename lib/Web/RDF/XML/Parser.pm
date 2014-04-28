@@ -863,7 +863,6 @@ sub convert_property_element ($$%) {
   } # rdf:parseType=""
 } # convert_property_element
 
-# XXX onattr tests
 # XXX SHOULD warn if not defined in RDF vocabulary
 # XXX reification rule
 

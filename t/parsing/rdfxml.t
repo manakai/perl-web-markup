@@ -70,6 +70,7 @@ for my $path (($data_path->children (qr/\.dat$/))) {
     errors => {is_list => 1},
     triples => {is_list => 1},
     nonrdf => {is_list => 1, is_prefixed => 1},
+    attrs => {is_list => 1, is_prefixed => 1},
   }, sub {
     my $test = shift;
     test {
@@ -121,17 +122,19 @@ for my $path (($data_path->children (qr/\.dat$/))) {
       my @attr;
       $parser->onattr (sub {
         push @attr,
-            get_node_path $_[0],
-            $_[1];
+            join " ",
+                get_node_path $_[0],
+                $_[1];
       });
       $parser->convert_document ($doc);
       @error = sort { $a cmp $b } @error;
       @triple = sort { $a cmp $b } @triple;
-      eq_or_diff \@triple, [sort { $a cmp $b } @{$test->{triples}->[0]}];
-      eq_or_diff \@error, [sort { $a cmp $b } @{$test->{errors}->[0]}];
-      eq_or_diff \@nonrdf, $test->{nonrdf}->[0] || [];
+      eq_or_diff \@triple, [sort { $a cmp $b } @{$test->{triples}->[0] or []}];
+      eq_or_diff \@error, [sort { $a cmp $b } @{$test->{errors}->[0] or []}];
+      eq_or_diff \@nonrdf, $test->{nonrdf}->[0] || [], 'nonrdf';
+      eq_or_diff \@attr, $test->{attrs}->[0] || [], 'attrs';
       done $c;
-    } n => 3, name => [$path->relative ($data_path), $test->{data}->[0]];
+    } n => 4, name => [$path->relative ($data_path), $test->{data}->[0]];
   });
 }
 
