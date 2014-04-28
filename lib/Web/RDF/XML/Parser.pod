@@ -54,6 +54,15 @@ L<Whatpm::Errors>
 <https://github.com/wakaba/manakai/blob/master/lib/Whatpm/Errors.pod>
 for more information.
 
+=item $code = $rdf->onnonrdfnode
+
+=item $rdf->onnonrdfnode ($code)
+
+Get or set the code reference that is invoked whenever a non-RDF node
+is detected.  The node is either non-conforming or part of an XML
+literal.  This hook is intended for injecting validation codes
+(e.g. by L<Web::HTML::Validator>).
+
 =item $rdf->convert_document ($doc)
 
 Extract the triples from a document.  The argument must be a DOM
