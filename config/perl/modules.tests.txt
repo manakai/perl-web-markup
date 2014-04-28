@@ -1,5 +1,6 @@
 Data::Dumper
 Path::Class
+Path::Tiny
 Scalar::Util
 Test::Class
 Test::Differences
