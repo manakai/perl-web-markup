@@ -1,7 +1,7 @@
 package Web::RDF::XML::Parser;
 use strict;
 use warnings;
-our $VERSION = '3.0';
+our $VERSION = '4.0';
 use Web::URL::Canonicalize qw(url_to_canon_url);
 
 sub RDF_URL () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
@@ -45,22 +45,34 @@ sub ontriple ($;$) {
     print STDERR $dump_resource->($opt{subject}) . ' ';
     print STDERR $dump_resource->($opt{predicate}) . ' ';
     print STDERR $dump_resource->($opt{object}) . "\n";
-    if ($dump_resource->{id}) {
-      print STDERR $dump_resource->($dump_resource->{id}) . ' ';
-      print STDERR $dump_resource->({uri => RDF_URL . 'subject'}) . ' ';
-      print STDERR $dump_resource->($opt{subject}) . "\n";
-      print STDERR $dump_resource->($dump_resource->{id}) . ' ';
-      print STDERR $dump_resource->({uri => RDF_URL . 'predicate'}) . ' ';
-      print STDERR $dump_resource->($opt{predicate}) . "\n";
-      print STDERR $dump_resource->($dump_resource->{id}) . ' ';
-      print STDERR $dump_resource->({uri => RDF_URL . 'object'}) . ' ';
-      print STDERR $dump_resource->($opt{object}) . "\n";
-      print STDERR $dump_resource->($dump_resource->{id}) . ' ';
-      print STDERR $dump_resource->({uri => RDF_URL . 'type'}) . ' ';
-      print STDERR $dump_resource->({uri => RDF_URL . 'Statement'}) . "\n";
-    }
   };
 } # ontriple
+
+sub _dispatch_triple {
+  my ($self, %args) = @_;
+  $self->ontriple->(subject => $args{subject},
+                    predicate => $args{predicate},
+                    object => $args{object},
+                    node => $args{node});
+  if (defined $args{id}) {
+    $self->ontriple->(subject => $args{id},
+                      predicate => {uri => RDF_URL . 'subject'},
+                      object => $args{subject},
+                      node => $args{node});
+    $self->ontriple->(subject => $args{id},
+                      predicate => {uri => RDF_URL . 'predicate'},
+                      object => $args{predicate},
+                      node => $args{node});
+    $self->ontriple->(subject => $args{id},
+                      predicate => {uri => RDF_URL . 'object'},
+                      object => $args{object},
+                      node => $args{node});
+    $self->ontriple->(subject => $args{id},
+                      predicate => {uri => RDF_URL . 'type'},
+                      object => {uri => RDF_URL . 'Statement'},
+                      node => $args{node});
+  }
+} # _dispatch_triple
 
 sub onerror ($;$) {
   if (@_ > 1) {
@@ -415,14 +427,14 @@ sub convert_node_element ($$;%) {
   }
 
   if ($xuri ne RDF_URL . 'Description') {
-    $self->ontriple->(subject => $subject,
+    $self->_dispatch_triple (subject => $subject,
                         predicate => {uri => RDF_URL . 'type'},
                         object => {uri => $xuri},
                         node => $node);
   }
 
   if ($type_attr) {
-    $self->ontriple->(subject => $subject,
+    $self->_dispatch_triple (subject => $subject,
                         predicate => {uri => RDF_URL . 'type'},
                         object => {uri => $resolve->($type_attr->value,
                                                      $type_attr)},
@@ -430,11 +442,12 @@ sub convert_node_element ($$;%) {
   }
 
   for my $attr (@prop_attr) {
-    $self->ontriple->(subject => $subject,
-                        predicate => {uri => $attr->manakai_expanded_uri},
-                        object => {value => $attr->value,
-                                   language => $opt{language}},
-                        node => $attr);
+    my $predicate = $attr->manakai_expanded_uri;
+    $self->_dispatch_triple (subject => $subject,
+                      predicate => {uri => $predicate},
+                      object => {value => $attr->value,
+                                 language => $opt{language}},
+                      node => $attr);
   }
 
   # |propertyEltList|
@@ -591,7 +604,7 @@ sub convert_property_element ($$%) {
     }
     
     my $object = {bnodeid => $generate_bnodeid->($self)};
-    $self->ontriple->(subject => $opt{subject},
+    $self->_dispatch_triple (subject => $opt{subject},
                         predicate => {uri => $xuri},
                         object => $object,
                         node => $node,
@@ -649,12 +662,12 @@ sub convert_property_element ($$%) {
     }
 
     if (@resource) {
-      $self->ontriple->(subject => $opt{subject},
+      $self->_dispatch_triple (subject => $opt{subject},
                           predicate => {uri => $xuri},
                           object => $resource[0]->[1],
                           node => $node);
     } else {
-      $self->ontriple->(subject => $opt{subject},
+      $self->_dispatch_triple (subject => $opt{subject},
                           predicate => {uri => $xuri},
                           object => {uri => RDF_URL . 'nil'},
                           node => $node,
@@ -663,17 +676,17 @@ sub convert_property_element ($$%) {
     
     while (@resource) {
       my $resource = shift @resource;
-      $self->ontriple->(subject => $resource->[1],
+      $self->_dispatch_triple (subject => $resource->[1],
                           predicate => {uri => RDF_URL . 'first'},
                           object => $resource->[0],
                           node => $resource->[2]);
       if (@resource) {
-        $self->ontriple->(subject => $resource->[1],
+        $self->_dispatch_triple (subject => $resource->[1],
                             predicate => {uri => RDF_URL . 'rest'},
                             object => $resource[0]->[1],
                             node => $resource->[2]);
       } else {
-        $self->ontriple->(subject => $resource->[1],
+        $self->_dispatch_triple (subject => $resource->[1],
                             predicate => {uri => RDF_URL . 'rest'},
                             object => {uri => RDF_URL . 'nil'},
                             node => $resource->[2]);
@@ -696,7 +709,7 @@ sub convert_property_element ($$%) {
                          node => $attr);
     }
 
-    $self->ontriple->(subject => $opt{subject},
+    $self->_dispatch_triple (subject => $opt{subject},
                         predicate => {uri => $xuri},
                         object => {parent_node => $node,
                                    datatype => RDF_URL . 'XMLLiteral'},
@@ -771,7 +784,7 @@ sub convert_property_element ($$%) {
       my $object = $self->convert_node_element ($node_element,
                                                 language => $opt{language});
       
-      $self->ontriple->(subject => $opt{subject},
+      $self->_dispatch_triple (subject => $opt{subject},
                           predicate => {uri => $xuri},
                           object => $object,
                           node => $node,
@@ -797,7 +810,7 @@ sub convert_property_element ($$%) {
                node => $node,
                id => $get_id_resource->($self, $rdf_id_attr));
       } else {
-        $self->ontriple->(subject => $opt{subject},
+        $self->_dispatch_triple (subject => $opt{subject},
                             predicate => {uri => $xuri},
                             object => {value => $text,
                                        language => $opt{language}},
@@ -815,7 +828,7 @@ sub convert_property_element ($$%) {
       }
       
       if (not $resource_attr and not $nodeid_attr and not @prop_attr) {
-        $self->ontriple->(subject => $opt{subject},
+        $self->_dispatch_triple (subject => $opt{subject},
                             predicate => {uri => $xuri},
                             object => {value => '',
                                        language => $opt{language}},
@@ -840,12 +853,12 @@ sub convert_property_element ($$%) {
         for my $attr (@prop_attr) {
           my $attr_xuri = $attr->manakai_expanded_uri;
           if ($attr_xuri eq RDF_URL . 'type') {
-            $self->ontriple->(subject => $object,
+            $self->_dispatch_triple (subject => $object,
                                 predicate => {uri => $attr_xuri},
                                 object => $resolve->($attr->value, $attr),
                                 node => $attr);
           } else {
-            $self->ontriple->(subject => $object,
+            $self->_dispatch_triple (subject => $object,
                                 predicate => {uri => $attr_xuri},
                                 object => {value => $attr->value,
                                            language => $opt{language}},
@@ -853,7 +866,7 @@ sub convert_property_element ($$%) {
           }
         }
 
-        $self->ontriple->(subject => $opt{subject},
+        $self->_dispatch_triple (subject => $opt{subject},
                             predicate => {uri => $xuri},
                             object => $object,
                             node => $node,
@@ -863,24 +876,11 @@ sub convert_property_element ($$%) {
   } # rdf:parseType=""
 } # convert_property_element
 
-# XXX SHOULD warn if not defined in RDF vocabulary
-# XXX reification rule
-
-# XXX datatype IRI checks
-# XXX lexical form validation (?)
-# XXX Attr validation:
-#   - url MUST be a valid URL
-#   - rdf-id MUST be an XML 1.0 Name
-#   - common then validate by nsurl and local name
-# XXX literal form SHOULD be NFC
-# XXX URL validation
-# XXX langtag validation
-
 1;
 
 =head1 LICENSE
 
-Copyright 2008-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2008-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
