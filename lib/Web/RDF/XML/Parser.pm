@@ -4,28 +4,25 @@ use warnings;
 our $VERSION = '3.0';
 use Web::URL::Canonicalize qw(url_to_canon_url);
 
-## TODO: Should we validate expanded URI created from QName?
-
 sub RDF_URL () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
 
+sub LEVEL_RDF_FACT () { 'm' }
+sub LEVEL_RDF_GRAMMER () { 'm' }
+
 sub new ($) {
-  my $self = bless {
-    level => {
-      rdf_fact => 'm',
-      rdf_grammer => 'm',
-      rdf_lc_must => 'm',
-      info => 'i',
-    },
+  return bless {
     next_id => 0,
-  }, shift;
-  $self->{onerror} = sub {
-    my %opt = @_;
-    warn $opt{type}, "\n";
-  };
-  $self->{ontriple} = sub {
+  }, $_[0];
+} # new
+
+sub ontriple ($;$) {
+  if (@_ > 1) {
+    $_[0]->{ontriple} = $_[1];
+  }
+  return $_[0]->{ontriple} ||= sub {
     my %opt = @_;
     my $dump_resource = sub {
       my $resource = shift;
@@ -63,21 +60,16 @@ sub new ($) {
       print STDERR $dump_resource->({uri => RDF_URL . 'Statement'}) . "\n";
     }
   };
-  return $self;
-} # new
-
-sub ontriple ($;$) {
-  if (@_ > 1) {
-    $_[0]->{ontriple} = $_[1];
-  }
-  return $_[0]->{ontriple};
 } # ontriple
 
 sub onerror ($;$) {
   if (@_ > 1) {
     $_[0]->{onerror} = $_[1];
   }
-  return $_[0]->{onerror};
+  return $_[0]->{onerror} ||= sub {
+    my %opt = @_;
+    warn $opt{type}, "\n";
+  };
 } # onerror
 
 sub onnonrdfnode ($;$) {
@@ -115,14 +107,14 @@ sub convert_document ($$) {
         }
         $has_element = 1;
       } else {
-        $self->{onerror}->(type => 'second node element',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'second node element',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $cn);
         $self->onnonrdfnode->($cn);
       }
     } elsif ($cnt == 3) { # TEXT_NODE
-      $self->{onerror}->(type => 'character not allowed',
-                         level => $self->{level}->{rdf_grammer},
+      $self->onerror->(type => 'character not allowed',
+                         level => LEVEL_RDF_GRAMMER,
                          node => $cn);
       if ($cn->data =~ /[^\x09\x0A\x0C\x0D\x20]/) {
         $self->onnonrdfnode->($cn);
@@ -135,8 +127,8 @@ sub convert_document ($$) {
   }
 
   unless ($has_element) {
-    $self->{onerror}->(type => 'rdfxml:no root element',
-                       level => $self->{level}->{rdf_grammer},
+    $self->onerror->(type => 'rdfxml:no root element',
+                       level => LEVEL_RDF_GRAMMER,
                        node => $node);
   }
 } # convert_document
@@ -150,8 +142,8 @@ my $check_rdf_namespace = sub {
   ## <http://www.w3.org/1999/02/22-rdf-syntax-ns#>:
   if (substr ($node_nsuri, 0, length RDF_URL) eq RDF_URL and
       length RDF_URL < length $node_nsuri) {
-    $self->{onerror}->(type => 'bad rdf namespace',
-                       level => $self->{level}->{rdf_fact}, # Section 5.1
+    $self->onerror->(type => 'bad rdf namespace',
+                       level => LEVEL_RDF_FACT, # Section 5.1
                        node => $node);
   }
   ## If the namespace URL is shorter than
@@ -188,7 +180,7 @@ sub convert_rdf_element ($$%) {
     my $prefix = $attr->prefix;
     if (defined $prefix) {
       if ($prefix =~ /^[Xx][Mm][Ll]/) {
-        $self->{onerror}->(type => 'rdf:attr ignored',
+        $self->onerror->(type => 'rdf:attr ignored',
                            level => 'w',
                            node => $attr);
         $self->onattr->($attr, 'common');
@@ -196,7 +188,7 @@ sub convert_rdf_element ($$%) {
       }
     } else {
       if ($attr->manakai_local_name =~ /^[Xx][Mm][Ll]/) {
-        $self->{onerror}->(type => 'rdf:attr ignored',
+        $self->onerror->(type => 'rdf:attr ignored',
                            level => 'w',
                            node => $attr);
         $self->onattr->($attr, 'common');
@@ -205,8 +197,8 @@ sub convert_rdf_element ($$%) {
     }
 
     $check_rdf_namespace->($self, $attr);
-    $self->{onerror}->(type => 'attribute not allowed',
-                       level => $self->{level}->{rdf_grammer},
+    $self->onerror->(type => 'attribute not allowed',
+                       level => LEVEL_RDF_GRAMMER,
                        node => $attr);
     $self->onattr->($attr, 'misc');
   }
@@ -217,8 +209,8 @@ sub convert_rdf_element ($$%) {
       $self->convert_node_element ($cn, language => $opt{language});
     } elsif ($cn->node_type == 3) { # TEXT_NODE
       if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
-        $self->{onerror}->(type => 'character not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'character not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $cn);
         $self->onnonrdfnode->($cn);
       }
@@ -283,20 +275,20 @@ my $check_local_attr = sub {
   if ({
     ID => 1, about => 1, resource => 1, parseType => 1, type => 1,
   }->{$attr_xuri}) {
-    $self->{onerror}->(type => 'unqualified rdf attr',
+    $self->onerror->(type => 'unqualified rdf attr',
                        level => 's',
                        node => $attr);
     if ($node->has_attribute_ns (RDF_URL, $attr_xuri)) {
-      $self->{onerror}->(type => 'duplicate unqualified attr',
-                         level => $self->{level}->{rdf_fact},
+      $self->onerror->(type => 'duplicate unqualified attr',
+                         level => LEVEL_RDF_FACT,
                          node => $attr);
       ## NOTE: <? rdfa:bout="" about=""> and such are not catched
       ## by this check; but who cares?  rdfa:bout="" is itself illegal.
     }
     $attr_xuri = RDF_URL . $attr_xuri;
   } else {
-    $self->{onerror}->(type => 'unqualified attr',
-                       level => $self->{level}->{rdf_fact},
+    $self->onerror->(type => 'unqualified attr',
+                       level => LEVEL_RDF_FACT,
                        node => $attr);
   }
   
@@ -317,8 +309,8 @@ sub convert_node_element ($$;%) {
     RDF_URL . 'li' => 1,
     %oldTerms,
   }->{$xuri}) {
-    $self->{onerror}->(type => 'element not allowed',
-                       level => $self->{level}->{rdf_grammer},
+    $self->onerror->(type => 'element not allowed',
+                       level => LEVEL_RDF_GRAMMER,
                        node => $node);
   }
 
@@ -348,7 +340,7 @@ sub convert_node_element ($$;%) {
     my $prefix = $attr->prefix;
     if (defined $prefix) {
       if ($prefix =~ /^[Xx][Mm][Ll]/) {
-        $self->{onerror}->(type => 'rdf:attr ignored',
+        $self->onerror->(type => 'rdf:attr ignored',
                            level => 'w',
                            node => $attr);
         $self->onattr->($attr, 'common');
@@ -356,7 +348,7 @@ sub convert_node_element ($$;%) {
       }
     } else {
       if ($attr->manakai_local_name =~ /^[Xx][Mm][Ll]/) {
-        $self->{onerror}->(type => 'rdf:attr ignored',
+        $self->onerror->(type => 'rdf:attr ignored',
                            level => 'w',
                            node => $attr);
         $self->onattr->($attr, 'common');
@@ -376,8 +368,8 @@ sub convert_node_element ($$;%) {
       unless (defined $subject) {
         $subject = {uri => $id_attr->($self, $attr)};
       } else {
-        $self->{onerror}->(type => 'attribute not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'attribute not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       $self->onattr->($attr, 'rdf-id');
@@ -385,8 +377,8 @@ sub convert_node_element ($$;%) {
       unless (defined $subject) {
         $subject = {bnodeid => $get_bnodeid->($attr->value)};
       } else {
-        $self->{onerror}->(type => 'attribute not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'attribute not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       $self->onattr->($attr, 'rdf-id');
@@ -394,8 +386,8 @@ sub convert_node_element ($$;%) {
       unless (defined $subject) {
         $subject = {uri => $uri_attr->($self, $attr)};
       } else {
-        $self->{onerror}->(type => 'attribute not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'attribute not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       $self->onattr->($attr, 'url');
@@ -408,8 +400,8 @@ sub convert_node_element ($$;%) {
       RDF_URL . 'Description' => 1,
       %oldTerms,
     }->{$attr_xuri}) {
-      $self->{onerror}->(type => 'attribute not allowed',
-                         level => $self->{level}->{rdf_grammer},
+      $self->onerror->(type => 'attribute not allowed',
+                         level => LEVEL_RDF_GRAMMER,
                          node => $attr);
       $self->onattr->($attr, 'misc');
     } else {
@@ -423,14 +415,14 @@ sub convert_node_element ($$;%) {
   }
 
   if ($xuri ne RDF_URL . 'Description') {
-    $self->{ontriple}->(subject => $subject,
+    $self->ontriple->(subject => $subject,
                         predicate => {uri => RDF_URL . 'type'},
                         object => {uri => $xuri},
                         node => $node);
   }
 
   if ($type_attr) {
-    $self->{ontriple}->(subject => $subject,
+    $self->ontriple->(subject => $subject,
                         predicate => {uri => RDF_URL . 'type'},
                         object => {uri => $resolve->($type_attr->value,
                                                      $type_attr)},
@@ -438,7 +430,7 @@ sub convert_node_element ($$;%) {
   }
 
   for my $attr (@prop_attr) {
-    $self->{ontriple}->(subject => $subject,
+    $self->ontriple->(subject => $subject,
                         predicate => {uri => $attr->manakai_expanded_uri},
                         object => {value => $attr->value,
                                    language => $opt{language}},
@@ -456,8 +448,8 @@ sub convert_node_element ($$;%) {
                                        language => $opt{language});
     } elsif ($cn_type == 3) { # TEXT_NODE
       if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
-        $self->{onerror}->(type => 'character not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'character not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $cn);
         $self->onnonrdfnode->($cn);
       }
@@ -499,8 +491,8 @@ sub convert_property_element ($$%) {
        RDF_URL . 'Description' => 1,
        %oldTerms,
       }->{$xuri}) {
-    $self->{onerror}->(type => 'element not allowed',
-                       level => $self->{level}->{rdf_grammer},
+    $self->onerror->(type => 'element not allowed',
+                       level => LEVEL_RDF_GRAMMER,
                        node => $node);
   }
 
@@ -532,7 +524,7 @@ sub convert_property_element ($$%) {
     my $prefix = $attr->prefix;
     if (defined $prefix) {
       if ($prefix =~ /^[Xx][Mm][Ll]/) {
-        $self->{onerror}->(type => 'rdf:attr ignored',
+        $self->onerror->(type => 'rdf:attr ignored',
                            level => 'w',
                            node => $attr);
         $self->onattr->($attr, 'common');
@@ -540,7 +532,7 @@ sub convert_property_element ($$%) {
       }
     } else {
       if ($attr->manakai_local_name =~ /^[Xx][Mm][Ll]/) {
-        $self->{onerror}->(type => 'rdf:attr ignored',
+        $self->onerror->(type => 'rdf:attr ignored',
                            level => 'w',
                            node => $attr);
         $self->onattr->($attr, 'common');
@@ -577,8 +569,8 @@ sub convert_property_element ($$%) {
       RDF_URL . 'Description' => 1,
       %oldTerms,
     }->{$attr_xuri}) {
-      $self->{onerror}->(type => 'attribute not allowed',
-                         level => $self->{level}->{rdf_grammer},
+      $self->onerror->(type => 'attribute not allowed',
+                         level => LEVEL_RDF_GRAMMER,
                          node => $attr);
       $self->onattr->($attr, 'misc');
     } else {
@@ -593,13 +585,13 @@ sub convert_property_element ($$%) {
 
     for my $attr ($resource_attr, $nodeid_attr, $dt_attr) {
       next unless $attr;
-      $self->{onerror}->(type => 'attribute not allowed',
-                         level => $self->{level}->{rdf_grammer},
+      $self->onerror->(type => 'attribute not allowed',
+                         level => LEVEL_RDF_GRAMMER,
                          node => $attr);
     }
     
     my $object = {bnodeid => $generate_bnodeid->($self)};
-    $self->{ontriple}->(subject => $opt{subject},
+    $self->ontriple->(subject => $opt{subject},
                         predicate => {uri => $xuri},
                         object => $object,
                         node => $node,
@@ -618,8 +610,8 @@ sub convert_property_element ($$%) {
                                          language => $opt{language});
       } elsif ($cn_type == 3) { # TEXT_NODE
         if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
-          $self->{onerror}->(type => 'character not allowed',
-                             level => $self->{level}->{rdf_grammer},
+          $self->onerror->(type => 'character not allowed',
+                             level => LEVEL_RDF_GRAMMER,
                              node => $cn);
           $self->onnonrdfnode->($cn);
         }
@@ -632,8 +624,8 @@ sub convert_property_element ($$%) {
 
     for my $attr ($resource_attr, $nodeid_attr, $dt_attr) {
       next unless $attr;
-      $self->{onerror}->(type => 'attribute not allowed',
-                         level => $self->{level}->{rdf_grammer},
+      $self->onerror->(type => 'attribute not allowed',
+                         level => LEVEL_RDF_GRAMMER,
                          node => $attr);
     }
     
@@ -646,8 +638,8 @@ sub convert_property_element ($$%) {
                          $cn];
       } elsif ($cn->node_type == 3) { # TEXT_NODE
         if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
-          $self->{onerror}->(type => 'character not allowed',
-                             level => $self->{level}->{rdf_grammer},
+          $self->onerror->(type => 'character not allowed',
+                             level => LEVEL_RDF_GRAMMER,
                              node => $cn);
           $self->onnonrdfnode->($cn);
         }
@@ -657,12 +649,12 @@ sub convert_property_element ($$%) {
     }
 
     if (@resource) {
-      $self->{ontriple}->(subject => $opt{subject},
+      $self->ontriple->(subject => $opt{subject},
                           predicate => {uri => $xuri},
                           object => $resource[0]->[1],
                           node => $node);
     } else {
-      $self->{ontriple}->(subject => $opt{subject},
+      $self->ontriple->(subject => $opt{subject},
                           predicate => {uri => $xuri},
                           object => {uri => RDF_URL . 'nil'},
                           node => $node,
@@ -671,17 +663,17 @@ sub convert_property_element ($$%) {
     
     while (@resource) {
       my $resource = shift @resource;
-      $self->{ontriple}->(subject => $resource->[1],
+      $self->ontriple->(subject => $resource->[1],
                           predicate => {uri => RDF_URL . 'first'},
                           object => $resource->[0],
                           node => $resource->[2]);
       if (@resource) {
-        $self->{ontriple}->(subject => $resource->[1],
+        $self->ontriple->(subject => $resource->[1],
                             predicate => {uri => RDF_URL . 'rest'},
                             object => $resource[0]->[1],
                             node => $resource->[2]);
       } else {
-        $self->{ontriple}->(subject => $resource->[1],
+        $self->ontriple->(subject => $resource->[1],
                             predicate => {uri => RDF_URL . 'rest'},
                             object => {uri => RDF_URL . 'nil'},
                             node => $resource->[2]);
@@ -692,19 +684,19 @@ sub convert_property_element ($$%) {
 
     if ($parse ne 'Literal') {
       # |parseTypeOtherPropertyElt|
-      $self->{onerror}->(type => 'parse type other',
+      $self->onerror->(type => 'parse type other',
                          level => 'w',
                          node => $parse_attr);
     }
 
     for my $attr ($resource_attr, $nodeid_attr, $dt_attr) {
       next unless $attr;
-      $self->{onerror}->(type => 'attribute not allowed',
-                         level => $self->{level}->{rdf_grammer},
+      $self->onerror->(type => 'attribute not allowed',
+                         level => LEVEL_RDF_GRAMMER,
                          node => $attr);
     }
 
-    $self->{ontriple}->(subject => $opt{subject},
+    $self->ontriple->(subject => $opt{subject},
                         predicate => {uri => $xuri},
                         object => {parent_node => $node,
                                    datatype => RDF_URL . 'XMLLiteral'},
@@ -729,14 +721,14 @@ sub convert_property_element ($$%) {
           }->{$mode}) {
             $mode = 'resource';
           } else {
-            $self->{onerror}->(type => 'element not allowed',
-                               level => $self->{level}->{rdf_grammer},
+            $self->onerror->(type => 'element not allowed',
+                               level => LEVEL_RDF_GRAMMER,
                                node => $cn);
             $self->onnonrdfnode->($cn);
           }
         } else {
-          $self->{onerror}->(type => 'second node element',
-                             level => $self->{level}->{rdf_grammer},
+          $self->onerror->(type => 'second node element',
+                             level => LEVEL_RDF_GRAMMER,
                              node => $cn);
           $self->onnonrdfnode->($cn);
         }
@@ -749,8 +741,8 @@ sub convert_property_element ($$%) {
               }->{$mode}) {
             $mode = 'literal';
           } else {
-            $self->{onerror}->(type => 'character not allowed',
-                               level => $self->{level}->{rdf_grammer},
+            $self->onerror->(type => 'character not allowed',
+                               level => LEVEL_RDF_GRAMMER,
                                node => $cn);
             $self->onnonrdfnode->($cn);
           }
@@ -771,15 +763,15 @@ sub convert_property_element ($$%) {
       
       for my $attr (@prop_attr, $resource_attr, $nodeid_attr, $dt_attr) {
         next unless $attr;
-        $self->{onerror}->(type => 'attribute not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'attribute not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       
       my $object = $self->convert_node_element ($node_element,
                                                 language => $opt{language});
       
-      $self->{ontriple}->(subject => $opt{subject},
+      $self->ontriple->(subject => $opt{subject},
                           predicate => {uri => $xuri},
                           object => $object,
                           node => $node,
@@ -789,13 +781,13 @@ sub convert_property_element ($$%) {
       
       for my $attr (@prop_attr, $resource_attr, $nodeid_attr) {
         next unless $attr;
-        $self->{onerror}->(type => 'attribute not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'attribute not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       
       if ($dt_attr) {
-        $self->{ontriple}
+        $self->ontriple
             ->(subject => $opt{subject},
                predicate => {uri => $xuri},
                object => {value => $text,
@@ -805,7 +797,7 @@ sub convert_property_element ($$%) {
                node => $node,
                id => $get_id_resource->($self, $rdf_id_attr));
       } else {
-        $self->{ontriple}->(subject => $opt{subject},
+        $self->ontriple->(subject => $opt{subject},
                             predicate => {uri => $xuri},
                             object => {value => $text,
                                        language => $opt{language}},
@@ -817,13 +809,13 @@ sub convert_property_element ($$%) {
 
       for my $attr ($dt_attr) {
         next unless $attr;
-        $self->{onerror}->(type => 'attribute not allowed',
-                           level => $self->{level}->{rdf_grammer},
+        $self->onerror->(type => 'attribute not allowed',
+                           level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       
       if (not $resource_attr and not $nodeid_attr and not @prop_attr) {
-        $self->{ontriple}->(subject => $opt{subject},
+        $self->ontriple->(subject => $opt{subject},
                             predicate => {uri => $xuri},
                             object => {value => '',
                                        language => $opt{language}},
@@ -834,8 +826,8 @@ sub convert_property_element ($$%) {
         if ($resource_attr) {
           $object = {uri => $uri_attr->($self, $resource_attr)};
           if (defined $nodeid_attr) {
-            $self->{onerror}->(type => 'attribute not allowed',
-                               level => $self->{level}->{rdf_grammer},
+            $self->onerror->(type => 'attribute not allowed',
+                               level => LEVEL_RDF_GRAMMER,
                                node => $nodeid_attr);
           }
         } elsif ($nodeid_attr) {
@@ -848,12 +840,12 @@ sub convert_property_element ($$%) {
         for my $attr (@prop_attr) {
           my $attr_xuri = $attr->manakai_expanded_uri;
           if ($attr_xuri eq RDF_URL . 'type') {
-            $self->{ontriple}->(subject => $object,
+            $self->ontriple->(subject => $object,
                                 predicate => {uri => $attr_xuri},
                                 object => $resolve->($attr->value, $attr),
                                 node => $attr);
           } else {
-            $self->{ontriple}->(subject => $object,
+            $self->ontriple->(subject => $object,
                                 predicate => {uri => $attr_xuri},
                                 object => {value => $attr->value,
                                            language => $opt{language}},
@@ -861,7 +853,7 @@ sub convert_property_element ($$%) {
           }
         }
 
-        $self->{ontriple}->(subject => $opt{subject},
+        $self->ontriple->(subject => $opt{subject},
                             predicate => {uri => $xuri},
                             object => $object,
                             node => $node,
@@ -874,7 +866,7 @@ sub convert_property_element ($$%) {
 # XXX onattr tests
 # XXX SHOULD warn if not defined in RDF vocabulary
 # XXX reification rule
-# XXX <... rdf:datatype=... /> (empty)
+
 # XXX datatype IRI checks
 # XXX lexical form validation (?)
 # XXX Attr validation:
