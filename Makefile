@@ -1,6 +1,6 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm
-clean:
+clean: clean-json-ps
 	rm -fr local/*.json
 
 updatenightly: update-submodules dataautoupdate-commit
@@ -86,6 +86,9 @@ local/html-syntax.json:
 local/xml-syntax.json:
 	mkdir -p local
 	$(WGET) -O $@ https://github.com/manakai/data-web-defs/raw/master/data/xml-syntax.json
+local/rdf.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/rdf.json
 
 local/bin/jq:
 	mkdir -p local/bin
@@ -160,70 +163,22 @@ Chromium:\
 	perl -c $@
 
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
-    local/aria.json local/aria-html-map.json local/bin/pmbp.pl Makefile
+    local/aria.json local/aria-html-map.json local/bin/pmbp.pl \
+    local/rdf.json \
+    bin/generate-validator-defs.pl json-ps
 	mkdir -p lib/Web/HTML/Validator
-	perl local/bin/pmbp.pl --install-module JSON \
+	perl local/bin/pmbp.pl --install-module Path::Tiny \
 	    --create-perl-command-shortcut perl
-	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"microdata\":"; cat local/microdata.json; echo ",\"aria\":"; cat local/aria.json; echo ",\"aria_html\":"; cat local/aria-html-map.json; echo "}"' | \
-	$(PERL) -MJSON -MData::Dumper -e ' #\
-	  local $$/ = undef; #\
-	  $$data = JSON->new->decode (scalar <>); #\
-	  $$data = {%{$$data->{dom}}, md => $$data->{microdata}, roles => $$data->{aria}->{roles}, aria_to_html => $$data->{aria_html}}; #\
-	  $$Data::Dumper::Sortkeys = 1; #\
-	  $$Data::Dumper::Useqq = 1; #\
-	  for $$ns (keys %{$$data->{elements}}) { #\
-	    for $$ln (keys %{$$data->{elements}->{$$ns}}) { #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{spec}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{id}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{desc}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{start_tag}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{end_tag}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{interface}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{auto_br}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_category}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_scoping}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_li_scoping}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_button_scoping}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_table_scoping}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_table_body_scoping}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_table_row_scoping}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_select_non_scoping}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_implied_end_tag}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_implied_end_tag_at_eof}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{parser_implied_end_tag_at_body}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{first_newline_ignored}; #\
-	      delete $$data->{elements}->{$$ns}->{$$ln}->{lang_sensitive}; #\
-	      for $$ns2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}}) { #\
-	        for $$ln2 (keys %{$$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}}) { #\
-	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{spec}; #\
-	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{id}; #\
-	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{desc}; #\
-	          delete $$data->{elements}->{$$ns}->{$$ln}->{attrs}->{$$ns2}->{$$ln2}->{lang_sensitive}; #\
-	        } #\
-	      } #\
-	    } #\
-	  } #\
-	  delete $$data->{input}->{idl_attrs}; #\
-	  delete $$data->{input}->{methods}; #\
-	  delete $$data->{input}->{events}; #\
-	  for $$type (keys %{$$data->{md}}) { #\
-	    next unless $$data->{md}->{$$type}->{vocab} eq "http://schema.org/"; #\
-	    for $$prop (keys %{$$data->{md}->{$$type}->{props} or {}}) { #\
-	      $$data->{schemaorg_props}->{$$prop} = {}; #\
-	    } #\
-	  } #\
-	  for $$role (keys %{$$data->{roles}}) { #\
-	    for (keys %{$$data->{roles}->{$$role}->{scope} or {}}) { #\
-	      $$data->{roles}->{$$_}->{scope_of}->{$$role} = 1; #\
-	    } #\
-	  } #\
-	  $$pm = Dumper $$data; #\
-	  $$pm =~ s/VAR1/Web::HTML::Validator::_Defs/g; #\
-	  print "$$pm\n"; #\
-	  print "# Some of data drived from schema.org Web site, which is licensed under the Creative Commons Attribution-ShareAlike License (version 3.0).  See <http://schema.org/docs/terms.html> for full terms."; #\
-	' > $@
+	$(PERL) bin/generate-validator-defs.pl > $@
 	perl -c $@
+
+
+json-ps: local/perl-latest/pm/lib/perl5/JSON/PS.pm
+clean-json-ps:
+	rm -fr local/perl-latest/pm/lib/perl5/JSON/PS.pm
+local/perl-latest/pm/lib/perl5/JSON/PS.pm:
+	mkdir -p local/perl-latest/pm/lib/perl5/JSON
+	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/perl-json-ps/master/lib/JSON/PS.pm
 
 ## ------ Tests ------
 
