@@ -46,12 +46,13 @@ for my $path (($data_path->children (qr/\.dat$/))) {
       $checker->onerror (sub {
         my %args = @_;
         push @error, join ';',
-            $args{index} || 0,
+            defined $args{line} ? ($args{line} . '.' . $args{column}) : $args{index} || 0,
             $args{type},
             $args{text} || '',
             $args{value} || '',
             $args{level};
       });
+      $checker->scripting (not $test->{noscript});
       $checker->check_parsed_term ($term);
       @error = sort { $a cmp $b } @error;
       eq_or_diff \@error, [sort { $a cmp $b } @{$test->{errors}->[0] or []}];

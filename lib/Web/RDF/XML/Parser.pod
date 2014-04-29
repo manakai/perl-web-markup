@@ -70,8 +70,8 @@ is changed, the result is undefined.
 =item $rdf->onnonrdfnode ($code)
 
 Get or set the code reference that is invoked whenever a non-RDF node
-is detected.  The node is either non-conforming or part of an XML
-literal.  This hook is intended for injecting validation codes
+is detected.  Note that use of such a node in an RDF/XML fragment is
+non-conforming.  This hook is intended for injecting validation codes
 (e.g. by L<Web::HTML::Validator>).  Note that the node can be a
 misplaced C<rdf:RDF> element, for example.
 

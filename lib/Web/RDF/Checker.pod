@@ -26,6 +26,12 @@ Following methods are available:
 
 Create a new checker.
 
+=item $checker->check_parsed_term ($term)
+
+Check the syntax of the specified parsed term.  The argument must be a
+parsed term data structure.  Any syntax error is reported through the
+C<onerror> handler.
+
 =item $code = $checker->onerror
 
 =item $checker->onerror ($new_code)
@@ -39,11 +45,27 @@ for details of error handling.
 The value should not be set while the parser is running.  If the value
 is changed, the result is undefined.
 
-=item $checker->check_parsed_term ($term)
+=item $code = $checker->onparentnode
 
-Check the syntax of the specified parsed term.  The argument must be a
-parsed term data structure.  Any syntax error is reported through the
-C<onerror> handler.
+=item $checker->onparentnode ($new_code)
+
+Get or set the code reference that is invoked when a DOM C<ParentNode>
+should be validated.  This hook is intended for integrating validation
+of RDF terms and HTML or XML fragments, especially when an RDF/XML
+fragment is embedded within an XML document.
+
+The code reference is expected to not throw any exception.  Any
+conformance error should be handled by itself.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
+
+=item $boolean = $checker->scripting
+
+=item $checker->scripting ($boolean)
+
+Get or set the scripting flag for the checker.  The scripting flag is
+used to parse HTML fragments embedded within the term.
 
 =back
 
@@ -154,6 +176,11 @@ RDF 1.1 Concepts and Abstract Syntax
 =item RDFXML
 
 RDF 1.1 XML Syntax <http://www.w3.org/TR/rdf-syntax-grammar/>.
+
+=item VALLANGS
+
+Handling of unknown namespaces in conformance checking
+<http://suika.suikawiki.org/www/markup/xml/validation-langs>.
 
 =back
 
