@@ -1,6 +1,8 @@
 package Web::RDF::Checker;
 use strict;
 use warnings;
+use warnings FATAL => 'recursion';
+no warnings 'utf8';
 our $VERSION = '1.0';
 use Web::HTML::Validator::_Defs;
 
@@ -149,7 +151,7 @@ sub check_parsed_term ($$) {
         $parser->onerror (sub {
           $self->onerror->(@_);
         }); # XXX sps
-        my $container = $doc->create_element ('div');
+        my $container = $doc->create_element_ns (undef, 'div');
         my $children = $parser->parse_char_string_with_context
             ($term->{lexical}, $container => $doc);
         my $df = $doc->create_document_fragment;

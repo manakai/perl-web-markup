@@ -109,7 +109,15 @@ Get or set the code reference that is invoked whenever an attribute is
 encounted by the parser.  This hook is intended for injecting
 validation codes (e.g. by L<Web::HTML::Validator>).
 
-The code is invoked with an argument, which is the node in question.
+The code is invoked with two arguments: the node in question and the
+type of the attribute, which is one of followings:
+
+  common   Normal attributes (e.g. xml:lang="" and xmlns="")
+  url      RDF/XML attributes whose value is a URL
+  rdf-id   RDF/XML attributes whose value is an rdf-id (NCName)
+  string   RDF/XML attributes whose value is a string
+  misc     Other RDF/XML attributes
+
 The code is expected not to throw any exception.  The value should not
 be set while the parser is running.  If the value is changed, the
 result is undefined.
