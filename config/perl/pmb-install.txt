@@ -3,7 +3,7 @@ File::Spec~3.40
 JE~0.060
 Test::NoWarnings~1.04
 Regexp::Parser~0.21
-Encode~2.59
+Encode~2.60
 Time::Zone~2.24
 Unicode::Normalize~1.17
 Test::Builder~1.001003
@@ -19,7 +19,7 @@ Term::ANSIColor~4.03
 Test::Class~0.41
 Exporter::Lite~0.04
 Data::Dumper~2.151
-ExtUtils::MakeMaker~6.96
+ExtUtils::MakeMaker~6.98
 Test::Tester~0.109
 Exporter~5.70
 Carp~1.3301
