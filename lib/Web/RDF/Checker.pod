@@ -1,0 +1,167 @@
+=head1 NAME
+
+Web::RDF::Checker - RDF syntax checker
+
+=head1 SYNOPSIS
+
+  use Web::RDF::Checker;
+  $checker = Web::RDF::Checker->new;
+  $checker->onerror (sub { ... });
+  $checker->check_parsed_term ($term);
+
+=head1 DESCRIPTION
+
+The C<Web::RDF::Checker> module has a module to check I<syntax> of an
+RDF term.  Note that the module does not support RDF Schema or any
+other specific vocabulary describing restrictions or characteristics
+of RDF triples and/or graphs.
+
+=head1 METHODS
+
+Following methods are available:
+
+=over 4
+
+=item $checker = Web::RDF::Checker->new
+
+Create a new checker.
+
+=item $code = $checker->onerror
+
+=item $checker->onerror ($new_code)
+
+Get or set the error handler for the checker.  Any conformance error,
+as well as warning and additional processing information, is reported
+to the handler.  See
+<https://github.com/manakai/data-errors/blob/master/doc/onerror.txt>
+for details of error handling.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
+
+=item $checker->check_parsed_term ($term)
+
+Check the syntax of the specified parsed term.  The argument must be a
+parsed term data structure.  Any syntax error is reported through the
+C<onerror> handler.
+
+=back
+
+=head1 PARSED TERM DATA STRUCTURE
+
+A parsed term data structure represents a term (i.e. a URL, a blank
+node identifier, or a literal) in RDF.  It is a hash reference with
+one or more of following key/value pairs:
+
+=over 4
+
+=item url
+
+The URL, used to identify a resource.  (This is referred to as "RDF
+URI reference" in RDF 1.0 or "IRI" in RDF 1.1.)  This is a Perl string
+of zero or more characters.  In RDF, it must be an absolute URL.
+However, in a parsed term data structure, it can be a relative URL to
+represent a non-conforming term.
+
+=item bnodeid
+
+The blank node identifier, i.e. a graph-local ID identifying a blank
+node.  This is a Perl string of zero or more characters.
+
+=item lexical
+
+The lexical form of a literal.  This is a Perl string of zero or more
+characters.  In RDF, it must be a Unicode string.  However, in a
+parsed term data structure, it can contain non-Unicode characters and
+surrogate code points to represent a non-conforming term.
+
+=item parent_node
+
+The parent node of zero or more DOM nodes contained by an XML literal.
+It is a DOM C<ParentNode> object, implementing manakai's DOM Perl
+Binding specification (e.g. L<Web::DOM::ParentNode>).  The node itself
+is not part of the literal.
+
+=item lang
+
+The language tag of a language-tagged string.  It is a Perl string of
+zero or more characters.  In RDF, it must be a well-formed BCP 47
+language tag.  However, in a parsed term data structure, it can be any
+string to represent a non-conforming term.
+
+=item datatype_url
+
+The datatype URL of a literal.  (This is referred to as "datatype URI
+(RDF URI reference)" in RDF 1.0 or "datatype IRI" in RDF 1.1.)  This
+is a Perl string of zero or more characters.  In RDF, it must be an
+absolute URL.  However, in a parsed term data structure, it can be a
+relative URL to represent a non-conforming term.
+
+=back
+
+An RDF term can be constructed by applying the following steps to a
+parsed term data structure /value/:
+
+  1. If /value/ has non-|undef| |url|, return URL |url| and abort
+     these steps.
+
+  2. If /value/ has non-|undef| |bnodeid|, return blank node whose ID
+     is |bnodeid| and abort these steps.
+
+  3. If /value/ has |parent_node|, return a literal whose lexical form
+     is |inner_html| of /value/'s |parent_node| and datatype URL (or
+     "IRI" in RDF 1.1) is /value/'s |datatype_url| (or the empty
+     string if it is |undef|) and abort these steps.
+
+  4. If /value/ has non-|undef| |lang|, return a literal whose lexical
+     form is /value/'s |lexical|, language tag is /value/'s
+     |language|, and datatype URL (or "IRI" in RDF 1.1) is
+     |http://www.w3.org/1999/02/22-rdf-syntax-ns#langString| and abort
+     these steps.
+
+  5. Otherwise, return a literal whose lexical form is /value/'s
+     |lexical| (or the empty string if it is |undef|) and datatype URL is
+     /value/'s |datatype_url|, if not |undef|, or
+     |http://www.w3.org/2001/XMLSchema#string|, otherwise.
+
+This data structure is supported by L<Web::RDF::Checker> and
+L<Web::RDF::XML::Parser>.
+
+=head1 DEPENDENCY
+
+In addition to the dependency described in the README file
+<https://github.com/manakai/perl-web-markup/blob/master/README.pod#dependency>,
+following modules (and modules required by them) are required by this
+module:
+
+=over 4
+
+=item perl-web-langtag <https://github.com/manakai/perl-web-langtag>
+
+=item perl-web-url <https://github.com/manakai/perl-web-url>
+
+=back
+
+=head1 SPECIFICATION
+
+=over 4
+
+=item RDF
+
+RDF 1.1 Concepts and Abstract Syntax
+<http://www.w3.org/TR/rdf11-concepts/>.
+
+=back
+
+=head1 AUTHOR
+
+Wakaba <wakaba@suikawiki.org>.
+
+=head1 LICENSE
+
+Copyright 2014 Wakaba <wakaba@suikawiki.org>.
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut

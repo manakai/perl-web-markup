@@ -56,7 +56,7 @@ has more submodule dependency (see its documentation for details).
 
 In addition, a DOM implementation is required as input (and output) to
 these modules, although there is no direct dependency.  For the XPath
-modules, see L<Web::XPath::Evaluation> for its requirements on the DOM
+modules, see L<Web::XPath::Evaluator> for its requirements on the DOM
 implementation.  For other modules, the DOM implementation must
 support a subset of features defined in DOM Standard, DOM Parsing and
 Serialization Standard, DOM3 Core, DOM Document Type Definitions, DOM
@@ -65,8 +65,9 @@ by the "NanoDOM" module (C<t_deps/lib/NanoDOM.pm>).  An example of
 such a DOM implementation is contained in the perl-web-dom package
 <https://github.com/manakai/perl-web-dom>.
 
-The L<Web::HTML::Validator> module requires additional external
-modules; see its documentation.
+Validator modules such as L<Web::HTML::Validator> and
+L<Web::RDF::Checker> require additional external modules; see their
+documentations.
 
 =head1 SEE ALSO
 
