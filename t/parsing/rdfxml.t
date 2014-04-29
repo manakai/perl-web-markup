@@ -13,18 +13,18 @@ use Web::RDF::XML::Parser;
 
 sub _rdf_value ($) {
   my $resource = $_[0];
-  if (defined $resource->{uri}) {
-    return '<' . $resource->{uri} . '>';
+  if (defined $resource->{url}) {
+    return '<' . $resource->{url} . '>';
   } elsif (defined $resource->{bnodeid}) {
     return '_:' . $resource->{bnodeid};
   } elsif (defined $resource->{parent_node}) {
     return '"' . $resource->{parent_node}->inner_html .
-        '"^^<' . $resource->{datatype} . '>';
-  } elsif (defined $resource->{value}) {
-    return '"' . $resource->{value} . '"' .
-        (defined $resource->{datatype}
-         ? '^^<' . $resource->{datatype} . '>'
-         : (defined $resource->{language} ? '@' . $resource->{language} : ''));
+        '"^^<' . $resource->{datatype_url} . '>';
+  } elsif (defined $resource->{lexical}) {
+    return '"' . $resource->{lexical} . '"' .
+        (defined $resource->{datatype_url}
+         ? '^^<' . $resource->{datatype_url} . '>'
+         : (defined $resource->{lang} ? '@' . $resource->{lang} : ''));
   } else {
     return '???:' . Dumper $resource;
   }

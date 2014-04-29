@@ -1,10 +1,10 @@
 package Web::RDF::XML::Parser;
 use strict;
 use warnings;
-our $VERSION = '4.0';
+our $VERSION = '5.0';
 use Web::URL::Canonicalize qw(url_to_canon_url);
 
-sub RDF_URL () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
+sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 sub XML_NS () { q<http://www.w3.org/XML/1998/namespace> }
 sub XMLNS_NS () { q<http://www.w3.org/2000/xmlns/> }
 sub HTML_NS () { q<http://www.w3.org/1999/xhtml> }
@@ -26,18 +26,18 @@ sub ontriple ($;$) {
     my %opt = @_;
     my $dump_resource = sub {
       my $resource = shift;
-      if (defined $resource->{uri}) {
-        return '<' . $resource->{uri} . '>';
+      if (defined $resource->{url}) {
+        return '<' . $resource->{url} . '>';
       } elsif (defined $resource->{bnodeid}) {
         return '_:' . $resource->{bnodeid};
       } elsif ($resource->{nodes}) {
         return '"' . join ('', map {$_->inner_html} @{$resource->{nodes}}) .
-            '"^^<' . $resource->{datatype} . '>';
-      } elsif (defined $resource->{value}) {
-        return '"' . $resource->{value} . '"' .
-            (defined $resource->{datatype}
-                 ? '^^<' . $resource->{datatype} . '>'
-                 : (defined $resource->{language} ? '@' . $resource->{language} : ''));
+            '"^^<' . $resource->{datatype_url} . '>';
+      } elsif (defined $resource->{lexical}) {
+        return '"' . $resource->{lexical} . '"' .
+            (defined $resource->{datatype_url}
+                 ? '^^<' . $resource->{datatype_url} . '>'
+                 : (defined $resource->{lang} ? '@' . $resource->{lang} : ''));
       } else {
         return '??';
       }
@@ -56,20 +56,20 @@ sub _dispatch_triple {
                     node => $args{node});
   if (defined $args{id}) {
     $self->ontriple->(subject => $args{id},
-                      predicate => {uri => RDF_URL . 'subject'},
+                      predicate => {url => RDF_NS . 'subject'},
                       object => $args{subject},
                       node => $args{node});
     $self->ontriple->(subject => $args{id},
-                      predicate => {uri => RDF_URL . 'predicate'},
+                      predicate => {url => RDF_NS . 'predicate'},
                       object => $args{predicate},
                       node => $args{node});
     $self->ontriple->(subject => $args{id},
-                      predicate => {uri => RDF_URL . 'object'},
+                      predicate => {url => RDF_NS . 'object'},
                       object => $args{object},
                       node => $args{node});
     $self->ontriple->(subject => $args{id},
-                      predicate => {uri => RDF_URL . 'type'},
-                      object => {uri => RDF_URL . 'Statement'},
+                      predicate => {url => RDF_NS . 'type'},
+                      object => {url => RDF_NS . 'Statement'},
                       node => $args{node});
   }
 } # _dispatch_triple
@@ -112,10 +112,10 @@ sub convert_document ($$) {
     my $cnt = $cn->node_type;
     if ($cnt == 1) { # ELEMENT_NODE
       unless ($has_element) {
-        if ($cn->manakai_expanded_uri eq RDF_URL . q<RDF>) {
-          $self->convert_rdf_element ($cn, language => undef);
+        if ($cn->manakai_expanded_uri eq RDF_NS . q<RDF>) {
+          $self->convert_rdf_element ($cn, lang => undef);
         } else {
-          $self->convert_node_element ($cn, language => undef);
+          $self->convert_node_element ($cn, lang => undef);
         }
         $has_element = 1;
       } else {
@@ -148,12 +148,12 @@ sub convert_document ($$) {
 my $check_rdf_namespace = sub {
   my $self = shift;
   my $node = shift;
-  my $node_nsuri = $node->namespace_uri;
-  return unless defined $node_nsuri;
+  my $node_nsurl = $node->namespace_uri;
+  return unless defined $node_nsurl;
   ## If the namespace URL is longer than
   ## <http://www.w3.org/1999/02/22-rdf-syntax-ns#>:
-  if (substr ($node_nsuri, 0, length RDF_URL) eq RDF_URL and
-      length RDF_URL < length $node_nsuri) {
+  if (substr ($node_nsurl, 0, length RDF_NS) eq RDF_NS and
+      length RDF_NS < length $node_nsurl) {
     $self->onerror->(type => 'bad rdf namespace',
                        level => LEVEL_RDF_FACT, # Section 5.1
                        node => $node);
@@ -171,19 +171,19 @@ sub convert_rdf_element ($$%) {
   # |RDF|
 
   for my $attr (@{$node->attributes}) {
-    my $nsuri = $attr->namespace_uri || '';
-    if ($nsuri eq XML_NS) {
+    my $nsurl = $attr->namespace_uri || '';
+    if ($nsurl eq XML_NS) {
       my $ln = $attr->local_name;
       if ($ln eq 'lang') {
-        $opt{language} = $attr->value;
-        delete $opt{language} if $opt{language} eq '';
+        $opt{lang} = $attr->value;
+        delete $opt{lang} if $opt{lang} eq '';
         $self->onattr->($attr, 'common');
         next;
       } elsif ($ln eq 'base') {
         $self->onattr->($attr, 'common');
         next;
       }
-    } elsif ($nsuri eq XMLNS_NS) {
+    } elsif ($nsurl eq XMLNS_NS) {
       $self->onattr->($attr, 'common');
       next;
     }
@@ -218,7 +218,7 @@ sub convert_rdf_element ($$%) {
   # |nodeElementList|
   for my $cn (@{$node->child_nodes}) {
     if ($cn->node_type == 1) { # ELEMENT_NODE
-      $self->convert_node_element ($cn, language => $opt{language});
+      $self->convert_node_element ($cn, lang => $opt{lang});
     } elsif ($cn->node_type == 3) { # TEXT_NODE
       if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
         $self->onerror->(type => 'character not allowed',
@@ -233,19 +233,19 @@ sub convert_rdf_element ($$%) {
 } # convert_rdf_element
 
 my %coreSyntaxTerms = (
-  RDF_URL . 'RDF' => 1,
-  RDF_URL . 'ID' => 1,
-  RDF_URL . 'about' => 1,
-  RDF_URL . 'parseType' => 1,
-  RDF_URL . 'resource' => 1,
-  RDF_URL . 'nodeID' => 1,
-  RDF_URL . 'datatype' => 1,
+  RDF_NS . 'RDF' => 1,
+  RDF_NS . 'ID' => 1,
+  RDF_NS . 'about' => 1,
+  RDF_NS . 'parseType' => 1,
+  RDF_NS . 'resource' => 1,
+  RDF_NS . 'nodeID' => 1,
+  RDF_NS . 'datatype' => 1,
 );
 
 my %oldTerms = (
-  RDF_URL . 'aboutEach' => 1,
-  RDF_URL . 'aboutEachPrefix' => 1,
-  RDF_URL . 'bagID' => 1,
+  RDF_NS . 'aboutEach' => 1,
+  RDF_NS . 'aboutEachPrefix' => 1,
+  RDF_NS . 'bagID' => 1,
 );
 
 my $resolve = sub {
@@ -270,11 +270,11 @@ my $get_bnodeid = sub {
   return 'b'.$_[0];
 }; # $get_bnodeid
 
-my $uri_attr = sub {
+my $url_attr = sub {
   my ($self, $attr) = @_;
-  my $abs_uri = $resolve->($attr->value, $attr);
-  return $abs_uri;
-}; # $uri_attr
+  my $abs_url = $resolve->($attr->value, $attr);
+  return $abs_url;
+}; # $url_attr
 
 my $id_attr = sub {
   my ($self, $attr) = @_;
@@ -282,29 +282,29 @@ my $id_attr = sub {
 }; # $id_attr
 
 my $check_local_attr = sub {
-  my ($self, $node, $attr, $attr_xuri) = @_;
+  my ($self, $node, $attr, $attr_xurl) = @_;
   
   if ({
     ID => 1, about => 1, resource => 1, parseType => 1, type => 1,
-  }->{$attr_xuri}) {
+  }->{$attr_xurl}) {
     $self->onerror->(type => 'unqualified rdf attr',
                        level => 's',
                        node => $attr);
-    if ($node->has_attribute_ns (RDF_URL, $attr_xuri)) {
+    if ($node->has_attribute_ns (RDF_NS, $attr_xurl)) {
       $self->onerror->(type => 'duplicate unqualified attr',
                          level => LEVEL_RDF_FACT,
                          node => $attr);
       ## NOTE: <? rdfa:bout="" about=""> and such are not catched
       ## by this check; but who cares?  rdfa:bout="" is itself illegal.
     }
-    $attr_xuri = RDF_URL . $attr_xuri;
+    $attr_xurl = RDF_NS . $attr_xurl;
   } else {
     $self->onerror->(type => 'unqualified attr',
                        level => LEVEL_RDF_FACT,
                        node => $attr);
   }
   
-  return $attr_xuri;
+  return $attr_xurl;
 }; # $check_local_attr
 
 sub convert_node_element ($$;%) {
@@ -314,13 +314,13 @@ sub convert_node_element ($$;%) {
 
   # |nodeElement|
 
-  my $xuri = $node->manakai_expanded_uri;
+  my $xurl = $node->manakai_expanded_uri;
 
   if ({
     %coreSyntaxTerms,
-    RDF_URL . 'li' => 1,
+    RDF_NS . 'li' => 1,
     %oldTerms,
-  }->{$xuri}) {
+  }->{$xurl}) {
     $self->onerror->(type => 'element not allowed',
                        level => LEVEL_RDF_GRAMMER,
                        node => $node);
@@ -331,19 +331,19 @@ sub convert_node_element ($$;%) {
   my @prop_attr;
 
   for my $attr (@{$node->attributes}) {
-    my $nsuri = $attr->namespace_uri;
-    if (defined $nsuri and $nsuri eq XML_NS) {
+    my $nsurl = $attr->namespace_uri;
+    if (defined $nsurl and $nsurl eq XML_NS) {
       my $ln = $attr->local_name;
       if ($ln eq 'lang') {
-        $opt{language} = $attr->value;
-        delete $opt{language} if $opt{language} eq '';
+        $opt{lang} = $attr->value;
+        delete $opt{lang} if $opt{lang} eq '';
         $self->onattr->($attr, 'common');
         next;
       } elsif ($ln eq 'base') {
         $self->onattr->($attr, 'common');
         next;
       }
-    } elsif (defined $nsuri and $nsuri eq XMLNS_NS) {
+    } elsif (defined $nsurl and $nsurl eq XMLNS_NS) {
       $self->onattr->($attr, 'common');
       next;
     }
@@ -370,22 +370,22 @@ sub convert_node_element ($$;%) {
 
     $check_rdf_namespace->($self, $attr);
 
-    my $attr_xuri = $attr->manakai_expanded_uri;
+    my $attr_xurl = $attr->manakai_expanded_uri;
 
-    unless (defined $nsuri) {
-      $attr_xuri = $check_local_attr->($self, $node, $attr, $attr_xuri);
+    unless (defined $nsurl) {
+      $attr_xurl = $check_local_attr->($self, $node, $attr, $attr_xurl);
     }
 
-    if ($attr_xuri eq RDF_URL . 'ID') {
+    if ($attr_xurl eq RDF_NS . 'ID') {
       unless (defined $subject) {
-        $subject = {uri => $id_attr->($self, $attr)};
+        $subject = {url => $id_attr->($self, $attr)};
       } else {
         $self->onerror->(type => 'attribute not allowed',
                            level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       $self->onattr->($attr, 'rdf-id');
-    } elsif ($attr_xuri eq RDF_URL . 'nodeID') {
+    } elsif ($attr_xurl eq RDF_NS . 'nodeID') {
       unless (defined $subject) {
         $subject = {bnodeid => $get_bnodeid->($attr->value)};
       } else {
@@ -394,24 +394,24 @@ sub convert_node_element ($$;%) {
                            node => $attr);
       }
       $self->onattr->($attr, 'rdf-id');
-    } elsif ($attr_xuri eq RDF_URL . 'about') {
+    } elsif ($attr_xurl eq RDF_NS . 'about') {
       unless (defined $subject) {
-        $subject = {uri => $uri_attr->($self, $attr)};
+        $subject = {url => $url_attr->($self, $attr)};
       } else {
         $self->onerror->(type => 'attribute not allowed',
                            level => LEVEL_RDF_GRAMMER,
                            node => $attr);
       }
       $self->onattr->($attr, 'url');
-    } elsif ($attr_xuri eq RDF_URL . 'type') {
+    } elsif ($attr_xurl eq RDF_NS . 'type') {
       $type_attr = $attr;
       $self->onattr->($attr, 'url');
     } elsif ({
       %coreSyntaxTerms,
-      RDF_URL . 'li' => 1,
-      RDF_URL . 'Description' => 1,
+      RDF_NS . 'li' => 1,
+      RDF_NS . 'Description' => 1,
       %oldTerms,
-    }->{$attr_xuri}) {
+    }->{$attr_xurl}) {
       $self->onerror->(type => 'attribute not allowed',
                          level => LEVEL_RDF_GRAMMER,
                          node => $attr);
@@ -426,17 +426,17 @@ sub convert_node_element ($$;%) {
     $subject = {bnodeid => $generate_bnodeid->($self)};
   }
 
-  if ($xuri ne RDF_URL . 'Description') {
+  if ($xurl ne RDF_NS . 'Description') {
     $self->_dispatch_triple (subject => $subject,
-                        predicate => {uri => RDF_URL . 'type'},
-                        object => {uri => $xuri},
+                        predicate => {url => RDF_NS . 'type'},
+                        object => {url => $xurl},
                         node => $node);
   }
 
   if ($type_attr) {
     $self->_dispatch_triple (subject => $subject,
-                        predicate => {uri => RDF_URL . 'type'},
-                        object => {uri => $resolve->($type_attr->value,
+                        predicate => {url => RDF_NS . 'type'},
+                        object => {url => $resolve->($type_attr->value,
                                                      $type_attr)},
                         node => $type_attr);
   }
@@ -444,9 +444,9 @@ sub convert_node_element ($$;%) {
   for my $attr (@prop_attr) {
     my $predicate = $attr->manakai_expanded_uri;
     $self->_dispatch_triple (subject => $subject,
-                      predicate => {uri => $predicate},
-                      object => {value => $attr->value,
-                                 language => $opt{language}},
+                      predicate => {url => $predicate},
+                      object => {lexical => $attr->value,
+                                 lang => $opt{lang}},
                       node => $attr);
   }
 
@@ -458,7 +458,7 @@ sub convert_node_element ($$;%) {
     if ($cn_type == 1) { # ELEMENT_NODE
       $self->convert_property_element ($cn, li_counter => \$li_counter,
                                        subject => $subject,
-                                       language => $opt{language});
+                                       lang => $opt{lang});
     } elsif ($cn_type == 3) { # TEXT_NODE
       if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
         $self->onerror->(type => 'character not allowed',
@@ -484,7 +484,7 @@ my $get_id_resource = sub {
 
   return undef unless $node;
 
-  return {uri => $id_attr->($self, $node)};
+  return {url => $id_attr->($self, $node)};
 }; # $get_id_resource
 
 sub convert_property_element ($$%) {
@@ -494,16 +494,16 @@ sub convert_property_element ($$%) {
 
   # |propertyElt|
 
-  my $xuri = $node->manakai_expanded_uri;
-  if ($xuri eq RDF_URL . 'li') {
-    $xuri = RDF_URL . '_' . ${$opt{li_counter}}++;
+  my $xurl = $node->manakai_expanded_uri;
+  if ($xurl eq RDF_NS . 'li') {
+    $xurl = RDF_NS . '_' . ${$opt{li_counter}}++;
   }
 
   if ({
        %coreSyntaxTerms,
-       RDF_URL . 'Description' => 1,
+       RDF_NS . 'Description' => 1,
        %oldTerms,
-      }->{$xuri}) {
+      }->{$xurl}) {
     $self->onerror->(type => 'element not allowed',
                        level => LEVEL_RDF_GRAMMER,
                        node => $node);
@@ -516,19 +516,19 @@ sub convert_property_element ($$%) {
   my $resource_attr;
   my @prop_attr;
   for my $attr (@{$node->attributes}) {
-    my $nsuri = $attr->namespace_uri;
-    if (defined $nsuri and $nsuri eq XML_NS) {
+    my $nsurl = $attr->namespace_uri;
+    if (defined $nsurl and $nsurl eq XML_NS) {
       my $ln = $attr->local_name;
       if ($ln eq 'lang') {
-        $opt{language} = $attr->value;
-        delete $opt{language} if $opt{language} eq '';
+        $opt{lang} = $attr->value;
+        delete $opt{lang} if $opt{lang} eq '';
         $self->onattr->($attr, 'common');
         next;
       } elsif ($ln eq 'base') {
         $self->onattr->($attr, 'common');
         next;
       }
-    } elsif (defined $nsuri and $nsuri eq XMLNS_NS) {
+    } elsif (defined $nsurl and $nsurl eq XMLNS_NS) {
       $self->onattr->($attr, 'common');
       next;
     }
@@ -555,33 +555,33 @@ sub convert_property_element ($$%) {
 
     $check_rdf_namespace->($self, $attr);
 
-    my $attr_xuri = $attr->manakai_expanded_uri;
+    my $attr_xurl = $attr->manakai_expanded_uri;
 
-    unless (defined $nsuri) {
-      $attr_xuri = $check_local_attr->($self, $node, $attr, $attr_xuri);
+    unless (defined $nsurl) {
+      $attr_xurl = $check_local_attr->($self, $node, $attr, $attr_xurl);
     }
 
-    if ($attr_xuri eq RDF_URL . 'ID') {
+    if ($attr_xurl eq RDF_NS . 'ID') {
       $rdf_id_attr = $attr;
       $self->onattr->($attr, 'rdf-id');
-    } elsif ($attr_xuri eq RDF_URL . 'datatype') {
+    } elsif ($attr_xurl eq RDF_NS . 'datatype') {
       $dt_attr = $attr;
       $self->onattr->($attr, 'url');
-    } elsif ($attr_xuri eq RDF_URL . 'parseType') {
+    } elsif ($attr_xurl eq RDF_NS . 'parseType') {
       $parse_attr = $attr;
       $self->onattr->($attr, 'misc');
-    } elsif ($attr_xuri eq RDF_URL . 'resource') {
+    } elsif ($attr_xurl eq RDF_NS . 'resource') {
       $resource_attr = $attr;
       $self->onattr->($attr, 'url');
-    } elsif ($attr_xuri eq RDF_URL . 'nodeID') {
+    } elsif ($attr_xurl eq RDF_NS . 'nodeID') {
       $nodeid_attr = $attr;
       $self->onattr->($attr, 'rdf-id');
     } elsif ({
       %coreSyntaxTerms,
-      RDF_URL . 'li' => 1,
-      RDF_URL . 'Description' => 1,
+      RDF_NS . 'li' => 1,
+      RDF_NS . 'Description' => 1,
       %oldTerms,
-    }->{$attr_xuri}) {
+    }->{$attr_xurl}) {
       $self->onerror->(type => 'attribute not allowed',
                          level => LEVEL_RDF_GRAMMER,
                          node => $attr);
@@ -605,7 +605,7 @@ sub convert_property_element ($$%) {
     
     my $object = {bnodeid => $generate_bnodeid->($self)};
     $self->_dispatch_triple (subject => $opt{subject},
-                        predicate => {uri => $xuri},
+                        predicate => {url => $xurl},
                         object => $object,
                         node => $node,
                         id => $get_id_resource->($self, $rdf_id_attr));
@@ -620,7 +620,7 @@ sub convert_property_element ($$%) {
       if ($cn_type == 1) { # ELEMENT_NODE
         $self->convert_property_element ($cn, li_counter => \$li_counter,
                                          subject => $object,
-                                         language => $opt{language});
+                                         lang => $opt{lang});
       } elsif ($cn_type == 3) { # TEXT_NODE
         if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
           $self->onerror->(type => 'character not allowed',
@@ -663,13 +663,13 @@ sub convert_property_element ($$%) {
 
     if (@resource) {
       $self->_dispatch_triple (subject => $opt{subject},
-                          predicate => {uri => $xuri},
+                          predicate => {url => $xurl},
                           object => $resource[0]->[1],
                           node => $node);
     } else {
       $self->_dispatch_triple (subject => $opt{subject},
-                          predicate => {uri => $xuri},
-                          object => {uri => RDF_URL . 'nil'},
+                          predicate => {url => $xurl},
+                          object => {url => RDF_NS . 'nil'},
                           node => $node,
                           id => $get_id_resource->($self, $rdf_id_attr));
     }
@@ -677,18 +677,18 @@ sub convert_property_element ($$%) {
     while (@resource) {
       my $resource = shift @resource;
       $self->_dispatch_triple (subject => $resource->[1],
-                          predicate => {uri => RDF_URL . 'first'},
+                          predicate => {url => RDF_NS . 'first'},
                           object => $resource->[0],
                           node => $resource->[2]);
       if (@resource) {
         $self->_dispatch_triple (subject => $resource->[1],
-                            predicate => {uri => RDF_URL . 'rest'},
+                            predicate => {url => RDF_NS . 'rest'},
                             object => $resource[0]->[1],
                             node => $resource->[2]);
       } else {
         $self->_dispatch_triple (subject => $resource->[1],
-                            predicate => {uri => RDF_URL . 'rest'},
-                            object => {uri => RDF_URL . 'nil'},
+                            predicate => {url => RDF_NS . 'rest'},
+                            object => {url => RDF_NS . 'nil'},
                             node => $resource->[2]);
       }
     }
@@ -710,9 +710,9 @@ sub convert_property_element ($$%) {
     }
 
     $self->_dispatch_triple (subject => $opt{subject},
-                        predicate => {uri => $xuri},
+                        predicate => {url => $xurl},
                         object => {parent_node => $node,
-                                   datatype => RDF_URL . 'XMLLiteral'},
+                                   datatype_url => RDF_NS . 'XMLLiteral'},
                         node => $node,
                         id => $get_id_resource->($self, $rdf_id_attr));
   } else { # no rdf:parseType=""
@@ -782,10 +782,10 @@ sub convert_property_element ($$%) {
       }
       
       my $object = $self->convert_node_element ($node_element,
-                                                language => $opt{language});
+                                                lang => $opt{lang});
       
       $self->_dispatch_triple (subject => $opt{subject},
-                          predicate => {uri => $xuri},
+                          predicate => {url => $xurl},
                           object => $object,
                           node => $node,
                           id => $get_id_resource->($self, $rdf_id_attr));
@@ -802,18 +802,18 @@ sub convert_property_element ($$%) {
       if ($dt_attr) {
         $self->ontriple
             ->(subject => $opt{subject},
-               predicate => {uri => $xuri},
-               object => {value => $text,
-                          datatype => $uri_attr->($self, $dt_attr)},
+               predicate => {url => $xurl},
+               object => {lexical => $text,
+                          datatype_url => $url_attr->($self, $dt_attr)},
                ## NOTE: No resolve() in the spec (but spec says that
                ## xml:base is applied also to rdf:datatype).
                node => $node,
                id => $get_id_resource->($self, $rdf_id_attr));
       } else {
         $self->_dispatch_triple (subject => $opt{subject},
-                            predicate => {uri => $xuri},
-                            object => {value => $text,
-                                       language => $opt{language}},
+                            predicate => {url => $xurl},
+                            object => {lexical => $text,
+                                       lang => $opt{lang}},
                             node => $node,
                             id => $get_id_resource->($self, $rdf_id_attr));
       }
@@ -829,15 +829,15 @@ sub convert_property_element ($$%) {
       
       if (not $resource_attr and not $nodeid_attr and not @prop_attr) {
         $self->_dispatch_triple (subject => $opt{subject},
-                            predicate => {uri => $xuri},
-                            object => {value => '',
-                                       language => $opt{language}},
+                            predicate => {url => $xurl},
+                            object => {lexical => '',
+                                       lang => $opt{lang}},
                             node => $node,
                             id => $get_id_resource->($self, $rdf_id_attr));
       } else {
         my $object;
         if ($resource_attr) {
-          $object = {uri => $uri_attr->($self, $resource_attr)};
+          $object = {url => $url_attr->($self, $resource_attr)};
           if (defined $nodeid_attr) {
             $self->onerror->(type => 'attribute not allowed',
                                level => LEVEL_RDF_GRAMMER,
@@ -851,23 +851,23 @@ sub convert_property_element ($$%) {
         }
         
         for my $attr (@prop_attr) {
-          my $attr_xuri = $attr->manakai_expanded_uri;
-          if ($attr_xuri eq RDF_URL . 'type') {
+          my $attr_xurl = $attr->manakai_expanded_uri;
+          if ($attr_xurl eq RDF_NS . 'type') {
             $self->_dispatch_triple (subject => $object,
-                                predicate => {uri => $attr_xuri},
+                                predicate => {url => $attr_xurl},
                                 object => $resolve->($attr->value, $attr),
                                 node => $attr);
           } else {
             $self->_dispatch_triple (subject => $object,
-                                predicate => {uri => $attr_xuri},
-                                object => {value => $attr->value,
-                                           language => $opt{language}},
+                                predicate => {url => $attr_xurl},
+                                object => {lexical => $attr->value,
+                                           lang => $opt{lang}},
                                 node => $attr);
           }
         }
 
         $self->_dispatch_triple (subject => $opt{subject},
-                            predicate => {uri => $xuri},
+                            predicate => {url => $xurl},
                             object => $object,
                             node => $node,
                             id => $get_id_resource->($self, $rdf_id_attr));
