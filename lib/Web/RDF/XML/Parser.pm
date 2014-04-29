@@ -98,6 +98,13 @@ sub onattr ($;$) {
   return $_[0]->{onattr} ||= sub { };
 } # onattr
 
+sub onbnodeid ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onbnodeid} = $_[1];
+  }
+  return $_[0]->{onbnodeid} ||= sub { $_[0] };
+} # onbnodeid
+
 sub convert_document ($$) {
   my $self = shift;
   my $node = shift; # Document
@@ -387,7 +394,7 @@ sub convert_node_element ($$;%) {
       $self->onattr->($attr, 'rdf-id');
     } elsif ($attr_xurl eq RDF_NS . 'nodeID') {
       unless (defined $subject) {
-        $subject = {bnodeid => $get_bnodeid->($attr->value)};
+        $subject = {bnodeid => $self->onbnodeid->($get_bnodeid->($attr->value))};
       } else {
         $self->onerror->(type => 'attribute not allowed',
                            level => LEVEL_RDF_GRAMMER,
@@ -423,7 +430,7 @@ sub convert_node_element ($$;%) {
   } # $attr
   
   unless (defined $subject) {
-    $subject = {bnodeid => $generate_bnodeid->($self)};
+    $subject = {bnodeid => $self->onbnodeid->($generate_bnodeid->($self))};
   }
 
   if ($xurl ne RDF_NS . 'Description') {
@@ -603,7 +610,7 @@ sub convert_property_element ($$%) {
                          node => $attr);
     }
     
-    my $object = {bnodeid => $generate_bnodeid->($self)};
+    my $object = {bnodeid => $self->onbnodeid->($generate_bnodeid->($self))};
     $self->_dispatch_triple (subject => $opt{subject},
                         predicate => {url => $xurl},
                         object => $object,
@@ -647,7 +654,7 @@ sub convert_property_element ($$%) {
     for my $cn (@{$node->child_nodes}) {
       if ($cn->node_type == 1) { # ELEMENT_NODE
         push @resource, [$self->convert_node_element ($cn),
-                         {bnodeid => $generate_bnodeid->($self)},
+                         {bnodeid => $self->onbnodeid->($generate_bnodeid->($self))},
                          $cn];
       } elsif ($cn->node_type == 3) { # TEXT_NODE
         if ($cn->data =~ /[^\x09\x0A\x0D\x20]/) {
@@ -845,9 +852,9 @@ sub convert_property_element ($$%) {
           }
         } elsif ($nodeid_attr) {
           my $id = $nodeid_attr->value;
-          $object = {bnodeid => $get_bnodeid->($id)};
+          $object = {bnodeid => $self->onbnodeid->($get_bnodeid->($id))};
         } else {
-          $object = {bnodeid => $generate_bnodeid->($self)};
+          $object = {bnodeid => $self->onbnodeid->($generate_bnodeid->($self))};
         }
         
         for my $attr (@prop_attr) {
