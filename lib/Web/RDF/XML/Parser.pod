@@ -48,42 +48,9 @@ extracted from the document.
 
 The callback is invoked with following name/value pairs as arguments:
 C<subject>, C<predicate>, C<object>, and C<node>.  The callback is not
-expected to throw any exception.
-
-Values C<subject>, C<predicate>, C<object> are hash references
-containing one or more of followings: C<uri> (URL of a resource),
-C<bnodeid> (graph-local ID of a blank node), C<value> (lexical form of
-a literal), C<parent_node> (parent node of DOM representation of an
-XML literal), C<language> (language tag of a literal), and C<datatype>
-(data type URL).  Relative URLs are resolved whenever possible before
-callback is invoked.
-
+expected to throw any exception.  Values C<subject>, C<predicate>,
+C<object> are parsed term data structures (see L<Web::RDF::Checker>).
 The node from which the triple is extracted is given as C<node>.
-
-Subject, predicate, or object of the RDF triple can be constructed by
-applying the following steps to the corresponding hash value /value/:
-
-  1. If /value/ has non-|undef| |uri|, return URL (or "IRI" in RDF
-     1.1) |uri| and abort these steps.
-
-  2. If /value/ has non-|undef| |bnodeid|, return blank node whose ID
-     is |bnodeid| and abort these steps.
-
-  3. If /value/ has |parent_node|, return a literal whose lexical form
-     is |inner_html| of /value/'s |parent_node| and datatype URL (or
-     "IRI" in RDF 1.1) is /value/'s |datatype| (which is not |undef|)
-     and abort these steps.
-
-  4. If /value/ has non-|undef| |language|, return a literal whose
-     lexical form is /value/'s |value|, language tag is /language/'s
-     value, and datatype URL (or "IRI" in RDF 1.1) is
-     |http://www.w3.org/1999/02/22-rdf-syntax-ns#langString| and abort
-     these steps.
-
-  5. Otherwise, return a literal whose lexical form is /value/'s value
-     (which is not |undef|) and datatype URL (or "IRI" in RDF 1.1) is
-     /value/'s |datatype|, if not |undef|, or
-     |http://www.w3.org/2001/XMLSchema#string|, otherwise.
 
 =item $code = $rdf->onerror
 

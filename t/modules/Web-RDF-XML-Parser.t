@@ -16,9 +16,9 @@ for my $test (
       </rdf:Description>
     </rdf:RDF>
   } => [
-    {subject => {uri => q<http://abc/>},
-     predicate => {uri => q<http://www.example.org/foo>},
-     object => {uri => q<http://xyz/>}},
+    {subject => {url => q<http://abc/>},
+     predicate => {url => q<http://www.example.org/foo>},
+     object => {url => q<http://xyz/>}},
   ]],
   [q{
     <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -27,9 +27,9 @@ for my $test (
       </rdf:Description>
     </rdf:RDF>
   } => [
-    {subject => {uri => q<http://abc/>},
-     predicate => {uri => q<http://www.example.org/foo>},
-     object => {uri => q<http://hoge.test/fuga/>}},
+    {subject => {url => q<http://abc/>},
+     predicate => {url => q<http://www.example.org/foo>},
+     object => {url => q<http://hoge.test/fuga/>}},
   ]],
   [q{
     <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -41,27 +41,27 @@ for my $test (
       </bar>
     </rdf:RDF>
   } => [
-    {subject => {uri => q<http://abc/>},
-     predicate => {uri => q<http://www.example.org/foo>},
-     object => {uri => q<http://hoge.test/fuga/>}},
+    {subject => {url => q<http://abc/>},
+     predicate => {url => q<http://www.example.org/foo>},
+     object => {url => q<http://hoge.test/fuga/>}},
     {subject => {bnodeid => 'g0'},
-     predicate => {uri => q<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>},
-     object => {uri => q<http://abc/bar>}},
+     predicate => {url => q<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>},
+     object => {url => q<http://abc/bar>}},
     {subject => {bnodeid => 'g0'},
-     predicate => {uri => q<http://abc/xxy>},
-     object => {value => 'ab', language => 'en'}},
+     predicate => {url => q<http://abc/xxy>},
+     object => {lexical => 'ab', lang => 'en'}},
   ]],
   [q{
     <Fuga xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" rdf:about="" xml:base="about:blank" xmlns="http://www.example.org/">
       <abc rdf:datatype="http://www.example.org/hogehoge">ddd</abc>
     </Fuga>
   } => [
-    {subject => {uri => q<about:blank>},
-     predicate => {uri => q<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>},
-     object => {uri => q<http://www.example.org/Fuga>}},
-    {subject => {uri => q<about:blank>},
-     predicate => {uri => q<http://www.example.org/abc>},
-     object => {value => 'ddd', datatype => 'http://www.example.org/hogehoge'}},
+    {subject => {url => q<about:blank>},
+     predicate => {url => q<http://www.w3.org/1999/02/22-rdf-syntax-ns#type>},
+     object => {url => q<http://www.example.org/Fuga>}},
+    {subject => {url => q<about:blank>},
+     predicate => {url => q<http://www.example.org/abc>},
+     object => {lexical => 'ddd', datatype_url => 'http://www.example.org/hogehoge'}},
   ]],
 ) {
   test {
