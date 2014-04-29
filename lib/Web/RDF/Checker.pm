@@ -2,8 +2,6 @@ package Web::RDF::Checker;
 use strict;
 use warnings;
 our $VERSION = '1.0';
-use Web::URL::Checker;
-use Web::LangTag;
 use Web::HTML::Validator::_Defs;
 
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
@@ -26,6 +24,7 @@ sub check_parsed_term ($$) {
   my ($self, $term) = @_;
   
   if (defined $term->{url}) {
+    require Web::URL::Checker;
     my $chk = Web::URL::Checker->new_from_string ($term->{url});
     $chk->onerror (sub {
       $self->onerror->(value => $term->{url}, node => $term->{node}, @_);
@@ -50,6 +49,7 @@ sub check_parsed_term ($$) {
 
   my $datatype;
   if (defined $term->{lang}) {
+    require Web::LangTag;
     my $lang = Web::LangTag->new;
     $lang->onerror (sub {
       $self->onerror->(value => $term->{lang}, node => $term->{node}, @_);
@@ -59,13 +59,31 @@ sub check_parsed_term ($$) {
     $datatype = RDF_NS . 'langString';
   }
   if (defined $term->{datatype_url}) {
+    require Web::URL::Checker;
     my $chk = Web::URL::Checker->new_from_string ($term->{datatype_url});
     $chk->onerror (sub {
       $self->onerror->(value => $term->{datatype_url}, node => $term->{node}, @_);
     });
     $chk->check_iri_reference; # XXX absolute URL
 
-    # XXX warn unless common type
+    my $dt = $Web::HTML::Validator::_Defs->{xml_datatypes}->{$term->{datatype_url}};
+    my $dt_rdf = $dt->{rdf} || '';
+    if ($dt_rdf eq 'builtin' or $dt_rdf eq '1') {
+      #
+    } elsif ($dt_rdf eq 'unsuitable') {
+      $self->onerror->(type => 'xsd:rdf:unsuitable',
+                       value => $term->{datatype_url},
+                       level => 's');
+    } elsif ($term->{datatype_url} eq RDF_NS . 'langString') {
+      $self->onerror->(type => 'rdf:langString:no lang',
+                       level => 'w')
+          unless defined $term->{lang};
+    } else {
+      $self->onerror->(type => 'xsd:rdf:non-standard datatype',
+                       value => $term->{datatype_url},
+                       level => 'w')
+          unless defined $term->{lang};
+    }
 
     if ($term->{datatype_url} =~ m{\A\Qhttp://www.w3.org/1999/02/22-rdf-syntax-ns#\E_[1-9][0-9]*\z}s) {
       #
@@ -81,7 +99,7 @@ sub check_parsed_term ($$) {
     }
 
     $datatype = $term->{datatype_url};
-  }
+  } # datatype
 
   if (defined $term->{lexical}) {
     # XXX literal form SHOULD be NFC

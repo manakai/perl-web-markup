@@ -89,6 +89,9 @@ local/xml-syntax.json:
 local/rdf.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/rdf.json
+local/xml-datatypes.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/xml-datatypes.json
 
 local/bin/jq:
 	mkdir -p local/bin
@@ -164,7 +167,7 @@ Chromium:\
 
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
     local/aria.json local/aria-html-map.json local/bin/pmbp.pl \
-    local/rdf.json \
+    local/rdf.json local/xml-datatypes.json \
     bin/generate-validator-defs.pl json-ps
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module Path::Tiny \
