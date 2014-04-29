@@ -83,11 +83,36 @@ for my $test (
   } n => 1;
 }
 
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  $doc->inner_html (q{
+    <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+      <rdf:Description>
+        <hoge xmlns="http://foo/">
+          <rdf:Description rdf:nodeID="foo"/>
+        </hoge>
+      </rdf:Description>
+    </rdf:RDF>
+  });
+  my $rdf = new Web::RDF::XML::Parser;
+  $rdf->onbnodeid (sub { "ID=[$_[0]]" });
+  my @node;
+  $rdf->ontriple (sub {
+    my %args = @_;
+    push @node, $args{subject}->{bnodeid};
+    push @node, $args{object}->{bnodeid};
+  });
+  $rdf->convert_document ($doc);
+  eq_or_diff \@node, ['ID=[g0]', 'ID=[bfoo]'];
+  done $c;
+} n => 1;
+
 run_tests;
 
 =head1 LICENSE
 
-Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -52,6 +52,27 @@ expected to throw any exception.  Values C<subject>, C<predicate>,
 C<object> are parsed term data structures (see L<Web::RDF::Checker>).
 The node from which the triple is extracted is given as C<node>.
 
+=item $rdf->onbnodeid ($code)
+
+=item $code = $rdf->onbnodeid
+
+Get or set the code reference that is invoked whenever a blank node
+identifier is to be constructed.
+
+The code is invoked with an argument, which is used within the module
+to identify a blank node.  The code can return the argument as is, or
+it can return a modified copy of the argument.  Anyway, the returned
+value is used as the blank node identifier.  The code must return the
+same value for the same argument.  The code must return different
+values for different arguments.  The code is not expected to throw any
+exception.
+
+This hook is useful when a document contains multiple RDF fragment
+such that blank nodes within them have to be distinguished.
+
+The value should not be set while the parser is running.  If the value
+is changed, the result is undefined.
+
 =item $code = $rdf->onerror
 
 =item $rdf->onerror ($code)
