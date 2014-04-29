@@ -1,6 +1,8 @@
 package Web::RDF::XML::Parser;
 use strict;
 use warnings;
+use warnings FATAL => 'recursion';
+no warnings 'utf8';
 our $VERSION = '5.0';
 use Web::URL::Canonicalize qw(url_to_canon_url);
 
@@ -599,6 +601,10 @@ sub convert_property_element ($$%) {
     }
   } # $attr
 
+  if ($node->manakai_element_type_match (HTML_NS, 'template')) {
+    $self->onnonrdfnode->($node->content);
+  }
+
   my $parse = $parse_attr ? $parse_attr->value : '';
   if ($parse eq 'Resource') {
     # |parseTypeResourcePropertyElt|
@@ -862,7 +868,7 @@ sub convert_property_element ($$%) {
           if ($attr_xurl eq RDF_NS . 'type') {
             $self->_dispatch_triple (subject => $object,
                                 predicate => {url => $attr_xurl},
-                                object => $resolve->($attr->value, $attr),
+                                object => {url => $resolve->($attr->value, $attr)},
                                 node => $attr);
           } else {
             $self->_dispatch_triple (subject => $object,

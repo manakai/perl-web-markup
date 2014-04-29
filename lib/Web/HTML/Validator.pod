@@ -115,7 +115,8 @@ In addition, L<JE> is required.
 
 =back
 
-Also, see L<Web::RDF::XML::Parser>'s dependency section.
+Also, see dependency sections of L<Web::RDF::XML::Parser> and
+L<Web::RDF::Checker>.
 
 =head1 SPECIFICATIONS
 

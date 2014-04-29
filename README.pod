@@ -50,9 +50,10 @@ An XPath 1.0 evaluator.
 
 These modules require Perl 5.8 or later.  They requires L<Encode>,
 which is included in the Perl distribution, and modules from the
-<https://github.com/manakai/perl-web-encodings> repository, which is a
-submodule of the Git repository.  The L<Web::RDF::XML::Parser> module
-has more submodule dependency (see its documentation for details).
+perl-web-encodings package
+<https://github.com/manakai/perl-web-encodings>, which is a submodule
+of the Git repository.  The L<Web::RDF::XML::Parser> module has more
+submodule dependency (see its documentation for details).
 
 In addition, a DOM implementation is required as input (and output) to
 these modules, although there is no direct dependency.  For the XPath
@@ -101,7 +102,7 @@ Wakaba <wakaba@suikawiki.org>.
 
 =head1 LICENSE
 
-Copyright 2007-2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2007-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
