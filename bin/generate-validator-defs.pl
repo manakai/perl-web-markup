@@ -14,6 +14,7 @@ my $elements = json 'elements';
 my $microdata = json 'microdata';
 my $aria = json 'aria';
 my $aria_html = json 'aria-html-map';
+my $rdf = json 'rdf';
 
 my $data = {
   %$elements,
@@ -69,6 +70,8 @@ for my $role (keys %{$data->{roles}}) {
     $data->{roles}->{$_}->{scope_of}->{$role} = 1;
   }
 }
+
+$data->{rdf_vocab} = $rdf->{rdf_vocab};
 
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Useqq = 1;

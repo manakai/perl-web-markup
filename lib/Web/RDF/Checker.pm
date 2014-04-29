@@ -4,6 +4,7 @@ use warnings;
 our $VERSION = '1.0';
 use Web::URL::Checker;
 use Web::LangTag;
+use Web::HTML::Validator::_Defs;
 
 sub RDF_NS () { q<http://www.w3.org/1999/02/22-rdf-syntax-ns#> }
 
@@ -31,7 +32,18 @@ sub check_parsed_term ($$) {
     });
     $chk->check_iri_reference; # XXX absolute URL
 
-    # XXX SHOULD warn if not defined in RDF vocabulary
+    if ($term->{url} =~ m{\A\Qhttp://www.w3.org/1999/02/22-rdf-syntax-ns#\E_[1-9][0-9]*\z}s) {
+      #
+    } elsif ($term->{url} =~ m{\A\Qhttp://www.w3.org/1999/02/22-rdf-syntax-ns#\E(.+)\z}s) {
+      my $type = $Web::HTML::Validator::_Defs->{rdf_vocab}->{$1}->{type} || '';
+      if (not {
+        class => 1, syntax => 1, property => 1, resource => 1,
+      }->{$type}) {
+        $self->onerror->(type => 'rdf vocab:not defined',
+                         level => 'w',
+                         value => $term->{url});
+      }
+    }
   }
 
   #$term->{bnodeid}
@@ -54,6 +66,19 @@ sub check_parsed_term ($$) {
     $chk->check_iri_reference; # XXX absolute URL
 
     # XXX warn unless common type
+
+    if ($term->{datatype_url} =~ m{\A\Qhttp://www.w3.org/1999/02/22-rdf-syntax-ns#\E_[1-9][0-9]*\z}s) {
+      #
+    } elsif ($term->{datatype_url} =~ m{\A\Qhttp://www.w3.org/1999/02/22-rdf-syntax-ns#\E(.+)\z}s) {
+      my $type = $Web::HTML::Validator::_Defs->{rdf_vocab}->{$1}->{type} || '';
+      if (not {
+        class => 1, syntax => 1, property => 1, resource => 1,
+      }->{$type}) {
+        $self->onerror->(type => 'rdf vocab:not defined',
+                         level => 'w',
+                         value => $term->{datatype_url});
+      }
+    }
 
     $datatype = $term->{datatype_url};
   }

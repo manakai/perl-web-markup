@@ -142,7 +142,7 @@ module:
 
 =back
 
-=head1 SPECIFICATION
+=head1 SPECIFICATIONS
 
 =over 4
 
@@ -150,6 +150,10 @@ module:
 
 RDF 1.1 Concepts and Abstract Syntax
 <http://www.w3.org/TR/rdf11-concepts/>.
+
+=item RDFXML
+
+RDF 1.1 XML Syntax <http://www.w3.org/TR/rdf-syntax-grammar/>.
 
 =back
 
