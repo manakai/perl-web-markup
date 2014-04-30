@@ -338,12 +338,33 @@ a valid unordered set of unique space-separated tokens.
 When an attribute value is defined as "ID reference list", the value
 MUST be a valid ordered set of unique space-separated tokens.
 
-=item MANAKAI
+=item OGP
 
-manakai DOM Extensions
-<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
+The Open Graph protocol <http://ogp.me/>.
 
-Any node MAY be used as orphan node.
+The RDF schema <http://ogp.me/ns/ogp.me.ttl>.
+
+Open Graph Reference Documentation
+<https://developers.facebook.com/docs/reference/opengraph>.
+
+Creating Custom Stories
+<https://developers.facebook.com/docs/opengraph/creating-custom-stories/>.
+
+Achievements API
+<https://developers.facebook.com/docs/games/achievements>.
+
+Open Graph protocol
+<http://web.archive.org/web/20111006152122/http://developers.facebook.com/docs/opengraph/>.
+
+=item OGPMIXI
+
+技術仕様 << mixi Developer Center (ミクシィ デベロッパーセンター)
+<http://developer.mixi.co.jp/connect/mixi_plugin/mixi_check/spec_mixi_check/>.
+
+=item OGPGREE
+
+Social Feedback - GREE Developer Center
+<https://docs.developer.gree.net/ja/platform/connect/socialfeedback>.
 
 =item MIMESNIFF
 
@@ -351,9 +372,16 @@ MIME Sniffing <http://mimesniff.spec.whatwg.org/>.
 
 =item URL
 
-URL <http://url.spec.whatwg.org/>.
+URL Standard <http://url.spec.whatwg.org/>.
 
-=item VALIDLANGS
+=item MANAKAI
+
+manakai DOM Extensions
+<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai%20DOM%20Extensions>.
+
+Any node MAY be used as orphan node.
+
+=item VALLANGS
 
 Handling of unknown namespaces in conformance checking
 <http://suika.suikawiki.org/www/markup/xml/validation-langs>.
@@ -361,8 +389,8 @@ Handling of unknown namespaces in conformance checking
 =back
 
 The validator also supports much more Web standards (indirectly via
-required modules), including but not limited to CSS, URL Standard,
-IETF BCP 47 language tags, and Encoding Standard.
+required modules), including but not limited to CSS, IETF BCP 47
+language tags, and Encoding Standard.
 
 Note that HTML 3.2, HTML4, XML 1.1, Namespaces in XML 1.1, C<xml:id>,
 XLink, XInclude, XHTML1, XHTML Modularization, Ruby Annotations, RDFa,
