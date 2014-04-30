@@ -1,8 +1,8 @@
 use strict;
 use warnings;
-use Path::Class;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use Path::Tiny;
+use lib path (__FILE__)->parent->parent->parent->child ('t_deps', 'lib')->stringify;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
 use Test::Differences;
 use Test::X1;
@@ -55,7 +55,8 @@ sub _test ($$) {
       $parser->scripting (not $test->{noscript});
       $parser->parse_char_string ($test->{data}->[0] => $doc);
     }
-    $doc->document_uri (q<thismessage:/>);
+    $doc->_set_content_type ($1)
+        if $test->{mime} and $test->{mime}->[1]->[0] =~ m{^([a-z0-9+_.-]+/[a-z0-9+_.-]+)$};
 
     if ($test->{issrcdoc}->[1] and $test->{issrcdoc}->[1]->[0]) {
       $doc->manakai_is_srcdoc (1);
