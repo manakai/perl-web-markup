@@ -16,12 +16,14 @@ my $aria = json 'aria';
 my $aria_html = json 'aria-html-map';
 my $rdf = json 'rdf';
 my $xml_datatypes = json 'xml-datatypes';
+my $ogp = json 'ogp';
 
 my $data = {
   %$elements,
   md => $microdata,
   roles => $aria->{roles},
   aria_to_html => $aria_html,
+  ogp => $ogp,
 };
 
 for my $ns (keys %{$data->{elements}}) {

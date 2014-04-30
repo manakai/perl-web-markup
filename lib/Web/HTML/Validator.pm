@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '130.0';
+our $VERSION = '131.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
@@ -106,6 +106,11 @@ my $GetNestedOnError = sub ($$$;$) {
 ##   {no_interactive}    Set to true if no interactive content is allowed.
 ##   {node_is_hyperlink}->{refaddr $node}
 ##                       Whether $node creates a hyperlink link or not.
+##   {ogp_expected_types}->{refaddr $node} = [$node, {$type => true}]
+##                       Allowed og:type values by $node.
+##   {ogp_has_prop}->{$prop} Set to true if the property is specified.
+##   {ogp_required_prop}->{$prop} Set to $node if it requires $prop.
+##   {ogtype}            The value of og:type property.
 
 ## $element_state
 ##
@@ -191,6 +196,7 @@ sub _terminate ($) {
   delete $self->{map_compat};
   delete $self->{top_level_item_elements};
   delete $self->{itemprop_els};
+  delete $self->{flag};
 } # _terminate
 
 ## For XML documents c.f. <http://www.whatwg.org/specs/web-apps/current-work/#serializing-xhtml-fragments>
@@ -615,6 +621,21 @@ $CheckerByType->{'non-negative integer greater than zero'} = sub {
                        level => 'm');
   }
 }; # non-negative integer greater than zero
+$ItemValueChecker->{'non-negative integer greater than zero'} = sub {
+  my ($self, $value, $node) = @_;
+  if ($value =~ /\A[0-9]+\z/) {
+    if ($value > 0) {
+      #
+    } else {
+      $self->{onerror}->(node => $node, type => 'nninteger:zero',
+                         level => 'm');
+    }
+  } else {
+    $self->{onerror}->(node => $node,
+                       type => 'nninteger:syntax error',
+                       level => 'm');
+  }
+}; # non-negative integer greater than zero
 
 ## Dimension value [OBSVOCAB]
 $CheckerByType->{'dimension value'} = sub {
@@ -805,6 +826,24 @@ $CheckerByType->{'MIME type'} = sub {
 
   return $type; # or undef
 }; # MIME type
+$ItemValueChecker->{'MIME type'} = sub {
+  my ($self, $value, $node) = @_;
+
+  require Web::MIME::Type;
+  my $onerror = sub {
+    $self->{onerror}->(@_, node => $node);
+  };
+
+  ## Syntax-level validation
+  my $type = Web::MIME::Type->parse_web_mime_type ($value, $onerror);
+
+  ## Vocabulary-level validation
+  if ($type) {
+    $type->validate ($onerror);
+  }
+
+  return $type; # or undef
+}; # MIME type
 
 $ElementAttrChecker->{(HTML_NS)}->{style}->{''}->{type} = sub {
   my ($self, $attr, $item, $element_state) = @_;
@@ -904,6 +943,41 @@ $ItemValueChecker->{currency} = sub {
   }
 }; # currency
 
+# OGP locale
+$ItemValueChecker->{'OGP locale'} = sub {
+  my ($self, $value, $node) = @_;
+  if ($value =~ /\A[a-z]{2}_[A-Z]{2}\z/) {
+    $value =~ tr/_/-/;
+    require Web::LangTag;
+    my $lang = Web::LangTag->new;
+    $lang->onerror (sub {
+      $self->{onerror}->(@_, node => $node);
+    });
+    my $parsed = $lang->parse_tag ($value);
+    $lang->check_parsed_tag ($parsed);
+  } else {
+    $self->{onerror}->(node => $node,
+                       value => $value,
+                       type => 'OGP locale:bad value',
+                       level => 'm');
+  }
+}; # OGP locale
+
+# OGP country
+$ItemValueChecker->{'OGP country'} = sub {
+  my ($self, $value, $node) = @_;
+  require Web::LangTag;
+  my $lang = Web::LangTag->new;
+  my $data = $lang->tag_registry_data ('region', $value);
+  if (not $value =~ /\A[A-Z]{2}\z/ or
+      not $data->{_registry}->{iana}) {
+    $self->{onerror}->(node => $node,
+                       value => $value,
+                       type => 'langtag:region:invalid',
+                       level => 'm');
+  }
+}; # OGP country
+
 $CheckerByType->{'character encoding label'} = sub {
   my ($self, $attr) = @_;
   my $value = $attr->value;
@@ -980,6 +1054,15 @@ $ElementTextCheckerByType->{URL} = sub {
   require Web::URL::Checker;
   my $chk = Web::URL::Checker->new_from_string ($value);
   $chk->onerror ($onerror);
+  $chk->check_iri_reference; # XXX URL Standard
+}; # URL
+$ItemValueChecker->{URL} = sub {
+  my ($self, $value, $node) = @_;
+  require Web::URL::Checker;
+  my $chk = Web::URL::Checker->new_from_string ($value);
+  $chk->onerror (sub {
+    $self->{onerror}->(@_, node => $node);
+  });
   $chk->check_iri_reference; # XXX URL Standard
 }; # URL
 
@@ -1140,6 +1223,13 @@ $ElementTextCheckerByType->{'e-mail address'} = sub {
              level => 'm')
       unless $value =~ qr/\A$ValidEmailAddress\z/o;
 }; # e-mail address
+$ItemValueChecker->{'e-mail address'} = sub {
+  my ($self, $value, $node) = @_;
+  $self->{onerror}->(node => $node,
+                     type => 'email:syntax error',
+                     level => 'm')
+      unless $value =~ qr/\A$ValidEmailAddress\z/o;
+}; # e-mail address
 
 ## E-mail address list [HTML]
 $CheckerByType->{'e-mail address list'} = sub {
@@ -1177,6 +1267,15 @@ our $MIMETypeChecker = sub {
 
   return $type; # or undef
 }; # $MIMETypeChecker
+
+## OGP unit
+$ItemValueChecker->{'OGP unit'} = sub {
+  my ($self, $value, $node) = @_;
+  $self->{onerror}->(node => $node,
+                     type => 'OGP unit:bad value',
+                     level => 'm')
+      unless $Web::HTML::Validator::_Defs->{ogp}->{units}->{$value};
+}; # OGP unit
 
 ## ------ ID references ------
 
@@ -2691,6 +2790,8 @@ my $GetDateTimeAttrChecker = sub ($) {
   };
 }; # $GetDateTimeAttrChecker
 
+# XXX $ItemValueChecker->{'OGP DateTime'}
+
 my $GetHTMLNonNegativeIntegerAttrChecker = sub {
   my $range_check = shift;
   return sub {
@@ -3830,7 +3931,7 @@ $Element->{+HTML_NS}->{link} = {
 }; # link
 
 $ElementAttrChecker->{(HTML_NS)}->{meta}->{''}->{$_} = sub {}
-    for qw(charset content http-equiv name); ## Checked by |check_attrs2|
+    for qw(charset content http-equiv name property); ## Checked by |check_attrs2|
 
 $Element->{+HTML_NS}->{meta} = {
   %HTMLEmptyChecker,
@@ -3843,6 +3944,7 @@ $Element->{+HTML_NS}->{meta} = {
       my $http_equiv_attr = $el->get_attribute_node_ns (undef, 'http-equiv'),
       my $charset_attr = $el->get_attribute_node_ns (undef, 'charset'),
       my $itemprop_attr = $el->get_attribute_node_ns (undef, 'itemprop'),
+      my $property_attr = $el->get_attribute_node_ns (undef, 'property'),
     );
     if (not @key_attr) {
       $self->{onerror}->(node => $el,
@@ -3854,10 +3956,10 @@ $Element->{+HTML_NS}->{meta} = {
                            type => 'attribute not allowed',
                            level => 'm');
       }
-    } # name="" http-equiv="" charset="" itemprop=""
+    } # name="" http-equiv="" charset="" itemprop="" property=""
 
     my $content_attr = $el->get_attribute_node_ns (undef, 'content');
-    if ($name_attr or $http_equiv_attr or $itemprop_attr) {
+    if ($name_attr or $http_equiv_attr or $itemprop_attr or $property_attr) {
       $self->{onerror}->(node => $el,
                          type => 'attribute missing',
                          text => 'content',
@@ -4043,6 +4145,100 @@ $Element->{+HTML_NS}->{meta} = {
 
       # XXX charset1024 check
     } # Character encoding declaration
+
+    if (defined $property_attr) {
+      ## <meta property="" content="">: Only OGP (and its extensions)
+      ## is supported:
+      ## <http://suika.suikawiki.org/www/markup/xml/validation-langs#ogp>,
+      ## <https://github.com/manakai/data-web-defs/blob/master/data/ogp.json>.
+
+      ## If there is one or more <meta property> element:
+      for (keys %{$Web::HTML::Validator::_Defs->{ogp}->{types}->{'*'}->{requires} or {}}) {
+        $self->{flag}->{ogp_required_prop}->{$_} = $property_attr;
+      }
+
+      my $prop = $property_attr->value;
+      my $prop_def = $Web::HTML::Validator::_Defs->{ogp}->{props}->{$prop};
+      if ($prop_def) {
+        if ($prop_def->{deprecated}) {
+          $self->{onerror}->(node => $property_attr,
+                             type => 'ogp:prop:deprecated',
+                             level => 's');
+        }
+        if ($prop_def->{target_type} and
+            not $prop_def->{target_type}->{'*'}) {
+          $self->{flag}->{ogp_expected_types}->{refaddr $property_attr}
+              = [$property_attr, $prop_def->{target_type}];
+        }
+        unless ($prop_def->{array} or $prop_def->{array_item}) {
+          $self->{onerror}->(node => $property_attr,
+                             type => 'ogp:prop:duplicate',
+                             level => 'm')
+              if $self->{flag}->{ogp_has_prop}->{$prop};
+        }
+        $self->{flag}->{ogp_has_prop}->{$_}++
+            for $prop, keys %{$prop_def->{aliases} or {}};
+        for (keys %{$Web::HTML::Validator::_Defs->{ogp}->{props}->{$prop}->{requires} or {}}) {
+          $self->{flag}->{ogp_required_prop}->{$_} = $property_attr;
+        }
+        if (defined $content_attr) {
+          if ($prop eq 'og:type') {
+            my $content = $self->{flag}->{ogtype} = $content_attr->value;
+            if ($Web::HTML::Validator::_Defs->{ogp}->{types}->{$content} and not $content eq '*') {
+              for (keys %{$Web::HTML::Validator::_Defs->{ogp}->{types}->{$content}->{requires} or {}}) {
+                $self->{flag}->{ogp_required_prop}->{$_} = $content_attr;
+              }
+            } elsif ($content =~ /\A([^:]+):(.+)\z/s) {
+              if ($Web::HTML::Validator::_Defs->{ogp}->{prefixes}->{$1}) {
+                $self->{onerror}->(node => $content_attr,
+                                   type => 'ogp:og:type:bad value',
+                                   level => 'm');
+              } else {
+                $self->{onerror}->(node => $content_attr,
+                                   type => 'ogp:og:type:private value',
+                                   level => 'w');
+              }
+            } else {
+              $self->{onerror}->(node => $content_attr,
+                                 type => 'ogp:og:type:bad value',
+                                 level => 'm');
+            }
+          } elsif (defined $prop_def->{value_type}) {
+            my $checker = $ItemValueChecker->{$prop_def->{value_type}};
+            if ($checker) {
+              $checker->($self, $content_attr->value, $content_attr);
+            } else {
+              $self->{onerror}->(node => $content_attr,
+                                 type => 'microdata:unknown type',
+                                 text => $prop_def->{value_type},
+                                 level => 'u');
+            }
+          } elsif (defined $prop_def->{enums}) {
+            my $content = $content_attr->value;
+            unless (defined $prop_def->{enums}->{$content}) {
+              $self->{onerror}->(node => $content_attr,
+                                 type => 'ogp:enum:bad value',
+                                 text => $prop,
+                                 level => 'm');
+            }
+          }
+        }
+      } elsif ($prop =~ /\A([^:]+):(.+)\z/s) {
+        if ($Web::HTML::Validator::_Defs->{ogp}->{prefixes}->{$1}) {
+          $self->{onerror}->(node => $property_attr,
+                             type => 'ogp:bad property',
+                             level => 'm');
+        } else {
+          $self->{onerror}->(node => $property_attr,
+                             type => 'ogp:private property',
+                             level => 'w');
+        }
+      } else {
+        $self->{onerror}->(node => $property_attr,
+                           type => 'ogp:bad property',
+                           level => 'm');
+      }
+    } # $property_attr
   }, # check_attrs2
 }; # meta
 
@@ -9899,6 +10095,24 @@ sub _check_refs ($) {
                          level => 'm');
     }
   } # $self->{idref}
+
+  ## OGP
+  for my $prop (keys %{$self->{flag}->{ogp_required_prop} or {}}) {
+    $self->{onerror}->(node => $self->{flag}->{ogp_required_prop}->{$prop},
+                       type => 'ogp:missing prop',
+                       text => $prop,
+                       level => 'm')
+        unless $self->{flag}->{ogp_has_prop}->{$prop};
+  }
+  my $ogtype = $self->{flag}->{ogtype} || '';
+  for (values %{$self->{flag}->{ogp_expected_types} or {}}) {
+    unless ($_->[1]->{$ogtype}) {
+      $self->{onerror}->(node => $_->[0],
+                         type => 'ogp:prop:bad og:type',
+                         text => (join ' ', sort { $a cmp $b } keys %{$_->[1]}),
+                         level => 'm');
+    }
+  }
 } # _check_refs
 
 sub check_node ($$) {
