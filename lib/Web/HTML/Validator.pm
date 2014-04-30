@@ -9431,7 +9431,14 @@ sub _check_node ($$) {
           push @$triple,
               [$opt{node}, $opt{subject}, $opt{predicate}, $opt{object}];
         });
-        $rdf->convert_rdf_element ($item->{node});
+        my $lang = ($item->{node}->parent_node || $item->{node}->owner_document);
+        $lang = $lang->node_type == 1 ? $lang->get_attribute_ns (XML_NS, 'lang') : undef;
+            #XXX ->manakai_language;
+        if ($item->{node}->manakai_expanded_uri eq RDF_NS . q<RDF>) {
+          $rdf->convert_rdf_element ($item->{node}, lang => $lang);
+        } else {
+          $rdf->convert_node_element ($item->{node}, lang => $lang);
+        }
         require Web::RDF::Checker;
         my $checker = Web::RDF::Checker->new;
         $checker->scripting ($self->scripting);
@@ -9470,7 +9477,7 @@ sub _check_node ($$) {
           } else { ## Different document
             my $checker = Web::HTML::Validator->new;
             $checker->onerror (sub {
-              $self->{onerror}->(@_, node => $context);
+              $self->{onerror}->(@_, di => -1, node => $context);
             });
             $checker->scripting ($self->scripting);
             $checker->check_node ($_[0]);
@@ -9706,10 +9713,8 @@ sub _check_node ($$) {
                   last MODE;
                 }
               } elsif ($ct eq 'application/rdf+xml') {
-                if (0 and 'XXX is RDF nodeElement') {
-                  $mode = 'RDF';
-                  last MODE;
-                }
+                $mode = 'RDF';
+                last MODE;
               } else {
                 #
               }
@@ -9738,16 +9743,7 @@ sub _check_node ($$) {
                                    level => 'm');
               }
             } elsif ($mode eq 'RDF') {
-              if ($nsurl eq RDF_NS and
-                  $_Defs->{elements}->{$nsurl}->{$ln}->{root}) {
-                #
-              } elsif (0 and 'XXX is RDF nodeElement') {
-                #
-              } else {
-                $self->{onerror}->(node => $node,
-                                   type => 'element not allowed:root',
-                                   level => 'm');
-              }
+              #
             } elsif ($mode eq 'RSS1') {
               if ($nsurl eq RDF_NS and $ln eq 'RDF') {
                 #
