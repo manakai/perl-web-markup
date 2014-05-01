@@ -432,7 +432,6 @@ sub _check_element_attrs ($$$;%) {
     $checker ||= $CheckerByType->{$value_type};
     if ($is_embed and
         $attr_ns eq '' and
-        $attr_ln !~ /^xml/ and
         $attr_ln !~ /[A-Z]/ and
         $attr_ln =~ /\A\p{InXML_NCNameStartChar10}\p{InXMLNCNameChar10}*\z/ and
         not $attr_def->{non_conforming}) {
