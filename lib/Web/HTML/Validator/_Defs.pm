@@ -25052,14 +25052,14 @@ $Web::HTML::Validator::_Defs = {
                                                                                              },
                                                                                      "value" => "integer"
                                                                                    },
-                                                                   "oponent" => {
-                                                                                "is_url" => 1,
-                                                                                "item" => {
-                                                                                          "types" => {
-                                                                                                     "http://schema.org/Person" => 1
-                                                                                                   }
-                                                                                        }
-                                                                              },
+                                                                   "opponent" => {
+                                                                                 "is_url" => 1,
+                                                                                 "item" => {
+                                                                                           "types" => {
+                                                                                                      "http://schema.org/Person" => 1
+                                                                                                    }
+                                                                                         }
+                                                                               },
                                                                    "sportsActivityLocation" => {
                                                                                                "is_url" => 1,
                                                                                                "item" => {
@@ -40857,7 +40857,7 @@ $Web::HTML::Validator::_Defs = {
                                "openingHoursSpecification" => {},
                                "opens" => {},
                                "operatingSystem" => {},
-                               "oponent" => {},
+                               "opponent" => {},
                                "option" => {},
                                "orderDate" => {},
                                "orderNumber" => {},
