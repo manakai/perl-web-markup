@@ -2773,8 +2773,8 @@ my $GetDateTimeAttrChecker = sub ($) {
     
     my $range_error;
     
-    require Web::DateTime;
-    my $dp = Web::DateTime->new;
+    require Web::DateTime::Parser;
+    my $dp = Web::DateTime::Parser->new;
     $dp->onerror (sub {
       my %opt = @_;
       unless ($opt{type} eq 'date value not supported') {
