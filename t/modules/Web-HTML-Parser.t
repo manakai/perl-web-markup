@@ -439,6 +439,18 @@ sub _parse_byte_string_with_a_known_definite_encoding : Test(1) {
   is $doc->input_encoding, 'shift_jis';
 } # _parse_byte_string_with_a_known_definite_encoding
 
+sub _parse_byte_string_with_a_known_definite_encoding_2 : Test(1) {
+local $TODO = 'XXX x-user-defined encoding not supported yet';
+return;
+  my $dom = Web::DOM::Implementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->known_definite_encoding ('x-user-defined');
+  $parser->parse_byte_string ('utf-8', "<!DOCTYPE html><meta charset=utf-16le>\x81\x40" => $doc);
+  is $doc->input_encoding, 'x-user-defined';
+  is $doc->inner_html, qq{\x{FE}\x40};
+} # _parse_byte_string_with_a_known_definite_encoding_2
+
 sub _parse_char_string_with_context_doc : Test(1) {
   my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
@@ -506,6 +518,21 @@ sub _parse_bytes_stream_change_encoding_by_main_parser : Test(3) {
   is $doc->input_encoding, 'shift_jis';
   is $doc->inner_html, qq(<html><head><meta charset="shift_jis"><link></head><body><p><q>\x{3000}</q></p></body></html>);
 } # _parse_bytes_stream_change_encoding_by_main_parser
+
+sub _parse_bytes_stream_change_encoding_by_main_parser_2 : Test(3) {
+  my $dom = Web::DOM::Implementation->new;
+  my $doc = $dom->create_document;
+  my $parser = Web::HTML::Parser->new;
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed ('<meta charset=', start_parsing => 1);
+  $parser->parse_bytes_feed ('"X-User-Defined"><link><p>');
+  $parser->parse_bytes_feed ("<q>\x80\x40</q>");
+  $parser->parse_bytes_end;
+  
+  ok $doc->manakai_is_html;
+  is $doc->input_encoding, 'windows-1252';
+  eq_or_diff $doc->inner_html, qq(<html><head><meta charset="X-User-Defined"><link></head><body><p><q>\x{20AC}\x40</q></p></body></html>);
+} # _parse_bytes_stream_change_encoding_by_main_parser_2
 
 sub _parse_bytes_stream_prescan_tag_like : Test(3) {
   my $dom = Web::DOM::Implementation->new;

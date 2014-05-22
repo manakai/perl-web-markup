@@ -328,10 +328,10 @@ sub _prescan_byte_stream ($$) {
           ($need_pragma and not $got_pragma)) {
         #
       } elsif (defined $charset) {
-        # 13.
-        $charset = 'utf-8' if $charset eq 'utf-16le' or $charset eq 'utf-16be';
+        # 13.-14.
+        $charset = Web::Encoding::fixup_html_meta_encoding_name $charset;
 
-        # 14.-15.
+        # 15.-16.
         return $charset if defined $charset;
       }
     } elsif ($_[1] =~ m{\G</?[A-Za-z][^\x09\x0A\x0C\x0D\x20>]*}gc) {
@@ -424,10 +424,10 @@ sub _change_encoding {
     return 0;
   }
 
-  ## Step 2. UTF-16
-  $name = 'utf-8' if $name eq 'utf-16le' or $name eq 'utf-16be';
+  ## Step 2.-3.
+  $name = Web::Encoding::fixup_html_meta_encoding_name $name;
   
-  ## Step 3. Same
+  ## Step 4. Same
   if ($name eq $self->{input_encoding}) {
     $self->{confident} = 1; # certain
     return 0;
@@ -439,15 +439,15 @@ sub _change_encoding {
                          level => $self->{level}->{warn},
                          token => $token);
 
-  ## Step 4. Change the encoding on the fly
+  ## Step 5. Change the encoding on the fly
   ## Not implemented.
 
-  ## Step 5. Navigate with replace.
+  ## Step 6. Navigate with replace.
   if ($self->{restart_parser}) {
     return $self->{restart_parser}->($name);
   }
 
-  ## Step 5. Can't restart
+  ## Step 6. If can't restart
   $self->{confident} = 1; # certain
   return 0;
 

@@ -1,7 +1,7 @@
 use strict;
 use warnings;
-use Path::Class;
-use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib');
+use Path::Tiny;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib');
 use Test::X1;
 use Test::More;
 use Web::HTML::InputStream;
@@ -33,6 +33,8 @@ for my $test (
   [q{<meta charset=us-ascii http-equiv=content-script-type>} => 'windows-1252'],
   [q{<meta content="text/html; charset=tis-620" charset=us-ascii http-equiv=content-script-type>} => 'windows-1252'],
   [q{<a b>} => undef],
+  [q{<meta charset=x-user-defined>} => q{windows-1252}],
+  [q{<meta http-equiv=Content-Type content="text/html;charset=X-User-Defined">} => q{windows-1252}],
 ) {
   test {
     my $c = shift;
@@ -48,7 +50,7 @@ run_tests;
 
 =head1 LICENSE
 
-Copyright 2013 Wakaba <wakaba@suikawiki.org>.
+Copyright 2013-2014 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '131.0';
+our $VERSION = '132.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
@@ -122,6 +122,7 @@ my $GetNestedOnError = sub ($$$;$) {
 ##   figure_table_count If the element is a |figure| element, the number
 ##                   of |table| child elements.
 ##   has_autofocus_original Used for autofocus="" scoping by |dialog|
+##   has_datetime    Whether there is a |datetime| attribute or not.
 ##   has_figcaption_content The element is a |figure| element and
 ##                   there is a |figcaption| child element whose content
 ##                   has elements and/or texts other than inter-element
@@ -511,6 +512,16 @@ $CheckerByType->{'non-empty text'} = sub {
   }
 }; # non-empty / non-empty text
 
+## One-line text
+$CheckerByType->{'one-line text'} = sub {
+  my ($self, $attr) = @_;
+  if ($attr->value =~ /[\x0D\x0A]/) {
+    $self->{onerror}->(node => $attr,
+                       type => 'newline in value',
+                       level => 'm');
+  }
+};
+
 ## Boolean attribute [HTML]
 $CheckerByType->{boolean} = sub {
   my ($self, $attr) = @_;
@@ -784,6 +795,16 @@ $CheckerByType->{'browsing context name or keyword'} = sub {
   }
 }; # browsing context name or keyword
 
+## Simple color [HTML]
+$CheckerByType->{'simple color'} = sub {
+  my ($self, $attr) = @_;
+  unless ($attr->value =~ /\A#[0-9A-Fa-f]{6}\z/) {
+    $self->{onerror}->(node => $attr,
+                       type => 'scolor:syntax error',
+                       level => 'm');
+  }
+};
+
 ## Legacy color value [OBSVOCAB]
 $CheckerByType->{'legacy color value'} = sub {
   my ($self, $attr) = @_;
@@ -942,7 +963,7 @@ $ItemValueChecker->{currency} = sub {
   }
 }; # currency
 
-# OGP locale
+## OGP locale
 $ItemValueChecker->{'OGP locale'} = sub {
   my ($self, $value, $node) = @_;
   if ($value =~ /\A[a-z]{2}_[A-Z]{2}\z/) {
@@ -962,7 +983,7 @@ $ItemValueChecker->{'OGP locale'} = sub {
   }
 }; # OGP locale
 
-# OGP country
+## OGP country
 $ItemValueChecker->{'OGP country'} = sub {
   my ($self, $value, $node) = @_;
   require Web::LangTag;
@@ -2609,7 +2630,7 @@ my $FAECheckAttrs2 = sub {
   } # CHK
 }; # $FAECheckAttrs2
 
-## -- Common attribute syntacx checkers
+## ---- XXX Common attribute syntacx checkers ----
 
 my $GetHTMLEnumeratedAttrChecker = sub {
   my $states = shift; # {value => conforming ? 1 : -1}
@@ -2764,32 +2785,6 @@ my $HTMLLinkTypesAttrChecker = sub {
   $self->{flag}->{node_is_hyperlink}->{refaddr $item->{node}} = $item->{node}
       if $is_hyperlink;
 }; # $HTMLLinkTypesAttrChecker
-
-## Valid global date and time.
-my $GetDateTimeAttrChecker = sub ($) {
-  my $type = shift;
-  return sub {
-    my ($self, $attr, $item, $element_state) = @_;
-    
-    my $range_error;
-    
-    require Web::DateTime;
-    my $dp = Web::DateTime->new;
-    $dp->onerror (sub {
-      my %opt = @_;
-      unless ($opt{type} eq 'date value not supported') {
-        $self->{onerror}->(%opt, node => $attr);
-        $range_error = '';
-      }
-    });
-    
-    my $method = 'parse_' . $type;
-    my $d = $dp->$method ($attr->value);
-    $element_state->{date_value}->{$attr->name} = $d || $range_error;
-  };
-}; # $GetDateTimeAttrChecker
-
-# XXX $ItemValueChecker->{'OGP DateTime'}
 
 my $GetHTMLNonNegativeIntegerAttrChecker = sub {
   my $range_check = shift;
@@ -3528,68 +3523,6 @@ my %AtomTextConstruct = (
   },
 ); # %AtomTextConstruct
 
-## MUST NOT be any white space
-my %AtomDateConstruct = (
-  %AnyChecker,
-
-  ## NOTE: It does not explicitly say that there MUST NOT be any element.
-
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $element_state->{value} = '';
-  },
-  check_child_text => sub {
-    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
-    $element_state->{value} .= $child_node->data;
-  },
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-
-    # XXX Move to Web::DateTime
-
-    ## MUST: RFC 3339 |date-time| with uppercase |T| and |Z|
-    if ($element_state->{value} =~ /\A([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})(?>\.[0-9]+)?(?>Z|[+-]([0-9]{2}):([0-9]{2}))\z/) {
-      my ($y, $M, $d, $h, $m, $s, $zh, $zm)
-          = ($1, $2, $3, $4, $5, $6, $7 || 0, $8 || 0);
-      my $node = $item->{node};
-
-      ## Check additional constraints described or referenced in
-      ## comments of ABNF rules for |date-time|.
-      if (0 < $M and $M < 13) {      
-        $self->{onerror}->(node => $node, type => 'datetime:bad day',
-                           level => 'm')
-            if $d < 1 or
-                $d > [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]->[$M];
-        $self->{onerror}->(node => $node, type => 'datetime:bad day',
-                           level => 'm')
-            if $M == 2 and $d == 29 and
-                not ($y % 400 == 0 or ($y % 4 == 0 and $y % 100 != 0));
-      } else {
-        $self->{onerror}->(node => $node, type => 'datetime:bad month',
-                           level => 'm');
-      }
-      $self->{onerror}->(node => $node, type => 'datetime:bad hour',
-                         level => 'm') if $h > 23;
-      $self->{onerror}->(node => $node, type => 'datetime:bad minute',
-                         level => 'm') if $m > 59;
-      $self->{onerror}->(node => $node, type => 'datetime:bad second',
-                         level => 'm')
-          if $s > 60; ## NOTE: Validness of leap seconds are not checked.
-      $self->{onerror}->(node => $node, type => 'datetime:bad timezone hour',
-                         level => 'm') if $zh > 23;
-      $self->{onerror}->(node => $node, type => 'datetime:bad timezone minute',
-                         level => 'm') if $zm > 59;
-    } else {
-      $self->{onerror}->(node => $item->{node},
-                         type => 'datetime:syntax error',
-                         level => 'm');
-    }
-    ## NOTE: SHOULD be accurate as possible (cannot be checked)
-
-    $AnyChecker{check_end}->(@_);
-  },
-); # %AtomDateConstruct
-
 for my $ns (keys %{$_Defs->{elements}}) {
   for my $ln (keys %{$_Defs->{elements}->{$ns}}) {
     my $cm = $_Defs->{elements}->{$ns}->{$ln}->{content_model} or next;
@@ -3611,9 +3544,6 @@ for my $ns (keys %{$_Defs->{elements}}) {
           = $AtomTextConstruct{$_} for keys %AtomTextConstruct;
       $ElementAttrChecker->{$ns}->{$ln}->{''}->{type}
           = $AtomTextConstructTypeAttrChecker;
-    } elsif ($cm eq 'atomDateConstruct' or $cm eq 'atom03DateConstruct') {
-      $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
-          = $AtomDateConstruct{$_} for keys %AtomDateConstruct;
     } elsif ($cm eq 'atomPersonConstruct' or $cm eq 'atom03PersonConstruct') {
       $Element->{$ns}->{$ln eq '*' ? '' : $ln}->{$_}
           = $PropContainerChecker{$_} for keys %PropContainerChecker;
@@ -3624,7 +3554,163 @@ for my $ns (keys %{$_Defs->{elements}}) {
   }
 }
 
-# ---- The root element ----
+## ---- Date and time ----
+{
+  my $attr_checker = sub ($) {
+    my $type = shift;
+    return sub {
+      my ($self, $attr, $item, $element_state) = @_;
+      
+      require Web::DateTime::Parser;
+      my $dp = Web::DateTime::Parser->new;
+      $dp->onerror (sub {
+        my %opt = @_;
+        $self->{onerror}->(%opt, node => $attr);
+      });
+      
+      my $method = 'parse_' . $type;
+      my $obj = $dp->$method ($attr->value);
+      $element_state->{date_value}->{$attr->name} = $obj;
+    };
+  }; # $attr_checker
+  my $value_checker = sub ($) {
+    my $type = shift;
+    return sub {
+      my ($self, $value, $node) = @_;
+      
+      require Web::DateTime::Parser;
+      my $dp = Web::DateTime::Parser->new;
+      $dp->onerror (sub {
+        my %opt = @_;
+        $self->{onerror}->(%opt, node => $node);
+      });
+      
+      my $method = 'parse_' . $type;
+      $dp->$method ($value);
+    };
+  }; # $value_checker
+  my $text_checker = sub {
+    my $type = shift;
+    return sub {
+      my ($self, $value, $onerror) = @_;
+      
+      require Web::DateTime::Parser;
+      my $dp = Web::DateTime::Parser->new;
+      $dp->onerror ($onerror);
+      
+      my $method = 'parse_' . $type;
+      $dp->$method ($value);
+    };
+  }; # $text_checker
+
+  $CheckerByType->{'global date and time string'}
+      = $attr_checker->('global_date_and_time_string');
+  $ItemValueChecker->{'global date and time string'}
+      = $value_checker->('global_date_and_time_string');
+
+  $CheckerByType->{'local date and time string'}
+      = $attr_checker->('local_date_and_time_string');
+
+  $CheckerByType->{'date string'} = $attr_checker->('date_string');
+  $ItemValueChecker->{'date string'} = $value_checker->('date_string');
+
+  $CheckerByType->{'month string'} = $attr_checker->('month_string');
+  $CheckerByType->{'week string'} = $attr_checker->('week_string');
+  $CheckerByType->{'time string'} = $attr_checker->('time_string');
+
+  $CheckerByType->{'date string with optional time'}
+      = $attr_checker->('date_string_with_optional_time');
+  $ItemValueChecker->{'date string with optional time'}
+      = $value_checker->('date_string_with_optional_time');
+
+  $ItemValueChecker->{'vcard tz'}
+      = $value_checker->('vcard_time_zone_offset_string');
+  $ItemValueChecker->{'vevent duration'} =
+      $value_checker->('vevent_duration_string');
+  $ItemValueChecker->{'vevent rdate'} =
+      $value_checker->('date_string_with_optional_time_and_duration');
+  $ItemValueChecker->{'ISO 8601 date'} =
+      $value_checker->('iso8601_date_string');
+  $ItemValueChecker->{'ISO 8601 duration'} =
+      $value_checker->('iso8601_duration_string');
+  $ItemValueChecker->{'schema.org date'} =
+      $value_checker->('iso8601_date_string');
+  $ItemValueChecker->{'schema.org datetime'} =
+      $value_checker->('schema_org_date_time_string');
+  $ItemValueChecker->{'schema.org duration'} =
+      $value_checker->('iso8601_duration_string');
+  $ItemValueChecker->{'schema.org time'} =
+      $value_checker->('xs_time_string');
+  $ItemValueChecker->{'weekly time range'} =
+      $value_checker->('weekly_time_range_string');
+  $ItemValueChecker->{'OGP DateTime'} =
+      $value_checker->('ogp_date_time_string');
+
+  $CheckerByType->{'atomDateConstruct'} =
+      $attr_checker->('rfc3339_xs_date_time_string');
+  $ElementTextCheckerByType->{'atomDateConstruct'} =
+      $text_checker->('rfc3339_xs_date_time_string');
+
+  $ElementTextCheckerByType->{'atom03DateConstruct'} =
+      $text_checker->('w3c_dtf_string');
+
+  ## <time>
+  $ElementAttrChecker->{(HTML_NS)}->{time}->{''}->{datetime} = sub { };
+  $Element->{+HTML_NS}->{time}->{check_start} = sub {
+    my ($self, $item, $element_state) = @_;
+    if ($item->{node}->has_attribute_ns (undef, 'datetime')) {
+      $element_state->{has_datetime} = 1;
+      $HTMLPhrasingContentChecker{check_start}->(@_);
+    } else {
+      $HTMLTextChecker{check_start}->(@_);
+    }
+  }; # check_start
+  $Element->{+HTML_NS}->{time}->{check_child_element} = sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if ($element_state->{has_datetime}) {
+      $HTMLPhrasingContentChecker{check_child_element}->(@_);
+    } else {
+      $HTMLTextChecker{check_child_element}->(@_);
+    }
+  }; # check_child_element
+  $Element->{+HTML_NS}->{time}->{check_child_text} = sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($element_state->{has_datetime}) {
+      $HTMLPhrasingContentChecker{check_child_text}->(@_);
+    } else {
+      $HTMLTextChecker{check_child_text}->(@_);
+    }
+  }; # check_child_text
+  $Element->{+HTML_NS}->{time}->{check_end} = sub {
+    my ($self, $item, $element_state) = @_;
+
+    my $node;
+    my $value;
+    if ($element_state->{has_datetime}) {
+      $node = $item->{node}->get_attribute_node_ns (undef, 'datetime');
+      $value = $node->value;
+    } else {
+      $node = $item->{node};
+      $value = $node->text_content;
+    }
+
+    require Web::DateTime::Parser;
+    my $dp = Web::DateTime::Parser->new;
+    $dp->onerror (sub {
+      $self->{onerror}->(@_, node => $node);
+    });
+    $dp->parse_html_datetime_value ($value);
+
+    if ($element_state->{has_datetime}) {
+      $HTMLPhrasingContentChecker{check_end}->(@_);
+    } else {
+      $HTMLTextChecker{check_end}->(@_);
+    }
+  }; # check_end
+}
+
+## ---- The root element ----
 
 $Element->{+HTML_NS}->{html} = {
   %AnyChecker,
@@ -5017,187 +5103,6 @@ $Element->{+HTML_NS}->{dfn} = {
 ## by machine, it requires language-specific knowledge and dictionary,
 ## such that we don't support the check of the requirement.
 
-# XXX content model need to be updated
-$Element->{+HTML_NS}->{time} = {
-  %HTMLPhrasingContentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    datetime => sub { 1 }, # checked in |checker|
-  }), # check_attrs
-  check_start => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_add_minus_elements ($element_state, {(HTML_NS) => {time => 1}}); # XXX
-
-    $HTMLPhrasingContentChecker{check_start}->(@_);
-  }, # check_start
-  check_end => sub {
-    my ($self, $item, $element_state) = @_;
-    $self->_remove_minus_elements ($element_state);
-
-    ## XXX Maybe we should move this code out somewhere (maybe
-    ## Message::Date) such that we can reuse this code in other places
-    ## (e.g. HTMLTimeElement implementation).
-
-    ## "Vaguer moments in time" or "valid date or time string".
-    my $attr = $item->{node}->get_attribute_node_ns (undef, 'datetime');
-    my $input;
-    my $reg_sp;
-    my $input_node;
-    if ($attr) {
-      $input = $attr->value;
-      $reg_sp = qr/[\x09\x0A\x0C\x0D\x20]/;
-      $input_node = $attr;
-    } else {
-      $input = $item->{node}->text_content;
-      $reg_sp = qr/\p{WhiteSpace}/;
-      $input_node = $item->{node};
-    }
-
-    # XXX Update error descriptions
-    my $hour;
-    my $minute;
-    my $second;
-    if ($input =~ /
-      \A
-      $reg_sp*
-      ([0-9]+) # 1
-      (?>
-        -([0-9]+) # 2
-        -((?>[0-9]+)) # 3 # Use (?>) such that yyyy-mm-ddhh:mm does not match
-        $reg_sp*
-        (?>
-          (?>
-            T
-            $reg_sp*
-          )?
-          ([0-9]+) # 4
-          :([0-9]+) # 5
-          (?>
-            :([0-9]+(?>\.[0-9]+)?) # 6
-          )?
-          $reg_sp*
-          (?>
-            Z
-            $reg_sp*
-          |
-            ([+-])([0-9]+):([0-9]+) # 7, 8, 9
-            $reg_sp*
-          )?
-        )?
-        \z
-      |
-        :([0-9]+) # 10
-        (?:
-          :([0-9]+(?>\.[0-9]+)?) # 11
-        )?
-        $reg_sp*
-        \z
-      )
-    /x) {
-      my $has_syntax_error;
-      if (defined $2) { ## YYYY-MM-DD T? hh:mm
-        if (length $1 != 4 or length $2 != 2 or length $3 != 2 or
-            (defined $4 and length $4 != 2) or
-            (defined $5 and length $5 != 2)) {
-          $self->{onerror}->(node => $input_node,
-                             type => 'dateortime:syntax error',
-                             level => 'm');
-          $has_syntax_error = 1;
-        }
-
-        if (1 <= $2 and $2 <= 12) {
-          $self->{onerror}->(node => $input_node, type => 'datetime:bad day',
-                             level => 'm')
-              if $3 < 1 or
-                  $3 > [0, 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]->[$2];
-          $self->{onerror}->(node => $input_node, type => 'datetime:bad day',
-                             level => 'm')
-              if $2 == 2 and $3 == 29 and
-                  not ($1 % 400 == 0 or ($1 % 4 == 0 and $1 % 100 != 0));
-        } else {
-          $self->{onerror}->(node => $input_node,
-                             type => 'datetime:bad month',
-                             level => 'm');
-        }
-        $self->{onerror}->(node => $input_node,
-                           type => 'datetime:bad year',
-                           level => 'm')
-          if $1 == 0;
-
-        ($hour, $minute, $second) = ($4, $5, $6);
-          
-        if (defined $8) { ## [+-]hh:mm
-          if (length $8 != 2 or length $9 != 2) {
-            $self->{onerror}->(node => $input_node,
-                               type => 'dateortime:syntax error',
-                               level => 'm');
-            $has_syntax_error = 1;
-          }
-
-          $self->{onerror}->(node => $input_node,
-                             type => 'datetime:bad timezone hour',
-                             level => 'm')
-              if $8 > 23;
-          $self->{onerror}->(node => $input_node,
-                             type => 'datetime:bad timezone minute',
-                             level => 'm')
-              if $9 > 59;
-          if ($7 eq '-' and $8 == 0 and $9 == 0) {
-            $self->{onerror}->(node => $input_node,
-                               type => 'datetime:-00:00', # XXXtype
-                               level => 'm'); # don't return
-          }
-        }
-      } else { ## hh:mm
-        if (length $1 != 2 or length $10 != 2) {
-          $self->{onerror}->(node => $input_node,
-                             type => qq'dateortime:syntax error',
-                             level => 'm');
-          $has_syntax_error = 1;
-        }
-
-        ($hour, $minute, $second) = ($1, $10, $11);
-      }
-
-      $self->{onerror}->(node => $input_node, type => 'datetime:bad hour',
-                         level => 'm')
-          if defined $hour and $hour > 23;
-      $self->{onerror}->(node => $input_node, type => 'datetime:bad minute',
-                         level => 'm')
-          if defined $minute and $minute > 59;
-
-      if (defined $second) { ## s
-        ## NOTE: Integer part of second don't have to have length of two.
-          
-        if (substr ($second, 0, 1) eq '.') {
-          $self->{onerror}->(node => $input_node,
-                             type => 'dateortime:syntax error',
-                             level => 'm');
-          $has_syntax_error = 1;
-        }
-          
-        $self->{onerror}->(node => $input_node, type => 'datetime:bad second',
-                           level => 'm') if $second >= 60;
-      }
-
-      unless ($has_syntax_error) {
-        $input =~ s/\A$reg_sp+//;
-        $input =~ s/$reg_sp+\z//;
-        if ($input =~ /$reg_sp+/) {
-          $self->{onerror}->(node => $input_node,
-                             type => 'dateortime:syntax error',
-                             level => 'm');
-        }
-      }
-    } else {
-      $self->{onerror}->(node => $input_node,
-                         type => 'dateortime:syntax error',
-                         level => 'm');
-    }
-
-    $HTMLPhrasingContentChecker{check_end}->(@_);
-  }, # check_end
-}; # time
-
 $Element->{+HTML_NS}->{$_}->{check_end} = sub {
   my ($self, $item, $element_state) = @_;
   my $el = $item->{node}; # <i> or <b>
@@ -5467,22 +5372,16 @@ $Element->{+HTML_NS}->{bdo}->{check_attrs2} = sub {
   }
 }; # check_attrs2
 
-# ---- Edits ----
+## ---- Edits ----
 
 # XXX "paragraph" vs ins/del
 
 $Element->{+HTML_NS}->{ins} = {
   %TransparentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    datetime => $GetDateTimeAttrChecker->('date_string_with_optional_time'),
-  }), # check_attrs
 }; # ins
 
 $Element->{+HTML_NS}->{del} = {
   %TransparentChecker,
-  check_attrs => $GetHTMLAttrsChecker->({
-    datetime => $GetDateTimeAttrChecker->('date_string_with_optional_time'),
-  }), # check_attrs
   check_end => sub {
     my ($self, $item, $element_state) = @_;
     # "in_phrasing" don't have to be restored here, because of the
@@ -5492,7 +5391,7 @@ $Element->{+HTML_NS}->{del} = {
   }, # check_end
 }; # del
 
-# ---- Embedded content ----
+## ---- Embedded content ----
 
 $Element->{+HTML_NS}->{figure} = {
   %HTMLFlowContentChecker,
@@ -6819,30 +6718,6 @@ $Element->{+HTML_NS}->{label} = {
   },
 }; # label
 
-# XXX
-$CheckerByType->{'global date and time string'} = $GetDateTimeAttrChecker->('global_date_and_time_string');
-$CheckerByType->{'date string'} = $GetDateTimeAttrChecker->('date_string');
-$CheckerByType->{'month string'} = $GetDateTimeAttrChecker->('month_string');
-$CheckerByType->{'week string'} = $GetDateTimeAttrChecker->('week_string');
-$CheckerByType->{'time string'} = $GetDateTimeAttrChecker->('time_string');
-$CheckerByType->{'local date and time string'} = $GetDateTimeAttrChecker->('local_date_and_time_string');
-$CheckerByType->{'simple color'} = sub {
-  my ($self, $attr) = @_;
-  unless ($attr->value =~ /\A#[0-9A-Fa-f]{6}\z/) {
-    $self->{onerror}->(node => $attr,
-                       type => 'scolor:syntax error',
-                       level => 'm');
-  }
-};
-$CheckerByType->{'one-line text'} = sub {
-  my ($self, $attr) = @_;
-  if ($attr->value =~ /[\x0D\x0A]/) {
-    $self->{onerror}->(node => $attr,
-                       type => 'newline in value',
-                       level => 'm');
-  }
-};
-
 $Element->{+HTML_NS}->{input} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -7031,34 +6906,6 @@ $Element->{+HTML_NS}->{input} = {
       my $min_value = $element_state->{date_value}->{min};
       my $max_value = $element_state->{date_value}->{max};
       my $value_value = $element_state->{date_value}->{value};
-
-      if (defined $min_value and $min_value eq '' and
-          (defined $max_value or defined $value_value)) {
-        my $min = $item->{node}->get_attribute_node_ns (undef, 'min');
-        $self->{onerror}->(node => $min,
-                           type => 'date value not supported', ## TODOC: type
-                           value => $min->value,
-                           level => 'u');
-        undef $min_value;
-      }
-      if (defined $max_value and $max_value eq '' and
-          (defined $max_value or defined $value_value)) {
-        my $max = $item->{node}->get_attribute_node_ns (undef, 'max');
-        $self->{onerror}->(node => $max,
-                           type => 'date value not supported', ## TODOC: type
-                           value => $max->value,
-                           level => 'u');
-        undef $max_value;
-      }
-      if (defined $value_value and $value_value eq '' and
-          (defined $max_value or defined $min_value)) {
-        my $value = $item->{node}->get_attribute_node_ns (undef, 'value');
-        $self->{onerror}->(node => $value,
-                           type => 'date value not supported', ## TODOC: type
-                           value => $value->value,
-                           level => 'u');
-        undef $value_value;
-      }
 
       if (defined $min_value and defined $max_value) {
         if ($min_value->to_html_number > $max_value->to_html_number) {
@@ -8459,15 +8306,7 @@ sub _validate_microdata_item ($$;$) {
 #    vcard telephone number
 #    vcard sex
 #    vcard geo
-#    vevent duration
-#    vevent rdate
-#    date string
-#    global date and time string
-#    global or local date and time string
-#    date string or global date and time string
 #    icalendar recur
-#    time string
-#    vcard tz
 
 ## ------ SVG ------
 
@@ -9147,10 +8986,6 @@ $Element->{(AT_NS)}->{'deleted-entry'} = {
     $PropContainerChecker{check_end}->(@_);
   }, # check_end
 }; # <at:deleted-entry>
-
-$ElementAttrChecker->{(AT_NS)}->{'deleted-entry'}->{''}->{when} = sub {
-# XXX
-};
 
 ## ------ Nested document ------
 
