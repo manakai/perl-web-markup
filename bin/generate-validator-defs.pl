@@ -28,33 +28,42 @@ my $data = {
 
 for my $ns (keys %{$data->{elements}}) {
   for my $ln (keys %{$data->{elements}->{$ns}}) {
-    delete $data->{elements}->{$ns}->{$ln}->{spec};
-    delete $data->{elements}->{$ns}->{$ln}->{id};
-    delete $data->{elements}->{$ns}->{$ln}->{desc};
-    delete $data->{elements}->{$ns}->{$ln}->{start_tag};
-    delete $data->{elements}->{$ns}->{$ln}->{end_tag};
-    delete $data->{elements}->{$ns}->{$ln}->{interface};
-    delete $data->{elements}->{$ns}->{$ln}->{auto_br};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_category};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_scoping};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_li_scoping};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_button_scoping};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_table_scoping};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_table_body_scoping};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_table_row_scoping};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_select_non_scoping};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_implied_end_tag};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_implied_end_tag_at_eof};
-    delete $data->{elements}->{$ns}->{$ln}->{parser_implied_end_tag_at_body};
-    delete $data->{elements}->{$ns}->{$ln}->{syntax_category};
-    delete $data->{elements}->{$ns}->{$ln}->{first_newline_ignored};
-    delete $data->{elements}->{$ns}->{$ln}->{lang_sensitive};
-    for my $ns2 (keys %{$data->{elements}->{$ns}->{$ln}->{attrs}}) {
-      for my $ln2 (keys %{$data->{elements}->{$ns}->{$ln}->{attrs}->{$ns2}}) {
-        delete $data->{elements}->{$ns}->{$ln}->{attrs}->{$ns2}->{$ln2}->{spec};
-        delete $data->{elements}->{$ns}->{$ln}->{attrs}->{$ns2}->{$ln2}->{id};
-        delete $data->{elements}->{$ns}->{$ln}->{attrs}->{$ns2}->{$ln2}->{desc};
-        delete $data->{elements}->{$ns}->{$ln}->{attrs}->{$ns2}->{$ln2}->{lang_sensitive};
+    my $def = $data->{elements}->{$ns}->{$ln};
+    delete $def->{spec};
+    delete $def->{id};
+    delete $def->{desc};
+    delete $def->{start_tag};
+    delete $def->{end_tag};
+    delete $def->{interface};
+    delete $def->{auto_br};
+    delete $def->{parser_category};
+    delete $def->{parser_scoping};
+    delete $def->{parser_li_scoping};
+    delete $def->{parser_button_scoping};
+    delete $def->{parser_table_scoping};
+    delete $def->{parser_table_body_scoping};
+    delete $def->{parser_table_row_scoping};
+    delete $def->{parser_select_non_scoping};
+    delete $def->{parser_implied_end_tag};
+    delete $def->{parser_implied_end_tag_at_eof};
+    delete $def->{parser_implied_end_tag_at_body};
+    delete $def->{syntax_category};
+    delete $def->{first_newline_ignored};
+    delete $def->{lang_sensitive};
+    for my $ns2 (keys %{$def->{attrs}}) {
+      for my $ln2 (keys %{$def->{attrs}->{$ns2}}) {
+        delete $def->{attrs}->{$ns2}->{$ln2}->{spec};
+        delete $def->{attrs}->{$ns2}->{$ln2}->{id};
+        delete $def->{attrs}->{$ns2}->{$ln2}->{desc};
+        delete $def->{attrs}->{$ns2}->{$ln2}->{lang_sensitive};
+      }
+    }
+
+    if (defined $def->{content_model}) {
+      if ($def->{content_model} eq 'atomDateConstruct' or
+          $def->{content_model} eq 'atom03DateConstruct') {
+        $def->{text_type} = $def->{content_model};
+        $def->{content_model} = 'text';
       }
     }
   }
@@ -62,12 +71,23 @@ for my $ns (keys %{$data->{elements}}) {
 delete $data->{input}->{idl_attrs};
 delete $data->{input}->{methods};
 delete $data->{input}->{events};
+
 for my $type (keys %{$data->{md}}) {
+  delete $data->{md}->{$type}->{spec};
+  delete $data->{md}->{$type}->{id};
+  delete $data->{md}->{$type}->{desc};
+  for my $prop (keys %{$data->{md}->{$type}->{props}}) {
+    delete $data->{md}->{$type}->{props}->{$prop}->{spec};
+    delete $data->{md}->{$type}->{props}->{$prop}->{id};
+    delete $data->{md}->{$type}->{props}->{$prop}->{desc};
+  }
+
   next unless $data->{md}->{$type}->{vocab} eq "http://schema.org/";
   for my $prop (keys %{$data->{md}->{$type}->{props} or {}}) {
     $data->{schemaorg_props}->{$prop} = {};
   }
 }
+
 for my $role (keys %{$data->{roles}}) {
   for (keys %{$data->{roles}->{$role}->{scope} or {}}) {
     $data->{roles}->{$_}->{scope_of}->{$role} = 1;

@@ -305,13 +305,8 @@ CSS Syntax
 
 Schema.org <http://schema.org/>.
 
-Definitions are clarified as follows: An item value whose data type is
-<http://schema.org/Integer> MUST be a valid integer.  An item value
-whose data type is <http://schema.org/DateTime> MUST be a valid global
-date and time string or a valid local date and time string.  An item
-value whose data type is <http://schema.org/Date> MUST be a valid date
-string.  An item value whose data type is <http://schema.org/Time>
-MUST be a valid time string.  An item value whose data type is
+An item value whose data type is <http://schema.org/Integer> MUST be a
+valid integer.  An item value whose data type is
 <http://schema.org/URL> MUST be an absolute URL.
 
 =item DATAVOCAB
@@ -321,11 +316,8 @@ data-vocabulary.org <http://www.data-vocabulary.org/>.
 Structured data
 <https://support.google.com/webmasters/topic/2643152?ref_topic=30163>.
 
-Definitions are clarified as follows: If the value is defined as an
-"ISO date", it MUST be a valid date string or a valid global date and
-time string.  If the value is defined as an "ISO duration", it MUST be
-a valid vevent duration string.  If the value is defined as a URL,
-image, or link, it MUST be an absolute URL.
+If the value is defined as a URL, image, or link, it MUST be an
+absolute URL.
 
 =item ARIA
 
