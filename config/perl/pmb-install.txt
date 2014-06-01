@@ -5,7 +5,7 @@ Test::NoWarnings~1.04
 Regexp::Parser~0.21
 Unicode::Normalize~1.18
 Time::Zone~2.24
-Encode~2.60
+Encode~2.62
 Test::Builder~1.001003
 Sub::Uplevel~0.24
 Algorithm::Diff~1.1902
