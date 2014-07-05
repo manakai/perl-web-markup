@@ -41,10 +41,10 @@ pmbp-install: pmbp-upgrade
 
 ## ------ Build ------
 
-GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm \
-    lib/Web/HTML/_Tokenizer.pm
+GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm
 
-generated-pm-files: $(GENERATED_PM_FILES)
+generated-pm-files: $(GENERATED_PM_FILES) \
+    lib/Web/HTML/_Tokenizer.pm
 
 $(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl local/bin/pmbp.pl
 	perl local/bin/pmbp.pl --create-perl-command-shortcut perl

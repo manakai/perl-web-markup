@@ -124,29 +124,24 @@ for my $file_name (grep {$_} split /\s+/, qq[
         my $i = 0;
         my @token;
 
-        #$p->{parse_error} = sub {
-        #  my %args = @_;
-        #  warn $args{type}, "\n" if $DEBUG;
-        #  push @token, 'ParseError';
-        #};
         $p->{insertion_mode} = Web::HTML::Parser::BEFORE_HEAD_IM (); # dummy
 
         $p->_initialize_tokenizer;
 
         $p->{state} = {
-          CDATA => Web::HTML::Defs::RAWTEXT_STATE (),
-          'RAWTEXT state' => Web::HTML::Defs::RAWTEXT_STATE (),
-          RCDATA => Web::HTML::Defs::RCDATA_STATE (),
-          'RCDATA state' => Web::HTML::Defs::RCDATA_STATE (),
-          PCDATA => Web::HTML::Defs::DATA_STATE (),
-          SCRIPT => Web::HTML::Defs::SCRIPT_DATA_STATE (),
-          PLAINTEXT => Web::HTML::Defs::PLAINTEXT_STATE (),
+          CDATA => 'RAWTEXT state',
+          'RAWTEXT state' => 'RAWTEXT state',
+          RCDATA => 'RCDATA state',
+          'RCDATA state' => 'RCDATA state',
+          PCDATA => 'data state',
+          SCRIPT => 'script data state',
+          PLAINTEXT => 'plaintext state',
         }->{$cm};
         if (defined $last_start_tag) {
           $p->{state} ||= {
-            textarea => Web::HTML::Defs::RCDATA_STATE (),
-            xmp => Web::HTML::Defs::RAWTEXT_STATE (),
-            plaintext => Web::HTML::Defs::PLAINTEXT_STATE (),
+            textarea => 'RCDATA state',
+            xmp => 'RAWTEXT state',
+            plaintext => 'plaintext state',
           }->{$last_start_tag};
           $p->{last_stag_name} = $last_start_tag;
         }

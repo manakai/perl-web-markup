@@ -93,7 +93,7 @@ sub serialize_actions ($) {
              $type eq 'append-to-attr' or
              $type eq 'append-to-temp') {
       my $field = $_->{field};
-      $field =~ s/ -/__/g if defined $field;
+      $field =~ tr/ -/__/ if defined $field;
       die if defined $field and $field eq 'type';
       my $value;
       my $index = $_->{capture_index} || 1;
@@ -122,28 +122,47 @@ sub serialize_actions ($) {
       }
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
-      $field =~ s/ -/__/g if defined $field;
+      $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = '';], $field;
     } elsif ($type eq 'set-empty-to-attr') {
       my $field = $_->{field};
-      $field =~ s/ -/__/g if defined $field;
+      $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
     } elsif ($type eq 'set-empty-to-temp') {
       push @result, q[$Temp = '';];
     } elsif ($type eq 'append-temp') {
       my $field = $_->{field};
-      $field =~ s/ -/__/g if defined $field;
+      $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Token->{q<%s>} .= $Temp;], $field;
     } elsif ($type eq 'append-temp-to-attr') {
       my $field = $_->{field};
-      $field =~ s/ -/__/g if defined $field;
+      $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Attr->{q<%s>} .= $Temp;], $field;
     } elsif ($type eq 'set-flag') {
       my $field = $_->{field};
-      $field =~ s/ -/__/g if defined $field;
+      $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
-    } elsif ($type =~ /^process-temp-as-/) {
-      push @result, sprintf q[# XXX %s], $type;
+    } elsif ($type eq 'process-temp-as-decimal') {
+      push @result, sprintf q[$Temp =~ s/\A&#0*([0-9]+)\z/chr $1/e;];
+      # XXX parse errors
+    } elsif ($type eq 'process-temp-as-hexadecimal') {
+      push @result, sprintf q[warn $Temp; $Temp =~ s/\A&#[Xx]0*([0-9A-Fa-f]+)\z/chr hex $1/e;];
+      # XXX parse errors
+    } elsif ($type eq 'process-temp-as-named' or
+             $type eq 'process-temp-as-named-equals') {
+      push @result, q{
+        for (reverse (2 .. length $Temp)) {
+          my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+          if (defined $value) {
+            unless (';' eq substr $Temp, $_-1, 1) {
+              $Emit->({type => 'error', error => {type => 'no refc', index => pos $Input}}); # XXXindex
+            }
+            substr ($Temp, 0, $_) = $value;
+            last;
+          }
+        }
+      };
+      # XXX parse error
     } else {
       die "Bad action type |$type|";
     }
@@ -175,7 +194,6 @@ our $Token;
 our $Attr;
 our $Temp;
 our $LastStartTagName;
-our $OriginalState;
 my $StateActions = {};
 our $EOF;
 our $Offset;
@@ -338,12 +356,11 @@ $case .= q[
     sub parse_char_string {
       my ($self, $in) = @_;
 
-local $State = 'data state';
+local $State = $self->{state} || 'data state';
 local $Token = $self->{token};
 local $Attr = $self->{attr};
 local $Temp = $self->{temp};
 local $LastStartTagName = $self->{last_start_tag_name};
-local $OriginalState = $self->{original_state};
 local $Emit = sub { $self->_emit (@_) };
 local $EOF = 0;
 local $Offset = 0;
@@ -376,7 +393,6 @@ $self->{token} = $Token;
 $self->{attr} = $Attr;
 $self->{temp} = $Temp;
 $self->{last_start_tag_name} = $LastStartTagName;
-$self->{original_state} = $OriginalState;
 $self->{eof} = $EOF;
 $self->{offset} = $Offset;
 undef $Emit;
