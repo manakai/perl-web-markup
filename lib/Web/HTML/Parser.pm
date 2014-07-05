@@ -7,8 +7,8 @@ our $VERSION = '6.0';
 use Encode;
 use Web::HTML::Defs;
 use Web::HTML::_SyntaxDefs;
-use Web::HTML::Tokenizer;
-push our @ISA, qw(Web::HTML::Tokenizer);
+use Web::HTML::_Tokenizer;
+push our @ISA, qw(Web::HTML::_Tokenizer);
 
 
 
@@ -441,12 +441,35 @@ sub parse_char_string ($$$) {
 
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
+  $self->{tokens} = [];
+  $self->SUPER::parse_char_string ($_[1]);
   $self->{t} = $self->_get_next_token;
   $self->_construct_tree;
   $self->_on_terminate;
 
   return {};
 } # parse_char_string
+
+sub _emit ($$) {
+  push @{$_[0]->{tokens}}, $_[1];
+} # _emit
+
+sub _get_next_token ($) {
+  while (($_[0]->{tokens}->[0] or {type => ''})->{type} eq 'error') {
+    my $error = shift @{$_[0]->{tokens}};
+    $_[0]->{parse_error}->(%{$error->{error}});
+  }
+
+  my $token = shift @{$_[0]->{tokens}};
+  if (not defined $token) {
+    return {type => ABORT_TOKEN};
+  } elsif ($token->{type} == END_OF_FILE_TOKEN) {
+    unshift @{$_[0]->{tokens}}, $token;
+    return $token;
+  } else {
+    return $token;
+  }
+} # _get_next_token
 
 ## ------ Stream parse API (experimental) ------
 
@@ -1960,10 +1983,10 @@ sub _construct_tree ($) {
         
         redo B;
       } elsif ($self->{t}->{type} == CHARACTER_TOKEN) {
-        if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+        if ($self->{t}->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           ## Ignore the token
           
-          unless (length $self->{t}->{data}) {
+          unless (length $self->{t}->{value}) {
             
             ## Stay in the insertion mode.
             $self->{t} = $self->_get_next_token;
@@ -1988,7 +2011,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         
         my $comment = $self->{document}->create_comment
-            ($self->{t}->{data});
+            ($self->{t}->{value});
         $self->{document}->append_child ($comment);
         
         ## Stay in the insertion mode.
@@ -2007,15 +2030,15 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         
         my $comment = $self->{document}->create_comment
-            ($self->{t}->{data});
+            ($self->{t}->{value});
         $self->{document}->append_child ($comment);
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{type} == CHARACTER_TOKEN) {
-        if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+        if ($self->{t}->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           ## Ignore the token.
           
-          unless (length $self->{t}->{data}) {
+          unless (length $self->{t}->{value}) {
             
             $self->{t} = $self->_get_next_token;
             redo B;
@@ -2142,8 +2165,8 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         ## "In foreign content", character tokens.
         delete $self->{frameset_ok}
-            if $self->{t}->{data} =~ /[^\x00\x09\x0A\x0C\x0D\x20]/;
-        while ($self->{t}->{data} =~ s/\x00/\x{FFFD}/) {
+            if $self->{t}->{value} =~ /[^\x00\x09\x0A\x0C\x0D\x20]/;
+        while ($self->{t}->{value} =~ s/\x00/\x{FFFD}/) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
         }
         my $parent = $self->{open_elements}->[-1]->[0];
@@ -2299,7 +2322,7 @@ sub _construct_tree ($) {
 
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         ## "In foreign content", comment token.
-        my $comment = $self->{document}->create_comment ($self->{t}->{data});
+        my $comment = $self->{document}->create_comment ($self->{t}->{value});
         $self->{open_elements}->[-1]->[0]->manakai_append_content ($comment);
         $self->{t} = $self->_get_next_token;
         next B;
@@ -2398,7 +2421,7 @@ sub _construct_tree ($) {
           if ($self->{open_elements}->[-1]->[1] & TABLE_ROWS_EL) {
             ## The "in table text" insertion mode, U+0000 or any other
             ## character token.
-            if ($self->{t}->{data} eq "\x00") {
+            if ($self->{t}->{value} eq "\x00") {
               ## Tokenizer always emits U+0000 as a standalone token.
               $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
             } else {
@@ -2418,7 +2441,7 @@ sub _construct_tree ($) {
             $pending_chars = delete $self->{pending_chars};
             my $has_non_space;
             for my $t (@$pending_chars) {
-              if ($t->{data} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+              if ($t->{value} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
                 $has_non_space = 1;
                 last;
               }
@@ -2558,7 +2581,7 @@ sub _construct_tree ($) {
       $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
-      my $comment = $self->{document}->create_comment ($self->{t}->{data});
+      my $comment = $self->{document}->create_comment ($self->{t}->{value});
       if ($self->{insertion_mode} & AFTER_HTML_IMS) {
         
         $self->{document}->append_child ($comment);
@@ -2576,9 +2599,9 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         if (delete $self->{ignore_newline}) {
           $self->{t}->{char_delta} = 1
-              if $self->{t}->{data} =~ s/^\x0A//;
+              if $self->{t}->{value} =~ s/^\x0A//;
         }
-        if (length $self->{t}->{data}) {
+        if (length $self->{t}->{value}) {
           my $parent = $self->{open_elements}->[-1]->[0];
           $parent = $parent->content
               if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
@@ -2647,7 +2670,7 @@ sub _construct_tree ($) {
 
     if ($self->{insertion_mode} & HEAD_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+        if ($self->{t}->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           unless ($self->{insertion_mode} == BEFORE_HEAD_IM) {
             my $parent = $self->{open_elements}->[-1]->[0];
             $parent = $parent->content
@@ -2659,7 +2682,7 @@ sub _construct_tree ($) {
             ## Ignore the token.
             #
           }
-          unless (length $self->{t}->{data}) {
+          unless (length $self->{t}->{value}) {
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -2887,10 +2910,10 @@ sub _construct_tree ($) {
         ## for character tokens "in foreign content" for certain
         ## cases.  This is an "in body text" code clone.
 
-        while ($self->{t}->{data} =~ s/\x00//g) {
+        while ($self->{t}->{value} =~ s/\x00//g) {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
         }
-        if ($self->{t}->{data} eq '') {
+        if ($self->{t}->{value} eq '') {
           $self->{t} = $self->_get_next_token;
           next B;
         }
@@ -2903,7 +2926,7 @@ sub _construct_tree ($) {
         $self->_append_text_by_token ($self->{t} => $parent);
 
         if ($self->{frameset_ok} and
-            $self->{t}->{data} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+            $self->{t}->{value} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
           delete $self->{frameset_ok};
         }
 
@@ -3279,10 +3302,10 @@ sub _construct_tree ($) {
         ## insertion mode.  This is an "in body text" code clone,
         ## except for the line marked by "FOSTER".
         {
-          while ($self->{t}->{data} =~ s/\x00//g) {
+          while ($self->{t}->{value} =~ s/\x00//g) {
             $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
           }
-          if ($self->{t}->{data} eq '') {
+          if ($self->{t}->{value} eq '') {
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -3295,7 +3318,7 @@ sub _construct_tree ($) {
           $self->_append_text_by_token ($self->{t} => $parent);
 
           if ($self->{frameset_ok} and
-              $self->{t}->{data} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
+              $self->{t}->{value} =~ /[^\x09\x0A\x0C\x0D\x20]/) {
             delete $self->{frameset_ok};
           }
 
@@ -3886,14 +3909,14 @@ sub _construct_tree ($) {
     } elsif (($self->{insertion_mode} & IM_MASK) == IN_COLUMN_GROUP_IM) {
       COLGROUP: {
         if ($self->{t}->{type} == CHARACTER_TOKEN) {
-          if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+          if ($self->{t}->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
             my $parent = $self->{open_elements}->[-1]->[0];
             $parent = $parent->content
                 if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
             $self->_append_text_by_token
                 ({%{$self->{t}}, data => $1} => $parent);
             $self->{t}->{char_delta} = length $1;
-            unless (length $self->{t}->{data}) {
+            unless (length $self->{t}->{value}) {
               $self->{t} = $self->_get_next_token;
               next B;
             }
@@ -3985,8 +4008,8 @@ sub _construct_tree ($) {
       #
     } elsif ($self->{insertion_mode} & SELECT_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        ## U+0000 is always emitted as one token.
-        if ($self->{t}->{data} eq "\x00") {
+        ## U+0000 is always emitted as one token. XXXXXXX
+        if ($self->{t}->{value} eq "\x00") {
           $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
           $self->{t} = $self->_get_next_token;
           next B;
@@ -4222,7 +4245,7 @@ sub _construct_tree ($) {
       }
     } elsif ($self->{insertion_mode} & BODY_AFTER_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+        if ($self->{t}->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           ## As if in body
           $self->_reconstruct_afe;
           
@@ -4232,7 +4255,7 @@ sub _construct_tree ($) {
           $self->_append_text_by_token
               ({%{$self->{t}}, data => $1} => $parent);
           
-          unless (length $self->{t}->{data}) {
+          unless (length $self->{t}->{value}) {
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -4315,7 +4338,7 @@ sub _construct_tree ($) {
       }
     } elsif ($self->{insertion_mode} & FRAME_IMS) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
-        if ($self->{t}->{data} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+        if ($self->{t}->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           my $parent = $self->{open_elements}->[-1]->[0];
           $parent = $parent->content
               if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
@@ -4323,13 +4346,13 @@ sub _construct_tree ($) {
               ({%{$self->{t}}, data => $1} => $parent);
           $self->{t}->{char_delta} += length $1;
           
-          unless (length $self->{t}->{data}) {
+          unless (length $self->{t}->{value}) {
             $self->{t} = $self->_get_next_token;
             next B;
           }
         }
         
-        if ($self->{t}->{data} =~ s/^([^\x09\x0A\x0C\x20]+)//) {
+        if ($self->{t}->{value} =~ s/^([^\x09\x0A\x0C\x20]+)//) {
           ## Note that the number of parse errors for character tokens
           ## is different from the spec .
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
@@ -4344,7 +4367,7 @@ sub _construct_tree ($) {
           }
           
           ## Ignore the token.
-          if (length $self->{t}->{data}) {
+          if (length $self->{t}->{value}) {
             $self->{t}->{char_delta} += length $1;
             ## reprocess the rest of characters
           } else {
@@ -4353,7 +4376,7 @@ sub _construct_tree ($) {
           next B;
         }
         
-        die qq[$0: Character "$self->{t}->{data}"];
+        die qq[$0: Character "$self->{t}->{value}"];
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{t}->{tag_name} eq 'frameset' and
             $self->{insertion_mode} == IN_FRAMESET_IM) {
@@ -4728,8 +4751,8 @@ sub _construct_tree ($) {
           
           $self->{t} = $self->_get_next_token;
           if ($self->{t}->{type} == CHARACTER_TOKEN) {
-            $self->{t}->{data} =~ s/^\x0A//;
-            unless (length $self->{t}->{data}) {
+            $self->{t}->{value} =~ s/^\x0A//;
+            unless (length $self->{t}->{value}) {
               
               $self->{t} = $self->_get_next_token;
             } else {

@@ -96,6 +96,14 @@ local/ogp.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/ogp.json
 
+local/html-tokenizer-expanded.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tokenizer-expanded.json
+lib/Web/HTML/_Tokenizer.pm: local/html-tokenizer-expanded.json \
+    bin/generate-tokenizer.pl json-ps
+	$(PERL) bin/generate-tokenizer.pl > $@
+	$(PERL) -c $@
+
 local/bin/jq:
 	mkdir -p local/bin
 	$(WGET) -O $@ http://stedolan.github.io/jq/download/linux64/jq
@@ -177,7 +185,6 @@ lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
 	    --create-perl-command-shortcut perl
 	$(PERL) bin/generate-validator-defs.pl > $@
 	perl -c $@
-
 
 json-ps: local/perl-latest/pm/lib/perl5/JSON/PS.pm
 clean-json-ps:
