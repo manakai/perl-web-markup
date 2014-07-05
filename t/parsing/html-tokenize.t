@@ -135,15 +135,15 @@ for my $file_name (grep {$_} split /\s+/, qq[
           'RCDATA state' => 'RCDATA state',
           PCDATA => 'data state',
           SCRIPT => 'script data state',
-          PLAINTEXT => 'plaintext state',
+          PLAINTEXT => 'PLAINTEXT state',
         }->{$cm};
         if (defined $last_start_tag) {
           $p->{state} ||= {
             textarea => 'RCDATA state',
             xmp => 'RAWTEXT state',
-            plaintext => 'plaintext state',
+            plaintext => 'PLAINTEXT state',
           }->{$last_start_tag};
-          $p->{last_stag_name} = $last_start_tag;
+          $p->{last_start_tag_name} = $last_start_tag;
         }
         $p->{state} ||= 'data state';
 
