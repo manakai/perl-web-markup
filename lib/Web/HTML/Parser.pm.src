@@ -1859,15 +1859,15 @@ sub _construct_tree ($) {
         if ($doctype_name ne 'html') {
           !!!cp ('t1');
           !!!parse-error (type => 'not HTML5', token => $self->{t});
-        } elsif (defined $self->{t}->{pubid}) {
+        } elsif (defined $self->{t}->{public_identifier}) {
           ## Obsolete permitted DOCTYPEs (case-sensitive)
           my $xsysid = $Web::HTML::ParserData::ObsoletePermittedDoctypes
-              ->{$self->{t}->{pubid}};
+              ->{$self->{t}->{public_identifier}};
           if (defined $xsysid and
-              ((not defined $self->{t}->{sysid} and
-                $self->{t}->{pubid} =~ /HTML 4/) or
-               (defined $self->{t}->{sysid} and
-                $self->{t}->{sysid} eq $xsysid))) {
+              ((not defined $self->{t}->{system_identifier} and
+                $self->{t}->{public_identifier} =~ /HTML 4/) or
+               (defined $self->{t}->{system_identifier} and
+                $self->{t}->{system_identifier} eq $xsysid))) {
             !!!cp ('t2');
             !!!parse-error (type => 'obs DOCTYPE', token => $self->{t},
                             level => $self->{level}->{obsconforming});
@@ -1875,8 +1875,8 @@ sub _construct_tree ($) {
             !!!cp ('t2.1');
             !!!parse-error (type => 'not HTML5', token => $self->{t});
           }
-        } elsif (defined $self->{t}->{sysid}) {
-          if ($self->{t}->{sysid} eq 'about:legacy-compat') {
+        } elsif (defined $self->{t}->{system_identifier}) {
+          if ($self->{t}->{system_identifier} eq 'about:legacy-compat') {
             ## <!DOCTYPE HTML SYSTEM "about:legacy-compat">
             !!!cp ('t1.2');
             !!!parse-error (type => 'XSLT-compat', token => $self->{t},
@@ -1892,10 +1892,10 @@ sub _construct_tree ($) {
         ## NOTE: Default value for both |public_id| and |system_id|
         ## attributes are empty strings, so that we don't set any
         ## value in missing cases.
-        $doctype->public_id ($self->{t}->{pubid})
-            if defined $self->{t}->{pubid};
-        $doctype->system_id ($self->{t}->{sysid})
-            if defined $self->{t}->{sysid};
+        $doctype->public_id ($self->{t}->{public_identifier})
+            if defined $self->{t}->{public_identifier};
+        $doctype->system_id ($self->{t}->{system_identifier})
+            if defined $self->{t}->{system_identifier};
         
         ## NOTE: Other DocumentType attributes are null or empty
         ## lists.  In Firefox3, |internalSubset| attribute is set to
@@ -1910,11 +1910,11 @@ sub _construct_tree ($) {
         $self->{document}->manakai_compat_mode ('no quirks');
         
         unless ($self->{document}->manakai_is_srcdoc) {
-          if ($self->{t}->{quirks} or $doctype_name ne 'html') {
+          if ($self->{t}->{force_quirks_flag} or $doctype_name ne 'html') {
             !!!cp ('t4');
             $self->{document}->manakai_compat_mode ('quirks');
-          } elsif (defined $self->{t}->{pubid}) {
-            my $pubid = $self->{t}->{pubid};
+          } elsif (defined $self->{t}->{public_identifier}) {
+            my $pubid = $self->{t}->{public_identifier};
             $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
             my $prefix = $Web::HTML::ParserData::QuirkyPublicIDPrefixes;
             my $match;
@@ -1930,7 +1930,7 @@ sub _construct_tree ($) {
               $self->{document}->manakai_compat_mode ('quirks');
             } elsif ($pubid =~ m[^-//W3C//DTD HTML 4.01 FRAMESET//] or
                      $pubid =~ m[^-//W3C//DTD HTML 4.01 TRANSITIONAL//]) {
-              if (not defined $self->{t}->{sysid}) {
+              if (not defined $self->{t}->{system_identifier}) {
                 !!!cp ('t6');
                 $self->{document}->manakai_compat_mode ('quirks');
               } else {
@@ -1947,8 +1947,8 @@ sub _construct_tree ($) {
           } else {
             !!!cp ('t10');
           }
-          if (defined $self->{t}->{sysid}) {
-            my $sysid = $self->{t}->{sysid};
+          if (defined $self->{t}->{system_identifier}) {
+            my $sysid = $self->{t}->{system_identifier};
             $sysid =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($sysid eq "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd") {
               ## NOTE: Ensure that |PUBLIC "(limited quirks)"

@@ -56,6 +56,14 @@ if ($DEBUG) {
 
 use Web::HTML::Parser;
 
+{
+  package Tokenizer;
+  push our @ISA, qw(Web::HTML::_Tokenizer);
+  sub _emit ($$) {
+    push @{$_[0]->{tokens} ||= []}, $_[1];
+  } # _emit
+}
+
 for my $file_name (grep {$_} split /\s+/, qq[
       ${dir_name}test1.test
       ${dir_name}test2.test
@@ -112,24 +120,17 @@ for my $file_name (grep {$_} split /\s+/, qq[
       my @cm = @{$test->{initialStates} || $test->{contentModelFlags} || ['']};
       my $last_start_tag = $test->{lastStartTag};
       for my $cm (@cm) {
-        my $p = Web::HTML::Tokenizer->new;
+        my $p = Tokenizer->new;
         my $i = 0;
         my @token;
 
-        $p->{line} = $p->{line_prev} = 0;
-        $p->{column_prev} = -1;
-        $p->{column} = 0;
-        $p->{parse_error} = sub {
-          my %args = @_;
-          warn $args{type}, "\n" if $DEBUG;
-          push @token, 'ParseError';
-        };
+        #$p->{parse_error} = sub {
+        #  my %args = @_;
+        #  warn $args{type}, "\n" if $DEBUG;
+        #  push @token, 'ParseError';
+        #};
         $p->{insertion_mode} = Web::HTML::Parser::BEFORE_HEAD_IM (); # dummy
 
-        $p->{chars} = [split //, $s];
-        $p->{chars_pos} = 0;
-        $p->{chars_pull_next} = sub { 0 };
-        
         $p->_initialize_tokenizer;
 
         $p->{state} = {
@@ -149,10 +150,17 @@ for my $file_name (grep {$_} split /\s+/, qq[
           }->{$last_start_tag};
           $p->{last_stag_name} = $last_start_tag;
         }
-        $p->{state} ||= Web::HTML::Defs::DATA_STATE ();
+        $p->{state} ||= 'data state';
 
+        $p->parse_char_string ($s);
         while (1) {
-          my $token = $p->_get_next_token;
+          my $token = shift @{$p->{tokens}};
+
+          if ($token->{type} eq 'error') {
+            push @token, 'ParseError';
+            next;
+          }
+
           last if $token->{type} == Web::HTML::Defs::END_OF_FILE_TOKEN ();
           
           my $test_token = [
@@ -172,9 +180,9 @@ for my $file_name (grep {$_} split /\s+/, qq[
             delete $p->{self_closing};
           } elsif ($token->{type} == Web::HTML::Defs::DOCTYPE_TOKEN ()) {
             $test_token->[1] = $token->{name};
-            $test_token->[2] = $token->{pubid};
-            $test_token->[3] = $token->{sysid};
-            $test_token->[4] = $token->{quirks} ? 0 : 1;
+            $test_token->[2] = $token->{public_identifier};
+            $test_token->[3] = $token->{system_identifier};
+            $test_token->[4] = $token->{force_quirks_flag} ? 0 : 1;
           }
 
           if (@token and ref $token[-1] and $token[-1]->[0] eq 'Character' and

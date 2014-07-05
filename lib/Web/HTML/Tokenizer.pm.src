@@ -136,9 +136,9 @@ sub _initialize_tokenizer ($) {
 ##   ->{name} (DOCTYPE_TOKEN)
 ##   ->{tag_name} (START_TAG_TOKEN, END_TAG_TOKEN)
 ##   ->{target} (PI_TOKEN)
-##   ->{pubid} (DOCTYPE_TOKEN)
-##   ->{sysid} (DOCTYPE_TOKEN)
-##   ->{quirks} == 1 or 0 (DOCTYPE_TOKEN): "force-quirks" flag
+##   ->{public_identifier} (DOCTYPE_TOKEN)
+##   ->{system_identifier} (DOCTYPE_TOKEN)
+##   ->{force_quirks_flag} == 1 or 0 (DOCTYPE_TOKEN)
 ##   ->{attributes} isa HASH (START_TAG_TOKEN, END_TAG_TOKEN)
 ##        ->{name}
 ##        ->{value}
@@ -147,12 +147,13 @@ sub _initialize_tokenizer ($) {
 ##        ->{line}
 ##        ->{column}
 ##        ->{sps}: Source positions
-##   ->{data} (COMMENT_TOKEN, CHARACTER_TOKEN, PI_TOKEN)
+##   ->{value} (COMMENT_TOKEN, CHARACTER_TOKEN, PI_TOKEN)
 ##   ->{has_reference} == 1 or 0 (CHARACTER_TOKEN)
 ##   ->{cdata} == 1 or 0 (CHARACTER_TOKEN)
 ##   ->{last_index} (ELEMENT_TOKEN): Next attribute's index - 1.
 ##   ->{has_internal_subset} = 1 or 0 (DOCTYPE_TOKEN)
 ##   ->{di}: Source document index
+##   ->{index}: Index of the first character
 ##   ->{line}: Line number of the first character
 ##   ->{column}: Column number of the first character
 ##   ->{char_delta}: Number of characters in prefix construct (e.g. <![CDATA[)

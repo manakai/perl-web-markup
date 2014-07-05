@@ -93,7 +93,7 @@ sub serialize_actions ($) {
              $type eq 'append-to-attr' or
              $type eq 'append-to-temp') {
       my $field = $_->{field};
-      $field =~ s/ /_/g if defined $field;
+      $field =~ s/ -/__/g if defined $field;
       die if defined $field and $field eq 'type';
       my $value;
       my $index = $_->{capture_index} || 1;
@@ -122,25 +122,25 @@ sub serialize_actions ($) {
       }
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
-      $field =~ s/ /_/g if defined $field;
+      $field =~ s/ -/__/g if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = '';], $field;
     } elsif ($type eq 'set-empty-to-attr') {
       my $field = $_->{field};
-      $field =~ s/ /_/g if defined $field;
+      $field =~ s/ -/__/g if defined $field;
       push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
     } elsif ($type eq 'set-empty-to-temp') {
       push @result, q[$Temp = '';];
     } elsif ($type eq 'append-temp') {
       my $field = $_->{field};
-      $field =~ s/ /_/g if defined $field;
+      $field =~ s/ -/__/g if defined $field;
       push @result, sprintf q[$Token->{q<%s>} .= $Temp;], $field;
     } elsif ($type eq 'append-temp-to-attr') {
       my $field = $_->{field};
-      $field =~ s/ /_/g if defined $field;
+      $field =~ s/ -/__/g if defined $field;
       push @result, sprintf q[$Attr->{q<%s>} .= $Temp;], $field;
     } elsif ($type eq 'set-flag') {
       my $field = $_->{field};
-      $field =~ s/ /_/g if defined $field;
+      $field =~ s/ -/__/g if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
     } elsif ($type =~ /^process-temp-as-/) {
       push @result, sprintf q[# XXX %s], $type;
