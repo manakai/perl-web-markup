@@ -2011,7 +2011,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         !!!cp ('t18');
         my $comment = $self->{document}->create_comment
-            ($self->{t}->{value});
+            ($self->{t}->{data});
         $self->{document}->append_child ($comment);
         
         ## Stay in the insertion mode.
@@ -2030,7 +2030,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         !!!cp ('t20');
         my $comment = $self->{document}->create_comment
-            ($self->{t}->{value});
+            ($self->{t}->{data});
         $self->{document}->append_child ($comment);
         !!!next-token;
         redo B;
@@ -2245,7 +2245,7 @@ sub _construct_tree ($) {
         ## |_insert_el| method.
         $self->_insert_el ($nsuri);
 
-        if ($self->{self_closing}) {
+        if ($self->{t}->{self_closing_flag}) {
           pop @{$self->{open_elements}}; # XXX Also, if $tag_name is 'script', run script
           !!!ack ('t87.3');
         } else {
@@ -2322,7 +2322,7 @@ sub _construct_tree ($) {
 
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         ## "In foreign content", comment token.
-        my $comment = $self->{document}->create_comment ($self->{t}->{value});
+        my $comment = $self->{document}->create_comment ($self->{t}->{data});
         $self->{open_elements}->[-1]->[0]->manakai_append_content ($comment);
         !!!next-token;
         next B;
@@ -2581,7 +2581,7 @@ sub _construct_tree ($) {
       !!!next-token;
       next B;
     } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
-      my $comment = $self->{document}->create_comment ($self->{t}->{value});
+      my $comment = $self->{document}->create_comment ($self->{t}->{data});
       if ($self->{insertion_mode} & AFTER_HTML_IMS) {
         !!!cp ('t85');
         $self->{document}->append_child ($comment);
@@ -5132,7 +5132,7 @@ sub _construct_tree ($) {
         $self->_insert_el
             ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS);
         
-        if ($self->{self_closing}) {
+        if ($self->{t}->{self_closing_flag}) {
           pop @{$self->{open_elements}};
           !!!ack ('t398.6');
         }

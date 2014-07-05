@@ -168,11 +168,12 @@ for my $file_name (grep {$_} split /\s+/, qq[
             }->{$token->{type}} || $token->{type},
           ];
           $test_token->[1] = $token->{tag_name} if defined $token->{tag_name};
+          $test_token->[1] = $token->{value} if defined $token->{value};
           $test_token->[1] = $token->{data} if defined $token->{data};
           if ($token->{type} == Web::HTML::Defs::START_TAG_TOKEN ()) {
             $test_token->[2] = {map {$_->{name} => $_->{value}} values %{$token->{attributes}}};
-            $test_token->[3] = 1 if $p->{self_closing};
-            delete $p->{self_closing};
+            $test_token->[3] = 1 if $token->{self_closing_flag};
+            delete $token->{self_closing_flag};
           } elsif ($token->{type} == Web::HTML::Defs::DOCTYPE_TOKEN ()) {
             $test_token->[1] = $token->{name};
             $test_token->[2] = $token->{public_identifier};

@@ -28,7 +28,7 @@ use Web::HTML::Defs qw(
 );
 
 ## XML5: XML5 has "empty tag token".  In this implementation, it is
-## represented as a start tag token with $self->{self_closing} flag
+## represented as a start tag token with $token->{self_closing} flag
 ## set to true.
 
 ## XML5: XML5 has "short end tag token".  In this implementation, it
@@ -159,10 +159,7 @@ sub _initialize_tokenizer ($) {
 ##   ->{char_delta}: Number of characters in prefix construct (e.g. <![CDATA[)
 ##   ->{sps} (CHARACTER_TOKEN): Source positions
 ##   ->{open} (GENERAL_ENTITY_TOKEN, PARAMETER_ENTITY_TOKEN): Entity is open
-
-## NOTE: The "self-closing flag" is hold as |$self->{self_closing}|.
-##     |->{self_closing}| is used to save the value of |$self->{self_closing}|
-##     while the token is pushed back to the stack.
+##   ->{self_closing_flag} (START_TAG_TOKEN, END_TAG_TOKEN)
 
 ## "sps" - Source positions structure is an array reference of "sp"s.
 ##         Items are sorted by their 0th values.

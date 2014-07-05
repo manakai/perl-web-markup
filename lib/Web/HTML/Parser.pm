@@ -2011,7 +2011,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         
         my $comment = $self->{document}->create_comment
-            ($self->{t}->{value});
+            ($self->{t}->{data});
         $self->{document}->append_child ($comment);
         
         ## Stay in the insertion mode.
@@ -2030,7 +2030,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         
         my $comment = $self->{document}->create_comment
-            ($self->{t}->{value});
+            ($self->{t}->{data});
         $self->{document}->append_child ($comment);
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -2245,9 +2245,9 @@ sub _construct_tree ($) {
         ## |_insert_el| method.
         $self->_insert_el ($nsuri);
 
-        if ($self->{self_closing}) {
+        if ($self->{t}->{self_closing_flag}) {
           pop @{$self->{open_elements}}; # XXX Also, if $tag_name is 'script', run script
-          delete $self->{self_closing};
+          delete $self->{t}->{self_closing_flag};
         } else {
           
         }
@@ -2322,7 +2322,7 @@ sub _construct_tree ($) {
 
       } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
         ## "In foreign content", comment token.
-        my $comment = $self->{document}->create_comment ($self->{t}->{value});
+        my $comment = $self->{document}->create_comment ($self->{t}->{data});
         $self->{open_elements}->[-1]->[0]->manakai_append_content ($comment);
         $self->{t} = $self->_get_next_token;
         next B;
@@ -2581,7 +2581,7 @@ sub _construct_tree ($) {
       $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
-      my $comment = $self->{document}->create_comment ($self->{t}->{value});
+      my $comment = $self->{document}->create_comment ($self->{t}->{data});
       if ($self->{insertion_mode} & AFTER_HTML_IMS) {
         
         $self->{document}->append_child ($comment);
@@ -2820,7 +2820,7 @@ sub _construct_tree ($) {
       if ($act->{insert_void_el}) {
         $inserted = $self->_insert_el;
         pop @{$self->{open_elements}};
-        delete $self->{self_closing};
+        delete $self->{t}->{self_closing_flag};
       }
       if ($self->{t}->{type} == START_TAG_TOKEN and
           $self->{t}->{tag_name} eq 'script') {
@@ -3592,7 +3592,7 @@ sub _construct_tree ($) {
 
               pop @{$self->{open_elements}}; # <input type=hidden>
 
-              delete $self->{self_closing};
+              delete $self->{t}->{self_closing_flag};
               $self->{t} = $self->_get_next_token;
               next B;
             } else {
@@ -3927,7 +3927,7 @@ sub _construct_tree ($) {
           if ($self->{t}->{tag_name} eq 'col') {
             $self->_insert_el;
             pop @{$self->{open_elements}};
-            delete $self->{self_closing};
+            delete $self->{t}->{self_closing_flag};
             $self->{t} = $self->_get_next_token;
             next B;
           } elsif ($self->{t}->{tag_name} eq 'template') {
@@ -4388,7 +4388,7 @@ sub _construct_tree ($) {
                  $self->{insertion_mode} == IN_FRAMESET_IM) {
           $self->_insert_el;
           pop @{$self->{open_elements}};
-          delete $self->{self_closing};
+          delete $self->{t}->{self_closing_flag};
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'noframes') {
@@ -4536,7 +4536,7 @@ sub _construct_tree ($) {
         ## NOTE: This is an "as if in head" code clone
         $self->_insert_el;
         pop @{$self->{open_elements}};
-        delete $self->{self_closing};
+        delete $self->{t}->{self_closing_flag};
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'meta') {
@@ -4602,7 +4602,7 @@ sub _construct_tree ($) {
           }
         }
 
-        delete $self->{self_closing};
+        delete $self->{t}->{self_closing_flag};
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'title') {
@@ -4784,7 +4784,7 @@ sub _construct_tree ($) {
           
           pop @{$self->{open_elements}};
           
-          delete $self->{self_closing};
+          delete $self->{t}->{self_closing_flag};
 
           delete $self->{frameset_ok};
 
@@ -5006,7 +5006,7 @@ sub _construct_tree ($) {
           next B;
         }
 
-        delete $self->{self_closing};
+        delete $self->{t}->{self_closing_flag};
         delete $self->{frameset_ok}; # not ok
         $self->_close_p;
 
@@ -5132,9 +5132,9 @@ sub _construct_tree ($) {
         $self->_insert_el
             ($self->{t}->{tag_name} eq 'math' ? MML_NS : SVG_NS);
         
-        if ($self->{self_closing}) {
+        if ($self->{t}->{self_closing_flag}) {
           pop @{$self->{open_elements}};
-          delete $self->{self_closing};
+          delete $self->{t}->{self_closing_flag};
         }
 
         $self->{t} = $self->_get_next_token;
@@ -5158,7 +5158,7 @@ sub _construct_tree ($) {
         $self->_insert_el;
         pop @{$self->{open_elements}};
 
-        delete $self->{self_closing};
+        delete $self->{t}->{self_closing_flag};
         $self->{t} = $self->_get_next_token;
         redo B;
       } else {
@@ -5212,7 +5212,7 @@ sub _construct_tree ($) {
             delete $self->{frameset_ok};
           }
 
-          delete $self->{self_closing};
+          delete $self->{t}->{self_closing_flag};
         } elsif ({
           area => 1, br => 1, embed => 1, img => 1, wbr => 1, keygen => 1,
         }->{$self->{t}->{tag_name}}) { ## Phrasing void elements
@@ -5222,7 +5222,7 @@ sub _construct_tree ($) {
 
           delete $self->{frameset_ok};
 
-          delete $self->{self_closing};
+          delete $self->{t}->{self_closing_flag};
         } elsif ($self->{t}->{tag_name} eq 'select') {
           ## TODO: associate with $self->{form_element} if defined
 
@@ -5529,7 +5529,7 @@ sub _construct_tree ($) {
         $self->_insert_el (undef, 'br', {});
         pop @{$self->{open_elements}}; # <br>
         
-        delete $self->{self_closing};
+        delete $self->{t}->{self_closing_flag};
 
         delete $self->{frameset_ok}; # not ok
         

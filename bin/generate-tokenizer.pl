@@ -20,7 +20,7 @@ sub serialize_actions ($) {
   for (@{$_[0]->{actions}}) {
     my $type = $_->{type};
     if ($type eq 'error') {
-      push @result, sprintf q[$Emit-> ({type => 'error', error => {type => '%s', level => 'm', offset => $Offset + pos $Input}});],
+      push @result, sprintf q[$Emit-> ({type => 'error', error => {type => '%s', level => 'm', index => $Offset + pos $Input}});],
           $_->{name};
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
@@ -59,13 +59,19 @@ sub serialize_actions ($) {
     } elsif ($type eq 'reconsume') {
       $reconsume = 1;
     } elsif ($type eq 'emit') {
-      push @result, q[$Emit-> ($Token);];
+      push @result, q{
+        if ($Token->{type} == END_TAG_TOKEN and
+            keys %{$Token->{attributes} or {}}) {
+          $Emit->({type => 'error', error => {type => 'end tag attribute', index => pos $Input}}); # XXX index
+        }
+        $Emit->($Token);
+      };
     } elsif ($type eq 'emit-eof') {
-      push @result, q[$Emit-> ({type => END_OF_FILE_TOKEN, offset => $Offset + pos $Input}); return 1;];
+      push @result, q[$Emit-> ({type => END_OF_FILE_TOKEN, index => $Offset + pos $Input}); return 1;];
     } elsif ($type eq 'emit-temp') {
-      push @result, q[$Emit-> ({type => CHARACTER_TOKEN, value => $Temp, offset => $Offset + pos $Input});];
+      push @result, q[$Emit-> ({type => CHARACTER_TOKEN, value => $Temp, index => $Offset + pos $Input});];
     } elsif ($type eq 'create') {
-      push @result, sprintf q[$Token = {type => %s, offset => $Offset + pos $Input};],
+      push @result, sprintf q[$Token = {type => %s, index => $Offset + pos $Input};],
           {
             'DOCTYPE token' => 'DOCTYPE_TOKEN',
             'comment token' => 'COMMENT_TOKEN',
@@ -82,7 +88,7 @@ sub serialize_actions ($) {
             'notation token' => 'NOTATION_TOKEN',
           }->{$_->{token}} || die "Unknown token type |$_->{token}|";
     } elsif ($type eq 'create-attr') {
-      push @result, q[$Attr = {offset => $Offset + pos $Input};];
+      push @result, q[$Attr = {index => $Offset + pos $Input};];
     } elsif ($type eq 'set-attr') {
       push @result, q[$Token->{attributes}->{$Attr->{name}} = $Attr;];
     } elsif ($type eq 'set' or
@@ -118,7 +124,7 @@ sub serialize_actions ($) {
       } elsif ($type eq 'append-to-temp') {
         push @result, sprintf q[$Temp .= %s;], $value;
       } elsif ($type eq 'emit-char') {
-        push @result, sprintf q[$Emit-> ({type => CHARACTER_TOKEN, value => %s, offset => $Offset + pos $Input});], $value;
+        push @result, sprintf q[$Emit-> ({type => CHARACTER_TOKEN, value => %s, index => $Offset + pos $Input});], $value;
       }
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
@@ -143,11 +149,45 @@ sub serialize_actions ($) {
       $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
     } elsif ($type eq 'process-temp-as-decimal') {
-      push @result, sprintf q[$Temp =~ s/\A&#0*([0-9]+)\z/chr $1/e;];
-      # XXX parse errors
+      push @result, q{
+        my $code = $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF;
+        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+          $Emit->({type => 'error',
+                   error => {type => 'invalid character reference',
+                             text => (sprintf 'U+%04X', $code),
+                             level => 'm',
+                             index => pos $Input}}); # XXXindex
+          $code = $replace->[0];
+        } elsif ($code > 0x10FFFF) {
+          $Emit->({type => 'error',
+                   error => {type => 'invalid character reference',
+                             text => (sprintf 'U-%08X', $code),
+                             level => 'm',
+                             index => pos $Input}}); # XXXindex
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      };
     } elsif ($type eq 'process-temp-as-hexadecimal') {
-      push @result, sprintf q[warn $Temp; $Temp =~ s/\A&#[Xx]0*([0-9A-Fa-f]+)\z/chr hex $1/e;];
-      # XXX parse errors
+      push @result, q{
+        my $code = $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF;
+        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+          $Emit->({type => 'error',
+                   error => {type => 'invalid character reference',
+                             text => (sprintf 'U+%04X', $code),
+                             level => 'm',
+                             index => pos $Input}}); # XXXindex
+          $code = $replace->[0];
+        } elsif ($code > 0x10FFFF) {
+          $Emit->({type => 'error',
+                   error => {type => 'invalid character reference',
+                             text => (sprintf 'U-%08X', $code),
+                             level => 'm',
+                             index => pos $Input}}); # XXXindex
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      };
     } elsif ($type eq 'process-temp-as-named' or
              $type eq 'process-temp-as-named-equals') {
       push @result, q{
@@ -185,6 +225,7 @@ sub generate {
     use warnings FATAL => 'recursion';
     our $VERSION = '7.0';
     use Web::HTML::Defs;
+    use Web::HTML::ParserData;
     use Web::HTML::SourceMap;
 
 our $Emit;
@@ -211,11 +252,11 @@ sub locale_tag {
 
 our $DefaultErrorHandler = sub {
   my (%%opt) = @_;
-  my $line = $opt{token} ? $opt{token}->{line} : $opt{line};
-  my $column = $opt{token} ? $opt{token}->{column} : $opt{column};
+  my $index = $opt{token} ? $opt{token}->{index} : $opt{index};
+  $index = -1 if not defined $index;
   my $text = defined $opt{text} ? qq{ - $opt{text}} : '';
   my $value = defined $opt{value} ? qq{ "$opt{value}"} : '';
-  warn "Parse error ($opt{type}$text) at line $line column $column$value\n";
+  warn "Parse error ($opt{type}$text) at index $index$value\n";
 }; # $DefaultErrorHandler
 
 sub onerror ($;$) {
@@ -262,6 +303,40 @@ sub _append_text_by_token ($$$) {
     $parent->append_child ($text);
   }
 } # _append_text_by_token
+
+my $InvalidCharRefs = {};
+
+for (0x0000, 0xD800..0xDFFF) {
+  $InvalidCharRefs->{0}->{$_} =
+  $InvalidCharRefs->{1.0}->{$_} =
+  $InvalidCharRefs->{1.1}->{$_} = [0xFFFD, 'must'];
+}
+for (0x0001..0x0008, 0x000B, 0x000E..0x001F) {
+  $InvalidCharRefs->{0}->{$_} =
+  $InvalidCharRefs->{1.0}->{$_} = [$_, 'must'];
+  $InvalidCharRefs->{1.1}->{$_} = [$_, 'warn'];
+}
+$InvalidCharRefs->{1.0}->{0x000C} = [0x000C, 'must'];
+$InvalidCharRefs->{1.1}->{0x000C} = [0x000C, 'warn'];
+$InvalidCharRefs->{0}->{0x007F} = [0x007F, 'must'];
+for (0x007F..0x009F) {
+  $InvalidCharRefs->{1.0}->{$_} =
+  $InvalidCharRefs->{1.1}->{$_} = [$_, 'warn'];
+}
+delete $InvalidCharRefs->{1.1}->{0x0085};
+for (keys %%$Web::HTML::ParserData::NoncharacterCodePoints) {
+  $InvalidCharRefs->{0}->{$_} = [$_, 'must'];
+  $InvalidCharRefs->{1.0}->{$_} =
+  $InvalidCharRefs->{1.1}->{$_} = [$_, 'warn'];
+}
+for (0xFFFE, 0xFFFF) {
+  $InvalidCharRefs->{1.0}->{$_} =
+  $InvalidCharRefs->{1.1}->{$_} = [$_, 'must'];
+}
+for (keys %%$Web::HTML::ParserData::CharRefReplacements) {
+  $InvalidCharRefs->{0}->{$_}
+      = [$Web::HTML::ParserData::CharRefReplacements->{$_}, 'must'];
+}
 
   ];
   for my $state (sort { $a cmp $b } keys %{$defs->{states}}) {

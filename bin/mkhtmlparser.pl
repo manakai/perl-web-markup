@@ -17,14 +17,14 @@ while (<>) {
   }}ge;
   s{!!!nack\s*\(\s*'([^']+)'\s*\)\s*;}{
     ($TokenizerDebug ? qq{
-      if (\$self->{self_closing}) {
+      if (\$self->{t}->{self_closing_flag}) {
         !!!cp ('$1.2');
       } else {
         !!!cp ('$1.3');
       }
     } : '')
   }ge;
-  s{!!!ack\s*(?>\([^)]*\)\s*)?;}{q{delete $self->{self_closing};}}ge;
+  s{!!!ack\s*(?>\([^)]*\)\s*)?;}{q{delete $self->{t}->{self_closing_flag};}}ge;
   s{!!!ack-later\s*(?>\([^)]*\)\s*)?;}{}ge;
   s{!!!parse-error\s*\(}{
     q{$self->{parse_error}->(level => $self->{level}->{must}, }
