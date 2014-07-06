@@ -59,15 +59,19 @@ sub serialize_actions ($) {
     } elsif ($type eq 'reconsume') {
       $reconsume = 1;
     } elsif ($type eq 'emit') {
+      if ($_->{check_end_tag_token}) {
+        push @result, q{
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attributes} or {}}) {
+              $Emit->({type => 'error', error => {type => 'end tag attribute', index => pos $Input}}); # XXX index
+            }
+            if ($Token->{self_closing_flag}) {
+              $Emit->({type => 'error', error => {type => 'nestc', index => pos $Input}}); # XXX index
+            }
+          }
+        };
+      }
       push @result, q{
-        if ($Token->{type} == END_TAG_TOKEN) {
-          if (keys %{$Token->{attributes} or {}}) {
-            $Emit->({type => 'error', error => {type => 'end tag attribute', index => pos $Input}}); # XXX index
-          }
-          if ($Token->{self_closing_flag}) {
-            $Emit->({type => 'error', error => {type => 'nestc', index => pos $Input}}); # XXX index
-          }
-        }
         $Emit->($Token);
       };
     } elsif ($type eq 'emit-eof') {
@@ -278,7 +282,16 @@ our $EOF;
 our $Offset;
 
 sub new {
-  return bless {}, $_[0];
+  return bless {
+    level => {
+      must => 'm',
+      should => 's',
+      obsconforming => 's',
+      warn => 'w',
+      info => 'i',
+      uncertain => 'u',
+    },
+  }, $_[0];
 }
 
 sub locale_tag {
