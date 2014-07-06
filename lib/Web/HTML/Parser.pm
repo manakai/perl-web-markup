@@ -441,10 +441,10 @@ sub parse_char_string ($$$) {
 
   $self->_initialize_tokenizer;
   $self->_initialize_tree_constructor;
+
   $self->{tokens} = [];
   $self->SUPER::parse_char_string ($_[1]);
-  $self->{t} = $self->_get_next_token;
-  $self->_construct_tree;
+
   $self->_on_terminate;
 
   return {};
@@ -837,11 +837,11 @@ sub _create_el ($$$$) {
 
     ## 2.
     if ($attrs->{xmlns} and $attrs->{xmlns}->{value} ne $nsurl) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t}); # XXXdoc
+      $self->{parse_error}->(level => 'm', type => 'bad namespace', token => $self->{t}); # XXXdoc
     }
     if ($attrs->{'xmlns:xlink'} and
         $attrs->{'xmlns:xlink'}->{value} ne Web::HTML::ParserData::XLINK_NS) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'bad namespace', token => $self->{t});
+      $self->{parse_error}->(level => 'm', type => 'bad namespace', token => $self->{t});
     }
 
     ## 3.
@@ -1194,7 +1194,7 @@ sub _aaa ($$) {
     } # OE
     unless (defined $formatting_element_i_in_open) {
       ## 6.
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'AAA:in afe but not in open elements', # XXXdoc
+      $self->{parse_error}->(level => 'm', type => 'AAA:in afe but not in open elements', # XXXdoc
                       text => $formatting_element->[0]->local_name,
                       value => $token->{tag_name},
                       token => $token);
@@ -1204,7 +1204,7 @@ sub _aaa ($$) {
     }
     unless ($formatting_element_is_in_scope) {
       ## 7.
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'AAA:formatting element not in scope', # XXXdoc
+      $self->{parse_error}->(level => 'm', type => 'AAA:formatting element not in scope', # XXXdoc
                       text => $formatting_element->[0]->local_name,
                       value => $token->{tag_name},
                       token => $token);
@@ -1213,7 +1213,7 @@ sub _aaa ($$) {
 
     ## 8.
     unless ($formatting_element->[0] eq $self->{open_elements}->[-1]->[0]) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'AAA:formatting element not current', # XXXdoc
+      $self->{parse_error}->(level => 'm', type => 'AAA:formatting element not current', # XXXdoc
                       text => $formatting_element->[0]->local_name,
                       value => $token->{tag_name},
                       token => $token);
@@ -1401,7 +1401,7 @@ sub _in_body_any_other_end_tag ($) {
       ## 2.2.
       unless ($node->[0] eq $self->{open_elements}->[-1]->[0]) {
         ## NOTE: <x><y></x>
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+        $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                         text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                         value => $self->{t}->{tag_name}, # actual
                         token => $self->{t});
@@ -1414,7 +1414,7 @@ sub _in_body_any_other_end_tag ($) {
     } else {
       ## 3.
       if ($node->[1] & SPECIAL_EL or $node->[1] & SCOPING_EL) { ## "Special"
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+        $self->{parse_error}->(level => 'm', type => 'stray end tag',
                         value => $self->{t}->{tag_name},
                         token => $self->{t});
         ## Ignore the token.
@@ -1453,7 +1453,7 @@ sub _script_start_tag ($) {
   });
 
   ## 7.
-  $self->{state} = SCRIPT_DATA_STATE;
+  $self->{state} = 'script data state';
 
   ## 8.-9.
   $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
@@ -1470,7 +1470,7 @@ sub _template_end_tag ($) {
     }
   } # OE
   unless (defined $i) {
-    $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+    $self->{parse_error}->(level => 'm', type => 'stray end tag',
                     value => $self->{t}->{tag_name},
                     token => $self->{t});
     ## Ignore the token.
@@ -1483,7 +1483,7 @@ sub _template_end_tag ($) {
 
   ## 2.
   unless ($self->{open_elements}->[-1]->[1] == TEMPLATE_EL) {
-    $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+    $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                     text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                     value => $self->{t}->{tag_name}, # actual
                     token => $self->{t});
@@ -1525,7 +1525,7 @@ sub _close_p ($;$) {
     
     ## 2.
     if ($self->{open_elements}->[-1]->[1] != P_EL) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+      $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                       text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                       value => $self->{t}->{tag_name}, # actual
                               token => $self->{t});
@@ -1537,7 +1537,7 @@ sub _close_p ($;$) {
     if ($imply_start_tag) {
       ## The "in body" insertion mode, </p> with no |p| element in
       ## button scope
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+      $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                       text => 'p',
                       token => $self->{t});
 
@@ -1834,7 +1834,7 @@ sub _construct_tree ($) {
     }
 
     if ($self->{t}->{n}++ == 100) {
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'parser impl error', # XXXtest
+      $self->{parse_error}->(level => 'm', type => 'parser impl error', # XXXtest
                       token => $self->{t});
       require Data::Dumper;
       warn "====== HTML Parser Error ======\n";
@@ -1858,7 +1858,7 @@ sub _construct_tree ($) {
         
         if ($doctype_name ne 'html') {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not HTML5', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'not HTML5', token => $self->{t});
         } elsif (defined $self->{t}->{public_identifier}) {
           ## Obsolete permitted DOCTYPEs (case-sensitive)
           my $xsysid = $Web::HTML::ParserData::ObsoletePermittedDoctypes
@@ -1869,20 +1869,20 @@ sub _construct_tree ($) {
                (defined $self->{t}->{system_identifier} and
                 $self->{t}->{system_identifier} eq $xsysid))) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'obs DOCTYPE', token => $self->{t},
+            $self->{parse_error}->(level => 'm', type => 'obs DOCTYPE', token => $self->{t},
                             level => $self->{level}->{obsconforming});
           } else {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not HTML5', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'not HTML5', token => $self->{t});
           }
         } elsif (defined $self->{t}->{system_identifier}) {
           if ($self->{t}->{system_identifier} eq 'about:legacy-compat') {
             ## <!DOCTYPE HTML SYSTEM "about:legacy-compat">
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'XSLT-compat', token => $self->{t},
+            $self->{parse_error}->(level => 'm', type => 'XSLT-compat', token => $self->{t},
                             level => $self->{level}->{should});
           } else {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not HTML5', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'not HTML5', token => $self->{t});
           }
         } else { ## <!DOCTYPE HTML>
           
@@ -1973,7 +1973,7 @@ sub _construct_tree ($) {
                }->{$self->{t}->{type}}) {
         unless ($self->{document}->manakai_is_srcdoc) {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'no DOCTYPE', token => $self->{t});
           $self->{document}->manakai_compat_mode ('quirks');
         } else {
           
@@ -2000,7 +2000,7 @@ sub _construct_tree ($) {
         
         unless ($self->{document}->manakai_is_srcdoc) {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no DOCTYPE', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'no DOCTYPE', token => $self->{t});
           $self->{document}->manakai_compat_mode ('quirks');
         } else {
           
@@ -2023,7 +2023,7 @@ sub _construct_tree ($) {
     } elsif ($self->{insertion_mode} == BEFORE_HTML_IM) {
       if ($self->{t}->{type} == DOCTYPE_TOKEN) {
         
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#DOCTYPE', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'in html:#DOCTYPE', token => $self->{t});
         ## Ignore the token.
         $self->{t} = $self->_get_next_token;
         redo B;
@@ -2070,6 +2070,10 @@ sub _construct_tree ($) {
           }
           
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           
           $self->{insertion_mode} = BEFORE_HEAD_IM;
           $self->{t} = $self->_get_next_token;
@@ -2086,7 +2090,7 @@ sub _construct_tree ($) {
           #
         } else {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+          $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                           text => $self->{t}->{tag_name},
                           token => $self->{t});
           ## Ignore the token.
@@ -2167,7 +2171,7 @@ sub _construct_tree ($) {
         delete $self->{frameset_ok}
             if $self->{t}->{value} =~ /[^\x00\x09\x0A\x0C\x0D\x20]/;
         while ($self->{t}->{value} =~ s/\x00/\x{FFFD}/) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'NULL', token => $self->{t});
         }
         my $parent = $self->{open_elements}->[-1]->[0];
         $parent = $parent->content
@@ -2189,12 +2193,12 @@ sub _construct_tree ($) {
           
 
           if (defined $self->{inner_html_node}) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'HTML start tag in foreign',
+            $self->{parse_error}->(level => 'm', type => 'HTML start tag in foreign',
                             text => $self->{t}->{tag_name},
                             token => $self->{t});
             #
           } else {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+            $self->{parse_error}->(level => 'm', type => 'not closed',
                             text => $self->{open_elements}->[-1]->[0]
                                 ->manakai_local_name,
                             token => $self->{t});
@@ -2281,7 +2285,7 @@ sub _construct_tree ($) {
           my $tag_name = $node->[0]->manakai_local_name;
           $tag_name =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
           if ($tag_name ne $self->{t}->{tag_name}) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+            $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                             text => $tag_name, # expected
                             value => $self->{t}->{tag_name}, # actual
                             token => $self->{t});
@@ -2290,7 +2294,7 @@ sub _construct_tree ($) {
           ## 3. Loop
           LOOP: {
             if (@{$self->{open_elements}} == 1) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+              $self->{parse_error}->(level => 'm', type => 'stray end tag',
                               value => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token.
@@ -2329,7 +2333,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == DOCTYPE_TOKEN) {
         
         ## "In foreign content", DOCTYPE token.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#DOCTYPE', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'in html:#DOCTYPE', token => $self->{t});
         ## Ignore the token.
         $self->{t} = $self->_get_next_token;
         next B;
@@ -2379,7 +2383,7 @@ sub _construct_tree ($) {
         if ($self->{t}->{tag_name} eq 'template') {
           #
         } else {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+          $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                           text => $self->{t}->{tag_name},
                           token => $self->{t});
           ## Ignore the token.
@@ -2398,7 +2402,7 @@ sub _construct_tree ($) {
         } # OE
         last B unless defined $i; ## Go to "stop parsing".
 
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no end tag at EOF',
+        $self->{parse_error}->(level => 'm', type => 'no end tag at EOF',
                         text => 'template',
                         token => $self->{t});
         splice @{$self->{open_elements}}, $i;
@@ -2423,7 +2427,7 @@ sub _construct_tree ($) {
             ## character token.
             if ($self->{t}->{value} eq "\x00") {
               ## Tokenizer always emits U+0000 as a standalone token.
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
+              $self->{parse_error}->(level => 'm', type => 'NULL', token => $self->{t});
             } else {
               $self->{pending_chars} ||= [];
               push @{$self->{pending_chars}}, $self->{t};
@@ -2466,7 +2470,7 @@ sub _construct_tree ($) {
 
         ## At this point, there is always non-empty @$pending_chars.
 
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:#text', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'in table:#text', token => $self->{t});
 
         ## Process the character tokens in the pending table character
         ## tokens list using the rules for the "in body" insertion
@@ -2538,7 +2542,7 @@ sub _construct_tree ($) {
 
     if ($self->{t}->{type} == DOCTYPE_TOKEN) {
       
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'in html:#DOCTYPE', token => $self->{t});
+      $self->{parse_error}->(level => 'm', type => 'in html:#DOCTYPE', token => $self->{t});
       ## Ignore the token
       ## Stay in the phase
       $self->{t} = $self->_get_next_token;
@@ -2547,18 +2551,18 @@ sub _construct_tree ($) {
              $self->{t}->{tag_name} eq 'html') {
       if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
         
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html', text => 'html', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'after html', text => 'html', token => $self->{t});
         $self->{insertion_mode} = AFTER_BODY_IM;
       } elsif ($self->{insertion_mode} == AFTER_HTML_FRAMESET_IM) {
         
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html', text => 'html', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'after html', text => 'html', token => $self->{t});
         $self->{insertion_mode} = AFTER_FRAMESET_IM;
       } else {
         
       }
 
       
-      $self->{parse_error}->(level => $self->{level}->{must}, type => 'not first start tag', token => $self->{t});
+      $self->{parse_error}->(level => 'm', type => 'not first start tag', token => $self->{t});
       my $has_template;
       OE: for (reverse @{$self->{open_elements}}) {
         if ($_->[1] == TEMPLATE_EL) {
@@ -2578,6 +2582,10 @@ sub _construct_tree ($) {
         }
       } # $has_template
       
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
       $self->{t} = $self->_get_next_token;
       next B;
     } elsif ($self->{t}->{type} == COMMENT_TOKEN) {
@@ -2650,7 +2658,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == END_OF_FILE_TOKEN) {
         delete $self->{ignore_newline};
 
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'no end tag at EOF',
+        $self->{parse_error}->(level => 'm', type => 'no end tag at EOF',
                         text => $self->{open_elements}->[-1]->[0]->local_name,
                         token => $self->{t});
 
@@ -2676,7 +2684,7 @@ sub _construct_tree ($) {
             $parent = $parent->content
                 if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
             $self->_append_text_by_token
-                ({%{$self->{t}}, data => $1} => $parent);
+                ({%{$self->{t}}, value => $1} => $parent);
             $self->{t}->{char_delta} = length $1;
           } else {
             ## Ignore the token.
@@ -2696,22 +2704,34 @@ sub _construct_tree ($) {
             $self->{head_element} = $self->{open_elements}->[-1]->[0];
             $self->{insertion_mode} = IN_HEAD_IM;
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           } elsif ($self->{insertion_mode} == AFTER_HEAD_IM) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head', text => 'head',
+            $self->{parse_error}->(level => 'm', type => 'after head', text => 'head',
                             token => $self->{t});
             ## Ignore the token
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           } else {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in head:head',
+            $self->{parse_error}->(level => 'm', type => 'in head:head',
                             token => $self->{t}); # or in head noscript
             ## Ignore the token
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -2733,23 +2753,35 @@ sub _construct_tree ($) {
             if ($self->scripting) { ## The scripting flag is enabled
               ## The generic raw text element parsing algorithm.
               $self->_insert_el;
-              $self->{state} = RAWTEXT_STATE;
+              $self->{state} = 'RAWTEXT state';
               $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             } else { ## The scripting flag is disabled
               $self->_insert_el;
               $self->{insertion_mode} = IN_HEAD_NOSCRIPT_IM;
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             }
           } elsif ($self->{insertion_mode} == IN_HEAD_NOSCRIPT_IM) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in noscript', text => 'noscript',
+            $self->{parse_error}->(level => 'm', type => 'in noscript', text => 'noscript',
                             token => $self->{t});
             ## Ignore the token
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           } else {
@@ -2781,7 +2813,7 @@ sub _construct_tree ($) {
         $self->{insertion_mode} = IN_HEAD_IM;
       }
       if ($act->{end_noscript_error}) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => $act->{end_noscript_error},
+        $self->{parse_error}->(level => 'm', type => $act->{end_noscript_error},
                         text => $self->{t}->{tag_name},
                         token => $self->{t});
       }
@@ -2795,7 +2827,7 @@ sub _construct_tree ($) {
         $self->{insertion_mode} = AFTER_HEAD_IM;
       }
       if ($act->{reopen_head}) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'after head',
+        $self->{parse_error}->(level => 'm', type => 'after head',
                         text => $self->{t}->{tag_name},
                         token => $self->{t});
         push @{$self->{open_elements}},
@@ -2808,13 +2840,17 @@ sub _construct_tree ($) {
       if ($act->{insert_el}) {
         $self->_insert_el;
         if ($act->{insert_el} eq 'rawtext') {
-          $self->{state} = RAWTEXT_STATE;
+          $self->{state} = 'RAWTEXT state';
           $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
         } elsif ($act->{insert_el} eq 'rcdata') {
-          $self->{state} = RCDATA_STATE;
+          $self->{state} = 'RCDATA state';
           $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
         }
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
       }
       my $inserted;
       if ($act->{insert_void_el}) {
@@ -2826,6 +2862,10 @@ sub _construct_tree ($) {
           $self->{t}->{tag_name} eq 'script') {
         $self->_script_start_tag;
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
       }
       push @$active_formatting_elements, ['#marker', '', undef]
           if $act->{push_marker};
@@ -2893,7 +2933,7 @@ sub _construct_tree ($) {
       delete $self->{frameset_ok} if $act->{frameset_not_ok};
       $self->{insertion_mode} = $act->{set_im} if defined $act->{set_im};
       if ($act->{ignore_end_tag_error}) {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+        $self->{parse_error}->(level => 'm', type => 'stray end tag',
                         value => $self->{t}->{tag_name},
                         token => $self->{t});
       }
@@ -2911,7 +2951,7 @@ sub _construct_tree ($) {
         ## cases.  This is an "in body text" code clone.
 
         while ($self->{t}->{value} =~ s/\x00//g) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'NULL', token => $self->{t});
         }
         if ($self->{t}->{value} eq '') {
           $self->{t} = $self->_get_next_token;
@@ -2952,11 +2992,15 @@ sub _construct_tree ($) {
               }
             } # OE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in cell',
+              $self->{parse_error}->(level => 'm', type => 'in cell',
                               value => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             }
@@ -2970,7 +3014,7 @@ sub _construct_tree ($) {
 
             ## 2.
             unless ($self->{open_elements}->[-1]->[1] == TABLE_CELL_EL) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+              $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                               text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                               value => $self->{t}->{tag_name}, # actual
                               token => $self->{t});
@@ -3003,11 +3047,15 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in caption',
+              $self->{parse_error}->(level => 'm', type => 'in caption',
                               text => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token.
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               redo B;
             }
@@ -3017,7 +3065,7 @@ sub _construct_tree ($) {
                 while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
 
             unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+              $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                               text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                               value => 'caption', # actual (implied)
                               token => $self->{t});
@@ -3054,7 +3102,7 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+              $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                               text => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token
@@ -3068,7 +3116,7 @@ sub _construct_tree ($) {
 
             unless (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
                     $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name}) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+              $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                               text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                               value => $self->{t}->{tag_name}, # actual
                               token => $self->{t});
@@ -3082,7 +3130,7 @@ sub _construct_tree ($) {
             next B;
           } elsif (($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
                 
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
                 $self->{t} = $self->_get_next_token;
@@ -3109,7 +3157,7 @@ sub _construct_tree ($) {
                   }
 
                   
-                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                  $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                                   text => $self->{t}->{tag_name}, token => $self->{t});
                   ## Ignore the token
                   $self->{t} = $self->_get_next_token;
@@ -3125,7 +3173,7 @@ sub _construct_tree ($) {
                 
                 unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
                   
-                  $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+                  $self->{parse_error}->(level => 'm', type => 'not closed',
                                   text => $self->{open_elements}->[-1]->[0]
                                       ->manakai_local_name,
                                   token => $self->{t});
@@ -3139,7 +3187,7 @@ sub _construct_tree ($) {
                 next B;
               } elsif (($self->{insertion_mode} & IM_MASK) == IN_CELL_IM) {
                 
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
                 $self->{t} = $self->_get_next_token;
@@ -3165,7 +3213,7 @@ sub _construct_tree ($) {
             }
           } # OE
           unless (defined $i) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
@@ -3182,7 +3230,7 @@ sub _construct_tree ($) {
 
           ## 2.
           unless ($self->{open_elements}->[-1]->[1] == TABLE_CELL_EL) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+            $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                             text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                             value => $self->{t}->{tag_name}, # actual
                             token => $self->{t});
@@ -3216,7 +3264,7 @@ sub _construct_tree ($) {
             }
           } # INSCOPE
           unless (defined $i) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
@@ -3229,7 +3277,7 @@ sub _construct_tree ($) {
               while $self->{open_elements}->[-1]->[1] & END_TAG_OPTIONAL_EL;
 
           unless ($self->{open_elements}->[-1]->[1] == CAPTION_EL) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+            $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                             text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                             value => $self->{t}->{tag_name}, # actual
                             token => $self->{t});
@@ -3246,7 +3294,7 @@ sub _construct_tree ($) {
         }->{$self->{t}->{tag_name}}) {
               if ($self->{insertion_mode} & BODY_TABLE_IMS) {
                 
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+                $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                                 text => $self->{t}->{tag_name}, token => $self->{t});
                 ## Ignore the token
                 $self->{t} = $self->_get_next_token;
@@ -3261,7 +3309,7 @@ sub _construct_tree ($) {
                  }->{$self->{t}->{tag_name}} and
                  ($self->{insertion_mode} & IM_MASK) == IN_CAPTION_IM) {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+          $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token
           $self->{t} = $self->_get_next_token;
@@ -3292,7 +3340,7 @@ sub _construct_tree ($) {
         ## for character tokens "in foreign content" for certain
         ## cases.
 
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:#text', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'in table:#text', token => $self->{t});
         ## Strictly speaking, this parse error must be reported for
         ## each character per the spec.  In the current implementation
         ## the number of the parse error here depends on how the
@@ -3303,7 +3351,7 @@ sub _construct_tree ($) {
         ## except for the line marked by "FOSTER".
         {
           while ($self->{t}->{value} =~ s/\x00//g) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'NULL', token => $self->{t});
           }
           if ($self->{t}->{value} eq '') {
             $self->{t} = $self->_get_next_token;
@@ -3347,7 +3395,7 @@ sub _construct_tree ($) {
             ## The "in table body" insertion mode, <tr><th><td>
             unless ($self->{t}->{tag_name} eq 'tr') {
               
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'missing start tag:tr',
+              $self->{parse_error}->(level => 'm', type => 'missing start tag:tr',
                               token => $self->{t});
             }
             
@@ -3360,6 +3408,10 @@ sub _construct_tree ($) {
               $self->{insertion_mode} = IN_ROW_IM;
               $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             } else {
@@ -3386,6 +3438,10 @@ sub _construct_tree ($) {
           push @$active_formatting_elements, ['#marker', '', undef];
           
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ({
@@ -3408,11 +3464,15 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in tr', # XXX
+              $self->{parse_error}->(level => 'm', type => 'in tr', # XXX
                               value => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             }
@@ -3448,11 +3508,15 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table body', # XXXdoc
+              $self->{parse_error}->(level => 'm', type => 'in table body', # XXXdoc
                               value => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token.
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             }
@@ -3505,13 +3569,17 @@ sub _construct_tree ($) {
                                       }->{$self->{t}->{tag_name}};
             $self->{t} = $self->_get_next_token;
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             next B;
           } else {
             die "$0: in table: <>: $self->{t}->{tag_name}";
           }
         } elsif ($self->{t}->{tag_name} eq 'table') {
           ## The "in table" insertion mode, <table>
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+          $self->{parse_error}->(level => 'm', type => 'not closed',
                           text => $self->{open_elements}->[-1]->[0]->local_name,
                           token => $self->{t});
 
@@ -3531,6 +3599,10 @@ sub _construct_tree ($) {
           unless (defined $i) {
             ## Ignore the token.
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -3548,9 +3620,13 @@ sub _construct_tree ($) {
           ## NOTE: This is a "as if in head" code clone.
           {
             $self->_insert_el;
-            $self->{state} = RAWTEXT_STATE;
+            $self->{state} = 'RAWTEXT state';
             $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
           }
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
@@ -3559,6 +3635,10 @@ sub _construct_tree ($) {
           $self->_script_start_tag;
           $open_tables->[-1]->[2] = 0 if @$open_tables; # ~node inserted
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
@@ -3581,7 +3661,7 @@ sub _construct_tree ($) {
             $type =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($type eq 'hidden') {
               ## <input type=hidden> in table
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table',
+              $self->{parse_error}->(level => 'm', type => 'in table',
                               text => $self->{t}->{tag_name},
                               token => $self->{t});
 
@@ -3615,16 +3695,20 @@ sub _construct_tree ($) {
                 } # OE
                 $has_template;
               }) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:form ignored',
+            $self->{parse_error}->(level => 'm', type => 'in table:form ignored',
                             token => $self->{t});
 
             ## Ignore the token.
             $self->{t} = $self->_get_next_token;
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             next B;
           }
 
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:form', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'in table:form', token => $self->{t});
 
           $self->_insert_el;
           $self->{form_element} = $self->{open_elements}->[-1]->[0];
@@ -3633,12 +3717,16 @@ sub _construct_tree ($) {
           
           $self->{t} = $self->_get_next_token;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           next B;
         } else {
           #
         }
 
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table', text => $self->{t}->{tag_name},
+        $self->{parse_error}->(level => 'm', type => 'in table', text => $self->{t}->{tag_name},
                         token => $self->{t});
 
         #
@@ -3659,11 +3747,15 @@ sub _construct_tree ($) {
                 }
               } # INSCOPE
               unless (defined $i) {
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                $self->{parse_error}->(level => 'm', type => 'stray end tag',
                                 value => $self->{t}->{tag_name},
                                 token => $self->{t});
                 ## Ignore the token
                 
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
                 $self->{t} = $self->_get_next_token;
                 next B;
               } else {
@@ -3682,6 +3774,10 @@ sub _construct_tree ($) {
               $self->{insertion_mode} = IN_TABLE_BODY_IM;
               $self->{t} = $self->_get_next_token;
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               next B;
         } elsif ($self->{t}->{tag_name} eq 'table') {
           if (($self->{insertion_mode} & IM_MASK) == IN_ROW_IM) {
@@ -3698,11 +3794,15 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+              $self->{parse_error}->(level => 'm', type => 'stray end tag',
                               value => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token.
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             }
@@ -3731,7 +3831,7 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+              $self->{parse_error}->(level => 'm', type => 'stray end tag',
                               value => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token.
@@ -3768,11 +3868,15 @@ sub _construct_tree ($) {
                 }
               } # INSCOPE
               unless (defined $i) {
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+                $self->{parse_error}->(level => 'm', type => 'stray end tag',
                                 value => $self->{t}->{tag_name},
                                 token => $self->{t});
                 ## Ignore the token
                 
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
                 $self->{t} = $self->_get_next_token;
                 next B;
               }
@@ -3802,12 +3906,16 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+              $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                               text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                               value => $self->{t}->{tag_name}, # actual
                               token => $self->{t});
               ## Ignore the token
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             }
@@ -3823,11 +3931,15 @@ sub _construct_tree ($) {
               }
             } # INSCOPE
             unless (defined $i) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+              $self->{parse_error}->(level => 'm', type => 'stray end tag',
                               value => $self->{t}->{tag_name},
                               token => $self->{t});
               ## Ignore the token
               
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
               $self->{t} = $self->_get_next_token;
               next B;
             }
@@ -3858,11 +3970,15 @@ sub _construct_tree ($) {
             }
           } # INSCOPE
           unless (defined $i) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -3874,6 +3990,10 @@ sub _construct_tree ($) {
           pop @{$self->{open_elements}}; # <tbody> <thead> <tfoot>
           $self->{insertion_mode} = IN_TABLE_IM;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ({
@@ -3883,11 +4003,15 @@ sub _construct_tree ($) {
           tbody => 1, tfoot => 1, thead => 1, # $self->{insertion_mode} == IN_TABLE_IM
         }->{$self->{t}->{tag_name}}) {
           ## The "in table" insertion mode, table end tags
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+          $self->{parse_error}->(level => 'm', type => 'stray end tag',
                           value => $self->{t}->{tag_name},
                           token => $self->{t});
           ## Ignore the token.
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
@@ -3896,7 +4020,7 @@ sub _construct_tree ($) {
           next B;
         } else {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in table:/',
+          $self->{parse_error}->(level => 'm', type => 'in table:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
 
           #
@@ -3914,7 +4038,7 @@ sub _construct_tree ($) {
             $parent = $parent->content
                 if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
             $self->_append_text_by_token
-                ({%{$self->{t}}, data => $1} => $parent);
+                ({%{$self->{t}}, value => $1} => $parent);
             $self->{t}->{char_delta} = length $1;
             unless (length $self->{t}->{value}) {
               $self->{t} = $self->_get_next_token;
@@ -3948,7 +4072,7 @@ sub _construct_tree ($) {
           if ($self->{t}->{tag_name} eq 'colgroup') {
             ## The "in column group" insertion mode, </colgroup>
             if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+              $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                               text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                               value => $self->{t}->{tag_name}, # actual
                               token => $self->{t});
@@ -3963,7 +4087,7 @@ sub _construct_tree ($) {
               next B;
             }
           } elsif ($self->{t}->{tag_name} eq 'col') {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => 'col',
                             token => $self->{t});
             ## Ignore the token.
@@ -3989,10 +4113,14 @@ sub _construct_tree ($) {
         if ($self->{open_elements}->[-1]->[1] != COLGROUP_EL) {
           ## Note that the number of parse errors for character tokens
           ## is different from the spec in fragment case.
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in colgroup',
+          $self->{parse_error}->(level => 'm', type => 'in colgroup',
                           token => $self->{t});
           ## Ignore the token.
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         }
@@ -4010,7 +4138,7 @@ sub _construct_tree ($) {
       if ($self->{t}->{type} == CHARACTER_TOKEN) {
         ## U+0000 is always emitted as one token. XXXXXXX
         if ($self->{t}->{value} eq "\x00") {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'NULL', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'NULL', token => $self->{t});
           $self->{t} = $self->_get_next_token;
           next B;
         }
@@ -4027,6 +4155,10 @@ sub _construct_tree ($) {
               if $self->{open_elements}->[-1]->[1] == OPTION_EL;
           $self->_insert_el;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'optgroup') {
@@ -4036,6 +4168,10 @@ sub _construct_tree ($) {
               if $self->{open_elements}->[-1]->[1] == OPTGROUP_EL;
           $self->_insert_el;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
 
@@ -4056,7 +4192,7 @@ sub _construct_tree ($) {
           ## <textarea> <keygen> <caption> <table> <tbody> <tfoot>
           ## <thead> <tr> <td> <th>
 
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed', text => 'select',
+          $self->{parse_error}->(level => 'm', type => 'not closed', text => 'select',
                           token => $self->{t});
 
           ## have a |select| element in select scope
@@ -4078,6 +4214,10 @@ sub _construct_tree ($) {
 
             ## Ignore the token.
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -4097,6 +4237,10 @@ sub _construct_tree ($) {
         } elsif ($self->{t}->{tag_name} eq 'script') {
           $self->_script_start_tag;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'template') {
@@ -4110,10 +4254,14 @@ sub _construct_tree ($) {
           next B;
         } else {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in select',
+          $self->{parse_error}->(level => 'm', type => 'in select',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         }
@@ -4126,24 +4274,32 @@ sub _construct_tree ($) {
           } elsif ($self->{open_elements}->[-1]->[1] == OPTGROUP_EL) {
             pop @{$self->{open_elements}}; # <optgroup>
           } else {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
           }
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'option') {
           if ($self->{open_elements}->[-1]->[1] == OPTION_EL) {
             pop @{$self->{open_elements}}; # <option>
           } else {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
           }
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
 
@@ -4165,11 +4321,15 @@ sub _construct_tree ($) {
             }
           } # INSCOPE
           unless (defined $i) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -4179,6 +4339,10 @@ sub _construct_tree ($) {
           $self->_reset_insertion_mode;
 
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
 
@@ -4192,7 +4356,7 @@ sub _construct_tree ($) {
           ## The "in select in table" insertion mode, </caption>
           ## </table> </tbody> </tfoot> </thead> </tr> </td> </th>
 
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+          $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                           text => $self->{t}->{tag_name},
                           token => $self->{t});
 
@@ -4211,6 +4375,10 @@ sub _construct_tree ($) {
           unless (defined $i) {
             ## Ignore the token
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -4231,10 +4399,14 @@ sub _construct_tree ($) {
           next B;
         } else {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'in select:/',
+          $self->{parse_error}->(level => 'm', type => 'in select:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         }
@@ -4253,7 +4425,7 @@ sub _construct_tree ($) {
           $parent = $parent->content
               if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
           $self->_append_text_by_token
-              ({%{$self->{t}}, data => $1} => $parent);
+              ({%{$self->{t}}, value => $1} => $parent);
           
           unless (length $self->{t}->{value}) {
             $self->{t} = $self->_get_next_token;
@@ -4264,11 +4436,11 @@ sub _construct_tree ($) {
         }
         
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html:#text', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'after html:#text', token => $self->{t});
           #
         } else {
           ## "after body" insertion mode
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after body:#text', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'after body:#text', token => $self->{t});
           #
         }
 
@@ -4277,12 +4449,12 @@ sub _construct_tree ($) {
         next B;
       } elsif ($self->{t}->{type} == START_TAG_TOKEN) {
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html',
+          $self->{parse_error}->(level => 'm', type => 'after html',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           #
         } else {
           ## "after body" insertion mode
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after body',
+          $self->{parse_error}->(level => 'm', type => 'after body',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           #
         }
@@ -4294,7 +4466,7 @@ sub _construct_tree ($) {
       } elsif ($self->{t}->{type} == END_TAG_TOKEN) {
         if ($self->{insertion_mode} == AFTER_HTML_BODY_IM) {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html:/',
+          $self->{parse_error}->(level => 'm', type => 'after html:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           
           $self->{insertion_mode} = IN_BODY_IM;
@@ -4308,7 +4480,7 @@ sub _construct_tree ($) {
         if ($self->{t}->{tag_name} eq 'html') {
           if (defined $self->{inner_html_node}) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+            $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                             text => 'html', token => $self->{t});
             ## Ignore the token
             $self->{t} = $self->_get_next_token;
@@ -4321,7 +4493,7 @@ sub _construct_tree ($) {
           }
         } else {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'after body:/',
+          $self->{parse_error}->(level => 'm', type => 'after body:/',
                           text => $self->{t}->{tag_name}, token => $self->{t});
 
           $self->{insertion_mode} = IN_BODY_IM;
@@ -4343,7 +4515,7 @@ sub _construct_tree ($) {
           $parent = $parent->content
               if $self->{open_elements}->[-1]->[1] == TEMPLATE_EL;
           $self->_append_text_by_token
-              ({%{$self->{t}}, data => $1} => $parent);
+              ({%{$self->{t}}, value => $1} => $parent);
           $self->{t}->{char_delta} += length $1;
           
           unless (length $self->{t}->{value}) {
@@ -4357,13 +4529,13 @@ sub _construct_tree ($) {
           ## is different from the spec .
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in frameset:#text', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'in frameset:#text', token => $self->{t});
           } elsif ($self->{insertion_mode} == AFTER_FRAMESET_IM) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after frameset:#text', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'after frameset:#text', token => $self->{t});
           } else { # "after after frameset"
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after html:#text', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'after html:#text', token => $self->{t});
           }
           
           ## Ignore the token.
@@ -4382,6 +4554,10 @@ sub _construct_tree ($) {
             $self->{insertion_mode} == IN_FRAMESET_IM) {
           $self->_insert_el;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         } elsif ($self->{t}->{tag_name} eq 'frame' and
@@ -4396,9 +4572,13 @@ sub _construct_tree ($) {
           ## NOTE: As if in head.
           {
             $self->_insert_el;
-            $self->{state} = RAWTEXT_STATE;
+            $self->{state} = 'RAWTEXT state';
             $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
           }
           next B;
@@ -4408,19 +4588,23 @@ sub _construct_tree ($) {
         } else {
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in frameset',
+            $self->{parse_error}->(level => 'm', type => 'in frameset',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } elsif ($self->{insertion_mode} == AFTER_FRAMESET_IM) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after frameset',
+            $self->{parse_error}->(level => 'm', type => 'after frameset',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } else { # "after after frameset"
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after after frameset',
+            $self->{parse_error}->(level => 'm', type => 'after after frameset',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           }
           ## Ignore the token
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           next B;
         }
@@ -4430,7 +4614,7 @@ sub _construct_tree ($) {
           if ($self->{open_elements}->[-1]->[1] == HTML_EL and
               @{$self->{open_elements}} == 1) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+            $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                             text => $self->{t}->{tag_name}, token => $self->{t});
             ## Ignore the token
             $self->{t} = $self->_get_next_token;
@@ -4457,15 +4641,15 @@ sub _construct_tree ($) {
         } else {
           if ($self->{insertion_mode} == IN_FRAMESET_IM) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in frameset:/',
+            $self->{parse_error}->(level => 'm', type => 'in frameset:/',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } elsif ($self->{insertion_mode} == AFTER_FRAMESET_IM) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after frameset:/',
+            $self->{parse_error}->(level => 'm', type => 'after frameset:/',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           } else { # "after after html"
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'after after frameset:/',
+            $self->{parse_error}->(level => 'm', type => 'after after frameset:/',
                             text => $self->{t}->{tag_name}, token => $self->{t});
           }
           ## Ignore the token
@@ -4481,7 +4665,7 @@ sub _construct_tree ($) {
 
           ## Note that the current node is always the |frameset|
           ## element here.
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no end tag at EOF',
+          $self->{parse_error}->(level => 'm', type => 'no end tag at EOF',
                           text => $self->{open_elements}->[-1]->[0]->local_name,
                           token => $self->{t});
         }
@@ -4507,6 +4691,10 @@ sub _construct_tree ($) {
       if ($self->{t}->{tag_name} eq 'script') {
         $self->_script_start_tag;
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'style') {
@@ -4514,9 +4702,13 @@ sub _construct_tree ($) {
         ## NOTE: This is an "as if in head" code clone
         {
           $self->_insert_el;
-          $self->{state} = RAWTEXT_STATE;
+          $self->{state} = 'RAWTEXT state';
           $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
         }
         next B;
@@ -4610,16 +4802,20 @@ sub _construct_tree ($) {
         ## NOTE: This is an "as if in head" code clone
         {
           $self->_insert_el;
-          $self->{state} = RCDATA_STATE;
+          $self->{state} = 'RCDATA state';
           $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
         }
         next B;
 
       } elsif ($self->{t}->{tag_name} eq 'body') {
         ## "In body" insertion mode, "body" start tag token.
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body', text => 'body', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'in body', text => 'body', token => $self->{t});
         
         if (@{$self->{open_elements}} == 1 or
             not ($self->{open_elements}->[1]->[1] == BODY_EL) or 
@@ -4648,10 +4844,14 @@ sub _construct_tree ($) {
           }
         }
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'frameset') {
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body', text => $self->{t}->{tag_name},
+        $self->{parse_error}->(level => 'm', type => 'in body', text => $self->{t}->{tag_name},
                         token => $self->{t});
 
         if (@{$self->{open_elements}} == 1 or
@@ -4680,6 +4880,10 @@ sub _construct_tree ($) {
         }
 
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
 
@@ -4720,9 +4924,13 @@ sub _construct_tree ($) {
             }
           } # OE
           if (defined $self->{form_element} and not $in_template) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in form:form', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'in form:form', token => $self->{t});
             ## Ignore the token.
             
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
             $self->{t} = $self->_get_next_token;
             next B;
           }
@@ -4738,7 +4946,7 @@ sub _construct_tree ($) {
         if ({h1 => 1, h2 => 1, h3 => 1,
              h4 => 1, h5 => 1, h6 => 1}->{$self->{t}->{tag_name}}) {
           if ($self->{open_elements}->[-1]->[1] == HEADING_EL) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+            $self->{parse_error}->(level => 'm', type => 'not closed',
                             text => $self->{open_elements}->[-1]->[0]->local_name,
                             token => $self->{t});
             pop @{$self->{open_elements}};
@@ -4749,6 +4957,10 @@ sub _construct_tree ($) {
         $self->_insert_el;
         if ($self->{t}->{tag_name} eq 'pre' or $self->{t}->{tag_name} eq 'listing') {
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
           if ($self->{t}->{type} == CHARACTER_TOKEN) {
             $self->{t}->{value} =~ s/^\x0A//;
@@ -4769,6 +4981,10 @@ sub _construct_tree ($) {
               if not $in_template;
 
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
         } elsif ($self->{t}->{tag_name} eq 'table') {
           
@@ -4779,6 +4995,10 @@ sub _construct_tree ($) {
           $self->{insertion_mode} = IN_TABLE_IM;
 
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
         } elsif ($self->{t}->{tag_name} eq 'hr') {
           
@@ -4791,6 +5011,10 @@ sub _construct_tree ($) {
           $self->{t} = $self->_get_next_token;
         } else {
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
           $self->{t} = $self->_get_next_token;
         }
         next B;
@@ -4820,7 +5044,7 @@ sub _construct_tree ($) {
               ## 3.2.
               unless ($self->{open_elements}->[-1]->[1] != FOREIGN_EL and
                       $self->{open_elements}->[-1]->[0]->local_name eq $el_name) {
-                $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+                $self->{parse_error}->(level => 'm', type => 'not closed',
                                 text => $self->{open_elements}->[-1]->[0]->local_name,
                                 token => $self->{t});
               }
@@ -4845,6 +5069,10 @@ sub _construct_tree ($) {
         ## <li> 7. / <dt><dd> 8.
         $self->_insert_el;
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
 
@@ -4856,9 +5084,13 @@ sub _construct_tree ($) {
         
         $self->_insert_el;
         
-        $self->{state} = PLAINTEXT_STATE;
+        $self->{state} = 'PLAINTEXT state';
           
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
 
@@ -4868,7 +5100,7 @@ sub _construct_tree ($) {
         AFE: for my $i (reverse 0..$#$active_formatting_elements) {
           my $node = $active_formatting_elements->[$i];
           if ($node->[1] == A_EL) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in a:a', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'in a:a', token => $self->{t});
             $self->_aaa ($self->{t});
             AFE2: for (reverse 0..$#$active_formatting_elements) {
               if ($active_formatting_elements->[$_]->[0] eq $node->[0]) {
@@ -4897,6 +5129,10 @@ sub _construct_tree ($) {
                           => $active_formatting_elements);
 
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
 
@@ -4909,7 +5145,7 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           my $node = $self->{open_elements}->[$_];
           if ($node->[1] == NOBR_EL) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in nobr:nobr', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'in nobr:nobr', token => $self->{t});
             $self->_aaa ($self->{t});
             $self->_reconstruct_afe;
             last INSCOPE;
@@ -4925,6 +5161,10 @@ sub _construct_tree ($) {
                           => $active_formatting_elements);
         
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'button') {
@@ -4932,7 +5172,7 @@ sub _construct_tree ($) {
         INSCOPE: for (reverse 0..$#{$self->{open_elements}}) {
           if ($self->{open_elements}->[$_]->[1] == BUTTON_EL) {
             ## 1.1.
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'in button:button', token => $self->{t});
+            $self->{parse_error}->(level => 'm', type => 'in button:button', token => $self->{t});
 
             ## 1.2. Generate implied end tags.
             pop @{$self->{open_elements}}
@@ -4956,6 +5196,10 @@ sub _construct_tree ($) {
         delete $self->{frameset_ok};
 
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'xmp') {
@@ -4966,9 +5210,13 @@ sub _construct_tree ($) {
 
         ## The generic raw text element parsing algorithm.
         $self->_insert_el;
-        $self->{state} = RAWTEXT_STATE;
+        $self->{state} = 'RAWTEXT state';
         $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
@@ -4981,15 +5229,19 @@ sub _construct_tree ($) {
 
         ## The generic raw text element parsing algorithm.
         $self->_insert_el;
-        $self->{state} = RAWTEXT_STATE;
+        $self->{state} = 'RAWTEXT state';
         $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'isindex') {
         ## The "in body" insertion mode, <isindex>.
 
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'isindex', token => $self->{t});
+        $self->{parse_error}->(level => 'm', type => 'isindex', token => $self->{t});
 
         my $has_template;
         OE: for (reverse @{$self->{open_elements}}) {
@@ -5001,7 +5253,11 @@ sub _construct_tree ($) {
 
         if (defined $self->{form_element} and not $has_template) {
           ## Ignore the token.
-           ## NOTE: Not acknowledged.
+          
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+     ## NOTE: Not acknowledged.
           $self->{t} = $self->_get_next_token;
           next B;
         }
@@ -5065,7 +5321,7 @@ sub _construct_tree ($) {
         $self->{ignore_newline} = 1;
 
         ## 3. RCDATA
-        $self->{state} = RCDATA_STATE;
+        $self->{state} = 'RCDATA state';
 
         ## 4., 6. Insertion mode
         $self->{insertion_mode} |= IN_CDATA_RCDATA_IM;
@@ -5074,6 +5330,10 @@ sub _construct_tree ($) {
         delete $self->{frameset_ok}; # not ok
 
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ($self->{t}->{tag_name} eq 'optgroup' or
@@ -5086,6 +5346,10 @@ sub _construct_tree ($) {
         $self->_insert_el;
 
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{tag_name} eq 'rt' or
@@ -5102,7 +5366,7 @@ sub _construct_tree ($) {
             }
             unless ($self->{open_elements}->[-1]->[1] == RUBY_EL) {
               
-              $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+              $self->{parse_error}->(level => 'm', type => 'not closed',
                               text => $self->{open_elements}->[-1]->[0]
                                   ->manakai_local_name,
                               token => $self->{t});
@@ -5117,6 +5381,10 @@ sub _construct_tree ($) {
         $self->_insert_el;
 
         
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         $self->{t} = $self->_get_next_token;
         redo B;
       } elsif ($self->{t}->{tag_name} eq 'math' or
@@ -5146,10 +5414,14 @@ sub _construct_tree ($) {
                 thead => 1, tr => 1,
                }->{$self->{t}->{tag_name}}) {
         
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'in body',
+        $self->{parse_error}->(level => 'm', type => 'in body',
                         text => $self->{t}->{tag_name}, token => $self->{t});
         ## Ignore the token
-         ## NOTE: |<col/>| or |<frame/>| here is an error.
+        
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+     ## NOTE: |<col/>| or |<frame/>| here is an error.
         $self->{t} = $self->_get_next_token;
         next B;
       } elsif ({
@@ -5164,7 +5436,7 @@ sub _construct_tree ($) {
       } else {
         if ($self->{t}->{tag_name} eq 'image') {
           
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'image', token => $self->{t});
+          $self->{parse_error}->(level => 'm', type => 'image', token => $self->{t});
           $self->{t}->{tag_name} = 'img';
         } else {
           
@@ -5184,6 +5456,10 @@ sub _construct_tree ($) {
           delete $self->{frameset_ok};
 
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         } elsif ({
                   b => 1, big => 1, code => 1, em => 1, font => 1, i => 1,
                   s => 1, small => 1, strike => 1,
@@ -5194,6 +5470,10 @@ sub _construct_tree ($) {
                              $self->{t}]
                             => $active_formatting_elements);
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         } elsif ($self->{t}->{tag_name} eq 'input') {
           
           ## TODO: associate with $self->{form_element} if defined
@@ -5237,8 +5517,16 @@ sub _construct_tree ($) {
             $self->{insertion_mode} = IN_SELECT_IM;
           }
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         } else {
           
+      if ($self->{t}->{self_closing_flag}) {
+        $self->{parse_error}->(level => 'm', type => 'nestc');
+      }
+    
         }
         
         $self->{t} = $self->_get_next_token;
@@ -5266,7 +5554,7 @@ sub _construct_tree ($) {
           ## NOTE: |<marquee></body>|, |<svg><foreignobject></body>|,
           ## and fragment cases.
 
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+          $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                           text => $self->{t}->{tag_name}, token => $self->{t});
           ## Ignore the token.  (</body> or </html>)
           $self->{t} = $self->_get_next_token;
@@ -5280,7 +5568,7 @@ sub _construct_tree ($) {
                   $_->[1] == OPTION_EL ||
                   $_->[1] == RUBY_COMPONENT_EL) {
             
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+            $self->{parse_error}->(level => 'm', type => 'not closed',
                             text => $_->[0]->manakai_local_name,
                             token => $self->{t});
             last;
@@ -5332,7 +5620,7 @@ sub _construct_tree ($) {
           }
         } # INSCOPE
         unless (defined $i) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+          $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                           text => $self->{t}->{tag_name},
                           token => $self->{t});
           ## Ignore the token.
@@ -5349,7 +5637,7 @@ sub _construct_tree ($) {
         ## Step 2.
         unless (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
                 $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name}) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed',
+          $self->{parse_error}->(level => 'm', type => 'not closed',
                           text => $self->{open_elements}->[-1]->[0]->local_name,
                           token => $self->{t});
         }
@@ -5396,7 +5684,7 @@ sub _construct_tree ($) {
             } # OE
           }
           unless (defined $i) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
@@ -5410,7 +5698,7 @@ sub _construct_tree ($) {
 
           ## 5.
           unless ($self->{open_elements}->[-1]->[0] eq $node) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+            $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                             text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                             value => $self->{t}->{tag_name}, # actual
                             token => $self->{t});
@@ -5433,7 +5721,7 @@ sub _construct_tree ($) {
             }
           } # OE
           unless (defined $i) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'stray end tag',
+            $self->{parse_error}->(level => 'm', type => 'stray end tag',
                             value => $self->{t}->{tag_name},
                             token => $self->{t});
             ## Ignore the token.
@@ -5447,7 +5735,7 @@ sub _construct_tree ($) {
 
           ## 3.
           unless ($self->{open_elements}->[-1]->[1] == FORM_EL) {
-            $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+            $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                             text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                             value => $self->{t}->{tag_name}, # actual
                             token => $self->{t});
@@ -5476,7 +5764,7 @@ sub _construct_tree ($) {
           }
         } # INSCOPE
         unless (defined $i) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+          $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                           text => $self->{t}->{tag_name},
                           token => $self->{t});
           ## Ignore the token.
@@ -5491,7 +5779,7 @@ sub _construct_tree ($) {
         ## Step 2.
         unless (not ($self->{open_elements}->[-1]->[1] & FOREIGN_EL) and
                 $self->{open_elements}->[-1]->[0]->local_name eq $self->{t}->{tag_name}) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'not closed before ancestor end tag',
+          $self->{parse_error}->(level => 'm', type => 'not closed before ancestor end tag',
                           text => $self->{open_elements}->[-1]->[0]->local_name, # expected
                           value => $self->{t}->{tag_name}, # actual
                           token => $self->{t});
@@ -5521,7 +5809,7 @@ sub _construct_tree ($) {
         next B;
       } elsif ($self->{t}->{tag_name} eq 'br') {
         ## The "in body" insertion mode, </br>
-        $self->{parse_error}->(level => $self->{level}->{must}, type => 'unmatched end tag',
+        $self->{parse_error}->(level => 'm', type => 'unmatched end tag',
                         text => 'br', token => $self->{t});
 
         ## As if <br>
@@ -5552,7 +5840,7 @@ sub _construct_tree ($) {
 
       OE: for (reverse @{$self->{open_elements}}) {
         unless ($_->[1] & ALL_END_TAG_OPTIONAL_EL) {
-          $self->{parse_error}->(level => $self->{level}->{must}, type => 'no end tag at EOF',
+          $self->{parse_error}->(level => 'm', type => 'no end tag at EOF',
                           text => $_->[0]->local_name,
                           token => $self->{t});
           last OE;
@@ -5576,7 +5864,7 @@ sub _construct_tree ($) {
   ## Stop parsing # MUST
   
   ## TODO: script stuffs
-} # _tree_construct_main
+} # _construct_tree
 
 sub parse_char_string_with_context ($$$$) {
   my $self = $_[0];
@@ -5622,21 +5910,20 @@ sub parse_char_string_with_context ($$$$) {
     if ($node_ns eq HTML_NS) {
       ## 4.1.
       if ($node_ln eq 'title' or $node_ln eq 'textarea') {
-        $self->{state} = RCDATA_STATE;
+        $self->{state} = 'RCDATA state';
       } elsif ($node_ln eq 'script') {
-        $self->{state} = SCRIPT_DATA_STATE;
+        $self->{state} = 'script data state';
       } elsif ({
         style => 1,
-        script => 1,
         xmp => 1,
         iframe => 1,
         noembed => 1,
         noframes => 1,
         noscript => $self->scripting, ## The scripting flag is enabled
       }->{$node_ln}) {
-        $self->{state} = RAWTEXT_STATE;
+        $self->{state} = 'RAWTEXT state';
       } elsif ($node_ln eq 'plaintext') {
-        $self->{state} = PLAINTEXT_STATE;
+        $self->{state} = 'PLAINTEXT state';
       }
       
       $self->{inner_html_node} = [$context, $el_category->{$node_ln} || 0];
@@ -5687,8 +5974,8 @@ sub parse_char_string_with_context ($$$$) {
   $self->{confident} = 1; ## Confident: irrelevant.
 
   # 6.
-  $self->{t} = $self->_get_next_token;
-  $self->_construct_tree;
+  $self->{tokens} = [];
+  $self->SUPER::parse_char_string ($_[1]);
 
   $self->_on_terminate;
 

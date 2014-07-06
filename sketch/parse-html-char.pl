@@ -9,6 +9,7 @@ use Encode;
 
 my $doc = new Web::DOM::Document;
 my $parser = Web::HTML::Parser->new;
+$parser->scripting (not $ENV{NOSCRIPT});
 $parser->locale_tag (lc $ENV{LANG}) if $ENV{LANG};
 
 my $input = shift;

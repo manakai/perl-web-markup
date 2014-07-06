@@ -1,5 +1,6 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
-    lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm
+    lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
+    lib/Web/HTML/_Tokenizer.pm
 clean: clean-json-ps
 	rm -fr local/*.json
 
@@ -43,8 +44,7 @@ pmbp-install: pmbp-upgrade
 
 GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm
 
-generated-pm-files: $(GENERATED_PM_FILES) \
-    lib/Web/HTML/_Tokenizer.pm
+generated-pm-files: $(GENERATED_PM_FILES)
 
 $(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl local/bin/pmbp.pl
 	perl local/bin/pmbp.pl --create-perl-command-shortcut perl

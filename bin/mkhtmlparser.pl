@@ -16,18 +16,16 @@ while (<>) {
     $self->_set_nc;
   }}ge;
   s{!!!nack\s*\(\s*'([^']+)'\s*\)\s*;}{
-    ($TokenizerDebug ? qq{
+    qq{
       if (\$self->{t}->{self_closing_flag}) {
-        !!!cp ('$1.2');
-      } else {
-        !!!cp ('$1.3');
+        !!!parse-error (type => 'nestc');
       }
-    } : '')
+    } # XXX ignored start tag's nestc error
   }ge;
   s{!!!ack\s*(?>\([^)]*\)\s*)?;}{q{delete $self->{t}->{self_closing_flag};}}ge;
   s{!!!ack-later\s*(?>\([^)]*\)\s*)?;}{}ge;
   s{!!!parse-error\s*\(}{
-    q{$self->{parse_error}->(level => $self->{level}->{must}, }
+    q{$self->{parse_error}->(level => 'm', }
   }ge;
   s{!!!next-token;}{q{$self->{t} = $self->_get_next_token;}}ge;
   s{!!!cp\s*\(\s*(\S+)\s*\)\s*;}{

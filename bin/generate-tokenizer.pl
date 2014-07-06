@@ -26,15 +26,24 @@ sub serialize_actions ($) {
       if (not defined $_->{if}) {
         push @result, sprintf q[$State = q<%s>;], $_->{state};
       } elsif ($_->{if} eq 'appropriate end tag') {
-        push @result, sprintf q[if ($Temp eq $LastStartTagName) {
-          $State = q<%s>;
-          return 0 if %d;
-        }], $_->{state}, $_->{break};
+        push @result, sprintf q[
+          if ($Token->{tag_name} eq $LastStartTagName) {
+            $State = q<%s>;
+            return 0 if %d;
+          }
+        ], $_->{state}, $_->{break};
       } elsif ($_->{if} eq 'in-foreign') {
-        push @result, sprintf q[if ('XXX' eq 'in-foreign') {
-          $State = q<%s>;
-          return 0 if %d;
-        }], $_->{state}, $_->{break};
+        push @result, sprintf q{
+          if (not defined $InForeign) {
+            pos ($Input) -= length $1;
+            return 1;
+          } else {
+            if ($InForeign) {
+              $State = q<%s>;
+              return 0 if %d;
+            }
+          }
+        }, $_->{state}, $_->{break};
       } else {
         die "Unknown if |$_->{if}|";
       }
@@ -59,7 +68,7 @@ sub serialize_actions ($) {
     } elsif ($type eq 'reconsume') {
       $reconsume = 1;
     } elsif ($type eq 'emit') {
-      if ($_->{check_end_tag_token}) {
+      if ($_->{possible_token_types}->{'end tag token'}) {
         push @result, q{
           if ($Token->{type} == END_TAG_TOKEN) {
             if (keys %{$Token->{attributes} or {}}) {
@@ -71,9 +80,26 @@ sub serialize_actions ($) {
           }
         };
       }
+      if ($_->{possible_token_types}->{'start tag token'}) {
+        push @result, q{
+          if ($Token->{type} == START_TAG_TOKEN) {
+            $LastStartTagName = $Token->{tag_name};
+          }
+        };
+      }
       push @result, q{
         $Emit->($Token);
       };
+      if ($_->{possible_token_types}->{'start tag token'} or
+          $_->{possible_token_types}->{'end tag token'}) {
+        push @result, q{
+          if ($Token->{type} == START_TAG_TOKEN or
+              $Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        };
+      }
     } elsif ($type eq 'emit-eof') {
       push @result, q[$Emit-> ({type => END_OF_FILE_TOKEN, index => $Offset + pos $Input}); return 1;];
     } elsif ($type eq 'emit-temp') {
@@ -277,6 +303,7 @@ our $Token;
 our $Attr;
 our $Temp;
 our $LastStartTagName;
+our $InForeign;
 my $StateActions = {};
 our $EOF;
 our $Offset;
@@ -322,7 +349,38 @@ sub _initialize_tokenizer {
     $self->{application_cache_selection} = sub { };
 }
 sub _terminate_tokenizer { }
-sub _clear_refs { }
+sub _clear_refs {
+  my $self = $_[0];
+  ## Remove self references.
+  delete $self->{set_nc};
+  delete $self->{read_until};
+  delete $self->{parse_error};
+  delete $self->{document};
+  delete $self->{chars};
+  delete $self->{chars_pull_next};
+  delete $self->{restart_parser};
+  delete $self->{t};
+  delete $self->{embedded_encoding_name};
+  delete $self->{byte_buffer};
+  delete $self->{inner_html_node};
+  delete $self->{inner_html_tag_name};
+  delete $self->{context_element};
+  delete $self->{onerror};
+  delete $self->{onextentref};
+  delete $self->{onparsed};
+  delete $self->{open_tables};
+  delete $self->{open_elements};
+  delete $self->{head_element};
+  delete $self->{form_element};
+  delete $self->{active_formatting_elements};
+  delete $self->{insert};
+  delete $self->{ge};
+  delete $self->{pe};
+  delete $self->{tokenizer_initial_state};
+  delete $self->{sps_transformer};
+  delete $self->{init_subparser};
+  delete $self->{validation};
+}
 sub _token_sps ($) {
   my $token = $_[0];
   return $token->{sps} if defined $token->{sps};
@@ -388,6 +446,19 @@ for (keys %%$Web::HTML::ParserData::CharRefReplacements) {
   $InvalidCharRefs->{0}->{$_}
       = [$Web::HTML::ParserData::CharRefReplacements->{$_}, 'must'];
 }
+
+my $TokenizerAbortingTagNames = {
+  title => 1,
+  textarea => 1,
+  plaintext => 1,
+        style => 1,
+        script => 1,
+        xmp => 1,
+        iframe => 1,
+        noembed => 1,
+        noframes => 1,
+        noscript => 1,
+};
 
   ];
   for my $state (sort { $a cmp $b } keys %{$defs->{states}}) {
@@ -490,10 +561,19 @@ local $LastStartTagName = $self->{last_start_tag_name};
 local $Emit = sub { $self->_emit (@_) };
 local $EOF = 0;
 local $Offset = 0;
+local $InForeign;
+my $get_in_foreign = sub {
+  ## The adjusted current node is a foreign element
+  (@{$self->{open_elements} || []} and
+   ($self->{open_elements}->[-1]->[1] & FOREIGN_EL)) or
+  (@{$self->{open_elements} || []} == 1 and
+   defined $self->{inner_html_node} and
+   $self->{inner_html_node}->[1] & FOREIGN_EL);
+};
 
 pos ($in) = 0;
       while ($in =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
-        $Emit-> ({type => 'error'});
+        $Emit-> ({type => 'error', error => {type => 'XXX', index => $-[0], level => 'm'}});
       }
 
 pos ($in) = 0;
@@ -506,13 +586,30 @@ my $len = 10000;
 $len = $length - $i if $i + $len > $length;
 $Offset += $i;
 $Input = substr $in, $i, $len;
-$self->_parse_segment;
+{
+    $InForeign = $get_in_foreign->();
+  $self->_parse_segment;
+  $self->{state} = $State;
+  $self->{t} = $self->_get_next_token;
+  $self->_construct_tree;
+  $State = $self->{state};
+  redo unless pos $Input == length $Input;
+}
 $i += $len;
 }
 
 $EOF = 1;
 
-$self->_parse_segment;
+{
+    $InForeign = $get_in_foreign->();
+  $self->_parse_segment;
+  $self->{state} = $State;
+  $self->{t} = $self->_get_next_token;
+  $self->_construct_tree;
+  $State = $self->{state};
+  redo unless pos $Input == length $Input;
+}
+
 
 $self->{state} = $State;
 $self->{token} = $Token;
