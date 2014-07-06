@@ -28,22 +28,22 @@ sub serialize_actions ($) {
       } elsif ($_->{if} eq 'appropriate end tag') {
         push @result, sprintf q[if ($Temp eq $LastStartTagName) {
           $State = q<%s>;
-          last if %d;
+          return 0 if %d;
         }], $_->{state}, $_->{break};
       } elsif ($_->{if} eq 'in-foreign') {
         push @result, sprintf q[if ('XXX' eq 'in-foreign') {
           $State = q<%s>;
-          last if %d;
+          return 0 if %d;
         }], $_->{state}, $_->{break};
       } else {
         die "Unknown if |$_->{if}|";
       }
     } elsif ($type eq 'switch-and-emit') {
       if ($_->{if} eq 'appropriate end tag') {
-        push @result, sprintf q[if ($Temp eq $LastStartTagName) {
+        push @result, sprintf q[if ($Token->{tag_name} eq $LastStartTagName) {
           $State = q<%s>;
           $Emit-> ($Token);
-          last if %d;
+          return 0 if %d;
         }], $_->{state}, $_->{break};
       } else {
         die "Unknown if |$_->{if}|";
@@ -60,9 +60,13 @@ sub serialize_actions ($) {
       $reconsume = 1;
     } elsif ($type eq 'emit') {
       push @result, q{
-        if ($Token->{type} == END_TAG_TOKEN and
-            keys %{$Token->{attributes} or {}}) {
-          $Emit->({type => 'error', error => {type => 'end tag attribute', index => pos $Input}}); # XXX index
+        if ($Token->{type} == END_TAG_TOKEN) {
+          if (keys %{$Token->{attributes} or {}}) {
+            $Emit->({type => 'error', error => {type => 'end tag attribute', index => pos $Input}}); # XXX index
+          }
+          if ($Token->{self_closing_flag}) {
+            $Emit->({type => 'error', error => {type => 'nestc', index => pos $Input}}); # XXX index
+          }
         }
         $Emit->($Token);
       };
@@ -90,7 +94,13 @@ sub serialize_actions ($) {
     } elsif ($type eq 'create-attr') {
       push @result, q[$Attr = {index => $Offset + pos $Input};];
     } elsif ($type eq 'set-attr') {
-      push @result, q[$Token->{attributes}->{$Attr->{name}} = $Attr;];
+      push @result, q{
+        if (defined $Token->{attributes}->{$Attr->{name}}) {
+          $Emit->({type => 'error', error => {type => 'duplicate attribute', text => $Attr->{name}, index => $Attr->{index}}});
+        } else {
+          $Token->{attributes}->{$Attr->{name}} = $Attr;
+        }
+      };
     } elsif ($type eq 'set' or
              $type eq 'set-to-attr' or
              $type eq 'set-to-temp' or
@@ -150,7 +160,7 @@ sub serialize_actions ($) {
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
     } elsif ($type eq 'process-temp-as-decimal') {
       push @result, q{
-        my $code = $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF;
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{0}->{$code}) {
           $Emit->({type => 'error',
                    error => {type => 'invalid character reference',
@@ -170,7 +180,7 @@ sub serialize_actions ($) {
       };
     } elsif ($type eq 'process-temp-as-hexadecimal') {
       push @result, q{
-        my $code = $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF;
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
         if (my $replace = $InvalidCharRefs->{0}->{$code}) {
           $Emit->({type => 'error',
                    error => {type => 'invalid character reference',
@@ -188,21 +198,49 @@ sub serialize_actions ($) {
         }
         $Temp = chr $code;
       };
-    } elsif ($type eq 'process-temp-as-named' or
-             $type eq 'process-temp-as-named-equals') {
-      push @result, q{
-        for (reverse (2 .. length $Temp)) {
-          my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
-          if (defined $value) {
-            unless (';' eq substr $Temp, $_-1, 1) {
-              $Emit->({type => 'error', error => {type => 'no refc', index => pos $Input}}); # XXXindex
+    } elsif ($type eq 'process-temp-as-named') {
+      if ($_->{in_attr}) {
+        push @result, sprintf q{
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (%d) { # before_equals
+                    $Emit->({type => 'error', error => {type => 'no refc', index => pos $Input}}); # XXXindex
+                    last REF;
+                  } else {
+                    $Emit->({type => 'error', error => {type => 'no refc', index => pos $Input}}); # XXXindex
+                  }
+                }
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
             }
-            substr ($Temp, 0, $_) = $value;
-            last;
-          }
-        }
-      };
-      # XXX parse error
+            $Emit->({type => 'error', error => {type => 'not charref', text => $Temp, index => pos $Input}}) # XXXindex
+                if $Temp =~ /;\z/;
+          } # REF
+        }, !!$_->{before_equals};
+      } else { # in content
+        push @result, q{
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  $Emit->({type => 'error', error => {type => 'no refc', index => pos $Input}}); # XXXindex
+                }
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            $Emit->({type => 'error', error => {type => 'not charref', text => $Temp, index => pos $Input}}) # XXXindex
+                if $Temp =~ /;\z/;
+          } # REF
+        };
+      }
     } else {
       die "Bad action type |$type|";
     }
