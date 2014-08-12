@@ -796,7 +796,7 @@ sub _create_el ($$$$) {
     ];
 
     my $attrs = $token->{attributes};
-    for my $attr_name (keys %$attrs) {
+    for my $attr_name (keys %$attrs) { # XXX sort
       my $attr_t = $attrs->{$attr_name};
 
       ## "adjust SVG attributes" (SVG only), "adjust MathML
