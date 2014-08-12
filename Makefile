@@ -43,7 +43,7 @@ pmbp-install: pmbp-upgrade
 
 ## ------ Build ------
 
-GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm #lib/Web/HTML/Parser.pm
+GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm
 
 generated-pm-files: $(GENERATED_PM_FILES)
 
@@ -112,11 +112,6 @@ local/html-tokenizer-expanded.json:
 local/html-tree-constructor-expanded-no-isindex.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tree-constructor-expanded-no-isindex.json
-
-lib/Web/HTML/_Tokenizer.pm: local/html-tokenizer-expanded.json \
-    bin/generate-tokenizer.pl $(JSON_PS)
-	$(PERL) bin/generate-tokenizer.pl > $@
-	$(PERL) -c $@
 
 local/bin/jq:
 	mkdir -p local/bin
