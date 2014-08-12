@@ -1221,12 +1221,13 @@ sub actions_to_code ($;%) {
                @{$act->{actions}} == 2 and
                $act->{actions}->[0]->{type} eq 'parse error' and
                $act->{actions}->[1]->{type} eq 'set-compat-mode') {
-        push @code, q{
+        push @code, sprintf q{
           unless ($IframeSrcdoc) {
+            %s
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
-        };
+        }, actions_to_code [$act->{actions}->[0]];
       } elsif ($act->{cond}->[0] eq 'legacy doctype' and
                @{$act->{actions}} == 1 and
                $act->{actions}->[0]->{type} eq 'parse error') {
@@ -1376,6 +1377,8 @@ sub actions_to_code ($;%) {
           ## Adjusted current node
           my $ns = ((defined $CONTEXT and @$OE == 1) ? $CONTEXT : $OE->[-1])->{ns};
         };
+        ## Note that $ns can be 0 if $CONTEXT is not an HTML, SVG, or
+        ## MathML element.
       } elsif ($act->{ns} eq 'SVG' or $act->{ns} eq 'MathML') {
         push @code, sprintf q{my $ns = %s;}, ns_const $act->{ns};
       } else {
@@ -1388,8 +1391,8 @@ sub actions_to_code ($;%) {
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       };
       if ($act->{ns} eq 'inherit') {
         push @code, sprintf q{
@@ -1683,7 +1686,7 @@ sub actions_to_code ($;%) {
                         [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
                         ([^"'\x09\x0A\x0C\x0D\x20]
                          [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
-            push @$OP, ['change-the-encoding', $1, $token->{attrs}->{content}];
+            push @$OP, ['change-the-encoding', defined $1 ? $1 : defined $2 ? $2 : $3, $token->{attrs}->{content}];
           }
         }
       };
@@ -2606,6 +2609,7 @@ sub dom_tree ($$) {
       my $data = $op->[1];
       my $el = $doc->create_element_ns
           ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
+      ## Note that $data->{ns} can be 0.
       for my $attr (@{$data->{attr_list} or []}) {
         $el->set_attribute_ns (@{$attr->{name_args}} => $attr->{value});
       }
@@ -2796,6 +2800,7 @@ sub generate_api ($) {
     sub _run ($) {
       my ($self) = @_;
       my $is = $self->{input_stream};
+      # XXX rewrite loop conditions
       my $length = @$is == 0 ? 0 : defined $is->[0]->[0] ? length $is->[0]->[0] : 0;
       my $in_offset = 0;
       {
@@ -2803,6 +2808,10 @@ sub generate_api ($) {
         $len = $length - $in_offset if $in_offset + $len > $length;
         if ($len > 0) {
           $Input = substr $is->[0]->[0], $in_offset, $len;
+        } elsif (@$is and not defined $is->[0]->[0]) {
+          $Input = '';
+          pos ($Input) = 0;
+          $EOF = 1;
         } else {
           shift @$is;
           if (@$is) {
@@ -2811,6 +2820,8 @@ sub generate_api ($) {
               $in_offset = 0;
               redo;
             } else {
+              $Input = '';
+              pos ($Input) = 0;
               $EOF = 1;
             }
           } else {
@@ -2872,6 +2883,7 @@ sub generate_api ($) {
 
       $self->{input_stream} = [];
       my $doc = $self->{document} = $_[2];
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -2904,6 +2916,7 @@ sub generate_api ($) {
 
       ## 1.
       my $doc = $self->{document} = $_[3];
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       my $nodes = $self->{nodes} = [$doc];
@@ -3059,6 +3072,7 @@ sub generate_api ($) {
 
       $self->{input_stream} = [];
       $self->{document} = $doc;
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -3119,6 +3133,7 @@ sub generate_api ($) {
       my $self = $_[0];
 
       my $doc = $self->{document} = $_[3];
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $self->{can_restart} = 1;
 
@@ -3158,6 +3173,7 @@ sub generate_api ($) {
       my $self = $_[0];
 
       my $doc = $self->{document};
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
@@ -3191,7 +3207,6 @@ sub generate_api ($) {
       my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
 
       $self->_feed_chars ($input) or return 0;
-      $self->_feed_eof or return 0;
 
       return 1;
     } # _parse_bytes_start_parsing

@@ -8,3 +8,4 @@
 /config/perl/libs.txt
 /deps/
 /t/tmp/
+/nytprof*

@@ -16,7 +16,7 @@ sub _html_parser_srcdoc : Test(3) {
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_srcdoc (1);
 
-  Web::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
+  Web::HTML::Parser->new->parse_char_string (q<<p>abc</p>> => $doc);
 
   ok $doc->manakai_is_html;
   is $doc->compat_mode, 'CSS1Compat';
@@ -51,7 +51,7 @@ sub _html_parser_change_the_encoding_fragment : Test(2) {
   });
   
   my $doc = new Web::DOM::Document;
-  my $el = $doc->create_element_ns (undef, [undef, 'div']);
+  my $el = $doc->create_element ('div');
 
   $parser->parse_char_string_with_context
       ('<meta charset=shift_jis>', $el, Web::DOM::Document->new);
@@ -62,6 +62,27 @@ sub _html_parser_change_the_encoding_fragment : Test(2) {
        $el, Web::DOM::Document->new);
   ok !$called;
 } # _html_parser_change_the_encoding_fragment
+
+sub _html_parser_change_the_encoding_fragment_null : Test(2) {
+  my $parser = Web::HTML::Parser->new;
+  my $called = 0;
+  $parser->onerror (sub {
+    my %args = @_;
+    $called = 1 if $args{type} eq 'charset label detected';
+  });
+  
+  my $doc = new Web::DOM::Document;
+  my $el = $doc->create_element_ns (undef, [undef, 'div']);
+
+  $parser->parse_char_string_with_context
+      ('<meta charset=shift_jis>', $el, Web::DOM::Document->new);
+  ok !$called;
+
+  $parser->parse_char_string_with_context
+      ('<meta http-equiv=content-type content="text/html; charset=shift_jis">',
+       $el, Web::DOM::Document->new);
+  ok !$called;
+} # _html_parser_change_the_encoding_fragment_null
 
 sub _html_parser_change_the_encoding_byte_string : Test(64) {
   my $dom = Web::DOM::Implementation->new;
@@ -549,7 +570,7 @@ sub _parse_bytes_stream_prescan_tag_like : Test(3) {
   is $doc->inner_html, q(<html><head></head><body>&lt;%$a<f>&lt;*ab&lt;&amp;a&lt;%aa%?&gt;&lt;#&gt;</f></body></html>);
 } # _parse_bytes_stream_prescan_tag_like
 
-sub _parse_bytes_stream_locale_default : Test(3) {
+sub _parse_bytes_stream_locale_default : Test(2) {
   my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
@@ -562,7 +583,7 @@ sub _parse_bytes_stream_locale_default : Test(3) {
   is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
 } # _parse_bytes_stream_locale_default
 
-sub _parse_bytes_stream_locale_default_2 : Test(3) {
+sub _parse_bytes_stream_locale_default_2 : Test(2) {
   my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
@@ -575,7 +596,7 @@ sub _parse_bytes_stream_locale_default_2 : Test(3) {
   is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
 } # _parse_bytes_stream_locale_default_2
 
-sub _parse_bytes_stream_locale_default_2_long : Test(3) {
+sub _parse_bytes_stream_locale_default_2_long : Test(2) {
   my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;
@@ -588,7 +609,7 @@ sub _parse_bytes_stream_locale_default_2_long : Test(3) {
   is $doc->inner_html, q(<!DOCTYPE html><html><head></head><body>hoge</body></html>);
 } # _parse_bytes_stream_locale_default_2_long
 
-sub _parse_bytes_stream_locale_default_3 : Test(3) {
+sub _parse_bytes_stream_locale_default_3 : Test(2) {
   my $dom = Web::DOM::Implementation->new;
   my $doc = $dom->create_document;
   my $parser = Web::HTML::Parser->new;

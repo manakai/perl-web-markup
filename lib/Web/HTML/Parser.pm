@@ -1301,7 +1301,7 @@ push @$OE, $HEAD_ELEMENT;
                         [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
                         ([^"'\x09\x0A\x0C\x0D\x20]
                          [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
-            push @$OP, ['change-the-encoding', $1, $token->{attrs}->{content}];
+            push @$OP, ['change-the-encoding', defined $1 ? $1 : defined $2 ? $2 : $3, $token->{attrs}->{content}];
           }
         }
       
@@ -3568,8 +3568,8 @@ my $ns = MATHMLNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
         if (defined $token->{attrs}->{xmlns}) {
@@ -3976,8 +3976,8 @@ my $ns = SVGNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
         if (defined $token->{attrs}->{xmlns}) {
@@ -4918,8 +4918,8 @@ last;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
           if ($ns == MATHMLNS and $node->{local_name} eq 'annotation-xml' and
@@ -5013,8 +5013,8 @@ push @$Errors, {type => 'in-foreign-content-start-b5ccd4eeh8iillmmnopprs7ttuuv',
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
           if ($ns == MATHMLNS and $node->{local_name} eq 'annotation-xml' and
@@ -5124,8 +5124,8 @@ $token->{attrs}->{q@size@}) {
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
           if ($ns == MATHMLNS and $node->{local_name} eq 'annotation-xml' and
@@ -5224,8 +5224,8 @@ push @$OP, ['script', $script->{id}];
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
           if ($ns == MATHMLNS and $node->{local_name} eq 'annotation-xml' and
@@ -5769,7 +5769,7 @@ push @$Errors, {type => 'in-head-start-head', index => $token->{index}};
                         [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
                         ([^"'\x09\x0A\x0C\x0D\x20]
                          [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
-            push @$OP, ['change-the-encoding', $1, $token->{attrs}->{content}];
+            push @$OP, ['change-the-encoding', defined $1 ? $1 : defined $2 ? $2 : $3, $token->{attrs}->{content}];
           }
         }
       
@@ -9083,8 +9083,8 @@ my $ns = MATHMLNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
         if (defined $token->{attrs}->{xmlns}) {
@@ -9219,7 +9219,7 @@ push @$Errors, {type => 'in-table-else', index => $token->{index}};
                         [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
                         ([^"'\x09\x0A\x0C\x0D\x20]
                          [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
-            push @$OP, ['change-the-encoding', $1, $token->{attrs}->{content}];
+            push @$OP, ['change-the-encoding', defined $1 ? $1 : defined $2 ? $2 : $3, $token->{attrs}->{content}];
           }
         }
       
@@ -9722,8 +9722,8 @@ my $ns = SVGNS;
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'},
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'}};
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       
 
         if (defined $token->{attrs}->{xmlns}) {
@@ -10419,6 +10419,7 @@ push @$OP, ['doctype', $token => 0];
           my $token = $_;
 
           unless ($IframeSrcdoc) {
+            push @$Errors, {type => 'initial-else', index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -10437,6 +10438,7 @@ push @$OP, ['doctype', $token => 0];
           my $token = $_;
 
           unless ($IframeSrcdoc) {
+            push @$Errors, {type => 'initial-else', index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -10455,6 +10457,7 @@ push @$OP, ['doctype', $token => 0];
           my $token = $_;
 
           unless ($IframeSrcdoc) {
+            push @$Errors, {type => 'initial-else', index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -10478,6 +10481,7 @@ push @$OP, ['doctype', $token => 0];
         if (length $token->{value}) {
           
           unless ($IframeSrcdoc) {
+            push @$Errors, {type => 'initial-else', index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -27196,6 +27200,7 @@ sub dom_tree ($$) {
       my $data = $op->[1];
       my $el = $doc->create_element_ns
           ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
+      ## Note that $data->{ns} can be 0.
       for my $attr (@{$data->{attr_list} or []}) {
         $el->set_attribute_ns (@{$attr->{name_args}} => $attr->{value});
       }
@@ -27339,6 +27344,7 @@ sub dom_tree ($$) {
     sub _run ($) {
       my ($self) = @_;
       my $is = $self->{input_stream};
+      # XXX rewrite loop conditions
       my $length = @$is == 0 ? 0 : defined $is->[0]->[0] ? length $is->[0]->[0] : 0;
       my $in_offset = 0;
       {
@@ -27346,6 +27352,10 @@ sub dom_tree ($$) {
         $len = $length - $in_offset if $in_offset + $len > $length;
         if ($len > 0) {
           $Input = substr $is->[0]->[0], $in_offset, $len;
+        } elsif (@$is and not defined $is->[0]->[0]) {
+          $Input = '';
+          pos ($Input) = 0;
+          $EOF = 1;
         } else {
           shift @$is;
           if (@$is) {
@@ -27354,6 +27364,8 @@ sub dom_tree ($$) {
               $in_offset = 0;
               redo;
             } else {
+              $Input = '';
+              pos ($Input) = 0;
               $EOF = 1;
             }
           } else {
@@ -27416,6 +27428,7 @@ sub dom_tree ($$) {
 
       $self->{input_stream} = [];
       my $doc = $self->{document} = $_[2];
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -27452,6 +27465,7 @@ $Scripting = $self->{Scripting};
 
       ## 1.
       my $doc = $self->{document} = $_[3];
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       my $nodes = $self->{nodes} = [$doc];
@@ -27611,6 +27625,7 @@ $Scripting = $self->{Scripting};
 
       $self->{input_stream} = [];
       $self->{document} = $doc;
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
@@ -27679,6 +27694,7 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
 
       my $doc = $self->{document} = $_[3];
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $self->{can_restart} = 1;
 
@@ -27722,6 +27738,7 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
 
       my $doc = $self->{document};
+      $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
@@ -27759,7 +27776,6 @@ $Scripting = $self->{Scripting};
       my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
 
       $self->_feed_chars ($input) or return 0;
-      $self->_feed_eof or return 0;
 
       return 1;
     } # _parse_bytes_start_parsing
