@@ -1,6 +1,6 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
     lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
-    lib/Web/HTML/_Tokenizer.pm
+    lib/Web/HTML/Parser.pm
 clean: clean-json-ps
 	rm -fr local/*.json
 
@@ -22,6 +22,7 @@ PROVE = ./prove
 
 WGET = wget
 GIT = git
+JSON_PS = local/perl-latest/pm/lib/perl5/JSON/PS.pm
 
 deps: git-submodules pmbp-install
 
@@ -42,13 +43,22 @@ pmbp-install: pmbp-upgrade
 
 ## ------ Build ------
 
-GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm
+GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm #lib/Web/HTML/Parser.pm
 
 generated-pm-files: $(GENERATED_PM_FILES)
 
 $(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl local/bin/pmbp.pl
 	perl local/bin/pmbp.pl --create-perl-command-shortcut perl
 	perl bin/mkhtmlparser.pl $< > $@
+	$(PERL) -c $@
+
+lib/Web/HTML/Parser.pm: bin/generate-parser.pl \
+    local/html-tokenizer-expanded.json \
+    local/html-tree-constructor-expanded-no-isindex.json \
+    local/elements.json local/bin/pmbp.pl $(JSON_PS)
+	perl local/bin/pmbp.pl --create-perl-command-shortcut perl \
+	    --install-module Path::Tiny
+	$(PERL) bin/generate-parser.pl > $@
 	$(PERL) -c $@
 
 lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
@@ -96,12 +106,15 @@ local/xml-datatypes.json:
 local/ogp.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/ogp.json
-
 local/html-tokenizer-expanded.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tokenizer-expanded.json
+local/html-tree-constructor-expanded-no-isindex.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tree-constructor-expanded-no-isindex.json
+
 lib/Web/HTML/_Tokenizer.pm: local/html-tokenizer-expanded.json \
-    bin/generate-tokenizer.pl json-ps
+    bin/generate-tokenizer.pl $(JSON_PS)
 	$(PERL) bin/generate-tokenizer.pl > $@
 	$(PERL) -c $@
 
@@ -180,17 +193,17 @@ Chromium:\
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
     local/aria.json local/aria-html-map.json local/bin/pmbp.pl \
     local/rdf.json local/xml-datatypes.json local/ogp.json \
-    bin/generate-validator-defs.pl json-ps
+    bin/generate-validator-defs.pl $(JSON_PS)
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module Path::Tiny \
 	    --create-perl-command-shortcut perl
 	$(PERL) bin/generate-validator-defs.pl > $@
 	perl -c $@
 
-json-ps: local/perl-latest/pm/lib/perl5/JSON/PS.pm
+json-ps: $(JSON_PS)
 clean-json-ps:
-	rm -fr local/perl-latest/pm/lib/perl5/JSON/PS.pm
-local/perl-latest/pm/lib/perl5/JSON/PS.pm:
+	rm -fr $(JSON_PS)
+$(JSON_PS):
 	mkdir -p local/perl-latest/pm/lib/perl5/JSON
 	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/perl-json-ps/master/lib/JSON/PS.pm
 
