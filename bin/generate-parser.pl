@@ -1,4 +1,4 @@
-package TreeParser::ig3;
+
 use strict;
 use warnings;
 use Path::Tiny;
@@ -10,7 +10,6 @@ my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
 # XXX indexes and parse errors
-# XXX fragment parsing
 
 sub new ($) {
   return bless {}, $_[0];
@@ -54,7 +53,7 @@ my $Vars = {
   NEXT_ID => {save => 1, type => 'index', default => 1},
   HEAD_ELEMENT => {save => 1, type => 'struct?'},
   FORM_ELEMENT => {save => 1, type => 'struct?'},
-  CONTEXT => {input => 1, type => 'struct?'},
+  CONTEXT => {save => 1, type => 'struct?'},
   OE => {unchanged => 1, type => 'list'},
   AFE => {unchanged => 1, type => 'list'},
   TABLE_CHARS => {unchanged => 1, type => 'list'},
@@ -3103,6 +3102,18 @@ sub generate_api ($) {
       return;
     } # parse_chars_end
 
+## NOTE: HTML5 spec says that the encoding layer MUST NOT strip BOM
+## and the HTML layer MUST ignore it.  However, we does strip BOM in
+## the encoding layer and the HTML layer does not ignore any U+FEFF,
+## because the core part of our HTML parser expects a string of
+## character, not a string of bytes or code units or anything which
+## might contain a BOM.  Therefore, any parser interface that accepts
+## a string of bytes, such as |parse_byte_string| in this module, must
+## ensure that it does strip the BOM and never strip any ZWNBSP.
+
+## XXX The policy mentioned above might change when we implement
+## Encoding Standard spec.
+
     sub parse_byte_string ($$$$) {
       #my ($self, $charset_name, $string, $doc) = @_;
       my $self = $_[0];
@@ -3359,9 +3370,22 @@ for (keys %%$Web::HTML::ParserData::CharRefReplacements) {
 
     ## ------ Common handlers ------
 
-sub new ($) {
-  return bless {}, $_[0];
-} # new
+    sub new ($) {
+      return bless {
+        ## Input parameters
+        # Scripting IframeSrcdoc known_definite_encoding locale_tag
+
+        ## Callbacks
+        # onerror onerrors onappcacheselection onscript
+        # onelementspopped onrestartwithencoding
+
+        ## Parser internal states
+        # input_stream input_encoding saved_stats saved_lists
+        # nodes document can_restart restart
+        # parse_bytes_started transport_encoding_label
+        # byte_bufer byte_buffer_orig
+      }, $_[0];
+    } # new
 
 our $DefaultErrorHandler = sub {
   my $error = {@_};
@@ -3427,6 +3451,13 @@ sub onrestartwithencoding ($;$) {
       }
       $_[0]->{restart} = 1;
     } # restart
+
+    sub scripting ($;$) {
+      if (@_ > 1) {
+        $_[0]->{Scripting} = $_[1];
+      }
+      return $_[0]->{Scripting};
+    } # scripting
 
     sub _cleanup_states ($) {
       my $self = $_[0];
