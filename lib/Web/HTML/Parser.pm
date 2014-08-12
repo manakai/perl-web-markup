@@ -10347,6 +10347,14 @@ push @$OP, ['doctype', $token => 0];
                 push @$Errors, {type => 'XXXobsolete permitted DOCTYPE', level => 's', token => $token};
               } else {
                 push @$Errors, {type => 'XXX', token => $token};
+                unless ($IframeSrcdoc) {
+                  my $sysid = $token->{system_identifier};
+                  $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
+                  if ($QSystemIDs->{$sysid}) {
+                    push @$OP, ['set-compat-mode', 'quirks'];
+                    $QUIRKS = 1;
+                  }
+                }
               }
             } else {
               if ($OPPublicIDOnly->{$token->{public_identifier}}) {
@@ -27430,6 +27438,7 @@ sub dom_tree ($$) {
       my $doc = $self->{document} = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
+      $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
@@ -27471,8 +27480,12 @@ $Scripting = $self->{Scripting};
       my $nodes = $self->{nodes} = [$doc];
 
       ## 2.
-      $doc->manakai_compat_mode ($context->owner_document->manakai_compat_mode)
-          if defined $context;
+      if (defined $context) {
+        $doc->manakai_compat_mode ($context->owner_document->manakai_compat_mode);
+      } else {
+        ## Not in spec
+        $doc->manakai_compat_mode ('no quirks');
+      }
 
       ## 3.
       my $input = [$_[1]]; # string copy
@@ -27627,6 +27640,7 @@ $Scripting = $self->{Scripting};
       $self->{document} = $doc;
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
+      $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
@@ -27696,6 +27710,7 @@ $Scripting = $self->{Scripting};
       my $doc = $self->{document} = $_[3];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
+      $doc->manakai_compat_mode ('no quirks');
       $self->{can_restart} = 1;
 
       PARSER: {
