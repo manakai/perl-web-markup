@@ -527,10 +527,14 @@ sub serialize_actions ($) {
         push @result, q{
           if ($Token->{type} == END_TAG_TOKEN) {
             if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute', index => pos $Input}; # XXX index
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              index => pos $Input}; # XXX index
             }
             if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc', index => pos $Input}; # XXX index
+              push @$Errors, {type => 'nestc',
+                              level => 'm',
+                              index => pos $Input}; # XXX index
             }
           }
         };
@@ -582,7 +586,10 @@ sub serialize_actions ($) {
     } elsif ($type eq 'set-attr') {
       push @result, q{
         if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute', text => $Attr->{name}, index => $Attr->{index}};
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          index => $Attr->{index}};
         } else {
           $Token->{attrs}->{$Attr->{name}} = $Attr;
           push @{$Token->{attr_list} ||= []}, $Attr;
@@ -697,17 +704,24 @@ sub serialize_actions ($) {
                   if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
                     last REF;
                   } elsif (%d) { # before_equals
-                    push @$Errors, {type => 'no refc', index => pos $Input}; # XXXindex
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    index => pos $Input}; # XXXindex
                     last REF;
                   } else {
-                    push @$Errors, {type => 'no refc', index => pos $Input}; # XXXindex
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    index => pos $Input}; # XXXindex
                   }
                 }
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp, index => pos $Input} # XXXindex
+            push @$Errors, {type => 'not charref',
+                            text => $Temp,
+                            level => 'm',
+                            index => pos $Input} # XXXindex
                 if $Temp =~ /;\z/;
           } # REF
         }, !!$_->{before_equals};
@@ -718,13 +732,17 @@ sub serialize_actions ($) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
                 unless (';' eq substr $Temp, $_-1, 1) {
-                  push @$Errors, {type => 'no refc', index => pos $Input}; # XXXindex
+                  push @$Errors, {type => 'no refc',
+                                  level => 'm',
+                                  index => pos $Input}; # XXXindex
                 }
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp, index => pos $Input} # XXXindex
+            push @$Errors, {type => 'not charref', text => $Temp,
+                            level => 'm',
+                            index => pos $Input} # XXXindex
                 if $Temp =~ /;\z/;
           } # REF
         };
@@ -1127,6 +1145,8 @@ sub cond_to_code ($) {
     }, $cond->[2];
   } elsif ($cond->[0] eq 'fragment') {
     return q{defined $CONTEXT};
+  } elsif ($cond->[0] eq 'not fragment') {
+    return q{not defined $CONTEXT};
   } elsif ($cond->[0] eq 'form element pointer' and
            $cond->[1] eq 'is not null') {
     return q{defined $FORM_ELEMENT};
@@ -1416,12 +1436,14 @@ sub actions_to_code ($;%) {
           } elsif ($ns == MATHMLNS and $token->{attrs}->{xmlns}->{value} eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX', index => $token->{attrs}->{xmlns}->{index}}; # XXXindex
+            push @$Errors, {type => 'XXX',
+                            level => 'm',
+                            index => $token->{attrs}->{xmlns}->{index}}; # XXXindex
           }
         }
         if (defined $token->{attrs}->{'xmlns:xlink'}) {
           unless ($token->{attrs}->{'xmlns:xlink'}->{value} eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX'}; # XXXindex
+            push @$Errors, {type => 'XXX', level => 'm'}; # XXXindex
           }
         }
 
@@ -1550,8 +1572,8 @@ sub actions_to_code ($;%) {
       push @code, q{pop @$TEMPLATE_IMS;};
     } elsif ($act->{type} eq 'push-template-ims') {
       push @code, sprintf q{
-        push @$TEMPLATE_IMS, q@%s@;
-      }, $act->{im};
+        push @$TEMPLATE_IMS, %s;
+      }, im_const $act->{im};
     } elsif ($act->{type} eq 'remove-tree') {
       push @code, sprintf q{
         push @$OP, ['remove', %s->{id}];
@@ -1599,7 +1621,7 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'doctype-switch') {
       push @code, q{
         if (not $token->{name} eq 'html') {
-          push @$Errors, {type => 'XXX', token => $token};
+          push @$Errors, {type => 'XXX', level => 'm', token => $token};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
@@ -1610,7 +1632,7 @@ sub actions_to_code ($;%) {
               if ($OPPublicIDToSystemID->{$token->{public_identifier}} eq $token->{system_identifier}) {
                 push @$Errors, {type => 'XXXobsolete permitted DOCTYPE', level => 's', token => $token};
               } else {
-                push @$Errors, {type => 'XXX', token => $token};
+                push @$Errors, {type => 'XXX', level => 'm', token => $token};
                 unless ($IframeSrcdoc) {
                   my $sysid = $token->{system_identifier};
                   $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -1624,11 +1646,11 @@ sub actions_to_code ($;%) {
               if ($OPPublicIDOnly->{$token->{public_identifier}}) {
                 push @$Errors, {type => 'XXXobsolete permitted DOCTYPE', level => 's', token => $token};
               } else {
-                push @$Errors, {type => 'XXX', token => $token};
+                push @$Errors, {type => 'XXX', level => 'm', token => $token};
               }
             }
           } else {
-            push @$Errors, {type => 'XXX', token => $token};
+            push @$Errors, {type => 'XXX', level => 'm', token => $token};
             unless ($IframeSrcdoc) {
               my $pubid = $token->{public_identifier};
               $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -1662,7 +1684,7 @@ sub actions_to_code ($;%) {
           if ($token->{system_identifier} eq 'about:legacy-compat') {
             push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's', token => $token};
           } else {
-            push @$Errors, {type => 'XXX', token => $token};
+            push @$Errors, {type => 'XXX', level => 'm', token => $token};
             unless ($IframeSrcdoc) {
               my $sysid = $token->{system_identifier};
               $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -1749,7 +1771,9 @@ sub actions_to_code ($;%) {
         push @code, sprintf q{%s ($token, $token->{tag_name});}, $method;
       }
     } elsif ($act->{type} eq 'parse error') {
-      push @code, sprintf q{push @$Errors, {type => '%s', index => $token->{index}};},
+      push @code, sprintf q{push @$Errors, {type => '%s',
+                                            level => 'm',
+                                            index => $token->{index}};},
           $act->{name};
     } elsif ($act->{type} eq 'switch the tokenizer') {
       push @code, sprintf q{$State = %s;}, state_const $act->{state};
@@ -2383,7 +2407,7 @@ sub generate_tree_constructor ($) {
           }
         }
             unless (defined $formatting_element_i) {
-              push @$Errors, {type => 'XXX', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm', token => $token};
               splice @$AFE, $formatting_element_afe_i, 1, ();
               if ($args{remove_from_afe_and_oe}) {
                 #push @popped,
@@ -2393,7 +2417,7 @@ sub generate_tree_constructor ($) {
               return;
             }
             if ($beyond_scope) {
-              push @$Errors, {type => 'XXX', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm', token => $token};
               if ($args{remove_from_afe_and_oe}) {
                 splice @$AFE, $formatting_element_afe_i, 1, ();
                 #push @popped,
@@ -2403,7 +2427,7 @@ sub generate_tree_constructor ($) {
               return;
             }
             unless ($formatting_element eq $OE->[-1]) {
-              push @$Errors, {type => 'XXX', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm', token => $token};
             }
             unless (defined $furthest_block) {
               #push @popped,
@@ -2721,7 +2745,7 @@ sub dom_tree ($$) {
       # XXX insertion point setup
       push @$Callbacks, [$self->onscript, $nodes->[$op->[1]]];
     } elsif ($op->[0] eq 'ignore-script') {
-      warn "XXX set already started flag of $nodes->[$op->[1]]";
+      #warn "XXX set already started flag of $nodes->[$op->[1]]";
     } elsif ($op->[0] eq 'appcache') {
       if (defined $op->[1] and length $op->[1]->{value}) {
         push @$Callbacks, [$self->onappcacheselection, $op->[1]->{value}];
