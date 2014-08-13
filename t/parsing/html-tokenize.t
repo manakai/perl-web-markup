@@ -209,7 +209,7 @@ for my $file_name (grep {$_} split /\s+/, qq[
       } # $cm
 
       done $c;
-    } name => [$test->{description}, $test->{input}],
+    } name => [$file_name, $test->{description}, $test->{input}],
       n => 0+@{$test->{initialStates} || $test->{contentModelFlags} || ['']};
   } # $test
 }
