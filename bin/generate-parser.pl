@@ -480,7 +480,8 @@ sub serialize_actions ($) {
       } elsif ($_->{if} eq 'appropriate end tag') {
         die unless $_->{break};
         push @result, sprintf q[
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = %s;
             return 1;
           }
@@ -505,7 +506,8 @@ sub serialize_actions ($) {
       die "Unknown if |$_->{if}|" unless $_->{if} eq 'appropriate end tag';
       die unless $_->{break};
       push @result, sprintf q[
-        if ($Token->{tag_name} eq $LastStartTagName) {
+        if (defined $LastStartTagName and
+            $Token->{tag_name} eq $LastStartTagName) {
           $State = %s;
           $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
           push @$Tokens, $Token;
@@ -1428,7 +1430,8 @@ sub actions_to_code ($;%) {
             $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($encoding eq 'text/html' or
                 $encoding eq 'application/xhtml+xml') {
-              $node->{aet} = $node->{et} = M_ANN_M_ANN_ELS;
+              $node->{aet} |= M_ANN_M_ANN_ELS;
+              $node->{et} |= M_ANN_M_ANN_ELS;
             }
           }
         };
@@ -1854,8 +1857,6 @@ sub actions_to_code ($;%) {
       push @code, q{
         ## Take a deep breath!
       };
-    } elsif ($act->{type} eq 'ignore the token') {
-      #
 
     } elsif ($act->{type} eq 'text-with-optional-ws-prefix') {
       die if $act->{pending_table_character_tokens};
@@ -1901,6 +1902,7 @@ sub actions_to_code ($;%) {
           $ws2 =~ s/\$1\b/\$token->{value}/g;
           $code = sprintf q{
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   %s
@@ -1919,6 +1921,7 @@ sub actions_to_code ($;%) {
           }, $codes->{else}, $codes->{ws}, $codes->{null}, $ws2;
         } else {
           $code = sprintf q{
+            pos ($token->{value}) = 0;
             while (pos $token->{value} < length $token->{value}) {
               if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                 %s
@@ -1985,6 +1988,8 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'append-to-pending-table-character-tokens-list') {
       push @code, q{push @$TABLE_CHARS, {%$token, value => $1};};
 
+    } elsif ($act->{type} eq 'ignore the token') {
+      push @code, q{return;};
     } elsif ($act->{type} eq 'abort these steps') {
       push @code, q{return;};
     } elsif ($act->{type} eq 'ignore-next-lf') {
@@ -2420,10 +2425,7 @@ sub generate_tree_constructor ($) {
             unless (defined $formatting_element_i) {
               push @$Errors, {type => 'XXX', level => 'm', token => $token};
               splice @$AFE, $formatting_element_afe_i, 1, ();
-              if ($args{remove_from_afe_and_oe}) {
-                #push @popped,
-                splice @$OE, $formatting_element_i, 1, ();
-              }
+              ## $args{remove_from_afe_and_oe} - nop
               push @$OP, ['popped', \@popped];
               return;
             }
@@ -2566,17 +2568,16 @@ sub generate_tree_constructor ($) {
           }
           my $entry_i = $#$AFE;
           my $entry = $AFE->[$entry_i];
-          if ($entry_i > 0) {
-            E: while (not $entry_i == 0) {
-              $entry_i--;
-              $entry = $AFE->[$entry_i];
-              last E if not ref $entry;
-              for (reverse @$OE) {
-                last E if $_ eq $entry;
-              }
+          E: {
+            last E if $entry_i == 0;
+            $entry_i--;
+            $entry = $AFE->[$entry_i];
+            ($entry_i++, last E) if not ref $entry;
+            for (reverse @$OE) {
+              ($entry_i++, last E) if $_ eq $entry;
             }
-            $entry_i++;
-          }
+            redo E;
+          } # E
 
           for my $entry_i ($entry_i..$#$AFE) {
             $entry = $AFE->[$entry_i];
@@ -3057,7 +3058,8 @@ sub generate_api ($) {
               $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
               if ($encoding eq 'text/html' or
                   $encoding eq 'application/xhtml+xml') {
-                $CONTEXT->{et} = $CONTEXT->{aet} = M_ANN_M_ANN_ELS;
+                $CONTEXT->{et} |= M_ANN_M_ANN_ELS;
+                $CONTEXT->{aet} |= M_ANN_M_ANN_ELS;
               }
             }
           }

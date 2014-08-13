@@ -108,6 +108,7 @@ sub _test ($) {
   my $doc = $dom->create_document;
   my @errors;
   my @shoulds;
+  my @warns;
   
   local $SIG{INT} = sub {
     print scalar dumptree ($doc);
@@ -123,6 +124,8 @@ sub _test ($) {
     my %opt = @_;
     if ($opt{level} eq 's') {
       push @shoulds, join ':', grep { defined } $opt{line}, $opt{column}, defined $opt{value} ? $opt{value} : '', $opt{type}, $opt{text};
+    } elsif ($opt{level} eq 'w') {
+      push @warns, join ':', grep { defined } $opt{line}, $opt{column}, defined $opt{value} ? $opt{value} : '', $opt{type}, $opt{text};
     } else {
       push @errors, join ':', grep { defined } $opt{line}, $opt{column}, defined $opt{value} ? $opt{value} : '', $opt{type}, $opt{text};
     }
@@ -163,6 +166,7 @@ sub _test ($) {
 #line 1 "HTML-tree.t test () ok"
   compare_errors \@errors, $test->{errors}->[0] || [], 'Parse error';
   compare_errors \@shoulds, $test->{shoulds}->[0] || [], 'SHOULD-level error';
+  compare_errors \@warns, $test->{warnings}->[0] || [], 'warning';
 
   $test->{document}->[0] .= "\x0A" if defined $test->{document}->[0] and length $test->{document}->[0];
   eq_or_diff $result, $test->{document}->[0], 'Document tree';
@@ -180,6 +184,7 @@ for (@FILES) {
     data => {is_prefixed => 1},
     errors => {is_list => 1},
     shoulds => {is_list => 1},
+    warnings => {is_list => 1},
     document => {is_prefixed => 1},
     'document-fragment' => {is_prefixed => 1},
   }, sub {
@@ -187,7 +192,7 @@ for (@FILES) {
     test {
       _test ($test);
       $_[0]->done;
-    } n => 3, name => [$file_name, Data::Dumper::qquote $test->{data}->[0]];
+    } n => 4, name => [$file_name, Data::Dumper::qquote $test->{data}->[0]];
   });
 }
 

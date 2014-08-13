@@ -891,6 +891,7 @@ push @$Errors, {type => 'after-after-body-else',
 push @$Errors, {type => 'after-after-frameset-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [8] after after frameset;EOF
@@ -911,6 +912,7 @@ push @$Errors, {type => 'after-after-frameset-else',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [10] after after frameset;TEXT
@@ -953,6 +955,7 @@ push @$Errors, {type => 'after-after-frameset-else',
 push @$Errors, {type => 'after-body-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [13] after body;END-ELSE
@@ -978,6 +981,7 @@ push @$Errors, {type => 'after-body-else',
             push @$Errors, {type => 'after-body-end-html',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             
           $IM = AFTER_AFTER_BODY_IM;
@@ -1046,6 +1050,7 @@ push @$Errors, {type => 'after-body-else',
 push @$Errors, {type => 'after-frameset-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [20] after frameset;END-ELSE
@@ -1054,6 +1059,7 @@ push @$Errors, {type => 'after-frameset-doctype',
 push @$Errors, {type => 'after-frameset-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [21] after frameset;END:html
@@ -1082,6 +1088,7 @@ push @$Errors, {type => 'after-frameset-else',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [24] after frameset;TEXT
@@ -1123,6 +1130,7 @@ push @$Errors, {type => 'after-frameset-else',
 push @$Errors, {type => 'after-head-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [27] after head;END-ELSE
@@ -1131,6 +1139,7 @@ push @$Errors, {type => 'after-head-doctype',
 push @$Errors, {type => 'after-head-end-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [28] after head;END:body,br,html
@@ -1311,6 +1320,7 @@ push @$Errors, {type => 'after-head-start-head',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [35] after head;START:meta
@@ -1556,6 +1566,7 @@ push @$OE, $node_body;
 push @$Errors, {type => 'before-head-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [43] before head;END-ELSE
@@ -1564,6 +1575,7 @@ push @$Errors, {type => 'before-head-doctype',
 push @$Errors, {type => 'before-head-end-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [44] before head;END:body,br,head,html
@@ -1743,6 +1755,7 @@ push @$OE, $node_body;
 push @$Errors, {type => 'before-html-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [51] before html;END-ELSE
@@ -1751,6 +1764,7 @@ push @$Errors, {type => 'before-html-doctype',
 push @$Errors, {type => 'before-html-end-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [52] before html;END:body,br,head,html
@@ -1967,6 +1981,7 @@ push @$OE, $node_body;
 push @$Errors, {type => 'in-body-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [63] in body;END-ELSE
@@ -2003,6 +2018,7 @@ return;
                                             level => 'm',
                                             index => $token->{index}};
 return;
+return;
           }
         
           }
@@ -2037,6 +2053,7 @@ aaa ($token, $token->{tag_name});
             push @$Errors, {type => 'in-body-end-a3bbcd5f4hhlmmnopssu',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -2076,6 +2093,7 @@ aaa ($token, $token->{tag_name});
             push @$Errors, {type => 'in-body-end-applet-marquee-object',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -2119,6 +2137,7 @@ aaa ($token, $token->{tag_name});
             push @$Errors, {type => 'in-body-end-body',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             
           if (
@@ -2198,6 +2217,7 @@ push @$Errors, {type => 'in-body-end-br',
             push @$Errors, {type => 'in-body-end-dd-dt',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             {
             my @popped;
@@ -2259,6 +2279,7 @@ $FORM_ELEMENT = undef;
                                             level => 'm',
                                             index => $token->{index}};
 return;
+return;
           }
         
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
@@ -2304,6 +2325,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
                                             level => 'm',
                                             index => $token->{index}};
 return;
+return;
           }
         
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
@@ -2344,6 +2366,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
             push @$Errors, {type => 'in-body-end-h6',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -2383,6 +2406,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
             push @$Errors, {type => 'in-body-end-html',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             
           if (
@@ -2434,6 +2458,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
             push @$Errors, {type => 'in-body-end-li',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -2540,6 +2565,7 @@ return;
             push @$Errors, {type => 'in-body-end-else-2',
                                             level => 'm',
                                             index => $token->{index}};
+return;
 return;
           }
         
@@ -2976,7 +3002,7 @@ push @$Errors, {type => 'in-body-start-body',
          $result;
       }
     )) {
-            
+            return;
           } else {
             
         $FRAMESET_OK = 0;
@@ -3078,6 +3104,7 @@ push @$Errors, {type => 'in-body-start-c3fht6',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [86] in body;START:dd dt
@@ -3292,12 +3319,12 @@ push @$Errors, {type => 'in-body-start-frameset',
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
 (@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
-            
+            return;
           }
         
 
           if (not $FRAMESET_OK) {
-            
+            return;
           } else {
             
         push @$OP, ['remove', $OE->[1]->{id}];
@@ -3476,7 +3503,7 @@ push @$Errors, {type => 'in-body-start-html',
          $result;
       }
     ) {
-            
+            return;
           } else {
             
         push @$OP, ['set-if-missing', $token->{attr_list} => $OE->[0]->{id}]
@@ -4425,6 +4452,7 @@ $ORIGINAL_IM = $IM;
           my $token = $_;
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
@@ -4469,6 +4497,7 @@ $ORIGINAL_IM = $IM;
 push @$Errors, {type => 'in-caption-end-bccht6',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [112] in caption;END:caption
@@ -4491,6 +4520,7 @@ push @$Errors, {type => 'in-caption-end-bccht6',
             push @$Errors, {type => 'in-caption-end-caption',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -4538,6 +4568,7 @@ push @$Errors, {type => 'in-caption-end-bccht6',
             push @$Errors, {type => 'in-caption-end-table',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -4595,6 +4626,7 @@ push @$Errors, {type => 'in-caption-end-bccht6',
                                             index => $token->{index}};
           }
         
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -4630,6 +4662,7 @@ push @$Errors, {type => 'in-caption-end-bccht6',
           my $token = $_;
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
@@ -4674,6 +4707,7 @@ push @$Errors, {type => 'in-caption-end-bccht6',
 push @$Errors, {type => 'in-cell-end-bc3h',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [117] in cell;END:table,tbody tfoot thead,tr
@@ -4696,6 +4730,7 @@ push @$Errors, {type => 'in-cell-end-bc3h',
             push @$Errors, {type => 'in-cell-end-t5',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -4746,6 +4781,7 @@ push @$Errors, {type => 'in-cell-end-bc3h',
             push @$Errors, {type => 'in-cell-end-td-th',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -4800,6 +4836,7 @@ push @$Errors, {type => 'in-cell-end-bc3h',
                                             index => $token->{index}};
           }
         
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
@@ -4835,6 +4872,7 @@ push @$Errors, {type => 'in-cell-end-bc3h',
           my $token = $_;
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
@@ -4887,6 +4925,7 @@ push @$Errors, {type => 'in-cell-end-bc3h',
 push @$Errors, {type => 'in-column-group-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [123] in column group;END-ELSE
@@ -4897,6 +4936,7 @@ push @$Errors, {type => 'in-column-group-doctype',
             push @$Errors, {type => 'in-column-group-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
 
@@ -4916,6 +4956,7 @@ push @$Errors, {type => 'in-column-group-doctype',
 push @$Errors, {type => 'in-column-group-end-col',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [125] in column group;END:colgroup
@@ -4926,6 +4967,7 @@ push @$Errors, {type => 'in-column-group-end-col',
             push @$Errors, {type => 'in-column-group-end-colgroup',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
 
@@ -4951,6 +4993,7 @@ push @$Errors, {type => 'in-column-group-end-col',
                                             index => $token->{index}};
           }
         
+return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
 
@@ -5049,6 +5092,7 @@ push @$Errors, {type => 'in-column-group-end-col',
 push @$Errors, {type => 'in-foreign-content-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [131] in foreign content;END-ELSE
@@ -5216,7 +5260,8 @@ last;
             $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($encoding eq 'text/html' or
                 $encoding eq 'application/xhtml+xml') {
-              $node->{aet} = $node->{et} = M_ANN_M_ANN_ELS;
+              $node->{aet} |= M_ANN_M_ANN_ELS;
+              $node->{et} |= M_ANN_M_ANN_ELS;
             }
           }
         
@@ -5303,7 +5348,8 @@ push @$Errors, {type => 'in-foreign-content-start-b5ccd4eeh8iillmmnopprs7ttuuv',
             $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($encoding eq 'text/html' or
                 $encoding eq 'application/xhtml+xml') {
-              $node->{aet} = $node->{et} = M_ANN_M_ANN_ELS;
+              $node->{aet} |= M_ANN_M_ANN_ELS;
+              $node->{et} |= M_ANN_M_ANN_ELS;
             }
           }
         
@@ -5406,7 +5452,8 @@ $token->{attrs}->{q@size@}) {
             $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($encoding eq 'text/html' or
                 $encoding eq 'application/xhtml+xml') {
-              $node->{aet} = $node->{et} = M_ANN_M_ANN_ELS;
+              $node->{aet} |= M_ANN_M_ANN_ELS;
+              $node->{et} |= M_ANN_M_ANN_ELS;
             }
           }
         
@@ -5496,7 +5543,8 @@ delete $token->{self_closing_flag};
             $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($encoding eq 'text/html' or
                 $encoding eq 'application/xhtml+xml') {
-              $node->{aet} = $node->{et} = M_ANN_M_ANN_ELS;
+              $node->{aet} |= M_ANN_M_ANN_ELS;
+              $node->{et} |= M_ANN_M_ANN_ELS;
             }
           }
         
@@ -5555,6 +5603,7 @@ delete $token->{self_closing_flag};
           my $token = $_;
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   
@@ -5607,6 +5656,7 @@ delete $token->{self_closing_flag};
 push @$Errors, {type => 'in-frameset-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [140] in frameset;END-ELSE
@@ -5615,6 +5665,7 @@ push @$Errors, {type => 'in-frameset-doctype',
 push @$Errors, {type => 'in-frameset-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [141] in frameset;END:frameset
@@ -5625,6 +5676,7 @@ push @$Errors, {type => 'in-frameset-else',
             push @$Errors, {type => 'in-frameset-end-frameset',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
 
@@ -5666,6 +5718,7 @@ push @$Errors, {type => 'in-frameset-else',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [144] in frameset;START:frame
@@ -5748,6 +5801,7 @@ push @$OE, $node;
 push @$Errors, {type => 'in-head-noscript-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [148] in head noscript;END-ELSE
@@ -5756,6 +5810,7 @@ push @$Errors, {type => 'in-head-noscript-doctype',
 push @$Errors, {type => 'in-head-noscript-end-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [149] in head noscript;END:br
@@ -5828,6 +5883,7 @@ push @$Errors, {type => 'in-head-noscript-start-head-noscript',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [154] in head noscript;TEXT
@@ -5891,6 +5947,7 @@ push @$OE, $node_body;
 push @$Errors, {type => 'in-head-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [157] in head;END-ELSE
@@ -5899,6 +5956,7 @@ push @$Errors, {type => 'in-head-doctype',
 push @$Errors, {type => 'in-head-end-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [158] in head;END:body,br,html
@@ -5943,6 +6001,7 @@ push @$OP, ['popped', [pop @$OE]];
             push @$Errors, {type => 'in-head-end-template',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (CAP_ELS | COL_ELS | DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TR_ELS);
 
@@ -6031,6 +6090,7 @@ push @$Errors, {type => 'in-head-start-head',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [165] in head;START:meta
@@ -6301,6 +6361,7 @@ push @$OE, $node_body;
 push @$Errors, {type => 'in-row-end-bc3htt',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [173] in row;END:table
@@ -6323,6 +6384,7 @@ push @$Errors, {type => 'in-row-end-bc3htt',
             push @$Errors, {type => 'in-row-end-table',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             {
           my @popped;
@@ -6361,6 +6423,7 @@ push @$OP, ['popped', [pop @$OE]];
             push @$Errors, {type => 'in-row-end-tbody-tfoot-thead',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           }
         
 
@@ -6377,7 +6440,7 @@ push @$OP, ['popped', [pop @$OE]];
         not $result;
       }
     ) {
-            
+            return;
           } else {
             {
           my @popped;
@@ -6416,6 +6479,7 @@ push @$OP, ['popped', [pop @$OE]];
             push @$Errors, {type => 'in-row-end-tr',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             {
           my @popped;
@@ -6458,6 +6522,7 @@ push @$OP, ['popped', [pop @$OE]];
                                             index => $token->{index}};
           }
         
+return;
           } else {
             {
           my @popped;
@@ -6531,6 +6596,7 @@ $ORIGINAL_IM = $IM;
                                             index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -6636,7 +6702,7 @@ push @$Errors, {type => 'in-select-in-table-end-ct7',
         not $result;
       }
     ) {
-            
+            return;
           } else {
             {
           my @popped;
@@ -6709,6 +6775,7 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
 push @$Errors, {type => 'in-select-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [184] in select;END-ELSE
@@ -6717,6 +6784,7 @@ push @$Errors, {type => 'in-select-doctype',
 push @$Errors, {type => 'in-select-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [185] in select;END:optgroup
@@ -6735,6 +6803,7 @@ push @$Errors, {type => 'in-select-else',
             push @$Errors, {type => 'in-select-end-optgroup',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           }
         
         },
@@ -6749,6 +6818,7 @@ push @$Errors, {type => 'in-select-else',
             push @$Errors, {type => 'in-select-end-option',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           }
         
         },
@@ -6773,6 +6843,7 @@ push @$Errors, {type => 'in-select-else',
             push @$Errors, {type => 'in-select-end-select',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             {
           my @popped;
@@ -6798,6 +6869,7 @@ push @$Errors, {type => 'in-select-else',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [189] in select;START:input,keygen,textarea
@@ -6827,6 +6899,7 @@ push @$Errors, {type => 'in-select-start-input-keygen-textarea',
                                             index => $token->{index}};
           }
         
+return;
           } else {
             {
           my @popped;
@@ -6927,7 +7000,7 @@ push @$Errors, {type => 'in-select-start-select',
         not $result;
       }
     ) {
-            
+            return;
           } else {
             {
           my @popped;
@@ -6978,6 +7051,7 @@ push @$Errors, {type => 'in-select-start-select',
 push @$Errors, {type => 'in-table-body-end-bc3ht3',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [195] in table body;END:table
@@ -7000,6 +7074,7 @@ push @$Errors, {type => 'in-table-body-end-bc3ht3',
             push @$Errors, {type => 'in-table-body-end-table',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             {
           my @popped;
@@ -7038,6 +7113,7 @@ push @$OP, ['popped', [pop @$OE]];
             push @$Errors, {type => 'in-table-body-end-tbody-tfoot-thead',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             {
           my @popped;
@@ -7080,6 +7156,7 @@ push @$OP, ['popped', [pop @$OE]];
                                             index => $token->{index}};
           }
         
+return;
           } else {
             {
           my @popped;
@@ -7185,6 +7262,7 @@ $ORIGINAL_IM = $IM;
                                             index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7282,6 +7360,7 @@ $ORIGINAL_IM = $IM;
           for my $token (@$TABLE_CHARS) {
             
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7391,6 +7470,7 @@ $ORIGINAL_IM = $IM;
           for my $token (@$TABLE_CHARS) {
             
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7500,6 +7580,7 @@ $ORIGINAL_IM = $IM;
           for my $token (@$TABLE_CHARS) {
             
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7609,6 +7690,7 @@ $ORIGINAL_IM = $IM;
           for my $token (@$TABLE_CHARS) {
             
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7718,6 +7800,7 @@ $ORIGINAL_IM = $IM;
           for my $token (@$TABLE_CHARS) {
             
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7852,6 +7935,7 @@ $ORIGINAL_IM = $IM;
 push @$Errors, {type => 'in-table-doctype',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [209] in table;END-ELSE
@@ -7880,6 +7964,7 @@ aaa_foster ($token, $token->{tag_name});
 push @$Errors, {type => 'in-table-end-bc3ht6',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [212] in table;END:br
@@ -8020,6 +8105,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
             push @$Errors, {type => 'in-table-end-table',
                                             level => 'm',
                                             index => $token->{index}};
+return;
           } else {
             {
           my @popped;
@@ -8546,7 +8632,7 @@ push @$Errors, {type => 'in-body-start-body',
          $result;
       }
     )) {
-            
+            return;
           } else {
             
         $FRAMESET_OK = 0;
@@ -8901,7 +8987,7 @@ push @$Errors, {type => 'in-table-start-form',
       }
     ) or 
 (defined $FORM_ELEMENT)) {
-            
+            return;
           } else {
             
         my $node = {id => $NEXT_ID++,
@@ -8945,6 +9031,7 @@ push @$Errors, {type => 'in-body-start-c3fht6',
                                             index => $token->{index}};
           }
         
+return;
         },
       ,
         ## [230] in table;START:frameset
@@ -8959,12 +9046,12 @@ push @$Errors, {type => 'in-body-start-frameset',
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
 (@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
-            
+            return;
           }
         
 
           if (not $FRAMESET_OK) {
-            
+            return;
           } else {
             
         push @$OP, ['remove', $OE->[1]->{id}];
@@ -9197,7 +9284,7 @@ push @$Errors, {type => 'in-body-start-html',
          $result;
       }
     ) {
-            
+            return;
           } else {
             
         push @$OP, ['set-if-missing', $token->{attr_list} => $OE->[0]->{id}]
@@ -10432,6 +10519,7 @@ push @$Errors, {type => 'in-table-start-table',
                                             index => $token->{index}};
           }
         
+return;
           } else {
             {
           my @popped;
@@ -10732,6 +10820,7 @@ $ORIGINAL_IM = $IM;
                                             index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -10823,6 +10912,7 @@ $ORIGINAL_IM = $IM;
 push @$Errors, {type => 'in-template-end-else',
                                             level => 'm',
                                             index => $token->{index}};
+return;
         },
       ,
         ## [259] in template;EOF
@@ -10951,6 +11041,7 @@ pop @$TEMPLATE_IMS;
           my $token = $_;
 
             if (index ($token->{value}, "\x00") > -1) {
+              pos ($token->{value}) = 0;
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
@@ -11480,10 +11571,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             unless (defined $formatting_element_i) {
               push @$Errors, {type => 'XXX', level => 'm', token => $token};
               splice @$AFE, $formatting_element_afe_i, 1, ();
-              if ($args{remove_from_afe_and_oe}) {
-                #push @popped,
-                splice @$OE, $formatting_element_i, 1, ();
-              }
+              ## $args{remove_from_afe_and_oe} - nop
               push @$OP, ['popped', \@popped];
               return;
             }
@@ -11679,10 +11767,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             unless (defined $formatting_element_i) {
               push @$Errors, {type => 'XXX', level => 'm', token => $token};
               splice @$AFE, $formatting_element_afe_i, 1, ();
-              if ($args{remove_from_afe_and_oe}) {
-                #push @popped,
-                splice @$OE, $formatting_element_i, 1, ();
-              }
+              ## $args{remove_from_afe_and_oe} - nop
               push @$OP, ['popped', \@popped];
               return;
             }
@@ -11832,17 +11917,16 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
           }
           my $entry_i = $#$AFE;
           my $entry = $AFE->[$entry_i];
-          if ($entry_i > 0) {
-            E: while (not $entry_i == 0) {
-              $entry_i--;
-              $entry = $AFE->[$entry_i];
-              last E if not ref $entry;
-              for (reverse @$OE) {
-                last E if $_ eq $entry;
-              }
+          E: {
+            last E if $entry_i == 0;
+            $entry_i--;
+            $entry = $AFE->[$entry_i];
+            ($entry_i++, last E) if not ref $entry;
+            for (reverse @$OE) {
+              ($entry_i++, last E) if $_ eq $entry;
             }
-            $entry_i++;
-          }
+            redo E;
+          } # E
 
           for my $entry_i ($entry_i..$#$AFE) {
             $entry = $AFE->[$entry_i];
@@ -11873,17 +11957,16 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
           }
           my $entry_i = $#$AFE;
           my $entry = $AFE->[$entry_i];
-          if ($entry_i > 0) {
-            E: while (not $entry_i == 0) {
-              $entry_i--;
-              $entry = $AFE->[$entry_i];
-              last E if not ref $entry;
-              for (reverse @$OE) {
-                last E if $_ eq $entry;
-              }
+          E: {
+            last E if $entry_i == 0;
+            $entry_i--;
+            $entry = $AFE->[$entry_i];
+            ($entry_i++, last E) if not ref $entry;
+            for (reverse @$OE) {
+              ($entry_i++, last E) if $_ eq $entry;
             }
-            $entry_i++;
-          }
+            redo E;
+          } # E
 
           for my $entry_i ($entry_i..$#$AFE) {
             $entry = $AFE->[$entry_i];
@@ -13019,7 +13102,8 @@ $StateActions->[RAWTEXT_END_TAG_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -13042,7 +13126,8 @@ $State = RAWTEXT_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -13066,7 +13151,8 @@ $State = RAWTEXT_STATE;
 $State = RAWTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = SELF_CLOSING_START_TAG_STATE;
             return 1;
           }
@@ -13101,7 +13187,8 @@ $State = RAWTEXT_STATE;
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if ($Token->{tag_name} eq $LastStartTagName) {
+        if (defined $LastStartTagName and
+            $Token->{tag_name} eq $LastStartTagName) {
           $State = DATA_STATE;
           $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
           push @$Tokens, $Token;
@@ -13436,7 +13523,8 @@ $StateActions->[RCDATA_END_TAG_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -13459,7 +13547,8 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -13495,7 +13584,8 @@ $State = RCDATA_STATE_CR;
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = SELF_CLOSING_START_TAG_STATE;
             return 1;
           }
@@ -13530,7 +13620,8 @@ $State = RCDATA_STATE;
 $State = RCDATA_LESS_THAN_SIGN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if ($Token->{tag_name} eq $LastStartTagName) {
+        if (defined $LastStartTagName and
+            $Token->{tag_name} eq $LastStartTagName) {
           $State = DATA_STATE;
           $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
           push @$Tokens, $Token;
@@ -26476,7 +26567,8 @@ $StateActions->[SCRIPT_DATA_END_TAG_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -26499,7 +26591,8 @@ $State = SCRIPT_DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -26523,7 +26616,8 @@ $State = SCRIPT_DATA_STATE;
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = SELF_CLOSING_START_TAG_STATE;
             return 1;
           }
@@ -26558,7 +26652,8 @@ $State = SCRIPT_DATA_STATE;
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if ($Token->{tag_name} eq $LastStartTagName) {
+        if (defined $LastStartTagName and
+            $Token->{tag_name} eq $LastStartTagName) {
           $State = DATA_STATE;
           $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
           push @$Tokens, $Token;
@@ -26949,7 +27044,8 @@ $StateActions->[SCRIPT_DATA_ESCAPED_END_TAG_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -26972,7 +27068,8 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = BEFORE_ATTR_NAME_STATE;
             return 1;
           }
@@ -27013,7 +27110,8 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 
-          if ($Token->{tag_name} eq $LastStartTagName) {
+          if (defined $LastStartTagName and
+              $Token->{tag_name} eq $LastStartTagName) {
             $State = SELF_CLOSING_START_TAG_STATE;
             return 1;
           }
@@ -27048,7 +27146,8 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-        if ($Token->{tag_name} eq $LastStartTagName) {
+        if (defined $LastStartTagName and
+            $Token->{tag_name} eq $LastStartTagName) {
           $State = DATA_STATE;
           $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
           push @$Tokens, $Token;
@@ -28901,7 +29000,8 @@ $Scripting = $self->{Scripting};
               $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
               if ($encoding eq 'text/html' or
                   $encoding eq 'application/xhtml+xml') {
-                $CONTEXT->{et} = $CONTEXT->{aet} = M_ANN_M_ANN_ELS;
+                $CONTEXT->{et} |= M_ANN_M_ANN_ELS;
+                $CONTEXT->{aet} |= M_ANN_M_ANN_ELS;
               }
             }
           }
