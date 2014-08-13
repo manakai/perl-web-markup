@@ -1066,17 +1066,21 @@ sub cond_to_code ($) {
       }
     }, pattern_to_code ($cond->[3], '$_');
   } elsif ($cond->[0] =~ /^oe\[-?[0-9]+\]$/ or $cond->[0] eq 'node') {
+    my $pre = '';
+    if ($cond->[0] eq 'oe[1]' or $cond->[0] eq 'oe[-2]') {
+      $pre = q{@$OE >= 2 and };
+    }
     my $left = node_expr_to_code $cond->[0];
     if ($cond->[1] eq 'is') {
-      return pattern_to_code $cond->[2], $left;
+      return $pre.pattern_to_code $cond->[2], $left;
     } elsif ($cond->[1] eq 'is not') {
-      return sprintf q{not (%s)}, pattern_to_code $cond->[2], $left;
+      return $pre.sprintf q{not (%s)}, pattern_to_code $cond->[2], $left;
     } elsif ($cond->[1] eq 'lc is') {
-      return pattern_to_code {%{$cond->[2]}, _lc => 1}, $left;
+      return $pre.pattern_to_code {%{$cond->[2]}, _lc => 1}, $left;
     } elsif ($cond->[1] eq 'lc is not') {
-      return sprintf q{not (%s)}, pattern_to_code {%{$cond->[2]}, _lc => 1}, $left;
+      return $pre.sprintf q{not (%s)}, pattern_to_code {%{$cond->[2]}, _lc => 1}, $left;
     } elsif ($cond->[1] eq 'is null') {
-      return sprintf q{not defined %s}, $left;
+      return $pre.sprintf q{not defined %s}, $left;
     } else {
       die "Unknown expr |$cond->[1]|";
     }
@@ -1570,6 +1574,11 @@ sub actions_to_code ($;%) {
         $value_code = $args{chars} // q{$token->{value}};
       }
       push @code, foster_code $act => 'text', $value_code;
+    } elsif ($act->{type} eq 'insert a character' and
+             defined $act->{value} and
+             2 == keys %$act) {
+      my $value_code = sprintf q{q@%s@}, $act->{value};
+      push @code, foster_code $act => 'text', $value_code;
     } elsif ($act->{type} eq 'pop-template-ims') {
       push @code, q{pop @$TEMPLATE_IMS;};
     } elsif ($act->{type} eq 'push-template-ims') {
@@ -1622,7 +1631,7 @@ sub actions_to_code ($;%) {
       ## $token->{tn} don't have to be updated
     } elsif ($act->{type} eq 'doctype-switch') {
       push @code, q{
-        if (not $token->{name} eq 'html') {
+        if (not defined $token->{name} or not $token->{name} eq 'html') {
           push @$Errors, {type => 'XXX', level => 'm', token => $token};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
@@ -2390,24 +2399,24 @@ sub generate_tree_constructor ($) {
               push @$OP, ['popped', \@popped];
               return;
             }
-        my $beyond_scope;
-        my $formatting_element_i;
-        my $furthest_block;
-        my $furthest_block_i;
-        for (reverse 0..$#$OE) {
-          if ($OE->[$_] eq $formatting_element) {
-            $formatting_element_i = $_;
-            last;
-          } else {
-            if (ET_CATEGORY_IS ($OE->[$_], 'has an element in scope')) {
-              $beyond_scope = 1;
+            my $beyond_scope;
+            my $formatting_element_i;
+            my $furthest_block;
+            my $furthest_block_i;
+            for (reverse 0..$#$OE) {
+              if ($OE->[$_] eq $formatting_element) {
+                $formatting_element_i = $_;
+                last;
+              } else {
+                if (ET_CATEGORY_IS ($OE->[$_], 'has an element in scope')) {
+                  $beyond_scope = 1;
+                }
+                if (ET_CATEGORY_IS ($OE->[$_], 'special category')) {
+                  $furthest_block = $OE->[$_];
+                  $furthest_block_i = $_;
+                }
+              }
             }
-            if (ET_CATEGORY_IS ($OE->[$_], 'special category')) {
-              $furthest_block = $OE->[$_];
-              $furthest_block_i = $_;
-            }
-          }
-        }
             unless (defined $formatting_element_i) {
               push @$Errors, {type => 'XXX', level => 'm', token => $token};
               splice @$AFE, $formatting_element_afe_i, 1, ();
@@ -2459,9 +2468,13 @@ sub generate_tree_constructor ($) {
             }
           }
           if ($inner_loop_counter > 3 and defined $node_afe_i) {
+            $formatting_element_afe_i-- if $node_afe_i < $formatting_element_afe_i;
+            $bookmark-- if $node_afe_i < $bookmark;
             splice @$AFE, $node_afe_i, 1, ();
+            undef $node_afe_i;
           }
           if (not defined $node_afe_i) {
+            $furthest_block_i-- if $node_i < $furthest_block_i;
             push @popped, splice @$OE, $node_i, 1, ();
             redo INNER_LOOP;
           }
@@ -2510,12 +2523,25 @@ sub generate_tree_constructor ($) {
             ## it can't be a form-associated element.  Note that
             ## /intended parent/ is $furthest_block.
 
-            splice @$AFE, $formatting_element_afe_i, 1, ();
-            splice @$AFE, $bookmark, 0, $new_element;
+            if ($bookmark <= $formatting_element_afe_i) {
+              splice @$AFE, $formatting_element_afe_i, 1, ();
+              splice @$AFE, $bookmark, 0, $new_element;
+            } else {
+              splice @$AFE, $bookmark, 0, $new_element;
+              splice @$AFE, $formatting_element_afe_i, 1, ();
+              $bookmark--;
+            }
 
-            splice @$OE, $furthest_block_i + 1, 0, ($new_element);
-            #push @popped,
-            splice @$OE, $formatting_element_i, 1, ();
+            if ($formatting_element_i < $furthest_block_i) {
+              splice @$OE, $furthest_block_i + 1, 0, ($new_element);
+              #push @popped,
+              splice @$OE, $formatting_element_i, 1, ();
+              $furthest_block_i--;
+            } else {
+              #push @popped,
+              splice @$OE, $formatting_element_i, 1, ();
+              splice @$OE, $furthest_block_i + 1, 0, ($new_element);
+            }
 
             redo OUTER_LOOP;
           } # OUTER_LOOP
@@ -2540,13 +2566,16 @@ sub generate_tree_constructor ($) {
           }
           my $entry_i = $#$AFE;
           my $entry = $AFE->[$entry_i];
-          while (not $entry_i == 0) {
-            $entry_i--;
-            $entry = $AFE->[$entry_i];
-            last if not ref $entry;
-            for (reverse @$OE) {
-              last if $_ eq $entry;
+          if ($entry_i > 0) {
+            E: while (not $entry_i == 0) {
+              $entry_i--;
+              $entry = $AFE->[$entry_i];
+              last E if not ref $entry;
+              for (reverse @$OE) {
+                last E if $_ eq $entry;
+              }
             }
+            $entry_i++;
           }
 
           for my $entry_i ($entry_i..$#$AFE) {
@@ -2723,7 +2752,7 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
-          ($data->{name},
+          (defined $data->{name} ? $data->{name} : '',
            defined $data->{public_identifier} ? $data->{public_identifier} : '',
            defined $data->{system_identifier} ? $data->{system_identifier} : '');
       $nodes->[$op->[2]]->append_child ($dt);
@@ -3372,6 +3401,7 @@ sub generate ($) {
     no warnings 'utf8';
     use warnings FATAL => 'recursion';
     use warnings FATAL => 'redefine';
+    use warnings FATAL => 'uninitialized';
     use utf8;
     our $VERSION = '7.0';
     use Carp qw(croak);

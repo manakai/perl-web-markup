@@ -5,6 +5,7 @@
     no warnings 'utf8';
     use warnings FATAL => 'recursion';
     use warnings FATAL => 'redefine';
+    use warnings FATAL => 'uninitialized';
     use utf8;
     our $VERSION = '7.0';
     use Carp qw(croak);
@@ -2960,7 +2961,7 @@ push @$Errors, {type => 'in-body-start-body',
                                             level => 'm',
                                             index => $token->{index}};
 
-          if ((not ($OE->[1]->{et} & (BOD_ELS))) or 
+          if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
 ($OE->[-1]->{et} & (HTM_ELS)) or 
 (
       do {
@@ -3290,7 +3291,7 @@ push @$Errors, {type => 'in-body-start-frameset',
                                             index => $token->{index}};
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
-(not ($OE->[1]->{et} & (BOD_ELS)))) {
+(@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
             
           }
         
@@ -5575,10 +5576,11 @@ delete $token->{self_closing_flag};
               push @$Errors, {type => 'in-foreign-content-null',
                                             level => 'm',
                                             index => $token->{index}};
+
+      push @$OP, ['text', q@�@ => $OE->[-1]->{id}];
+    
             }
             
-      push @$OP, ['text', $value => $OE->[-1]->{id}];
-    
           
                 }
               }
@@ -6722,7 +6724,7 @@ push @$Errors, {type => 'in-select-else',
           my $token = $_;
 
           if (($OE->[-1]->{et} == OPTION_EL) and 
-($OE->[-2]->{et} == OPTGROUP_EL)) {
+(@$OE >= 2 and $OE->[-2]->{et} == OPTGROUP_EL)) {
             push @$OP, ['popped', [pop @$OE]];
           }
         
@@ -8529,7 +8531,7 @@ push @$Errors, {type => 'in-body-start-body',
                                             level => 'm',
                                             index => $token->{index}};
 
-          if ((not ($OE->[1]->{et} & (BOD_ELS))) or 
+          if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
 ($OE->[-1]->{et} & (HTM_ELS)) or 
 (
       do {
@@ -8956,7 +8958,7 @@ push @$Errors, {type => 'in-body-start-frameset',
                                             index => $token->{index}};
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
-(not ($OE->[1]->{et} & (BOD_ELS)))) {
+(@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
             
           }
         
@@ -11000,7 +11002,7 @@ pop @$TEMPLATE_IMS;
           my $token = $_;
 push @$OP, ['doctype', $token => 0];
 
-        if (not $token->{name} eq 'html') {
+        if (not defined $token->{name} or not $token->{name} eq 'html') {
           push @$Errors, {type => 'XXX', level => 'm', token => $token};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
@@ -11457,24 +11459,24 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               push @$OP, ['popped', \@popped];
               return;
             }
-        my $beyond_scope;
-        my $formatting_element_i;
-        my $furthest_block;
-        my $furthest_block_i;
-        for (reverse 0..$#$OE) {
-          if ($OE->[$_] eq $formatting_element) {
-            $formatting_element_i = $_;
-            last;
-          } else {
-            if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
-              $beyond_scope = 1;
+            my $beyond_scope;
+            my $formatting_element_i;
+            my $furthest_block;
+            my $furthest_block_i;
+            for (reverse 0..$#$OE) {
+              if ($OE->[$_] eq $formatting_element) {
+                $formatting_element_i = $_;
+                last;
+              } else {
+                if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                  $beyond_scope = 1;
+                }
+                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                  $furthest_block = $OE->[$_];
+                  $furthest_block_i = $_;
+                }
+              }
             }
-            if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
-              $furthest_block = $OE->[$_];
-              $furthest_block_i = $_;
-            }
-          }
-        }
             unless (defined $formatting_element_i) {
               push @$Errors, {type => 'XXX', level => 'm', token => $token};
               splice @$AFE, $formatting_element_afe_i, 1, ();
@@ -11526,9 +11528,13 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             }
           }
           if ($inner_loop_counter > 3 and defined $node_afe_i) {
+            $formatting_element_afe_i-- if $node_afe_i < $formatting_element_afe_i;
+            $bookmark-- if $node_afe_i < $bookmark;
             splice @$AFE, $node_afe_i, 1, ();
+            undef $node_afe_i;
           }
           if (not defined $node_afe_i) {
+            $furthest_block_i-- if $node_i < $furthest_block_i;
             push @popped, splice @$OE, $node_i, 1, ();
             redo INNER_LOOP;
           }
@@ -11579,12 +11585,25 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             ## it can't be a form-associated element.  Note that
             ## /intended parent/ is $furthest_block.
 
-            splice @$AFE, $formatting_element_afe_i, 1, ();
-            splice @$AFE, $bookmark, 0, $new_element;
+            if ($bookmark <= $formatting_element_afe_i) {
+              splice @$AFE, $formatting_element_afe_i, 1, ();
+              splice @$AFE, $bookmark, 0, $new_element;
+            } else {
+              splice @$AFE, $bookmark, 0, $new_element;
+              splice @$AFE, $formatting_element_afe_i, 1, ();
+              $bookmark--;
+            }
 
-            splice @$OE, $furthest_block_i + 1, 0, ($new_element);
-            #push @popped,
-            splice @$OE, $formatting_element_i, 1, ();
+            if ($formatting_element_i < $furthest_block_i) {
+              splice @$OE, $furthest_block_i + 1, 0, ($new_element);
+              #push @popped,
+              splice @$OE, $formatting_element_i, 1, ();
+              $furthest_block_i--;
+            } else {
+              #push @popped,
+              splice @$OE, $formatting_element_i, 1, ();
+              splice @$OE, $furthest_block_i + 1, 0, ($new_element);
+            }
 
             redo OUTER_LOOP;
           } # OUTER_LOOP
@@ -11639,24 +11658,24 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               push @$OP, ['popped', \@popped];
               return;
             }
-        my $beyond_scope;
-        my $formatting_element_i;
-        my $furthest_block;
-        my $furthest_block_i;
-        for (reverse 0..$#$OE) {
-          if ($OE->[$_] eq $formatting_element) {
-            $formatting_element_i = $_;
-            last;
-          } else {
-            if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
-              $beyond_scope = 1;
+            my $beyond_scope;
+            my $formatting_element_i;
+            my $furthest_block;
+            my $furthest_block_i;
+            for (reverse 0..$#$OE) {
+              if ($OE->[$_] eq $formatting_element) {
+                $formatting_element_i = $_;
+                last;
+              } else {
+                if ($OE->[$_]->{et} & (APP_ELS | CAP_ELS | HTM_ELS | MAR_M_ANN_ELS | OBJ_ELS | TAB_ELS | TD_TH_ELS | TEM_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                  $beyond_scope = 1;
+                }
+                if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
+                  $furthest_block = $OE->[$_];
+                  $furthest_block_i = $_;
+                }
+              }
             }
-            if ($OE->[$_]->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
-              $furthest_block = $OE->[$_];
-              $furthest_block_i = $_;
-            }
-          }
-        }
             unless (defined $formatting_element_i) {
               push @$Errors, {type => 'XXX', level => 'm', token => $token};
               splice @$AFE, $formatting_element_afe_i, 1, ();
@@ -11708,9 +11727,13 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             }
           }
           if ($inner_loop_counter > 3 and defined $node_afe_i) {
+            $formatting_element_afe_i-- if $node_afe_i < $formatting_element_afe_i;
+            $bookmark-- if $node_afe_i < $bookmark;
             splice @$AFE, $node_afe_i, 1, ();
+            undef $node_afe_i;
           }
           if (not defined $node_afe_i) {
+            $furthest_block_i-- if $node_i < $furthest_block_i;
             push @popped, splice @$OE, $node_i, 1, ();
             redo INNER_LOOP;
           }
@@ -11776,12 +11799,25 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             ## it can't be a form-associated element.  Note that
             ## /intended parent/ is $furthest_block.
 
-            splice @$AFE, $formatting_element_afe_i, 1, ();
-            splice @$AFE, $bookmark, 0, $new_element;
+            if ($bookmark <= $formatting_element_afe_i) {
+              splice @$AFE, $formatting_element_afe_i, 1, ();
+              splice @$AFE, $bookmark, 0, $new_element;
+            } else {
+              splice @$AFE, $bookmark, 0, $new_element;
+              splice @$AFE, $formatting_element_afe_i, 1, ();
+              $bookmark--;
+            }
 
-            splice @$OE, $furthest_block_i + 1, 0, ($new_element);
-            #push @popped,
-            splice @$OE, $formatting_element_i, 1, ();
+            if ($formatting_element_i < $furthest_block_i) {
+              splice @$OE, $furthest_block_i + 1, 0, ($new_element);
+              #push @popped,
+              splice @$OE, $formatting_element_i, 1, ();
+              $furthest_block_i--;
+            } else {
+              #push @popped,
+              splice @$OE, $formatting_element_i, 1, ();
+              splice @$OE, $furthest_block_i + 1, 0, ($new_element);
+            }
 
             redo OUTER_LOOP;
           } # OUTER_LOOP
@@ -11796,13 +11832,16 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
           }
           my $entry_i = $#$AFE;
           my $entry = $AFE->[$entry_i];
-          while (not $entry_i == 0) {
-            $entry_i--;
-            $entry = $AFE->[$entry_i];
-            last if not ref $entry;
-            for (reverse @$OE) {
-              last if $_ eq $entry;
+          if ($entry_i > 0) {
+            E: while (not $entry_i == 0) {
+              $entry_i--;
+              $entry = $AFE->[$entry_i];
+              last E if not ref $entry;
+              for (reverse @$OE) {
+                last E if $_ eq $entry;
+              }
             }
+            $entry_i++;
           }
 
           for my $entry_i ($entry_i..$#$AFE) {
@@ -11834,13 +11873,16 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
           }
           my $entry_i = $#$AFE;
           my $entry = $AFE->[$entry_i];
-          while (not $entry_i == 0) {
-            $entry_i--;
-            $entry = $AFE->[$entry_i];
-            last if not ref $entry;
-            for (reverse @$OE) {
-              last if $_ eq $entry;
+          if ($entry_i > 0) {
+            E: while (not $entry_i == 0) {
+              $entry_i--;
+              $entry = $AFE->[$entry_i];
+              last E if not ref $entry;
+              for (reverse @$OE) {
+                last E if $_ eq $entry;
+              }
             }
+            $entry_i++;
           }
 
           for my $entry_i ($entry_i..$#$AFE) {
@@ -28592,7 +28634,7 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
-          ($data->{name},
+          (defined $data->{name} ? $data->{name} : '',
            defined $data->{public_identifier} ? $data->{public_identifier} : '',
            defined $data->{system_identifier} ? $data->{system_identifier} : '');
       $nodes->[$op->[2]]->append_child ($dt);
