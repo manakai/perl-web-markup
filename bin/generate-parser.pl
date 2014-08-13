@@ -1136,12 +1136,14 @@ sub cond_to_code ($) {
            $cond->[1] eq 'lc is not' and
            defined $cond->[2]) {
     return sprintf q{
-      defined $token->{attrs}->{type} and
-      do {
-        my $value = $token->{attrs}->{type}->{value};
-        $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-        $value eq q@%s@;
-      }
+      not (
+        defined $token->{attrs}->{type} and
+        do {
+          my $value = $token->{attrs}->{type}->{value};
+          $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+          $value eq q@%s@;
+        }
+      )
     }, $cond->[2];
   } elsif ($cond->[0] eq 'fragment') {
     return q{defined $CONTEXT};
@@ -1611,7 +1613,7 @@ sub actions_to_code ($;%) {
              $act->{node} =~ /^oe\[([0-9]+)\]$/) {
       push @code, sprintf q{
         push @$OP, ['set-if-missing', $token->{attr_list} => $OE->[%d]->{id}]
-            if @{$token->{attr_list}};
+            if @{$token->{attr_list} or []};
       }, $1;
     } elsif ($act->{type} eq 'fixup-svg-tag-name') {
       push @code, q{
@@ -1970,7 +1972,7 @@ sub actions_to_code ($;%) {
       push @code, $code;
     } elsif ($act->{type} eq 'set-empty' and
              $act->{target} eq 'pending table character tokens') {
-      push @code, q{$TABLE_CHARS = [];};
+      push @code, q{@$TABLE_CHARS = ();};
     } elsif ($act->{type} eq 'append-to-pending-table-character-tokens-list') {
       push @code, q{push @$TABLE_CHARS, {%$token, value => $1};};
 

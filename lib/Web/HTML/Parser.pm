@@ -2982,7 +2982,7 @@ push @$Errors, {type => 'in-body-start-body',
       
 
         push @$OP, ['set-if-missing', $token->{attr_list} => $OE->[1]->{id}]
-            if @{$token->{attr_list}};
+            if @{$token->{attr_list} or []};
       
           }
         
@@ -3479,7 +3479,7 @@ push @$Errors, {type => 'in-body-start-html',
           } else {
             
         push @$OP, ['set-if-missing', $token->{attr_list} => $OE->[0]->{id}]
-            if @{$token->{attr_list}};
+            if @{$token->{attr_list} or []};
       
           }
         
@@ -3596,12 +3596,14 @@ push @$Errors, {type => 'in-body-start-image',
         
 
           if (
-      defined $token->{attrs}->{type} and
-      do {
-        my $value = $token->{attrs}->{type}->{value};
-        $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-        $value eq q@hidden@;
-      }
+      not (
+        defined $token->{attrs}->{type} and
+        do {
+          my $value = $token->{attrs}->{type}->{value};
+          $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+          $value eq q@hidden@;
+        }
+      )
     ) {
             
         $FRAMESET_OK = 0;
@@ -4099,13 +4101,13 @@ $State = PLAINTEXT_STATE;
       }
     ) {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
-          }
-        
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
             push @$Errors, {type => 'in-body-start-rp-rt',
                                             level => 'm',
                                             index => $token->{index}};
+          }
+        
           }
         
 
@@ -6512,7 +6514,7 @@ push @$AFE, '#marker';
           my $token = $_;
 
           if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) {
-            $TABLE_CHARS = [];
+            @$TABLE_CHARS = ();
 $ORIGINAL_IM = $IM;
 
           $IM = IN_TABLE_TEXT_IM;
@@ -7166,7 +7168,7 @@ push @$OE, $node;
           my $token = $_;
 
           if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) {
-            $TABLE_CHARS = [];
+            @$TABLE_CHARS = ();
 $ORIGINAL_IM = $IM;
 
           $IM = IN_TABLE_TEXT_IM;
@@ -8490,7 +8492,22 @@ push @$Errors, {type => 'in-table-else',
                  et => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}, aet => $Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'} };
       
 
-      push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
+        FOSTER: {
+          for my $i (reverse 1..$#$OE) {
+            if ($OE->[$i]->{et} & (TAB_ELS)) { # table
+              push @$OP, ['insert-foster', $node => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              last FOSTER;
+            } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
+              push @$OP, ['insert', $node => $OE->[$i]->{id}];
+              last FOSTER;
+            }
+          }
+          push @$OP, ['insert', $node => $OE->[0]->{id}];
+        } # FOSTER
+      } else {
+        push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      }
     
 
 
@@ -8534,7 +8551,7 @@ push @$Errors, {type => 'in-body-start-body',
       
 
         push @$OP, ['set-if-missing', $token->{attr_list} => $OE->[1]->{id}]
-            if @{$token->{attr_list}};
+            if @{$token->{attr_list} or []};
       
           }
         
@@ -9182,7 +9199,7 @@ push @$Errors, {type => 'in-body-start-html',
           } else {
             
         push @$OP, ['set-if-missing', $token->{attr_list} => $OE->[0]->{id}]
-            if @{$token->{attr_list}};
+            if @{$token->{attr_list} or []};
       
           }
         
@@ -9301,12 +9318,14 @@ push @$Errors, {type => 'in-body-start-image',
           my $token = $_;
 
           if (
-      defined $token->{attrs}->{type} and
-      do {
-        my $value = $token->{attrs}->{type}->{value};
-        $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-        $value eq q@hidden@;
-      }
+      not (
+        defined $token->{attrs}->{type} and
+        do {
+          my $value = $token->{attrs}->{type}->{value};
+          $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+          $value eq q@hidden@;
+        }
+      )
     ) {
             push @$Errors, {type => 'in-table-else',
                                             level => 'm',
@@ -9362,12 +9381,14 @@ push @$Errors, {type => 'in-body-start-image',
         
 
           if (
-      defined $token->{attrs}->{type} and
-      do {
-        my $value = $token->{attrs}->{type}->{value};
-        $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
-        $value eq q@hidden@;
-      }
+      not (
+        defined $token->{attrs}->{type} and
+        do {
+          my $value = $token->{attrs}->{type}->{value};
+          $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
+          $value eq q@hidden@;
+        }
+      )
     ) {
             
         $FRAMESET_OK = 0;
@@ -9730,7 +9751,22 @@ push @$Errors, {type => 'in-table-else',
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS) };
       
 
-      push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
+        FOSTER: {
+          for my $i (reverse 1..$#$OE) {
+            if ($OE->[$i]->{et} & (TAB_ELS)) { # table
+              push @$OP, ['insert-foster', $node => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              last FOSTER;
+            } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
+              push @$OP, ['insert', $node => $OE->[$i]->{id}];
+              last FOSTER;
+            }
+          }
+          push @$OP, ['insert', $node => $OE->[0]->{id}];
+        } # FOSTER
+      } else {
+        push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      }
     
 
 
@@ -9916,7 +9952,22 @@ push @$Errors, {type => 'in-table-else',
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS) };
       
 
-      push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
+        FOSTER: {
+          for my $i (reverse 1..$#$OE) {
+            if ($OE->[$i]->{et} & (TAB_ELS)) { # table
+              push @$OP, ['insert-foster', $node => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              last FOSTER;
+            } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
+              push @$OP, ['insert', $node => $OE->[$i]->{id}];
+              last FOSTER;
+            }
+          }
+          push @$OP, ['insert', $node => $OE->[0]->{id}];
+        } # FOSTER
+      } else {
+        push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      }
     
 
 push @$OE, $node;
@@ -10162,13 +10213,13 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
-          }
-        
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
             push @$Errors, {type => 'in-body-start-rp-rt',
                                             level => 'm',
                                             index => $token->{index}};
+          }
+        
           }
         
 
@@ -10542,7 +10593,22 @@ push @$Errors, {type => 'in-table-else',
                  et => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS), aet => (HTML_NS_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS) };
       
 
-      push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) { # table* context
+        FOSTER: {
+          for my $i (reverse 1..$#$OE) {
+            if ($OE->[$i]->{et} & (TAB_ELS)) { # table
+              push @$OP, ['insert-foster', $node => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              last FOSTER;
+            } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
+              push @$OP, ['insert', $node => $OE->[$i]->{id}];
+              last FOSTER;
+            }
+          }
+          push @$OP, ['insert', $node => $OE->[0]->{id}];
+        } # FOSTER
+      } else {
+        push @$OP, ['insert', $node => $OE->[-1]->{id}];
+      }
     
 
 push @$OE, $node;
@@ -10649,7 +10715,7 @@ $ORIGINAL_IM = $IM;
           my $token = $_;
 
           if ($OE->[-1]->{et} & (TAB_ELS | TBO_TFO_THE_ELS | TR_ELS)) {
-            $TABLE_CHARS = [];
+            @$TABLE_CHARS = ();
 $ORIGINAL_IM = $IM;
 
           $IM = IN_TABLE_TEXT_IM;
