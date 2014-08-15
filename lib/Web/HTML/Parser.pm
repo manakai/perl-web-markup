@@ -12374,8 +12374,7 @@ if ($Input =~ /\G([^\\]]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -12383,13 +12382,12 @@ if ($Input =~ /\G([^\\]]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = CDATA_SECTION_STATE_CR;
 } elsif ($Input =~ /\G([\]])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = CDATA_SECTION_STATE__5D;
 } else {
 if ($EOF) {
@@ -12418,8 +12416,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = CDATA_SECTION_STATE_CR;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -12436,8 +12433,7 @@ $State = CDATA_SECTION_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -12472,8 +12468,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = CDATA_SECTION_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -12482,8 +12477,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -12496,8 +12490,7 @@ $State = CDATA_SECTION_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -12529,21 +12522,19 @@ $State = CDATA_SECTION_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = CDATA_SECTION_STATE_CR;
 } elsif ($Input =~ /\G([\]])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = CDATA_SECTION_STATE__5D;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = CDATA_SECTION_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13063,8 +13054,7 @@ if ($Input =~ /\G([^\\ ]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -13072,8 +13062,7 @@ if ($Input =~ /\G([^\\ ]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = PLAINTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -13084,8 +13073,7 @@ $State = PLAINTEXT_STATE_CR;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13110,8 +13098,7 @@ $State = PLAINTEXT_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = PLAINTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -13123,16 +13110,14 @@ $State = PLAINTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PLAINTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13163,8 +13148,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13175,8 +13159,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13189,8 +13172,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13202,8 +13184,7 @@ $State = RAWTEXT_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RAWTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\/])/gcs) {
@@ -13218,8 +13199,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13230,15 +13210,13 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13247,6 +13225,7 @@ $State = RAWTEXT_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $LastStartTagName and
@@ -13261,8 +13240,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13273,8 +13251,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Token->{q<tag_name>} .= chr ((ord $1) + 32);
@@ -13287,8 +13264,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13303,16 +13279,14 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13323,8 +13297,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13332,8 +13305,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13358,25 +13330,23 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RAWTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
         $Token = {type => END_TAG_TOKEN, tn => 0,
@@ -13398,8 +13368,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -13408,22 +13377,19 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13431,8 +13397,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13451,38 +13416,35 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RAWTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = RAWTEXT_END_TAG_OPEN_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -13491,22 +13453,19 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13514,8 +13473,7 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13534,8 +13492,7 @@ if ($Input =~ /\G([^\\<\ ]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -13543,12 +13500,12 @@ if ($Input =~ /\G([^\\<\ ]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RAWTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -13557,8 +13514,7 @@ $State = RAWTEXT_LESS_THAN_SIGN_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13583,12 +13539,12 @@ $State = RAWTEXT_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RAWTEXT_STATE_CR;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = RAWTEXT_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = RAWTEXT_STATE;
 
@@ -13598,16 +13554,14 @@ $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RAWTEXT_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13638,8 +13592,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13650,8 +13603,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -13664,8 +13616,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13677,16 +13628,14 @@ $State = RCDATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13707,8 +13656,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13719,15 +13667,13 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13736,6 +13682,7 @@ $State = RCDATA_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $LastStartTagName and
@@ -13750,8 +13697,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13762,8 +13708,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Token->{q<tag_name>} .= chr ((ord $1) + 32);
@@ -13776,8 +13721,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13792,16 +13736,14 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13812,8 +13754,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13821,8 +13762,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -13847,33 +13787,30 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
         $Token = {type => END_TAG_TOKEN, tn => 0,
@@ -13895,8 +13832,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -13905,22 +13841,19 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -13928,8 +13861,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -13948,46 +13880,42 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = RCDATA_END_TAG_OPEN_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -13996,22 +13924,19 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -14019,8 +13944,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -14039,8 +13963,7 @@ if ($Input =~ /\G([^\\&\<\ ]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -14048,14 +13971,14 @@ if ($Input =~ /\G([^\\&\<\ ]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -14064,8 +13987,7 @@ $State = RCDATA_LESS_THAN_SIGN_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -14104,8 +14026,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14122,8 +14043,7 @@ $State = RCDATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -14150,6 +14070,7 @@ $State = CHARREF_IN_RCDATA_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
         push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
@@ -14165,8 +14086,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -14257,8 +14177,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14292,8 +14211,7 @@ $State = RCDATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -14354,6 +14272,7 @@ $State = CHARREF_IN_RCDATA_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
         push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
@@ -14386,8 +14305,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -14495,8 +14413,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -14530,8 +14447,7 @@ $State = RCDATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -14592,6 +14508,7 @@ $State = CHARREF_IN_RCDATA_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
         push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
@@ -14624,8 +14541,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -14709,8 +14625,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -14824,6 +14739,7 @@ $State = RCDATA_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
           REF: {
@@ -14863,8 +14779,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY]+)/gcs) {
 $Temp .= $1;
@@ -14913,8 +14828,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -14955,8 +14869,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -15036,8 +14949,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -15054,8 +14966,7 @@ $State = RCDATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -15082,6 +14993,7 @@ $State = CHARREF_IN_RCDATA_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
         push @$Errors, {type => 'character-reference-number-else', level => 'm',
@@ -15097,8 +15009,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -15138,8 +15049,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -15152,8 +15062,7 @@ $State = RCDATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
@@ -15178,6 +15087,7 @@ $State = RCDATA_STATE___CHARREF_NAME_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
@@ -15199,8 +15109,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -15213,8 +15122,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -15250,8 +15158,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\
 ])/gcs) {
@@ -15267,8 +15174,7 @@ $State = RCDATA_STATE___CHARREF_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
@@ -15293,6 +15199,7 @@ $State = RCDATA_STATE___CHARREF_NAME_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
@@ -15314,8 +15221,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -15328,8 +15234,7 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -15361,14 +15266,14 @@ $State = RCDATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = RCDATA_STATE;
 
@@ -15378,16 +15283,14 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -15412,19 +15315,19 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([P])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = AFTER_DOCTYPE_NAME_STATE_P;
 } elsif ($Input =~ /\G([S])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = AFTER_DOCTYPE_NAME_STATE_S;
 } elsif ($Input =~ /\G([p])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = AFTER_DOCTYPE_NAME_STATE_P;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = AFTER_DOCTYPE_NAME_STATE_S;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -16437,7 +16340,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -16503,7 +16406,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -16663,7 +16566,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -16857,7 +16760,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -17027,7 +16930,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
@@ -17270,7 +17173,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -17324,7 +17227,7 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
@@ -17383,7 +17286,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = ATTR_VALUE__DQ__STATE;
@@ -17424,7 +17327,7 @@ $Attr->{q<value>} .= q@
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
@@ -17485,7 +17388,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -17628,7 +17531,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -17822,7 +17725,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -17983,7 +17886,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
         
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -18252,7 +18155,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -18310,7 +18213,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Attr->{q<value>} .= $Temp;
@@ -18370,7 +18273,7 @@ $Attr->{q<value>} .= q@
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
@@ -18413,7 +18316,7 @@ $Attr->{q<value>} .= $1;
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
@@ -18560,7 +18463,7 @@ $Attr->{q<value>} .= $1;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -18841,7 +18744,7 @@ $Attr->{q<value>} .= $1;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -19241,7 +19144,7 @@ $Attr->{q<value>} .= $1;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -19588,7 +19491,7 @@ $State = BEFORE_ATTR_NAME_STATE;
         
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
@@ -20069,7 +19972,7 @@ $Attr->{q<value>} .= $1;
       
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -20210,7 +20113,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Attr->{q<value>} .= $Temp;
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
@@ -20344,7 +20247,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
@@ -23196,7 +23099,7 @@ if ($Input =~ /\G([\	\\ \
 $State = ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = ATTR_VALUE__SQ__STATE;
@@ -23422,7 +23325,7 @@ $StateActions->[CHARREF_IN_RCDATA_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23433,12 +23336,11 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23449,18 +23351,17 @@ $TempIndex = $Offset + (pos $Input) - 1 - 1;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23470,12 +23371,12 @@ $TempIndex = $Offset + (pos $Input) - 1 - 1;
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23483,19 +23384,20 @@ $TempIndex = $Offset + (pos $Input) - 1 - 1;
                         index => $TempIndex} if length $Temp;
       
 $State = RCDATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([afbcdeghjknqrvwzilmopstuxy])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23510,12 +23412,11 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23526,13 +23427,12 @@ $State = RCDATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23556,7 +23456,7 @@ $StateActions->[CHARREF_IN_DATA_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23567,12 +23467,11 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23583,18 +23482,17 @@ $TempIndex = $Offset + (pos $Input) - 1 - 1;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23604,12 +23502,12 @@ $TempIndex = $Offset + (pos $Input) - 1 - 1;
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23620,17 +23518,17 @@ $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([afbcdeghjknqrvwzilmopstuxy])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23645,12 +23543,11 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -23661,13 +23558,12 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - 1 - 1;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -24000,8 +23896,7 @@ if ($Input =~ /\G([^\\&\<\ ]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -24009,8 +23904,7 @@ if ($Input =~ /\G([^\\&\<\ ]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -24026,8 +23920,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -24066,8 +23959,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -24084,8 +23976,7 @@ $State = DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -24128,8 +24019,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -24220,8 +24110,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -24255,8 +24144,7 @@ $State = DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -24350,8 +24238,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -24459,8 +24346,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -24494,8 +24380,7 @@ $State = DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -24589,8 +24474,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -24674,8 +24558,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -24829,8 +24712,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY]+)/gcs) {
 $Temp .= $1;
@@ -24879,8 +24761,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -24921,8 +24802,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -25002,8 +24882,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -25020,8 +24899,7 @@ $State = DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -25064,8 +24942,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -25105,8 +24982,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -25119,8 +24995,7 @@ $State = DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
@@ -25167,8 +25042,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -25181,8 +25055,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -25218,8 +25091,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\
 ])/gcs) {
@@ -25235,8 +25107,7 @@ $State = DATA_STATE___CHARREF_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
@@ -25283,8 +25154,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -25297,8 +25167,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -25330,8 +25199,7 @@ $State = DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -25348,16 +25216,14 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -25442,8 +25308,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -25460,19 +25325,19 @@ return 0;
 $StateActions->[MDO_STATE] = sub {
 if ($Input =~ /\G([\-])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 } elsif ($Input =~ /\G([D])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE_D;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__5B;
 } elsif ($Input =~ /\G([d])/gcs) {
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE_D;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -26686,8 +26551,7 @@ if ($Input =~ /\G([\	\\ \
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -26701,8 +26565,7 @@ if ($Input =~ /\G([\	\\ \
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -26710,8 +26573,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 
@@ -26724,16 +26586,15 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -26746,24 +26607,21 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp .= chr ((ord $1) + 32);
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([afbcdeghjknqrvwzilmopstuxy]+)/gcs) {
 $Temp .= $1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
@@ -26774,16 +26632,14 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -26817,8 +26673,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\
 ])/gcs) {
@@ -26835,8 +26690,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -26844,8 +26698,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
@@ -26859,16 +26712,15 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
@@ -26882,8 +26734,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
@@ -26891,8 +26742,7 @@ $Temp .= chr ((ord $1) + 32);
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([afbcdeghjknqrvwzilmopstuxy])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
@@ -26900,8 +26750,7 @@ $Temp .= $1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
@@ -26912,16 +26761,14 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -26955,8 +26802,7 @@ if ($Input =~ /\G([\	\\ \
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -26970,8 +26816,7 @@ if ($Input =~ /\G([\	\\ \
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -26979,8 +26824,7 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 
@@ -26993,11 +26837,11 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if ($Temp eq 'script') {
@@ -27009,24 +26853,21 @@ $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Temp .= chr ((ord $1) + 32);
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([afbcdeghjknqrvwzilmopstuxy]+)/gcs) {
 $Temp .= $1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
@@ -27037,16 +26878,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27080,8 +26919,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\
 ])/gcs) {
@@ -27098,8 +26936,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -27107,8 +26944,7 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
@@ -27122,11 +26958,11 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
@@ -27139,8 +26975,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
@@ -27148,8 +26983,7 @@ $Temp .= chr ((ord $1) + 32);
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([afbcdeghjknqrvwzilmopstuxy])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
@@ -27157,8 +26991,7 @@ $Temp .= $1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
@@ -27169,16 +27002,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27205,32 +27036,29 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@>@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -27241,16 +27069,14 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27277,8 +27103,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -27286,16 +27111,15 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -27306,16 +27130,14 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27342,8 +27164,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -27351,28 +27172,26 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@/@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
@@ -27383,16 +27202,14 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27418,8 +27235,7 @@ if ($Input =~ /\G([^\\-\<\ ]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -27427,8 +27243,7 @@ if ($Input =~ /\G([^\\-\<\ ]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -27436,16 +27251,15 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -27455,8 +27269,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27486,8 +27299,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -27495,16 +27307,15 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
@@ -27515,16 +27326,14 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27559,8 +27368,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27571,8 +27379,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -27585,8 +27392,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27598,8 +27404,7 @@ $State = SCRIPT_DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\/])/gcs) {
@@ -27614,8 +27419,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27626,15 +27430,13 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27643,6 +27445,7 @@ $State = SCRIPT_DATA_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $LastStartTagName and
@@ -27657,8 +27460,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27669,8 +27471,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Token->{q<tag_name>} .= chr ((ord $1) + 32);
@@ -27683,8 +27484,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27699,16 +27499,14 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27719,8 +27517,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27728,8 +27525,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -27754,25 +27550,23 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
         $Token = {type => END_TAG_TOKEN, tn => 0,
@@ -27794,8 +27588,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -27804,22 +27597,19 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27827,8 +27617,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -27848,8 +27637,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -27857,11 +27645,11 @@ $State = SCRIPT_DATA_ESCAPED_DASH_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_STATE;
 
@@ -27871,16 +27659,14 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27903,8 +27689,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -27912,11 +27697,11 @@ $State = SCRIPT_DATA_ESCAPE_START_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_STATE;
 
@@ -27926,16 +27711,14 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -27958,26 +27741,24 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@>@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -27988,16 +27769,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -28024,8 +27803,7 @@ if ($Input =~ /\G([\])/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -28033,11 +27811,11 @@ $State = SCRIPT_DATA_ESCAPED_DASH_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -28047,16 +27825,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -28091,8 +27867,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28103,8 +27878,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -28117,8 +27891,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28130,16 +27903,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28151,8 +27922,7 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 
@@ -28166,8 +27936,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28178,15 +27947,13 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28195,6 +27962,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
                         index => $TempIndex} if length $Temp;
       
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $LastStartTagName and
@@ -28209,8 +27977,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28221,8 +27988,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 $Token->{q<tag_name>} .= chr ((ord $1) + 32);
@@ -28235,8 +28001,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28251,16 +28016,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28271,16 +28034,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -28310,39 +28071,35 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
         $Token = {type => END_TAG_TOKEN, tn => 0,
@@ -28364,8 +28121,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -28374,30 +28130,26 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@</@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = DATA_STATE;
 
@@ -28421,90 +28173,81 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = SCRIPT_DATA_ESCAPED_END_TAG_OPEN_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $Temp .= chr ((ord $1) + 32);
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([afbcdeghjknqrvwzilmopstuxy])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $Temp .= $1;
 $State = SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -28513,30 +28256,26 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = DATA_STATE;
 
@@ -28560,8 +28299,7 @@ if ($Input =~ /\G([^\\-\<\ ]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -28569,8 +28307,7 @@ if ($Input =~ /\G([^\\-\<\ ]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -28578,11 +28315,11 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -28591,8 +28328,7 @@ $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -28622,8 +28358,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_ESCAPED_STATE_CR;
 } elsif ($Input =~ /\G([\-])/gcs) {
@@ -28631,11 +28366,11 @@ $State = SCRIPT_DATA_ESCAPED_DASH_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@-@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
@@ -28645,16 +28380,14 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_ESCAPED_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -28680,15 +28413,13 @@ if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
@@ -28696,30 +28427,28 @@ $State = SCRIPT_DATA_ESCAPE_START_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<!@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 } elsif ($Input =~ /\G([\/])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = SCRIPT_DATA_END_TAG_OPEN_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -28728,22 +28457,19 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -28751,8 +28477,7 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -28771,8 +28496,7 @@ if ($Input =~ /\G([^\\<\ ]+)/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -28780,12 +28504,12 @@ if ($Input =~ /\G([^\\<\ ]+)/gcs) {
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -28794,8 +28518,7 @@ $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -28820,12 +28543,12 @@ $State = SCRIPT_DATA_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = SCRIPT_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
+$AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = SCRIPT_DATA_STATE;
 
@@ -28835,16 +28558,14 @@ $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@�@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = SCRIPT_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -29106,11 +28827,11 @@ $StateActions->[TAG_OPEN_STATE] = sub {
 if ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = MDO_STATE;
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -29157,11 +28878,11 @@ $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = MDO_STATE;
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -29204,11 +28925,11 @@ $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = MDO_STATE;
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -29228,11 +28949,11 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-\-\>/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = MDO_STATE;
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -29646,11 +29367,11 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G\!(\-)\-\-\-\>/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = MDO_STATE;
 $Temp = $1;
-$TempIndex = $Offset + (pos $Input) - 1 - 0;
+$TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE__;
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -29665,7 +29386,7 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       
 $State = MDO_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
@@ -29693,8 +29414,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Errors, {type => 'NULL', level => 'm',
@@ -29703,8 +29423,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -29714,15 +29433,13 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@
 @,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -29733,8 +29450,7 @@ $State = DATA_STATE_CR;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
@@ -29745,8 +29461,7 @@ $State = CHARREF_IN_DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
@@ -29771,14 +29486,12 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 0};
+                          di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
 } else {
 if ($EOF) {
@@ -29790,8 +29503,7 @@ $State = DATA_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => q@<@,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - 1};
+                          di => $DI, index => $AnchoredIndex};
         
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,

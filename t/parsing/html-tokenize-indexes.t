@@ -19,9 +19,9 @@ use Web::DOM::Document;
         @{$self->{saved_lists}->{Errors}};
     push @{$self->{_tokens} ||= []},
         @{$self->{saved_lists}->{Tokens}};
-    @{$self->{saved_lists}->{Errors}} = ();
-    @{$self->{saved_lists}->{Tokens}} = ();
+    return $self->SUPER::_construct_tree;
   }
+  sub onerrors { return sub { } }
 }
 
 my $TestData = q{
@@ -121,6 +121,36 @@ e 8
 
 ab|cd<ab |fd>
 t 0 2 4 8 11
+
+<svg><![CDATA[abc]]></svg>
+t 0 14 20 26
+
+<plaintext>ab</plaintext>n
+t 0 11 26
+
+<xmp>ab</xmpab>cd</XMp>d
+t 0 5 7 9 14 15 17 23 24
+
+<script>aa<!--<script>b</script>c-->d</script>e
+t 0 8 10 12 13 14 15 16 21 22 23 24 25 31 32 33 34 35 36 37 46 47
+
+<!---ab-->c
+t 0 10 11
+
+<!---ab----c>d
+t 0 14
+e 9 10 11 13
+
+<!doc>hoge
+t 0 6 10
+e 5
+
+<svg><![CDA[ab]]>bb</svg>
+t 0 5 17 19 25
+e 11
+
+<svg><![CDATA[ab]]]>c</svg>
+t 0 14 16 20 21 27
 
 };
 

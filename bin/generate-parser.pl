@@ -476,7 +476,8 @@ sub switch_state_code ($) {
   my $state = $_[0];
   my @code;
   push @code, sprintf q{$State = %s;}, state_const $state;
-  if ($state eq 'tag open state') {
+  if ($state eq 'tag open state' or
+      $state =~ /less-than sign state/) {
     push @code,
         q{$AnchoredIndex = $Offset + (pos $Input) - 1;};
   }
@@ -638,10 +639,8 @@ sub serialize_actions ($) {
       die if defined $field and $field eq 'type';
       my $value;
       my $index = $_->{capture_index} || 1;
-      my $index_delta = 0;
       if (defined $_->{value}) {
         $value = sprintf q[q@%s@], $_->{value};
-        $index_delta = 1;
       } elsif (defined $_->{offset}) {
         $value = sprintf q[chr ((ord $%d) + %d)],
             $index, $_->{offset};
@@ -660,22 +659,37 @@ sub serialize_actions ($) {
             push @result, sprintf q{$Attr->{index} = $Offset + (pos $Input) - length $1;};
           }
         }
-      } elsif ($type eq 'set-to-temp') {
-        push @result, sprintf q[$Temp = %s;], $value;
-        push @result, sprintf q{$TempIndex = $Offset + (pos $Input) - 1 - %d;},
-            $index_delta;
       } elsif ($type eq 'append') {
         push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
       } elsif ($type eq 'append-to-attr') {
         push @result, sprintf q[$Attr->{q<%s>} .= %s;], $field, $value;
       } elsif ($type eq 'append-to-temp') {
         push @result, sprintf q[$Temp .= %s;], $value;
+      } elsif ($type eq 'set-to-temp') {
+        push @result, sprintf q[$Temp = %s;], $value;
+        my $index_delta = q{$Offset + (pos $Input) - (length $1)};
+        if (defined $_->{value}) {
+          if ($_->{value} =~ /^</) {
+            $index_delta = q{$AnchoredIndex};
+          } else {
+            $index_delta .= q{ - 1};
+          }
+        }
+        push @result, sprintf q{$TempIndex = %s;}, $index_delta;
       } elsif ($type eq 'emit-char') {
+        my $index_delta = q{$Offset + (pos $Input) - (length $1)};
+        if (defined $_->{value}) {
+          if ($_->{value} =~ /^</) {
+            $index_delta = q{$AnchoredIndex};
+          }
+        }
+        if (defined $_->{index_offset}) {
+          $index_delta .= ' - ' . $_->{index_offset};
+        }
         push @result, sprintf q{
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => %s,
-                          di => $DI,
-                          index => $Offset + (pos $Input) - (length $1) - %d};
+                          di => $DI, index => %s};
         }, $value, $index_delta;
       }
     } elsif ($type eq 'set-empty') {
@@ -689,7 +703,7 @@ sub serialize_actions ($) {
     } elsif ($type eq 'set-empty-to-temp') {
       push @result, q{
         $Temp = '';
-        $TempIndex = $Offset + (pos $Input) - 1;
+        $TempIndex = $Offset + (pos $Input);
       };
     } elsif ($type eq 'append-temp') {
       my $field = $_->{field};
