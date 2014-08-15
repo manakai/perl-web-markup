@@ -38,12 +38,15 @@ my $Vars = {
   Scripting => {input => 1, type => 'boolean'},
   IframeSrcdoc => {input => 1, type => 'boolean'},
   Confident => {save => 1, type => 'boolean'},
+  DI => {input => 1, type => 'index', default => -1},
+  AnchoredIndex => {save => 1, type => 'index'},
   EOF => {save => 1, type => 'boolean'},
   Offset => {save => 1, type => 'index', default => 0},
   State => {save => 1, type => 'enum'},
   Token => {save => 1, type => 'struct?'},
   Attr => {save => 1, type => 'struct?'},
   Temp => {save => 1, type => 'string?'},
+  TempIndex => {save => 1, type => 'index'},
   LastStartTagName => {save => 1, type => 'string?'},
   IM => {save => 1, type => 'enum'},
   TEMPLATE_IMS => {unchanged => 1, type => 'list'},
@@ -423,6 +426,13 @@ sub _change_the_encoding ($$$) {
   return undef;
 } # _change_the_encoding
 
+    sub di ($;$) {
+      if (@_ > 1) {
+        $_[0]->{DI} = 0+$_[1];
+      }
+      return defined $_[0]->{DI} ? $_[0]->{DI} : -1;
+    } # di
+
   };
 
   return join "\n", @code;
@@ -462,6 +472,18 @@ sub im_const ($) {
   return $const . '_IM';
 } # im_const
 
+sub switch_state_code ($) {
+  my $state = $_[0];
+  my @code;
+  push @code, sprintf q{$State = %s;}, state_const $state;
+  if ($state eq 'tag open state') {
+    push @code,
+        q{$AnchoredIndex = $Offset + (pos $Input) - 1;};
+  }
+  #push @code, qq{warn "State changed to $state";};
+  return join "\n", @code;
+} # switch_state_code
+
 sub serialize_actions ($) {
   ## Generate |return 1| to abort tokenizer, |return 0| to abort
   ## current steps.
@@ -472,20 +494,20 @@ sub serialize_actions ($) {
     if ($type eq 'parse error') {
       push @result, sprintf q[
         push @$Errors, {type => '%s', level => 'm',
-                        index => $Offset + pos $Input};
+                        di => $DI, index => $Offset + (pos $Input) - 1};
       ], $_->{name};
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
-        push @result, sprintf q[$State = %s;], state_const $_->{state};
+        push @result, switch_state_code $_->{state};
       } elsif ($_->{if} eq 'appropriate end tag') {
         die unless $_->{break};
         push @result, sprintf q[
           if (defined $LastStartTagName and
               $Token->{tag_name} eq $LastStartTagName) {
-            $State = %s;
+            %s
             return 1;
           }
-        ], state_const $_->{state};
+        ], switch_state_code $_->{state};
       } elsif ($_->{if} eq 'in-foreign') {
         die unless $_->{break};
         push @result, sprintf q{
@@ -494,11 +516,11 @@ sub serialize_actions ($) {
             return 1;
           } else {
             if ($InForeign) {
-              $State = %s;
+              %s
               return 0;
             }
           }
-        }, state_const $_->{state};
+        }, switch_state_code $_->{state};
       } else {
         die "Unknown if |$_->{if}|";
       }
@@ -508,20 +530,20 @@ sub serialize_actions ($) {
       push @result, sprintf q[
         if (defined $LastStartTagName and
             $Token->{tag_name} eq $LastStartTagName) {
-          $State = %s;
+          %s
           $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
           push @$Tokens, $Token;
           return 1;
         }
-      ], state_const $_->{state}, $_->{break};
+      ], switch_state_code $_->{state}, $_->{break};
     } elsif ($type eq 'switch-by-temp') {
       push @result, sprintf q[
         if ($Temp eq 'script') {
-          $State = %s;
+          %s
         } else {
-          $State = %s;
+          %s
         }
-      ], state_const $_->{script_state}, state_const $_->{state};
+      ], switch_state_code $_->{script_state}, switch_state_code $_->{state};
     } elsif ($type eq 'reconsume') {
       $reconsume = 1;
     } elsif ($type eq 'emit') {
@@ -531,12 +553,14 @@ sub serialize_actions ($) {
             if (keys %{$Token->{attrs} or {}}) {
               push @$Errors, {type => 'end tag attribute',
                               level => 'm',
-                              index => pos $Input}; # XXX index
+                              di => $Token->{di},
+                              index => $Token->{index}};
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
                               level => 'm',
-                              index => pos $Input}; # XXX index
+                              di => $Token->{di},
+                              index => $Token->{index}};
             }
           }
         };
@@ -570,6 +594,7 @@ sub serialize_actions ($) {
     } elsif ($type eq 'emit-eof') {
       push @result, q{
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
                         index => $Offset + pos $Input};
         return 1;
       };
@@ -577,20 +602,23 @@ sub serialize_actions ($) {
       push @result, q{
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
-                        index => $Offset + pos $Input};
+                        di => $DI,
+                        index => $TempIndex} if length $Temp;
       };
     } elsif ($type eq 'create') {
       push @result, sprintf q{
-        $Token = {type => %s_TOKEN, tn => 0, index => $Offset + pos $Input};
+        $Token = {type => %s_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
       }, map { s/ token$//; s/[- ]/_/g; uc $_ } $_->{token};
     } elsif ($type eq 'create-attr') {
-      push @result, q[$Attr = {index => $Offset + pos $Input};];
+      push @result, q[$Attr = {di => $DI};];
     } elsif ($type eq 'set-attr') {
       push @result, q{
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
                           text => $Attr->{name},
                           level => 'm',
+                          di => $Attr->{di},
                           index => $Attr->{index}};
         } else {
           $Token->{attrs}->{$Attr->{name}} = $Attr;
@@ -610,8 +638,10 @@ sub serialize_actions ($) {
       die if defined $field and $field eq 'type';
       my $value;
       my $index = $_->{capture_index} || 1;
+      my $index_delta = 0;
       if (defined $_->{value}) {
         $value = sprintf q[q@%s@], $_->{value};
+        $index_delta = 1;
       } elsif (defined $_->{offset}) {
         $value = sprintf q[chr ((ord $%d) + %d)],
             $index, $_->{offset};
@@ -622,8 +652,18 @@ sub serialize_actions ($) {
         push @result, sprintf q[$Token->{q<%s>} = %s;], $field, $value;
       } elsif ($type eq 'set-to-attr') {
         push @result, sprintf q[$Attr->{q<%s>} = %s;], $field, $value;
+        if ($field eq 'name') {
+          if (defined $_->{capture_index}) {
+            push @result, sprintf q{$Attr->{index} = $Offset + $-[%d];},
+                $_->{capture_index};
+          } else {
+            push @result, sprintf q{$Attr->{index} = $Offset + (pos $Input) - length $1;};
+          }
+        }
       } elsif ($type eq 'set-to-temp') {
         push @result, sprintf q[$Temp = %s;], $value;
+        push @result, sprintf q{$TempIndex = $Offset + (pos $Input) - 1 - %d;},
+            $index_delta;
       } elsif ($type eq 'append') {
         push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
       } elsif ($type eq 'append-to-attr') {
@@ -634,8 +674,9 @@ sub serialize_actions ($) {
         push @result, sprintf q{
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => %s,
-                          index => $Offset + pos $Input};
-        }, $value;
+                          di => $DI,
+                          index => $Offset + (pos $Input) - (length $1) - %d};
+        }, $value, $index_delta;
       }
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
@@ -646,7 +687,10 @@ sub serialize_actions ($) {
       $field =~ tr/ -/__/ if defined $field;
       push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
     } elsif ($type eq 'set-empty-to-temp') {
-      push @result, q[$Temp = '';];
+      push @result, q{
+        $Temp = '';
+        $TempIndex = $Offset + (pos $Input) - 1;
+      };
     } elsif ($type eq 'append-temp') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
@@ -666,13 +710,13 @@ sub serialize_actions ($) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
-                          index => pos $Input}; # XXXindex
+                          di => $DI, index => $TempIndex};
           $code = $replace->[0];
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
                           level => 'm',
-                          index => pos $Input}; # XXXindex
+                          di => $DI, index => $TempIndex};
           $code = 0xFFFD;
         }
         $Temp = chr $code;
@@ -684,13 +728,13 @@ sub serialize_actions ($) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
-                          index => pos $Input}; # XXXindex
+                          di => $DI, index => $TempIndex};
           $code = $replace->[0];
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
                           level => 'm',
-                          index => pos $Input}; # XXXindex
+                          di => $DI, index => $TempIndex};
           $code = 0xFFFD;
         }
         $Temp = chr $code;
@@ -736,7 +780,15 @@ sub serialize_actions ($) {
                 unless (';' eq substr $Temp, $_-1, 1) {
                   push @$Errors, {type => 'no refc',
                                   level => 'm',
-                                  index => pos $Input}; # XXXindex
+                                  di => $DI,
+                                  index => $TempIndex + $_};
+
+                  ## A variant of |emit-temp|
+                  push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                  value => $value,
+                                  di => $DI, index => $TempIndex};
+                  $TempIndex += $_;
+                  $value = '';
                 }
                 substr ($Temp, 0, $_) = $value;
                 last REF;
@@ -744,7 +796,7 @@ sub serialize_actions ($) {
             }
             push @$Errors, {type => 'not charref', text => $Temp,
                             level => 'm',
-                            index => pos $Input} # XXXindex
+                            di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
           } # REF
         };
@@ -1790,7 +1842,7 @@ sub actions_to_code ($;%) {
                                             index => $token->{index}};},
           $act->{name};
     } elsif ($act->{type} eq 'switch the tokenizer') {
-      push @code, sprintf q{$State = %s;}, state_const $act->{state};
+      push @code, switch_state_code $act->{state};
     } elsif ($act->{type} eq 'reconstruct the active formatting elements') {
       if ($act->{foster_parenting}) {
         push @code, q{&reconstruct_afe_foster if @$AFE and ref $AFE->[-1];};
@@ -2959,7 +3011,7 @@ sub generate_api ($) {
       VARS::INIT;
       VARS::RESET;
       $Confident = 1; # irrelevant
-      $State = STATE ("data state");
+      SWITCH_STATE ("data state");
       $IM = IM ("initial");
 
       $self->_feed_chars ($input) or die "Can't restart";
@@ -3002,7 +3054,7 @@ sub generate_api ($) {
       VARS::LOCAL;
       VARS::INIT;
       VARS::RESET;
-      $State = STATE ("data state");
+      SWITCH_STATE ("data state");
       $IM = IM ("initial");
 
       ## 4.
@@ -3014,9 +3066,9 @@ sub generate_api ($) {
         if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
           # XXX JSON
           if ($node_ln eq 'title' or $node_ln eq 'textarea') {
-            $State = STATE ("RCDATA state");
+            SWITCH_STATE ("RCDATA state");
           } elsif ($node_ln eq 'script') {
-            $State = STATE ("script data state");
+            SWITCH_STATE ("script data state");
           } elsif ({
             style => 1,
             xmp => 1,
@@ -3025,9 +3077,9 @@ sub generate_api ($) {
             noframes => 1,
             noscript => $Scripting,
           }->{$node_ln}) {
-            $State = STATE ("RAWTEXT state");
+            SWITCH_STATE ("RAWTEXT state");
           } elsif ($node_ln eq 'plaintext') {
-            $State = STATE ("PLAINTEXT state");
+            SWITCH_STATE ("PLAINTEXT state");
           }
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -3154,7 +3206,7 @@ sub generate_api ($) {
       VARS::INIT;
       VARS::RESET;
       $Confident = 1; # irrelevant
-      $State = STATE ("data state");
+      SWITCH_STATE ("data state");
       $IM = IM ("initial");
 
       VARS::SAVE;
@@ -3230,7 +3282,7 @@ sub generate_api ($) {
 
         # XXX index
 
-        $State = STATE ("data state");
+        SWITCH_STATE ("data state");
         $IM = IM ("initial");
 
         $self->_feed_chars ($input) or redo PARSER;
@@ -3255,7 +3307,7 @@ sub generate_api ($) {
       $self->{input_stream} = [];
       VARS::INIT;
       VARS::RESET;
-      $State = STATE ("data state");
+      SWITCH_STATE ("data state");
       $IM = IM ("initial");
     } # _parse_bytes_init
 
@@ -3382,7 +3434,7 @@ sub generate_api ($) {
       return;
     } # parse_bytes_end
   };
-  $code[-1] =~ s/\bSTATE\s*\("([^"]+)"\)/state_const $1/ge;
+  $code[-1] =~ s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
   $code[-1] =~ s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
   $code[-1] =~ s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
 
@@ -3461,7 +3513,7 @@ for (keys %%$Web::HTML::ParserData::CharRefReplacements) {
     sub new ($) {
       return bless {
         ## Input parameters
-        # Scripting IframeSrcdoc known_definite_encoding locale_tag
+        # Scripting IframeSrcdoc DI known_definite_encoding locale_tag
 
         ## Callbacks
         # onerror onerrors onappcacheselection onscript
