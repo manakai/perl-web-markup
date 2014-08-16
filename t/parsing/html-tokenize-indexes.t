@@ -139,7 +139,7 @@ t 0 10 11
 
 <!---ab----c>d
 t 0 14
-e 9 10 11 13
+e 9 10 11 14
 
 <!doc>hoge
 t 0 6 10
@@ -151,6 +151,65 @@ e 11
 
 <svg><![CDATA[ab]]]>c</svg>
 t 0 14 16 20 21 27
+
+a<p f=x>
+t 0 1 4 6 7 8
+
+a<p f=|x>
+t 0 1 4 6 8
+
+a<p foo=bar>
+t 0 1 4 8 9 12
+
+a<p foo=|b|a|r>
+t 0 1 4 8 9 10 12
+
+a<p foo=bar baz=baz>
+t 0 1 4 8 9 12 16 17 20
+
+a<p foo="|bar"bar='|baz'>
+t 0 1  4 9  13 18  23
+e 13
+
+a<p foo="bar"bar='baz'>
+t 0 1  4 9  13 18  23
+e 13
+
+a<p foo="bar
+t 0 12
+e 12
+
+a<p foo=b`a>
+t 0 1 4 8 9 10 12
+e 9
+
+a<p foo=&amp;>
+t 0 1 4 8 14
+
+a<p foo=a&amp;b>
+t 0 1 4 8 9 14 16
+
+a<p foo=a&ampb>
+t 0 1 4 8 9 15
+
+a<p foo=a&amp>
+t 0 1 4 8 9 13 14
+e 13
+
+a<p foo=a&foo>
+t 0 1 4 8 9 14
+
+a<p foo=a&foo;a>
+t 0 1 4 8 9 14 16
+e 9
+
+a<p foo="a&amp=x">
+t 0 1 4 9 10 14 15 18
+e 14
+
+a<p foo='a&amp=x'>
+t 0 1 4 9 10 14 15 18
+e 14
 
 };
 
@@ -180,7 +239,10 @@ for (grep { length } split /\n\n+/, $TestData) {
         [map { [$di, $_] } @$ErrorIndexes];
     eq_or_diff [map {
       [$_->{di}, $_->{index}],
-      map { [$_->{di}, $_->{index}] } @{$_->{attr_list}}
+      map {
+        [$_->{di}, $_->{index}],
+        map { [$_->[1], $_->[2]] } @{$_->{value}};
+      } @{$_->{attr_list}};
     } @{$tokenizer->{_tokens}}],
         [map { [$di, $_] } @$TokenIndexes];
 

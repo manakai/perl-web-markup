@@ -9,7 +9,12 @@ my $GeneratedPackageName = q{Web::HTML::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
-# XXX indexes and parse errors
+# XXX attr value indexes
+# XXX stream error indexes
+# XXX tree error indexes
+# XXX additional error indexes
+# XXX parse error types
+# XXX exposing input stream index -> (di, ci) mapping table
 
 sub new ($) {
   return bless {}, $_[0];
@@ -493,10 +498,17 @@ sub serialize_actions ($) {
   for (@{$_[0]->{actions}}) {
     my $type = $_->{type};
     if ($type eq 'parse error') {
-      push @result, sprintf q[
-        push @$Errors, {type => '%s', level => 'm',
-                        di => $DI, index => $Offset + (pos $Input) - 1};
-      ], $_->{name};
+      if ($_->{name} eq 'EOF') {
+        push @result, sprintf q[
+          push @$Errors, {type => '%s', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        ], $_->{name};
+      } else {
+        push @result, sprintf q[
+          push @$Errors, {type => '%s', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        ], $_->{name};
+      }
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
         push @result, switch_state_code $_->{state};
@@ -650,6 +662,7 @@ sub serialize_actions ($) {
       if ($type eq 'set') {
         push @result, sprintf q[$Token->{q<%s>} = %s;], $field, $value;
       } elsif ($type eq 'set-to-attr') {
+        die if $field eq 'value';
         push @result, sprintf q[$Attr->{q<%s>} = %s;], $field, $value;
         if ($field eq 'name') {
           if (defined $_->{capture_index}) {
@@ -662,29 +675,36 @@ sub serialize_actions ($) {
       } elsif ($type eq 'append') {
         push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
       } elsif ($type eq 'append-to-attr') {
-        push @result, sprintf q[$Attr->{q<%s>} .= %s;], $field, $value;
+        if ($field eq 'value') {
+          # IndexedString
+          if (defined $_->{capture_index}) {
+            push @result, sprintf q[push @{$Attr->{q<%s>}}, [%s, $DI, $Offset + $-[%d]];], $field, $value, $_->{capture_index};
+          } else {
+            push @result, sprintf q[push @{$Attr->{q<%s>}}, [%s, $DI, $Offset + (pos $Input) - length $1];], $field, $value;
+          }
+        } else {
+          push @result, sprintf q[$Attr->{q<%s>} .= %s;], $field, $value;
+        }
       } elsif ($type eq 'append-to-temp') {
         push @result, sprintf q[$Temp .= %s;], $value;
       } elsif ($type eq 'set-to-temp') {
         push @result, sprintf q[$Temp = %s;], $value;
         my $index_delta = q{$Offset + (pos $Input) - (length $1)};
         if (defined $_->{value}) {
-          if ($_->{value} =~ /^</) {
-            $index_delta = q{$AnchoredIndex};
-          } else {
-            $index_delta .= q{ - 1};
-          }
+          $index_delta .= sprintf q{ - %d}, $_->{index_offset};
         }
         push @result, sprintf q{$TempIndex = %s;}, $index_delta;
       } elsif ($type eq 'emit-char') {
         my $index_delta = q{$Offset + (pos $Input) - (length $1)};
         if (defined $_->{value}) {
-          if ($_->{value} =~ /^</) {
+          if ($_->{value} =~ /^</) { # e.g. |</| of non-matching RCDATA end tag
             $index_delta = q{$AnchoredIndex};
+          } else {
+            $index_delta .= sprintf q{ - %d}, $_->{index_offset};
           }
-        }
-        if (defined $_->{index_offset}) {
-          $index_delta .= ' - ' . $_->{index_offset};
+        } else {
+          $index_delta .= sprintf q{ - %d}, $_->{index_offset}
+              if defined $_->{index_offset};
         }
         push @result, sprintf q{
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -699,7 +719,11 @@ sub serialize_actions ($) {
     } elsif ($type eq 'set-empty-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
+      if ($field eq 'value') {
+        push @result, sprintf q[$Attr->{q<%s>} = [];], $field;
+      } else {
+        push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
+      }
     } elsif ($type eq 'set-empty-to-temp') {
       push @result, q{
         $Temp = '';
@@ -712,7 +736,11 @@ sub serialize_actions ($) {
     } elsif ($type eq 'append-temp-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      push @result, sprintf q[$Attr->{q<%s>} .= $Temp;], $field;
+      if ($field eq 'value') {
+        push @result, sprintf q[push @{$Attr->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field;
+      } else {
+        push @result, sprintf q[$Attr->{q<%s>} .= $Temp;], $field;
+      }
     } elsif ($type eq 'set-flag') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
@@ -766,13 +794,21 @@ sub serialize_actions ($) {
                   } elsif (%d) { # before_equals
                     push @$Errors, {type => 'no refc',
                                     level => 'm',
-                                    index => pos $Input}; # XXXindex
+                                    di => $DI,
+                                    index => $TempIndex + $_};
                     last REF;
                   } else {
                     push @$Errors, {type => 'no refc',
                                     level => 'm',
-                                    index => pos $Input}; # XXXindex
+                                    di => $DI,
+                                    index => $TempIndex + $_};
                   }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
                 }
                 substr ($Temp, 0, $_) = $value;
                 last REF;
@@ -781,7 +817,7 @@ sub serialize_actions ($) {
             push @$Errors, {type => 'not charref',
                             text => $Temp,
                             level => 'm',
-                            index => pos $Input} # XXXindex
+                            di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
           } # REF
         }, !!$_->{before_equals};
@@ -1211,7 +1247,7 @@ sub cond_to_code ($) {
       not (
         defined $token->{attrs}->{type} and
         do {
-          my $value = $token->{attrs}->{type}->{value};
+          my $value = join '', map { $_->[0] } @{$token->{attrs}->{type}->{value}}; # IndexedString
           $value =~ tr/A-Z/a-z/; ## ASCII case-insensitive
           $value eq q@%s@;
         }
@@ -1492,7 +1528,7 @@ sub actions_to_code ($;%) {
         push @code, sprintf q{
           if ($ns == MATHMLNS and $node->{local_name} eq 'annotation-xml' and
               defined $token->{attrs}->{encoding}) {
-            my $encoding = $token->{attrs}->{encoding}->{value};
+            my $encoding = join '', map { $_->[0] } @{$token->{attrs}->{encoding}->{value}}; # IndexedString
             $encoding =~ tr/A-Z/a-z/; ## ASCII case-insensitive.
             if ($encoding eq 'text/html' or
                 $encoding eq 'application/xhtml+xml') {
@@ -1506,19 +1542,29 @@ sub actions_to_code ($;%) {
       ## "Create an element for a token", step 2.
       push @code, q{
         if (defined $token->{attrs}->{xmlns}) {
-          if ($ns == SVGNS and $token->{attrs}->{xmlns}->{value} eq 'http://www.w3.org/2000/svg') {
+          # IndexedString
+          my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{xmlns}->{value}};
+          if ($ns == SVGNS and $xmlns eq 'http://www.w3.org/2000/svg') {
             #
-          } elsif ($ns == MATHMLNS and $token->{attrs}->{xmlns}->{value} eq 'http://www.w3.org/1998/Math/MathML') {
+          } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
             push @$Errors, {type => 'XXX',
                             level => 'm',
-                            index => $token->{attrs}->{xmlns}->{index}}; # XXXindex
+                            value => $xmlns,
+                            di => $token->{attrs}->{xmlns}->{di},
+                            index => $token->{attrs}->{xmlns}->{index}};
           }
         }
         if (defined $token->{attrs}->{'xmlns:xlink'}) {
-          unless ($token->{attrs}->{'xmlns:xlink'}->{value} eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX', level => 'm'}; # XXXindex
+          # IndexedString
+          my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
+          unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
+            push @$Errors, {type => 'XXX',
+                            level => 'm',
+                            value => $xmlns,
+                            di => $token->{attrs}->{'xmlns:xlink'}->{di},
+                            index => $token->{attrs}->{'xmlns:xlink'}->{index}};
           }
         }
 
@@ -1785,18 +1831,23 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'change-the-encoding-if-appropriate') {
       push @code, q{
         if (defined $token->{attrs}->{charset}) {
-          push @$OP, ['change-the-encoding', $token->{attrs}->{charset}->{value}, $token->{attrs}->{charset}];
+          push @$OP, ['change-the-encoding',
+                      (join '', map { $_->[0] } @{$token->{attrs}->{charset}->{value}}), # IndexedString
+                      $token->{attrs}->{charset}];
         } elsif (defined $token->{attrs}->{'http-equiv'} and
                  defined $token->{attrs}->{content}) {
-          if ($token->{attrs}->{'http-equiv'}->{value}
+          # IndexedString
+          if ((join '', map { $_->[0] } @{$token->{attrs}->{'http-equiv'}->{value}})
                   =~ /\A[Cc][Oo][Nn][Tt][Ee][Nn][Tt]-[Tt][Yy][Pp][Ee]\z/ and
-              $token->{attrs}->{content}->{value}
+              (join '', map { $_->[0] } @{$token->{attrs}->{content}->{value}})
                   =~ /[Cc][Hh][Aa][Rr][Ss][Ee][Tt]
                         [\x09\x0A\x0C\x0D\x20]*=
                         [\x09\x0A\x0C\x0D\x20]*(?>"([^"]*)"|'([^']*)'|
                         ([^"'\x09\x0A\x0C\x0D\x20]
                          [^\x09\x0A\x0C\x0D\x20\x3B]*))/x) {
-            push @$OP, ['change-the-encoding', defined $1 ? $1 : defined $2 ? $2 : $3, $token->{attrs}->{content}];
+            push @$OP, ['change-the-encoding',
+                        defined $1 ? $1 : defined $2 ? $2 : $3,
+                        $token->{attrs}->{content}];
           }
         }
       };
@@ -1878,7 +1929,9 @@ sub actions_to_code ($;%) {
               my $attr = $AFE->[$i]->{token}->{attrs}->{$_};
               next AFE unless defined $attr;
               #next AFE unless $attr->{ns} == $node->{token}->{attrs}->{$_}->{ns};
-              next AFE unless $attr->{value} eq $node->{token}->{attrs}->{$_}->{value};
+              # IndexedString
+              next AFE unless (join '', map { $_->[0] } @{$attr->{value}}) eq
+                              (join '', map { $_->[0] } @{$node->{token}->{attrs}->{$_}->{value}});
             }
             next AFE unless (keys %{$node->{token}->{attrs} or {}}) == (keys %{$AFE->[$i]->{token}->{attrs} or {}});
 
@@ -2741,7 +2794,8 @@ sub dom_tree ($$) {
           ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
       ## Note that $data->{ns} can be 0.
       for my $attr (@{$data->{attr_list} or []}) {
-        $el->set_attribute_ns (@{$attr->{name_args}} => $attr->{value});
+        $el->manakai_set_attribute_indexed_string_ns
+            (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
       # XXX index
       if ($data->{ns} == HTMLNS and $data->{local_name} eq 'template') {
@@ -2827,7 +2881,8 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'set-if-missing') {
       my $el = $nodes->[$op->[2]];
       for my $attr (@{$op->[1]}) {
-        $el->set_attribute_ns (@{$attr->{name_args}} => $attr->{value})
+        $el->manakai_set_attribute_indexed_string_ns
+            (@{$attr->{name_args}} => $attr->{value}) # IndexedString
             unless $el->has_attribute_ns ($attr->{name_args}->[0], $attr->{name_args}->[1]->[1]);
       }
       # XXX index
@@ -2845,8 +2900,9 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'ignore-script') {
       #warn "XXX set already started flag of $nodes->[$op->[1]]";
     } elsif ($op->[0] eq 'appcache') {
-      if (defined $op->[1] and length $op->[1]->{value}) {
-        push @$Callbacks, [$self->onappcacheselection, $op->[1]->{value}];
+      if (defined $op->[1]) {
+        my $value = join '', map { $_->[0] } @{$op->[1]->{value}}; # IndexedString
+        push @$Callbacks, [$self->onappcacheselection, length $value ? $value : undef];
       } else {
         push @$Callbacks, [$self->onappcacheselection, undef];
       }
