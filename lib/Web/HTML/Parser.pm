@@ -813,7 +813,7 @@ my $OPPublicIDOnly = {q<-//W3C//DTD HTML 4.0//EN> => 1, q<-//W3C//DTD HTML 4.01/
         sub {
           my $token = $_;
 
-            push @$OP, ['comment', $token->{data} => 0];
+            push @$OP, ['comment', $token => 0];
           
         },
       ,
@@ -821,8 +821,9 @@ my $OPPublicIDOnly = {q<-//W3C//DTD HTML 4.0//EN> => 1, q<-//W3C//DTD HTML 4.01/
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-after-body-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -841,8 +842,9 @@ push @$Errors, {type => 'after-after-body-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-after-body-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -859,13 +861,15 @@ push @$Errors, {type => 'after-after-body-else',
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           push @$Errors, {type => 'after-after-body-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -881,7 +885,7 @@ push @$Errors, {type => 'after-after-body-else',
         sub {
           my $token = $_;
 
-            push @$OP, ['comment', $token->{data} => 0];
+            push @$OP, ['comment', $token => 0];
           
         },
       ,
@@ -889,8 +893,9 @@ push @$Errors, {type => 'after-after-body-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-after-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -903,13 +908,15 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-after-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -925,17 +932,20 @@ return;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'after-after-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
               &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+              $token->{index} += length $1;
             }
           }
         
@@ -945,7 +955,7 @@ return;
         sub {
           my $token = $_;
 
-            push @$OP, ['comment', $token->{data} => $OE->[0]->{id}];
+            push @$OP, ['comment', $token => $OE->[0]->{id}];
           
         },
       ,
@@ -953,8 +963,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-body-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -962,8 +973,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-body-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -979,8 +991,9 @@ push @$Errors, {type => 'after-body-else',
 
           if (defined $CONTEXT) {
             push @$Errors, {type => 'after-body-end-html',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             
@@ -1000,8 +1013,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-body-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -1018,13 +1032,15 @@ push @$Errors, {type => 'after-body-else',
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           push @$Errors, {type => 'after-body-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -1040,7 +1056,7 @@ push @$Errors, {type => 'after-body-else',
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -1048,8 +1064,9 @@ push @$Errors, {type => 'after-body-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-frameset-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1057,8 +1074,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1079,13 +1097,15 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -1101,16 +1121,19 @@ return;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'after-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
               
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+              $token->{index} += length $1;
             }
           }
         
@@ -1120,7 +1143,7 @@ return;
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -1128,8 +1151,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1137,8 +1161,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1148,6 +1173,7 @@ return;
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -1173,6 +1199,7 @@ push @$OE, $node_body;
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -1198,6 +1225,7 @@ push @$OE, $node_body;
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -1221,12 +1249,14 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -1239,8 +1269,8 @@ push @$OE, $HEAD_ELEMENT;
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 @$OE = grep { $_ ne $HEAD_ELEMENT } @$OE;
@@ -1252,6 +1282,7 @@ push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => $token->{attr_list},
@@ -1265,8 +1296,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -1284,6 +1316,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
@@ -1297,8 +1330,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -1311,13 +1345,15 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-head',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -1327,12 +1363,14 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
@@ -1345,8 +1383,8 @@ push @$OE, $HEAD_ELEMENT;
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -1378,12 +1416,14 @@ push @$OE, $HEAD_ELEMENT;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -1404,8 +1444,9 @@ $ORIGINAL_IM = $IM;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -1414,12 +1455,14 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'script',
                  attr_list => $token->{attr_list},
@@ -1440,8 +1483,9 @@ $ORIGINAL_IM = $IM;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -1450,12 +1494,14 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'template',
                  attr_list => $token->{attr_list},
@@ -1481,8 +1527,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -1491,12 +1538,14 @@ push @$AFE, '#marker';
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
@@ -1517,8 +1566,9 @@ $ORIGINAL_IM = $IM;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -1529,13 +1579,15 @@ $ORIGINAL_IM = $IM;
 
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -1561,7 +1613,7 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -1569,8 +1621,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-head-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1578,8 +1631,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-head-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1589,6 +1643,7 @@ return;
 
         my $node_head = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
@@ -1615,6 +1670,7 @@ $HEAD_ELEMENT = $node_head;
 
         my $node_head = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
@@ -1641,6 +1697,7 @@ $HEAD_ELEMENT = $node_head;
 
         my $node_head = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
@@ -1667,6 +1724,7 @@ $HEAD_ELEMENT = $node_head;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => $token->{attr_list},
@@ -1681,8 +1739,9 @@ $HEAD_ELEMENT = $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -1697,11 +1756,13 @@ $HEAD_ELEMENT = $node;
 
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           
         my $node_head = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
@@ -1725,6 +1786,7 @@ push @$OP, ['popped', [pop @$OE]];
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -1750,7 +1812,7 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 
-            push @$OP, ['comment', $token->{data} => 0];
+            push @$OP, ['comment', $token => 0];
           
         },
       ,
@@ -1758,8 +1820,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-html-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1767,8 +1830,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-html-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -1778,6 +1842,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
@@ -1801,6 +1866,7 @@ push @$OP, ['appcache'];
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
@@ -1824,6 +1890,7 @@ push @$OP, ['appcache'];
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
@@ -1847,6 +1914,7 @@ push @$OP, ['appcache'];
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => $token->{attr_list},
@@ -1858,8 +1926,9 @@ push @$OP, ['appcache', $token->{attrs}->{manifest}];
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -1874,11 +1943,13 @@ push @$OP, ['appcache', $token->{attrs}->{manifest}];
 
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
@@ -1894,6 +1965,7 @@ push @$OP, ['appcache'];
 
         my $node_head = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
@@ -1917,6 +1989,7 @@ push @$OP, ['popped', [pop @$OE]];
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -1949,7 +2022,7 @@ push @$OE, $node_body;
         ## [58] before ignored newline and text;TEXT
         sub {
           
-    $_->{value} =~ s/^\x0A//; # XXXindex
+    $_->{index}++ if $_->{value} =~ s/^\x0A//;
     $IM = TEXT_IM;
     goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
   
@@ -1966,7 +2039,7 @@ push @$OE, $node_body;
         ## [60] before ignored newline;TEXT
         sub {
           
-    $_->{value} =~ s/^\x0A//; # XXXindex
+    $_->{index}++ if $_->{value} =~ s/^\x0A//;
     $IM = $ORIGINAL_IM;
     goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
   
@@ -1976,7 +2049,7 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -1984,8 +2057,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -2005,8 +2079,9 @@ return;
 
           if (not ($OE->[-1] eq $_node)) {
             push @$Errors, {type => 'in-body-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2020,8 +2095,9 @@ return;
             
           if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'in-body-end-else-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
 return;
           }
@@ -2056,16 +2132,18 @@ aaa ($token, $token->{tag_name});
       }
     ) {
             push @$Errors, {type => 'in-body-end-a3bbcd5f4hhlmmnopssu',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-a3bbcd5f4hhlmmnopssu-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2096,16 +2174,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-applet-marquee-object',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-applet-marquee-object-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2140,8 +2220,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-body',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             
@@ -2159,8 +2240,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-body-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -2175,12 +2257,14 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-end-br',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
         my $node_br = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'br',
                  attr_list => [],
@@ -2193,8 +2277,8 @@ push @$Errors, {type => 'in-body-end-br',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -2220,8 +2304,9 @@ push @$Errors, {type => 'in-body-end-br',
       }
     ) {
             push @$Errors, {type => 'in-body-end-dd-dt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             {
@@ -2232,8 +2317,9 @@ return;
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-dd-dt-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2281,8 +2367,9 @@ $FORM_ELEMENT = undef;
       }
     )) {
             push @$Errors, {type => 'in-body-end-form',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
 return;
           }
@@ -2291,8 +2378,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 
           if (not ($OE->[-1] eq $_node)) {
             push @$Errors, {type => 'in-body-end-form-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 @$OE = grep { $_ ne $_node } @$OE;
@@ -2327,8 +2415,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
       }
     ) {
             push @$Errors, {type => 'in-body-end-form-3',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
 return;
           }
@@ -2337,8 +2426,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 
           if (not ($OE->[-1]->{et} == FORM_EL)) {
             push @$Errors, {type => 'in-body-end-form-4',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2369,16 +2459,18 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
       }
     ) {
             push @$Errors, {type => 'in-body-end-h6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-h6-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2409,8 +2501,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-html',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             
@@ -2428,8 +2521,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-html-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -2461,16 +2555,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-li',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
             push @$Errors, {type => 'in-body-end-li-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2501,11 +2597,13 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-p',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node_p = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'p',
                  attr_list => [],
@@ -2522,8 +2620,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2553,8 +2652,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
 
           if (not ($OE->[-1] eq $_node)) {
             push @$Errors, {type => 'in-body-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2568,8 +2668,9 @@ return;
             
           if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'in-body-end-else-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
 return;
           }
@@ -2602,8 +2703,9 @@ return;
             push @$OP, ['stop-parsing'];
           } else {
             push @$Errors, {type => 'in-template-eof',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2637,8 +2739,9 @@ pop @$TEMPLATE_IMS;
       }
     ) {
             push @$Errors, {type => 'in-body-eof',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 push @$OP, ['stop-parsing'];
@@ -2653,6 +2756,7 @@ push @$OP, ['stop-parsing'];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -2684,8 +2788,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -2708,8 +2813,9 @@ push @$OE, $node;
       }
     ) {
             push @$Errors, {type => 'in-body-start-a',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 aaa ($token, 'a', remove_from_afe_and_oe => 1);
           }
         
@@ -2717,6 +2823,7 @@ aaa ($token, 'a', remove_from_afe_and_oe => 1);
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'a',
                  attr_list => $token->{attr_list},
@@ -2760,8 +2867,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -2787,8 +2895,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -2802,6 +2911,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -2833,8 +2943,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -2846,6 +2957,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -2878,8 +2990,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -2894,6 +3007,7 @@ push @$AFE, '#marker';
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -2924,8 +3038,8 @@ push @$AFE, '#marker';
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -2940,6 +3054,7 @@ push @$AFE, '#marker';
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -2983,8 +3098,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -2993,8 +3109,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-body',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
 ($OE->[-1]->{et} & (HTM_ELS)) or 
@@ -3025,8 +3142,9 @@ push @$Errors, {type => 'in-body-start-body',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3049,8 +3167,9 @@ push @$Errors, {type => 'in-body-start-body',
       }
     ) {
             push @$Errors, {type => 'in-body-start-button',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 {
           my @popped;
@@ -3064,6 +3183,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'button',
                  attr_list => $token->{attr_list},
@@ -3091,8 +3211,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -3104,13 +3225,15 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-c3fht6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -3131,8 +3254,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (DD_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3149,8 +3273,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (DT_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3192,8 +3317,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3207,6 +3333,7 @@ last;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -3220,8 +3347,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3245,8 +3373,9 @@ push @$OE, $node;
       }
     )) {
             push @$Errors, {type => 'in-body-start-form',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           } else {
             
           if (
@@ -3266,8 +3395,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3281,6 +3411,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'form',
                  attr_list => $token->{attr_list},
@@ -3313,8 +3444,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3323,8 +3455,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-frameset',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
 (@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
@@ -3347,6 +3480,7 @@ push @$Errors, {type => 'in-body-start-frameset',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
@@ -3366,8 +3500,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3393,8 +3528,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3408,14 +3544,16 @@ push @$OE, $node;
 
           if ($OE->[-1]->{et} & (HHHHHH_ELS)) {
             push @$Errors, {type => 'in-body-start-h6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
           }
         
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -3429,8 +3567,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3456,8 +3595,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3471,6 +3611,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'hr',
                  attr_list => $token->{attr_list},
@@ -3483,8 +3624,8 @@ push @$OE, $node;
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -3496,8 +3637,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-html',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -3523,8 +3665,9 @@ push @$Errors, {type => 'in-body-start-html',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3538,6 +3681,7 @@ push @$Errors, {type => 'in-body-start-html',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'iframe',
                  attr_list => $token->{attr_list},
@@ -3551,8 +3695,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -3567,12 +3712,14 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-image',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
         my $node_img = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'img',
                  attr_list => $token->{attr_list},
@@ -3585,8 +3732,8 @@ push @$Errors, {type => 'in-body-start-image',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -3601,6 +3748,7 @@ push @$Errors, {type => 'in-body-start-image',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
@@ -3627,8 +3775,8 @@ push @$Errors, {type => 'in-body-start-image',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -3664,8 +3812,9 @@ push @$Errors, {type => 'in-body-start-image',
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
             push @$Errors, {type => 'in-body-start-li',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3705,8 +3854,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3720,6 +3870,7 @@ last;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'li',
                  attr_list => $token->{attr_list},
@@ -3733,8 +3884,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3760,8 +3912,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -3775,6 +3928,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -3788,8 +3942,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -3809,6 +3964,7 @@ my $ns = MATHMLNS;
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -3869,6 +4025,7 @@ delete $token->{self_closing_flag};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -3881,8 +4038,8 @@ delete $token->{self_closing_flag};
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
         },
@@ -3906,8 +4063,9 @@ delete $token->{self_closing_flag};
       }
     ) {
             push @$Errors, {type => 'in-body-start-nobr',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 aaa ($token, 'nobr');
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
           }
@@ -3915,6 +4073,7 @@ aaa ($token, 'nobr');
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'nobr',
                  attr_list => $token->{attr_list},
@@ -3958,8 +4117,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -3970,6 +4130,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noembed',
                  attr_list => $token->{attr_list},
@@ -3983,8 +4144,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -4003,6 +4165,7 @@ $ORIGINAL_IM = $IM;
             
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
@@ -4024,6 +4187,7 @@ $ORIGINAL_IM = $IM;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
@@ -4039,8 +4203,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -4057,6 +4222,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -4070,8 +4236,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -4097,8 +4264,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4112,6 +4280,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'plaintext',
                  attr_list => $token->{attr_list},
@@ -4125,8 +4294,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = PLAINTEXT_STATE;
@@ -4153,8 +4323,9 @@ $State = PLAINTEXT_STATE;
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
             push @$Errors, {type => 'in-body-start-rp-rt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
           }
@@ -4162,6 +4333,7 @@ $State = PLAINTEXT_STATE;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -4175,8 +4347,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -4188,6 +4361,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'select',
                  attr_list => $token->{attr_list},
@@ -4231,8 +4405,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -4245,6 +4420,7 @@ my $ns = SVGNS;
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -4321,8 +4497,9 @@ delete $token->{self_closing_flag};
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4336,6 +4513,7 @@ delete $token->{self_closing_flag};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'table',
                  attr_list => $token->{attr_list},
@@ -4349,8 +4527,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -4368,6 +4547,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'textarea',
                  attr_list => $token->{attr_list},
@@ -4395,8 +4575,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -4434,8 +4615,9 @@ $ORIGINAL_IM = $IM;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4453,6 +4635,7 @@ $ORIGINAL_IM = $IM;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'xmp',
                  attr_list => $token->{attr_list},
@@ -4466,8 +4649,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -4488,34 +4672,38 @@ $ORIGINAL_IM = $IM;
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
               &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
             }
@@ -4526,8 +4714,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-caption-end-bccht6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -4549,16 +4738,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-caption-end-caption',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
             push @$Errors, {type => 'in-caption-end-caption-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4597,16 +4788,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-caption-end-table',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
             push @$Errors, {type => 'in-caption-end-table-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4648,13 +4841,15 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-caption-start-c3t6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -4663,8 +4858,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
             push @$Errors, {type => 'in-caption-start-c3t6-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4698,34 +4894,38 @@ return;
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
               &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
             }
@@ -4736,8 +4936,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-cell-end-bc3h',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -4759,16 +4960,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-cell-end-t5',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (TD_TH_ELS))) {
             push @$Errors, {type => '-steps-close-the-cell',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4810,16 +5013,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-cell-end-td-th',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-cell-end-td-th-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4858,13 +5063,15 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-cell-start-c3t6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -4873,8 +5080,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (TD_TH_ELS))) {
             push @$Errors, {type => '-steps-close-the-cell',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -4908,34 +5116,38 @@ return;
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
               &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
             }
@@ -4946,7 +5158,7 @@ return;
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -4954,8 +5166,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-column-group-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -4965,8 +5178,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
             push @$Errors, {type => 'in-column-group-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
@@ -4985,8 +5199,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-column-group-end-col',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -4996,8 +5211,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
             push @$Errors, {type => 'in-column-group-end-colgroup',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
@@ -5015,13 +5231,15 @@ return;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
             push @$Errors, {type => 'in-column-group-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -5044,6 +5262,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'col',
                  attr_list => $token->{attr_list},
@@ -5056,8 +5275,8 @@ return;
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
         },
@@ -5074,16 +5293,19 @@ return;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-column-group-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
               
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+              $token->{index} += length $1;
             }
           }
         
@@ -5091,8 +5313,9 @@ return;
             
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           push @$OP, ['popped', [pop @$OE]];
@@ -5113,7 +5336,7 @@ return;
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -5121,8 +5344,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-foreign-content-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -5139,8 +5363,9 @@ return;
         }
       ))) {
             push @$Errors, {type => 'in-foreign-content-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -5206,8 +5431,9 @@ push @$OP, ['script', $script->{id}];
         }
       ))) {
             push @$Errors, {type => 'in-foreign-content-end-script',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -5278,6 +5504,7 @@ last;
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -5358,8 +5585,9 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-foreign-content-start-b5ccd4eeh8iillmmnopprs7ttuuv',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (defined $CONTEXT) {
             
@@ -5376,6 +5604,7 @@ push @$Errors, {type => 'in-foreign-content-start-b5ccd4eeh8iillmmnopprs7ttuuv',
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -5472,8 +5701,9 @@ delete $token->{self_closing_flag};
 $token->{attrs}->{q@face@} or 
 $token->{attrs}->{q@size@}) {
             push @$Errors, {type => 'in-foreign-content-start-font',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (defined $CONTEXT) {
             
@@ -5490,6 +5720,7 @@ $token->{attrs}->{q@size@}) {
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -5591,6 +5822,7 @@ delete $token->{self_closing_flag};
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -5678,35 +5910,39 @@ delete $token->{self_closing_flag};
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-foreign-content-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
 
-      push @$OP, ['text', q@�@ => $OE->[-1]->{id}];
+      push @$OP, ['text', [[q@�@, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
               
-      push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
             }
@@ -5717,7 +5953,7 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -5725,8 +5961,9 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-frameset-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -5734,8 +5971,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -5745,8 +5983,9 @@ return;
 
           if ($OE->[-1]->{et} & (HTM_ELS)) {
             push @$Errors, {type => 'in-frameset-end-frameset',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
@@ -5769,8 +6008,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (HTM_ELS))) {
             push @$Errors, {type => 'in-frameset-eof',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 push @$OP, ['stop-parsing'];
@@ -5780,13 +6020,15 @@ push @$OP, ['stop-parsing'];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -5798,6 +6040,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'frame',
                  attr_list => $token->{attr_list},
@@ -5810,8 +6053,8 @@ return;
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
         },
@@ -5822,6 +6065,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
@@ -5835,8 +6079,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -5851,16 +6096,19 @@ push @$OE, $node;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-frameset-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
               
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+              $token->{index} += length $1;
             }
           }
         
@@ -5870,8 +6118,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -5879,8 +6128,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -5888,8 +6138,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -5913,8 +6164,9 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -5929,8 +6181,9 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -5945,13 +6198,15 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-start-head-noscript',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -5963,13 +6218,15 @@ return;
 
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           push @$Errors, {type => 'in-head-noscript-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -5983,6 +6240,7 @@ push @$OP, ['popped', [pop @$OE]];
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -6008,7 +6266,7 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -6016,8 +6274,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -6025,8 +6284,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -6070,16 +6330,18 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-head-end-template',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (CAP_ELS | COL_ELS | DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TR_ELS);
 
           if (not ($OE->[-1]->{et} & (TEM_ELS))) {
             push @$Errors, {type => 'in-head-end-template-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -6130,6 +6392,7 @@ push @$OP, ['popped', [pop @$OE]];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -6142,8 +6405,8 @@ push @$OP, ['popped', [pop @$OE]];
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
         },
@@ -6152,13 +6415,15 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-start-head',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -6170,6 +6435,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
@@ -6182,8 +6448,8 @@ return;
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -6216,6 +6482,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -6229,8 +6496,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -6249,6 +6517,7 @@ $ORIGINAL_IM = $IM;
             
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
@@ -6269,6 +6538,7 @@ $ORIGINAL_IM = $IM;
             
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
@@ -6288,8 +6558,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -6300,6 +6571,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'script',
                  attr_list => $token->{attr_list},
@@ -6313,8 +6585,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = SCRIPT_DATA_STATE;
@@ -6331,6 +6604,7 @@ $ORIGINAL_IM = $IM;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'template',
                  attr_list => $token->{attr_list},
@@ -6345,8 +6619,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -6367,6 +6642,7 @@ push @$AFE, '#marker';
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
@@ -6380,8 +6656,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -6398,8 +6675,9 @@ $ORIGINAL_IM = $IM;
 
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           push @$OP, ['popped', [pop @$OE]];
@@ -6410,6 +6688,7 @@ $ORIGINAL_IM = $IM;
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -6435,8 +6714,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-row-end-bc3htt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -6458,8 +6738,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-row-end-table',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             {
@@ -6497,8 +6778,9 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-row-end-tbody-tfoot-thead',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           }
         
@@ -6553,8 +6835,9 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-row-end-tr',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             {
@@ -6589,13 +6872,15 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-row-start-c3t4',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -6628,6 +6913,7 @@ push @$OP, ['popped', [pop @$OE]];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -6646,8 +6932,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -6668,8 +6955,9 @@ $ORIGINAL_IM = $IM;
       
           } else {
             push @$Errors, {type => 'in-table-char',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
               pos ($token->{value}) = 0;
@@ -6681,22 +6969,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -6705,30 +6994,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -6738,17 +7030,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -6762,8 +7054,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-in-table-end-ct7',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -6798,8 +7091,9 @@ push @$Errors, {type => 'in-select-in-table-end-ct7',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-in-table-start-ct7',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 {
           my @popped;
           push @popped, pop @$OE while not ($OE->[-1]->{et} == SELECT_EL);
@@ -6819,19 +7113,22 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
           while (length $token->{value}) {
             if ($token->{value} =~ s/^([^\x00]+)//) {
               
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x00]+)//) {
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-select-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+              $token->{index} += length $1;
             }
           }
         
@@ -6841,7 +7138,7 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -6849,8 +7146,9 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -6858,8 +7156,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -6877,8 +7176,9 @@ return;
             push @$OP, ['popped', [pop @$OE]];
           } else {
             push @$Errors, {type => 'in-select-end-optgroup',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           }
         
@@ -6892,8 +7192,9 @@ return;
             push @$OP, ['popped', [pop @$OE]];
           } else {
             push @$Errors, {type => 'in-select-end-option',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           }
         
@@ -6917,8 +7218,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-select-end-select',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             {
@@ -6936,13 +7238,15 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -6952,8 +7256,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-start-input-keygen-textarea',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -6971,8 +7276,9 @@ push @$Errors, {type => 'in-select-start-input-keygen-textarea',
             
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -7007,6 +7313,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'optgroup',
                  attr_list => $token->{attr_list},
@@ -7020,8 +7327,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -7037,6 +7345,7 @@ push @$OE, $node;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'option',
                  attr_list => $token->{attr_list},
@@ -7050,8 +7359,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -7060,8 +7370,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-start-select',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -7090,8 +7401,9 @@ push @$Errors, {type => 'in-select-start-select',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -7103,19 +7415,22 @@ push @$Errors, {type => 'in-select-start-select',
           while (length $token->{value}) {
             if ($token->{value} =~ s/^([^\x00]+)//) {
               
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x00]+)//) {
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-select-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+              $token->{index} += length $1;
             }
           }
         
@@ -7125,8 +7440,9 @@ push @$Errors, {type => 'in-select-start-select',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-body-end-bc3ht3',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -7148,8 +7464,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-table-body-end-table',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             {
@@ -7187,8 +7504,9 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-table-body-end-tbody-tfoot-thead',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             {
@@ -7223,13 +7541,15 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-table-body-start-c3t3',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -7255,8 +7575,9 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-body-start-td-th',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 {
           my @popped;
           push @popped, pop @$OE while not ($OE->[-1]->{et} & (HTM_ELS | TBO_TFO_THE_ELS | TEM_ELS));
@@ -7265,6 +7586,7 @@ push @$Errors, {type => 'in-table-body-start-td-th',
 
         my $node_tr = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'tr',
                  attr_list => [],
@@ -7295,6 +7617,7 @@ push @$OE, $node_tr;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'tr',
                  attr_list => $token->{attr_list},
@@ -7308,8 +7631,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -7334,8 +7658,9 @@ $ORIGINAL_IM = $IM;
       
           } else {
             push @$Errors, {type => 'in-table-char',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
               pos ($token->{value}) = 0;
@@ -7347,22 +7672,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7371,30 +7697,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -7404,17 +7733,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -7430,8 +7759,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $TABLE_CHARS->[0]->{di},
+                                              index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -7445,22 +7775,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7469,30 +7800,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -7502,17 +7836,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -7522,7 +7856,7 @@ $ORIGINAL_IM = $IM;
         
           } else {
             
-      push @$OP, ['text', (join '', map { $_->{value} } @$TABLE_CHARS) => $OE->[-1]->{id}];
+      push @$OP, ['text', [map { [$_->{value}, $_->{di}, $_->{index}] } @$TABLE_CHARS] => $OE->[-1]->{id}];
     
           }
         
@@ -7540,8 +7874,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $TABLE_CHARS->[0]->{di},
+                                              index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -7555,22 +7890,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7579,30 +7915,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -7612,17 +7951,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -7632,7 +7971,7 @@ $ORIGINAL_IM = $IM;
         
           } else {
             
-      push @$OP, ['text', (join '', map { $_->{value} } @$TABLE_CHARS) => $OE->[-1]->{id}];
+      push @$OP, ['text', [map { [$_->{value}, $_->{di}, $_->{index}] } @$TABLE_CHARS] => $OE->[-1]->{id}];
     
           }
         
@@ -7650,8 +7989,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $TABLE_CHARS->[0]->{di},
+                                              index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -7665,22 +8005,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7689,30 +8030,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -7722,17 +8066,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -7742,7 +8086,7 @@ $ORIGINAL_IM = $IM;
         
           } else {
             
-      push @$OP, ['text', (join '', map { $_->{value} } @$TABLE_CHARS) => $OE->[-1]->{id}];
+      push @$OP, ['text', [map { [$_->{value}, $_->{di}, $_->{index}] } @$TABLE_CHARS] => $OE->[-1]->{id}];
     
           }
         
@@ -7760,8 +8104,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $TABLE_CHARS->[0]->{di},
+                                              index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -7775,22 +8120,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7799,30 +8145,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -7832,17 +8181,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -7852,7 +8201,7 @@ $ORIGINAL_IM = $IM;
         
           } else {
             
-      push @$OP, ['text', (join '', map { $_->{value} } @$TABLE_CHARS) => $OE->[-1]->{id}];
+      push @$OP, ['text', [map { [$_->{value}, $_->{di}, $_->{index}] } @$TABLE_CHARS] => $OE->[-1]->{id}];
     
           }
         
@@ -7870,8 +8219,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $TABLE_CHARS->[0]->{di},
+                                              index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -7885,22 +8235,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -7909,30 +8260,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -7942,17 +8296,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -7962,7 +8316,7 @@ $ORIGINAL_IM = $IM;
         
           } else {
             
-      push @$OP, ['text', (join '', map { $_->{value} } @$TABLE_CHARS) => $OE->[-1]->{id}];
+      push @$OP, ['text', [map { [$_->{value}, $_->{di}, $_->{index}] } @$TABLE_CHARS] => $OE->[-1]->{id}];
     
           }
         
@@ -7981,17 +8335,20 @@ $ORIGINAL_IM = $IM;
           while (length $token->{value}) {
             if ($token->{value} =~ s/^([^\x00]+)//) {
               push @$TABLE_CHARS, {%$token, value => $1};
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x00]+)//) {
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-table-text-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+              $token->{index} += length $1;
             }
           }
         
@@ -8001,7 +8358,7 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         
         },
       ,
@@ -8009,8 +8366,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-doctype',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -8018,8 +8376,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         goto &{$ProcessIM->[IN_BODY_IM]->[$token->{type}]->[$token->{tn}]};
       
@@ -8029,8 +8388,9 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 aaa_foster ($token, $token->{tag_name});
         },
       ,
@@ -8038,8 +8398,9 @@ aaa_foster ($token, $token->{tag_name});
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-end-bc3ht6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -8047,15 +8408,18 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$Errors, {type => 'in-body-end-br',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node_br = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'br',
                  attr_list => [],
@@ -8083,8 +8447,8 @@ push @$Errors, {type => 'in-body-end-br',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -8096,8 +8460,9 @@ push @$Errors, {type => 'in-body-end-br',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -8113,11 +8478,13 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-end-p',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node_p = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'p',
                  attr_list => [],
@@ -8149,8 +8516,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -8179,8 +8547,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
       }
     ) {
             push @$Errors, {type => 'in-table-end-table',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
           } else {
             {
@@ -8198,12 +8567,14 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -8250,8 +8621,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -8260,8 +8632,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -8277,8 +8650,9 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-start-a',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 aaa_foster ($token, 'a', remove_from_afe_and_oe => 1);
           }
         
@@ -8286,6 +8660,7 @@ aaa_foster ($token, 'a', remove_from_afe_and_oe => 1);
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'a',
                  attr_list => $token->{attr_list},
@@ -8344,8 +8719,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -8354,8 +8730,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -8374,8 +8751,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -8389,6 +8767,7 @@ push @$Errors, {type => 'in-table-else',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -8435,8 +8814,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -8445,12 +8825,14 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -8498,8 +8880,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -8511,12 +8894,14 @@ push @$AFE, '#marker';
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -8562,8 +8947,8 @@ push @$Errors, {type => 'in-table-else',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -8575,12 +8960,14 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -8639,8 +9026,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -8649,11 +9037,13 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -8681,8 +9071,8 @@ push @$Errors, {type => 'in-table-else',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
         },
@@ -8691,11 +9081,13 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$Errors, {type => 'in-body-start-body',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
 ($OE->[-1]->{et} & (HTM_ELS)) or 
@@ -8726,8 +9118,9 @@ push @$Errors, {type => 'in-body-start-body',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -8736,8 +9129,9 @@ push @$Errors, {type => 'in-body-start-body',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -8753,8 +9147,9 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-start-button',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 {
           my @popped;
@@ -8768,6 +9163,7 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'button',
                  attr_list => $token->{attr_list},
@@ -8810,8 +9206,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -8831,6 +9228,7 @@ push @$AFE, '#marker';
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'caption',
                  attr_list => $token->{attr_list},
@@ -8844,8 +9242,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -8865,6 +9264,7 @@ push @$OE, $node;
 
         my $node_colgroup = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'colgroup',
                  attr_list => [],
@@ -8895,6 +9295,7 @@ push @$OE, $node_colgroup;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'colgroup',
                  attr_list => $token->{attr_list},
@@ -8908,8 +9309,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -8922,8 +9324,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         $FRAMESET_OK = 0;
       
@@ -8936,8 +9339,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (DD_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -8954,8 +9358,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (DT_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt-2',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -8997,8 +9402,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -9012,6 +9418,7 @@ last;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -9040,8 +9447,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -9050,8 +9458,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-start-form',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ((
       do {
@@ -9072,6 +9481,7 @@ push @$Errors, {type => 'in-table-start-form',
             
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'form',
                  attr_list => $token->{attr_list},
@@ -9089,8 +9499,9 @@ push @$OP, ['popped', [pop @$OE]];
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -9099,16 +9510,19 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$Errors, {type => 'in-body-start-c3fht6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -9118,11 +9532,13 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$Errors, {type => 'in-body-start-frameset',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
 (@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
@@ -9145,6 +9561,7 @@ push @$Errors, {type => 'in-body-start-frameset',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'frameset',
                  attr_list => $token->{attr_list},
@@ -9179,8 +9596,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -9189,8 +9607,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -9209,8 +9628,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -9224,14 +9644,16 @@ push @$Errors, {type => 'in-table-else',
 
           if ($OE->[-1]->{et} & (HHHHHH_ELS)) {
             push @$Errors, {type => 'in-body-start-h6',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
           }
         
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -9260,8 +9682,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -9270,8 +9693,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -9290,8 +9714,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -9305,6 +9730,7 @@ push @$Errors, {type => 'in-table-else',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'hr',
                  attr_list => $token->{attr_list},
@@ -9332,8 +9758,8 @@ push @$Errors, {type => 'in-table-else',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -9345,11 +9771,13 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$Errors, {type => 'in-body-start-html',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -9375,8 +9803,9 @@ push @$Errors, {type => 'in-body-start-html',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -9385,14 +9814,16 @@ push @$Errors, {type => 'in-body-start-html',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         $FRAMESET_OK = 0;
       
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'iframe',
                  attr_list => $token->{attr_list},
@@ -9421,8 +9852,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -9437,15 +9869,18 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 push @$Errors, {type => 'in-body-start-image',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node_img = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'img',
                  attr_list => $token->{attr_list},
@@ -9473,8 +9908,8 @@ push @$Errors, {type => 'in-body-start-image',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -9497,12 +9932,14 @@ push @$Errors, {type => 'in-body-start-image',
       )
     ) {
             push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
@@ -9544,8 +9981,8 @@ push @$Errors, {type => 'in-body-start-image',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -9566,11 +10003,13 @@ push @$Errors, {type => 'in-body-start-image',
         
           } else {
             push @$Errors, {type => 'in-table-start-input',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'input',
                  attr_list => $token->{attr_list},
@@ -9597,8 +10036,8 @@ push @$Errors, {type => 'in-body-start-image',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
           }
@@ -9609,8 +10048,9 @@ push @$Errors, {type => 'in-body-start-image',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         $FRAMESET_OK = 0;
       
@@ -9623,8 +10063,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
             push @$Errors, {type => 'in-body-start-li',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -9664,8 +10105,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -9679,6 +10121,7 @@ last;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'li',
                  attr_list => $token->{attr_list},
@@ -9707,8 +10150,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -9717,8 +10161,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -9737,8 +10182,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -9752,6 +10198,7 @@ push @$Errors, {type => 'in-table-else',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -9780,8 +10227,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -9797,13 +10245,15 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 my $ns = MATHMLNS;
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -9877,11 +10327,13 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -9909,8 +10361,8 @@ push @$Errors, {type => 'in-table-else',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
         },
@@ -9919,11 +10371,13 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'meta',
                  attr_list => $token->{attr_list},
@@ -9951,8 +10405,8 @@ push @$Errors, {type => 'in-table-else',
 
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         
 
@@ -9983,8 +10437,9 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
           if (
@@ -10001,8 +10456,9 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-start-nobr',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 aaa_foster ($token, 'nobr');
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
           }
@@ -10010,6 +10466,7 @@ aaa_foster ($token, 'nobr');
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'nobr',
                  attr_list => $token->{attr_list},
@@ -10068,8 +10525,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -10078,11 +10536,13 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noembed',
                  attr_list => $token->{attr_list},
@@ -10111,8 +10571,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -10127,11 +10588,13 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noframes',
                  attr_list => $token->{attr_list},
@@ -10160,8 +10623,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -10176,13 +10640,15 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($Scripting) {
             
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
@@ -10219,6 +10685,7 @@ $ORIGINAL_IM = $IM;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'noscript',
                  attr_list => $token->{attr_list},
@@ -10249,8 +10716,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -10259,8 +10727,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($OE->[-1]->{et} == OPTION_EL) {
             push @$OP, ['popped', [pop @$OE]];
@@ -10270,6 +10739,7 @@ push @$Errors, {type => 'in-table-else',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -10298,8 +10768,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -10308,8 +10779,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -10328,8 +10800,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -10343,6 +10816,7 @@ push @$Errors, {type => 'in-table-else',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'plaintext',
                  attr_list => $token->{attr_list},
@@ -10371,8 +10845,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = PLAINTEXT_STATE;
@@ -10382,8 +10857,9 @@ $State = PLAINTEXT_STATE;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -10402,8 +10878,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
             push @$Errors, {type => 'in-body-start-rp-rt',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
           }
@@ -10411,6 +10888,7 @@ push @$Errors, {type => 'in-table-else',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -10439,8 +10917,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -10449,12 +10928,14 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'select',
                  attr_list => $token->{attr_list},
@@ -10513,8 +10994,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -10523,13 +11005,15 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 my $ns = SVGNS;
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -10603,8 +11087,9 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-start-table',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -10622,8 +11107,9 @@ push @$Errors, {type => 'in-table-start-table',
             
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 return;
@@ -10653,6 +11139,7 @@ return;
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => $token->{tag_name},
                  attr_list => $token->{attr_list},
@@ -10666,8 +11153,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 
@@ -10687,6 +11175,7 @@ push @$OE, $node;
 
         my $node_tbody = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'tbody',
                  attr_list => [],
@@ -10710,11 +11199,13 @@ push @$OE, $node_tbody;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'textarea',
                  attr_list => $token->{attr_list},
@@ -10757,8 +11248,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -10779,11 +11271,13 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'title',
                  attr_list => $token->{attr_list},
@@ -10812,8 +11306,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -10828,8 +11323,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if (
       do {
@@ -10848,8 +11344,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -10867,6 +11364,7 @@ push @$Errors, {type => 'in-table-else',
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'xmp',
                  attr_list => $token->{attr_list},
@@ -10895,8 +11393,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -10923,8 +11422,9 @@ $ORIGINAL_IM = $IM;
       
           } else {
             push @$Errors, {type => 'in-table-char',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
               pos ($token->{value}) = 0;
@@ -10936,22 +11436,23 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -10960,30 +11461,33 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $1 => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $1 => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $1 => $OE->[0]->{id}];
+          push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $1 => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -10993,17 +11497,17 @@ $ORIGINAL_IM = $IM;
         FOSTER: {
           for my $i (reverse 1..$#$OE) {
             if ($OE->[$i]->{et} & (TAB_ELS)) { # table
-              push @$OP, ['text-foster', $token->{value} => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
+              push @$OP, ['text-foster', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}, $OE->[$i-1]->{id}];
               last FOSTER;
             } elsif ($OE->[$i]->{et} & (TEM_ELS)) { # template
-              push @$OP, ['text', $token->{value} => $OE->[$i]->{id}];
+              push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[$i]->{id}];
               last FOSTER;
             }
           }
-          push @$OP, ['text', $token->{value} => $OE->[0]->{id}];
+          push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[0]->{id}];
         } # FOSTER
       } else {
-        push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+        push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
       }
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
@@ -11017,8 +11521,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-template-end-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 return;
         },
       ,
@@ -11042,8 +11547,9 @@ return;
             push @$OP, ['stop-parsing'];
           } else {
             push @$Errors, {type => 'in-template-eof',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
 {
@@ -11153,34 +11659,38 @@ pop @$TEMPLATE_IMS;
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
 
         $FRAMESET_OK = 0;
       
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $1 => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$1, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index} + $-[1]};
             }
             
           
+                  $token->{index} += length $1;
                 }
               }
             } else {
               &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
-      push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
               $FRAMESET_OK = 0 if $FRAMESET_OK and $token->{value} =~ /[^\x09\x0A\x0C\x20]/;
             }
@@ -11191,7 +11701,7 @@ pop @$TEMPLATE_IMS;
         sub {
           my $token = $_;
 
-            push @$OP, ['comment', $token->{data} => 0];
+            push @$OP, ['comment', $token => 0];
           
         },
       ,
@@ -11201,7 +11711,8 @@ pop @$TEMPLATE_IMS;
 push @$OP, ['doctype', $token => 0];
 
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'XXX', level => 'm', token => $token};
+          push @$Errors, {type => 'XXX', level => 'm',
+                          di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
@@ -11210,9 +11721,12 @@ push @$OP, ['doctype', $token => 0];
           if (defined $OPPublicIDToSystemID->{$token->{public_identifier}}) {
             if (defined $token->{system_identifier}) {
               if ($OPPublicIDToSystemID->{$token->{public_identifier}} eq $token->{system_identifier}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE', level => 's', token => $token};
+                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                                level => 's',
+                                di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm', token => $token};
+                push @$Errors, {type => 'XXX', level => 'm',
+                                di => $token->{di}, index => $token->{index}};
                 unless ($IframeSrcdoc) {
                   my $sysid = $token->{system_identifier};
                   $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -11224,13 +11738,17 @@ push @$OP, ['doctype', $token => 0];
               }
             } else {
               if ($OPPublicIDOnly->{$token->{public_identifier}}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE', level => 's', token => $token};
+                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                                level => 's',
+                                di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm', token => $token};
+                push @$Errors, {type => 'XXX', level => 'm',
+                                di => $token->{di}, index => $token->{index}};
               }
             }
           } else {
-            push @$Errors, {type => 'XXX', level => 'm', token => $token};
+            push @$Errors, {type => 'XXX', level => 'm',
+                            di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $pubid = $token->{public_identifier};
               $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -11262,9 +11780,11 @@ push @$OP, ['doctype', $token => 0];
           }
         } elsif (defined $token->{system_identifier}) {
           if ($token->{system_identifier} eq 'about:legacy-compat') {
-            push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's', token => $token};
+            push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's',
+                            di => $token->{di}, index => $token->{index}};
           } else {
-            push @$Errors, {type => 'XXX', level => 'm', token => $token};
+            push @$Errors, {type => 'XXX', level => 'm',
+                            di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $sysid = $token->{system_identifier};
               $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -11294,8 +11814,9 @@ push @$OP, ['doctype', $token => 0];
 
           unless ($IframeSrcdoc) {
             push @$Errors, {type => 'initial-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11315,8 +11836,9 @@ push @$OP, ['doctype', $token => 0];
 
           unless ($IframeSrcdoc) {
             push @$Errors, {type => 'initial-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11336,8 +11858,9 @@ push @$OP, ['doctype', $token => 0];
 
           unless ($IframeSrcdoc) {
             push @$Errors, {type => 'initial-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11357,13 +11880,15 @@ push @$OP, ['doctype', $token => 0];
 
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           
           unless ($IframeSrcdoc) {
             push @$Errors, {type => 'initial-else',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11375,6 +11900,7 @@ push @$OP, ['doctype', $token => 0];
 
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => HTMLNS,
                     local_name => 'html',
                     attr_list => [],
@@ -11390,6 +11916,7 @@ push @$OP, ['appcache'];
 
         my $node_head = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'head',
                  attr_list => [],
@@ -11413,6 +11940,7 @@ push @$OP, ['popped', [pop @$OE]];
 
         my $node_body = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'body',
                  attr_list => [],
@@ -11466,8 +11994,9 @@ push @$OP, ['script', $script->{id}];
         sub {
           my $token = $_;
 push @$Errors, {type => 'text-eof',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
 
           if ($OE->[-1]->{et} == SCRIPT_EL) {
             push @$OP, ['ignore-script', $OE->[-1]->{id}];
@@ -11488,8 +12017,9 @@ push @$OP, ['popped', [pop @$OE]];
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                            level => 'm',
-                                            index => $token->{index}};
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}};
           }
         
         },
@@ -11498,7 +12028,7 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 
-      push @$OP, ['text', $token->{value} => $OE->[-1]->{id}];
+      push @$OP, ['text', [[$token->{value}, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
         },
       ];
@@ -11676,14 +12206,16 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               }
             }
             unless (defined $formatting_element_i) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
               splice @$AFE, $formatting_element_afe_i, 1, ();
               ## $args{remove_from_afe_and_oe} - nop
               push @$OP, ['popped', \@popped];
               return;
             }
             if ($beyond_scope) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
               if ($args{remove_from_afe_and_oe}) {
                 splice @$AFE, $formatting_element_afe_i, 1, ();
                 #push @popped,
@@ -11693,7 +12225,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               return;
             }
             unless ($formatting_element eq $OE->[-1]) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
             }
             unless (defined $furthest_block) {
               #push @popped,
@@ -11737,6 +12270,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
           ## Create an HTML element
           $node = {id => $NEXT_ID++,
                    token => $node->{token},
+                   di => $node->{token}->{di}, index => $node->{token}->{index},
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
@@ -11767,6 +12301,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             ## Create an HTML element
             my $new_element = {id => $NEXT_ID++,
                                token => $formatting_element->{token},
+                               di => $formatting_element->{token}->{di},
+                               index => $formatting_element->{token}->{index},
                                ns => HTMLNS,
                                local_name => $formatting_element->{token}->{tag_name},
                                attr_list => $formatting_element->{token}->{attr_list},
@@ -11872,14 +12408,16 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               }
             }
             unless (defined $formatting_element_i) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
               splice @$AFE, $formatting_element_afe_i, 1, ();
               ## $args{remove_from_afe_and_oe} - nop
               push @$OP, ['popped', \@popped];
               return;
             }
             if ($beyond_scope) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
               if ($args{remove_from_afe_and_oe}) {
                 splice @$AFE, $formatting_element_afe_i, 1, ();
                 #push @popped,
@@ -11889,7 +12427,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               return;
             }
             unless ($formatting_element eq $OE->[-1]) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
             }
             unless (defined $furthest_block) {
               #push @popped,
@@ -11933,6 +12472,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
           ## Create an HTML element
           $node = {id => $NEXT_ID++,
                    token => $node->{token},
+                   di => $node->{token}->{di}, index => $node->{token}->{index},
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
@@ -11978,6 +12518,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             ## Create an HTML element
             my $new_element = {id => $NEXT_ID++,
                                token => $formatting_element->{token},
+                               di => $formatting_element->{token}->{di},
+                               index => $formatting_element->{token}->{index},
                                ns => HTMLNS,
                                local_name => $formatting_element->{token}->{tag_name},
                                attr_list => $formatting_element->{token}->{attr_list},
@@ -12041,6 +12583,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             ## Insert an HTML element
             my $node = {id => $NEXT_ID++,
                         token => $entry->{token},
+                        di => $entry->{token}->{di},
+                        index => $entry->{token}->{index},
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
@@ -12081,6 +12625,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             ## Insert an HTML element
             my $node = {id => $NEXT_ID++,
                         token => $entry->{token},
+                        di => $entry->{token}->{di},
+                        index => $entry->{token}->{index},
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
@@ -12451,7 +12997,7 @@ sub _change_the_encoding ($$$) {
                   text => $self->{input_encoding},
                   value => $name,
                   level => 'i',
-                  token => $attr};
+                  di => $attr->{di}, index => $attr->{index}};
 
   ## Step 5. Change the encoding on the fly
   ## Not implemented.
@@ -16051,7 +16597,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -16061,7 +16607,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = q@�@;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -16071,7 +16617,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -16081,7 +16627,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -16091,13 +16637,13 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
@@ -16176,7 +16722,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = q@�@;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -16190,7 +16736,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -16204,7 +16750,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -16218,7 +16764,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -16232,7 +16778,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
@@ -16242,7 +16788,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -16252,7 +16798,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
@@ -20861,7 +21407,7 @@ if ($Input =~ /\G([^\ \	\
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -20894,7 +21440,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -20966,7 +21512,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -20999,7 +21545,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21030,7 +21576,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21050,7 +21596,7 @@ $State = AFTER_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $3;
 $Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([^\ \	\
@@ -21064,7 +21610,7 @@ $Attr->{q<name>} .= $4;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21097,7 +21643,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21128,7 +21674,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21197,7 +21743,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21267,7 +21813,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21297,7 +21843,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21317,7 +21863,7 @@ $State = AFTER_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $3) + 32);
 $Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -21329,7 +21875,7 @@ $Attr->{q<name>} .= $4;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21349,7 +21895,7 @@ $State = AFTER_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $3;
 $Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([^\ \	\
@@ -21361,7 +21907,7 @@ $Attr->{q<name>} .= $4;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21432,7 +21978,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21503,7 +22049,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21572,7 +22118,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21641,7 +22187,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21672,7 +22218,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21703,7 +22249,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21734,7 +22280,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21764,7 +22310,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21831,7 +22377,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21851,7 +22397,7 @@ $State = AFTER_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $3) + 32);
 $Attr->{index} = $Offset + $-[3];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $4;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -21862,7 +22408,7 @@ $Attr->{q<name>} .= $4;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -21931,7 +22477,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22000,7 +22546,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22069,7 +22615,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22138,7 +22684,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22205,7 +22751,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22271,7 +22817,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22338,7 +22884,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22406,7 +22952,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22435,7 +22981,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22464,7 +23010,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22530,7 +23076,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22592,7 +23138,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22659,7 +23205,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22726,7 +23272,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22791,7 +23337,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22857,7 +23403,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22921,7 +23467,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -22985,7 +23531,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -23047,7 +23593,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -23107,7 +23653,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -23169,7 +23715,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
 
@@ -23354,7 +23900,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -23364,7 +23910,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = q@�@;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -23374,7 +23920,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -23384,7 +23930,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -23394,7 +23940,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -23404,13 +23950,13 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
@@ -28975,7 +29521,7 @@ push @$Tokens, $Token;
 $Attr = {di => $DI};
 $Attr->{q<name>} = q@�@;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
@@ -28996,7 +29542,7 @@ $State = BEFORE_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -29010,7 +29556,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
@@ -29030,7 +29576,7 @@ $State = SELF_CLOSING_START_TAG_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -29044,7 +29590,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
@@ -29054,7 +29600,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -29064,7 +29610,7 @@ $State = ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
-$Attr->{q<value>} = [];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
@@ -29918,14 +30464,16 @@ sub dom_tree ($$) {
       my $data = $op->[1];
       my $el = $doc->create_element_ns
           ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
+      $el->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       ## Note that $data->{ns} can be 0.
       for my $attr (@{$data->{attr_list} or []}) {
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
-      # XXX index
       if ($data->{ns} == HTMLNS and $data->{local_name} eq 'template') {
         $nodes->[$data->{id}] = $el->content;
+        $el->content->manakai_set_source_location
+            (['', $data->{di}, $data->{index}]);
       } else {
         $nodes->[$data->{id}] = $el;
       }
@@ -29952,7 +30500,7 @@ sub dom_tree ($$) {
         }
       }
     } elsif ($op->[0] eq 'text') {
-      $nodes->[$op->[2]]->manakai_append_text ($op->[1]);
+      $nodes->[$op->[2]]->manakai_append_indexed_string ($op->[1]); # IndexedString
     } elsif ($op->[0] eq 'text-foster') {
       my $next_sibling = $nodes->[$op->[2]];
       my $parent = $next_sibling->parent_node;
@@ -29963,10 +30511,11 @@ sub dom_tree ($$) {
           my $prev_sibling = $next_sibling->previous_sibling;
           if (defined $prev_sibling and
               $prev_sibling->node_type == $prev_sibling->TEXT_NODE) {
-            $prev_sibling->manakai_append_text ($op->[1]);
+            $prev_sibling->manakai_append_indexed_string ($op->[1]);
           } else {
-            $parent->insert_before
-              ($doc->create_text_node ($op->[1]), $next_sibling);
+            $prev_sibling = $doc->create_text_node ('');
+            $prev_sibling->manakai_append_indexed_string ($op->[1]);
+            $parent->insert_before ($prev_sibling, $next_sibling);
           }
         }
       } else {
@@ -29995,13 +30544,17 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'comment') {
-      $nodes->[$op->[2]]->append_child ($doc->create_comment ($op->[1]));
+      my $comment = $doc->create_comment ($op->[1]->{data});
+      $comment->manakai_set_source_location
+          (['', $op->[1]->{di}, $op->[1]->{index}]);
+      $nodes->[$op->[2]]->append_child ($comment);
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
           (defined $data->{name} ? $data->{name} : '',
            defined $data->{public_identifier} ? $data->{public_identifier} : '',
            defined $data->{system_identifier} ? $data->{system_identifier} : '');
+      $dt->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       $nodes->[$op->[2]]->append_child ($dt);
 
     } elsif ($op->[0] eq 'set-if-missing') {
@@ -30129,7 +30682,8 @@ sub dom_tree ($$) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
       while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
-        push @$Errors, {type => 'XXX', index => $-[0], level => 'm'};
+        push @$Errors, {type => 'XXX', level => 'm',
+                        di => $DI, index => $-[0]};
       }
       push @{$self->{input_stream}}, $input;
 
@@ -30154,21 +30708,20 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-
-      # XXX index
-
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
       $IM = INITIAL_IM;
+      $doc->manakai_set_source_location (['', $DI, 0]);
+      # XXX indexmap
 
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
@@ -30213,7 +30766,7 @@ $DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
@@ -30245,6 +30798,7 @@ $Scripting = $self->{Scripting};
           }
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => HTMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -30253,6 +30807,7 @@ $Scripting = $self->{Scripting};
         } elsif ($node_ns eq 'http://www.w3.org/2000/svg') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => SVGNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -30261,6 +30816,7 @@ $Scripting = $self->{Scripting};
         } elsif ($node_ns eq 'http://www.w3.org/1998/Math/MathML') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => MATHMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -30280,6 +30836,7 @@ $Scripting = $self->{Scripting};
         } else {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => 0,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -30297,6 +30854,7 @@ $Scripting = $self->{Scripting};
         ## 4.4.
         @$OE = ({id => $NEXT_ID++,
                  #token => undef,
+                 #di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'html',
                  attr_list => {},
@@ -30326,6 +30884,7 @@ $Scripting = $self->{Scripting};
             } else {
               $FORM_ELEMENT = {id => $NEXT_ID++,
                                #token => undef,
+                               #di => $token->{di}, index => $token->{index},
                                ns => HTMLNS,
                                local_name => 'form',
                                attr_list => {}, # not relevant
@@ -30362,20 +30921,20 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      # XXX index
-
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
       $IM = INITIAL_IM;
+      $doc->manakai_set_source_location (['', $DI, 0]);
+      # XXX indexmap
 
       $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
@@ -30386,7 +30945,7 @@ $Scripting = $self->{Scripting};
       my $input = [$_[1]];
 
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
@@ -30401,7 +30960,7 @@ $Scripting = $self->{Scripting};
     sub parse_chars_end ($) {
       my $self = $_[0];
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
@@ -30446,9 +31005,11 @@ $DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-        $DI = $self->{DI};
+        $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
+        $doc->manakai_set_source_location (['', $DI, 0]);
+        # XXX indexmap
 
         my $inputref = \($_[2]);
         $self->_encoding_sniffing
@@ -30459,8 +31020,6 @@ $Scripting = $self->{Scripting};
         $doc->input_encoding ($self->{input_encoding});
 
         my $input = [decode $self->{input_encoding}, $$inputref]; # XXXencoding
-
-        # XXX index
 
         $State = DATA_STATE;;
         $IM = INITIAL_IM;
@@ -30481,8 +31040,6 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      # XXX index
-
       delete $self->{parse_bytes_started};
       $self->{input_stream} = [];
       $FRAMESET_OK = 1;
@@ -30490,11 +31047,13 @@ $DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
       $IM = INITIAL_IM;
+      $doc->manakai_set_source_location (['', $DI, 0]);
+      # XXX indexmap
     } # _parse_bytes_init
 
     sub _parse_bytes_start_parsing ($;%) {
@@ -30552,7 +31111,7 @@ $Scripting = $self->{Scripting};
       my ($self, undef, %args) = @_;
 
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
@@ -30591,7 +31150,7 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_end ($) {
       my $self = $_[0];
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = $self->{DI};
+      $DI = defined $self->{DI} ? $self->{DI} : -1;
 $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};

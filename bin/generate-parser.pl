@@ -9,9 +9,6 @@ my $GeneratedPackageName = q{Web::HTML::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
-# XXX attr value indexes
-# XXX stream error indexes
-# XXX tree error indexes
 # XXX additional error indexes
 # XXX parse error types
 # XXX exposing input stream index -> (di, ci) mapping table
@@ -417,7 +414,7 @@ sub _change_the_encoding ($$$) {
                   text => $self->{input_encoding},
                   value => $name,
                   level => 'i',
-                  token => $attr};
+                  di => $attr->{di}, index => $attr->{index}};
 
   ## Step 5. Change the encoding on the fly
   ## Not implemented.
@@ -720,7 +717,7 @@ sub serialize_actions ($) {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
       if ($field eq 'value') {
-        push @result, sprintf q[$Attr->{q<%s>} = [];], $field;
+        push @result, sprintf q[$Attr->{q<%s>} = [['', $Attr->{di}, $Attr->{index}]];], $field; # IndexedString
       } else {
         push @result, sprintf q[$Attr->{q<%s>} = '';], $field;
       }
@@ -1418,6 +1415,7 @@ sub actions_to_code ($;%) {
       push @code, sprintf q{
         my %s = {id => $NEXT_ID++,
                  token => $token,
+                 di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => %s,
                  attr_list => %s,
@@ -1491,6 +1489,7 @@ sub actions_to_code ($;%) {
       push @code, sprintf q{
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => HTMLNS,
                     local_name => %s,
                     attr_list => %s,
@@ -1518,6 +1517,7 @@ sub actions_to_code ($;%) {
       push @code, sprintf q{
         my $node = {id => $NEXT_ID++,
                     token => $token,
+                    di => $token->{di}, index => $token->{index},
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
@@ -1657,18 +1657,18 @@ sub actions_to_code ($;%) {
       if (defined $act->{position}) {
         if ($act->{position} eq 'document') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token->{data} => 0];
+            push @$OP, ['comment', $token => 0];
           };
         } elsif ($act->{position} eq 'oe[0]') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token->{data} => $OE->[0]->{id}];
+            push @$OP, ['comment', $token => $OE->[0]->{id}];
           };
         } else {
           die "Unknown insertion position |$act->{position}|";
         }
       } else {
         push @code, sprintf q{
-          push @$OP, ['comment', $token->{data} => $OE->[-1]->{id}];
+          push @$OP, ['comment', $token => $OE->[-1]->{id}];
         };
       }
     } elsif ($act->{type} eq 'insert-chars') {
@@ -1676,23 +1676,24 @@ sub actions_to_code ($;%) {
       if (defined $act->{value}) {
         if (ref $act->{value}) {
           if ($act->{value}->[0] eq 'pending table character tokens list') {
-            $value_code = q{(join '', map { $_->{value} } @$TABLE_CHARS)};
-          #} elsif ($act->{value}->[0] eq 'prompt-string') {
-          #  $value_code = '"Isindex prompt"';
+            $value_code = q{[map { [$_->{value}, $_->{di}, $_->{index}] } @$TABLE_CHARS]}; # IndexedString
           } else {
             die "Unknown value |$act->{value}->[0]|";
           }
         } else {
-          $value_code = sprintf q{q@%s@}, $act->{value};
+          $value_code = sprintf q{[[q@%s@, $token->{di}, $token->{index}]]},
+              $act->{value}; # IndexedString
         }
       } else {
-        $value_code = $args{chars} // q{$token->{value}};
+        $value_code = sprintf q{[[%s, $token->{di}, $token->{index}]]},
+            $args{chars} // q{$token->{value}}; # IndexedString
       }
       push @code, foster_code $act => 'text', $value_code;
     } elsif ($act->{type} eq 'insert a character' and
              defined $act->{value} and
              2 == keys %$act) {
-      my $value_code = sprintf q{q@%s@}, $act->{value};
+      my $value_code = sprintf q{[[q@%s@, $token->{di}, $token->{index}]]},
+          $act->{value}; # IndexedString
       push @code, foster_code $act => 'text', $value_code;
     } elsif ($act->{type} eq 'pop-template-ims') {
       push @code, q{pop @$TEMPLATE_IMS;};
@@ -1747,7 +1748,8 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'doctype-switch') {
       push @code, q{
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'XXX', level => 'm', token => $token};
+          push @$Errors, {type => 'XXX', level => 'm',
+                          di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
@@ -1756,9 +1758,12 @@ sub actions_to_code ($;%) {
           if (defined $OPPublicIDToSystemID->{$token->{public_identifier}}) {
             if (defined $token->{system_identifier}) {
               if ($OPPublicIDToSystemID->{$token->{public_identifier}} eq $token->{system_identifier}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE', level => 's', token => $token};
+                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                                level => 's',
+                                di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm', token => $token};
+                push @$Errors, {type => 'XXX', level => 'm',
+                                di => $token->{di}, index => $token->{index}};
                 unless ($IframeSrcdoc) {
                   my $sysid = $token->{system_identifier};
                   $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -1770,13 +1775,17 @@ sub actions_to_code ($;%) {
               }
             } else {
               if ($OPPublicIDOnly->{$token->{public_identifier}}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE', level => 's', token => $token};
+                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                                level => 's',
+                                di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm', token => $token};
+                push @$Errors, {type => 'XXX', level => 'm',
+                                di => $token->{di}, index => $token->{index}};
               }
             }
           } else {
-            push @$Errors, {type => 'XXX', level => 'm', token => $token};
+            push @$Errors, {type => 'XXX', level => 'm',
+                            di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $pubid = $token->{public_identifier};
               $pubid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -1808,9 +1817,11 @@ sub actions_to_code ($;%) {
           }
         } elsif (defined $token->{system_identifier}) {
           if ($token->{system_identifier} eq 'about:legacy-compat') {
-            push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's', token => $token};
+            push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's',
+                            di => $token->{di}, index => $token->{index}};
           } else {
-            push @$Errors, {type => 'XXX', level => 'm', token => $token};
+            push @$Errors, {type => 'XXX', level => 'm',
+                            di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $sysid = $token->{system_identifier};
               $sysid =~ tr/a-z/A-Z/; ## ASCII case-insensitive.
@@ -1902,10 +1913,20 @@ sub actions_to_code ($;%) {
         push @code, sprintf q{%s ($token, $token->{tag_name});}, $method;
       }
     } elsif ($act->{type} eq 'parse error') {
-      push @code, sprintf q{push @$Errors, {type => '%s',
-                                            level => 'm',
-                                            index => $token->{index}};},
-          $act->{name};
+      if ($act->{name} eq 'in-table-text-else') {
+        push @code, sprintf q{push @$Errors, {type => '%s',
+                                              level => 'm',
+                                              di => $TABLE_CHARS->[0]->{di},
+                                              index => $TABLE_CHARS->[0]->{index}};},
+            $act->{name};
+      } else {
+        push @code, sprintf q{push @$Errors, {type => '%s',
+                                              level => 'm',
+                                              di => $token->{di},
+                                              index => $token->{index}%s};},
+            $act->{name},
+            defined $args{index_delta_code} ? ' + ' . $args{index_delta_code} : '';
+      }
     } elsif ($act->{type} eq 'switch the tokenizer') {
       push @code, switch_state_code $act->{state};
     } elsif ($act->{type} eq 'reconstruct the active formatting elements') {
@@ -1957,8 +1978,8 @@ sub actions_to_code ($;%) {
         push @code, q{
           if (delete $token->{self_closing_flag}) {
             push @$Errors, {type => 'XXX self-closing void', level => 'w',
-                            index => $token->{index},
-                            text => $token->{tag_name}};
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
           }
         };
       }
@@ -1979,10 +2000,10 @@ sub actions_to_code ($;%) {
 
     } elsif ($act->{type} eq 'text-with-optional-ws-prefix') {
       die if $act->{pending_table_character_tokens};
-      # XXX index
       push @code, sprintf q{
         if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
           %s
+          $token->{index} += length $1;
         }
         if (length $token->{value}) {
           %s
@@ -2000,7 +2021,6 @@ sub actions_to_code ($;%) {
         if (not defined $act->{$char_key} and defined $act->{$seq_key}) {
           $codes->{$key} = actions_to_code $act->{$seq_key} || [], chars => '$1';
         } elsif (defined $act->{$char_key} or defined $act->{$seq_key}) {
-          # XXX index
           $codes->{$key} = sprintf q{
             my $value = $1;
             while ($value =~ /(.)/gs) {
@@ -2008,14 +2028,13 @@ sub actions_to_code ($;%) {
             }
             %s
           },
-              (actions_to_code $act->{$char_key} || [], chars => '$1'),
+              (actions_to_code $act->{$char_key} || [], chars => '$1', index_delta_code => '$-[1]'),
               (actions_to_code $act->{$seq_key} || [], chars => '$value');
         }
       }
 
       my $code;
       if (defined $codes->{ws} and defined $codes->{null}) {
-        # XXX index
         if ($codes->{else} =~ /^\s*\Q$codes->{ws}\E\s*\$\QFRAMESET_OK = 0;\E\s*$/) {
           my $ws2 = $codes->{ws};
           $ws2 =~ s/\$1\b/\$token->{value}/g;
@@ -2025,12 +2044,15 @@ sub actions_to_code ($;%) {
               while (pos $token->{value} < length $token->{value}) {
                 if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                   %s
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                   %s
+                  $token->{index} += length $1;
                 }
                 if ($token->{value} =~ /\G([\x00]+)/gc) {
                   %s
+                  $token->{index} += length $1;
                 }
               }
             } else {
@@ -2044,46 +2066,52 @@ sub actions_to_code ($;%) {
             while (pos $token->{value} < length $token->{value}) {
               if ($token->{value} =~ /\G([^\x00\x09\x0A\x0C\x20]+)/gc) {
                 %s
+                $token->{index} += length $1;
               }
               if ($token->{value} =~ /\G([\x09\x0A\x0C\x20]+)/gc) {
                 %s
+                $token->{index} += length $1;
               }
               if ($token->{value} =~ /\G([\x00]+)/gc) {
                 %s
+                $token->{index} += length $1;
               }
             }
           }, $codes->{else}, $codes->{ws}, $codes->{null};
         }
       } elsif (defined $codes->{ws}) {
-        # XXX index
         $code = sprintf q{
           while (length $token->{value}) {
             if ($token->{value} =~ s/^([^\x09\x0A\x0C\x20]+)//) {
               %s
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
               %s
+              $token->{index} += length $1;
             }
           }
         }, $codes->{else}, $codes->{ws};
       } elsif (defined $codes->{null}) {
-        # XXX index
         $code = sprintf q{
           while (length $token->{value}) {
             if ($token->{value} =~ s/^([^\x00]+)//) {
               %s
+              $token->{index} += length $1;
             }
             if ($token->{value} =~ s/^([\x00]+)//) {
               %s
+              $token->{index} += length $1;
             }
           }
         }, $codes->{else}, $codes->{null};
       } else {
         if (defined $act->{char_actions}) {
-          # XXX index
+          die;
           $code = sprintf q{
             while ($token->{value} =~ /(.)/gs) {
               %s
+              $token->{index}++;
             }
             %s
           },
@@ -2182,7 +2210,7 @@ sub generate_tree_constructor ($) {
 
   ## ---- Injecting pseudo-IM definitions ----
   $defs->{actions}->{'before ignored newline;TEXT'} = q{
-    $_->{value} =~ s/^\x0A//; # XXXindex
+    $_->{index}++ if $_->{value} =~ s/^\x0A//;
     $IM = $ORIGINAL_IM;
     goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
   };
@@ -2191,7 +2219,7 @@ sub generate_tree_constructor ($) {
     goto &{$ProcessIM->[$IM]->[$_->{type}]->[$_->{tn}]};
   };
   $defs->{actions}->{'before ignored newline and text;TEXT'} = sprintf q{
-    $_->{value} =~ s/^\x0A//; # XXXindex
+    $_->{index}++ if $_->{value} =~ s/^\x0A//;
     $IM = %s;
     goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
   }, im_const 'text';
@@ -2542,14 +2570,16 @@ sub generate_tree_constructor ($) {
               }
             }
             unless (defined $formatting_element_i) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
               splice @$AFE, $formatting_element_afe_i, 1, ();
               ## $args{remove_from_afe_and_oe} - nop
               push @$OP, ['popped', \@popped];
               return;
             }
             if ($beyond_scope) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
               if ($args{remove_from_afe_and_oe}) {
                 splice @$AFE, $formatting_element_afe_i, 1, ();
                 #push @popped,
@@ -2559,7 +2589,8 @@ sub generate_tree_constructor ($) {
               return;
             }
             unless ($formatting_element eq $OE->[-1]) {
-              push @$Errors, {type => 'XXX', level => 'm', token => $token};
+              push @$Errors, {type => 'XXX', level => 'm',
+                              di => $token->{di}, index => $token->{index}};
             }
             unless (defined $furthest_block) {
               #push @popped,
@@ -2603,6 +2634,7 @@ sub generate_tree_constructor ($) {
           ## Create an HTML element
           $node = {id => $NEXT_ID++,
                    token => $node->{token},
+                   di => $node->{token}->{di}, index => $node->{token}->{index},
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
@@ -2631,6 +2663,8 @@ sub generate_tree_constructor ($) {
             ## Create an HTML element
             my $new_element = {id => $NEXT_ID++,
                                token => $formatting_element->{token},
+                               di => $formatting_element->{token}->{di},
+                               index => $formatting_element->{token}->{index},
                                ns => HTMLNS,
                                local_name => $formatting_element->{token}->{tag_name},
                                attr_list => $formatting_element->{token}->{attr_list},
@@ -2704,6 +2738,8 @@ sub generate_tree_constructor ($) {
             ## Insert an HTML element
             my $node = {id => $NEXT_ID++,
                         token => $entry->{token},
+                        di => $entry->{token}->{di},
+                        index => $entry->{token}->{index},
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
@@ -2792,14 +2828,16 @@ sub dom_tree ($$) {
       my $data = $op->[1];
       my $el = $doc->create_element_ns
           ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
+      $el->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       ## Note that $data->{ns} can be 0.
       for my $attr (@{$data->{attr_list} or []}) {
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
-      # XXX index
       if ($data->{ns} == HTMLNS and $data->{local_name} eq 'template') {
         $nodes->[$data->{id}] = $el->content;
+        $el->content->manakai_set_source_location
+            (['', $data->{di}, $data->{index}]);
       } else {
         $nodes->[$data->{id}] = $el;
       }
@@ -2826,7 +2864,7 @@ sub dom_tree ($$) {
         }
       }
     } elsif ($op->[0] eq 'text') {
-      $nodes->[$op->[2]]->manakai_append_text ($op->[1]);
+      $nodes->[$op->[2]]->manakai_append_indexed_string ($op->[1]); # IndexedString
     } elsif ($op->[0] eq 'text-foster') {
       my $next_sibling = $nodes->[$op->[2]];
       my $parent = $next_sibling->parent_node;
@@ -2837,10 +2875,11 @@ sub dom_tree ($$) {
           my $prev_sibling = $next_sibling->previous_sibling;
           if (defined $prev_sibling and
               $prev_sibling->node_type == $prev_sibling->TEXT_NODE) {
-            $prev_sibling->manakai_append_text ($op->[1]);
+            $prev_sibling->manakai_append_indexed_string ($op->[1]);
           } else {
-            $parent->insert_before
-              ($doc->create_text_node ($op->[1]), $next_sibling);
+            $prev_sibling = $doc->create_text_node ('');
+            $prev_sibling->manakai_append_indexed_string ($op->[1]);
+            $parent->insert_before ($prev_sibling, $next_sibling);
           }
         }
       } else {
@@ -2869,13 +2908,17 @@ sub dom_tree ($$) {
       }
 
     } elsif ($op->[0] eq 'comment') {
-      $nodes->[$op->[2]]->append_child ($doc->create_comment ($op->[1]));
+      my $comment = $doc->create_comment ($op->[1]->{data});
+      $comment->manakai_set_source_location
+          (['', $op->[1]->{di}, $op->[1]->{index}]);
+      $nodes->[$op->[2]]->append_child ($comment);
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
           (defined $data->{name} ? $data->{name} : '',
            defined $data->{public_identifier} ? $data->{public_identifier} : '',
            defined $data->{system_identifier} ? $data->{system_identifier} : '');
+      $dt->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       $nodes->[$op->[2]]->append_child ($dt);
 
     } elsif ($op->[0] eq 'set-if-missing') {
@@ -2964,7 +3007,12 @@ sub generate_api ($) {
     $vars_codes->{INIT} = join "\n", @init_code;
 
     $vars_codes->{RESET} = join "\n", map {
-      sprintf q{$%s = $self->{%s};}, $_, $_;
+      if (defined $Vars->{$_}->{default}) {
+        sprintf q{$%s = defined $self->{%s} ? $self->{%s} : %s;},
+            $_, $_, $_, $Vars->{$_}->{default};
+      } else {
+        sprintf q{$%s = $self->{%s};}, $_, $_;
+      }
     } sort { $a cmp $b } grep { $Vars->{$_}->{input} } keys %$Vars;
 
     my @saved_var = sort { $a cmp $b } grep { $Vars->{$_}->{save} } keys %$Vars;
@@ -3049,7 +3097,8 @@ sub generate_api ($) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
       while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
-        push @$Errors, {type => 'XXX', index => $-[0], level => 'm'};
+        push @$Errors, {type => 'XXX', level => 'm',
+                        di => $DI, index => $-[0]};
       }
       push @{$self->{input_stream}}, $input;
 
@@ -3074,15 +3123,14 @@ sub generate_api ($) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-
-      # XXX index
-
       VARS::LOCAL;
       VARS::INIT;
       VARS::RESET;
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
       $IM = IM ("initial");
+      $doc->manakai_set_source_location (['', $DI, 0]);
+      # XXX indexmap
 
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
@@ -3153,6 +3201,7 @@ sub generate_api ($) {
           }
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => HTMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -3161,6 +3210,7 @@ sub generate_api ($) {
         } elsif ($node_ns eq 'http://www.w3.org/2000/svg') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => SVGNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -3169,6 +3219,7 @@ sub generate_api ($) {
         } elsif ($node_ns eq 'http://www.w3.org/1998/Math/MathML') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => MATHMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -3188,6 +3239,7 @@ sub generate_api ($) {
         } else {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
+                      #di => $token->{di}, index => $token->{index},
                       ns => 0,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
@@ -3205,6 +3257,7 @@ sub generate_api ($) {
         ## 4.4.
         @$OE = ({id => $NEXT_ID++,
                  #token => undef,
+                 #di => $token->{di}, index => $token->{index},
                  ns => HTMLNS,
                  local_name => 'html',
                  attr_list => {},
@@ -3234,6 +3287,7 @@ sub generate_api ($) {
             } else {
               $FORM_ELEMENT = {id => $NEXT_ID++,
                                #token => undef,
+                               #di => $token->{di}, index => $token->{index},
                                ns => HTMLNS,
                                local_name => 'form',
                                attr_list => {}, # not relevant
@@ -3270,14 +3324,14 @@ sub generate_api ($) {
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      # XXX index
-
       VARS::LOCAL;
       VARS::INIT;
       VARS::RESET;
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
       $IM = IM ("initial");
+      $doc->manakai_set_source_location (['', $DI, 0]);
+      # XXX indexmap
 
       VARS::SAVE;
       return;
@@ -3339,6 +3393,8 @@ sub generate_api ($) {
         VARS::LOCAL;
         VARS::INIT;
         VARS::RESET;
+        $doc->manakai_set_source_location (['', $DI, 0]);
+        # XXX indexmap
 
         my $inputref = \($_[2]);
         $self->_encoding_sniffing
@@ -3349,8 +3405,6 @@ sub generate_api ($) {
         $doc->input_encoding ($self->{input_encoding});
 
         my $input = [decode $self->{input_encoding}, $$inputref]; # XXXencoding
-
-        # XXX index
 
         SWITCH_STATE ("data state");
         $IM = IM ("initial");
@@ -3371,14 +3425,14 @@ sub generate_api ($) {
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      # XXX index
-
       delete $self->{parse_bytes_started};
       $self->{input_stream} = [];
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
       $IM = IM ("initial");
+      $doc->manakai_set_source_location (['', $DI, 0]);
+      # XXX indexmap
     } # _parse_bytes_init
 
     sub _parse_bytes_start_parsing ($;%%) {

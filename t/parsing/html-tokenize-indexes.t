@@ -246,7 +246,7 @@ for (grep { length } split /\n\n+/, $TestData) {
     } @{$tokenizer->{_tokens}}],
         [map { [$di, $_] } @$TokenIndexes];
 
-    use Data::Dumper;
+    #use Data::Dumper;
     #warn Dumper $tokenizer->{_errors};
     #warn Dumper $tokenizer->{_tokens};
 
@@ -255,3 +255,5 @@ for (grep { length } split /\n\n+/, $TestData) {
 }
 
 run_tests;
+
+## License: Public Domain.
