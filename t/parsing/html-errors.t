@@ -16,6 +16,11 @@ my $path = path (__FILE__)->parent->parent->parent->child
 my $error_defs = json_bytes2perl $path->slurp;
 $error_defs = $error_defs->{errors} if defined $error_defs->{errors};
 
+test {
+  ok @{$error_defs->{'stray end tag'}->{parser_tests}};
+  shift->done;
+} n => 1, name => 'test loaded';
+
 for my $error_type (keys %$error_defs) {
   for my $test (@{$error_defs->{$error_type}->{parser_tests} or []}) {
     test {

@@ -1928,14 +1928,32 @@ sub actions_to_code ($;%) {
                                             %s%s%s};},
           $act->{error_type} // $act->{name},
           (defined $act->{error_text} ?
-               sprintf q{text => $token->{%s},}, map {
-                 die "Unknown type |$_->[0]|" unless $_->[0] eq 'field';
-                 my $s = $_->[1]; $s =~ tr/ /_/; $s;
+               sprintf q{text => %s,}, map {
+                 if ($_->[0] eq 'token') {
+                   my $s = $_->[1];
+                   $s =~ tr/ /_/;
+                   sprintf q{$token->{%s}}, $s;
+                 } elsif ($_->[0] eq 'oe[-1]') {
+                   my $s = $_->[1];
+                   $s =~ tr/ /_/;
+                   sprintf q{$OE->[-1]->{%s}}, $s;
+                 } else {
+                   die "Unknown type |$_->[0]|";
+                 }
                } $act->{error_text} : ''),
           (defined $act->{error_value} ?
-               sprintf q{value => $token->{%s},}, map {
-                 die "Unknown type |$_->[0]|" unless $_->[0] eq 'field';
-                 my $s = $_->[1]; $s =~ tr/ /_/; $s;
+               sprintf q{value => %s,}, map {
+                 if ($_->[0] eq 'token') {
+                   my $s = $_->[1];
+                   $s =~ tr/ /_/;
+                   sprintf q{$token->{%s}}, $s;
+                 } elsif ($_->[0] eq 'oe[-1]') {
+                   my $s = $_->[1];
+                   $s =~ tr/ /_/;
+                   sprintf q{$OE->[-1]->{%s}}, $s;
+                 } else {
+                   die "Unknown type |$_->[0]|";
+                 }
                } $act->{error_value} : ''),
           $index_code;
     } elsif ($act->{type} eq 'switch the tokenizer') {
