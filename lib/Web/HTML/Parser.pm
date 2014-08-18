@@ -821,9 +821,9 @@ my $OPPublicIDOnly = {q<-//W3C//DTD HTML 4.0//EN> => 1, q<-//W3C//DTD HTML 4.01/
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-after-body-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -842,9 +842,9 @@ push @$Errors, {type => 'after-after-body-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-after-body-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -867,9 +867,9 @@ push @$Errors, {type => 'after-after-body-else',
         }
         if (length $token->{value}) {
           push @$Errors, {type => 'after-after-body-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -892,10 +892,10 @@ push @$Errors, {type => 'after-after-body-else',
         ## [7] after after frameset;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-after-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+push @$Errors, {type => 'after-after-body-else',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -907,16 +907,16 @@ return;
         ## [9] after after frameset;START-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-after-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+push @$Errors, {type => 'after-after-body-else',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -931,10 +931,10 @@ return;
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'after-after-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+              push @$Errors, {type => 'after-after-body-else',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -962,10 +962,10 @@ return;
         ## [12] after body;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-body-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+push @$Errors, {type => 'doctype:bad context',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -973,9 +973,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-body-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -990,10 +990,10 @@ push @$Errors, {type => 'after-body-else',
           my $token = $_;
 
           if (defined $CONTEXT) {
-            push @$Errors, {type => 'after-body-end-html',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+            push @$Errors, {type => 'stray end tag',
+                                            level => 'm',
+                                            value => $token->{tag_name},di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             
@@ -1013,9 +1013,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-body-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -1038,9 +1038,9 @@ push @$Errors, {type => 'after-body-else',
         }
         if (length $token->{value}) {
           push @$Errors, {type => 'after-body-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           $IM = IN_BODY_IM;
           #warn "Insertion mode changed to |in body| ($IM)";
@@ -1063,20 +1063,20 @@ push @$Errors, {type => 'after-body-else',
         ## [19] after frameset;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-frameset-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+push @$Errors, {type => 'doctype:bad context',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
         ## [20] after frameset;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+push @$Errors, {type => 'after-body-else',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -1096,16 +1096,16 @@ return;
         ## [23] after frameset;START-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+push @$Errors, {type => 'after-body-else',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -1120,10 +1120,10 @@ return;
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'after-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+              push @$Errors, {type => 'after-body-else',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -1151,9 +1151,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -1161,9 +1161,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -1249,9 +1249,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
@@ -1296,9 +1296,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -1330,9 +1330,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -1345,15 +1345,15 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-head',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -1363,9 +1363,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
@@ -1416,9 +1416,9 @@ push @$OE, $HEAD_ELEMENT;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
@@ -1444,9 +1444,9 @@ $ORIGINAL_IM = $IM;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -1455,9 +1455,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
@@ -1483,9 +1483,9 @@ $ORIGINAL_IM = $IM;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -1494,9 +1494,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
@@ -1527,9 +1527,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -1538,9 +1538,9 @@ push @$AFE, '#marker';
         sub {
           my $token = $_;
 push @$Errors, {type => 'after-head-start-b3lmnsstt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OE, $HEAD_ELEMENT;
 
         my $node = {id => $NEXT_ID++,
@@ -1566,9 +1566,9 @@ $ORIGINAL_IM = $IM;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -1621,9 +1621,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-head-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -1631,9 +1631,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-head-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -1739,9 +1739,9 @@ $HEAD_ELEMENT = $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -1820,9 +1820,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-html-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -1830,9 +1830,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-html-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -1926,9 +1926,9 @@ push @$OP, ['appcache', $token->{attrs}->{manifest}];
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -2057,9 +2057,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -2079,9 +2079,9 @@ return;
 
           if (not ($OE->[-1] eq $_node)) {
             push @$Errors, {type => 'in-body-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2095,9 +2095,9 @@ return;
             
           if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'in-body-end-else-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
 return;
           }
@@ -2132,18 +2132,18 @@ aaa ($token, $token->{tag_name});
       }
     ) {
             push @$Errors, {type => 'in-body-end-a3bbcd5f4hhlmmnopssu',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-a3bbcd5f4hhlmmnopssu-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2174,18 +2174,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-applet-marquee-object',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-applet-marquee-object-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2220,9 +2220,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-body',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             
@@ -2240,9 +2240,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-body-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -2257,9 +2257,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-end-br',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
         my $node_br = {id => $NEXT_ID++,
@@ -2304,9 +2304,9 @@ push @$Errors, {type => 'in-body-end-br',
       }
     ) {
             push @$Errors, {type => 'in-body-end-dd-dt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             {
@@ -2317,9 +2317,9 @@ return;
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-dd-dt-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2367,9 +2367,9 @@ $FORM_ELEMENT = undef;
       }
     )) {
             push @$Errors, {type => 'in-body-end-form',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
 return;
           }
@@ -2378,9 +2378,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 
           if (not ($OE->[-1] eq $_node)) {
             push @$Errors, {type => 'in-body-end-form-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 @$OE = grep { $_ ne $_node } @$OE;
@@ -2415,9 +2415,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
       }
     ) {
             push @$Errors, {type => 'in-body-end-form-3',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
 return;
           }
@@ -2426,9 +2426,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 
           if (not ($OE->[-1]->{et} == FORM_EL)) {
             push @$Errors, {type => 'in-body-end-form-4',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2459,18 +2459,18 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
       }
     ) {
             push @$Errors, {type => 'in-body-end-h6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-body-end-h6-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2501,9 +2501,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-html',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             
@@ -2521,9 +2521,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-html-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -2555,18 +2555,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-li',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
             push @$Errors, {type => 'in-body-end-li-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2597,9 +2597,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-body-end-p',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node_p = {id => $NEXT_ID++,
                  token => $token,
@@ -2620,9 +2620,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2652,9 +2652,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
 
           if (not ($OE->[-1] eq $_node)) {
             push @$Errors, {type => 'in-body-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2668,9 +2668,9 @@ return;
             
           if ($_node->{et} & (ADD_DIV_ELS | APP_ELS | AAABBBBBCCDDDEFFFFFFHHHHILLMMMMNNNNPPPSSSSTTWX_ELS | BOD_ELS | BUT_ELS | CAP_ELS | COL_ELS | DD_ELS | DT_ELS | FIE_INP_SEL_TEX_ELS | HHHHHH_ELS | HTM_ELS | IMG_ELS | LI_ELS | MAR_M_ANN_ELS | OBJ_ELS | OL_UL_ELS | P_ELS | STY_ELS | TAB_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TEM_ELS | TR_ELS | M_MI_M_MN_M_MO_M_MS_M_MTE_ELS | S_DES_S_FOR_S_TIT_ELS)) {
             push @$Errors, {type => 'in-body-end-else-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
 return;
           }
@@ -2703,9 +2703,9 @@ return;
             push @$OP, ['stop-parsing'];
           } else {
             push @$Errors, {type => 'in-template-eof',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2739,9 +2739,9 @@ pop @$TEMPLATE_IMS;
       }
     ) {
             push @$Errors, {type => 'in-body-eof',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 push @$OP, ['stop-parsing'];
@@ -2788,9 +2788,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -2813,9 +2813,9 @@ push @$OE, $node;
       }
     ) {
             push @$Errors, {type => 'in-body-start-a',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 aaa ($token, 'a', remove_from_afe_and_oe => 1);
           }
         
@@ -2867,9 +2867,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -2895,9 +2895,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -2943,9 +2943,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -2990,9 +2990,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -3098,9 +3098,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3109,9 +3109,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-body',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
 ($OE->[-1]->{et} & (HTM_ELS)) or 
@@ -3142,9 +3142,9 @@ push @$Errors, {type => 'in-body-start-body',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3167,9 +3167,9 @@ push @$Errors, {type => 'in-body-start-body',
       }
     ) {
             push @$Errors, {type => 'in-body-start-button',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 {
           my @popped;
@@ -3211,9 +3211,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -3225,15 +3225,15 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-c3fht6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -3254,9 +3254,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (DD_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3273,9 +3273,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (DT_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3317,9 +3317,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3347,9 +3347,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3373,9 +3373,9 @@ push @$OE, $node;
       }
     )) {
             push @$Errors, {type => 'in-body-start-form',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           } else {
             
           if (
@@ -3395,9 +3395,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3444,9 +3444,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3455,9 +3455,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-frameset',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
 (@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
@@ -3500,9 +3500,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3528,9 +3528,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3544,9 +3544,9 @@ push @$OE, $node;
 
           if ($OE->[-1]->{et} & (HHHHHH_ELS)) {
             push @$Errors, {type => 'in-body-start-h6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
           }
         
@@ -3567,9 +3567,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3595,9 +3595,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3637,9 +3637,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-html',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -3665,9 +3665,9 @@ push @$Errors, {type => 'in-body-start-html',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3695,9 +3695,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -3712,9 +3712,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-body-start-image',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
 
         my $node_img = {id => $NEXT_ID++,
@@ -3812,9 +3812,9 @@ push @$Errors, {type => 'in-body-start-image',
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
             push @$Errors, {type => 'in-body-start-li',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3854,9 +3854,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3884,9 +3884,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -3912,9 +3912,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -3942,9 +3942,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -4063,9 +4063,9 @@ delete $token->{self_closing_flag};
       }
     ) {
             push @$Errors, {type => 'in-body-start-nobr',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 aaa ($token, 'nobr');
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
           }
@@ -4117,9 +4117,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -4144,9 +4144,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -4203,9 +4203,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -4236,9 +4236,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -4264,9 +4264,9 @@ push @$OE, $node;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -4294,9 +4294,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = PLAINTEXT_STATE;
@@ -4323,9 +4323,9 @@ $State = PLAINTEXT_STATE;
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
             push @$Errors, {type => 'in-body-start-rp-rt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
           }
@@ -4347,9 +4347,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -4405,9 +4405,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -4497,9 +4497,9 @@ delete $token->{self_closing_flag};
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -4527,9 +4527,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -4575,9 +4575,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -4615,9 +4615,9 @@ $ORIGINAL_IM = $IM;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -4649,9 +4649,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -4691,9 +4691,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -4714,9 +4714,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-caption-end-bccht6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -4738,18 +4738,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-caption-end-caption',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
             push @$Errors, {type => 'in-caption-end-caption-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -4788,18 +4788,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-caption-end-table',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
             push @$Errors, {type => 'in-caption-end-table-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -4841,15 +4841,15 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-caption-start-c3t6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -4858,9 +4858,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
             push @$Errors, {type => 'in-caption-start-c3t6-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -4913,9 +4913,9 @@ return;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -4936,9 +4936,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-cell-end-bc3h',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -4960,18 +4960,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-cell-end-t5',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (TD_TH_ELS))) {
             push @$Errors, {type => '-steps-close-the-cell',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -5013,18 +5013,18 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-cell-end-td-th',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
             push @$Errors, {type => 'in-cell-end-td-th-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -5063,15 +5063,15 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-cell-start-c3t6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -5080,9 +5080,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (TD_TH_ELS))) {
             push @$Errors, {type => '-steps-close-the-cell',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -5135,9 +5135,9 @@ return;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -5166,9 +5166,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-column-group-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -5178,9 +5178,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
             push @$Errors, {type => 'in-column-group-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
@@ -5199,9 +5199,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-column-group-end-col',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -5211,9 +5211,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
             push @$Errors, {type => 'in-column-group-end-colgroup',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
@@ -5231,15 +5231,15 @@ return;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
             push @$Errors, {type => 'in-column-group-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -5293,9 +5293,9 @@ return;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-column-group-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -5344,9 +5344,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-foreign-content-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -5363,9 +5363,9 @@ return;
         }
       ))) {
             push @$Errors, {type => 'in-foreign-content-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -5431,9 +5431,9 @@ push @$OP, ['script', $script->{id}];
         }
       ))) {
             push @$Errors, {type => 'in-foreign-content-end-script',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -5585,9 +5585,9 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-foreign-content-start-b5ccd4eeh8iillmmnopprs7ttuuv',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (defined $CONTEXT) {
             
@@ -5701,9 +5701,9 @@ delete $token->{self_closing_flag};
 $token->{attrs}->{q@face@} or 
 $token->{attrs}->{q@size@}) {
             push @$Errors, {type => 'in-foreign-content-start-font',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (defined $CONTEXT) {
             
@@ -5928,9 +5928,9 @@ delete $token->{self_closing_flag};
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-foreign-content-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
 
       push @$OP, ['text', [[q@�@, $token->{di}, $token->{index}]] => $OE->[-1]->{id}];
     
@@ -5961,9 +5961,9 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-frameset-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -5971,9 +5971,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -5983,9 +5983,9 @@ return;
 
           if ($OE->[-1]->{et} & (HTM_ELS)) {
             push @$Errors, {type => 'in-frameset-end-frameset',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             push @$OP, ['popped', [pop @$OE]];
@@ -6008,9 +6008,9 @@ return;
 
           if (not ($OE->[-1]->{et} & (HTM_ELS))) {
             push @$Errors, {type => 'in-frameset-eof',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 push @$OP, ['stop-parsing'];
@@ -6020,15 +6020,15 @@ push @$OP, ['stop-parsing'];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -6079,9 +6079,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -6096,9 +6096,9 @@ push @$OE, $node;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-frameset-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -6118,9 +6118,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -6128,9 +6128,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -6138,9 +6138,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -6164,9 +6164,9 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -6181,9 +6181,9 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -6198,15 +6198,15 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-noscript-start-head-noscript',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -6224,9 +6224,9 @@ return;
         }
         if (length $token->{value}) {
           push @$Errors, {type => 'in-head-noscript-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
 
           $IM = IN_HEAD_IM;
@@ -6274,9 +6274,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -6284,9 +6284,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -6330,18 +6330,18 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-head-end-template',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (CAP_ELS | COL_ELS | DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TR_ELS);
 
           if (not ($OE->[-1]->{et} & (TEM_ELS))) {
             push @$Errors, {type => 'in-head-end-template-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -6415,15 +6415,15 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-head-start-head',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -6496,9 +6496,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -6558,9 +6558,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -6585,9 +6585,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = SCRIPT_DATA_STATE;
@@ -6619,9 +6619,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -6656,9 +6656,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -6714,9 +6714,9 @@ push @$OE, $node_body;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-row-end-bc3htt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -6738,9 +6738,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-row-end-table',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             {
@@ -6778,9 +6778,9 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-row-end-tbody-tfoot-thead',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           }
         
@@ -6835,9 +6835,9 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-row-end-tr',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             {
@@ -6872,15 +6872,15 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-row-start-c3t4',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -6932,9 +6932,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -6955,9 +6955,9 @@ $ORIGINAL_IM = $IM;
       
           } else {
             push @$Errors, {type => 'in-table-char',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
               pos ($token->{value}) = 0;
@@ -7014,9 +7014,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -7054,9 +7054,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-in-table-end-ct7',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -7091,9 +7091,9 @@ push @$Errors, {type => 'in-select-in-table-end-ct7',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-in-table-start-ct7',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 {
           my @popped;
           push @popped, pop @$OE while not ($OE->[-1]->{et} == SELECT_EL);
@@ -7122,9 +7122,9 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-select-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -7146,9 +7146,9 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -7156,9 +7156,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -7176,9 +7176,9 @@ return;
             push @$OP, ['popped', [pop @$OE]];
           } else {
             push @$Errors, {type => 'in-select-end-optgroup',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           }
         
@@ -7192,9 +7192,9 @@ return;
             push @$OP, ['popped', [pop @$OE]];
           } else {
             push @$Errors, {type => 'in-select-end-option',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           }
         
@@ -7218,9 +7218,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-select-end-select',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             {
@@ -7238,15 +7238,15 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -7256,9 +7256,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-start-input-keygen-textarea',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -7276,9 +7276,9 @@ push @$Errors, {type => 'in-select-start-input-keygen-textarea',
             
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -7327,9 +7327,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -7359,9 +7359,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -7370,9 +7370,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-select-start-select',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -7401,9 +7401,9 @@ push @$Errors, {type => 'in-select-start-select',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -7424,9 +7424,9 @@ push @$Errors, {type => 'in-select-start-select',
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-select-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -7440,9 +7440,9 @@ push @$Errors, {type => 'in-select-start-select',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-body-end-bc3ht3',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -7464,9 +7464,9 @@ return;
       }
     ) {
             push @$Errors, {type => 'in-table-body-end-table',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             {
@@ -7504,9 +7504,9 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-table-body-end-tbody-tfoot-thead',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             {
@@ -7541,15 +7541,15 @@ push @$OP, ['popped', [pop @$OE]];
       }
     ) {
             push @$Errors, {type => 'in-table-body-start-c3t3',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -7575,9 +7575,9 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-body-start-td-th',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 {
           my @popped;
           push @popped, pop @$OE while not ($OE->[-1]->{et} & (HTM_ELS | TBO_TFO_THE_ELS | TEM_ELS));
@@ -7631,9 +7631,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -7658,9 +7658,9 @@ $ORIGINAL_IM = $IM;
       
           } else {
             push @$Errors, {type => 'in-table-char',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
               pos ($token->{value}) = 0;
@@ -7717,9 +7717,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -7759,9 +7759,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                              level => 'm',
-                                              di => $TABLE_CHARS->[0]->{di},
-                                              index => $TABLE_CHARS->[0]->{index}};
+                                            level => 'm',
+                                            di => $TABLE_CHARS->[0]->{di},
+                        index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -7820,9 +7820,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -7874,9 +7874,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                              level => 'm',
-                                              di => $TABLE_CHARS->[0]->{di},
-                                              index => $TABLE_CHARS->[0]->{index}};
+                                            level => 'm',
+                                            di => $TABLE_CHARS->[0]->{di},
+                        index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -7935,9 +7935,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -7989,9 +7989,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                              level => 'm',
-                                              di => $TABLE_CHARS->[0]->{di},
-                                              index => $TABLE_CHARS->[0]->{index}};
+                                            level => 'm',
+                                            di => $TABLE_CHARS->[0]->{di},
+                        index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -8050,9 +8050,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -8104,9 +8104,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                              level => 'm',
-                                              di => $TABLE_CHARS->[0]->{di},
-                                              index => $TABLE_CHARS->[0]->{index}};
+                                            level => 'm',
+                                            di => $TABLE_CHARS->[0]->{di},
+                        index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -8165,9 +8165,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -8219,9 +8219,9 @@ $ORIGINAL_IM = $IM;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
             push @$Errors, {type => 'in-table-text-else',
-                                              level => 'm',
-                                              di => $TABLE_CHARS->[0]->{di},
-                                              index => $TABLE_CHARS->[0]->{index}};
+                                            level => 'm',
+                                            di => $TABLE_CHARS->[0]->{di},
+                        index => $TABLE_CHARS->[0]->{index}};
 
           for my $token (@$TABLE_CHARS) {
             
@@ -8280,9 +8280,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -8342,9 +8342,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-table-text-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -8366,9 +8366,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-doctype',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -8376,9 +8376,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         goto &{$ProcessIM->[IN_BODY_IM]->[$token->{type}]->[$token->{tn}]};
       
@@ -8388,9 +8388,9 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 aaa_foster ($token, $token->{tag_name});
         },
       ,
@@ -8398,9 +8398,9 @@ aaa_foster ($token, $token->{tag_name});
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-end-bc3ht6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -8408,13 +8408,13 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$Errors, {type => 'in-body-end-br',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node_br = {id => $NEXT_ID++,
@@ -8460,9 +8460,9 @@ push @$Errors, {type => 'in-body-end-br',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -8478,9 +8478,9 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-end-p',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node_p = {id => $NEXT_ID++,
                  token => $token,
@@ -8516,9 +8516,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -8547,9 +8547,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
       }
     ) {
             push @$Errors, {type => 'in-table-end-table',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
           } else {
             {
@@ -8567,9 +8567,9 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
@@ -8621,9 +8621,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -8632,9 +8632,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -8650,9 +8650,9 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-start-a',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 aaa_foster ($token, 'a', remove_from_afe_and_oe => 1);
           }
         
@@ -8719,9 +8719,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -8730,9 +8730,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -8751,9 +8751,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -8814,9 +8814,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -8825,9 +8825,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
@@ -8880,9 +8880,9 @@ push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -8894,9 +8894,9 @@ push @$AFE, '#marker';
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
@@ -8960,9 +8960,9 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
@@ -9026,9 +9026,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -9037,9 +9037,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -9081,13 +9081,13 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$Errors, {type => 'in-body-start-body',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
 ($OE->[-1]->{et} & (HTM_ELS)) or 
@@ -9118,9 +9118,9 @@ push @$Errors, {type => 'in-body-start-body',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -9129,9 +9129,9 @@ push @$Errors, {type => 'in-body-start-body',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -9147,9 +9147,9 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-start-button',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 {
           my @popped;
@@ -9206,9 +9206,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -9242,9 +9242,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -9309,9 +9309,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -9324,9 +9324,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         $FRAMESET_OK = 0;
       
@@ -9339,9 +9339,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (DD_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -9358,9 +9358,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (DT_ELS))) {
             push @$Errors, {type => 'in-body-start-dd-dt-2',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -9402,9 +9402,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -9447,9 +9447,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -9458,9 +9458,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-start-form',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ((
       do {
@@ -9499,9 +9499,9 @@ push @$OP, ['popped', [pop @$OE]];
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -9510,19 +9510,19 @@ push @$OP, ['popped', [pop @$OE]];
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$Errors, {type => 'in-body-start-c3fht6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -9532,13 +9532,13 @@ return;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$Errors, {type => 'in-body-start-frameset',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (($OE->[-1]->{et} & (HTM_ELS)) or 
 (@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS)))) {
@@ -9596,9 +9596,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -9607,9 +9607,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -9628,9 +9628,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -9644,9 +9644,9 @@ push @$Errors, {type => 'in-table-else',
 
           if ($OE->[-1]->{et} & (HHHHHH_ELS)) {
             push @$Errors, {type => 'in-body-start-h6',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
           }
         
@@ -9682,9 +9682,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -9693,9 +9693,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -9714,9 +9714,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -9771,13 +9771,13 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$Errors, {type => 'in-body-start-html',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -9803,9 +9803,9 @@ push @$Errors, {type => 'in-body-start-html',
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -9814,9 +9814,9 @@ push @$Errors, {type => 'in-body-start-html',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         $FRAMESET_OK = 0;
       
@@ -9852,9 +9852,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -9869,13 +9869,13 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 push @$Errors, {type => 'in-body-start-image',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node_img = {id => $NEXT_ID++,
@@ -9932,9 +9932,9 @@ push @$Errors, {type => 'in-body-start-image',
       )
     ) {
             push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
@@ -10003,9 +10003,9 @@ push @$Errors, {type => 'in-body-start-image',
         
           } else {
             push @$Errors, {type => 'in-table-start-input',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -10048,9 +10048,9 @@ push @$Errors, {type => 'in-body-start-image',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         $FRAMESET_OK = 0;
       
@@ -10063,9 +10063,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
             push @$Errors, {type => 'in-body-start-li',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -10105,9 +10105,9 @@ last;
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -10150,9 +10150,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -10161,9 +10161,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -10182,9 +10182,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -10227,9 +10227,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -10245,9 +10245,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 my $ns = MATHMLNS;
 
@@ -10327,9 +10327,9 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -10371,9 +10371,9 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -10437,9 +10437,9 @@ push @$Errors, {type => 'in-table-else',
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
           if (
@@ -10456,9 +10456,9 @@ push @$Errors, {type => 'in-table-else',
       }
     ) {
             push @$Errors, {type => 'in-body-start-nobr',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 aaa_foster ($token, 'nobr');
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
           }
@@ -10525,9 +10525,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -10536,9 +10536,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -10571,9 +10571,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -10588,9 +10588,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -10623,9 +10623,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -10640,9 +10640,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($Scripting) {
             
@@ -10716,9 +10716,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -10727,9 +10727,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($OE->[-1]->{et} == OPTION_EL) {
             push @$OP, ['popped', [pop @$OE]];
@@ -10768,9 +10768,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -10779,9 +10779,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -10800,9 +10800,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -10845,9 +10845,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = PLAINTEXT_STATE;
@@ -10857,9 +10857,9 @@ $State = PLAINTEXT_STATE;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -10878,9 +10878,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
             push @$Errors, {type => 'in-body-start-rp-rt',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
           }
@@ -10917,9 +10917,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -10928,9 +10928,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 
         my $node = {id => $NEXT_ID++,
@@ -10994,9 +10994,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },
@@ -11005,9 +11005,9 @@ push @$OE, $node;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
 my $ns = SVGNS;
 
@@ -11087,9 +11087,9 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-start-table',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -11107,9 +11107,9 @@ push @$Errors, {type => 'in-table-start-table',
             
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 return;
@@ -11153,9 +11153,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 
@@ -11199,9 +11199,9 @@ push @$OE, $node_tbody;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -11248,9 +11248,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -11271,9 +11271,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
         my $node = {id => $NEXT_ID++,
                  token => $token,
@@ -11306,9 +11306,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RCDATA_STATE;
@@ -11323,9 +11323,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-table-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if (
       do {
@@ -11344,9 +11344,9 @@ push @$Errors, {type => 'in-table-else',
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
             push @$Errors, {type => '-steps-close-a-p-element',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -11393,9 +11393,9 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 $State = RAWTEXT_STATE;
@@ -11422,9 +11422,9 @@ $ORIGINAL_IM = $IM;
       
           } else {
             push @$Errors, {type => 'in-table-char',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
             if (index ($token->{value}, "\x00") > -1) {
               pos ($token->{value}) = 0;
@@ -11481,9 +11481,9 @@ $ORIGINAL_IM = $IM;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -11521,9 +11521,9 @@ $ORIGINAL_IM = $IM;
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-template-end-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 return;
         },
       ,
@@ -11547,9 +11547,9 @@ return;
             push @$OP, ['stop-parsing'];
           } else {
             push @$Errors, {type => 'in-template-eof',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
 {
@@ -11678,9 +11678,9 @@ pop @$TEMPLATE_IMS;
             my $value = $1;
             while ($value =~ /(.)/gs) {
               push @$Errors, {type => 'in-body-null',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index} + $-[1]};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index} + $-[1]};
             }
             
           
@@ -11711,7 +11711,7 @@ pop @$TEMPLATE_IMS;
 push @$OP, ['doctype', $token => 0];
 
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'XXX', level => 'm',
+          push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                           di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
@@ -11725,7 +11725,7 @@ push @$OP, ['doctype', $token => 0];
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm',
+                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
                 unless ($IframeSrcdoc) {
                   my $sysid = $token->{system_identifier};
@@ -11742,12 +11742,12 @@ push @$OP, ['doctype', $token => 0];
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm',
+                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
               }
             }
           } else {
-            push @$Errors, {type => 'XXX', level => 'm',
+            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $pubid = $token->{public_identifier};
@@ -11783,7 +11783,7 @@ push @$OP, ['doctype', $token => 0];
             push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's',
                             di => $token->{di}, index => $token->{index}};
           } else {
-            push @$Errors, {type => 'XXX', level => 'm',
+            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $sysid = $token->{system_identifier};
@@ -11813,10 +11813,10 @@ push @$OP, ['doctype', $token => 0];
           my $token = $_;
 
           unless ($IframeSrcdoc) {
-            push @$Errors, {type => 'initial-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+            push @$Errors, {type => 'no DOCTYPE',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11835,10 +11835,10 @@ push @$OP, ['doctype', $token => 0];
           my $token = $_;
 
           unless ($IframeSrcdoc) {
-            push @$Errors, {type => 'initial-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+            push @$Errors, {type => 'no DOCTYPE',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11857,10 +11857,10 @@ push @$OP, ['doctype', $token => 0];
           my $token = $_;
 
           unless ($IframeSrcdoc) {
-            push @$Errors, {type => 'initial-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+            push @$Errors, {type => 'no DOCTYPE',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11885,10 +11885,10 @@ push @$OP, ['doctype', $token => 0];
         if (length $token->{value}) {
           
           unless ($IframeSrcdoc) {
-            push @$Errors, {type => 'initial-else',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+            push @$Errors, {type => 'no DOCTYPE',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
             push @$OP, ['set-compat-mode', 'quirks'];
             $QUIRKS = 1;
           }
@@ -11994,9 +11994,9 @@ push @$OP, ['script', $script->{id}];
         sub {
           my $token = $_;
 push @$Errors, {type => 'text-eof',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
 
           if ($OE->[-1]->{et} == SCRIPT_EL) {
             push @$OP, ['ignore-script', $OE->[-1]->{id}];
@@ -12017,9 +12017,9 @@ push @$OP, ['popped', [pop @$OE]];
 
           if ($token->{self_closing_flag}) {
             push @$Errors, {type => '-start-tag-self-closing-flag',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}};
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
           }
         
         },

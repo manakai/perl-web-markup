@@ -9,7 +9,6 @@ my $GeneratedPackageName = q{Web::HTML::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
-# XXX additional error indexes
 # XXX parse error types
 # XXX exposing input stream index -> (di, ci) mapping table
 
@@ -499,12 +498,12 @@ sub serialize_actions ($) {
         push @result, sprintf q[
           push @$Errors, {type => '%s', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
-        ], $_->{name};
+        ], $_->{error_type} // $_->{name};
       } else {
         push @result, sprintf q[
           push @$Errors, {type => '%s', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
-        ], $_->{name};
+        ], $_->{error_type} // $_->{name};
       }
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
@@ -1748,7 +1747,7 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'doctype-switch') {
       push @code, q{
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'XXX', level => 'm',
+          push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                           di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
@@ -1762,7 +1761,7 @@ sub actions_to_code ($;%) {
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm',
+                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
                 unless ($IframeSrcdoc) {
                   my $sysid = $token->{system_identifier};
@@ -1779,12 +1778,12 @@ sub actions_to_code ($;%) {
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'XXX', level => 'm',
+                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
               }
             }
           } else {
-            push @$Errors, {type => 'XXX', level => 'm',
+            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $pubid = $token->{public_identifier};
@@ -1820,7 +1819,7 @@ sub actions_to_code ($;%) {
             push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's',
                             di => $token->{di}, index => $token->{index}};
           } else {
-            push @$Errors, {type => 'XXX', level => 'm',
+            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $sysid = $token->{system_identifier};
@@ -1913,20 +1912,26 @@ sub actions_to_code ($;%) {
         push @code, sprintf q{%s ($token, $token->{tag_name});}, $method;
       }
     } elsif ($act->{type} eq 'parse error') {
+      my $index_code;
       if ($act->{name} eq 'in-table-text-else') {
-        push @code, sprintf q{push @$Errors, {type => '%s',
-                                              level => 'm',
-                                              di => $TABLE_CHARS->[0]->{di},
-                                              index => $TABLE_CHARS->[0]->{index}};},
-            $act->{name};
+        $index_code = q{di => $TABLE_CHARS->[0]->{di},
+                        index => $TABLE_CHARS->[0]->{index}};
       } else {
-        push @code, sprintf q{push @$Errors, {type => '%s',
-                                              level => 'm',
-                                              di => $token->{di},
-                                              index => $token->{index}%s};},
-            $act->{name},
+        $index_code = sprintf q{di => $token->{di},
+                                index => $token->{index}%s},
             defined $args{index_delta_code} ? ' + ' . $args{index_delta_code} : '';
       }
+      push @code, sprintf q{push @$Errors, {type => '%s',
+                                            level => 'm',
+                                            %s%s%s};},
+          $act->{error_type} // $act->{name},
+          (defined $act->{error_text} ?
+               sprintf q{text => $token->{%s},},
+                   map { my $s = $_; $s =~ tr/ /_/; $s } $act->{error_text} : ''),
+          (defined $act->{error_value} ?
+               sprintf q{value => $token->{%s},},
+                   map { my $s = $_; $s =~ tr/ /_/; $s } $act->{error_value} : ''),
+          $index_code;
     } elsif ($act->{type} eq 'switch the tokenizer') {
       push @code, switch_state_code $act->{state};
     } elsif ($act->{type} eq 'reconstruct the active formatting elements') {

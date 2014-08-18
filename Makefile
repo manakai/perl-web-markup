@@ -113,6 +113,10 @@ local/html-tree-constructor-expanded-no-isindex.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tree-constructor-expanded-no-isindex.json
 
+local/errors.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-errors/master/data/errors.json
+
 local/bin/jq:
 	mkdir -p local/bin
 	$(WGET) -O $@ http://stedolan.github.io/jq/download/linux64/jq
@@ -206,7 +210,7 @@ $(JSON_PS):
 
 test: test-deps test-main
 
-test-deps: deps local/elements.json
+test-deps: deps local/elements.json local/errors.json $(JSON_PS)
 
 test-main:
 	$(PROVE) t/tests/*.t t/modules/*.t t/parsing/*.t \
