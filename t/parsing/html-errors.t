@@ -14,6 +14,7 @@ use Web::DOM::Document;
 my $path = path (__FILE__)->parent->parent->parent->child
     ('local/errors.json');
 my $error_defs = json_bytes2perl $path->slurp;
+$error_defs = $error_defs->{errors} if defined $error_defs->{errors};
 
 for my $error_type (keys %$error_defs) {
   for my $test (@{$error_defs->{$error_type}->{parser_tests} or []}) {
@@ -25,13 +26,23 @@ for my $error_type (keys %$error_defs) {
       my $doc = new Web::DOM::Document;
       my $di = 45;
       $parser->di ($di);
-      $parser->parse_chars_start ($doc);
-      $parser->parse_chars_feed ($test->{input});
-      $parser->parse_chars_end;
+      if (defined $test->{context}) {
+        my $el = $doc->create_element ($test->{context});
+        $parser->parse_char_string_with_context ($test->{input}, $el => $doc);
+      } else {
+        $parser->parse_chars_start ($doc);
+        $parser->parse_chars_feed ($test->{input});
+        $parser->parse_chars_end;
+      }
 
+      if (grep { $_->{type} eq $error_type } @$errors) {
+        @$errors = grep { $_->{type} eq $error_type } @$errors;
+      }
       eq_or_diff $errors,
           [{type => $error_type,
             di => $di, index => $test->{index},
+            (defined $test->{text} ? (text => $test->{text}) : ()),
+            (defined $test->{value} ? (value => $test->{value}) : ()),
             level => $error_defs->{$error_type}->{default_level}}];
       done $c;
     } n => 1, name => [$test->{input}];

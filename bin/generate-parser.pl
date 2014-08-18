@@ -1926,11 +1926,15 @@ sub actions_to_code ($;%) {
                                             %s%s%s};},
           $act->{error_type} // $act->{name},
           (defined $act->{error_text} ?
-               sprintf q{text => $token->{%s},},
-                   map { my $s = $_; $s =~ tr/ /_/; $s } $act->{error_text} : ''),
+               sprintf q{text => $token->{%s},}, map {
+                 die "Unknown type |$_->[0]|" unless $_->[0] eq 'field';
+                 my $s = $_->[1]; $s =~ tr/ /_/; $s;
+               } $act->{error_text} : ''),
           (defined $act->{error_value} ?
-               sprintf q{value => $token->{%s},},
-                   map { my $s = $_; $s =~ tr/ /_/; $s } $act->{error_value} : ''),
+               sprintf q{value => $token->{%s},}, map {
+                 die "Unknown type |$_->[0]|" unless $_->[0] eq 'field';
+                 my $s = $_->[1]; $s =~ tr/ /_/; $s;
+               } $act->{error_value} : ''),
           $index_code;
     } elsif ($act->{type} eq 'switch the tokenizer') {
       push @code, switch_state_code $act->{state};

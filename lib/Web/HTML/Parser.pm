@@ -1150,7 +1150,7 @@ return;
         ## [26] after head;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1160,9 +1160,9 @@ return;
         ## [27] after head;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -1248,7 +1248,7 @@ push @$OE, $node_body;
         ## [31] after head;START:base,basefont bgsound link
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-start-b3lmnsstt',
+push @$Errors, {type => 'after head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1344,7 +1344,7 @@ push @$OE, $node;
         ## [34] after head;START:head
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-start-head',
+push @$Errors, {type => 'after head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1362,7 +1362,7 @@ return;
         ## [35] after head;START:meta
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-start-b3lmnsstt',
+push @$Errors, {type => 'after head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1415,7 +1415,7 @@ push @$OE, $HEAD_ELEMENT;
         ## [36] after head;START:noframes,style
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-start-b3lmnsstt',
+push @$Errors, {type => 'after head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1454,7 +1454,7 @@ $ORIGINAL_IM = $IM;
         ## [37] after head;START:script
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-start-b3lmnsstt',
+push @$Errors, {type => 'after head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1493,7 +1493,7 @@ $ORIGINAL_IM = $IM;
         ## [38] after head;START:template
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-start-b3lmnsstt',
+push @$Errors, {type => 'after head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1537,7 +1537,7 @@ push @$AFE, '#marker';
         ## [39] after head;START:title
         sub {
           my $token = $_;
-push @$Errors, {type => 'after-head-start-b3lmnsstt',
+push @$Errors, {type => 'after head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -13226,7 +13226,7 @@ $Token->{q<name>} .= q@�@;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13271,7 +13271,7 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13320,7 +13320,7 @@ $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13365,7 +13365,7 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13414,7 +13414,7 @@ $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13492,7 +13492,7 @@ $State = DOCTYPE_NAME_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13541,7 +13541,7 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13590,7 +13590,7 @@ $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13635,7 +13635,7 @@ push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -13684,7 +13684,7 @@ $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -15984,7 +15984,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = AFTER_DOCTYPE_NAME_STATE_S;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -15992,7 +15992,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16019,7 +16019,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_PU;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16027,7 +16027,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16054,7 +16054,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_PUB;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16062,7 +16062,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16089,7 +16089,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16097,7 +16097,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16124,7 +16124,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16132,7 +16132,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16157,7 +16157,7 @@ $State = AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE;
 $State = AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16165,7 +16165,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16192,7 +16192,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_SY;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16200,7 +16200,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16227,7 +16227,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_SYS;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16235,7 +16235,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16262,7 +16262,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_SYST;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16270,7 +16270,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16297,7 +16297,7 @@ $Temp .= $1;
 $State = AFTER_DOCTYPE_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16305,7 +16305,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16330,7 +16330,7 @@ $State = AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE;
 $State = AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-name-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16338,7 +16338,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16365,21 +16365,21 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-public-identifier-0022', level => 'm',
+          push @$Errors, {type => 'no space before literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-public-identifier-0027', level => 'm',
+          push @$Errors, {type => 'no space before literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-public-identifier-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16387,7 +16387,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16411,21 +16411,21 @@ if ($Input =~ /\G([\	\\ \
 $State = BEFORE_DOCTYPE_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-public-keyword-0022', level => 'm',
+          push @$Errors, {type => 'no space before literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<public_identifier>} = '';
 $State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-public-keyword-0027', level => 'm',
+          push @$Errors, {type => 'no space before literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<public_identifier>} = '';
 $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-public-keyword-003e', level => 'm',
+          push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16433,7 +16433,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-public-keyword-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16441,7 +16441,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16467,14 +16467,14 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-system-identifier-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16498,21 +16498,21 @@ if ($Input =~ /\G([\	\\ \
 $State = BEFORE_DOCTYPE_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-system-keyword-0022', level => 'm',
+          push @$Errors, {type => 'no space before literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-system-keyword-0027', level => 'm',
+          push @$Errors, {type => 'no space before literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'after-doctype-system-keyword-003e', level => 'm',
+          push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16520,7 +16520,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-doctype-system-keyword-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -16528,7 +16528,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16611,7 +16611,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-name-0022', level => 'm',
+          push @$Errors, {type => 'attr:no =', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16621,7 +16621,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-name-0027', level => 'm',
+          push @$Errors, {type => 'attr:no =', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16631,7 +16631,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-name-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16648,7 +16648,7 @@ $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16712,7 +16712,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-value-quoted-else', level => 'm',
+          push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -16726,7 +16726,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-value-quoted-else', level => 'm',
+          push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -16740,7 +16740,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-value-quoted-else', level => 'm',
+          push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -16754,7 +16754,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-value-quoted-else', level => 'm',
+          push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -16768,7 +16768,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-value-quoted-else', level => 'm',
+          push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -16782,7 +16782,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
-          push @$Errors, {type => 'after-attribute-value-quoted-else', level => 'm',
+          push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16792,7 +16792,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'after-attribute-value-quoted-else', level => 'm',
+          push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16803,7 +16803,7 @@ $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -16945,14 +16945,14 @@ $Attr->{q<name>} .= $1;
 $Attr->{q<name>} .= $1;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'attribute-name-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr->{q<name>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -17004,7 +17004,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -17077,7 +17077,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -17271,7 +17271,7 @@ if ($EOF) {
       
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -17465,7 +17465,7 @@ if ($EOF) {
       
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -17829,7 +17829,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -17908,7 +17908,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -17975,7 +17975,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -18018,7 +18018,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -18057,7 +18057,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -18130,7 +18130,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -18324,7 +18324,7 @@ if ($EOF) {
       
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -18518,7 +18518,7 @@ if ($EOF) {
       
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -18882,7 +18882,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -18961,7 +18961,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -19028,7 +19028,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -19071,7 +19071,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -19178,7 +19178,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -19355,7 +19355,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -19755,7 +19755,7 @@ if ($EOF) {
       
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -20155,7 +20155,7 @@ if ($EOF) {
       
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -20785,7 +20785,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -20968,7 +20968,7 @@ if ($EOF) {
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -21106,7 +21106,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -21222,7 +21222,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -21281,7 +21281,7 @@ $State = DOCTYPE_NAME_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -21314,7 +21314,7 @@ $Token->{q<public_identifier>} = '';
 $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'before-doctype-public-identifier-003e', level => 'm',
+          push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -21330,7 +21330,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -21359,7 +21359,7 @@ $Token->{q<system_identifier>} = '';
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'before-doctype-system-identifier-003e', level => 'm',
+          push @$Errors, {type => 'no DOCTYPE literal', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -21375,7 +21375,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -23961,7 +23961,7 @@ $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24066,7 +24066,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24104,7 +24104,7 @@ $State = BOGUS_DOCTYPE_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24494,7 +24494,7 @@ $State = COMMENT_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24533,7 +24533,7 @@ $State = COMMENT_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24593,7 +24593,7 @@ $State = COMMENT_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24639,7 +24639,7 @@ $State = COMMENT_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24683,7 +24683,7 @@ $State = COMMENT_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24719,7 +24719,7 @@ $Token->{q<data>} .= q@�@;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -24759,7 +24759,7 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -26186,7 +26186,7 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -27529,7 +27529,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -27658,7 +27658,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -27776,7 +27776,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 if ($EOF) {
 $State = DATA_STATE;
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -27900,7 +27900,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 if ($EOF) {
 $State = DATA_STATE;
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -27966,7 +27966,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -28027,7 +28027,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -28099,7 +28099,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -28159,7 +28159,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -28223,7 +28223,7 @@ $State = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -28666,7 +28666,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -28722,7 +28722,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -28936,7 +28936,7 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -29038,7 +29038,7 @@ if ($EOF) {
         
 $State = DATA_STATE;
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -29164,7 +29164,7 @@ if ($EOF) {
         
 $State = DATA_STATE;
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -29219,7 +29219,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
 if ($EOF) {
 $State = DATA_STATE;
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -29278,7 +29278,7 @@ $State = SCRIPT_DATA_ESCAPED_STATE;
 if ($EOF) {
 $State = DATA_STATE;
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 
@@ -29615,7 +29615,7 @@ $State = ATTR_NAME_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
@@ -29692,7 +29692,7 @@ $Token->{q<tag_name>} .= q@�@;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'EOF', level => 'm',
+          push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
