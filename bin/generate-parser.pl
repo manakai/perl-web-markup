@@ -486,15 +486,16 @@ sub switch_state_code ($) {
   return join "\n", @code;
 } # switch_state_code
 
-sub serialize_actions ($) {
+sub serialize_actions ($;%) {
+  my ($acts, %args) = @_;
   ## Generate |return 1| to abort tokenizer, |return 0| to abort
   ## current steps.
   my @result;
   my $reconsume;
-  for (@{$_[0]->{actions}}) {
+  for (@{$acts->{actions}}) {
     my $type = $_->{type};
     if ($type eq 'parse error') {
-      if ($_->{name} eq 'EOF') {
+      if ($args{in_eof}) {
         push @result, sprintf q[
           push @$Errors, {type => '%s', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
@@ -685,7 +686,8 @@ sub serialize_actions ($) {
         push @result, sprintf q[$Temp .= %s;], $value;
       } elsif ($type eq 'set-to-temp') {
         push @result, sprintf q[$Temp = %s;], $value;
-        my $index_delta = q{$Offset + (pos $Input) - (length $1)};
+        my $index_delta = q{$Offset + (pos $Input)};
+        $index_delta .= q{ - (length $1)} unless $args{in_eof};
         if (defined $_->{value}) {
           $index_delta .= sprintf q{ - %d}, $_->{index_offset};
         }
@@ -960,7 +962,7 @@ $case .= q[
     { ## EOF
       my $case = q<e {> . "\n";
       $case .= q[if ($EOF) {] . "\n";
-      $case .= serialize_actions ($defs->{states}->{$state}->{conds}->{$eof_cond});
+      $case .= serialize_actions ($defs->{states}->{$state}->{conds}->{$eof_cond}, in_eof => 1);
       $case .= q[} else {]."\n";
       $case .= q[return 1;]."\n";
       $case .= q[}]."\n";

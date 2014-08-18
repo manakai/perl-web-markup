@@ -1620,7 +1620,7 @@ push @$OE, $node_body;
         ## [42] before head;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'before-head-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1630,9 +1630,9 @@ return;
         ## [43] before head;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'before-head-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -1819,7 +1819,7 @@ push @$OE, $node_body;
         ## [50] before html;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'before-html-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -1829,9 +1829,9 @@ return;
         ## [51] before html;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'before-html-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -13262,7 +13262,7 @@ $State = AFTER_DOCTYPE_PUBLIC_ID_STATE;
 $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-public-identifier-double-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -13308,7 +13308,7 @@ $State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-public-identifier-double-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -13356,7 +13356,7 @@ $State = AFTER_DOCTYPE_PUBLIC_ID_STATE;
 $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-public-identifier-single-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -13402,7 +13402,7 @@ $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-public-identifier-single-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -13438,7 +13438,7 @@ if ($Input =~ /\G([\	\\ \
 $State = BEFORE_DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'doctype-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -13453,11 +13453,11 @@ $Token->{q<name>} = q@�@;
 $State = DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-doctype-name-003e', level => 'm',
+          push @$Errors, {type => 'no DOCTYPE name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -13469,7 +13469,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
-          push @$Errors, {type => 'doctype-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -13480,7 +13480,7 @@ $Token->{q<name>} = chr ((ord $1) + 32);
 $State = DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'doctype-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -13532,7 +13532,7 @@ $State = AFTER_DOCTYPE_SYSTEM_ID_STATE;
 $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-system-identifier-double-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -13578,7 +13578,7 @@ $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-system-identifier-double-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -13626,7 +13626,7 @@ $State = AFTER_DOCTYPE_SYSTEM_ID_STATE;
 $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-system-identifier-single-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -13672,7 +13672,7 @@ $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'doctype-system-identifier-single-quoted-003e', level => 'm',
+          push @$Errors, {type => 'parser:literal not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -14662,7 +14662,7 @@ $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14683,7 +14683,7 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14701,7 +14701,7 @@ $State = RCDATA_STATE;
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14713,7 +14713,7 @@ $State = RCDATA_STATE_CR;
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14726,7 +14726,7 @@ $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14744,8 +14744,8 @@ $State = RCDATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -14796,7 +14796,7 @@ $Temp .= $1;
 $State = RCDATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14834,7 +14834,7 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14869,7 +14869,7 @@ $State = RCDATA_STATE;
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14898,7 +14898,7 @@ $State = RCDATA_STATE_CR;
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14928,7 +14928,7 @@ $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -14963,8 +14963,8 @@ $State = RCDATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -15032,7 +15032,7 @@ $Temp .= $1;
 $State = RCDATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15070,7 +15070,7 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15105,7 +15105,7 @@ $State = RCDATA_STATE;
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15134,7 +15134,7 @@ $State = RCDATA_STATE_CR;
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15164,7 +15164,7 @@ $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15199,8 +15199,8 @@ $State = RCDATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -15585,7 +15585,7 @@ $Temp .= $1;
 $State = RCDATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15606,7 +15606,7 @@ $State = RCDATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15624,7 +15624,7 @@ $State = RCDATA_STATE;
 $State = RCDATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15636,7 +15636,7 @@ $State = RCDATA_STATE_CR;
 $State = CHARREF_IN_RCDATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15649,7 +15649,7 @@ $State = RCDATA_LESS_THAN_SIGN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -15667,8 +15667,8 @@ $State = RCDATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -16730,7 +16730,7 @@ $State = ATTR_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16744,7 +16744,7 @@ $State = ATTR_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16758,7 +16758,7 @@ $State = ATTR_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16772,7 +16772,7 @@ $State = ATTR_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-003d', level => 'm',
+          push @$Errors, {type => 'parser:no attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -16933,13 +16933,13 @@ $Attr->{q<name>} .= chr ((ord $1) + 32);
 $Attr->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'attribute-name-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr->{q<name>} .= $1;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'attribute-name-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr->{q<name>} .= $1;
@@ -17026,7 +17026,7 @@ $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17038,7 +17038,7 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17047,14 +17047,14 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17063,7 +17063,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17072,8 +17072,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
@@ -17118,7 +17118,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17147,7 +17147,7 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17173,7 +17173,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17197,7 +17197,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17223,7 +17223,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17249,8 +17249,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -17312,7 +17312,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17341,7 +17341,7 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17367,7 +17367,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17391,7 +17391,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17417,7 +17417,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -17443,8 +17443,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -17857,7 +17857,7 @@ $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17869,7 +17869,7 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17878,14 +17878,14 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17894,7 +17894,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -17903,8 +17903,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
@@ -18079,7 +18079,7 @@ $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18091,7 +18091,7 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18100,7 +18100,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18109,14 +18109,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18125,8 +18125,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
@@ -18171,7 +18171,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18200,7 +18200,7 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18226,7 +18226,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18252,7 +18252,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18276,7 +18276,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18302,8 +18302,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -18365,7 +18365,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18394,7 +18394,7 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18420,7 +18420,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18446,7 +18446,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18470,7 +18470,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -18496,8 +18496,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -18910,7 +18910,7 @@ $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18922,7 +18922,7 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18931,7 +18931,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18940,14 +18940,14 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -18956,8 +18956,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
@@ -19147,31 +19147,31 @@ push @$Tokens, $Token;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -19200,7 +19200,7 @@ $Temp .= $1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -19213,33 +19213,33 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -19248,43 +19248,43 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -19329,19 +19329,19 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -19350,8 +19350,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
@@ -19396,7 +19396,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19426,7 +19426,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19450,7 +19450,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19474,7 +19474,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19497,13 +19497,13 @@ $State = BEFORE_ATTR_NAME_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19529,7 +19529,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19552,13 +19552,13 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19581,13 +19581,13 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19610,13 +19610,13 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19678,7 +19678,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19701,13 +19701,13 @@ push @$Tokens, $Token;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19733,8 +19733,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -19796,7 +19796,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19826,7 +19826,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19850,7 +19850,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19874,7 +19874,7 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19897,13 +19897,13 @@ $State = BEFORE_ATTR_NAME_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19929,7 +19929,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19952,13 +19952,13 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -19981,13 +19981,13 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -20010,13 +20010,13 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -20078,7 +20078,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -20101,13 +20101,13 @@ push @$Tokens, $Token;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -20133,8 +20133,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -20513,7 +20513,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -20559,7 +20559,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -20605,7 +20605,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -20651,7 +20651,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -20697,7 +20697,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -20813,7 +20813,7 @@ $Temp .= $1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -20826,33 +20826,33 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -20861,43 +20861,43 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -20942,19 +20942,19 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -20963,8 +20963,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
@@ -21062,7 +21062,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -21070,7 +21070,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -21078,7 +21078,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -21086,7 +21086,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -21094,7 +21094,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -21184,35 +21184,35 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
-          push @$Errors, {type => 'attribute-value-unquoted-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -21261,7 +21261,7 @@ $Token->{q<name>} = q@�@;
 $State = DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'before-doctype-name-003e', level => 'm',
+          push @$Errors, {type => 'no DOCTYPE name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -21322,7 +21322,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'before-doctype-public-identifier-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -21367,7 +21367,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'before-doctype-system-identifier-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -23914,7 +23914,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-name-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -23924,7 +23924,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-name-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -23934,7 +23934,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-name-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -23944,7 +23944,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-name-003d', level => 'm',
+          push @$Errors, {type => 'parser:no attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -23997,21 +23997,21 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-value-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-value-003d', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-value-003e', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DATA_STATE;
@@ -24055,7 +24055,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([\`])/gcs) {
 
-          push @$Errors, {type => 'before-attribute-value-0060', level => 'm',
+          push @$Errors, {type => 'bad attribute value', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -24096,7 +24096,7 @@ $State = DATA_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'between-doctype-public-and-system-identifiers-else', level => 'm',
+          push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<force_quirks_flag>} = 1;
@@ -24317,7 +24317,7 @@ $State = RCDATA_STATE;
 } else {
 if ($EOF) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$TempIndex = $Offset + (pos $Input) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -24448,7 +24448,7 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 $Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$TempIndex = $Offset + (pos $Input) - 1;
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                         value => $Temp,
@@ -24563,7 +24563,7 @@ $Token->{q<data>} .= q@--�@;
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'comment-end-else', level => 'm',
+          push @$Errors, {type => 'parser:comment not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<data>} .= q@--@;
@@ -24572,19 +24572,19 @@ $Token->{q<data>} .= q@
 $State = COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\!])/gcs) {
 
-          push @$Errors, {type => 'comment-end-0021', level => 'm',
+          push @$Errors, {type => 'parser:comment not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = COMMENT_END_BANG_STATE;
 } elsif ($Input =~ /\G([\-])/gcs) {
 
-          push @$Errors, {type => 'comment-end-002d', level => 'm',
+          push @$Errors, {type => 'parser:comment not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<data>} .= q@-@;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'comment-end-else', level => 'm',
+          push @$Errors, {type => 'parser:comment not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<data>} .= q@--@;
@@ -24627,7 +24627,7 @@ $Token->{q<data>} .= q@-�@;
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'comment-start-dash-003e', level => 'm',
+          push @$Errors, {type => 'parser:comment closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DATA_STATE;
@@ -24672,7 +24672,7 @@ $Token->{q<data>} .= q@�@;
 $State = COMMENT_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'comment-start-003e', level => 'm',
+          push @$Errors, {type => 'parser:comment closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DATA_STATE;
@@ -24827,7 +24827,7 @@ $Temp .= $1;
 $State = DATA_STATE___CHARREF_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -24848,7 +24848,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -24866,7 +24866,7 @@ $State = DATA_STATE;
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -24878,7 +24878,7 @@ $State = DATA_STATE_CR;
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -24891,7 +24891,7 @@ $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'bare hcro', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -24909,8 +24909,8 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-before-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -24961,7 +24961,7 @@ $Temp .= $1;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -24999,7 +24999,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25034,7 +25034,7 @@ $State = DATA_STATE;
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25063,7 +25063,7 @@ $State = DATA_STATE_CR;
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25093,7 +25093,7 @@ $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25128,8 +25128,8 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-decimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
@@ -25197,7 +25197,7 @@ $Temp .= $1;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25235,7 +25235,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25270,7 +25270,7 @@ $State = DATA_STATE;
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25299,7 +25299,7 @@ $State = DATA_STATE_CR;
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25329,7 +25329,7 @@ $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
+          push @$Errors, {type => 'no refc', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25364,8 +25364,8 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-hexadecimal-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -25750,7 +25750,7 @@ $Temp .= $1;
 $State = DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25771,7 +25771,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25789,7 +25789,7 @@ $State = DATA_STATE;
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25801,7 +25801,7 @@ $State = DATA_STATE_CR;
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25814,7 +25814,7 @@ $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
+          push @$Errors, {type => 'bare nero', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -25832,8 +25832,8 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'character-reference-number-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -26142,7 +26142,7 @@ $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'end-tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare etago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26154,7 +26154,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'end-tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare etago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26167,13 +26167,13 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'end-tag-open-003e', level => 'm',
+          push @$Errors, {type => 'empty end tag', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'end-tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare etago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26226,7 +26226,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1);
 $State = MDO_STATE_D;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26239,7 +26239,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26253,7 +26253,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26266,7 +26266,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26280,8 +26280,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26313,7 +26313,7 @@ $Token->{q<data>} = '';
 $State = COMMENT_START_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26326,7 +26326,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26340,7 +26340,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26353,7 +26353,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26367,8 +26367,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26399,7 +26399,7 @@ $Temp .= $1;
 $State = MDO_STATE_DO;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26412,7 +26412,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26426,7 +26426,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26439,7 +26439,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26453,8 +26453,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26485,7 +26485,7 @@ $Temp .= $1;
 $State = MDO_STATE_DOC;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26498,7 +26498,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26512,7 +26512,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26525,7 +26525,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26539,8 +26539,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26571,7 +26571,7 @@ $Temp .= $1;
 $State = MDO_STATE_DOCT;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26584,7 +26584,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26598,7 +26598,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26611,7 +26611,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26625,8 +26625,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26657,7 +26657,7 @@ $Temp .= $1;
 $State = MDO_STATE_DOCTY;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26670,7 +26670,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26684,7 +26684,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26697,7 +26697,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26711,8 +26711,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26743,7 +26743,7 @@ $Temp .= $1;
 $State = MDO_STATE_DOCTYP;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26756,7 +26756,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26770,7 +26770,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26783,7 +26783,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26797,8 +26797,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26827,7 +26827,7 @@ $State = DOCTYPE_STATE;
 $State = DOCTYPE_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26840,7 +26840,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26854,7 +26854,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26867,7 +26867,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26881,8 +26881,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26910,7 +26910,7 @@ $Temp .= $1;
 $State = MDO_STATE__5BC;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26923,7 +26923,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26937,7 +26937,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26950,7 +26950,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -26964,8 +26964,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -26993,7 +26993,7 @@ $Temp .= $1;
 $State = MDO_STATE__5BCD;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27006,7 +27006,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27020,7 +27020,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27033,7 +27033,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27047,8 +27047,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -27076,7 +27076,7 @@ $Temp .= $1;
 $State = MDO_STATE__5BCDA;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27089,7 +27089,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27103,7 +27103,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27116,7 +27116,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27130,8 +27130,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -27159,7 +27159,7 @@ $Temp .= $1;
 $State = MDO_STATE__5BCDAT;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27172,7 +27172,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27186,7 +27186,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27199,7 +27199,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27213,8 +27213,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -27242,7 +27242,7 @@ $Temp .= $1;
 $State = MDO_STATE__5BCDATA;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27255,7 +27255,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27269,7 +27269,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27282,7 +27282,7 @@ push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27296,8 +27296,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -27322,7 +27322,7 @@ return 0;
 $StateActions->[MDO_STATE__5BCDATA] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27335,7 +27335,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27349,7 +27349,7 @@ $Token->{q<data>} .= q@
 $State = BOGUS_COMMENT_STATE_CR;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27373,7 +27373,7 @@ $State = DATA_STATE;
           }
         
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27386,7 +27386,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= $1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
+          push @$Errors, {type => 'bogus comment', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -27400,8 +27400,8 @@ $Token->{q<data>} .= $1;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'markup-declaration-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bogus comment', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 
         $Token = {type => COMMENT_TOKEN, tn => 0,
@@ -29511,7 +29511,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -29526,17 +29526,17 @@ $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-0022', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -29546,11 +29546,11 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-0027', level => 'm',
+          push @$Errors, {type => 'bad attribute name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -29560,17 +29560,17 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = SELF_CLOSING_START_TAG_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-003c', level => 'm',
+          push @$Errors, {type => 'tag not closed', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -29580,11 +29580,11 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
-          push @$Errors, {type => 'before-attribute-name-003d', level => 'm',
+          push @$Errors, {type => 'parser:no attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -29594,7 +29594,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([ABCDEFGHJKNQRVWZILMOPSTUXY])/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -29604,7 +29604,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'self-closing-start-tag-else', level => 'm',
+          push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Attr = {di => $DI};
@@ -30292,7 +30292,7 @@ $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
-          push @$Errors, {type => 'tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare stago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DATA_STATE;
@@ -30312,7 +30312,7 @@ $State = DATA_STATE;
         
 } elsif ($Input =~ /\G([\])/gcs) {
 
-          push @$Errors, {type => 'tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare stago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -30329,7 +30329,7 @@ $State = DATA_STATE;
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-          push @$Errors, {type => 'tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare stago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -30340,7 +30340,7 @@ $State = DATA_STATE_CR;
 $State = CHARREF_IN_DATA_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
-          push @$Errors, {type => 'tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare stago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -30352,7 +30352,7 @@ $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
-          push @$Errors, {type => 'tag-open-003f', level => 'm',
+          push @$Errors, {type => 'pio', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 
@@ -30364,7 +30364,7 @@ $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= $1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
-          push @$Errors, {type => 'tag-open-else', level => 'm',
+          push @$Errors, {type => 'bare stago', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DATA_STATE;
@@ -30381,8 +30381,8 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 
-          push @$Errors, {type => 'tag-open-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
+          push @$Errors, {type => 'bare stago', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
 
