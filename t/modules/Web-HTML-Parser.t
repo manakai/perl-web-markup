@@ -322,13 +322,11 @@ sub _parse_char_string_onerror_old : Test(2) {
     push @error, {@_};
   });
   $parser->parse_char_string ($input => $doc);
-  ok $error[0]->{token};
-  delete $error[0]->{token};
+  ok not $error[0]->{token};
   eq_or_diff \@error, [{
     type => 'no DOCTYPE',
     level => 'm',
-    line => 1,
-    column => 15,
+    di => -1, index => 0,
   }];
 } # _parse_char_string_onerror_old
 
@@ -342,13 +340,11 @@ sub _parse_char_string_onerror_new : Test(2) {
     push @error, {@_};
   });
   $parser->parse_char_string ($input => $doc);
-  ok $error[0]->{token};
-  delete $error[0]->{token};
+  ok not $error[0]->{token};
   eq_or_diff \@error, [{
     type => 'no DOCTYPE',
     level => 'm',
-    line => 1,
-    column => 15,
+    di => -1, index => 0,
   }];
 } # _parse_char_string_onerror_new
 
@@ -441,13 +437,11 @@ sub _parse_byte_string_onerror_new : Test(2) {
     push @error, {@_};
   });
   $parser->parse_byte_string ('utf-8', $input => $doc);
-  ok $error[0]->{token};
-  delete $error[0]->{token};
+  ok not $error[0]->{token};
   eq_or_diff \@error, [{
     type => 'no DOCTYPE',
     level => 'm',
-    line => 1,
-    column => 15,
+    di => -1, index => 0,
   }];
 } # _parse_byte_string_onerror_new
 
