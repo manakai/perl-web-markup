@@ -49,7 +49,7 @@ for my $error_type (keys %$error_defs) {
             di => $di, index => $test->{index},
             (defined $test->{text} ? (text => $test->{text}) : ()),
             (defined $test->{value} ? (value => $test->{value}) : ()),
-            level => $error_defs->{$error_type}->{default_level}}];
+            level => $test->{level} || $error_defs->{$error_type}->{default_level}}];
       done $c;
     } n => 1, name => [$test->{input}];
   }

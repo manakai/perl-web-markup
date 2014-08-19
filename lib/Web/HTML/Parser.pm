@@ -913,9 +913,9 @@ push @$Errors, {type => 'after-after-body-else',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1102,9 +1102,9 @@ push @$Errors, {type => 'after-body-else',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1268,7 +1268,7 @@ push @$OE, $HEAD_ELEMENT;
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -1295,9 +1295,9 @@ push @$OE, $HEAD_ELEMENT;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1329,9 +1329,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1350,9 +1350,9 @@ push @$Errors, {type => 'after head',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1382,7 +1382,7 @@ push @$OE, $HEAD_ELEMENT;
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -1443,9 +1443,9 @@ $ORIGINAL_IM = $IM;
 @$OE = grep { $_ ne $HEAD_ELEMENT } @$OE;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1482,9 +1482,9 @@ $ORIGINAL_IM = $IM;
 @$OE = grep { $_ ne $HEAD_ELEMENT } @$OE;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1526,9 +1526,9 @@ push @$AFE, '#marker';
 @$OE = grep { $_ ne $HEAD_ELEMENT } @$OE;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1565,9 +1565,9 @@ $ORIGINAL_IM = $IM;
 @$OE = grep { $_ ne $HEAD_ELEMENT } @$OE;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1738,9 +1738,9 @@ push @$OE, $node;
 $HEAD_ELEMENT = $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -1925,9 +1925,9 @@ push @$OE, $node;
 push @$OP, ['appcache', $token->{attrs}->{manifest}];
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -2276,7 +2276,7 @@ push @$Errors, {type => '</br>',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -2787,9 +2787,9 @@ push @$OP, ['stop-parsing'];
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -2866,9 +2866,9 @@ push @$OE, $node;
       
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -2942,9 +2942,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -2989,9 +2989,9 @@ push @$OE, $node;
 push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3037,7 +3037,7 @@ push @$AFE, '#marker';
           
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -3097,9 +3097,9 @@ push @$OE, $node;
       
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3141,9 +3141,9 @@ push @$Errors, {type => 'duplicate body/html tag',
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3210,9 +3210,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3230,9 +3230,9 @@ push @$Errors, {type => 'in body',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3346,9 +3346,9 @@ last;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3443,9 +3443,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3499,9 +3499,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3566,9 +3566,9 @@ push @$OP, ['popped', [pop @$OE]];
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3623,7 +3623,7 @@ push @$OE, $node;
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -3664,9 +3664,9 @@ push @$Errors, {type => 'duplicate body/html tag',
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3694,9 +3694,9 @@ push @$Errors, {type => 'duplicate body/html tag',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3731,7 +3731,7 @@ push @$Errors, {type => 'image',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -3774,7 +3774,7 @@ push @$Errors, {type => 'image',
         
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -3883,9 +3883,9 @@ last;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3941,9 +3941,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3980,7 +3980,7 @@ my $ns = MATHMLNS;
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -3991,7 +3991,7 @@ my $ns = MATHMLNS;
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -4037,7 +4037,7 @@ delete $token->{self_closing_flag};
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -4116,9 +4116,9 @@ push @$OE, $node;
       
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4143,9 +4143,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4202,9 +4202,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4235,9 +4235,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4293,9 +4293,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4346,9 +4346,9 @@ $State = PLAINTEXT_STATE;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4404,9 +4404,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4436,7 +4436,7 @@ my $ns = SVGNS;
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -4447,7 +4447,7 @@ my $ns = SVGNS;
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -4526,9 +4526,9 @@ delete $token->{self_closing_flag};
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4574,9 +4574,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4648,9 +4648,9 @@ $ORIGINAL_IM = $IM;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4846,9 +4846,9 @@ return;
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5068,9 +5068,9 @@ return;
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5236,9 +5236,9 @@ return;
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5274,7 +5274,7 @@ return;
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -5532,7 +5532,7 @@ last;
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -5543,7 +5543,7 @@ last;
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -5632,7 +5632,7 @@ push @$Errors, {type => 'element not closed before implied ancestor end tag',
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -5643,7 +5643,7 @@ push @$Errors, {type => 'element not closed before implied ancestor end tag',
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -5748,7 +5748,7 @@ $token->{attrs}->{q@size@}) {
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -5759,7 +5759,7 @@ $token->{attrs}->{q@size@}) {
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -5850,7 +5850,7 @@ delete $token->{self_closing_flag};
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -5861,7 +5861,7 @@ delete $token->{self_closing_flag};
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -6025,9 +6025,9 @@ push @$Errors, {type => 'in frameset',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6052,7 +6052,7 @@ return;
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -6078,9 +6078,9 @@ return;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6203,9 +6203,9 @@ push @$Errors, {type => 'in noscript',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6404,7 +6404,7 @@ push @$OP, ['popped', [pop @$OE]];
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -6420,9 +6420,9 @@ push @$Errors, {type => 'in head:head',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6447,7 +6447,7 @@ return;
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -6495,9 +6495,9 @@ return;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6557,9 +6557,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6584,9 +6584,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6618,9 +6618,9 @@ push @$OE, $node;
 push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6655,9 +6655,9 @@ push @$AFE, '#marker';
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6877,9 +6877,9 @@ push @$OP, ['popped', [pop @$OE]];
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6931,9 +6931,9 @@ push @$OE, $node;
 push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -7243,9 +7243,9 @@ push @$Errors, {type => 'in select',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -7275,9 +7275,9 @@ push @$Errors, {type => 'element not closed before implied ancestor end tag',
     ) {
             
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -7326,9 +7326,9 @@ return;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -7358,9 +7358,9 @@ push @$OE, $node;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -7400,9 +7400,9 @@ push @$Errors, {type => 'parser:element not nestable',
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -7546,9 +7546,9 @@ push @$OP, ['popped', [pop @$OE]];
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -7630,9 +7630,9 @@ push @$OE, $node_tr;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -8446,7 +8446,7 @@ push @$Errors, {type => '</br>',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -8620,9 +8620,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -8718,9 +8718,9 @@ push @$OE, $node;
       
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -8813,9 +8813,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -8879,9 +8879,9 @@ push @$OE, $node;
 push @$AFE, '#marker';
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -8946,7 +8946,7 @@ push @$Errors, {type => 'in table',
           
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -9025,9 +9025,9 @@ push @$OE, $node;
       
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9070,7 +9070,7 @@ push @$Errors, {type => 'in table',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -9117,9 +9117,9 @@ push @$Errors, {type => 'duplicate body/html tag',
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9205,9 +9205,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9241,9 +9241,9 @@ push @$AFE, '#marker';
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9308,9 +9308,9 @@ push @$OE, $node_colgroup;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9446,9 +9446,9 @@ last;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9498,9 +9498,9 @@ push @$OP, ['popped', [pop @$OE]];
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9519,9 +9519,9 @@ push @$Errors, {type => 'in body',
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9595,9 +9595,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9681,9 +9681,9 @@ push @$OP, ['popped', [pop @$OE]];
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9757,7 +9757,7 @@ push @$Errors, {type => 'in table',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -9802,9 +9802,9 @@ push @$Errors, {type => 'duplicate body/html tag',
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9851,9 +9851,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9907,7 +9907,7 @@ push @$Errors, {type => 'image',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -9980,7 +9980,7 @@ push @$Errors, {type => 'image',
         
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -10035,7 +10035,7 @@ push @$Errors, {type => 'image',
         
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -10149,9 +10149,9 @@ last;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10226,9 +10226,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10269,7 +10269,7 @@ my $ns = MATHMLNS;
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -10280,7 +10280,7 @@ my $ns = MATHMLNS;
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -10360,7 +10360,7 @@ push @$Errors, {type => 'in table',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -10404,7 +10404,7 @@ push @$Errors, {type => 'in table',
 
 
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -10524,9 +10524,9 @@ push @$OE, $node;
       
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10570,9 +10570,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10622,9 +10622,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10715,9 +10715,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10767,9 +10767,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10844,9 +10844,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10916,9 +10916,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10993,9 +10993,9 @@ push @$OE, $node;
         
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11029,7 +11029,7 @@ my $ns = SVGNS;
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -11040,7 +11040,7 @@ my $ns = SVGNS;
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -11106,9 +11106,9 @@ push @$Errors, {type => 'parser:element not nestable',
     ) {
             
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11152,9 +11152,9 @@ return;
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11247,9 +11247,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11305,9 +11305,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11392,9 +11392,9 @@ push @$Errors, {type => 'in table',
 push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11711,7 +11711,8 @@ pop @$TEMPLATE_IMS;
 push @$OP, ['doctype', $token => 0];
 
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+          push @$Errors, {type => 'bad DOCTYPE name', level => 'm',
+                          value => $token->{name},
                           di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
@@ -11721,11 +11722,11 @@ push @$OP, ['doctype', $token => 0];
           if (defined $OPPublicIDToSystemID->{$token->{public_identifier}}) {
             if (defined $token->{system_identifier}) {
               if ($OPPublicIDToSystemID->{$token->{public_identifier}} eq $token->{system_identifier}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                push @$Errors, {type => 'obsolete permitted DOCTYPE',
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
                 unless ($IframeSrcdoc) {
                   my $sysid = $token->{system_identifier};
@@ -11738,16 +11739,16 @@ push @$OP, ['doctype', $token => 0];
               }
             } else {
               if ($OPPublicIDOnly->{$token->{public_identifier}}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                push @$Errors, {type => 'obsolete permitted DOCTYPE',
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
               }
             }
           } else {
-            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+            push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $pubid = $token->{public_identifier};
@@ -11780,10 +11781,10 @@ push @$OP, ['doctype', $token => 0];
           }
         } elsif (defined $token->{system_identifier}) {
           if ($token->{system_identifier} eq 'about:legacy-compat') {
-            push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's',
+            push @$Errors, {type => 'legacy DOCTYPE', level => 's',
                             di => $token->{di}, index => $token->{index}};
           } else {
-            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+            push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $sysid = $token->{system_identifier};
@@ -12016,9 +12017,9 @@ push @$OP, ['popped', [pop @$OE]];
           my $token = $_;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => '-start-tag-self-closing-flag',
+            push @$Errors, {type => 'nestc',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -12206,7 +12207,9 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               }
             }
             unless (defined $formatting_element_i) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:in afe but not in open elements',
+                              value => $token->{tag_name},
+                              level => 'm',
                               di => $token->{di}, index => $token->{index}};
               splice @$AFE, $formatting_element_afe_i, 1, ();
               ## $args{remove_from_afe_and_oe} - nop
@@ -12214,7 +12217,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               return;
             }
             if ($beyond_scope) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:formatting element not in scope',
+                              level => 'm', value => $token->{tag_name},
                               di => $token->{di}, index => $token->{index}};
               if ($args{remove_from_afe_and_oe}) {
                 splice @$AFE, $formatting_element_afe_i, 1, ();
@@ -12225,7 +12229,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               return;
             }
             unless ($formatting_element eq $OE->[-1]) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:formatting element not current',
+                              level => 'm', value => $token->{tag_name},
                               di => $token->{di}, index => $token->{index}};
             }
             unless (defined $furthest_block) {
@@ -12408,7 +12413,9 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               }
             }
             unless (defined $formatting_element_i) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:in afe but not in open elements',
+                              value => $token->{tag_name},
+                              level => 'm',
                               di => $token->{di}, index => $token->{index}};
               splice @$AFE, $formatting_element_afe_i, 1, ();
               ## $args{remove_from_afe_and_oe} - nop
@@ -12416,7 +12423,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               return;
             }
             if ($beyond_scope) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:formatting element not in scope',
+                              level => 'm', value => $token->{tag_name},
                               di => $token->{di}, index => $token->{index}};
               if ($args{remove_from_afe_and_oe}) {
                 splice @$AFE, $formatting_element_afe_i, 1, ();
@@ -12427,7 +12435,8 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
               return;
             }
             unless ($formatting_element eq $OE->[-1]) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:formatting element not current',
+                              level => 'm', value => $token->{tag_name},
                               di => $token->{di}, index => $token->{index}};
             }
             unless (defined $furthest_block) {
@@ -15262,7 +15271,7 @@ if ($Input =~ /\G([\])/gcs) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -15304,7 +15313,7 @@ $State = RCDATA_STATE_CR;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -15343,7 +15352,7 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -15379,7 +15388,7 @@ $State = RCDATA_STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -15416,7 +15425,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -15461,7 +15470,7 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -15506,7 +15515,7 @@ $State = RCDATA_STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -15548,7 +15557,7 @@ if ($EOF) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -16565,6 +16574,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -16682,6 +16692,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -16895,6 +16906,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -17514,8 +17526,8 @@ if ($Input =~ /\G([\])/gcs) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -17557,8 +17569,8 @@ $State = ATTR_VALUE__DQ__STATE_CR;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -17598,8 +17610,8 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -17644,8 +17656,8 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -17685,8 +17697,8 @@ $State = ATTR_VALUE__DQ__STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -17731,8 +17743,8 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -17777,8 +17789,8 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -17820,8 +17832,8 @@ if ($EOF) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18567,8 +18579,8 @@ if ($Input =~ /\G([\])/gcs) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18610,8 +18622,8 @@ $State = ATTR_VALUE__SQ__STATE_CR;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18653,8 +18665,8 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18697,8 +18709,8 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18738,8 +18750,8 @@ $State = ATTR_VALUE__SQ__STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18784,8 +18796,8 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18830,8 +18842,8 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -18873,8 +18885,8 @@ if ($EOF) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -19111,6 +19123,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -19299,6 +19312,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -19648,6 +19662,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -20048,6 +20063,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -20205,8 +20221,8 @@ if ($Input =~ /\G([\	\\ \
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20246,8 +20262,8 @@ $State = BEFORE_ATTR_NAME_STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20287,8 +20303,8 @@ $State = BEFORE_ATTR_NAME_STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20333,8 +20349,8 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20374,8 +20390,8 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20393,6 +20409,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -20457,8 +20474,8 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20503,8 +20520,8 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20549,8 +20566,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20595,8 +20612,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20641,8 +20658,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20687,8 +20704,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20733,8 +20750,8 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20776,8 +20793,8 @@ if ($EOF) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -20912,6 +20929,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -21016,6 +21034,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -21146,6 +21165,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -21472,6 +21492,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -21705,6 +21726,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -21775,6 +21797,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -21941,6 +21964,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22012,6 +22036,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22081,6 +22106,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22150,6 +22176,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22341,6 +22368,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22442,6 +22470,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22510,6 +22539,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22580,6 +22610,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22648,6 +22679,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22716,6 +22748,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22782,6 +22815,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22848,6 +22882,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -22916,6 +22951,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23040,6 +23076,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23104,6 +23141,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23171,6 +23209,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23238,6 +23277,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23303,6 +23343,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23368,6 +23409,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23433,6 +23475,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23496,6 +23539,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23559,6 +23603,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23620,6 +23665,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23682,6 +23728,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23742,6 +23789,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23784,6 +23832,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23824,6 +23873,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -23868,6 +23918,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -24025,6 +24076,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -25427,7 +25479,7 @@ if ($Input =~ /\G([\])/gcs) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -25469,7 +25521,7 @@ $State = DATA_STATE_CR;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -25508,7 +25560,7 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -25544,7 +25596,7 @@ $State = DATA_STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -25581,7 +25633,7 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -25626,7 +25678,7 @@ $Temp .= $1;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -25671,7 +25723,7 @@ $State = DATA_STATE;
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -25713,7 +25765,7 @@ if ($EOF) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -29481,6 +29533,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -29653,6 +29706,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -29876,6 +29930,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -29927,6 +29982,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -29977,6 +30033,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -30026,6 +30083,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -30076,6 +30134,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -30125,6 +30184,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -30173,6 +30233,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -30221,6 +30282,7 @@ $State = DATA_STATE;
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -30682,8 +30744,21 @@ sub dom_tree ($$) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
       while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
-        push @$Errors, {type => 'XXX', level => 'm',
-                        di => $DI, index => $-[0]};
+        my $index = $-[0];
+        my $char = ord substr $input->[0], $index, 1;
+        if ($char < 0x100) {
+          push @$Errors, {type => 'control char', level => 'm',
+                          text => (sprintf 'U+0000', $char),
+                          di => $DI, index => $index};
+        } elsif ($char < 0xE000) {
+          push @$Errors, {type => 'char:surrogate', level => 'm',
+                          text => (sprintf 'U+0000', $char),
+                          di => $DI, index => $index};
+        } else {
+          push @$Errors, {type => 'nonchar', level => 'm',
+                          text => (sprintf 'U+0000', $char),
+                          di => $DI, index => $index};
+        }
       }
       push @{$self->{input_stream}}, $input;
 

@@ -568,6 +568,7 @@ sub serialize_actions ($;%) {
             }
             if ($Token->{self_closing_flag}) {
               push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
                               level => 'm',
                               di => $Token->{di},
                               index => $Token->{index}};
@@ -812,8 +813,8 @@ sub serialize_actions ($;%) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref',
-                            text => $Temp,
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -842,7 +843,7 @@ sub serialize_actions ($;%) {
                 last REF;
               }
             }
-            push @$Errors, {type => 'not charref', text => $Temp,
+            push @$Errors, {type => 'entity not declared', value => $Temp,
                             level => 'm',
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
@@ -1550,7 +1551,7 @@ sub actions_to_code ($;%) {
           } elsif ($ns == MATHMLNS and $xmlns eq 'http://www.w3.org/1998/Math/MathML') {
             #
           } else {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{xmlns}->{di},
@@ -1561,7 +1562,7 @@ sub actions_to_code ($;%) {
           # IndexedString
           my $xmlns = join '', map { $_->[0] } @{$token->{attrs}->{'xmlns:xlink'}->{value}};
           unless ($xmlns eq 'http://www.w3.org/1999/xlink') {
-            push @$Errors, {type => 'XXX',
+            push @$Errors, {type => 'foreign:bad xmlns value',
                             level => 'm',
                             value => $xmlns,
                             di => $token->{attrs}->{'xmlns:xlink'}->{di},
@@ -1749,7 +1750,8 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'doctype-switch') {
       push @code, q{
         if (not defined $token->{name} or not $token->{name} eq 'html') {
-          push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+          push @$Errors, {type => 'bad DOCTYPE name', level => 'm',
+                          value => $token->{name},
                           di => $token->{di}, index => $token->{index}};
           unless ($IframeSrcdoc) {
             push @$OP, ['set-compat-mode', 'quirks'];
@@ -1759,11 +1761,11 @@ sub actions_to_code ($;%) {
           if (defined $OPPublicIDToSystemID->{$token->{public_identifier}}) {
             if (defined $token->{system_identifier}) {
               if ($OPPublicIDToSystemID->{$token->{public_identifier}} eq $token->{system_identifier}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                push @$Errors, {type => 'obsolete permitted DOCTYPE',
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
                 unless ($IframeSrcdoc) {
                   my $sysid = $token->{system_identifier};
@@ -1776,16 +1778,16 @@ sub actions_to_code ($;%) {
               }
             } else {
               if ($OPPublicIDOnly->{$token->{public_identifier}}) {
-                push @$Errors, {type => 'XXXobsolete permitted DOCTYPE',
+                push @$Errors, {type => 'obsolete permitted DOCTYPE',
                                 level => 's',
                                 di => $token->{di}, index => $token->{index}};
               } else {
-                push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+                push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                                 di => $token->{di}, index => $token->{index}};
               }
             }
           } else {
-            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+            push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $pubid = $token->{public_identifier};
@@ -1818,10 +1820,10 @@ sub actions_to_code ($;%) {
           }
         } elsif (defined $token->{system_identifier}) {
           if ($token->{system_identifier} eq 'about:legacy-compat') {
-            push @$Errors, {type => 'XXXlegacy DOCTYPE', level => 's',
+            push @$Errors, {type => 'legacy DOCTYPE', level => 's',
                             di => $token->{di}, index => $token->{index}};
           } else {
-            push @$Errors, {type => 'obs DOCTYPE', level => 'm',
+            push @$Errors, {type => 'obsolete DOCTYPE', level => 'm',
                             di => $token->{di}, index => $token->{index}};
             unless ($IframeSrcdoc) {
               my $sysid = $token->{system_identifier};
@@ -2006,7 +2008,7 @@ sub actions_to_code ($;%) {
       } else {
         push @code, q{
           if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'XXX self-closing void', level => 'w',
+            push @$Errors, {type => 'nestc', level => 'w',
                             text => $token->{tag_name},
                             di => $token->{di}, index => $token->{index}};
           }
@@ -2599,7 +2601,9 @@ sub generate_tree_constructor ($) {
               }
             }
             unless (defined $formatting_element_i) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:in afe but not in open elements',
+                              value => $token->{tag_name},
+                              level => 'm',
                               di => $token->{di}, index => $token->{index}};
               splice @$AFE, $formatting_element_afe_i, 1, ();
               ## $args{remove_from_afe_and_oe} - nop
@@ -2607,7 +2611,8 @@ sub generate_tree_constructor ($) {
               return;
             }
             if ($beyond_scope) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:formatting element not in scope',
+                              level => 'm', value => $token->{tag_name},
                               di => $token->{di}, index => $token->{index}};
               if ($args{remove_from_afe_and_oe}) {
                 splice @$AFE, $formatting_element_afe_i, 1, ();
@@ -2618,7 +2623,8 @@ sub generate_tree_constructor ($) {
               return;
             }
             unless ($formatting_element eq $OE->[-1]) {
-              push @$Errors, {type => 'XXX', level => 'm',
+              push @$Errors, {type => 'AAA:formatting element not current',
+                              level => 'm', value => $token->{tag_name},
                               di => $token->{di}, index => $token->{index}};
             }
             unless (defined $furthest_block) {
@@ -3126,8 +3132,21 @@ sub generate_api ($) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
       while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
-        push @$Errors, {type => 'XXX', level => 'm',
-                        di => $DI, index => $-[0]};
+        my $index = $-[0];
+        my $char = ord substr $input->[0], $index, 1;
+        if ($char < 0x100) {
+          push @$Errors, {type => 'control char', level => 'm',
+                          text => (sprintf 'U+%04X', $char),
+                          di => $DI, index => $index};
+        } elsif ($char < 0xE000) {
+          push @$Errors, {type => 'char:surrogate', level => 'm',
+                          text => (sprintf 'U+%04X', $char),
+                          di => $DI, index => $index};
+        } else {
+          push @$Errors, {type => 'nonchar', level => 'm',
+                          text => (sprintf 'U+%04X', $char),
+                          di => $DI, index => $index};
+        }
       }
       push @{$self->{input_stream}}, $input;
 
