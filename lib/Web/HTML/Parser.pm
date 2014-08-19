@@ -2619,9 +2619,9 @@ push @$OE, $node_p;
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -2702,9 +2702,9 @@ return;
     ) {
             push @$OP, ['stop-parsing'];
           } else {
-            push @$Errors, {type => 'in-template-eof',
+            push @$Errors, {type => 'in body:#eof',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -2812,9 +2812,9 @@ push @$OE, $node;
         $result;
       }
     ) {
-            push @$Errors, {type => 'in-body-start-a',
+            push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 aaa ($token, 'a', remove_from_afe_and_oe => 1);
           }
@@ -2894,9 +2894,9 @@ push @$OE, $node;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3108,9 +3108,9 @@ push @$OE, $node;
         ## [83] in body;START:body
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-body-start-body',
+push @$Errors, {type => 'duplicate body/html tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
@@ -3166,9 +3166,9 @@ push @$Errors, {type => 'in-body-start-body',
          $result;
       }
     ) {
-            push @$Errors, {type => 'in-body-start-button',
+            push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 {
@@ -3224,7 +3224,7 @@ push @$OE, $node;
         ## [85] in body;START:caption,col,colgroup,frame,head,tbody tfoot thead,td th,tr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-body-start-c3fht6',
+push @$Errors, {type => 'in body',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -3253,9 +3253,9 @@ return;
             pop @$OE while $OE->[-1]->{et} & (DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (DD_ELS))) {
-            push @$Errors, {type => 'in-body-start-dd-dt',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3272,9 +3272,9 @@ last;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (DT_ELS))) {
-            push @$Errors, {type => 'in-body-start-dd-dt-2',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3316,9 +3316,9 @@ last;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3372,9 +3372,9 @@ push @$OE, $node;
         not $result;
       }
     )) {
-            push @$Errors, {type => 'in-body-start-form',
+            push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           } else {
             
@@ -3394,9 +3394,9 @@ push @$OE, $node;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3454,7 +3454,7 @@ push @$OE, $node;
         ## [88] in body;START:frameset
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-body-start-frameset',
+push @$Errors, {type => 'in body',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -3527,9 +3527,9 @@ push @$OE, $node;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3543,9 +3543,9 @@ push @$OE, $node;
         
 
           if ($OE->[-1]->{et} & (HHHHHH_ELS)) {
-            push @$Errors, {type => 'in-body-start-h6',
+            push @$Errors, {type => 'in hn:hn',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
           }
@@ -3594,9 +3594,9 @@ push @$OE, $node;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3636,9 +3636,9 @@ push @$OE, $node;
         ## [91] in body;START:html
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-body-start-html',
+push @$Errors, {type => 'duplicate body/html tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (
@@ -3711,7 +3711,7 @@ $ORIGINAL_IM = $IM;
         ## [93] in body;START:image
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-body-start-image',
+push @$Errors, {type => 'image',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -3811,9 +3811,9 @@ push @$Errors, {type => 'in-body-start-image',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
-            push @$Errors, {type => 'in-body-start-li',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3853,9 +3853,9 @@ last;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -3911,9 +3911,9 @@ push @$OE, $node;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4062,9 +4062,9 @@ delete $token->{self_closing_flag};
          $result;
       }
     ) {
-            push @$Errors, {type => 'in-body-start-nobr',
+            push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 aaa ($token, 'nobr');
 &reconstruct_afe if @$AFE and ref $AFE->[-1];
@@ -4263,9 +4263,9 @@ push @$OE, $node;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4322,9 +4322,9 @@ $State = PLAINTEXT_STATE;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
-            push @$Errors, {type => 'in-body-start-rp-rt',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4496,9 +4496,9 @@ delete $token->{self_closing_flag};
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4614,9 +4614,9 @@ $ORIGINAL_IM = $IM;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4713,9 +4713,9 @@ $ORIGINAL_IM = $IM;
         ## [111] in caption;END:body,col,colgroup,html,tbody tfoot thead,td th,tr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-caption-end-bccht6',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -4737,18 +4737,18 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-caption-end-caption',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
-            push @$Errors, {type => 'in-caption-end-caption-2',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4787,18 +4787,18 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-caption-end-table',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
-            push @$Errors, {type => 'in-caption-end-table-2',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4840,9 +4840,9 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-caption-start-c3t6',
+            push @$Errors, {type => 'in caption',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
@@ -4857,9 +4857,9 @@ return;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (CAP_ELS))) {
-            push @$Errors, {type => 'in-caption-start-c3t6-2',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -4935,9 +4935,9 @@ return;
         ## [116] in cell;END:body,caption,col,colgroup,html
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-cell-end-bc3h',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -4959,18 +4959,18 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-cell-end-t5',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (TD_TH_ELS))) {
-            push @$Errors, {type => '-steps-close-the-cell',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5012,18 +5012,18 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-cell-end-td-th',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & HTML_NS_ELS and $OE->[-1]->{local_name} eq $token->{tag_name})) {
-            push @$Errors, {type => 'in-cell-end-td-th-2',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5062,9 +5062,9 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-cell-start-c3t6',
+            push @$Errors, {type => 'in cell',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
@@ -5079,9 +5079,9 @@ return;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (TD_TH_ELS))) {
-            push @$Errors, {type => '-steps-close-the-cell',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5165,7 +5165,7 @@ return;
         ## [122] in column group;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-column-group-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -5177,7 +5177,7 @@ return;
           my $token = $_;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
-            push @$Errors, {type => 'in-column-group-else',
+            push @$Errors, {type => 'in colgroup',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -5198,9 +5198,9 @@ return;
         ## [124] in column group;END:col
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-column-group-end-col',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -5210,9 +5210,9 @@ return;
           my $token = $_;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
-            push @$Errors, {type => 'in-column-group-end-colgroup',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -5230,7 +5230,7 @@ return;
           my $token = $_;
 
           if (not ($OE->[-1]->{et} & (COL_ELS))) {
-            push @$Errors, {type => 'in-column-group-else',
+            push @$Errors, {type => 'in colgroup',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -5292,7 +5292,7 @@ return;
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'in-column-group-else',
+              push @$Errors, {type => 'in colgroup',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index} + $-[1]};
@@ -5343,7 +5343,7 @@ return;
         ## [130] in foreign content;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-foreign-content-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -5362,9 +5362,9 @@ return;
           $ln eq $token->{tag_name};
         }
       ))) {
-            push @$Errors, {type => 'in-foreign-content-end-else',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5430,9 +5430,9 @@ push @$OP, ['script', $script->{id}];
           $ln eq $token->{tag_name};
         }
       ))) {
-            push @$Errors, {type => 'in-foreign-content-end-script',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -5584,9 +5584,9 @@ delete $token->{self_closing_flag};
         ## [135] in foreign content;START:b big code em i s small strike strong tt u,blockquote center div dl menu ol ul,body,br,dd dt,embed,h1 h2 h3 h4 h5 h6,head,hr,img,li,listing pre,meta,nobr,p,ruby span sub sup var,table
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-foreign-content-start-b5ccd4eeh8iillmmnopprs7ttuuv',
+push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (defined $CONTEXT) {
@@ -5700,9 +5700,9 @@ delete $token->{self_closing_flag};
           if ($token->{attrs}->{q@color@} or 
 $token->{attrs}->{q@face@} or 
 $token->{attrs}->{q@size@}) {
-            push @$Errors, {type => 'in-foreign-content-start-font',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (defined $CONTEXT) {
@@ -5927,7 +5927,7 @@ delete $token->{self_closing_flag};
                   
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'in-foreign-content-null',
+              push @$Errors, {type => 'parser:NULL',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index} + $-[1]};
@@ -5960,7 +5960,7 @@ delete $token->{self_closing_flag};
         ## [139] in frameset;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-frameset-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -5970,7 +5970,7 @@ return;
         ## [140] in frameset;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-frameset-else',
+push @$Errors, {type => 'in frameset',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -5982,9 +5982,9 @@ return;
           my $token = $_;
 
           if ($OE->[-1]->{et} & (HTM_ELS)) {
-            push @$Errors, {type => 'in-frameset-end-frameset',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -6007,9 +6007,9 @@ return;
           my $token = $_;
 
           if (not ($OE->[-1]->{et} & (HTM_ELS))) {
-            push @$Errors, {type => 'in-frameset-eof',
+            push @$Errors, {type => 'in body:#eof',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6019,7 +6019,7 @@ push @$OP, ['stop-parsing'];
         ## [143] in frameset;START-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-frameset-else',
+push @$Errors, {type => 'in frameset',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6095,7 +6095,7 @@ push @$OE, $node;
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'in-frameset-else',
+              push @$Errors, {type => 'in frameset',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index} + $-[1]};
@@ -6117,7 +6117,7 @@ push @$OE, $node;
         ## [147] in head noscript;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-noscript-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6127,9 +6127,9 @@ return;
         ## [148] in head noscript;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-noscript-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -6137,7 +6137,7 @@ return;
         ## [149] in head noscript;END:br
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-noscript-else',
+push @$Errors, {type => 'in noscript',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6163,7 +6163,7 @@ push @$OP, ['popped', [pop @$OE]];
         ## [151] in head noscript;EOF
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-noscript-else',
+push @$Errors, {type => 'in noscript',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6180,7 +6180,7 @@ push @$OP, ['popped', [pop @$OE]];
         ## [152] in head noscript;START-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-noscript-else',
+push @$Errors, {type => 'in noscript',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6197,7 +6197,7 @@ push @$OP, ['popped', [pop @$OE]];
         ## [153] in head noscript;START:head,noscript
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-noscript-start-head-noscript',
+push @$Errors, {type => 'in noscript',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6223,7 +6223,7 @@ return;
           $token->{index} += length $1;
         }
         if (length $token->{value}) {
-          push @$Errors, {type => 'in-head-noscript-else',
+          push @$Errors, {type => 'in noscript',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6273,7 +6273,7 @@ push @$OE, $node_body;
         ## [156] in head;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6283,9 +6283,9 @@ return;
         ## [157] in head;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -6329,18 +6329,18 @@ push @$OP, ['popped', [pop @$OE]];
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-head-end-template',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
             pop @$OE while $OE->[-1]->{et} & (CAP_ELS | COL_ELS | DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS | TBO_TFO_THE_ELS | TD_TH_ELS | TR_ELS);
 
           if (not ($OE->[-1]->{et} & (TEM_ELS))) {
-            push @$Errors, {type => 'in-head-end-template-2',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -6414,7 +6414,7 @@ push @$OP, ['popped', [pop @$OE]];
         ## [164] in head;START:head
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-head-start-head',
+push @$Errors, {type => 'in head:head',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -6713,9 +6713,9 @@ push @$OE, $node_body;
         ## [172] in row;END:body,caption,col,colgroup,html,td th
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-row-end-bc3htt',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -6737,9 +6737,9 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-row-end-table',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -6777,9 +6777,9 @@ push @$OP, ['popped', [pop @$OE]];
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-row-end-tbody-tfoot-thead',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           }
@@ -6834,9 +6834,9 @@ push @$OP, ['popped', [pop @$OE]];
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-row-end-tr',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -6871,9 +6871,9 @@ push @$OP, ['popped', [pop @$OE]];
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-row-start-c3t4',
+            push @$Errors, {type => 'in table row',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
@@ -6954,7 +6954,7 @@ $ORIGINAL_IM = $IM;
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
       
           } else {
-            push @$Errors, {type => 'in-table-char',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -7053,9 +7053,9 @@ $ORIGINAL_IM = $IM;
         ## [179] in select in table;END:caption,table,tbody tfoot thead,td th,tr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-select-in-table-end-ct7',
+push @$Errors, {type => 'in select in table:end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (
@@ -7090,9 +7090,9 @@ push @$Errors, {type => 'in-select-in-table-end-ct7',
         ## [180] in select in table;START:caption,table,tbody tfoot thead,td th,tr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-select-in-table-start-ct7',
+push @$Errors, {type => 'in select in table:start tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 {
           my @popped;
@@ -7121,7 +7121,7 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'in-select-null',
+              push @$Errors, {type => 'parser:NULL',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index} + $-[1]};
@@ -7145,7 +7145,7 @@ push @$Errors, {type => 'in-select-in-table-start-ct7',
         ## [183] in select;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-select-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -7155,7 +7155,7 @@ return;
         ## [184] in select;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-select-else',
+push @$Errors, {type => 'in select',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -7175,9 +7175,9 @@ return;
           if ($OE->[-1]->{et} == OPTGROUP_EL) {
             push @$OP, ['popped', [pop @$OE]];
           } else {
-            push @$Errors, {type => 'in-select-end-optgroup',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           }
@@ -7191,9 +7191,9 @@ return;
           if ($OE->[-1]->{et} == OPTION_EL) {
             push @$OP, ['popped', [pop @$OE]];
           } else {
-            push @$Errors, {type => 'in-select-end-option',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           }
@@ -7217,9 +7217,9 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-select-end-select',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -7237,7 +7237,7 @@ return;
         ## [188] in select;START-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-select-else',
+push @$Errors, {type => 'in select',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -7255,9 +7255,9 @@ return;
         ## [189] in select;START:input,keygen,textarea
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-select-start-input-keygen-textarea',
+push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (
@@ -7369,9 +7369,9 @@ push @$OE, $node;
         ## [192] in select;START:select
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-select-start-select',
+push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (
@@ -7423,7 +7423,7 @@ push @$Errors, {type => 'in-select-start-select',
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'in-select-null',
+              push @$Errors, {type => 'parser:NULL',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index} + $-[1]};
@@ -7439,9 +7439,9 @@ push @$Errors, {type => 'in-select-start-select',
         ## [194] in table body;END:body,caption,col,colgroup,html,td th,tr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-body-end-bc3ht3',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -7463,9 +7463,9 @@ return;
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-table-body-end-table',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -7503,9 +7503,9 @@ push @$OP, ['popped', [pop @$OE]];
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-table-body-end-tbody-tfoot-thead',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -7540,9 +7540,9 @@ push @$OP, ['popped', [pop @$OE]];
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-table-body-start-c3t3',
+            push @$Errors, {type => 'in table body',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if ($token->{self_closing_flag}) {
@@ -7574,7 +7574,7 @@ push @$OP, ['popped', [pop @$OE]];
         ## [198] in table body;START:td th
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-body-start-td-th',
+push @$Errors, {type => 'no <tr>',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -7657,7 +7657,7 @@ $ORIGINAL_IM = $IM;
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
       
           } else {
-            push @$Errors, {type => 'in-table-char',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -7758,7 +7758,7 @@ $ORIGINAL_IM = $IM;
           my $token = $_;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
-            push @$Errors, {type => 'in-table-text-else',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $TABLE_CHARS->[0]->{di},
                         index => $TABLE_CHARS->[0]->{index}};
@@ -7873,7 +7873,7 @@ $ORIGINAL_IM = $IM;
           my $token = $_;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
-            push @$Errors, {type => 'in-table-text-else',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $TABLE_CHARS->[0]->{di},
                         index => $TABLE_CHARS->[0]->{index}};
@@ -7988,7 +7988,7 @@ $ORIGINAL_IM = $IM;
           my $token = $_;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
-            push @$Errors, {type => 'in-table-text-else',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $TABLE_CHARS->[0]->{di},
                         index => $TABLE_CHARS->[0]->{index}};
@@ -8103,7 +8103,7 @@ $ORIGINAL_IM = $IM;
           my $token = $_;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
-            push @$Errors, {type => 'in-table-text-else',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $TABLE_CHARS->[0]->{di},
                         index => $TABLE_CHARS->[0]->{index}};
@@ -8218,7 +8218,7 @@ $ORIGINAL_IM = $IM;
           my $token = $_;
 
           if (grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS) {
-            push @$Errors, {type => 'in-table-text-else',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $TABLE_CHARS->[0]->{di},
                         index => $TABLE_CHARS->[0]->{index}};
@@ -8341,7 +8341,7 @@ $ORIGINAL_IM = $IM;
               
             my $value = $1;
             while ($value =~ /(.)/gs) {
-              push @$Errors, {type => 'in-table-text-null',
+              push @$Errors, {type => 'parser:NULL',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index} + $-[1]};
@@ -8365,7 +8365,7 @@ $ORIGINAL_IM = $IM;
         ## [208] in table;DOCTYPE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-doctype',
+push @$Errors, {type => 'doctype:bad context',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8375,7 +8375,7 @@ return;
         ## [209] in table;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8387,7 +8387,7 @@ push @$Errors, {type => 'in-table-else',
         ## [210] in table;END:a,b big code em i s small strike strong tt u,font,nobr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8397,9 +8397,9 @@ aaa_foster ($token, $token->{tag_name});
         ## [211] in table;END:body,caption,col,colgroup,html,tbody tfoot thead,td th,tr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-end-bc3ht6',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -8407,7 +8407,7 @@ return;
         ## [212] in table;END:br
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8459,7 +8459,7 @@ push @$Errors, {type => '</br>',
         ## [213] in table;END:p
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8515,9 +8515,9 @@ push @$OE, $node_p;
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -8546,9 +8546,9 @@ pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT
         not $result;
       }
     ) {
-            push @$Errors, {type => 'in-table-end-table',
+            push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
           } else {
@@ -8566,7 +8566,7 @@ return;
         ## [215] in table;START-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8631,7 +8631,7 @@ push @$OE, $node;
         ## [216] in table;START:a
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8649,9 +8649,9 @@ push @$Errors, {type => 'in-table-else',
         $result;
       }
     ) {
-            push @$Errors, {type => 'in-body-start-a',
+            push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 aaa_foster ($token, 'a', remove_from_afe_and_oe => 1);
           }
@@ -8729,7 +8729,7 @@ push @$OE, $node;
         ## [217] in table;START:address article aside details dialog dir figcaption figure footer header hgroup main nav section summary,blockquote center div dl menu ol ul,fieldset,p
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8750,9 +8750,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -8824,7 +8824,7 @@ push @$OE, $node;
         ## [218] in table;START:applet marquee,object
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8893,7 +8893,7 @@ push @$AFE, '#marker';
         ## [219] in table;START:area wbr,br,embed,img,keygen
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -8959,7 +8959,7 @@ push @$Errors, {type => 'in-table-else',
         ## [220] in table;START:b big code em i s small strike strong tt u,font
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9036,7 +9036,7 @@ push @$OE, $node;
         ## [221] in table;START:base,basefont bgsound link
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9080,13 +9080,13 @@ push @$Errors, {type => 'in-table-else',
         ## [222] in table;START:body
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-push @$Errors, {type => 'in-body-start-body',
+push @$Errors, {type => 'duplicate body/html tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if ((@$OE >= 2 and not ($OE->[1]->{et} & (BOD_ELS))) or 
@@ -9128,7 +9128,7 @@ push @$Errors, {type => 'in-body-start-body',
         ## [223] in table;START:button
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9146,9 +9146,9 @@ push @$Errors, {type => 'in-table-else',
          $result;
       }
     ) {
-            push @$Errors, {type => 'in-body-start-button',
+            push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 {
@@ -9323,7 +9323,7 @@ push @$OE, $node;
         ## [227] in table;START:dd dt
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9338,9 +9338,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (DD_ELS))) {
-            push @$Errors, {type => 'in-body-start-dd-dt',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9357,9 +9357,9 @@ last;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (DT_ELS))) {
-            push @$Errors, {type => 'in-body-start-dd-dt-2',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9401,9 +9401,9 @@ last;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9457,7 +9457,7 @@ push @$OE, $node;
         ## [228] in table;START:form
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-start-form',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9509,11 +9509,11 @@ push @$OP, ['popped', [pop @$OE]];
         ## [229] in table;START:frame,head
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-push @$Errors, {type => 'in-body-start-c3fht6',
+push @$Errors, {type => 'in body',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9531,11 +9531,11 @@ return;
         ## [230] in table;START:frameset
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-push @$Errors, {type => 'in-body-start-frameset',
+push @$Errors, {type => 'in body',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9606,7 +9606,7 @@ push @$OE, $node;
         ## [231] in table;START:h1 h2 h3 h4 h5 h6
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9627,9 +9627,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9643,9 +9643,9 @@ push @$Errors, {type => 'in-table-else',
         
 
           if ($OE->[-1]->{et} & (HHHHHH_ELS)) {
-            push @$Errors, {type => 'in-body-start-h6',
+            push @$Errors, {type => 'in hn:hn',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 push @$OP, ['popped', [pop @$OE]];
           }
@@ -9692,7 +9692,7 @@ push @$OE, $node;
         ## [232] in table;START:hr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9713,9 +9713,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -9770,13 +9770,13 @@ push @$Errors, {type => 'in-table-else',
         ## [233] in table;START:html
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-push @$Errors, {type => 'in-body-start-html',
+push @$Errors, {type => 'duplicate body/html tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (
@@ -9813,7 +9813,7 @@ push @$Errors, {type => 'in-body-start-html',
         ## [234] in table;START:iframe
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9868,11 +9868,11 @@ $ORIGINAL_IM = $IM;
         ## [235] in table;START:image
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-push @$Errors, {type => 'in-body-start-image',
+push @$Errors, {type => 'image',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -9931,7 +9931,7 @@ push @$Errors, {type => 'in-body-start-image',
         }
       )
     ) {
-            push @$Errors, {type => 'in-table-else',
+            push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10002,7 +10002,7 @@ push @$Errors, {type => 'in-body-start-image',
           }
         
           } else {
-            push @$Errors, {type => 'in-table-start-input',
+            push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10047,7 +10047,7 @@ push @$Errors, {type => 'in-body-start-image',
         ## [237] in table;START:li
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10062,9 +10062,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (LI_ELS))) {
-            push @$Errors, {type => 'in-body-start-li',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10104,9 +10104,9 @@ last;
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10160,7 +10160,7 @@ push @$OE, $node;
         ## [238] in table;START:listing pre
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10181,9 +10181,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10244,7 +10244,7 @@ push @$OE, $node;
         ## [239] in table;START:math
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10326,7 +10326,7 @@ delete $token->{self_closing_flag};
         ## [240] in table;START:menuitem param source track
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10370,7 +10370,7 @@ push @$Errors, {type => 'in-table-else',
         ## [241] in table;START:meta
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10436,7 +10436,7 @@ push @$Errors, {type => 'in-table-else',
         ## [242] in table;START:nobr
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10455,9 +10455,9 @@ push @$Errors, {type => 'in-table-else',
          $result;
       }
     ) {
-            push @$Errors, {type => 'in-body-start-nobr',
+            push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 aaa_foster ($token, 'nobr');
 &reconstruct_afe_foster if @$AFE and ref $AFE->[-1];
@@ -10535,7 +10535,7 @@ push @$OE, $node;
         ## [243] in table;START:noembed
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10587,7 +10587,7 @@ $ORIGINAL_IM = $IM;
         ## [244] in table;START:noframes
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10639,7 +10639,7 @@ $ORIGINAL_IM = $IM;
         ## [245] in table;START:noscript
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10726,7 +10726,7 @@ push @$OE, $node;
         ## [246] in table;START:optgroup,option
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10778,7 +10778,7 @@ push @$OE, $node;
         ## [247] in table;START:plaintext
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10799,9 +10799,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10856,7 +10856,7 @@ $State = PLAINTEXT_STATE;
         ## [248] in table;START:rp rt
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -10877,9 +10877,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | P_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} == RUBY_EL)) {
-            push @$Errors, {type => 'in-body-start-rp-rt',
+            push @$Errors, {type => 'element not closed before implied ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -10927,7 +10927,7 @@ push @$OE, $node;
         ## [249] in table;START:select
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -11004,7 +11004,7 @@ push @$OE, $node;
         ## [250] in table;START:svg
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -11086,9 +11086,9 @@ delete $token->{self_closing_flag};
         ## [251] in table;START:table
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-start-table',
+push @$Errors, {type => 'parser:element not nestable',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 
           if (
@@ -11198,7 +11198,7 @@ push @$OE, $node_tbody;
         ## [254] in table;START:textarea
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -11270,7 +11270,7 @@ $ORIGINAL_IM = $IM;
         ## [255] in table;START:title
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -11322,7 +11322,7 @@ $ORIGINAL_IM = $IM;
         ## [256] in table;START:xmp
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-table-else',
+push @$Errors, {type => 'in table',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -11343,9 +11343,9 @@ push @$Errors, {type => 'in-table-else',
             pop @$OE while $OE->[-1]->{et} & (DD_ELS | DT_ELS | LI_ELS | OPT_OPT_ELS | RP_RT_ELS);
 
           if (not ($OE->[-1]->{et} & (P_ELS))) {
-            push @$Errors, {type => '-steps-close-a-p-element',
+            push @$Errors, {type => 'not closed before ancestor end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11421,7 +11421,7 @@ $ORIGINAL_IM = $IM;
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
       
           } else {
-            push @$Errors, {type => 'in-table-char',
+            push @$Errors, {type => 'in table:#text',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
@@ -11520,9 +11520,9 @@ $ORIGINAL_IM = $IM;
         ## [258] in template;END-ELSE
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-template-end-else',
+push @$Errors, {type => 'stray end tag',
                                             level => 'm',
-                                            di => $token->{di},
+                                            value => $token->{tag_name},di => $token->{di},
                                 index => $token->{index}};
 return;
         },
@@ -11546,9 +11546,9 @@ return;
     ) {
             push @$OP, ['stop-parsing'];
           } else {
-            push @$Errors, {type => 'in-template-eof',
+            push @$Errors, {type => 'in body:#eof',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},di => $token->{di},
                                 index => $token->{index}};
           }
         
@@ -11993,9 +11993,9 @@ push @$OP, ['script', $script->{id}];
         ## [276] text;EOF
         sub {
           my $token = $_;
-push @$Errors, {type => 'text-eof',
+push @$Errors, {type => 'in body:#eof',
                                             level => 'm',
-                                            di => $token->{di},
+                                            text => $OE->[-1]->{local_name},di => $token->{di},
                                 index => $token->{index}};
 
           if ($OE->[-1]->{et} == SCRIPT_EL) {
@@ -30865,10 +30865,8 @@ $Scripting = $self->{Scripting};
         if ($node_ns eq 'http://www.w3.org/1999/xhtml' and
             $node_ln eq 'template') {
           push @$TEMPLATE_IMS, IN_TEMPLATE_IM;
-          $nodes->[$OE->[-1]->{id}] = $root->content;
-        } else {
-          $nodes->[$OE->[-1]->{id}] = $root;
         }
+        $nodes->[$OE->[-1]->{id}] = $root;
 
         ## 4.6.
         &reset_im;

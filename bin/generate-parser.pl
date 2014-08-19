@@ -3297,10 +3297,8 @@ sub generate_api ($) {
         if ($node_ns eq 'http://www.w3.org/1999/xhtml' and
             $node_ln eq 'template') {
           push @$TEMPLATE_IMS, IM ("in template");
-          $nodes->[$OE->[-1]->{id}] = $root->content;
-        } else {
-          $nodes->[$OE->[-1]->{id}] = $root;
         }
+        $nodes->[$OE->[-1]->{id}] = $root;
 
         ## 4.6.
         &reset_im;

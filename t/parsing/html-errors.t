@@ -31,6 +31,7 @@ for my $error_type (keys %$error_defs) {
       my $doc = new Web::DOM::Document;
       my $di = 45;
       $parser->di ($di);
+      $parser->scripting (!$test->{noscript});
       if (defined $test->{context}) {
         my $el = $doc->create_element ($test->{context});
         $parser->parse_char_string_with_context ($test->{input}, $el => $doc);
