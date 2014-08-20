@@ -126,67 +126,12 @@ local/aria-html-map.json: local/aria.json local/bin/jq
 	cat local/aria.json | local/bin/jq '.attrs | to_entries | map(select(.value.preferred.type == "html_attr")) | map([.key, .value.preferred.name])' > $@
 
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
-    local/html-syntax.json local/xml-syntax.json local/bin/pmbp.pl Makefile
-	mkdir -p lib/Web/HTML/Validator
-	perl local/bin/pmbp.pl --install-module JSON \
+    local/html-syntax.json local/xml-syntax.json local/bin/pmbp.pl Makefile \
+    $(JSON_PS) bin/generate-syntax-defs.pl
+	mkdir -p lib/Web/HTML
+	perl local/bin/pmbp.pl --install-module Path::Tiny \
 	    --create-perl-command-shortcut perl
-	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"prompt\":"; cat local/isindex-prompt.json; echo ",\"syntax\":"; cat local/html-syntax.json; echo ",\"xml_syntax\":"; cat local/xml-syntax.json; echo "}"' | \
-	$(PERL) -MJSON -MEncode -MData::Dumper -e ' #\
-	  local $$/ = undef; #\
-	  $$data = JSON->new->decode (decode "utf-8", scalar <>); #\
-	  $$Data::Dumper::Sortkeys = 1; #\
-	  $$Data::Dumper::Useqq = 1; #\
-	  for $$ns (keys %{$$data->{dom}->{elements}}) { #\
-	    for $$ln (keys %{$$data->{dom}->{elements}->{$$ns}}) { #\
-	      my $$category = $$data->{dom}->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
-	      if ($$category eq "void" or $$category eq "obsolete void") { #\
-	        $$result->{void}->{$$ns}->{$$ln} = 1; #\
-	      } #\
-	    } #\
-	  } #\
-	  for $$locale (keys %{$$data->{prompt}}) { #\
-	    $$text = $$data->{prompt}->{$$locale}->{chromium} || #\
-	             $$data->{prompt}->{$$locale}->{gecko} or next; #\
-	    $$text .= " " if $$text =~ /:$$/; #\
-	    $$result->{prompt}->{$$locale} = $$text; #\
-	  } #\
-	  for (qw(adjusted_mathml_attr_names adjusted_ns_attr_names), #\
-               qw(adjusted_svg_attr_names adjusted_svg_element_names)) { #\
-	    $$result->{$$_} = $$data->{syntax}->{$$_}; #\
-          } #\
-	  for (qw(charrefs_pubids)) { #\
-	    $$result->{$$_} = $$data->{xml_syntax}->{$$_}; #\
-          } #\
-	  $$pm = Dumper $$result; #\
-	  $$pm =~ s/VAR1/Web::HTML::_SyntaxDefs/; #\
-	  print "$$pm\n"; #\
-	  print "1;\n"; #\
-	  $$footer = q{\
-=head1 LICENSE\
-\
-This file contains data from the data-web-defs repository\
-<https://github.com/manakai/data-web-defs/>.\
-\
-This file contains texts from Gecko and Chromium source codes.\
-See following documents for full license terms of them:\
-\
-Gecko:\
-\
-  This Source Code Form is subject to the terms of the Mozilla Public\
-  License, v. 2.0. If a copy of the MPL was not distributed with this\
-  file, You can obtain one at http://mozilla.org/MPL/2.0/.\
-\
-Chromium:\
-\
-  See following documents:\
-  <http://src.chromium.org/viewvc/chrome/trunk/src/webkit/LICENSE>\
-  <http://src.chromium.org/viewvc/chrome/trunk/src/webkit/glue/resources/README.txt>\
-\
-=cut\
-	  }; #\
-	  $$footer =~ s/\x5C$$//gm; #\
-	  print $$footer; #\
-	' > $@
+	./perl bin/generate-syntax-defs.pl > $@
 	perl -c $@
 
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
