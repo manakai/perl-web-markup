@@ -113,6 +113,13 @@ local/html-tree-constructor-expanded-no-isindex.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tree-constructor-expanded-no-isindex.json
 
+local/maps.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-chars/master/data/maps.json
+local/sets.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-chars/master/data/sets.json
+
 local/errors.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-errors/master/data/errors.json
@@ -127,7 +134,7 @@ local/aria-html-map.json: local/aria.json local/bin/jq
 
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
     local/html-syntax.json local/xml-syntax.json local/bin/pmbp.pl Makefile \
-    $(JSON_PS) bin/generate-syntax-defs.pl
+    $(JSON_PS) bin/generate-syntax-defs.pl local/maps.json local/sets.json
 	mkdir -p lib/Web/HTML
 	perl local/bin/pmbp.pl --install-module Path::Tiny \
 	    --create-perl-command-shortcut perl

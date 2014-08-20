@@ -12,6 +12,8 @@ my $DOM = json 'elements.json';
 my $PROMPT = json 'isindex-prompt.json';
 my $HTML = json 'html-syntax.json';
 my $XML = json 'xml-syntax.json';
+my $MAPS = json 'maps.json';
+my $SETS = json 'sets.json';
 
 my $Data = {};
 
@@ -35,9 +37,108 @@ for (qw(adjusted_mathml_attr_names adjusted_ns_attr_names),
      qw(adjusted_svg_attr_names adjusted_svg_element_names)) {
   $Data->{$_} = $HTML->{$_};
 }
+
+if ($HTML->{tree_patterns}->{'HTML integration point'}->[0] eq 'or') {
+  my @item = @{$HTML->{tree_patterns}->{'HTML integration point'}};
+  shift @item;
+  for (@item) {
+    if ($_->{ns} eq 'SVG' and not defined $_->{attrs}) {
+      $Data->{is_svg_html_integration_point}->{$_->{name}} = 1;
+    } elsif ($_->{ns} eq 'MathML' and not defined $_->{attrs}) {
+      $Data->{is_mathml_html_integration_point}->{$_->{name}} = 1;
+    }
+  }
+}
+if ($HTML->{tree_patterns}->{'MathML text integration point'}->[0] eq 'or') {
+  my @item = @{$HTML->{tree_patterns}->{'MathML text integration point'}};
+  shift @item;
+  for (@item) {
+    if ($_->{ns} eq 'MathML' and not defined $_->{attrs}) {
+      $Data->{is_mathml_text_integration_point}->{$_->{name}} = 1;
+    }
+  }
+}
+if ($HTML->{dispatcher_html}->[0] eq 'or') {
+  my @item = @{$HTML->{dispatcher_html}};
+  shift @item;
+  for (@item) {
+    if ($_->[0] eq 'and' and
+        $_->[1]->[0] eq 'adjusted current node' and
+        $_->[1]->[1] eq 'is' and
+        $_->[1]->[2]->{'MathML text integration point'} and
+        $_->[2]->[0] eq 'and' and
+        $_->[2]->[1]->[0] eq 'token' and
+        $_->[2]->[1]->[1] eq 'is a' and
+        $_->[2]->[1]->[2] eq 'START' and
+        $_->[2]->[2]->[0] eq 'token tag_name' and
+        $_->[2]->[2]->[1] eq 'is not') {
+      $Data->{is_mathml_text_integration_point_mathml}->{$_} = 1
+          for @{$_->[2]->[2]->[2]};
+    }
+  }
+}
+{
+  my @cond = sort { (length $b) <=> (length $a) } grep { /^START:/ } keys %{$HTML->{ims}->{'in foreign content'}->{conds}};
+  if (@cond) {
+    my $acts = $HTML->{ims}->{'in foreign content'}->{conds}->{$cond[0]}->{actions};
+    if (@$acts and $acts->[0]->{type} eq 'parse error') {
+      my $cond = $cond[0];
+      $cond =~ s/^START://;
+      for (split /[ ,]/, $cond) {
+        $Data->{foreign_content_breakers}->{$_} = 1;
+      }
+    }
+  }
+}
+
 for (qw(charrefs_pubids)) {
   $Data->{$_} = $XML->{$_};
 }
+
+for (keys %{$MAPS->{maps}->{'html:charref'}->{char_to_char}}) {
+  my $from = hex $_;
+  my $to = hex $MAPS->{maps}->{'html:charref'}->{char_to_char}->{$_};
+  $Data->{charref_replacements}->{$from} = $to
+      if $from < 0x100;
+}
+for (0x80..0x9F) {
+  $Data->{charref_replacements}->{$_} ||= $_;
+}
+
+sub expand_range ($) {
+  my $range = shift;
+  my $list = {};
+  $range =~ s/^\[//;
+  $range =~ s/\]$//;
+  while (length $range) {
+    my $from;
+    if ($range =~ s/^\\u\{([0-9A-F]+)\}//) {
+      $from = hex $1;
+    } elsif ($range =~ s/^\\u([0-9A-F]{4})//) {
+      $from = hex $1;
+    } else {
+      $range =~ s/^(.)//s;
+      $from = ord $1;
+    }
+    if ($range =~ s/^-//) {
+      my $to;
+      if ($range =~ s/^\\u\{([0-9A-F]+)\}//) {
+        $to = hex $1;
+      } elsif ($range =~ s/^\\u([0-9A-F]{4})//) {
+        $to = hex $1;
+      } else {
+        $range =~ s/^(.)//s;
+        $to = ord $1;
+      }
+      $list->{$_} = 1 for $from..$to;
+    } else {
+      $list->{$from} = 1;
+    }
+  }
+  return $list;
+} # expand_range
+
+$Data->{nonchars} = expand_range $SETS->{sets}->{'$unicode:Noncharacter_Code_Point'}->{chars};
 
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Useqq = 1;

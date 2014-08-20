@@ -131,7 +131,7 @@ test {
   is $Web::HTML::ParserData::CharRefReplacements->{0x0000}, 0xFFFD;
   is $Web::HTML::ParserData::CharRefReplacements->{0x0001}, undef;
   is $Web::HTML::ParserData::CharRefReplacements->{0x000A}, undef;
-  is $Web::HTML::ParserData::CharRefReplacements->{0x000D}, 0x000D;
+  is $Web::HTML::ParserData::CharRefReplacements->{0x000D}, undef;
   is $Web::HTML::ParserData::CharRefReplacements->{0x0080}, 0x20AC;
   is $Web::HTML::ParserData::CharRefReplacements->{0x0081}, 0x0081;
   is $Web::HTML::ParserData::CharRefReplacements->{0x009F}, 0x0178;
