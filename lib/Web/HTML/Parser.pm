@@ -17133,6 +17133,7 @@ $Temp .= $1;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -17157,6 +17158,7 @@ $State = ATTR_VALUE__DQ__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 
@@ -17186,6 +17188,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
@@ -17212,6 +17215,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -17236,6 +17240,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -17262,6 +17267,7 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -17288,6 +17294,7 @@ if ($EOF) {
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -17327,6 +17334,7 @@ $Temp .= $1;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -17351,6 +17359,7 @@ $State = ATTR_VALUE__DQ__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 
@@ -17380,6 +17389,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
@@ -17406,6 +17416,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -17430,6 +17441,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -17456,6 +17468,7 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -17482,6 +17495,7 @@ if ($EOF) {
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -17529,6 +17543,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -17572,6 +17587,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -17613,6 +17629,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -17659,6 +17676,7 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -17700,6 +17718,7 @@ $State = ATTR_VALUE__DQ__STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -17746,6 +17765,7 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -17792,6 +17812,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -17835,6 +17856,7 @@ if ($EOF) {
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18186,6 +18208,7 @@ $Temp .= $1;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -18210,6 +18233,7 @@ $State = ATTR_VALUE__SQ__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 
@@ -18239,6 +18263,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
@@ -18265,6 +18290,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -18291,6 +18317,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -18315,6 +18342,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -18341,6 +18369,7 @@ if ($EOF) {
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -18380,6 +18409,7 @@ $Temp .= $1;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -18404,6 +18434,7 @@ $State = ATTR_VALUE__SQ__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 
@@ -18433,6 +18464,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
@@ -18459,6 +18491,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -18485,6 +18518,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -18509,6 +18543,7 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -18535,6 +18570,7 @@ if ($EOF) {
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -18582,6 +18618,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18625,6 +18662,7 @@ $State = ATTR_VALUE__SQ__STATE_CR;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18668,6 +18706,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18712,6 +18751,7 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18753,6 +18793,7 @@ $State = ATTR_VALUE__SQ__STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18799,6 +18840,7 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18845,6 +18887,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -18888,6 +18931,7 @@ if ($EOF) {
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -19413,6 +19457,7 @@ $Temp .= $1;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -19437,6 +19482,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19467,6 +19513,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -19491,6 +19538,7 @@ $State = BEFORE_ATTR_NAME_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
@@ -19515,6 +19563,7 @@ $State = BEFORE_ATTR_NAME_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19544,6 +19593,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -19570,6 +19620,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19599,6 +19650,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19628,6 +19680,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19657,6 +19710,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
@@ -19720,6 +19774,7 @@ push @$Tokens, $Token;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19749,6 +19804,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -19775,6 +19831,7 @@ if ($EOF) {
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -19814,6 +19871,7 @@ $Temp .= $1;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -19838,6 +19896,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19868,6 +19927,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -19892,6 +19952,7 @@ $State = BEFORE_ATTR_NAME_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = BEFORE_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
@@ -19916,6 +19977,7 @@ $State = BEFORE_ATTR_NAME_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -19945,6 +20007,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -19971,6 +20034,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -20000,6 +20064,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -20029,6 +20094,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -20058,6 +20124,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
@@ -20121,6 +20188,7 @@ push @$Tokens, $Token;
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -20150,6 +20218,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -20176,6 +20245,7 @@ if ($EOF) {
         }
         $Temp = chr $code;
       
+$Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
@@ -20224,6 +20294,7 @@ if ($Input =~ /\G([\	\\ \
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20265,6 +20336,7 @@ $State = BEFORE_ATTR_NAME_STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20306,6 +20378,7 @@ $State = BEFORE_ATTR_NAME_STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20352,6 +20425,7 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20393,6 +20467,7 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20477,6 +20552,7 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20523,6 +20599,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20569,6 +20646,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20615,6 +20693,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20661,6 +20740,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20707,6 +20787,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20753,6 +20834,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -20796,6 +20878,7 @@ if ($EOF) {
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -30633,7 +30716,6 @@ sub dom_tree ($$) {
             (@{$attr->{name_args}} => $attr->{value}) # IndexedString
             unless $el->has_attribute_ns ($attr->{name_args}->[0], $attr->{name_args}->[1]->[1]);
       }
-      # XXX index
 
     } elsif ($op->[0] eq 'change-the-encoding') {
       unless ($Confident) {
@@ -30641,7 +30723,11 @@ sub dom_tree ($$) {
         push @$Callbacks, [$self->onrestartwithencoding, $changed]
             if defined $changed;
       }
-      # XXX conformance error if bad index (has reference)
+      if ($op->[2]->{has_ref}) {
+        push @$Errors, {type => 'charref in charset', level => 'm',
+                        di => $op->[2]->{di}, index => $op->[2]->{index}};
+      }
+
     } elsif ($op->[0] eq 'script') {
       # XXX insertion point setup
       push @$Callbacks, [$self->onscript, $nodes->[$op->[1]]];

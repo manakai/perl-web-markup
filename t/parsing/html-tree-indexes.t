@@ -135,6 +135,10 @@ e 20
 n 0 0 0 0 0
 e 0 0
 
+<html foo=bar><html abc=def>
+n 0 0 6,10,11 20,24,25 28 28
+e 0 14
+
 };
 
 for (grep { length } split /\n\n+/, $TestData) {

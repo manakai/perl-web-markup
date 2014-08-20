@@ -766,6 +766,7 @@ sub serialize_actions ($;%) {
         }
         $Temp = chr $code;
       };
+      push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-hexadecimal') {
       push @result, q{
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
@@ -784,6 +785,7 @@ sub serialize_actions ($;%) {
         }
         $Temp = chr $code;
       };
+      push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-named') {
       if ($_->{in_attr}) {
         push @result, sprintf q{
@@ -813,6 +815,7 @@ sub serialize_actions ($;%) {
                   $TempIndex += $_;
                   $value = '';
                 }
+                $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -2967,7 +2970,6 @@ sub dom_tree ($$) {
             (@{$attr->{name_args}} => $attr->{value}) # IndexedString
             unless $el->has_attribute_ns ($attr->{name_args}->[0], $attr->{name_args}->[1]->[1]);
       }
-      # XXX index
 
     } elsif ($op->[0] eq 'change-the-encoding') {
       unless ($Confident) {
@@ -2975,7 +2977,11 @@ sub dom_tree ($$) {
         push @$Callbacks, [$self->onrestartwithencoding, $changed]
             if defined $changed;
       }
-      # XXX conformance error if bad index (has reference)
+      if ($op->[2]->{has_ref}) {
+        push @$Errors, {type => 'charref in charset', level => 'm',
+                        di => $op->[2]->{di}, index => $op->[2]->{index}};
+      }
+
     } elsif ($op->[0] eq 'script') {
       # XXX insertion point setup
       push @$Callbacks, [$self->onscript, $nodes->[$op->[1]]];
