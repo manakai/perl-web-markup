@@ -100,6 +100,7 @@ for (keys %{$MAPS->{maps}->{'html:charref'}->{char_to_char}}) {
   my $to = hex $MAPS->{maps}->{'html:charref'}->{char_to_char}->{$_};
   $Data->{charref_replacements}->{$from} = $to
       if $from < 0x100;
+  $Data->{charref_invalid}->{$from} = $to;
 }
 for (0x80..0x9F) {
   $Data->{charref_replacements}->{$_} ||= $_;
@@ -139,6 +140,10 @@ sub expand_range ($) {
 } # expand_range
 
 $Data->{nonchars} = expand_range $SETS->{sets}->{'$unicode:Noncharacter_Code_Point'}->{chars};
+
+for (keys %{expand_range $SETS->{sets}->{'$html:charref-parse-error'}->{chars}}) {
+  $Data->{charref_invalid}->{$_} ||= $_;
+}
 
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Useqq = 1;

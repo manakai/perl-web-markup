@@ -48,18 +48,14 @@ for (keys %$MathMLAttrNameFixup) {
 ## ------ Character references ------
 
 our $NamedCharRefs = $Web::HTML::EntityChar;
+our $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{charref_invalid};
 our $CharRefReplacements = $Web::HTML::_SyntaxDefs->{charref_replacements};
 our $NoncharacterCodePoints = $Web::HTML::_SyntaxDefs->{nonchars};
 
-## ------ DOCTYPEs ------
+## ------ DEPRECATED ------
 
 # XXX Variables in this section will be removed.
 
-## Obsolete permitted DOCTYPE strings
-## <http://www.whatwg.org/specs/web-apps/current-work/#obsolete-permitted-doctype-string>,
-## <http://www.whatwg.org/specs/web-apps/current-work/#the-initial-insertion-mode>.
-
-## Case-sensitive
 our $ObsoletePermittedDoctypes = {
   '-//W3C//DTD HTML 4.0//EN'
       => 'http://www.w3.org/TR/REC-html40/strict.dtd', # or missing
@@ -70,8 +66,6 @@ our $ObsoletePermittedDoctypes = {
   '-//W3C//DTD XHTML 1.1//EN'
       => 'http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd', # required
 };
-
-## ASCII case-insensitive
 our $QuirkyPublicIDPrefixes = [
   "+//SILMARIL//DTD HTML PRO V0R11 19970101//",
   "-//ADVASOFT LTD//DTD HTML 3.0 ASWEDIT + EXTENSIONS//",
@@ -129,27 +123,13 @@ our $QuirkyPublicIDPrefixes = [
   "-//WEBTECHS//DTD MOZILLA HTML 2.0//",
   "-//WEBTECHS//DTD MOZILLA HTML//",
 ]; # $QuirkyPublicIDPrefixes
-
-## ASCII case-insensitive
 our $QuirkyPublicIDs = {
   "-//W3O//DTD W3 HTML STRICT 3.0//EN//" => 1,
   "-/W3C/DTD HTML 4.0 TRANSITIONAL/EN" => 1,
   "HTML" => 1,
 }; # $QuirkyPublicIDs
 
-## ASCII case-insensitive
-## Quirks or limited quirks, depending on existence of system id
-## -//W3C//DTD HTML 4.01 FRAMESET// (prefix)
-## -//W3C//DTD HTML 4.01 TRANSITIONAL// (prefix)
-
-## ASCII case-insensitive
-## Limited quirks
-## -//W3C//DTD XHTML 1.0 FRAMESET// (prefix)
-## -//W3C//DTD XHTML 1.0 TRANSITIONAL// (prefix)
-
-## ASCII case-insensitive
-## Quirks system id
-## http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd
+## ------ End of deprecated ------
 
 1;
 

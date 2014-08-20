@@ -30,34 +30,6 @@
     ];
     my $TagName2Group = {};
 
-# XXX defs from json
-my $InvalidCharRefs = {};
-
-for (0x0000, 0xD800..0xDFFF) {
-  $InvalidCharRefs->{0}->{$_} =
-  $InvalidCharRefs->{1.0}->{$_} = [0xFFFD, 'must'];
-}
-for (0x0001..0x0008, 0x000B, 0x000E..0x001F) {
-  $InvalidCharRefs->{0}->{$_} =
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'must'];
-}
-$InvalidCharRefs->{1.0}->{0x000C} = [0x000C, 'must'];
-$InvalidCharRefs->{0}->{0x007F} = [0x007F, 'must'];
-for (0x007F..0x009F) {
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'warn'];
-}
-for (keys %$Web::HTML::ParserData::NoncharacterCodePoints) {
-  $InvalidCharRefs->{0}->{$_} = [$_, 'must'];
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'warn'];
-}
-for (0xFFFE, 0xFFFF) {
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'must'];
-}
-for (keys %$Web::HTML::ParserData::CharRefReplacements) {
-  $InvalidCharRefs->{0}->{$_}
-      = [$Web::HTML::ParserData::CharRefReplacements->{$_}, 'must'];
-}
-
     ## ------ Common handlers ------
 
     sub new ($) {
@@ -12664,7 +12636,7 @@ my $ResetIMByETUnlessLast = {  (HEAD_EL) => IN_HEAD_IM,
             $AFE->[$entry_i] = $node;
           }
         }
-      
+      my $StateByElementName = {'iframe' => RAWTEXT_STATE, 'noembed' => RAWTEXT_STATE, 'noframes' => RAWTEXT_STATE, 'plaintext' => PLAINTEXT_STATE, 'script' => SCRIPT_DATA_STATE, 'style' => RAWTEXT_STATE, 'textarea' => RCDATA_STATE, 'title' => RCDATA_STATE, 'xmp' => RAWTEXT_STATE, };
 
     ## ------ Input byte stream ------
     
@@ -14788,12 +14760,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -14817,12 +14789,12 @@ $State = RCDATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -14855,12 +14827,12 @@ $State = RCDATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -14890,12 +14862,12 @@ $State = RCDATA_STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -14919,12 +14891,12 @@ $State = CHARREF_IN_RCDATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -14949,12 +14921,12 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -14984,12 +14956,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -15024,12 +14996,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -15053,12 +15025,12 @@ $State = RCDATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -15091,12 +15063,12 @@ $State = RCDATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -15126,12 +15098,12 @@ $State = RCDATA_STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -15155,12 +15127,12 @@ $State = CHARREF_IN_RCDATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -15185,12 +15157,12 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -15220,12 +15192,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17118,12 +17090,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17143,12 +17115,12 @@ $State = ATTR_VALUE__DQ__STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17173,12 +17145,12 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17200,12 +17172,12 @@ $State = ATTR_VALUE__DQ__STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17225,12 +17197,12 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17252,12 +17224,12 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17279,12 +17251,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17319,12 +17291,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17344,12 +17316,12 @@ $State = ATTR_VALUE__DQ__STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17374,12 +17346,12 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17401,12 +17373,12 @@ $State = ATTR_VALUE__DQ__STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17426,12 +17398,12 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17453,12 +17425,12 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -17480,12 +17452,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18193,12 +18165,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18218,12 +18190,12 @@ $State = ATTR_VALUE__SQ__STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18248,12 +18220,12 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18275,12 +18247,12 @@ $State = ATTR_VALUE__SQ__STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18302,12 +18274,12 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18327,12 +18299,12 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18354,12 +18326,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18394,12 +18366,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18419,12 +18391,12 @@ $State = ATTR_VALUE__SQ__STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18449,12 +18421,12 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18476,12 +18448,12 @@ $State = ATTR_VALUE__SQ__STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18503,12 +18475,12 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18528,12 +18500,12 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -18555,12 +18527,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19442,12 +19414,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19467,12 +19439,12 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19498,12 +19470,12 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19523,12 +19495,12 @@ $State = BEFORE_ATTR_NAME_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19548,12 +19520,12 @@ $State = BEFORE_ATTR_NAME_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19578,12 +19550,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19605,12 +19577,12 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19635,12 +19607,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19665,12 +19637,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19695,12 +19667,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19759,12 +19731,12 @@ push @$Tokens, $Token;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19789,12 +19761,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19816,12 +19788,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19856,12 +19828,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19881,12 +19853,12 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19912,12 +19884,12 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19937,12 +19909,12 @@ $State = BEFORE_ATTR_NAME_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19962,12 +19934,12 @@ $State = BEFORE_ATTR_NAME_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -19992,12 +19964,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -20019,12 +19991,12 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -20049,12 +20021,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -20079,12 +20051,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -20109,12 +20081,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -20173,12 +20145,12 @@ push @$Tokens, $Token;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -20203,12 +20175,12 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -20230,12 +20202,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25079,12 +25051,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25108,12 +25080,12 @@ $State = DATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25146,12 +25118,12 @@ $State = DATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25181,12 +25153,12 @@ $State = DATA_STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25210,12 +25182,12 @@ $State = CHARREF_IN_DATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25240,12 +25212,12 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25275,12 +25247,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25315,12 +25287,12 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25344,12 +25316,12 @@ $State = DATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25382,12 +25354,12 @@ $State = DATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25417,12 +25389,12 @@ $State = DATA_STATE_CR;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25446,12 +25418,12 @@ $State = CHARREF_IN_DATA_STATE;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25476,12 +25448,12 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -25511,12 +25483,12 @@ if ($EOF) {
         
 
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -30944,22 +30916,10 @@ $Scripting = $self->{Scripting};
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
         if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
-          # XXX use JSON's data
-          if ($node_ln eq 'title' or $node_ln eq 'textarea') {
-            $State = RCDATA_STATE;;
-          } elsif ($node_ln eq 'script') {
-            $State = SCRIPT_DATA_STATE;;
-          } elsif ({
-            style => 1,
-            xmp => 1,
-            iframe => 1,
-            noembed => 1,
-            noframes => 1,
-            noscript => $Scripting,
-          }->{$node_ln}) {
+          if ($Scripting and $node_ln eq 'noscript') {
             $State = RAWTEXT_STATE;;
-          } elsif ($node_ln eq 'plaintext') {
-            $State = PLAINTEXT_STATE;;
+          } else {
+            $State = $StateByElementName->{$node_ln} || $State;
           }
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,

@@ -751,12 +751,12 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'process-temp-as-decimal') {
       push @result, q{
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -770,12 +770,12 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'process-temp-as-hexadecimal') {
       push @result, q{
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $InvalidCharRefs->{0}->{$code}) {
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
                           di => $DI, index => $TempIndex};
-          $code = $replace->[0];
+          $code = $replace;
         } elsif ($code > 0x10FFFF) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U-%08X', $code),
@@ -3026,7 +3026,19 @@ sub dom_tree ($$) {
 } # generate_dom_glue
 
 sub generate_api ($) {
+  my $self = $_[0];
+  my @def_code;
   my @code;
+
+  {
+    my $defs = $self->_expanded_tokenizer_defs->{tokenizer};
+    my @c;
+    for my $el_name (sort { $a cmp $b } keys %{$defs->{initial_state_by_html_element}->{always}}) {
+      my $state = $defs->{initial_state_by_html_element}->{always}->{$el_name};
+      push @c, sprintf q{'%s' => %s, }, $el_name, state_const $state;
+    }
+    push @def_code, sprintf q{my $StateByElementName = {%s};}, join '', @c;
+  }
 
   my $vars_codes = {};
   {
@@ -3241,22 +3253,10 @@ sub generate_api ($) {
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
         if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
-          # XXX use JSON's data
-          if ($node_ln eq 'title' or $node_ln eq 'textarea') {
-            SWITCH_STATE ("RCDATA state");
-          } elsif ($node_ln eq 'script') {
-            SWITCH_STATE ("script data state");
-          } elsif ({
-            style => 1,
-            xmp => 1,
-            iframe => 1,
-            noembed => 1,
-            noframes => 1,
-            noscript => $Scripting,
-          }->{$node_ln}) {
+          if ($Scripting and $node_ln eq 'noscript') {
             SWITCH_STATE ("RAWTEXT state");
-          } elsif ($node_ln eq 'plaintext') {
-            SWITCH_STATE ("PLAINTEXT state");
+          } else {
+            $State = $StateByElementName->{$node_ln} || $State;
           }
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -3630,7 +3630,7 @@ sub generate_api ($) {
   $code[-1] =~ s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
   $code[-1] =~ s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
 
-  return join "\n", @code;
+  return join ("\n", @def_code), join "\n", @code;
 } # generate_api
 
 sub generate ($) {
@@ -3639,6 +3639,7 @@ sub generate ($) {
   my $var_decls = join '', map { sprintf q{our $%s;}, $_ } sort { $a cmp $b } keys %$Vars;
   my ($tokenizer_defs_code, $tokenizer_code) = $self->generate_tokenizer;
   my ($tree_defs_code, $tree_code) = $self->generate_tree_constructor;
+  my ($api_defs_code, $api_code) = $self->generate_api;
 
   return sprintf q{
     package %s;
@@ -3671,34 +3672,6 @@ sub generate ($) {
       $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/1998/Math/MathML'},
     ];
     my $TagName2Group = {};
-
-# XXX defs from json
-my $InvalidCharRefs = {};
-
-for (0x0000, 0xD800..0xDFFF) {
-  $InvalidCharRefs->{0}->{$_} =
-  $InvalidCharRefs->{1.0}->{$_} = [0xFFFD, 'must'];
-}
-for (0x0001..0x0008, 0x000B, 0x000E..0x001F) {
-  $InvalidCharRefs->{0}->{$_} =
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'must'];
-}
-$InvalidCharRefs->{1.0}->{0x000C} = [0x000C, 'must'];
-$InvalidCharRefs->{0}->{0x007F} = [0x007F, 'must'];
-for (0x007F..0x009F) {
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'warn'];
-}
-for (keys %%$Web::HTML::ParserData::NoncharacterCodePoints) {
-  $InvalidCharRefs->{0}->{$_} = [$_, 'must'];
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'warn'];
-}
-for (0xFFFE, 0xFFFF) {
-  $InvalidCharRefs->{1.0}->{$_} = [$_, 'must'];
-}
-for (keys %%$Web::HTML::ParserData::CharRefReplacements) {
-  $InvalidCharRefs->{0}->{$_}
-      = [$Web::HTML::ParserData::CharRefReplacements->{$_}, 'must'];
-}
 
     ## ------ Common handlers ------
 
@@ -3808,7 +3781,7 @@ sub onrestartwithencoding ($;$) {
     ## ------ Tokenizer defs ------
     %s
     ## ------ Tree constructor defs ------
-    %s
+    %s%s
 
     ## ------ Input byte stream ------
     %s
@@ -3837,12 +3810,12 @@ it under the same terms as Perl itself.
       $UseLibCode,
       $var_decls,
       $tokenizer_defs_code,
-      $tree_defs_code,
+      $tree_defs_code, $api_defs_code,
       $self->generate_input_bytes_handler,
       $tokenizer_code,
       $tree_code,
       $self->generate_dom_glue,
-      $self->generate_api;
+      $api_code;
 } # generate
 
 sub parser ($) {
