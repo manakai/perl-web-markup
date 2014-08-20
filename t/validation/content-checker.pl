@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+no warnings 'utf8';
 use Path::Tiny;
 use lib path (__FILE__)->parent->parent->parent->child ('t_deps', 'lib')->stringify;
 use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib')->stringify;
