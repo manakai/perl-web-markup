@@ -76,7 +76,8 @@ sub _test ($$) {
       } else {
         warn $opt{type} unless ref $opt{node};
         push @error,
-          (($opt{di} || 0) == 0 ? (defined $opt{line} ? $opt{line} . ';' .$opt{column} . ';' : '') : '') .
+          # XXXindex
+          #(($opt{di} || 0) == 0 ? (defined $opt{line} ? $opt{line} . ';' .$opt{column} . ';' : '') : '') .
           get_node_path ($opt{node}) . ';' . $opt{type} .
           (defined $opt{text} ? ';' . $opt{text} : '') .
           (defined $opt{level} ? ';'.$opt{level} : '');
@@ -87,7 +88,11 @@ sub _test ($$) {
     $val->check_node ($check_as_doc ? $doc : $doc->document_element);
 
     my $actual = join ("\n", sort {$a cmp $b} @error);
-    my $expected = join ("\n", sort {$a cmp $b} @{$test->{errors}->[0]});
+    my $expected = join ("\n", sort {$a cmp $b} map {
+      # XXXindex
+      s/^\d+;\d+;//;
+      $_;
+    } @{$test->{errors}->[0]});
     $actual = join "\n", sort { $a cmp $b } split /\n/, join "\n", $actual;
     $expected = join "\n", sort { $a cmp $b } split /\n/, join "\n", $expected;
     if ($actual eq $expected) {
