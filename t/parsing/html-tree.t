@@ -156,7 +156,11 @@ sub _test ($) {
     }
     my $children = $parser->parse_char_string_with_context
         ($test->{data}->[0], $el, $dom->create_document);
-    $el->append_child ($_) for $children->to_list;
+    if ($el->manakai_element_type_match ('http://www.w3.org/1999/xhtml', 'template')) {
+      $el->content->append_child ($_) for $children->to_list;
+    } else {
+      $el->append_child ($_) for $children->to_list;
+    }
     $result = dumptree ($el);
   }
   

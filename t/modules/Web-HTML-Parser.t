@@ -326,7 +326,7 @@ sub _parse_char_string_onerror_old : Test(2) {
   eq_or_diff \@error, [{
     type => 'no DOCTYPE',
     level => 'm',
-    di => 0, index => 0,
+    di => 1, index => 0,
   }];
 } # _parse_char_string_onerror_old
 
@@ -344,7 +344,7 @@ sub _parse_char_string_onerror_new : Test(2) {
   eq_or_diff \@error, [{
     type => 'no DOCTYPE',
     level => 'm',
-    di => 0, index => 0,
+    di => 1, index => 0,
   }];
 } # _parse_char_string_onerror_new
 
@@ -441,7 +441,7 @@ sub _parse_byte_string_onerror_new : Test(2) {
   eq_or_diff \@error, [{
     type => 'no DOCTYPE',
     level => 'm',
-    di => 0, index => 0,
+    di => 1, index => 0,
   }];
 } # _parse_byte_string_onerror_new
 

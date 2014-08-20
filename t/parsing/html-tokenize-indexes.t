@@ -18,7 +18,7 @@ use Web::DOM::Document;
     push @{$self->{_errors} ||= []},
         @{$self->{saved_lists}->{Errors}};
     push @{$self->{_tokens} ||= []},
-        @{$self->{saved_lists}->{Tokens}};
+        map { +{%$_} } @{$self->{saved_lists}->{Tokens}};
     return $self->SUPER::_construct_tree;
   }
   sub onerrors { return sub { } }
@@ -229,8 +229,8 @@ for (grep { length } split /\n\n+/, $TestData) {
     my $c = shift;
     my $tokenizer = Tokenizer->new;
     my $doc = new Web::DOM::Document;
-    my $di = 45;
-    $tokenizer->di ($di);
+    my $di = 1;
+    $tokenizer->di (45);
     $tokenizer->parse_chars_start ($doc);
     $tokenizer->parse_chars_feed ($_) for @$Input;
     $tokenizer->parse_chars_end;
@@ -240,7 +240,7 @@ for (grep { length } split /\n\n+/, $TestData) {
     eq_or_diff [map {
       [$_->{di}, $_->{index}],
       map {
-        [$_->{di}, $_->{index}],
+        #[$_->{di}, $_->{index}],
         map { [$_->[1], $_->[2]] } @{$_->{value}};
       } @{$_->{attr_list}};
     } @{$tokenizer->{_tokens}}],

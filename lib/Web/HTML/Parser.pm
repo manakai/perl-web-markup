@@ -2706,8 +2706,6 @@ return;
                                             level => 'm',
                                             text => $OE->[-1]->{local_name},di => $token->{di},
                                 index => $token->{index}};
-          }
-        
 {
           my @popped;
           push @popped, pop @$OE while not ($OE->[-1]->{et} & (TEM_ELS));
@@ -2723,6 +2721,8 @@ pop @$TEMPLATE_IMS;
 
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
       
+          }
+        
           } else {
             
           if (
@@ -11550,8 +11550,6 @@ return;
                                             level => 'm',
                                             text => $OE->[-1]->{local_name},di => $token->{di},
                                 index => $token->{index}};
-          }
-        
 {
           my @popped;
           push @popped, pop @$OE while not ($OE->[-1]->{et} & (TEM_ELS));
@@ -11567,6 +11565,8 @@ pop @$TEMPLATE_IMS;
 
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
       
+          }
+        
         },
       ,
         ## [260] in template;START-ELSE

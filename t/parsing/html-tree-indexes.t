@@ -157,8 +157,8 @@ for (grep { length } split /\n\n+/, $TestData) {
     my $errors = [];
     $parser->onerrors (sub { push @$errors, @{$_[1]} });
     my $doc = new Web::DOM::Document;
-    my $di = 45;
-    $parser->di ($di);
+    my $di = 1;
+    $parser->di (45);
     $parser->parse_chars_start ($doc);
     $parser->parse_chars_feed ($_) for @$Input;
     $parser->parse_chars_end;

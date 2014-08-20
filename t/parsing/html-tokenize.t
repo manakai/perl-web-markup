@@ -187,7 +187,7 @@ for my $file_name (grep {$_} split /\s+/, qq[
           $test_token->[1] = $token->{value} if defined $token->{value};
           $test_token->[1] = $token->{data} if defined $token->{data};
           if ($token->{type} == Web::HTML::Parser::START_TAG_TOKEN ()) {
-            $test_token->[2] = {map {$_->{name} => $_->{value}} values %{$token->{attrs}}};
+            $test_token->[2] = {map {$_->{name} => (join '', map { $_->[0] } @{$_->{value}})} values %{$token->{attrs}}}; # IndexedString
             $test_token->[3] = 1 if $token->{self_closing_flag};
             delete $token->{self_closing_flag};
           } elsif ($token->{type} == Web::HTML::Parser::DOCTYPE_TOKEN ()) {
