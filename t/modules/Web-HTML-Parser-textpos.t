@@ -1,13 +1,16 @@
 use strict;
 use warnings;
-use Path::Class;
-use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use Path::Tiny;
+use lib path (__FILE__)->parent->parent->parent->child ('lib')->stringify;
+use lib path (__FILE__)->parent->parent->parent->child
+    ('t_deps', 'lib')->stringify;
+use lib glob path (__FILE__)->parent->parent->parent->child
+    ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
 use Test::Differences;
 use Test::X1;
 use Web::HTML::Parser;
+use Web::HTML::SourceMap;
 use Web::DOM::Document;
 
 for my $test (
@@ -31,14 +34,14 @@ for my $test (
   [qq{<textarea>\x0A\x00aa</textarea>}, 'textarea',
    [[0, 1, 2,1], [1, 2, 2,2]]],
   [qq{<textarea>\x00\x0Aaa</textarea>}, 'textarea',
-   [[0, 1, 1,11], [1, 3, 2,0]]],
-  [qq{<style>\x00\x0Aaa</style>}, 'style', [[0, 1, 1,8], [1, 3, 2,0]]],
+   [[0, 1, 1,11], [1, 3, 1,12]]],
+  [qq{<style>\x00\x0Aaa</style>}, 'style', [[0, 1, 1,8], [1, 3, 1,9]]],
   [qq{<script>\x0A\x00aa</script>}, 'script',
-   [[0, 1, 2,0], [1, 1, 2,1], [2, 2, 2,2]]],
+   [[0, 1, 1,9], [1, 1, 2,1], [2, 2, 2,2]]],
   [qq{<title>\x0A\x00aa</title>}, 'title',
-   [[0, 1, 2,0], [1, 1, 2,1], [2, 2, 2,2]]],
+   [[0, 1, 1,8], [1, 1, 2,1], [2, 2, 2,2]]],
   [qq{<title>\x0A&apos;\x00aa</title>}, 'title',
-   [[0, 1, 2,0], [1, 1, 2,1], [2, 1, 2,7], [3, 2, 2,8]]],
+   [[0, 1, 1,8], [1, 1, 2,1], [2, 1, 2,7], [3, 2, 2,8]]],
   [qq{<head> </head>}, 'head', [[0, 1, 1,7]]],
   [qq{</head> }, 'html 1', [[0, 1, 1,8]]],
   [qq{<head> x}, 'head', [[0, 1, 1,7]]],
@@ -69,8 +72,8 @@ for my $test (
   [qq{<frameset>ab c </frameset>}, 'frameset', [[0, 1, 1,13], [1, 1, 1,15]]],
   [qq{<frameset> c </frameset>}, 'frameset', [[0, 1, 1,11], [1, 1, 1,13]]],
   [q{<svg><![CDATA[x]]></svg>}, 'svg', [[0, 1, 1,15]]],
-  [qq{<svg><![CDATA[\x0Ax]]></svg>}, 'svg', [[0, 2, 2,0]]],
-  [qq{<svg><![CDATA[\x0Ax\x0Ab]]></svg>}, 'svg', [[0, 2, 2,0], [2, 2, 3,0]]],
+  [qq{<svg><![CDATA[\x0Ax]]></svg>}, 'svg', [[0, 2, 1,15]]],
+  [qq{<svg><![CDATA[\x0Ax\x0Ab]]></svg>}, 'svg', [[0, 2, 1,15], [2, 2, 2,2]]],
 ) {
   test {
     my $c = shift;
@@ -85,12 +88,110 @@ for my $test (
     my $el = $doc->query_selector ($test->[1]);
     my $text = ($el->local_name eq 'template' ? $el->content : $el)
         ->child_nodes->[$index];
-    my $pos = $text->get_user_data ('manakai_sps');
-    eq_or_diff $pos, $test->[2];
+    my $is = $text->manakai_get_indexed_string;
+
+    my $dids = $p->di_data_set;
+    $dids->[$p->di]->{lc_map} = create_index_lc_mapping $test->[0];
+    $dids->[my $is_di = @$dids]->{map} = indexed_string_to_mapping $is;
+
+    for (@{$test->[2]}) {
+      my ($di, $index) = resolve_index_pair $dids, $is_di, $_->[0];
+      my ($line, $col) = index_pair_to_lc_pair $dids, $di, $index;
+      test {
+        eq_or_diff [$line, $col], [$_->[2], $_->[3]];
+      } $c, name => $_;
+    }
 
     done $c;
-  } n => 1, name => 'a text node';
+  } n => scalar @{$test->[2]}, name => ['a text node', $test->[0]];
 }
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::HTML::Parser->new;
+  my @error;
+  $parser->onerrors (sub { push @error, @{$_[1]} });
+  $parser->parse_char_string (q{  hoge} => $doc);
+  eq_or_diff $doc->body->first_child->manakai_get_source_location, ['', 1, 2];
+  is $error[0]->{di}, 1;
+  is $error[0]->{index}, 2;
+  is $parser->di, 1;
+  eq_or_diff $parser->di_data_set->[1], {};
+  done $c;
+} n => 5, name => 'parse_char_string di';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::HTML::Parser->new;
+  my @error;
+  $parser->onerrors (sub { push @error, @{$_[1]} });
+  my $nodes = $parser->parse_char_string_with_context (q{  hoge}, undef, $doc);
+  eq_or_diff $nodes->[0]->manakai_get_source_location, ['', 1, 2];
+  is $error[0]->{di}, 1;
+  is $error[0]->{index}, 2;
+  is $parser->di, 1;
+  eq_or_diff $parser->di_data_set->[1], {};
+  done $c;
+} n => 5, name => 'parse_char_string_with_context di';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::HTML::Parser->new;
+  my @error;
+  $parser->onerrors (sub { push @error, @{$_[1]} });
+  $parser->parse_chars_start ($doc);
+  $parser->parse_chars_feed (' ');
+  $parser->parse_chars_feed (' ');
+  $parser->parse_chars_feed ('h');
+  $parser->parse_chars_feed ('oge');
+  $parser->parse_chars_end;
+  eq_or_diff $doc->body->first_child->manakai_get_source_location, ['', 1, 2];
+  is $error[0]->{di}, 1;
+  is $error[0]->{index}, 2;
+  is $parser->di, 2;
+  eq_or_diff $parser->di_data_set->[1], {map => [[0, 2, 0]]};
+  eq_or_diff $parser->di_data_set->[2], {};
+  done $c;
+} n => 6, name => 'parse_chars_* di';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::HTML::Parser->new;
+  my @error;
+  $parser->onerrors (sub { push @error, @{$_[1]} });
+  $parser->parse_byte_string (undef, q{  hoge} => $doc);
+  eq_or_diff $doc->body->first_child->manakai_get_source_location, ['', 1, 2];
+  is $error[0]->{di}, 1;
+  is $error[0]->{index}, 2;
+  is $parser->di, 1;
+  eq_or_diff $parser->di_data_set->[1], {};
+  done $c;
+} n => 5, name => 'parse_byte_string di';
+
+test {
+  my $c = shift;
+  my $doc = new Web::DOM::Document;
+  my $parser = Web::HTML::Parser->new;
+  my @error;
+  $parser->onerrors (sub { push @error, @{$_[1]} });
+  $parser->parse_bytes_start (undef, $doc);
+  $parser->parse_bytes_feed (' ');
+  $parser->parse_bytes_feed (' ');
+  $parser->parse_bytes_feed ('h');
+  $parser->parse_bytes_feed ('oge');
+  $parser->parse_bytes_end;
+  eq_or_diff $doc->body->first_child->manakai_get_source_location, ['', 1, 2];
+  is $error[0]->{di}, 1;
+  is $error[0]->{index}, 2;
+  is $parser->di, 2;
+  eq_or_diff $parser->di_data_set->[1], {map => [[0, 2, 0]]};
+  eq_or_diff $parser->di_data_set->[2], {};
+  done $c;
+} n => 6, name => 'parse_bytes_* di';
 
 run_tests;
 

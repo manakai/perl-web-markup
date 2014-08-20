@@ -9,6 +9,7 @@ use Test::More;
 use Test::Differences;
 use JSON::PS;
 use Web::HTML::Parser;
+use Web::HTML::SourceMap;
 use Web::DOM::Document;
 
 my $path = path (__FILE__)->parent->parent->parent->child
@@ -43,6 +44,10 @@ for my $error_type (keys %$error_defs) {
 
       if (grep { $_->{type} eq $error_type } @$errors) {
         @$errors = grep { $_->{type} eq $error_type } @$errors;
+      }
+      my $dids = $parser->di_data_set;
+      for (@$errors) {
+        ($_->{di}, $_->{index}) = resolve_index_pair $dids, $_->{di}, $_->{index}
       }
       eq_or_diff $errors,
           [{type => $error_type,

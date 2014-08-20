@@ -13020,11 +13020,18 @@ sub _change_the_encoding ($$$) {
   return undef;
 } # _change_the_encoding
 
+    sub di_data_set ($;$) {
+      if (@_ > 1) {
+        $_[0]->{di_data_set} = 0+$_[1];
+      }
+      return $_[0]->{di_data_set} ||= [];
+    } # di_data_set
+
     sub di ($;$) {
       if (@_ > 1) {
-        $_[0]->{DI} = 0+$_[1];
+        $_[0]->{di} = $_[1];
       }
-      return defined $_[0]->{DI} ? $_[0]->{DI} : -1;
+      return $_[0]->{di}; # or undef
     } # di
 
   
@@ -30713,7 +30720,7 @@ sub dom_tree ($$) {
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors) {
-            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
 
             $self->onerrors->($self, $Errors) if @$Errors;
             for my $cb (@$Callbacks) {
@@ -30727,7 +30734,7 @@ sub dom_tree ($$) {
               return 0;
             }
 
-            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
+            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
           }
 
@@ -30748,15 +30755,15 @@ sub dom_tree ($$) {
         my $char = ord substr $input->[0], $index, 1;
         if ($char < 0x100) {
           push @$Errors, {type => 'control char', level => 'm',
-                          text => (sprintf 'U+0000', $char),
+                          text => (sprintf 'U+%04X', $char),
                           di => $DI, index => $index};
         } elsif ($char < 0xE000) {
           push @$Errors, {type => 'char:surrogate', level => 'm',
-                          text => (sprintf 'U+0000', $char),
+                          text => (sprintf 'U+%04X', $char),
                           di => $DI, index => $index};
         } else {
           push @$Errors, {type => 'nonchar', level => 'm',
-                          text => (sprintf 'U+0000', $char),
+                          text => (sprintf 'U+%04X', $char),
                           di => $DI, index => $index};
         }
       }
@@ -30772,12 +30779,10 @@ sub dom_tree ($$) {
     } # _feed_eof
 
     sub parse_char_string ($$$) {
-      #my ($self, $string, $document) = @_;
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      $self->{input_stream} = [];
-      my $doc = $self->{document} = $_[2];
+      $self->{document} = my $doc = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->manakai_compat_mode ('no quirks');
@@ -30785,18 +30790,20 @@ sub dom_tree ($$) {
       $self->{nodes} = [$doc];
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
-$DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
       $IM = INITIAL_IM;
+
+      $self->{input_stream} = [];
+      my $dids = $self->di_data_set;
+      $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
+      $dids->[$DI] ||= {} if $DI >= 0;
       $doc->manakai_set_source_location (['', $DI, 0]);
-      # XXX indexmap
 
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
@@ -30806,17 +30813,14 @@ $Scripting = $self->{Scripting};
     } # parse_char_string
 
     sub parse_char_string_with_context ($$$$) {
-      #my ($self, $string, $context, $document) = @_;
       my $self = $_[0];
-      my $context = $_[2];
-      ## $context MUST be an Element or undef.
-      ## $document MUST be an empty Document.
+      my $context = $_[2]; # an Element or undef
 
       ## HTML fragment parsing algorithm
       ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>.
 
       ## 1.
-      my $doc = $self->{document} = $_[3];
+      $self->{document} = my $doc = $_[3]; # an empty Document
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
@@ -30830,22 +30834,22 @@ $Scripting = $self->{Scripting};
         $doc->manakai_compat_mode ('no quirks');
       }
 
-      ## 3.
-      my $input = [$_[1]]; # string copy
-      $self->{input_stream} = [];
-      # XXX index
-
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
-$DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
       $IM = INITIAL_IM;
+
+      ## 3.
+      my $input = [$_[1]]; # string copy
+      $self->{input_stream} = [];
+      my $dids = $self->di_data_set;
+      $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
+      $dids->[$DI] ||= {} if $DI >= 0;
 
       ## 4.
       my $root;
@@ -30854,7 +30858,7 @@ $Scripting = $self->{Scripting};
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
         if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
-          # XXX JSON
+          # XXX use JSON's data
           if ($node_ln eq 'title' or $node_ln eq 'textarea') {
             $State = RCDATA_STATE;;
           } elsif ($node_ln eq 'script') {
@@ -30996,47 +31000,48 @@ $Scripting = $self->{Scripting};
 
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
-$DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
       $IM = INITIAL_IM;
-      $doc->manakai_set_source_location (['', $DI, 0]);
-      # XXX indexmap
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      my $dids = $self->di_data_set;
+      $DI = @$dids || 1;
+      $self->{di} = my $source_di = defined $self->{di} ? $self->{di} : $DI+1;
+      $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
+      $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
+      $doc->manakai_set_source_location (['', $DI, 0]);
+
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_start
 
     sub parse_chars_feed ($$) {
       my $self = $_[0];
-      my $input = [$_[1]];
+      my $input = [$_[1]]; # string copy
 
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->_feed_eof or die "Can't restart";
@@ -31058,10 +31063,9 @@ $Scripting = $self->{Scripting};
 ## Encoding Standard spec.
 
     sub parse_byte_string ($$$$) {
-      #my ($self, $charset_name, $string, $doc) = @_;
       my $self = $_[0];
 
-      my $doc = $self->{document} = $_[3];
+      $self->{document} = my $doc = $_[3];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->manakai_compat_mode ('no quirks');
@@ -31074,15 +31078,11 @@ $Scripting = $self->{Scripting};
 
         local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
         $FRAMESET_OK = 1;
-$DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-        $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+        $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-        $doc->manakai_set_source_location (['', $DI, 0]);
-        # XXX indexmap
 
         my $inputref = \($_[2]);
         $self->_encoding_sniffing
@@ -31093,6 +31093,10 @@ $Scripting = $self->{Scripting};
         $doc->input_encoding ($self->{input_encoding});
 
         my $input = [decode $self->{input_encoding}, $$inputref]; # XXXencoding
+        my $dids = $self->di_data_set;
+        $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
+        $dids->[$DI] ||= {} if $DI >= 0;
+        $doc->manakai_set_source_location (['', $DI, 0]);
 
         $State = DATA_STATE;;
         $IM = INITIAL_IM;
@@ -31116,17 +31120,20 @@ $Scripting = $self->{Scripting};
       delete $self->{parse_bytes_started};
       $self->{input_stream} = [];
       $FRAMESET_OK = 1;
-$DI = -1;
 $NEXT_ID = 1;
 $Offset = 0;
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
       $IM = INITIAL_IM;
+
+      my $dids = $self->di_data_set;
+      $DI = @$dids || 1;
+      $self->{di} = my $source_di = defined $self->{di} ? $self->{di} : $DI+1;
+      $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
+      $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
-      # XXX indexmap
     } # _parse_bytes_init
 
     sub _parse_bytes_start_parsing ($;%) {
@@ -31154,13 +31161,13 @@ $Scripting = $self->{Scripting};
     } # _parse_bytes_start_parsing
 
     sub parse_bytes_start ($$$) {
-      my ($self, $charset_name, $doc) = @_;
+      my $self = $_[0];
 
       $self->{byte_buffer} = '';
       $self->{byte_buffer_orig} = '';
-      $self->{transport_encoding_label} = $charset_name;
+      $self->{transport_encoding_label} = $_[1];
 
-      $self->{document} = $doc;
+      $self->{document} = my $doc = $_[2];
       $doc->manakai_is_html (1);
       $self->{can_restart} = 1;
 
@@ -31173,21 +31180,20 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
     ## The $args{start_parsing} flag should be set true if it has
     ## taken more than 500ms from the start of overall parsing
-    ## process.
-    sub parse_bytes_feed ($$) {
+    ## process. XXX should this be a separate method?
+    sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->{byte_buffer} .= $_[1];
@@ -31216,17 +31222,16 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
       local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
-      $DI = defined $self->{DI} ? $self->{DI} : -1;
-$IframeSrcdoc = $self->{IframeSrcdoc};
+      $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       PARSER: {

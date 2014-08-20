@@ -9,7 +9,7 @@ use base qw(Test::Class);
 use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
-use Web::HTML::Parser;
+#use Web::HTML::Parser;
 use Web::XML::Parser;
 use Web::DOM::Document;
 use Test::X1;
@@ -42,15 +42,15 @@ for my $test (
   [qq{<p hoge= abc&#xa;x&#xd;b />} => [[0,1 => 1,10], [1,2 => 1,11], [3,1 => 1,13], [4,1 => 1,18], [5,1 => 1,19], [6,1 => 1,24]]],
   [qq{<p hoge= abc&#10;x&#13;b />} => [[0,1 => 1,10], [1,2 => 1,11], [3,1 => 1,13], [4,1 => 1,18], [5,1 => 1,19], [6,1 => 1,24]]],
 ) {
-  test {
-    my $c = shift;
-    my $doc = new Web::DOM::Document;
-    my $parser = Web::HTML::Parser->new;
-    $parser->parse_char_string ($test->[0] => $doc);
-    my $attr = $doc->body->first_element_child->attributes->[0];
-    eq_or_diff $attr->get_user_data ('manakai_sps'), $test->[1];
-    done $c;
-  } n => 1, name => ['manakai_pos', 'html', $test->[0]];
+  #test {
+  #  my $c = shift;
+  #  my $doc = new Web::DOM::Document;
+  #  my $parser = Web::HTML::Parser->new;
+  #  $parser->parse_char_string ($test->[0] => $doc);
+  #  my $attr = $doc->body->first_element_child->attributes->[0];
+  #  eq_or_diff $attr->get_user_data ('manakai_sps'), $test->[1];
+  #  done $c;
+  #} n => 1, name => ['manakai_pos', 'html', $test->[0]];
 
   test {
     my $c = shift;

@@ -9,9 +9,6 @@ my $GeneratedPackageName = q{Web::HTML::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
-# XXX parse error types
-# XXX exposing input stream index -> (di, ci) mapping table
-
 sub new ($) {
   return bless {}, $_[0];
 } # new
@@ -39,7 +36,7 @@ my $Vars = {
   Scripting => {input => 1, type => 'boolean'},
   IframeSrcdoc => {input => 1, type => 'boolean'},
   Confident => {save => 1, type => 'boolean'},
-  DI => {input => 1, type => 'index', default => -1},
+  DI => {save => 1, type => 'index'},
   AnchoredIndex => {save => 1, type => 'index'},
   EOF => {save => 1, type => 'boolean'},
   Offset => {save => 1, type => 'index', default => 0},
@@ -427,11 +424,18 @@ sub _change_the_encoding ($$$) {
   return undef;
 } # _change_the_encoding
 
+    sub di_data_set ($;$) {
+      if (@_ > 1) {
+        $_[0]->{di_data_set} = 0+$_[1];
+      }
+      return $_[0]->{di_data_set} ||= [];
+    } # di_data_set
+
     sub di ($;$) {
       if (@_ > 1) {
-        $_[0]->{DI} = 0+$_[1];
+        $_[0]->{di} = $_[1];
       }
-      return defined $_[0]->{DI} ? $_[0]->{DI} : -1;
+      return $_[0]->{di}; # or undef
     } # di
 
   };
@@ -3136,15 +3140,15 @@ sub generate_api ($) {
         my $char = ord substr $input->[0], $index, 1;
         if ($char < 0x100) {
           push @$Errors, {type => 'control char', level => 'm',
-                          text => (sprintf 'U+%04X', $char),
+                          text => (sprintf 'U+%%04X', $char),
                           di => $DI, index => $index};
         } elsif ($char < 0xE000) {
           push @$Errors, {type => 'char:surrogate', level => 'm',
-                          text => (sprintf 'U+%04X', $char),
+                          text => (sprintf 'U+%%04X', $char),
                           di => $DI, index => $index};
         } else {
           push @$Errors, {type => 'nonchar', level => 'm',
-                          text => (sprintf 'U+%04X', $char),
+                          text => (sprintf 'U+%%04X', $char),
                           di => $DI, index => $index};
         }
       }
@@ -3160,12 +3164,10 @@ sub generate_api ($) {
     } # _feed_eof
 
     sub parse_char_string ($$$) {
-      #my ($self, $string, $document) = @_;
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      $self->{input_stream} = [];
-      my $doc = $self->{document} = $_[2];
+      $self->{document} = my $doc = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->manakai_compat_mode ('no quirks');
@@ -3177,8 +3179,12 @@ sub generate_api ($) {
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
       $IM = IM ("initial");
+
+      $self->{input_stream} = [];
+      my $dids = $self->di_data_set;
+      $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
+      $dids->[$DI] ||= {} if $DI >= 0;
       $doc->manakai_set_source_location (['', $DI, 0]);
-      # XXX indexmap
 
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
@@ -3188,17 +3194,14 @@ sub generate_api ($) {
     } # parse_char_string
 
     sub parse_char_string_with_context ($$$$) {
-      #my ($self, $string, $context, $document) = @_;
       my $self = $_[0];
-      my $context = $_[2];
-      ## $context MUST be an Element or undef.
-      ## $document MUST be an empty Document.
+      my $context = $_[2]; # an Element or undef
 
       ## HTML fragment parsing algorithm
       ## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>.
 
       ## 1.
-      my $doc = $self->{document} = $_[3];
+      $self->{document} = my $doc = $_[3]; # an empty Document
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
@@ -3212,16 +3215,18 @@ sub generate_api ($) {
         $doc->manakai_compat_mode ('no quirks');
       }
 
-      ## 3.
-      my $input = [$_[1]]; # string copy
-      $self->{input_stream} = [];
-      # XXX index
-
       VARS::LOCAL;
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
       $IM = IM ("initial");
+
+      ## 3.
+      my $input = [$_[1]]; # string copy
+      $self->{input_stream} = [];
+      my $dids = $self->di_data_set;
+      $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
+      $dids->[$DI] ||= {} if $DI >= 0;
 
       ## 4.
       my $root;
@@ -3230,7 +3235,7 @@ sub generate_api ($) {
         my $node_ns = $context->namespace_uri || '';
         my $node_ln = $context->local_name;
         if ($node_ns eq 'http://www.w3.org/1999/xhtml') {
-          # XXX JSON
+          # XXX use JSON's data
           if ($node_ln eq 'title' or $node_ln eq 'textarea') {
             SWITCH_STATE ("RCDATA state");
           } elsif ($node_ln eq 'script') {
@@ -3376,8 +3381,13 @@ sub generate_api ($) {
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
       $IM = IM ("initial");
+
+      my $dids = $self->di_data_set;
+      $DI = @$dids || 1;
+      $self->{di} = my $source_di = defined $self->{di} ? $self->{di} : $DI+1;
+      $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
+      $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
-      # XXX indexmap
 
       VARS::SAVE;
       return;
@@ -3385,7 +3395,7 @@ sub generate_api ($) {
 
     sub parse_chars_feed ($$) {
       my $self = $_[0];
-      my $input = [$_[1]];
+      my $input = [$_[1]]; # string copy
 
       VARS::LOCAL;
       VARS::RESET;
@@ -3422,10 +3432,9 @@ sub generate_api ($) {
 ## Encoding Standard spec.
 
     sub parse_byte_string ($$$$) {
-      #my ($self, $charset_name, $string, $doc) = @_;
       my $self = $_[0];
 
-      my $doc = $self->{document} = $_[3];
+      $self->{document} = my $doc = $_[3];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
       $doc->manakai_is_html (1);
       $doc->manakai_compat_mode ('no quirks');
@@ -3439,8 +3448,6 @@ sub generate_api ($) {
         VARS::LOCAL;
         VARS::INIT;
         VARS::RESET;
-        $doc->manakai_set_source_location (['', $DI, 0]);
-        # XXX indexmap
 
         my $inputref = \($_[2]);
         $self->_encoding_sniffing
@@ -3451,6 +3458,10 @@ sub generate_api ($) {
         $doc->input_encoding ($self->{input_encoding});
 
         my $input = [decode $self->{input_encoding}, $$inputref]; # XXXencoding
+        my $dids = $self->di_data_set;
+        $self->{di} = $DI = defined $self->{di} ? $self->{di} : @$dids || 1;
+        $dids->[$DI] ||= {} if $DI >= 0;
+        $doc->manakai_set_source_location (['', $DI, 0]);
 
         SWITCH_STATE ("data state");
         $IM = IM ("initial");
@@ -3477,8 +3488,13 @@ sub generate_api ($) {
       VARS::RESET;
       SWITCH_STATE ("data state");
       $IM = IM ("initial");
+
+      my $dids = $self->di_data_set;
+      $DI = @$dids || 1;
+      $self->{di} = my $source_di = defined $self->{di} ? $self->{di} : $DI+1;
+      $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
+      $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
-      # XXX indexmap
     } # _parse_bytes_init
 
     sub _parse_bytes_start_parsing ($;%%) {
@@ -3506,13 +3522,13 @@ sub generate_api ($) {
     } # _parse_bytes_start_parsing
 
     sub parse_bytes_start ($$$) {
-      my ($self, $charset_name, $doc) = @_;
+      my $self = $_[0];
 
       $self->{byte_buffer} = '';
       $self->{byte_buffer_orig} = '';
-      $self->{transport_encoding_label} = $charset_name;
+      $self->{transport_encoding_label} = $_[1];
 
-      $self->{document} = $doc;
+      $self->{document} = my $doc = $_[2];
       $doc->manakai_is_html (1);
       $self->{can_restart} = 1;
 
@@ -3531,8 +3547,8 @@ sub generate_api ($) {
 
     ## The $args{start_parsing} flag should be set true if it has
     ## taken more than 500ms from the start of overall parsing
-    ## process.
-    sub parse_bytes_feed ($$) {
+    ## process. XXX should this be a separate method?
+    sub parse_bytes_feed ($$;%%) {
       my ($self, undef, %%args) = @_;
 
       VARS::LOCAL;
