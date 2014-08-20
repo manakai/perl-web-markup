@@ -1,7 +1,7 @@
 package Web::HTML::ParserData;
 use strict;
 use warnings;
-our $VERSION = '3.0';
+our $VERSION = '4.0';
 use Web::HTML::_SyntaxDefs;
 
 ## ------ Namespace URLs ------
@@ -19,8 +19,6 @@ our $AllVoidElements = $Web::HTML::_SyntaxDefs->{void}->{+HTML_NS};
 
 ## ------ Foreign element integration points ------
 
-## MathML text integration point
-## <http://www.whatwg.org/specs/web-apps/current-work/#mathml-text-integration-point>.
 our $MathMLTextIntegrationPoints = {
   mi => 1,
   mo => 1,
@@ -29,28 +27,22 @@ our $MathMLTextIntegrationPoints = {
   mtext => 1,
 };
 
-## <http://www.whatwg.org/specs/web-apps/current-work/#tree-construction>.
 our $MathMLTextIntegrationPointMathMLElements = {
   mglyph => 1,
   malignmark => 1,
 };
 
-## HTML integration point (SVG elements)
-## <http://www.whatwg.org/specs/web-apps/current-work/#html-integration-point>.
 our $SVGHTMLIntegrationPoints = {
   foreignObject => 1,
   desc => 1,
   title => 1,
 };
 
-## HTML integration point (MathML elements)
-## <http://www.whatwg.org/specs/web-apps/current-work/#html-integration-point>.
 our $MathMLHTMLIntegrationPoints = {
   #'annotation-xml' with encoding (ASCII case-insensitive) text/html
   #or application/xhtml+xml
 };
 
-## <http://www.whatwg.org/specs/web-apps/current-work/#parsing-main-inforeign>.
 our $ForeignContentBreakers = {
   b => 1, big => 1, blockquote => 1, body => 1, br => 1, center => 1,
   code => 1, dd => 1, div => 1, dl => 1, dt => 1, em => 1, embed => 1,
@@ -86,7 +78,6 @@ for (keys %$MathMLAttrNameFixup) {
 require Web::HTML::_NamedEntityList;
 our $NamedCharRefs = $Web::HTML::EntityChar;
 
-## <http://www.whatwg.org/specs/web-apps/current-work/#tokenizing-character-references>.
 our $CharRefReplacements = {
   0x00 => 0xFFFD,
   0x0D => 0x000D,
@@ -136,6 +127,8 @@ our $NoncharacterCodePoints = {
 }; # $NoncharacterCodePoints
 
 ## ------ DOCTYPEs ------
+
+# XXX Variables in this section will be removed.
 
 ## Obsolete permitted DOCTYPE strings
 ## <http://www.whatwg.org/specs/web-apps/current-work/#obsolete-permitted-doctype-string>,
@@ -267,11 +260,39 @@ void" in the JSON data file
 
 =item $MathMLTextIntegrationPoints
 
-=item $MathMLHTMLIntegrationPoints
+The local names of the MathML text integration point elements
+<http://www.whatwg.org/specs/web-apps/current-work/#mathml-text-integration-point>.
+Keys are local names and values are true values.
+
+=item $MathMLTextIntegrationPointMathMLElements
+
+The tag names of the start tags that are interpreted as MathML
+elements in MathML text integration point
+<http://www.whatwg.org/specs/web-apps/current-work/#tree-construction>.
+Keys are tag names (in lowercase) and values are true values.
 
 =item $SVGHTMLIntegrationPoints
 
+The local names of the HTML integration point SVG elements
+<http://www.whatwg.org/specs/web-apps/current-work/#html-integration-point>.
+Keys are local names and values are true values.
+
+=item $MathMLHTMLIntegrationPoints
+
+The local names of the HTML integration point MathML elements
+<http://www.whatwg.org/specs/web-apps/current-work/#html-integration-point>.
+Keys are local names and values are true values.
+
+Note that the C<annotation-xml> element is B<NOT> in this list.
+
 =item $ForeignContentBreakers
+
+The tag names of the start tags that will close foreign elements if
+they appear in foreign content parsing mode
+<http://www.whatwg.org/specs/web-apps/current-work/#parsing-main-inforeign>.
+Keys are tag names (in lowercase) and values are true values.
+
+Note that the C<font> tag name is B<NOT> in this list.
 
 =item $MathMLAttrNameFixup
 
@@ -296,22 +317,39 @@ start tag, an element in the SVG namespace
 
 =item $NamedCharRefs
 
+HTML named character references.
+
 =item $CharRefReplacements
+
+The code point replacement table for HTML character references, as
+specified in HTML Standard
+<http://www.whatwg.org/specs/web-apps/current-work/#tokenizing-character-references>.
+Keys are original code points (as specified in character references),
+represented as strings in shortest decimal form, and values are
+corresponding replaced code points, represented as integers.
 
 =item $NoncharacterCodePoints
 
-=item $ObsoletePermittedDoctypes
-
-=item $QuirkyPublicIDPrefixes
-
-=item $QuirkyPublicIDs
+The Unicode noncharacter code points.  Keys are code points,
+represented as strings in shortest decimal form, and values are some
+true values.
 
 =back
 
-=head1 SEE ALSO
+Note that variables not mentioned in this section should not be used.
+They might be removed in later revision of this module.
 
-HTML Living Standard
-<http://www.whatwg.org/specs/web-apps/current-work/>.
+=head1 SPECIFICATION
+
+=over 4
+
+=item HTML
+
+HTML Standard <http://www.whatwg.org/specs/web-apps/current-work/>.
+
+=back
+
+=head1 SOURCE
 
 data-web-defs <https://github.com/manakai/data-web-defs/>.
 
