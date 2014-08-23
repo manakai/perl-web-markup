@@ -7,6 +7,7 @@ use Web::DOM::Document;
 use Time::HiRes qw(time);
 
 exit unless $ENV{TRAVIS};
+exit unless $ENV{TRAVIS_BRANCH} eq 'master';
 
 my $api_key = $ENV{BENCHMARKER_HTMLPARSER_API_KEY} or die "No api key";
 my $info_url = sprintf q{https://travis-ci.org/%s/jobs/%s},
@@ -32,4 +33,3 @@ warn "Time elapsed: $time_elapsed\n";
 
 ## Results are posted to:
 ## <https://docs.google.com/spreadsheets/d/1hL1WhPm-V9T-caiNjJ5t5v5PgaFI0UWVsCrOZnLAksw/edit?usp=sharing>.
-
