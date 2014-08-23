@@ -160,12 +160,15 @@ $(JSON_PS):
 
 ## ------ Tests ------
 
-test: test-deps test-main
+test: test-deps test-main test-benchmark
 
 test-deps: deps local/elements.json local/errors.json $(JSON_PS)
 
 test-main:
 	$(PROVE) t/tests/*.t t/modules/*.t t/parsing/*.t \
 	    t/processing/*.t t/validation/*.t
+
+test-benchmark:
+	$(PERL) bin/benchmark-html-parser.pl
 
 ## License: Public Domain.
