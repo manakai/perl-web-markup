@@ -169,6 +169,6 @@ test-main:
 	    t/processing/*.t t/validation/*.t
 
 test-benchmark:
-	$(PERL) bin/benchmark-html-parser.pl
+	$(PERL) benchmark/travis-benchmark-html-parser.pl
 
 ## License: Public Domain.
