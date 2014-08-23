@@ -29,3 +29,7 @@ system ('curl', '-s', '-S', '-L', qq{https://script.google.com/macros/s/AKfycbyM
 warn "Time elapsed: $time_elapsed\n";
 
 ## License: Public Domain.
+
+## Results are posted to:
+## <https://docs.google.com/spreadsheets/d/1hL1WhPm-V9T-caiNjJ5t5v5PgaFI0UWVsCrOZnLAksw/edit?usp=sharing>.
+
