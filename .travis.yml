@@ -15,6 +15,9 @@ notifications:
     use_notice: true
 env:
   global:
-    secure: "hl7I44r0tPD4iTzCqJCKwDE0dmVumNYDpG7aFFuyd5yTBibgQPG1y7xm9y1aBm5Bs+ImdgmvkFzPcWBJJTopIINJ5iS0yx+KNnZh9JQ2PCl21WFKDef+GSMWPDmalQuIck4V4nIPtL2u7nHVJFBG1OuHy8X52vbCg1Qzo6NXgY8="
+    ## Merger
+    - secure: "hl7I44r0tPD4iTzCqJCKwDE0dmVumNYDpG7aFFuyd5yTBibgQPG1y7xm9y1aBm5Bs+ImdgmvkFzPcWBJJTopIINJ5iS0yx+KNnZh9JQ2PCl21WFKDef+GSMWPDmalQuIck4V4nIPtL2u7nHVJFBG1OuHy8X52vbCg1Qzo6NXgY8="
+    ## HTML parser benchmark
+    - secure: "VnPHj51h9PDVimcnyWihNlz751x7AxlzBLlxR+od8WI3inx/kFtb4RqBsAM/vqqJBB/K3flqR1DQFokSl4nuBdBR6m2Ux7zphHATRByoc6cGrhxGeVhDXCmrxWhgU3rvP5ER2vF9rwLaN3l1eGA6LNGMP4o2rMNlzITinGblFds="
 after_success:
   - curl https://gist.githubusercontent.com/wakaba/9970857/raw/travis-merger.pl | perl

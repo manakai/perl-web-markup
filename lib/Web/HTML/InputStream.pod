@@ -4,6 +4,8 @@ Web::HTML::InputStream - Input stream integration for HTML/XML parsers
 
 =head1 DESCRIPTION
 
+B<THIS MODULE IS DEPRECATED.  DON'T USE THIS MODULE FOR NEW APPLICATIONS.>
+
 The C<Web::HTML::InputStream> module implements handling of input
 stream for HTML/XML parsers (tokenizers), including the coordination
 with character encoding layer.  This module is not intended to be used

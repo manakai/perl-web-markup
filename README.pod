@@ -12,29 +12,17 @@ Following modules are available:
 
 An HTML parser.
 
-=item L<Web::HTML::Serializer>
-
-An HTML serializer.
-
-=item L<Web::HTML::Table>
-
-An implementation of HTML table model.
-
-=item L<Web::HTML::Validator>
-
-A DOM conformance checker (for HTML and XML).
-
 =item L<Web::XML::Parser>
 
 An XML parser.
 
+=item L<Web::HTML::Serializer>
+
+An HTML serializer.
+
 =item L<Web::XML::Serializer>
 
 An XML serializer.
-
-=item L<Web::RDF::XML::Parser>
-
-An RDF/XML parser.
 
 =item L<Web::XPath::Parser>
 
@@ -43,6 +31,22 @@ An XPath 1.0 parser.
 =item L<Web::XPath::Evaluator>
 
 An XPath 1.0 evaluator.
+
+=item L<Web::HTML::Table>
+
+An implementation of HTML table model.
+
+=item L<Web::HTML::Microdata>
+
+An implementation of HTML microdata.
+
+=item L<Web::RDF::XML::Parser>
+
+An RDF/XML parser.
+
+=item L<Web::HTML::Validator>
+
+A DOM conformance checker (for HTML and XML).
 
 =back
 
@@ -61,9 +65,8 @@ modules, see L<Web::XPath::Evaluator> for its requirements on the DOM
 implementation.  For other modules, the DOM implementation must
 support a subset of features defined in DOM Standard, DOM Parsing and
 Serialization Standard, DOM3 Core, DOM Document Type Definitions, DOM
-Perl Binding, and manakai's DOM Extensions, to the extent implemented
-by the "NanoDOM" module (C<t_deps/lib/NanoDOM.pm>).  An example of
-such a DOM implementation is contained in the perl-web-dom package
+Perl Binding, and manakai's DOM Extensions.  An example of such a DOM
+implementation is the L<Web::DOM> modules in the perl-web-dom package
 <https://github.com/manakai/perl-web-dom>.
 
 Validator modules such as L<Web::HTML::Validator> and

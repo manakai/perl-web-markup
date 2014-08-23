@@ -16,11 +16,12 @@ test {
   my $doc_destroy_called = 0;
 
   no warnings 'redefine';
+  no warnings 'once';
   local *Web::HTML::Parser::DESTROY = sub { $parser_destroy_called++ };
   local *Web::DOM::Document::DESTROY = sub { $doc_destroy_called++ };
 
   my $doc = new Web::DOM::Document;
-  Web::HTML::Parser->parse_char_string (q<<p>abc</p>> => $doc);
+  Web::HTML::Parser->new->parse_char_string (q<<p>abc</p>> => $doc);
 
   is $parser_destroy_called, 1;
 

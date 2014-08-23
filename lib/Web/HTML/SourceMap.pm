@@ -2,16 +2,120 @@ package Web::HTML::SourceMap;
 use strict;
 use warnings;
 no warnings 'utf8';
-our $VERSION = '2.0';
-use Exporter::Lite;
+our $VERSION = '3.0';
+use Carp qw(croak);
+
+our @EXPORT;
+
+sub import ($;@) {
+  my $from_class = shift;
+  my ($to_class, $file, $line) = caller;
+  no strict 'refs';
+  for (@_ ? @_ : @{$from_class . '::EXPORT'}) {
+    my $code = $from_class->can ($_)
+        or croak qq{"$_" is not exported by the $from_class module at $file line $line};
+    *{$to_class . '::' . $_} = $code;
+  }
+} # import
+
+## See SuikaWiki:manakai index data structure
+## <http://wiki.suikawiki.org/n/manakai%20index%20data%20structures>.
+
+## XXX As these functions are still in development, they are not
+## documented yet.
+
+push @EXPORT, qw(resolve_index_pair);
+sub resolve_index_pair ($$$) {
+  my ($di_data_set, $di, $index) = @_;
+  for (1..50) {
+    return ($di, $index) if $di < 0;
+
+    my $map = ($di_data_set->[$di] || {})->{map};
+    return ($di, $index) if not defined $map;
+
+    my $entry = [0, -1, 0];
+    for (@$map) {
+      last if $index < $_->[0];
+      $entry = $_;
+    }
+    $di = $entry->[1];
+    $index = $entry->[2] + $index - $entry->[0];
+  }
+  return ($di, $index);
+} # resolve_index_pair
+
+push @EXPORT, qw(indexed_string_to_mapping);
+sub indexed_string_to_mapping ($) {
+  my $is = $_[0];
+  my $map = [];
+  my $offset = 0;
+  for (@$is) { # IndexedString
+    push @$map, [$offset, $_->[1], $_->[2]];
+    $offset += length $_->[0];
+  }
+  return $map;
+} # indexed_string_to_mapping
+
+push @EXPORT, qw(index_pair_to_lc_pair);
+sub index_pair_to_lc_pair ($$$) {
+  my ($di_data_set, $di, $index) = @_;
+  return (undef, undef) if $di < 0;
+
+  my $map = ($di_data_set->[$di] || {})->{lc_map};
+  return (undef, undef) if not defined $map;
+
+  my $entry = undef;
+  for (@$map) {
+    last if $index < $_->[0];
+    $entry = $_;
+  }
+
+  if (defined $entry) {
+    return ($entry->[1], $entry->[2] + $index - $entry->[0]);
+  } else {
+    return (undef, undef);
+  }
+} # index_pair_to_lc_pair
+
+push @EXPORT, qw(create_index_lc_mapping);
+sub create_index_lc_mapping ($) {
+  my @map = ([0, 1, 1]);
+  my $pos = 0;
+  my $l = 1;
+  my $c = 1;
+  my $prev_length = 0;
+  for (split /(\x0D\x0A?|\x0A)/, $_[0], -1) {
+    if ($_ eq "\x0A" or $_ eq "\x0D") {
+      $l++;
+      push @map, [$pos+1, $l, 1];
+      $c = 1;
+      $pos += length $_;
+      $prev_length = 0;
+    } elsif ($_ eq "\x0D\x0A") {
+      push @map, [$pos+1, $l, $prev_length || 1], [$pos+2, $l+1, 1];
+      $l++;
+      $c = 1;
+      $pos += length $_;
+      $prev_length = 0;
+    } else {
+      my $length = $prev_length = length $_;
+      $c += $length;
+      $pos += $length;
+    }
+  }
+  return \@map;
+} # create_index_lc_mapping
+
+## ------ "sps" data structure ------
+
+## DON'T USE THESE FUNCTIONS!  They are to be removed once the XML
+## parser is replaced by a new one.
 
 ## See |Web::HTML::Tokenizer| (search for |"sps"|) for description of
 ## data structures.
 
 ## Tests are included in |t/modules/Web-HTML-Parser-textpos.t|,
 ## |t/modules/Web-XML-Parser-textpos.t|, and other test scripts.
-
-our @EXPORT;
 
 push @EXPORT, qw(create_pos_lc_map);
 sub create_pos_lc_map ($) {

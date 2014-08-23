@@ -1,106 +1,113 @@
-package test::Web::HTML::Parser::doctype;
 use strict;
 use warnings;
-use Path::Class;
-use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
-use base qw(Test::Class);
+use Path::Tiny;
+use lib path (__FILE__)->parent->parent->parent->child ('lib')->stringify;
+use lib path (__FILE__)->parent->parent->parent->child ('t_deps', 'lib')->stringify;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib')->stringify;
+use Test::X1;
 use Test::More;
 use Web::HTML::Parser;
 use Web::DOM::Document;
 use Test::HTCT::Parser;
 
-my $test_d = file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'tests', 'html', 'doctype');
+my $test_path = path (__FILE__)->parent->parent->parent->child
+    ('t_deps', 'tests', 'html', 'doctype');
 
-sub _no_quirks : Tests {
-  for_each_test ($test_d->file ($_)->stringify, {
-    data => {is_prefixed => 1},
-  }, sub {
-    my $test = shift;
-    {
-      my $doc = new Web::DOM::Document;
+for_each_test ($test_path->child ($_)->stringify, {
+  data => {is_prefixed => 1},
+}, sub {
+  my $test = shift;
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
 
-      my $parser = Web::HTML::Parser->new;
-      $parser->parse_char_string ($test->{data}->[0] => $doc);
+    my $parser = Web::HTML::Parser->new;
+    $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-      is $doc->compat_mode, 'CSS1Compat';
-      is $doc->manakai_compat_mode, 'no quirks';
-    }
-    {
-      my $doc = new Web::DOM::Document;
-      $doc->manakai_is_srcdoc (1);
+    is $doc->compat_mode, 'CSS1Compat';
+    is $doc->manakai_compat_mode, 'no quirks';
+    done $c;
+  } n => 2, name => ['quirks', $test->{data}->[0]];
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->manakai_is_srcdoc (1);
 
-      my $parser = Web::HTML::Parser->new;
-      $parser->parse_char_string ($test->{data}->[0] => $doc);
+    my $parser = Web::HTML::Parser->new;
+    $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-      is $doc->compat_mode, 'CSS1Compat';
-      is $doc->manakai_compat_mode, 'no quirks';
-    }
-  }) for qw(
-    doctype-noquirks.dat
-  );
-} # _no_quirks
+    is $doc->compat_mode, 'CSS1Compat';
+    is $doc->manakai_compat_mode, 'no quirks';
+    done $c;
+  } n => 2, name => ['no quirks', $test->{data}->[0]];
+}) for qw(
+  doctype-noquirks.dat
+);
 
-sub _limited_quirks : Tests {
-  for_each_test ($test_d->file ($_)->stringify, {
-    data => {is_prefixed => 1},
-  }, sub {
-    my $test = shift;
-    {
-      my $doc = new Web::DOM::Document;
+for_each_test ($test_path->child ($_)->stringify, {
+  data => {is_prefixed => 1},
+}, sub {
+  my $test = shift;
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
 
-      my $parser = Web::HTML::Parser->new;
-      $parser->parse_char_string ($test->{data}->[0] => $doc);
+    my $parser = Web::HTML::Parser->new;
+    $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-      is $doc->compat_mode, 'CSS1Compat';
-      is $doc->manakai_compat_mode, 'limited quirks';
-    }
-    {
-      my $doc = new Web::DOM::Document;
-      $doc->manakai_is_srcdoc (1);
+    is $doc->compat_mode, 'CSS1Compat';
+    is $doc->manakai_compat_mode, 'limited quirks';
+    done $c;
+  } n => 2, name => ['limited quirks', $test->{data}->[0]];
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->manakai_is_srcdoc (1);
 
-      my $parser = Web::HTML::Parser->new;
-      $parser->parse_char_string ($test->{data}->[0] => $doc);
+    my $parser = Web::HTML::Parser->new;
+    $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-      is $doc->compat_mode, 'CSS1Compat';
-      is $doc->manakai_compat_mode, 'no quirks';
-    }
-  }) for qw(
-    doctype-limitedquirks.dat
-  );
-} # _limited_quirks
+    is $doc->compat_mode, 'CSS1Compat';
+    is $doc->manakai_compat_mode, 'no quirks';
+    done $c;
+  } n => 2, name => ['limited quirks', $test->{data}->[0]];
+}) for qw(
+  doctype-limitedquirks.dat
+);
 
-sub _quirks : Tests {
-  for_each_test ($test_d->file ($_)->stringify, {
-    data => {is_prefixed => 1},
-  }, sub {
-    my $test = shift;
-    {
-      my $doc = new Web::DOM::Document;
+for_each_test ($test_path->child ($_)->stringify, {
+  data => {is_prefixed => 1},
+}, sub {
+  my $test = shift;
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
 
-      my $parser = Web::HTML::Parser->new;
-      $parser->parse_char_string ($test->{data}->[0] => $doc);
+    my $parser = Web::HTML::Parser->new;
+    $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-      is $doc->compat_mode, 'BackCompat';
-      is $doc->manakai_compat_mode, 'quirks';
-    }
-    {
-      my $doc = new Web::DOM::Document;
-      $doc->manakai_is_srcdoc (1);
+    is $doc->compat_mode, 'BackCompat';
+    is $doc->manakai_compat_mode, 'quirks';
+    done $c;
+  } n => 2, name => ['quirks', $test->{data}->[0]];
+  test {
+    my $c = shift;
+    my $doc = new Web::DOM::Document;
+    $doc->manakai_is_srcdoc (1);
 
-      my $parser = Web::HTML::Parser->new;
-      $parser->parse_char_string ($test->{data}->[0] => $doc);
+    my $parser = Web::HTML::Parser->new;
+    $parser->parse_char_string ($test->{data}->[0] => $doc);
 
-      is $doc->compat_mode, 'CSS1Compat';
-      is $doc->manakai_compat_mode, 'no quirks';
-    }
-  }) for qw(
-    doctype-quirks.dat
-  );
-} # _quirks
+    is $doc->compat_mode, 'CSS1Compat';
+    is $doc->manakai_compat_mode, 'no quirks';
+    done $c;
+  } n => 2, name => ['(srcdoc) quirks', $test->{data}->[0]];
+}) for qw(
+  doctype-quirks.dat
+);
 
-sub _change_compat_to_quirk : Test(4) {
+test {
+  my $c = shift;
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('no quirks');
@@ -113,9 +120,11 @@ sub _change_compat_to_quirk : Test(4) {
 
   is $doc->compat_mode, 'BackCompat';
   is $doc->manakai_compat_mode, 'quirks';
-} # _change_compat_to_quirk
+  done $c;
+} n => 4, name => '-> quirks';
 
-sub _change_compat_to_limited_quirk : Test(4) {
+test {
+  my $c = shift;
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('no quirks');
@@ -128,9 +137,11 @@ sub _change_compat_to_limited_quirk : Test(4) {
 
   is $doc->compat_mode, 'CSS1Compat';
   is $doc->manakai_compat_mode, 'limited quirks';
-} # _change_compat_to_limited_quirk
+  done $c;
+} n => 4, name => '-> limited quirks';
 
-sub _change_compat_to_no_quirk : Test(4) {
+test {
+  my $c = shift;
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('no quirks');
@@ -143,9 +154,11 @@ sub _change_compat_to_no_quirk : Test(4) {
 
   is $doc->compat_mode, 'CSS1Compat';
   is $doc->manakai_compat_mode, 'no quirks';
-} # _change_compat_to_no_quirk
+  done $c;
+} n => 4, name => '-> no quirks';
 
-sub _change_compat_q_to_quirk : Test(4) {
+test {
+  my $c = shift;
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('quirks');
@@ -158,9 +171,11 @@ sub _change_compat_q_to_quirk : Test(4) {
 
   is $doc->compat_mode, 'BackCompat';
   is $doc->manakai_compat_mode, 'quirks';
-} # _change_compat_q_to_quirk
+  done $c;
+} n => 4, name => 'quikrs -> quirks';
 
-sub _change_compat_q_to_limited_quirk : Test(4) {
+test {
+  my $c = shift;
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('quirks');
@@ -173,9 +188,11 @@ sub _change_compat_q_to_limited_quirk : Test(4) {
 
   is $doc->compat_mode, 'CSS1Compat';
   is $doc->manakai_compat_mode, 'limited quirks';
-} # _change_compat_q_to_limited_quirk
+  done $c;
+} n => 4, name => 'quirks -> limited quirks';
 
-sub _change_compat_q_to_no_quirk : Test(4) {
+test {
+  my $c = shift;
   my $doc = new Web::DOM::Document;
   $doc->manakai_is_html (1);
   $doc->manakai_compat_mode ('quirks');
@@ -188,11 +205,10 @@ sub _change_compat_q_to_no_quirk : Test(4) {
 
   is $doc->compat_mode, 'CSS1Compat';
   is $doc->manakai_compat_mode, 'no quirks';
-} # _change_compat_q_to_no_quirk
+  done $c;
+} n => 4, name => 'quirks -> no quirks';
 
-__PACKAGE__->runtests;
-
-1;
+run_tests;
 
 =head1 LICENSE
 
