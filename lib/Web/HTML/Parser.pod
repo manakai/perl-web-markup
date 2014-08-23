@@ -5,10 +5,9 @@ Web::HTML::Parser - An HTML parser
 =head1 SYNOPSIS
 
   use Web::HTML::Parser;
-  use Message::DOM::DOMImplementation;
+  use Web::DOM::Document;
   $parser = Web::HTML::Parser->new;
-  $dom = Message::DOM::DOMImplementation->new;
-  $doc = $dom->create_document;
+  $doc = Web::DOM::Document->new;
   
   $parser->parse_char_string ($chars => $doc);
   $parser->parse_byte_string ($encoding, $bytes => $doc);
@@ -20,20 +19,24 @@ Web::HTML::Parser - An HTML parser
 =head1 DESCRIPTION
 
 The C<Web::HTML::Parser> module is an implementation of the HTML
-parser.  It implements the HTML parsing algorithm as defined by HTML
-Living Standard.  Therefore, it's parsing behavior is fully compatible
-with Web browsers with HTML5 parser enabled.
+parsing algorithm defined by the HTML Standard and implemented by Web
+browsers.
+
+This module is intended to be a component of Web user agents, such as
+browsers, data mining tools, validators, and so on.  However, such
+applications might not want to use this module directly.  Rather, this
+module should be used indirectly through more abstract or
+domain-specific modules, such as DOM implementations, scrapers, or
+feed processors, which can provide more convinient APIs.
+
+The perl-web-dom package contains an implementation of the standard
+DOM APIs in pure Perl, which implements HTML parsing API including
+C<inner_html> and C<DOMParser> using this module.  See L<Web::DOM>
+documentation for more information.
 
 =head1 METHODS
 
-It is recommended to use standard DOM interface, such as C<inner_html>
-method of the C<Document> object, to parse an HTML string, where
-possible.  The L<Web::HTML::Parser> module, which, in fact, is used
-to implement the C<inner_html> method, offers more control on how
-parser behaves, which would not be useful unless you are writing a
-complex user agent such as browser or validator.
-
-The L<Web::HTML::Parser> module provides following methods:
+The L<Web::HTML::Parser> module has following methods:
 
 =over 4
 
@@ -43,39 +46,41 @@ Create a new parser.
 
 =item $parser->parse_char_string ($chars => $doc)
 
-Parse a string of characters (i.e. a possibly utf8-flagged string) as
-HTML and construct the DOM tree.
+Parse a character string as HTML.  The first argument must be the
+character string (i.e. a latin1 or utf8 string) to parse.  The second
+argument must be a DOM C<Document> object.  The C<Document> is mutated
+during the process of parsing.
 
-The first argument to the method must be a string to parse.  It may or
-may not be a valid HTML document.
-
-The second argument to the method must be a DOM C<Document> object
-(L<Message::DOM::Document>).  Any child nodes of the document is first
-removed by the parser.
+See <https://github.com/manakai/perl-web-markup#dependency> for the
+requirements on the C<Document> object.
 
 =item $parser->parse_byte_string ($encoding, $bytes => $doc)
 
-Parse a string of bytes as HTML and construct the DOM tree.
+Parse a byte string as HTML.  The first argument must be a character
+encoding label fo the byte string, if any, or C<undef> (See
+L</SPECIFYING ENCODING>).  The second argument must be the byte string
+to parse.  The third argument must be a DOM C<Document> object.  The
+C<Document> is mutated during the process of parsing.
 
-The first argument to the method is the character encoding of the
-document, if known, or C<undef>.  See also L</SPECIFYING ENCODING>.
-
-The second argument to the method must be a string to parse.  It may
-or may not be a valid HTML document.
-
-The third argument to the method must be a DOM C<Document> object
-(L<Message::DOM::Document>).  Any child nodes of the document is first
-removed by the parser.
+See <https://github.com/manakai/perl-web-markup#dependency> for the
+requirements on the C<Document> object.
 
 =item $node_list = $parser->parse_char_string_with_context ($chars, $context, $empty_doc)
 
-Parse a string of characters using the context node I<$context>, using
-the empty document I<$empty_doc>.
+Parse a character string as HTML in the specified context.  The first
+argument must be the character string (i.e. a latin1 or utf8 string)
+to parse.  The second argument must be an C<Element> object used as
+the context, or C<undef> if there is no context.  The third argument
+must be an empty C<Document> object used in the process of parsing.
+Note that the C<Document>'s children list is not affected by the
+parsing.  The method returns an C<HTMLCollection> object containing
+the result of the parsing (zero or more C<Node> objects).
 
-The first argument to the method must be a string of characters.  The
-second argument must be an element or C<undef>.
+This method can be used to implement the C<inner_html> method of an
+C<Element>.
 
-The method returns the result node list.
+See <https://github.com/manakai/perl-web-markup#dependency> for the
+requirements on the C<Document> and C<Element> objects.
 
 =item $parser->locale_tag ($string)
 
@@ -84,12 +89,11 @@ The method returns the result node list.
 Get or set the BCP 47 language tag for the locale used to parse the
 document, e.g. C<en>, C<ja>, C<zh-tw>, and C<zh-cn>.  It is used to
 determine the default character encoding (which is only used when
-character encoding cannot be determined by other means) and to expand
-the C<isindex> start tag (which is obsolete).
+character encoding cannot be determined by other means).
 
 If C<undef> is specified (or the C<locale_tag> method is not
 explicitly invoked at all), the default is "none", which results in
-the C<windows-1252> character encoding and English text defaults.
+the C<windows-1252> character encoding default.
 
 Except for the C<zh-tw> and C<zh-cn>, only the primary language tag
 (i.e. a language code with no C<-> and subtags) should be specified.
@@ -114,7 +118,7 @@ is changed, the result is undefined.
 
 Set whether the scripting flag of the parser is "enabled" or not.  By
 default the value is "disabled" (false).  If the value is "enabled",
-the |noscript| element's content is not parsed (This is how browsers
+the C<noscript> element's content is not parsed (This is how browsers
 parse the document by default).  Otherwise the content is parsed as
 normal.
 
@@ -134,28 +138,38 @@ for details of error handling.
 The value should not be set while the parser is running.  If the value
 is changed, the result is undefined.
 
-=item $parser->throw ($code)
-
-Terminate the parser and run the specified code reference.  The code
-reference must throw an exception.
-
-If the error handler specified by the C<onerror> method throw an
-exception, it must not be directly thrown and this method must be used
-instead.  Otherwise resources used by the parser is not destroyed due
-to the unexpected termination.
-
 =back
 
-Parsed document structure is reflected to the C<Document> object
-specified as an argument to parse methods.  The character encoding
-used to parse the document can be retrieved by the C<input_encoding>
-method of the C<Document>.
+=begin comment
 
-Although the parser is intended to be fully conformant to the HTML
-Living Standard, it might not implement latest spec changes yet.  See
-list of bugs on the HTML parser
-<http://manakai.g.hatena.ne.jp/task/2/> for the current implementation
-status.
+XXX Following methods are not yet documented, as the API is not stable
+until it is proved that document.write (for HTML) and entity expansion
+(for XML) are implementable (with some additions to these methods).
+
+$parser->di_data_set
+$parser->di
+
+$parser->onerrors
+$parser->onappcacheselection
+$parser->onscript
+$parser->onelementspopped
+$parser->onrestartwithencoding
+$parser->restart
+
+$parser->parse_chars_start
+$parser->parse_chars_feed
+$parser->parse_chars_end
+
+$parser->parse_bytes_start
+$parser->parse_bytes_feed
+$parser->parse_bytes_end
+
+Also, need to add a section on how to determine the node's source
+location and errors' source location using |di| and |index|,
+referencing index data structure doc [MANAKAIINDEX] and
+L<Web::HTML::SourceMap> API.
+
+=end comment
 
 =head1 SPECIFYING ENCODING
 
@@ -191,7 +205,8 @@ information of the C<locale_tag> method into account.
 
 =head1 SEE ALSO
 
-L<Message::DOM::Document>, L<Message::DOM::Element>.
+L<Web::DOM::Document>, L<Web::DOM::Element> in the perl-web-dom
+package.
 
 L<Web::HTML::Serializer>.
 
@@ -199,21 +214,15 @@ L<Web::HTML::Validator>.
 
 L<Web::XML::Parser>.
 
-See
-<http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai++Predefined%20User%20Data%20Names>
-for details of source location annotations using DOM3 user data.
-
 =head1 SPECIFICATIONS
 
 =over 4
 
 =item HTML
 
-HTML Living Standard - Parsing HTML documents
-<http://www.whatwg.org/specs/web-apps/current-work/#parsing>.
+HTML Standard <http://www.whatwg.org/specs/web-apps/current-work/>.
 
-HTML Living Standard - Parsing HTML fragments
-<http://www.whatwg.org/specs/web-apps/current-work/#parsing-html-fragments>.
+=item DOCUMENTINNERHTML
 
 Document.prototype.innerHTML
 <http://html5.org/tools/web-apps-tracker?from=6531&to=6532>.
@@ -230,6 +239,11 @@ Encoding Standard <http://encoding.spec.whatwg.org/>.
 
 manakai DOM Extensions
 <http://suika.suikawiki.org/~wakaba/wiki/sw/n/manakai++DOM%20Extensions>.
+
+=item MANAKAIINDEX
+
+manakai index data structure
+<http://wiki.suikawiki.org/n/manakai%20index%20data%20structures>.
 
 =back
 

@@ -1,16 +1,17 @@
 use strict;
 use warnings;
 no warnings 'utf8';
-use Path::Class;
-use lib file (__FILE__)->dir->parent->parent->subdir ('lib')->stringify;
-use lib file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'lib')->stringify;
-use lib glob file (__FILE__)->dir->parent->parent->subdir ('t_deps', 'modules', '*', 'lib')->stringify;
+use Path::Tiny;
+use lib path (__FILE__)->parent->parent->parent->child ('lib')->stringify;
+use lib path (__FILE__)->parent->parent->parent->child ('t_deps', 'lib')->stringify;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps', 'modules', '*', 'lib')->stringify;
 use Test::More;
 use Test::Differences;
 use Test::X1;
 use JSON 1.07;
 $JSON::UnMapping = 1;
 $JSON::UTF8 = 1;
+use Web::DOM::Document;
 
 my $builder = Test::More->builder;
 binmode $builder->output, ":utf8";
@@ -19,10 +20,10 @@ binmode $builder->todo_output, ":utf8";
 
 my $DEBUG = $ENV{DEBUG};
 
-my $test_dir_name = file (__FILE__)->dir->parent->parent->
-    subdir ('t_deps/tests/html/parsing/manakai') . '/';
-my $dir_name = file (__FILE__)->dir->parent->parent->
-    subdir ('t_deps/tests/html/parsing/html5lib/html-tokenizer') . '/';
+my $test_dir_name = path (__FILE__)->parent->parent->parent->
+    child ('t_deps/tests/html/parsing/manakai') . '/';
+my $dir_name = path (__FILE__)->parent->parent->parent->
+    child ('t_deps/tests/html/parsing/html5lib/html-tokenizer') . '/';
 
 use Data::Dumper;
 $Data::Dumper::Useqq = 1;
@@ -55,6 +56,20 @@ if ($DEBUG) {
 }
 
 use Web::HTML::Parser;
+
+{
+  package Tokenizer;
+  push our @ISA, qw(Web::HTML::Parser);
+  sub _construct_tree {
+    my $self = shift;
+    push @{$self->{tokens} ||= []},
+        map { 'ParseError' } @{$self->{saved_lists}->{Errors}};
+    push @{$self->{tokens} ||= []},
+        @{$self->{saved_lists}->{Tokens}};
+    @{$self->{saved_lists}->{Errors}} = ();
+    @{$self->{saved_lists}->{Tokens}} = ();
+  }
+}
 
 for my $file_name (grep {$_} split /\s+/, qq[
       ${dir_name}test1.test
@@ -94,9 +109,10 @@ for my $file_name (grep {$_} split /\s+/, qq[
   my $json = jsonToObj ($js);
   my $tests = $json->{tests} || $json->{xmlViolationTests};
   TEST: for my $test (@$tests) {
-    test {
-      my $c = shift;
-      my $s = $test->{input};
+    {
+      @{$test->{output}} = sort {
+        (!!ref $a) cmp (!!ref $b);
+      } @{$test->{output}};
       my $j = 1;
       while ($j < @{$test->{output}}) {
         if (ref $test->{output}->[$j - 1] and
@@ -105,76 +121,80 @@ for my $file_name (grep {$_} split /\s+/, qq[
             $test->{output}->[$j]->[0] eq 'Character') {
           $test->{output}->[$j - 1]->[1] .= $test->{output}->[$j]->[1];
           splice @{$test->{output}}, $j, 1;
+        } else {
+          $j++;
         }
-        $j++;
       }
+    }
+
+    test {
+      my $c = shift;
+      my $s = $test->{input};
 
       my @cm = @{$test->{initialStates} || $test->{contentModelFlags} || ['']};
       my $last_start_tag = $test->{lastStartTag};
       for my $cm (@cm) {
-        my $p = Web::HTML::Tokenizer->new;
+        my $p = Tokenizer->new;
         my $i = 0;
         my @token;
 
-        $p->{line} = $p->{line_prev} = 0;
-        $p->{column_prev} = -1;
-        $p->{column} = 0;
-        $p->{parse_error} = sub {
-          my %args = @_;
-          warn $args{type}, "\n" if $DEBUG;
-          push @token, 'ParseError';
-        };
-        $p->{insertion_mode} = Web::HTML::Parser::BEFORE_HEAD_IM (); # dummy
-
-        $p->{chars} = [split //, $s];
-        $p->{chars_pos} = 0;
-        $p->{chars_pull_next} = sub { 0 };
-        
-        $p->_initialize_tokenizer;
-
-        $p->{state} = {
-          CDATA => Web::HTML::Defs::RAWTEXT_STATE (),
-          'RAWTEXT state' => Web::HTML::Defs::RAWTEXT_STATE (),
-          RCDATA => Web::HTML::Defs::RCDATA_STATE (),
-          'RCDATA state' => Web::HTML::Defs::RCDATA_STATE (),
-          PCDATA => Web::HTML::Defs::DATA_STATE (),
-          SCRIPT => Web::HTML::Defs::SCRIPT_DATA_STATE (),
-          PLAINTEXT => Web::HTML::Defs::PLAINTEXT_STATE (),
-        }->{$cm};
-        if (defined $last_start_tag) {
-          $p->{state} ||= {
-            textarea => Web::HTML::Defs::RCDATA_STATE (),
-            xmp => Web::HTML::Defs::RAWTEXT_STATE (),
-            plaintext => Web::HTML::Defs::PLAINTEXT_STATE (),
-          }->{$last_start_tag};
-          $p->{last_stag_name} = $last_start_tag;
+        if (length $cm or defined $last_start_tag) {
+          $p->parse_chars_start (new Web::DOM::Document);
+          my $state = {
+            CDATA => Web::HTML::Parser::RAWTEXT_STATE,
+            'RAWTEXT state' => Web::HTML::Parser::RAWTEXT_STATE,
+            RCDATA => Web::HTML::Parser::RCDATA_STATE,
+            'RCDATA state' => Web::HTML::Parser::RCDATA_STATE,
+            PCDATA => Web::HTML::Parser::DATA_STATE,
+            SCRIPT => Web::HTML::Parser::SCRIPT_DATA_STATE,
+            PLAINTEXT => Web::HTML::Parser::PLAINTEXT_STATE,
+          }->{$cm};
+          if (defined $last_start_tag) {
+            $state ||= {
+              textarea => Web::HTML::Parser::RCDATA_STATE,
+              xmp => Web::HTML::Parser::RAWTEXT_STATE,
+              plaintext => Web::HTML::Parser::PLAINTEXT_STATE,
+            }->{$last_start_tag};
+            $p->{saved_states}->{LastStartTagName} = $last_start_tag;
+          }
+          $p->{saved_states}->{State} = $state if defined $state;
+          $p->parse_chars_feed ($s);
+          $p->parse_chars_end;
+        } else {
+          $p->parse_char_string ($s => new Web::DOM::Document);
         }
-        $p->{state} ||= Web::HTML::Defs::DATA_STATE ();
 
         while (1) {
-          my $token = $p->_get_next_token;
-          last if $token->{type} == Web::HTML::Defs::END_OF_FILE_TOKEN ();
+          my $token = shift @{$p->{tokens}};
+
+          unless (ref $token) {
+            unshift @token, 'ParseError';
+            next;
+          }
+
+          last if $token->{type} == Web::HTML::Parser::END_OF_FILE_TOKEN ();
           
           my $test_token = [
             {
-              Web::HTML::Defs::DOCTYPE_TOKEN () => 'DOCTYPE',
-              Web::HTML::Defs::START_TAG_TOKEN () => 'StartTag',
-              Web::HTML::Defs::END_TAG_TOKEN () => 'EndTag',
-              Web::HTML::Defs::COMMENT_TOKEN () => 'Comment',
-              Web::HTML::Defs::CHARACTER_TOKEN () => 'Character',
+              Web::HTML::Parser::DOCTYPE_TOKEN () => 'DOCTYPE',
+              Web::HTML::Parser::START_TAG_TOKEN () => 'StartTag',
+              Web::HTML::Parser::END_TAG_TOKEN () => 'EndTag',
+              Web::HTML::Parser::COMMENT_TOKEN () => 'Comment',
+              Web::HTML::Parser::TEXT_TOKEN () => 'Character',
             }->{$token->{type}} || $token->{type},
           ];
           $test_token->[1] = $token->{tag_name} if defined $token->{tag_name};
+          $test_token->[1] = $token->{value} if defined $token->{value};
           $test_token->[1] = $token->{data} if defined $token->{data};
-          if ($token->{type} == Web::HTML::Defs::START_TAG_TOKEN ()) {
-            $test_token->[2] = {map {$_->{name} => $_->{value}} values %{$token->{attributes}}};
-            $test_token->[3] = 1 if $p->{self_closing};
-            delete $p->{self_closing};
-          } elsif ($token->{type} == Web::HTML::Defs::DOCTYPE_TOKEN ()) {
+          if ($token->{type} == Web::HTML::Parser::START_TAG_TOKEN ()) {
+            $test_token->[2] = {map {$_->{name} => (join '', map { $_->[0] } @{$_->{value}})} values %{$token->{attrs}}}; # IndexedString
+            $test_token->[3] = 1 if $token->{self_closing_flag};
+            delete $token->{self_closing_flag};
+          } elsif ($token->{type} == Web::HTML::Parser::DOCTYPE_TOKEN ()) {
             $test_token->[1] = $token->{name};
-            $test_token->[2] = $token->{pubid};
-            $test_token->[3] = $token->{sysid};
-            $test_token->[4] = $token->{quirks} ? 0 : 1;
+            $test_token->[2] = $token->{public_identifier};
+            $test_token->[3] = $token->{system_identifier};
+            $test_token->[4] = $token->{force_quirks_flag} ? 0 : 1;
           }
 
           if (@token and ref $token[-1] and $token[-1]->[0] eq 'Character' and
@@ -189,7 +209,7 @@ for my $file_name (grep {$_} split /\s+/, qq[
       } # $cm
 
       done $c;
-    } name => [$test->{description}, $test->{input}],
+    } name => [$file_name, $test->{description}, $test->{input}],
       n => 0+@{$test->{initialStates} || $test->{contentModelFlags} || ['']};
   } # $test
 }

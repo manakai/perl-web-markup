@@ -1,5 +1,6 @@
 all: generated-pm-files lib/Web/HTML/Validator/_Defs.pm \
-    lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm
+    lib/Web/HTML/_SyntaxDefs.pm lib/Web/HTML/_NamedEntityList.pm \
+    lib/Web/HTML/Parser.pm
 clean: clean-json-ps
 	rm -fr local/*.json
 
@@ -21,6 +22,7 @@ PROVE = ./prove
 
 WGET = wget
 GIT = git
+JSON_PS = local/perl-latest/pm/lib/perl5/JSON/PS.pm
 
 deps: git-submodules pmbp-install
 
@@ -41,13 +43,22 @@ pmbp-install: pmbp-upgrade
 
 ## ------ Build ------
 
-GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm lib/Web/HTML/Parser.pm
+GENERATED_PM_FILES = lib/Web/HTML/Tokenizer.pm
 
 generated-pm-files: $(GENERATED_PM_FILES)
 
 $(GENERATED_PM_FILES):: %: %.src bin/mkhtmlparser.pl local/bin/pmbp.pl
 	perl local/bin/pmbp.pl --create-perl-command-shortcut perl
 	perl bin/mkhtmlparser.pl $< > $@
+	$(PERL) -c $@
+
+lib/Web/HTML/Parser.pm: bin/generate-parser.pl \
+    local/html-tokenizer-expanded.json \
+    local/html-tree-constructor-expanded-no-isindex.json \
+    local/elements.json local/bin/pmbp.pl $(JSON_PS)
+	perl local/bin/pmbp.pl --create-perl-command-shortcut perl \
+	    --install-module Path::Tiny
+	$(PERL) bin/generate-parser.pl > $@
 	$(PERL) -c $@
 
 lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
@@ -95,6 +106,23 @@ local/xml-datatypes.json:
 local/ogp.json:
 	mkdir -p local
 	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/ogp.json
+local/html-tokenizer-expanded.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tokenizer-expanded.json
+local/html-tree-constructor-expanded-no-isindex.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-web-defs/master/data/html-tree-constructor-expanded-no-isindex.json
+
+local/maps.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-chars/master/data/maps.json
+local/sets.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-chars/master/data/sets.json
+
+local/errors.json:
+	mkdir -p local
+	$(WGET) -O $@ https://raw.githubusercontent.com/manakai/data-errors/master/data/errors.json
 
 local/bin/jq:
 	mkdir -p local/bin
@@ -105,95 +133,42 @@ local/aria-html-map.json: local/aria.json local/bin/jq
 	cat local/aria.json | local/bin/jq '.attrs | to_entries | map(select(.value.preferred.type == "html_attr")) | map([.key, .value.preferred.name])' > $@
 
 lib/Web/HTML/_SyntaxDefs.pm: local/elements.json local/isindex-prompt.json \
-    local/html-syntax.json local/xml-syntax.json local/bin/pmbp.pl Makefile
-	mkdir -p lib/Web/HTML/Validator
-	perl local/bin/pmbp.pl --install-module JSON \
+    local/html-syntax.json local/xml-syntax.json local/bin/pmbp.pl Makefile \
+    $(JSON_PS) bin/generate-syntax-defs.pl local/maps.json local/sets.json
+	mkdir -p lib/Web/HTML
+	perl local/bin/pmbp.pl --install-module Path::Tiny \
 	    --create-perl-command-shortcut perl
-	sh -c 'echo "{\"dom\":"; cat local/elements.json; echo ",\"prompt\":"; cat local/isindex-prompt.json; echo ",\"syntax\":"; cat local/html-syntax.json; echo ",\"xml_syntax\":"; cat local/xml-syntax.json; echo "}"' | \
-	$(PERL) -MJSON -MEncode -MData::Dumper -e ' #\
-	  local $$/ = undef; #\
-	  $$data = JSON->new->decode (decode "utf-8", scalar <>); #\
-	  $$Data::Dumper::Sortkeys = 1; #\
-	  $$Data::Dumper::Useqq = 1; #\
-	  for $$ns (keys %{$$data->{dom}->{elements}}) { #\
-	    for $$ln (keys %{$$data->{dom}->{elements}->{$$ns}}) { #\
-	      my $$category = $$data->{dom}->{elements}->{$$ns}->{$$ln}->{syntax_category}; #\
-	      if ($$category eq "void" or $$category eq "obsolete void") { #\
-	        $$result->{void}->{$$ns}->{$$ln} = 1; #\
-	      } #\
-	    } #\
-	  } #\
-	  for $$locale (keys %{$$data->{prompt}}) { #\
-	    $$text = $$data->{prompt}->{$$locale}->{chromium} || #\
-	             $$data->{prompt}->{$$locale}->{gecko} or next; #\
-	    $$text .= " " if $$text =~ /:$$/; #\
-	    $$result->{prompt}->{$$locale} = $$text; #\
-	  } #\
-	  for (qw(adjusted_mathml_attr_names adjusted_ns_attr_names), #\
-               qw(adjusted_svg_attr_names adjusted_svg_element_names)) { #\
-	    $$result->{$$_} = $$data->{syntax}->{$$_}; #\
-          } #\
-	  for (qw(charrefs_pubids)) { #\
-	    $$result->{$$_} = $$data->{xml_syntax}->{$$_}; #\
-          } #\
-	  $$pm = Dumper $$result; #\
-	  $$pm =~ s/VAR1/Web::HTML::_SyntaxDefs/; #\
-	  print "$$pm\n"; #\
-	  print "1;\n"; #\
-	  $$footer = q{\
-=head1 LICENSE\
-\
-This file contains data from the data-web-defs repository\
-<https://github.com/manakai/data-web-defs/>.\
-\
-This file contains texts from Gecko and Chromium source codes.\
-See following documents for full license terms of them:\
-\
-Gecko:\
-\
-  This Source Code Form is subject to the terms of the Mozilla Public\
-  License, v. 2.0. If a copy of the MPL was not distributed with this\
-  file, You can obtain one at http://mozilla.org/MPL/2.0/.\
-\
-Chromium:\
-\
-  See following documents:\
-  <http://src.chromium.org/viewvc/chrome/trunk/src/webkit/LICENSE>\
-  <http://src.chromium.org/viewvc/chrome/trunk/src/webkit/glue/resources/README.txt>\
-\
-=cut\
-	  }; #\
-	  $$footer =~ s/\x5C$$//gm; #\
-	  print $$footer; #\
-	' > $@
+	./perl bin/generate-syntax-defs.pl > $@
 	perl -c $@
 
 lib/Web/HTML/Validator/_Defs.pm: local/elements.json local/microdata.json \
     local/aria.json local/aria-html-map.json local/bin/pmbp.pl \
     local/rdf.json local/xml-datatypes.json local/ogp.json \
-    bin/generate-validator-defs.pl json-ps
+    bin/generate-validator-defs.pl $(JSON_PS)
 	mkdir -p lib/Web/HTML/Validator
 	perl local/bin/pmbp.pl --install-module Path::Tiny \
 	    --create-perl-command-shortcut perl
 	$(PERL) bin/generate-validator-defs.pl > $@
 	perl -c $@
 
-
-json-ps: local/perl-latest/pm/lib/perl5/JSON/PS.pm
+json-ps: $(JSON_PS)
 clean-json-ps:
-	rm -fr local/perl-latest/pm/lib/perl5/JSON/PS.pm
-local/perl-latest/pm/lib/perl5/JSON/PS.pm:
+	rm -fr $(JSON_PS)
+$(JSON_PS):
 	mkdir -p local/perl-latest/pm/lib/perl5/JSON
 	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/perl-json-ps/master/lib/JSON/PS.pm
 
 ## ------ Tests ------
 
-test: test-deps test-main
+test: test-deps test-main test-benchmark
 
-test-deps: deps local/elements.json
+test-deps: deps local/elements.json local/errors.json $(JSON_PS)
 
 test-main:
 	$(PROVE) t/tests/*.t t/modules/*.t t/parsing/*.t \
 	    t/processing/*.t t/validation/*.t
+
+test-benchmark:
+	$(PERL) benchmark/travis-benchmark-html-parser.pl
 
 ## License: Public Domain.

@@ -93,7 +93,7 @@ HTML Standard
 
 L<Web::XML::Serializer>.
 
-L<Web::DOM::RootNode>.
+L<Web::DOM::ParentNode>.
 
 =head1 AUTHOR
 

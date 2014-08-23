@@ -10,11 +10,11 @@ use base qw(Test::Class);
 use Test::More;
 use Test::Differences;
 use Test::HTCT::Parser;
-use Web::HTML::Parser;
+use Web::HTML::Tokenizer;
 use Web::HTML::Defs;
 
 sub _abort : Test(10) {
-  my $tokenizer = Web::HTML::Parser->new;
+  my $tokenizer = Web::HTML::Tokenizer->new;
 
   my $eof;
 
