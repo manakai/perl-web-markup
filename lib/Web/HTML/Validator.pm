@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use warnings FATAL => 'recursion';
 no warnings 'utf8';
-our $VERSION = '132.0';
+our $VERSION = '133.0';
 use Scalar::Util qw(refaddr);
 use Web::HTML::Validator::_Defs;
 use Web::HTML::SourceMap;
@@ -145,6 +145,7 @@ my $GetNestedOnError = sub ($$$;$) {
 ##   in_a_href_original Used to preserve |$self->{flag}->{in_a_href}|.
 ##   in_flow_content Set to true while the content model checker is
 ##                   in the "flow content" checking mode.
+##   in_picture      Used by |picture|/|source| element checker.
 ##   phase           Content model checker state name.  Possible values
 ##                   depend on the element.
 ##   require_title   Set to 'm' (MUST) or 's' (SHOULD) if the element
@@ -5581,6 +5582,62 @@ sub image_viewable ($;$) {
   return $_[0]->{image_viewable};
 } # image_viewable
 
+$Element->{+HTML_NS}->{picture} = {
+  %AnyChecker,
+  check_start => sub {
+    my ($self, $item, $element_state) = @_;
+    $element_state->{phase} = 'before source';
+    $element_state->{in_picture} = 1;
+  },
+  check_child_element => sub {
+    my ($self, $item, $child_el, $child_nsuri, $child_ln,
+        $child_is_transparent, $element_state) = @_;
+    if ($_Defs->{categories}->{'script-supporting elements'}->{elements}->{$child_nsuri}->{$child_ln}) {
+      #
+    } elsif ($element_state->{phase} eq 'before source') {
+      if ($child_nsuri eq HTML_NS and $child_ln eq 'source') {
+        #
+      } elsif ($child_nsuri eq HTML_NS and $child_ln eq 'img') {
+        $element_state->{phase} = 'after img';
+      } else {
+        $self->{onerror}->(node => $child_el,
+                           type => 'element not allowed:picture', # XXXdoc
+                           level => 'm');
+      }
+    } elsif ($element_state->{phase} eq 'after img') {
+      $self->{onerror}->(node => $child_el,
+                         type => 'element not allowed:picture', # XXXdoc
+                         level => 'm');
+    } else {
+      die "check_child_element: Bad |dl| phase: $element_state->{phase}";
+    }
+
+    # XXX <* srcset type> constraints
+  }, # check_child_element
+  check_child_text => sub {
+    my ($self, $item, $child_node, $has_significant, $element_state) = @_;
+    if ($has_significant) {
+      $self->{onerror}->(node => $child_node,
+                         type => 'character not allowed',
+                         level => 'm');
+    }
+  }, # check_child_text
+  check_end => sub {
+    my ($self, $item, $element_state) = @_;
+    unless ($element_state->{phase} eq 'after img') {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'child element missing',
+                         text => 'img',
+                         level => 'm');
+    }
+    $AnyChecker{check_end}->(@_);
+  },
+}; # picture
+
+# XXX <picture srcset>
+
+# XXX <picture sizes>
+
 $Element->{+HTML_NS}->{img} = {
   %HTMLEmptyChecker,
   check_attrs => $GetHTMLAttrsChecker->({
@@ -5954,11 +6011,34 @@ $Element->{+HTML_NS}->{audio} = {
 
 $Element->{+HTML_NS}->{source}->{check_attrs2} = sub {
   my ($self, $item, $element_state) = @_;
-  unless ($item->{node}->has_attribute_ns (undef, 'src')) {
-    $self->{onerror}->(node => $item->{node},
-                       type => 'attribute missing',
-                       text => 'src',
-                       level => 'm');
+  if ($item->{parent_state}->{in_picture}) {
+    unless ($item->{node}->has_attribute_ns (undef, 'srcset')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'srcset',
+                         level => 'm');
+    }
+
+    for my $name (qw(src)) {
+      my $node = $item->{node}->get_attribute_node_ns (undef, $name);
+      $self->{onerror}->(node => $node,
+                         type => 'attribute not allowed:media source', # XXXtype
+                         level => 'm') if defined $node;
+    }
+  } else {
+    unless ($item->{node}->has_attribute_ns (undef, 'src')) {
+      $self->{onerror}->(node => $item->{node},
+                         type => 'attribute missing',
+                         text => 'src',
+                         level => 'm');
+    }
+
+    for my $name (qw(sizes media srcset)) {
+      my $node = $item->{node}->get_attribute_node_ns (undef, $name);
+      $self->{onerror}->(node => $node,
+                         type => 'attribute not allowed:picture source', # XXXtype
+                         level => 'm') if defined $node;
+    }
   }
 }; # source - check_attrs2
 
