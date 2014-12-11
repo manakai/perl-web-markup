@@ -61,6 +61,15 @@ lib/Web/HTML/Parser.pm: bin/generate-parser.pl \
 	$(PERL) bin/generate-parser.pl > $@
 	$(PERL) -c $@
 
+lib/Web/XML/XXXParser.pm: bin/generate-parserXXX.pl \
+    local/html-tokenizer-expanded.json \
+    local/html-tree-constructor-expanded-no-isindex.json \
+    local/elements.json local/bin/pmbp.pl $(JSON_PS)
+	#perl local/bin/pmbp.pl --create-perl-command-shortcut perl \
+	#    --install-module Path::Tiny
+	$(PERL) bin/generate-parserXXX.pl > $@
+	$(PERL) -c $@
+
 lib/Web/HTML/_NamedEntityList.pm: local/html-charrefs.json local/bin/pmbp.pl \
     Makefile
 	perl local/bin/pmbp.pl --install-module JSON \
