@@ -3,8 +3,7 @@ use warnings;
 use Path::Class;
 use lib glob file (__FILE__)->dir->parent->subdir ('t_deps', 'modules', '*', 'lib');
 use Web::DOM::Document;
-#XXXuse Web::XML::Parser;
-use Web::XML::XXXParser;
+use Web::XML::Parser;
 use Web::HTML::Dumper;
 use Encode;
 

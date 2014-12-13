@@ -4,8 +4,9 @@ use warnings;
 use Path::Tiny;
 use JSON::PS;
 
+my $LANG = $ENV{PARSER_LANG} ||= 'HTML';
 
-my $GeneratedPackageName = q{Web::HTML::Parser};
+my $GeneratedPackageName = q{Web::}.$LANG.q{::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
@@ -16,15 +17,27 @@ sub new ($) {
 sub package_name { $GeneratedPackageName }
 
 sub _expanded_tokenizer_defs ($) {
-  my $expanded_json_path = $DefDataPath->child
-      ('html-tokenizer-expanded.json');
-  return json_bytes2perl $expanded_json_path->slurp;
+  if ($LANG eq 'XML') {
+    my $expanded_json_path = $DefDataPath->child
+        ('../../../../../data-web-defs/data/xml-tokenizer-expanded.json'); # XXX
+    return json_bytes2perl $expanded_json_path->slurp;
+  } else {
+    my $expanded_json_path = $DefDataPath->child
+        ('html-tokenizer-expanded.json');
+    return json_bytes2perl $expanded_json_path->slurp;
+  }
 } # _expanded_tokenizer_defs
 
 sub _parser_defs ($) {
-  my $expanded_json_path = $DefDataPath->child
-      ('html-tree-constructor-expanded-no-isindex.json');
-  return json_bytes2perl $expanded_json_path->slurp;
+  if ($LANG eq 'XML') {
+    my $expanded_json_path = $DefDataPath->child
+        ('../../../../../data-web-defs/data/xml-tree-constructor-expanded.json'); # XXX
+    return json_bytes2perl $expanded_json_path->slurp;
+  } else {
+    my $expanded_json_path = $DefDataPath->child
+        ('html-tree-constructor-expanded-no-isindex.json');
+    return json_bytes2perl $expanded_json_path->slurp;
+  }
 } # _parser_defs
 
 sub _element_defs ($) {
@@ -65,6 +78,13 @@ my $Vars = {
   InForeign => {type => 'boolean'},
   Callbacks => {unchanged => 1, type => 'list'},
 };
+
+if ($LANG eq 'XML') {
+  $Vars->{DTDMode} = {type => 'enum', save => 1, default => 'N/A'};
+  $Vars->{OpenMarkedSections} = {unchanged => 1, type => 'list'};
+  $Vars->{OpenCMGroups} = {unchanged => 1, type => 'list'};
+  $Vars->{StopProcessing} = {save => 1, type => 'boolean'};
+}
 
 ## ------ Input byte stream ------
 
@@ -490,6 +510,7 @@ sub switch_state_code ($) {
   return join "\n", @code;
 } # switch_state_code
 
+sub serialize_actions ($;%);
 sub serialize_actions ($;%) {
   my ($acts, %args) = @_;
   ## Generate |return 1| to abort tokenizer, |return 0| to abort
@@ -499,16 +520,30 @@ sub serialize_actions ($;%) {
   for (@{$acts->{actions}}) {
     my $type = $_->{type};
     if ($type eq 'parse error') {
-      if ($args{in_eof}) {
-        push @result, sprintf q[
-          push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        ], $_->{error_type} // $_->{name};
+      if (defined $_->{if}) {
+        if ($_->{if} eq 'temp-wrong-case') {
+          push @result, sprintf q{
+            unless ($Temp eq q{%s}) {
+              push @$Errors, {type => '%s', level => 'm',
+                              value => $Temp,
+                              di => $DI, index => $Offset + (pos $Input) - 1};
+            }
+          }, $_->{expected_keyword}, $_->{error_type} // $_->{name};
+        } else {
+          die "Unknown condition |$_->{if}|";
+        }
       } else {
-        push @result, sprintf q[
-          push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        ], $_->{error_type} // $_->{name};
+        if ($args{in_eof}) {
+          push @result, sprintf q[
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          ], $_->{error_type} // $_->{name};
+        } else {
+          push @result, sprintf q[
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          ], $_->{error_type} // $_->{name};
+        }
       }
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
@@ -535,6 +570,22 @@ sub serialize_actions ($;%) {
             }
           }
         }, switch_state_code $_->{state};
+      } elsif ($_->{if} eq 'DTD mode is not internal subset') {
+        die unless $_->{break};
+        push @result, sprintf q[
+          unless ($DTDMode eq 'internal subset') {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
+      } elsif ($_->{if} eq 'DTD mode is internal subset') {
+        die unless $_->{break};
+        push @result, sprintf q[
+          if ($DTDMode eq 'internal subset') {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
       } else {
         die "Unknown if |$_->{if}|";
       }
@@ -644,10 +695,15 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'set' or
              $type eq 'set-to-attr' or
              $type eq 'set-to-temp' or
+             $type eq 'set-to-allowed-token' or
+             $type eq 'set-to-cmgroup' or
+             $type eq 'set-to-cmelement' or
              $type eq 'append' or
              $type eq 'emit-char' or
              $type eq 'append-to-attr' or
-             $type eq 'append-to-temp') {
+             $type eq 'append-to-temp' or
+             $type eq 'append-to-allowed-token' or
+             $type eq 'append-to-cmelement') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
       die if defined $field and $field eq 'type';
@@ -664,7 +720,7 @@ sub serialize_actions ($;%) {
       if ($type eq 'set') {
         push @result, sprintf q[$Token->{q<%s>} = %s;], $field, $value;
       } elsif ($type eq 'set-to-attr') {
-        die if $field eq 'value';
+        #die if $field eq 'value';
         push @result, sprintf q[$Attr->{q<%s>} = %s;], $field, $value;
         if ($field eq 'name') {
           if (defined $_->{capture_index}) {
@@ -697,6 +753,19 @@ sub serialize_actions ($;%) {
           $index_delta .= sprintf q{ - %d}, $_->{index_offset};
         }
         push @result, sprintf q{$TempIndex = %s;}, $index_delta;
+      } elsif ($type eq 'set-to-allowed-token') {
+        push @result, sprintf q[$Attr->{allowed_tokens}->[-1] = %s;], $value;
+      } elsif ($type eq 'append-to-allowed-token') {
+        push @result, sprintf q[$Attr->{allowed_tokens}->[-1] .= %s;], $value;
+      } elsif ($type eq 'set-to-cmgroup') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{q<%s>} = %s;],
+            $field, $value;
+      } elsif ($type eq 'append-to-cmgroup') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{q<%s>} .= %s;],
+            $field, $value;
+      } elsif ($type eq 'set-to-cmelement') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} = %s;],
+            $field, $value;
       } elsif ($type eq 'emit-char') {
         my $index_delta = q{$Offset + (pos $Input) - (length $1)};
         if (defined $_->{value}) {
@@ -857,6 +926,69 @@ sub serialize_actions ($;%) {
           } # REF
         };
       }
+
+    } elsif ($type eq 'set-DTD-mode') {
+      push @result, sprintf q{$DTDMode = q{%s};}, $_->{value};
+    } elsif ($type eq 'emit-end-of-DOCTYPE') {
+      push @result, q{
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      };
+    } elsif ($type eq 'insert-IGNORE') {
+      push @result, q{push @$OpenMarkedSections, 'IGNORE';};
+    } elsif ($type eq 'insert-INCLUDE') {
+      push @result, q{push @$OpenMarkedSections, 'INCLUDE';};
+    } elsif ($type eq 'pop-section') {
+      push @result, q{pop @$OpenMarkedSections;};
+    } elsif ($type eq 'insert-attrdef') {
+      push @result, q[$Attr = {di => $DI, index => $Offset + pos $Input};];
+    } elsif ($type eq 'insert-allowed-token') {
+      push @result, q{push @{$Attr->{allowed_tokens} ||= []}, '';};
+    } elsif ($type eq 'create-cmgroup') {
+      push @result, q{my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};};
+    } elsif ($type eq 'set-cmgroup') {
+      push @result, q{$Token->{cmgroup} = $cmgroup;};
+    } elsif ($type eq 'push-cmgroup') {
+      push @result, q{push @$OpenCMGroups, $cmgroup;};
+    } elsif ($type eq 'push-cmgroup-as-only-item') {
+      push @result, q{@$OpenCMGroups = ($cmgroup);};
+    } elsif ($type eq 'append-cmgroup') {
+      push @result, q{push @{$OpenCMGroups->[-1]->{items}}, $cmgroup;};
+    } elsif ($type eq 'pop-cmgroup') {
+      push @result, q{pop @$OpenCMGroups;};
+    } elsif ($type eq 'insert-cmelement') {
+      push @result, q{
+        push @{$OpenCMGroups->[-1]->{items}},
+            {di => $DI, index => $Offset + pos $Input};
+      };
+    } elsif ($type eq 'append-separator-to-cmgroup') {
+      push @result, sprintf q{
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $%d};
+      }, $_->{capture_index} || 1;
+    } elsif ($type eq 'if-empty') {
+      my $list = $_->{list};
+      if ($list eq 'cm-group') {
+        $list = q{@$OpenCMGroups};
+      } else {
+        die "Unknown list type |$list|";
+      }
+      push @result, sprintf q{
+        if (%s) {
+          %s
+        } else {
+          %s
+        }
+      }, $list,
+          (serialize_actions {actions => $_->{false_actions} || []}),
+          (serialize_actions $_);
+
+    # XXX
+    } elsif ($type eq 'set-original-state') {
+      push @result, qq{# XXX $type\n};
+
     } else {
       die "Bad action type |$type|";
     }
@@ -1063,7 +1195,9 @@ sub pattern_to_code ($$) {
       my @const;
       for (split / /, $pattern) {
         my $const = $GroupNameToElementTypeConst->{$_}
-            or die "|$_| has no const";
+or next;
+#XXX
+#            or die "|$_| has no const";
         push @const, $const;
       }
       if (@const == 1 and $const[0] =~ /_EL$/) {
@@ -1097,6 +1231,8 @@ sub pattern_to_code ($$) {
       return sprintf q{%s->{ns} == %s and %s->{local_name} eq $token->{tag_name}},
           $var, ns_const $pattern->{ns}, $var;
     }
+  } elsif ($pattern->{tag_name}) {
+    return sprintf q{$tag_name eq %s->{token}->{tag_name}}, $var;
   } else {
     die "Broken pattern @{[join ' ', %$pattern]}";
   }
@@ -1120,6 +1256,8 @@ sub cond_to_code ($) {
       $cond2 = 'not';
     } elsif ($cond->[1] eq 'is empty') {
       return q{not @$OE};
+    } elsif ($cond->[1] eq '> 1') {
+      return q{@$OE > 1};
     } else {
       die "Unknown cond expr |$cond->[1]|";
     }
@@ -1205,6 +1343,8 @@ sub cond_to_code ($) {
   } elsif ($cond->[0] eq 'token') {
     if ($cond->[1] eq 'has' and $cond->[2] eq 'self-closing flag') {
       return q{$token->{self_closing_flag}};
+    } elsif ($cond->[1] eq 'has' and $cond->[2] eq 'has internal subset flag') {
+      return q{$token->{has_internal_subset_flag}};
     } elsif ($cond->[1] eq 'has attr' and defined $cond->[2]) {
       if (ref $cond->[2]) {
         return join " or \n", map { sprintf q{$token->{attrs}->{q@%s@}}, $_ } @{$cond->[2]};
@@ -1238,6 +1378,12 @@ sub cond_to_code ($) {
         }
       } else {
         die "Unknown token type |$cond->[2]|";
+      }
+    } elsif ($cond->[1] eq 'non-empty') {
+      if ($cond->[2] eq 'system identifier') {
+        return sprintf q{(defined $token->{system_identifier} and length $token->{system_identifier})};
+      } else {
+        die "Unknown condition |@$cond|";
       }
     } else {
       die "Unknown condition |@$cond|";
@@ -1284,6 +1430,7 @@ sub cond_to_code ($) {
     return q{grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS};
   } elsif ($cond->[0] eq 'scripting') {
     return q{$Scripting};
+
   } else {
     die "Unknown condition |$cond->[0]|";
   }
@@ -1592,16 +1739,33 @@ sub actions_to_code ($;%) {
 
       ## As a non-HTML element can't be a form-associated element, we
       ## don't have to associate the form owner.
+    } elsif ($act->{type} eq 'create an XML element') { # XML
+      push @code, sprintf q{
+        my $ns = 0; #'XXX';
+        my $node = {id => $NEXT_ID++,
+                    token => $token,
+                    di => $token->{di}, index => $token->{index},
+                    ns => $ns,
+                    local_name => $token->{tag_name},
+                    attr_list => $token->{attr_list},
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
+      };
+    } elsif ($act->{type} eq 'insert a DOCTYPE') { # XML
+      push @code, q{push @$OP, ['doctype', $token => 0]; $NEXT_ID++;}; # id=1
     } elsif ($act->{type} eq 'append-to-document') {
       if (defined $act->{item}) {
         if ($act->{item} eq 'DocumentType') {
-          push @code, q{push @$OP, ['doctype', $token => 0];};
+          push @code, q{push @$OP, ['doctype', $token => 0];}; # HTML
         } else {
           die "Unknown item |$act->{item}|";
         }
       } else {
         push @code, q{push @$OP, ['insert', $node => 0];};
       }
+    } elsif ($act->{type} eq 'append-to-current') { # XML
+      push @code, q{push @$OP, ['insert', $node => $OE->[-1]->{id}];};
+
     } elsif ($act->{type} eq 'push-oe') {
       if (defined $act->{item}) {
         if ($act->{item} eq 'head element pointer') {
@@ -1662,23 +1826,29 @@ sub actions_to_code ($;%) {
       } else {
         die "Unknown item |$act->{item}|";
       }
-    } elsif ($act->{type} eq 'insert a comment') {
+    } elsif ($act->{type} eq 'insert a comment' or
+             $act->{type} eq 'insert a processing instruction') {
+      my $type = $act->{type} eq 'insert a comment' ? 'comment' : 'pi';
       if (defined $act->{position}) {
         if ($act->{position} eq 'document') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token => 0];
-          };
+            push @$OP, ['%s', $token => 0];
+          }, $type;
+        } elsif ($act->{position} eq 'doctype') { # XML
+          push @code, sprintf q{
+            push @$OP, ['%s', $token => 1];
+          }, $type;
         } elsif ($act->{position} eq 'oe[0]') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token => $OE->[0]->{id}];
-          };
+            push @$OP, ['%s', $token => $OE->[0]->{id}];
+          }, $type;
         } else {
           die "Unknown insertion position |$act->{position}|";
         }
       } else {
         push @code, sprintf q{
-          push @$OP, ['comment', $token => $OE->[-1]->{id}];
-        };
+          push @$OP, ['%s', $token => $OE->[-1]->{id}];
+        }, $type;
       }
     } elsif ($act->{type} eq 'insert-chars') {
       my $value_code;
@@ -2145,7 +2315,7 @@ sub actions_to_code ($;%) {
         }, $codes->{else}, $codes->{null};
       } else {
         if (defined $act->{char_actions}) {
-          die;
+          die if $LANG eq 'HTML';
           $code = sprintf q{
             while ($token->{value} =~ /(.)/gs) {
               %s
@@ -2179,6 +2349,24 @@ sub actions_to_code ($;%) {
       push @code, q{return;};
     } elsif ($act->{type} eq 'ignore-next-lf') {
       $ignore_newline = 1;
+
+    } elsif ($act->{type} eq 'set the stop processing flag') {
+      push @code, q{$StopProcessing = 1;};
+    } elsif ($act->{type} eq 'set-end-tag-name') {
+      push @code, q{my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};};
+
+# XXX
+    } elsif ({
+      'process an ATTLIST token' => 1,
+      'process an ELEMENT token' => 1,
+      'process an ENTITY token' => 1,
+      'process a NOTATION token' => 1,
+      'process an XML declaration' => 1,
+      'the XML declaration is missing' => 1,
+      'process the external subset' => 1,
+    }->{$act->{type}}) {
+      push @code, qq{# XXX $act->{type}\n};
+
     } else {
       die "Unknown tree construction action |$act->{type}|";
     }
@@ -2256,16 +2444,19 @@ sub generate_tree_constructor ($) {
     $IM = $ORIGINAL_IM;
     goto &{$ProcessIM->[$IM]->[$_->{type}]->[$_->{tn}]};
   };
-  $defs->{actions}->{'before ignored newline and text;TEXT'} = sprintf q{
-    $_->{index}++ if $_->{value} =~ s/^\x0A//;
-    $IM = %s;
-    goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
-  }, im_const 'text';
-  $defs->{actions}->{'before ignored newline and text;ELSE'} = sprintf q{
-    $IM = %s;
-    goto &{$ProcessIM->[$IM]->[$_->{type}]->[$_->{tn}]};
-  }, im_const 'text';
+  if (defined $defs->{ims}->{text}) {
+    $defs->{actions}->{'before ignored newline and text;TEXT'} = sprintf q{
+      $_->{index}++ if $_->{value} =~ s/^\x0A//;
+      $IM = %s;
+      goto &{$ProcessIM->[$IM]->[$_->{type}]->[0]} if length $_->{value};
+    }, im_const 'text';
+    $defs->{actions}->{'before ignored newline and text;ELSE'} = sprintf q{
+      $IM = %s;
+      goto &{$ProcessIM->[$IM]->[$_->{type}]->[$_->{tn}]};
+    }, im_const 'text';
+  }
   for my $im ('before ignored newline', 'before ignored newline and text') {
+    next if not defined $defs->{ims}->{text} and $im =~ /and text/;
     $defs->{ims}->{$im}->{conds}->{TEXT} = $im.';TEXT';
     $defs->{ims}->{$im}->{conds}->{'START-ELSE'} = $im.';ELSE';
     $defs->{ims}->{$im}->{conds}->{'END-ELSE'} = $im.';ELSE';
@@ -2423,6 +2614,8 @@ sub generate_tree_constructor ($) {
         } else {
           $short_token_type = $cond;
         }
+# XXX
+next if $short_token_type =~ /:/;
         my $token_type_id = $ShortTokenTypeToTokenTypeID->{$short_token_type}
             or die "Unknown token type |$short_token_type|";
         my $action_name = $defs->{ims}->{$im_name}->{conds}->{$cond};
@@ -2534,7 +2727,7 @@ sub generate_tree_constructor ($) {
           redo LOOP;
         } # LOOP
       } # reset_im
-    };
+    } if $LANG eq 'HTML';
 
     for (
       ['aaa', (foster_code {}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
@@ -2747,7 +2940,7 @@ sub generate_tree_constructor ($) {
           $_->[0],
           im_const 'in body',
           $_->[1];
-      push @substep_code, $aaa_code;
+      push @substep_code, $aaa_code if $LANG eq 'HTML';
     }
 
     for (
@@ -2794,7 +2987,7 @@ sub generate_tree_constructor ($) {
           }
         }
       }, $_->[0], $_->[1];
-      push @substep_code, $reconstruct_code;
+      push @substep_code, $reconstruct_code if $LANG eq 'HTML';
     }
 
     for (@substep_code) {
@@ -2804,7 +2997,8 @@ sub generate_tree_constructor ($) {
       }ge;
       s{\bET_CATEGORY_IS\s*\(\s*([^()"',\s]+)\s*,\s*'([^']+)'\s*\)}{
         my $var = $1;
-        my $p = $Defs->{tree_patterns}->{$2} or die "No definition for |$2|";
+        my $p = $Defs->{tree_patterns}->{$2}
+            or die "No definition for |$2|";
         pattern_to_code $p, $var;
       }ge;
       push @def_code, $_;
@@ -2818,7 +3012,8 @@ sub generate_tree_constructor ($) {
       (join "\n", @im_code),
       (join "\n", @def_code);
 
-  my $code = sprintf q{
+  my $code;
+  $code = sprintf q{
     sub _construct_tree ($$) {
       my $self = shift;
 
@@ -2842,7 +3037,23 @@ sub generate_tree_constructor ($) {
     } # _construct_tree
   },
       (cond_to_code $defs->{dispatcher_html}),
-      im_const 'in foreign content';
+      im_const 'in foreign content'
+      if $LANG eq 'HTML';
+
+  $code = sprintf q{
+    sub _construct_tree ($$) {
+      my $self = shift;
+
+      for my $token (@$Tokens) {
+        local $_ = $token;
+        &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      }
+
+      $self->dom_tree ($OP);
+      @$OP = ();
+      @$Tokens = ();
+    } # _construct_tree
+  } if $LANG eq 'XML';
 
   return ($def_code, $code);
 } # generate_tree_constructor
@@ -2954,6 +3165,12 @@ sub dom_tree ($$) {
       $comment->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       $nodes->[$op->[2]]->append_child ($comment);
+    } elsif ($op->[0] eq 'pi') {
+      my $pi = $doc->create_processing_instruction
+          ($op->[1]->{target}, $op->[1]->{data});
+      $pi->manakai_set_source_location
+          (['', $op->[1]->{di}, $op->[1]->{index}]);
+      $nodes->[$op->[2]]->append_child ($pi);
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
@@ -3057,6 +3274,12 @@ sub generate_api ($) {
       $Vars->{$_}->{type} eq 'index' and
       defined $Vars->{$_}->{default};
     } keys %$Vars;
+    push @init_code, map {
+      sprintf q{$%s = q{%s};}, $_, $Vars->{$_}->{default};
+    } sort { $a cmp $b } grep {
+      $Vars->{$_}->{type} eq 'enum' and
+      defined $Vars->{$_}->{default};
+    } keys %$Vars;
     my @list_var = sort { $a cmp $b } grep { $Vars->{$_}->{type} eq 'list' } keys %$Vars;
     push @init_code, q[$self->{saved_lists} = {] . (join ', ', map {
       sprintf q{%s => ($%s = [])}, $_, $_;
@@ -3087,7 +3310,8 @@ sub generate_api ($) {
     $vars_codes->{RESTORE} = join "\n", @restore_code;
   }
 
-  push @code, sprintf q{
+  my @sub_code;
+  push @sub_code, sprintf q{
     sub _run ($) {
       my ($self) = @_;
       my $is = $self->{input_stream};
@@ -3210,7 +3434,9 @@ sub generate_api ($) {
       $self->_cleanup_states;
       return;
     } # parse_char_string
+  };
 
+  push @sub_code, sprintf q{
     sub parse_char_string_with_context ($$$$) {
       my $self = $_[0];
       my $context = $_[2]; # an Element or undef
@@ -3369,7 +3595,10 @@ sub generate_api ($) {
       ## 7.
       return defined $context ? $root->child_nodes : $doc->child_nodes;
     } # parse_char_string_with_context
+  } if $LANG eq 'HTML';
+  # XXX XML
 
+  push @sub_code, sprintf q{
     sub parse_chars_start ($$) {
       my ($self, $doc) = @_;
 
@@ -3626,9 +3855,12 @@ sub generate_api ($) {
       return;
     } # parse_bytes_end
   };
-  $code[-1] =~ s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
-  $code[-1] =~ s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
-  $code[-1] =~ s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
+  for (@sub_code) {
+    s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
+    s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
+    s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
+  }
+  push @code, @sub_code;
 
   return join ("\n", @def_code), join "\n", @code;
 } # generate_api
