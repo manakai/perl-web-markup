@@ -4,9 +4,9 @@ use warnings;
 use Path::Tiny;
 use JSON::PS;
 
-my $LANG = $ENV{PARSER_LANG} ||= 'XML';
+my $LANG = $ENV{PARSER_LANG} ||= 'HTML';
 
-my $GeneratedPackageName = q{Web::HTML::Parser};
+my $GeneratedPackageName = q{Web::}.$LANG.q{::Parser};
 my $DefDataPath = path (__FILE__)->parent->parent->child (q{local});
 my $UseLibCode = q{};
 
@@ -68,6 +68,13 @@ my $Vars = {
   InForeign => {type => 'boolean'},
   Callbacks => {unchanged => 1, type => 'list'},
 };
+
+if ($LANG eq 'XML') {
+  $Vars->{DTDMode} = {type => 'enum', save => 1, default => 'N/A'};
+  $Vars->{OpenMarkedSections} = {unchanged => 1, type => 'list'};
+  $Vars->{OpenCMGroups} = {unchanged => 1, type => 'list'};
+  $Vars->{StopProcessing} = {save => 1, type => 'boolean'};
+}
 
 ## ------ Input byte stream ------
 
@@ -493,6 +500,7 @@ sub switch_state_code ($) {
   return join "\n", @code;
 } # switch_state_code
 
+sub serialize_actions ($;%);
 sub serialize_actions ($;%) {
   my ($acts, %args) = @_;
   ## Generate |return 1| to abort tokenizer, |return 0| to abort
@@ -538,12 +546,22 @@ sub serialize_actions ($;%) {
             }
           }
         }, switch_state_code $_->{state};
-
       } elsif ($_->{if} eq 'DTD mode is not internal subset') {
-        push @result, q{# XXX};
+        die unless $_->{break};
+        push @result, sprintf q[
+          unless ($DTDMode eq 'internal subset') {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
       } elsif ($_->{if} eq 'DTD mode is internal subset') {
-        push @result, q{# XXX};
-
+        die unless $_->{break};
+        push @result, sprintf q[
+          if ($DTDMode eq 'internal subset') {
+            %s
+            return 1;
+          }
+        ], switch_state_code $_->{state};
       } else {
         die "Unknown if |$_->{if}|";
       }
@@ -653,10 +671,15 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'set' or
              $type eq 'set-to-attr' or
              $type eq 'set-to-temp' or
+             $type eq 'set-to-allowed-token' or
+             $type eq 'set-to-cmgroup' or
+             $type eq 'set-to-cmelement' or
              $type eq 'append' or
              $type eq 'emit-char' or
              $type eq 'append-to-attr' or
-             $type eq 'append-to-temp') {
+             $type eq 'append-to-temp' or
+             $type eq 'append-to-allowed-token' or
+             $type eq 'append-to-cmelement') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
       die if defined $field and $field eq 'type';
@@ -706,6 +729,19 @@ sub serialize_actions ($;%) {
           $index_delta .= sprintf q{ - %d}, $_->{index_offset};
         }
         push @result, sprintf q{$TempIndex = %s;}, $index_delta;
+      } elsif ($type eq 'set-to-allowed-token') {
+        push @result, sprintf q[$Attr->{allowed_tokens}->[-1] = %s;], $value;
+      } elsif ($type eq 'append-to-allowed-token') {
+        push @result, sprintf q[$Attr->{allowed_tokens}->[-1] .= %s;], $value;
+      } elsif ($type eq 'set-to-cmgroup') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{q<%s>} = %s;],
+            $field, $value;
+      } elsif ($type eq 'append-to-cmgroup') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{q<%s>} .= %s;],
+            $field, $value;
+      } elsif ($type eq 'set-to-cmelement') {
+        push @result, sprintf q[$OpenCMGroups->[-1]->{items}->[-1]->{q<%s>} = %s;],
+            $field, $value;
       } elsif ($type eq 'emit-char') {
         my $index_delta = q{$Offset + (pos $Input) - (length $1)};
         if (defined $_->{value}) {
@@ -867,21 +903,66 @@ sub serialize_actions ($;%) {
         };
       }
 
-    } elsif ($type eq 'misc') { # XXX
-      push @result, qq{## XXX $_->{desc}\n};
+    } elsif ($type eq 'set-DTD-mode') {
+      push @result, sprintf q{$DTDMode = q{%s};}, $_->{value};
+    } elsif ($type eq 'emit-end-of-DOCTYPE') {
+      push @result, q{
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      };
+    } elsif ($type eq 'insert-IGNORE') {
+      push @result, q{push @$OpenMarkedSections, 'IGNORE';};
+    } elsif ($type eq 'insert-INCLUDE') {
+      push @result, q{push @$OpenMarkedSections, 'INCLUDE';};
+    } elsif ($type eq 'pop-section') {
+      push @result, q{pop @$OpenMarkedSections;};
+    } elsif ($type eq 'insert-attrdef') {
+      push @result, q[$Attr = {di => $DI, index => $Offset + pos $Input};];
+    } elsif ($type eq 'insert-allowed-token') {
+      push @result, q{push @{$Attr->{allowed_tokens} ||= []}, '';};
+    } elsif ($type eq 'create-cmgroup') {
+      push @result, q{my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};};
+    } elsif ($type eq 'set-cmgroup') {
+      push @result, q{$Token->{cmgroup} = $cmgroup;};
+    } elsif ($type eq 'push-cmgroup') {
+      push @result, q{push @$OpenCMGroups, $cmgroup;};
+    } elsif ($type eq 'push-cmgroup-as-only-item') {
+      push @result, q{@$OpenCMGroups = ($cmgroup);};
+    } elsif ($type eq 'append-cmgroup') {
+      push @result, q{push @{$OpenCMGroups->[-1]->{items}}, $cmgroup;};
+    } elsif ($type eq 'pop-cmgroup') {
+      push @result, q{pop @$OpenCMGroups;};
+    } elsif ($type eq 'insert-cmelement') {
+      push @result, q{
+        push @{$OpenCMGroups->[-1]->{items}},
+            {di => $DI, index => $Offset + pos $Input};
+      };
+    } elsif ($type eq 'append-separator-to-cmgroup') {
+      push @result, sprintf q{
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $%d};
+      }, $_->{capture_index} || 1;
+    } elsif ($type eq 'if-empty') {
+      my $list = $_->{list};
+      if ($list eq 'cm-group') {
+        $list = q{@$OpenCMGroups};
+      } else {
+        die "Unknown list type |$list|";
+      }
+      push @result, sprintf q{
+        if (%s) {
+          %s
+        } else {
+          %s
+        }
+      }, $list,
+          (serialize_actions {actions => $_->{false_actions} || []}),
+          (serialize_actions $_);
 
     # XXX
-    } elsif ($type eq 'parse error-and-switch-and-emit-eod-and-reconsume') {
-      push @result, qq{## XXX $type\n};
-    } elsif ($type eq 'set-DOCTYPE-mode') {
-      push @result, qq{# XXX $type\n};
     } elsif ($type eq 'set-original-state') {
-      push @result, qq{# XXX $type\n};
-    } elsif ($type eq 'emit-end-of-DOCTYPE') {
-      push @result, qq{# XXX $type\n};
-    } elsif ($type eq 'decrement-marked-section-nesting-level') {
-      push @result, qq{# XXX $type\n};
-    } elsif ($type eq 'increment-marked-section-nesting-level') {
       push @result, qq{# XXX $type\n};
 
     } else {
@@ -1126,6 +1207,8 @@ or next;
       return sprintf q{%s->{ns} == %s and %s->{local_name} eq $token->{tag_name}},
           $var, ns_const $pattern->{ns}, $var;
     }
+  } elsif ($pattern->{tag_name}) {
+    return sprintf q{$tag_name eq %s->{token}->{tag_name}}, $var;
   } else {
     die "Broken pattern @{[join ' ', %$pattern]}";
   }
@@ -1149,6 +1232,8 @@ sub cond_to_code ($) {
       $cond2 = 'not';
     } elsif ($cond->[1] eq 'is empty') {
       return q{not @$OE};
+    } elsif ($cond->[1] eq '> 1') {
+      return q{@$OE > 1};
     } else {
       die "Unknown cond expr |$cond->[1]|";
     }
@@ -1234,6 +1319,8 @@ sub cond_to_code ($) {
   } elsif ($cond->[0] eq 'token') {
     if ($cond->[1] eq 'has' and $cond->[2] eq 'self-closing flag') {
       return q{$token->{self_closing_flag}};
+    } elsif ($cond->[1] eq 'has' and $cond->[2] eq 'has internal subset flag') {
+      return q{$token->{has_internal_subset_flag}};
     } elsif ($cond->[1] eq 'has attr' and defined $cond->[2]) {
       if (ref $cond->[2]) {
         return join " or \n", map { sprintf q{$token->{attrs}->{q@%s@}}, $_ } @{$cond->[2]};
@@ -1267,6 +1354,12 @@ sub cond_to_code ($) {
         }
       } else {
         die "Unknown token type |$cond->[2]|";
+      }
+    } elsif ($cond->[1] eq 'non-empty') {
+      if ($cond->[2] eq 'system identifier') {
+        return sprintf q{$token->{system_identifier} eq ''};
+      } else {
+        die "Unknown condition |@$cond|";
       }
     } else {
       die "Unknown condition |@$cond|";
@@ -1313,10 +1406,6 @@ sub cond_to_code ($) {
     return q{grep { $_->{value} =~ /[^\x09\x0A\x0C\x20]/ } @$TABLE_CHARS};
   } elsif ($cond->[0] eq 'scripting') {
     return q{$Scripting};
-
-# XXX
-  } elsif ($cond->[0] eq 'COND') {
-    return qq{die 'XXX COND'};
 
   } else {
     die "Unknown condition |$cond->[0]|";
@@ -1626,6 +1715,19 @@ sub actions_to_code ($;%) {
 
       ## As a non-HTML element can't be a form-associated element, we
       ## don't have to associate the form owner.
+    } elsif ($act->{type} eq 'create an XML element') { ## XML
+      push @code, sprintf q{
+        my $ns = 0; #'XXX';
+        my $node = {id => $NEXT_ID++,
+                    token => $token,
+                    di => $token->{di}, index => $token->{index},
+                    ns => $ns,
+                    local_name => $token->{tag_name},
+                    attr_list => $token->{attr_list},
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
+      };
+
     } elsif ($act->{type} eq 'append-to-document') {
       if (defined $act->{item}) {
         if ($act->{item} eq 'DocumentType') {
@@ -1636,6 +1738,9 @@ sub actions_to_code ($;%) {
       } else {
         push @code, q{push @$OP, ['insert', $node => 0];};
       }
+    } elsif ($act->{type} eq 'append-to-current') { # XML
+      push @code, q{push @$OP, ['insert', $node => $OE->[-1]->{id}];};
+
     } elsif ($act->{type} eq 'push-oe') {
       if (defined $act->{item}) {
         if ($act->{item} eq 'head element pointer') {
@@ -2214,6 +2319,11 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'ignore-next-lf') {
       $ignore_newline = 1;
 
+    } elsif ($act->{type} eq 'set the stop processing flag') {
+      push @code, q{$StopProcessing = 1;};
+    } elsif ($act->{type} eq 'set-end-tag-name') {
+      push @code, q{my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};};
+
 # XXX
     } elsif ($act->{type} eq 'IF') {
       push @code, qq{# XXX $act->{type}\n};
@@ -2222,7 +2332,6 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'insert a DOCTYPE') {
       push @code, qq{# XXX $act->{type}\n};
     } elsif ({
-      'insert an XML element for the token' => 1,
       'process an ATTLIST token' => 1,
       'process an ELEMENT token' => 1,
       'process an ENTITY token' => 1,
@@ -2230,6 +2339,7 @@ sub actions_to_code ($;%) {
       UNPARSED => 1,
       'process an XML declaration' => 1,
       'the XML declaration is missing' => 1,
+      'process the external subset' => 1,
     }->{$act->{type}}) {
       push @code, qq{# XXX $act->{type}\n};
 
@@ -3132,6 +3242,12 @@ sub generate_api ($) {
       sprintf q{$%s = %d;}, $_, $Vars->{$_}->{default};
     } sort { $a cmp $b } grep {
       $Vars->{$_}->{type} eq 'index' and
+      defined $Vars->{$_}->{default};
+    } keys %$Vars;
+    push @init_code, map {
+      sprintf q{$%s = q{%s};}, $_, $Vars->{$_}->{default};
+    } sort { $a cmp $b } grep {
+      $Vars->{$_}->{type} eq 'enum' and
       defined $Vars->{$_}->{default};
     } keys %$Vars;
     my @list_var = sort { $a cmp $b } grep { $Vars->{$_}->{type} eq 'list' } keys %$Vars;

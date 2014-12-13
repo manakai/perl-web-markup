@@ -67,6 +67,7 @@ lib/Web/XML/XXXParser.pm: bin/generate-parserXXX.pl \
     local/elements.json local/bin/pmbp.pl $(JSON_PS)
 	#perl local/bin/pmbp.pl --create-perl-command-shortcut perl \
 	#    --install-module Path::Tiny
+	PARSER_LANG=XML \
 	$(PERL) bin/generate-parserXXX.pl > $@
 	$(PERL) -c $@
 

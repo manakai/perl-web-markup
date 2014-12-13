@@ -1,5 +1,5 @@
 
-    package Web::HTML::Parser;
+    package Web::XML::Parser;
     use strict;
     use warnings;
     no warnings 'utf8';
@@ -134,7 +134,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $QUIRKS;our $Scripting;our $State;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
+    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
     ## ------ Tokenizer defs ------
     sub ATTLIST_TOKEN () { 1 }
 sub DOCTYPE_TOKEN () { 2 }
@@ -194,152 +194,238 @@ sub DOCTYPE_SYSTEM_ID__SQ__STATE () { 43 }
 sub DOCTYPE_SYSTEM_ID__SQ__STATE_CR () { 44 }
 sub DOCTYPE_TAG_STATE () { 45 }
 sub DTD_STATE () { 46 }
-sub ELEMENT_NAME_STATE () { 47 }
-sub ELEMENT_STATE () { 48 }
-sub ENTITY_NAME_STATE () { 49 }
-sub ENTITY_STATE () { 50 }
-sub ENTITY_VALUE__DQ__STATE () { 51 }
-sub ENTITY_VALUE__DQ__STATE_CR () { 52 }
-sub ENTITY_VALUE__SQ__STATE () { 53 }
-sub ENTITY_VALUE__SQ__STATE_CR () { 54 }
-sub ENTITY_VALUE_CHARREF_STATE () { 55 }
-sub NOTATION_NAME_STATE () { 56 }
-sub NOTATION_STATE () { 57 }
-sub PI_DATA_STATE () { 58 }
-sub PI_DATA_STATE_CR () { 59 }
-sub PI_STATE () { 60 }
-sub PI_TARGET_QUESTION_STATE () { 61 }
-sub PI_TARGET_STATE () { 62 }
-sub AFTER_ATTLIST_ATTR_DEFAULT_STATE () { 63 }
-sub AFTER_ATTLIST_ATTR_NAME_STATE () { 64 }
-sub AFTER_ATTLIST_ATTR_TYPE_STATE () { 65 }
-sub AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 66 }
-sub AFTER_DOCTYPE_NAME_STATE () { 67 }
-sub AFTER_DOCTYPE_NAME_STATE_P () { 68 }
-sub AFTER_DOCTYPE_NAME_STATE_PU () { 69 }
-sub AFTER_DOCTYPE_NAME_STATE_PUB () { 70 }
-sub AFTER_DOCTYPE_NAME_STATE_PUBL () { 71 }
-sub AFTER_DOCTYPE_NAME_STATE_PUBLI () { 72 }
-sub AFTER_DOCTYPE_NAME_STATE_S () { 73 }
-sub AFTER_DOCTYPE_NAME_STATE_SY () { 74 }
-sub AFTER_DOCTYPE_NAME_STATE_SYS () { 75 }
-sub AFTER_DOCTYPE_NAME_STATE_SYST () { 76 }
-sub AFTER_DOCTYPE_NAME_STATE_SYSTE () { 77 }
-sub AFTER_DOCTYPE_PUBLIC_ID_STATE () { 78 }
-sub AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE () { 79 }
-sub AFTER_DOCTYPE_SYSTEM_ID_STATE () { 80 }
-sub AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE () { 81 }
-sub AFTER_DTD_MSC_STATE () { 82 }
-sub AFTER_ENTITY_NAME_STATE () { 83 }
-sub AFTER_ENTITY_PARAMETER_STATE () { 84 }
-sub AFTER_NOTATION_NAME_STATE () { 85 }
-sub AFTER_PI_TARGET_STATE () { 86 }
-sub AFTER_PI_TARGET_STATE_CR () { 87 }
-sub AFTER_AFTER_ALLOWED_TOKEN_LIST_STATE () { 88 }
-sub AFTER_ALLOWED_TOKEN_LIST_STATE () { 89 }
-sub AFTER_ALLOWED_TOKEN_STATE () { 90 }
-sub AFTER_ATTR_NAME_STATE () { 91 }
-sub AFTER_ATTR_VALUE__QUOTED__STATE () { 92 }
-sub AFTER_CONTENT_MODEL_ELEMENT_STATE () { 93 }
-sub AFTER_CONTENT_MODEL_GROUP_STATE () { 94 }
-sub AFTER_MSC_STATE () { 95 }
-sub AFTER_MSS_STATE () { 96 }
-sub AFTER_STATUS_KEYWORD_STATE () { 97 }
-sub ALLOWED_TOKEN_STATE () { 98 }
-sub ATTR_NAME_STATE () { 99 }
-sub ATTR_VALUE__DQ__STATE () { 100 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 101 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 102 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 103 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 104 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 105 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 106 }
-sub ATTR_VALUE__DQ__STATE_CR () { 107 }
-sub ATTR_VALUE__SQ__STATE () { 108 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 109 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 110 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 111 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 112 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 113 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 114 }
-sub ATTR_VALUE__SQ__STATE_CR () { 115 }
-sub ATTR_VALUE__UNQUOTED__STATE () { 116 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 117 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 118 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUMBER_STATE () { 119 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NAME_STATE () { 120 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUMBER_STATE () { 121 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE () { 122 }
-sub ATTR_VALUE__UNQUOTED__STATE_CR () { 123 }
-sub BEFORE_ATTLIST_ATTR_DEFAULT_STATE () { 124 }
-sub BEFORE_ATTLIST_ATTR_NAME_STATE () { 125 }
-sub BEFORE_ATTLIST_NAME_STATE () { 126 }
-sub BEFORE_DOCTYPE_NAME_STATE () { 127 }
-sub BEFORE_DOCTYPE_PUBLIC_ID_STATE () { 128 }
-sub BEFORE_DOCTYPE_SYSTEM_ID_STATE () { 129 }
-sub BEFORE_ELEMENT_NAME_STATE () { 130 }
-sub BEFORE_ENTITY_NAME_STATE () { 131 }
-sub BEFORE_ENTITY_TYPE_STATE () { 132 }
-sub BEFORE_NOTATION_NAME_STATE () { 133 }
-sub BEFORE_ALLOWED_TOKEN_STATE () { 134 }
-sub BEFORE_ATTR_NAME_STATE () { 135 }
-sub BEFORE_ATTR_VALUE_STATE () { 136 }
-sub BEFORE_CONTENT_MODEL_ITEM_STATE () { 137 }
-sub BEFORE_STATUS_KEYWORD_STATE () { 138 }
-sub BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE () { 139 }
-sub BOGUS_DOCTYPE_STATE () { 140 }
-sub BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 141 }
-sub BOGUS_COMMENT_STATE () { 142 }
-sub BOGUS_COMMENT_STATE_CR () { 143 }
-sub BOGUS_MARKUP_DECLARATION_STATE () { 144 }
-sub CHARREF_IN_DATA_STATE () { 145 }
-sub COMMENT_END_BANG_STATE () { 146 }
-sub COMMENT_END_DASH_STATE () { 147 }
-sub COMMENT_END_STATE () { 148 }
-sub COMMENT_START_DASH_STATE () { 149 }
-sub COMMENT_START_STATE () { 150 }
-sub COMMENT_STATE () { 151 }
-sub COMMENT_STATE_CR () { 152 }
-sub CONTENT_MODEL_ELEMENT_STATE () { 153 }
-sub DATA_STATE () { 154 }
-sub DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 155 }
-sub DATA_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 156 }
-sub DATA_STATE___CHARREF_HEX_NUMBER_STATE () { 157 }
-sub DATA_STATE___CHARREF_NAME_STATE () { 158 }
-sub DATA_STATE___CHARREF_NUMBER_STATE () { 159 }
-sub DATA_STATE___CHARREF_STATE () { 160 }
-sub DATA_STATE___CHARREF_STATE_CR () { 161 }
-sub DATA_STATE_CR () { 162 }
-sub END_TAG_OPEN_STATE () { 163 }
-sub IGNORED_SECTION_MARKED_DECLARATION_OPEN_STATE () { 164 }
-sub IGNORED_SECTION_STATE () { 165 }
-sub IGNORED_SECTION_TAG_STATE () { 166 }
-sub IN_DTD_MSC_STATE () { 167 }
-sub IN_MSC_STATE () { 168 }
-sub IN_PIC_STATE () { 169 }
-sub MDO_STATE () { 170 }
-sub MDO_STATE__ () { 171 }
-sub MDO_STATE_D () { 172 }
-sub MDO_STATE_DO () { 173 }
-sub MDO_STATE_DOC () { 174 }
-sub MDO_STATE_DOCT () { 175 }
-sub MDO_STATE_DOCTY () { 176 }
-sub MDO_STATE_DOCTYP () { 177 }
-sub MDO_STATE__5B () { 178 }
-sub MDO_STATE__5BC () { 179 }
-sub MDO_STATE__5BCD () { 180 }
-sub MDO_STATE__5BCDA () { 181 }
-sub MDO_STATE__5BCDAT () { 182 }
-sub MDO_STATE__5BCDATA () { 183 }
-sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_AFTER_SPACE_STATE () { 184 }
-sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE () { 185 }
-sub PARAMETER_ENTITY_NAME_IN_DTD_STATE () { 186 }
-sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE () { 187 }
-sub PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE () { 188 }
-sub SELF_CLOSING_START_TAG_STATE () { 189 }
-sub STATUS_KEYWORD_STATE () { 190 }
-sub TAG_NAME_STATE () { 191 }
-sub TAG_OPEN_STATE () { 192 }
+sub ELEMENT_CONTENT_KEYWORD_STATE () { 47 }
+sub ELEMENT_NAME_STATE () { 48 }
+sub ELEMENT_STATE () { 49 }
+sub ENTITY_NAME_STATE () { 50 }
+sub ENTITY_PUBLIC_ID__DQ__STATE () { 51 }
+sub ENTITY_PUBLIC_ID__DQ__STATE_CR () { 52 }
+sub ENTITY_PUBLIC_ID__SQ__STATE () { 53 }
+sub ENTITY_PUBLIC_ID__SQ__STATE_CR () { 54 }
+sub ENTITY_STATE () { 55 }
+sub ENTITY_SYSTEM_ID__DQ__STATE () { 56 }
+sub ENTITY_SYSTEM_ID__DQ__STATE_CR () { 57 }
+sub ENTITY_SYSTEM_ID__SQ__STATE () { 58 }
+sub ENTITY_SYSTEM_ID__SQ__STATE_CR () { 59 }
+sub ENTITY_VALUE__DQ__STATE () { 60 }
+sub ENTITY_VALUE__DQ__STATE_CR () { 61 }
+sub ENTITY_VALUE__SQ__STATE () { 62 }
+sub ENTITY_VALUE__SQ__STATE_CR () { 63 }
+sub ENTITY_VALUE_CHARREF_STATE () { 64 }
+sub NDATA_ID_STATE () { 65 }
+sub NOTATION_NAME_STATE () { 66 }
+sub NOTATION_PUBLIC_ID__DQ__STATE () { 67 }
+sub NOTATION_PUBLIC_ID__DQ__STATE_CR () { 68 }
+sub NOTATION_PUBLIC_ID__SQ__STATE () { 69 }
+sub NOTATION_PUBLIC_ID__SQ__STATE_CR () { 70 }
+sub NOTATION_STATE () { 71 }
+sub NOTATION_SYSTEM_ID__DQ__STATE () { 72 }
+sub NOTATION_SYSTEM_ID__DQ__STATE_CR () { 73 }
+sub NOTATION_SYSTEM_ID__SQ__STATE () { 74 }
+sub NOTATION_SYSTEM_ID__SQ__STATE_CR () { 75 }
+sub PI_DATA_STATE () { 76 }
+sub PI_DATA_STATE_CR () { 77 }
+sub PI_STATE () { 78 }
+sub PI_TARGET_QUESTION_STATE () { 79 }
+sub PI_TARGET_STATE () { 80 }
+sub AFTER_ATTLIST_ATTR_DEFAULT_STATE () { 81 }
+sub AFTER_ATTLIST_ATTR_NAME_STATE () { 82 }
+sub AFTER_ATTLIST_ATTR_TYPE_STATE () { 83 }
+sub AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 84 }
+sub AFTER_DOCTYPE_NAME_STATE () { 85 }
+sub AFTER_DOCTYPE_NAME_STATE_P () { 86 }
+sub AFTER_DOCTYPE_NAME_STATE_PU () { 87 }
+sub AFTER_DOCTYPE_NAME_STATE_PUB () { 88 }
+sub AFTER_DOCTYPE_NAME_STATE_PUBL () { 89 }
+sub AFTER_DOCTYPE_NAME_STATE_PUBLI () { 90 }
+sub AFTER_DOCTYPE_NAME_STATE_S () { 91 }
+sub AFTER_DOCTYPE_NAME_STATE_SY () { 92 }
+sub AFTER_DOCTYPE_NAME_STATE_SYS () { 93 }
+sub AFTER_DOCTYPE_NAME_STATE_SYST () { 94 }
+sub AFTER_DOCTYPE_NAME_STATE_SYSTE () { 95 }
+sub AFTER_DOCTYPE_PUBLIC_ID_STATE () { 96 }
+sub AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE () { 97 }
+sub AFTER_DOCTYPE_SYSTEM_ID_STATE () { 98 }
+sub AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE () { 99 }
+sub AFTER_DTD_MSC_STATE () { 100 }
+sub AFTER_ELEMENT_CONTENT_STATE () { 101 }
+sub AFTER_ENTITY_NAME_STATE () { 102 }
+sub AFTER_ENTITY_NAME_STATE_P () { 103 }
+sub AFTER_ENTITY_NAME_STATE_PU () { 104 }
+sub AFTER_ENTITY_NAME_STATE_PUB () { 105 }
+sub AFTER_ENTITY_NAME_STATE_PUBL () { 106 }
+sub AFTER_ENTITY_NAME_STATE_PUBLI () { 107 }
+sub AFTER_ENTITY_NAME_STATE_S () { 108 }
+sub AFTER_ENTITY_NAME_STATE_SY () { 109 }
+sub AFTER_ENTITY_NAME_STATE_SYS () { 110 }
+sub AFTER_ENTITY_NAME_STATE_SYST () { 111 }
+sub AFTER_ENTITY_NAME_STATE_SYSTE () { 112 }
+sub AFTER_ENTITY_PARAMETER_STATE () { 113 }
+sub AFTER_ENTITY_PUBLIC_ID_STATE () { 114 }
+sub AFTER_ENTITY_PUBLIC_KEYWORD_STATE () { 115 }
+sub AFTER_ENTITY_SYSTEM_ID_STATE () { 116 }
+sub AFTER_ENTITY_SYSTEM_KEYWORD_STATE () { 117 }
+sub AFTER_IGNORE_KEYWORD_STATE () { 118 }
+sub AFTER_INCLUDE_KEYWORD_STATE () { 119 }
+sub AFTER_NDATA_KEYWORD_STATE () { 120 }
+sub AFTER_NOTATION_NAME_STATE () { 121 }
+sub AFTER_NOTATION_NAME_STATE_P () { 122 }
+sub AFTER_NOTATION_NAME_STATE_PU () { 123 }
+sub AFTER_NOTATION_NAME_STATE_PUB () { 124 }
+sub AFTER_NOTATION_NAME_STATE_PUBL () { 125 }
+sub AFTER_NOTATION_NAME_STATE_PUBLI () { 126 }
+sub AFTER_NOTATION_NAME_STATE_S () { 127 }
+sub AFTER_NOTATION_NAME_STATE_SY () { 128 }
+sub AFTER_NOTATION_NAME_STATE_SYS () { 129 }
+sub AFTER_NOTATION_NAME_STATE_SYST () { 130 }
+sub AFTER_NOTATION_NAME_STATE_SYSTE () { 131 }
+sub AFTER_NOTATION_PUBLIC_ID_STATE () { 132 }
+sub AFTER_NOTATION_PUBLIC_KEYWORD_STATE () { 133 }
+sub AFTER_NOTATION_SYSTEM_ID_STATE () { 134 }
+sub AFTER_NOTATION_SYSTEM_KEYWORD_STATE () { 135 }
+sub AFTER_PI_TARGET_STATE () { 136 }
+sub AFTER_PI_TARGET_STATE_CR () { 137 }
+sub AFTER_AFTER_ALLOWED_TOKEN_LIST_STATE () { 138 }
+sub AFTER_ALLOWED_TOKEN_LIST_STATE () { 139 }
+sub AFTER_ALLOWED_TOKEN_STATE () { 140 }
+sub AFTER_ATTR_NAME_STATE () { 141 }
+sub AFTER_ATTR_VALUE__QUOTED__STATE () { 142 }
+sub AFTER_CONTENT_MODEL_GROUP_STATE () { 143 }
+sub AFTER_CONTENT_MODEL_ITEM_STATE () { 144 }
+sub AFTER_IGNORED_SECTION_MSC_STATE () { 145 }
+sub AFTER_MSC_STATE () { 146 }
+sub AFTER_MSS_STATE () { 147 }
+sub AFTER_MSS_STATE_I () { 148 }
+sub AFTER_MSS_STATE_IG () { 149 }
+sub AFTER_MSS_STATE_IGN () { 150 }
+sub AFTER_MSS_STATE_IGNO () { 151 }
+sub AFTER_MSS_STATE_IGNOR () { 152 }
+sub AFTER_MSS_STATE_IN () { 153 }
+sub AFTER_MSS_STATE_INC () { 154 }
+sub AFTER_MSS_STATE_INCL () { 155 }
+sub AFTER_MSS_STATE_INCLU () { 156 }
+sub AFTER_MSS_STATE_INCLUD () { 157 }
+sub ALLOWED_TOKEN_STATE () { 158 }
+sub ATTR_NAME_STATE () { 159 }
+sub ATTR_VALUE__DQ__STATE () { 160 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 161 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 162 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 163 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 164 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 165 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 166 }
+sub ATTR_VALUE__DQ__STATE_CR () { 167 }
+sub ATTR_VALUE__SQ__STATE () { 168 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 169 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 170 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 171 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 172 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 173 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 174 }
+sub ATTR_VALUE__SQ__STATE_CR () { 175 }
+sub ATTR_VALUE__UNQUOTED__STATE () { 176 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 177 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 178 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUMBER_STATE () { 179 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NAME_STATE () { 180 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUMBER_STATE () { 181 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE () { 182 }
+sub ATTR_VALUE__UNQUOTED__STATE_CR () { 183 }
+sub BEFORE_ATTLIST_ATTR_DEFAULT_STATE () { 184 }
+sub BEFORE_ATTLIST_ATTR_NAME_STATE () { 185 }
+sub BEFORE_ATTLIST_NAME_STATE () { 186 }
+sub BEFORE_DOCTYPE_NAME_STATE () { 187 }
+sub BEFORE_DOCTYPE_PUBLIC_ID_STATE () { 188 }
+sub BEFORE_DOCTYPE_SYSTEM_ID_STATE () { 189 }
+sub BEFORE_ELEMENT_CONTENT_STATE () { 190 }
+sub BEFORE_ELEMENT_NAME_STATE () { 191 }
+sub BEFORE_ENTITY_NAME_STATE () { 192 }
+sub BEFORE_ENTITY_PUBLIC_ID_STATE () { 193 }
+sub BEFORE_ENTITY_SYSTEM_ID_STATE () { 194 }
+sub BEFORE_ENTITY_TYPE_STATE () { 195 }
+sub BEFORE_NDATA_ID_STATE () { 196 }
+sub BEFORE_NDATA_KEYWORD_STATE () { 197 }
+sub BEFORE_NDATA_KEYWORD_STATE_N () { 198 }
+sub BEFORE_NDATA_KEYWORD_STATE_ND () { 199 }
+sub BEFORE_NDATA_KEYWORD_STATE_NDA () { 200 }
+sub BEFORE_NDATA_KEYWORD_STATE_NDAT () { 201 }
+sub BEFORE_NOTATION_NAME_STATE () { 202 }
+sub BEFORE_NOTATION_PUBLIC_ID_STATE () { 203 }
+sub BEFORE_NOTATION_SYSTEM_ID_STATE () { 204 }
+sub BEFORE_ALLOWED_TOKEN_STATE () { 205 }
+sub BEFORE_ATTR_NAME_STATE () { 206 }
+sub BEFORE_ATTR_VALUE_STATE () { 207 }
+sub BEFORE_CONTENT_MODEL_ITEM_STATE () { 208 }
+sub BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE () { 209 }
+sub BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE () { 210 }
+sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE () { 211 }
+sub BOGUS_DOCTYPE_STATE () { 212 }
+sub BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 213 }
+sub BOGUS_COMMENT_STATE () { 214 }
+sub BOGUS_COMMENT_STATE_CR () { 215 }
+sub BOGUS_MARKUP_DECLARATION_STATE () { 216 }
+sub CHARREF_IN_DATA_STATE () { 217 }
+sub COMMENT_END_BANG_STATE () { 218 }
+sub COMMENT_END_DASH_STATE () { 219 }
+sub COMMENT_END_STATE () { 220 }
+sub COMMENT_START_DASH_STATE () { 221 }
+sub COMMENT_START_STATE () { 222 }
+sub COMMENT_STATE () { 223 }
+sub COMMENT_STATE_CR () { 224 }
+sub CONTENT_MODEL_ELEMENT_STATE () { 225 }
+sub DATA_STATE () { 226 }
+sub DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 227 }
+sub DATA_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 228 }
+sub DATA_STATE___CHARREF_HEX_NUMBER_STATE () { 229 }
+sub DATA_STATE___CHARREF_NAME_STATE () { 230 }
+sub DATA_STATE___CHARREF_NUMBER_STATE () { 231 }
+sub DATA_STATE___CHARREF_STATE () { 232 }
+sub DATA_STATE___CHARREF_STATE_CR () { 233 }
+sub DATA_STATE_CR () { 234 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE () { 235 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 236 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 237 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 238 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 239 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 240 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 241 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE_CR () { 242 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE () { 243 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 244 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 245 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 246 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 247 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 248 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 249 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE_CR () { 250 }
+sub END_TAG_OPEN_STATE () { 251 }
+sub IGNORED_SECTION_STATE () { 252 }
+sub IN_DTD_MSC_STATE () { 253 }
+sub IN_IGNORED_SECTION_MSC_STATE () { 254 }
+sub IN_MSC_STATE () { 255 }
+sub IN_PIC_STATE () { 256 }
+sub MDO_STATE () { 257 }
+sub MDO_STATE__ () { 258 }
+sub MDO_STATE_D () { 259 }
+sub MDO_STATE_DO () { 260 }
+sub MDO_STATE_DOC () { 261 }
+sub MDO_STATE_DOCT () { 262 }
+sub MDO_STATE_DOCTY () { 263 }
+sub MDO_STATE_DOCTYP () { 264 }
+sub MDO_STATE__5B () { 265 }
+sub MDO_STATE__5BC () { 266 }
+sub MDO_STATE__5BCD () { 267 }
+sub MDO_STATE__5BCDA () { 268 }
+sub MDO_STATE__5BCDAT () { 269 }
+sub MDO_STATE__5BCDATA () { 270 }
+sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_AFTER_SPACE_STATE () { 271 }
+sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE () { 272 }
+sub PARAMETER_ENTITY_NAME_IN_DTD_STATE () { 273 }
+sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE () { 274 }
+sub PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE () { 275 }
+sub SELF_CLOSING_START_TAG_STATE () { 276 }
+sub TAG_NAME_STATE () { 277 }
+sub TAG_OPEN_STATE () { 278 }
 
 my $TokenizerAbortingTagNames = {
   title => 1,
@@ -416,7 +502,10 @@ sub BEFORE_IGNORED_NEWLINE_IM () { 3 }
 sub BEFORE_ROOT_ELEMENT_IM () { 4 }
 sub IN_ELEMENT_IM () { 5 }
 sub IN_SUBSET_IM () { 6 }
-sub INITIAL_IM () { 7 }
+sub IN_SUBSET_AFTER_ROOT_ELEMENT_IM () { 7 }
+sub IN_SUBSET_BEFORE_ROOT_ELEMENT_IM () { 8 }
+sub IN_SUBSET_IN_ELEMENT_IM () { 9 }
+sub INITIAL_IM () { 10 }
 my $QPublicIDPrefixPattern = qr{};
 my $LQPublicIDPrefixPattern = qr{};
 my $QorLQPublicIDPrefixPattern = qr{};
@@ -446,8 +535,15 @@ push @$Errors, {type => 'after-root-element-doctype',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-# XXX IF
 
+          if ($token->{has_internal_subset_flag}) {
+            $StopProcessing = 1;
+
+          $IM = IN_SUBSET_AFTER_ROOT_ELEMENT_IM;
+          #warn "Insertion mode changed to |in subset after root element| ($IM)";
+        
+          }
+        
         },
       ,
         ## [4] after root element;ELEMENT
@@ -539,10 +635,29 @@ return;
       ,
         ## [15] before DOCTYPE;DOCTYPE
         sub {
-          # XXX insert a DOCTYPE
+          my $token = $_;
+# XXX insert a DOCTYPE
 
-# XXX IF
 
+          if ($token->{has_internal_subset_flag}) {
+            
+          $IM = IN_SUBSET_IM;
+          #warn "Insertion mode changed to |in subset| ($IM)";
+        
+          } else {
+            
+          if ($token->{system_identifier} eq '') {
+            # XXX process the external subset
+
+          } else {
+            
+          $IM = BEFORE_ROOT_ELEMENT_IM;
+          #warn "Insertion mode changed to |before root element| ($IM)";
+        
+          }
+        
+          }
+        
         },
       ,
         ## [16] before DOCTYPE;ELEMENT
@@ -657,8 +772,15 @@ push @$Errors, {type => 'before-root-element-doctype',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-# XXX IF
 
+          if ($token->{has_internal_subset_flag}) {
+            $StopProcessing = 1;
+
+          $IM = IN_SUBSET_BEFORE_ROOT_ELEMENT_IM;
+          #warn "Insertion mode changed to |in subset before root element| ($IM)";
+        
+          }
+        
         },
       ,
         ## [30] before root element;ELEMENT
@@ -710,16 +832,39 @@ push @$OP, ['stop-parsing'];
         ## [37] before root element;START-ELSE
         sub {
           my $token = $_;
-# XXX insert an XML element for the token
 
-# XXX IF
-
+        my $ns = 0; #'XXX';
+        my $node = {id => $NEXT_ID++,
+                    token => $token,
+                    di => $token->{di}, index => $token->{index},
+                    ns => $ns,
+                    local_name => $token->{tag_name},
+                    attr_list => $token->{attr_list},
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
+      
+push @$OP, ['insert', $node => 0];
+push @$OE, $node;
+push @$OP, ['appcache'];
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => 'nestc',
-                                            level => 'm',
-                                            text => $token->{tag_name},di => $token->{di},
-                                index => $token->{index}};
+            push @$OP, ['popped', [pop @$OE]];
+
+          if (delete $token->{self_closing_flag}) {
+            push @$Errors, {type => 'nestc', level => 'w',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
+          }
+        
+
+          $IM = AFTER_ROOT_ELEMENT_IM;
+          #warn "Insertion mode changed to |after root element| ($IM)";
+        
+          } else {
+            
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
           }
         
         },
@@ -759,8 +904,15 @@ push @$Errors, {type => 'in-element-doctype',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-# XXX IF
 
+          if ($token->{has_internal_subset_flag}) {
+            $StopProcessing = 1;
+
+          $IM = IN_SUBSET_IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in subset in element| ($IM)";
+        
+          }
+        
         },
       ,
         ## [42] in element;ELEMENT
@@ -770,73 +922,129 @@ push @$Errors, {type => 'in-element-doctype',
       ,
         ## [43] in element;END-ELSE
         sub {
-          # XXX IF
-
-        },
-      ,
-        ## [44] in element;END:
-        sub {
-          # XXX IF
-
-        },
-      ,
-        ## [45] in element;ENTITY
-        sub {
-          
-        },
-      ,
-        ## [46] in element;EOD
-        sub {
-          
-        },
-      ,
-        ## [47] in element;EOF
-        sub {
           my $token = $_;
+my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};
 
-          if ((die 'XXX COND') or 
-(die 'XXX COND')) {
-            push @$Errors, {type => 'in-element-eof',
+          for my $i (reverse 0..$#$OE) {
+            my $_node = $OE->[$i];
+            
+          if ((defined $CONTEXT) and 
+($_node eq $OE->[0])) {
+            push @$Errors, {type => 'in-element-end-else',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
+return;
+return;
+          }
+        
+
+          if ($tag_name eq $_node->{token}->{tag_name}) {
+            
+          if (not ($OE->[-1] eq $_node)) {
+            push @$Errors, {type => 'in-element-end-else-2',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
           }
         
 
+          if ($_node eq $OE->[0]) {
+            
           $IM = AFTER_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |after root element| ($IM)";
         
+          }
+        
+{
+          my @popped;
+          push @popped, pop @$OE while not ($OE->[-1] eq $_node);
+          push @popped, pop @$OE;
+          push @$OP, ['popped', \@popped];
+        }
+return;
+          }
+        
+          }
+        
         },
       ,
-        ## [48] in element;NOTATION
+        ## [44] in element;ENTITY
         sub {
           
         },
       ,
-        ## [49] in element;PI
+        ## [45] in element;EOD
+        sub {
+          
+        },
+      ,
+        ## [46] in element;EOF
+        sub {
+          my $token = $_;
+
+          if (defined $CONTEXT) {
+            
+          if (@$OE > 1) {
+            push @$Errors, {type => 'in-element-eof',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
+          }
+        
+push @$OP, ['stop-parsing'];
+          } else {
+            push @$Errors, {type => 'in-element-eof-2',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
+push @$OP, ['stop-parsing'];
+          }
+        
+        },
+      ,
+        ## [47] in element;NOTATION
+        sub {
+          
+        },
+      ,
+        ## [48] in element;PI
         sub {
           # XXX insert a processing instruction
 
         },
       ,
-        ## [50] in element;START-ELSE
+        ## [49] in element;START-ELSE
         sub {
           my $token = $_;
-# XXX insert an XML element for the token
 
-# XXX IF
-
+        my $ns = 0; #'XXX';
+        my $node = {id => $NEXT_ID++,
+                    token => $token,
+                    di => $token->{di}, index => $token->{index},
+                    ns => $ns,
+                    local_name => $token->{tag_name},
+                    attr_list => $token->{attr_list},
+                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
+      
+push @$OP, ['insert', $node => $OE->[-1]->{id}];
+push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
-            push @$Errors, {type => 'nestc',
-                                            level => 'm',
-                                            text => $token->{tag_name},di => $token->{di},
-                                index => $token->{index}};
+            push @$OP, ['popped', [pop @$OE]];
+
+          if (delete $token->{self_closing_flag}) {
+            push @$Errors, {type => 'nestc', level => 'w',
+                            text => $token->{tag_name},
+                            di => $token->{di}, index => $token->{index}};
+          }
+        
           }
         
         },
       ,
-        ## [51] in element;TEXT
+        ## [50] in element;TEXT
         sub {
           my $token = $_;
 
@@ -864,65 +1072,284 @@ push @$Errors, {type => 'in-element-doctype',
         
         },
       ,
-        ## [52] in subset;ATTLIST
+        ## [51] in subset after root element;ATTLIST
+        sub {
+          return;
+        },
+      ,
+        ## [52] in subset after root element;COMMENT
+        sub {
+          return;
+        },
+      ,
+        ## [53] in subset after root element;DOCTYPE
+        sub {
+          return;
+        },
+      ,
+        ## [54] in subset after root element;ELEMENT
+        sub {
+          return;
+        },
+      ,
+        ## [55] in subset after root element;END-ELSE
+        sub {
+          return;
+        },
+      ,
+        ## [56] in subset after root element;ENTITY
+        sub {
+          return;
+        },
+      ,
+        ## [57] in subset after root element;EOD
+        sub {
+          
+          $IM = AFTER_ROOT_ELEMENT_IM;
+          #warn "Insertion mode changed to |after root element| ($IM)";
+        
+        },
+      ,
+        ## [58] in subset after root element;EOF
+        sub {
+          push @$OP, ['stop-parsing'];
+        },
+      ,
+        ## [59] in subset after root element;NOTATION
+        sub {
+          return;
+        },
+      ,
+        ## [60] in subset after root element;PI
+        sub {
+          return;
+        },
+      ,
+        ## [61] in subset after root element;START-ELSE
+        sub {
+          my $token = $_;
+
+          if ($token->{self_closing_flag}) {
+            push @$Errors, {type => 'nestc',
+                                            level => 'm',
+                                            text => $token->{tag_name},di => $token->{di},
+                                index => $token->{index}};
+          }
+        
+return;
+        },
+      ,
+        ## [62] in subset after root element;TEXT
+        sub {
+          
+        },
+      ,
+        ## [63] in subset before root element;ATTLIST
+        sub {
+          return;
+        },
+      ,
+        ## [64] in subset before root element;COMMENT
+        sub {
+          return;
+        },
+      ,
+        ## [65] in subset before root element;DOCTYPE
+        sub {
+          return;
+        },
+      ,
+        ## [66] in subset before root element;ELEMENT
+        sub {
+          return;
+        },
+      ,
+        ## [67] in subset before root element;END-ELSE
+        sub {
+          return;
+        },
+      ,
+        ## [68] in subset before root element;ENTITY
+        sub {
+          return;
+        },
+      ,
+        ## [69] in subset before root element;EOD
+        sub {
+          
+          $IM = BEFORE_ROOT_ELEMENT_IM;
+          #warn "Insertion mode changed to |before root element| ($IM)";
+        
+        },
+      ,
+        ## [70] in subset before root element;EOF
+        sub {
+          push @$OP, ['stop-parsing'];
+        },
+      ,
+        ## [71] in subset before root element;NOTATION
+        sub {
+          return;
+        },
+      ,
+        ## [72] in subset before root element;PI
+        sub {
+          return;
+        },
+      ,
+        ## [73] in subset before root element;START-ELSE
+        sub {
+          my $token = $_;
+
+          if ($token->{self_closing_flag}) {
+            push @$Errors, {type => 'nestc',
+                                            level => 'm',
+                                            text => $token->{tag_name},di => $token->{di},
+                                index => $token->{index}};
+          }
+        
+return;
+        },
+      ,
+        ## [74] in subset before root element;TEXT
+        sub {
+          
+        },
+      ,
+        ## [75] in subset in element;ATTLIST
+        sub {
+          return;
+        },
+      ,
+        ## [76] in subset in element;COMMENT
+        sub {
+          return;
+        },
+      ,
+        ## [77] in subset in element;DOCTYPE
+        sub {
+          return;
+        },
+      ,
+        ## [78] in subset in element;ELEMENT
+        sub {
+          return;
+        },
+      ,
+        ## [79] in subset in element;END-ELSE
+        sub {
+          return;
+        },
+      ,
+        ## [80] in subset in element;ENTITY
+        sub {
+          return;
+        },
+      ,
+        ## [81] in subset in element;EOD
+        sub {
+          
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+        },
+      ,
+        ## [82] in subset in element;EOF
+        sub {
+          push @$OP, ['stop-parsing'];
+        },
+      ,
+        ## [83] in subset in element;NOTATION
+        sub {
+          return;
+        },
+      ,
+        ## [84] in subset in element;PI
+        sub {
+          return;
+        },
+      ,
+        ## [85] in subset in element;START-ELSE
+        sub {
+          my $token = $_;
+
+          if ($token->{self_closing_flag}) {
+            push @$Errors, {type => 'nestc',
+                                            level => 'm',
+                                            text => $token->{tag_name},di => $token->{di},
+                                index => $token->{index}};
+          }
+        
+return;
+        },
+      ,
+        ## [86] in subset in element;TEXT
+        sub {
+          
+        },
+      ,
+        ## [87] in subset;ATTLIST
         sub {
           # XXX process an ATTLIST token
 
         },
       ,
-        ## [53] in subset;COMMENT
+        ## [88] in subset;COMMENT
         sub {
           return;
         },
       ,
-        ## [54] in subset;DOCTYPE
+        ## [89] in subset;DOCTYPE
         sub {
           
         },
       ,
-        ## [55] in subset;ELEMENT
+        ## [90] in subset;ELEMENT
         sub {
           # XXX process an ELEMENT token
 
         },
       ,
-        ## [56] in subset;END-ELSE
+        ## [91] in subset;END-ELSE
         sub {
           
         },
       ,
-        ## [57] in subset;ENTITY
+        ## [92] in subset;ENTITY
         sub {
           # XXX process an ENTITY token
 
         },
       ,
-        ## [58] in subset;EOD
+        ## [93] in subset;EOD
         sub {
-          # XXX IF
+          my $token = $_;
 
-# XXX IF
+          if ($token->{system_identifier} eq '') {
+            # XXX process the external subset
 
+          }
+        
         },
       ,
-        ## [59] in subset;EOF
+        ## [94] in subset;EOF
         sub {
           push @$OP, ['stop-parsing'];
         },
       ,
-        ## [60] in subset;NOTATION
+        ## [95] in subset;NOTATION
         sub {
           # XXX process a NOTATION token
 
         },
       ,
-        ## [61] in subset;PI
+        ## [96] in subset;PI
         sub {
           # XXX insert a processing instruction
 
         },
       ,
-        ## [62] in subset;START-ELSE
+        ## [97] in subset;START-ELSE
         sub {
           my $token = $_;
 
@@ -935,7 +1362,7 @@ push @$Errors, {type => 'in-element-doctype',
         
         },
       ,
-        ## [63] in subset;TEXT
+        ## [98] in subset;TEXT
         sub {
           my $token = $_;
 
@@ -950,7 +1377,7 @@ push @$Errors, {type => 'in-element-doctype',
           
         },
       ,
-        ## [64] initial;ATTLIST
+        ## [99] initial;ATTLIST
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -964,7 +1391,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [65] initial;COMMENT
+        ## [100] initial;COMMENT
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -978,7 +1405,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [66] initial;DOCTYPE
+        ## [101] initial;DOCTYPE
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -992,7 +1419,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [67] initial;ELEMENT
+        ## [102] initial;ELEMENT
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1006,7 +1433,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [68] initial;END-ELSE
+        ## [103] initial;END-ELSE
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1020,7 +1447,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [69] initial;ENTITY
+        ## [104] initial;ENTITY
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1034,7 +1461,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [70] initial;EOD
+        ## [105] initial;EOD
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1048,7 +1475,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [71] initial;EOF
+        ## [106] initial;EOF
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1062,7 +1489,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [72] initial;NOTATION
+        ## [107] initial;NOTATION
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1076,7 +1503,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [73] initial;PI
+        ## [108] initial;PI
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1090,7 +1517,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [74] initial;PI:xml
+        ## [109] initial;PI:xml
         sub {
           # XXX process an XML declaration
 
@@ -1100,7 +1527,7 @@ push @$Errors, {type => 'in-element-doctype',
         
         },
       ,
-        ## [75] initial;START-ELSE
+        ## [110] initial;START-ELSE
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1114,7 +1541,7 @@ push @$Errors, {type => 'in-element-doctype',
       
         },
       ,
-        ## [76] initial;TEXT
+        ## [111] initial;TEXT
         sub {
           my $token = $_;
 # XXX the XML declaration is missing
@@ -1134,9 +1561,12 @@ $ProcessIM = [undef,
 [undef, [$TCA->[13]], [$TCA->[15]], [$TCA->[16]], [$TCA->[18]], [$TCA->[21]], [$TCA->[14]], [$TCA->[17], $TCA->[17]], [$TCA->[19]], [$TCA->[20]], [$TCA->[22]], [$TCA->[23], $TCA->[23]], [$TCA->[24]]],
 [undef, [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25], $TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25], $TCA->[25]], [$TCA->[26]]],
 [undef, [$TCA->[27]], [$TCA->[29]], [$TCA->[30]], [$TCA->[32]], [$TCA->[35]], [$TCA->[28]], [$TCA->[31], $TCA->[31]], [$TCA->[33]], [$TCA->[34]], [$TCA->[36]], [$TCA->[37], $TCA->[37]], [$TCA->[38]]],
-[undef, [$TCA->[39]], [$TCA->[41]], [$TCA->[42]], [$TCA->[45]], [$TCA->[48]], [$TCA->[40]], [$TCA->[43], $TCA->[43]], [$TCA->[46]], [$TCA->[47]], [$TCA->[49]], [$TCA->[50], $TCA->[50]], [$TCA->[51]]],
-[undef, [$TCA->[52]], [$TCA->[54]], [$TCA->[55]], [$TCA->[57]], [$TCA->[60]], [$TCA->[53]], [$TCA->[56], $TCA->[56]], [$TCA->[58]], [$TCA->[59]], [$TCA->[61]], [$TCA->[62], $TCA->[62]], [$TCA->[63]]],
-[undef, [$TCA->[64]], [$TCA->[66]], [$TCA->[67]], [$TCA->[69]], [$TCA->[72]], [$TCA->[65]], [$TCA->[68], $TCA->[68]], [$TCA->[70]], [$TCA->[71]], [$TCA->[73]], [$TCA->[75], $TCA->[75]], [$TCA->[76]]]];
+[undef, [$TCA->[39]], [$TCA->[41]], [$TCA->[42]], [$TCA->[44]], [$TCA->[47]], [$TCA->[40]], [$TCA->[43], $TCA->[43]], [$TCA->[45]], [$TCA->[46]], [$TCA->[48]], [$TCA->[49], $TCA->[49]], [$TCA->[50]]],
+[undef, [$TCA->[87]], [$TCA->[89]], [$TCA->[90]], [$TCA->[92]], [$TCA->[95]], [$TCA->[88]], [$TCA->[91], $TCA->[91]], [$TCA->[93]], [$TCA->[94]], [$TCA->[96]], [$TCA->[97], $TCA->[97]], [$TCA->[98]]],
+[undef, [$TCA->[51]], [$TCA->[53]], [$TCA->[54]], [$TCA->[56]], [$TCA->[59]], [$TCA->[52]], [$TCA->[55], $TCA->[55]], [$TCA->[57]], [$TCA->[58]], [$TCA->[60]], [$TCA->[61], $TCA->[61]], [$TCA->[62]]],
+[undef, [$TCA->[63]], [$TCA->[65]], [$TCA->[66]], [$TCA->[68]], [$TCA->[71]], [$TCA->[64]], [$TCA->[67], $TCA->[67]], [$TCA->[69]], [$TCA->[70]], [$TCA->[72]], [$TCA->[73], $TCA->[73]], [$TCA->[74]]],
+[undef, [$TCA->[75]], [$TCA->[77]], [$TCA->[78]], [$TCA->[80]], [$TCA->[83]], [$TCA->[76]], [$TCA->[79], $TCA->[79]], [$TCA->[81]], [$TCA->[82]], [$TCA->[84]], [$TCA->[85], $TCA->[85]], [$TCA->[86]]],
+[undef, [$TCA->[99]], [$TCA->[101]], [$TCA->[102]], [$TCA->[104]], [$TCA->[107]], [$TCA->[100]], [$TCA->[103], $TCA->[103]], [$TCA->[105]], [$TCA->[106]], [$TCA->[108]], [$TCA->[110], $TCA->[110]], [$TCA->[111]]]];
 my $ResetIMByET = {};
 my $ResetIMByETUnlessLast = {};my $StateByElementName = {};
 
@@ -1526,48 +1956,52 @@ push @$Tokens, $Token;
           push @$Errors, {type => 'attlist-attribute-default-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Create an attribute definition and append it to the list of attribute definitions of the current token.
-
+$Attr = {di => $DI, index => $Offset + pos $Input};
 $State = ATTLIST_ATTR_NAME_STATE;
-## XXX Set the current attribute definition's name to a U+FFFD REPLACEMENT CHARACTER character.
-
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
           push @$Errors, {type => 'attlist-attribute-default-0022', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$State = ATTR_VALUE__DQ__STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\'])/gcs) {
 
           push @$Errors, {type => 'attlist-attribute-default-0027', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$State = ATTR_VALUE__SQ__STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'attlist-attribute-default-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Create an attribute definition and append it to the list of attribute definitions of the current token.
-
+$Attr = {di => $DI, index => $Offset + pos $Input};
 $State = ATTLIST_ATTR_NAME_STATE;
-## XXX Set the current attribute definition's name to the current input character.
-
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -1609,13 +2043,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -1653,13 +2093,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -1695,13 +2141,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -1723,6 +2175,10 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
           push @$Errors, {type => 'NULL', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+
+        $Token = {type => ATTLIST_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $Token->{q<name>} = q@�@;
 $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -1739,14 +2195,16 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'attlist-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Set the current token's name to the current input character.
 
+        $Token = {type => ATTLIST_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
 $State = ATTLIST_NAME_STATE;
 } else {
 if ($EOF) {
@@ -1758,13 +2216,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -2023,7 +2487,12 @@ $Token->{q<data>} .= $Temp;
 push @$Tokens, $Token;
 $State = DATA_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
-# XXX
+
+          unless ($DTDMode eq 'internal subset') {
+            $State = AFTER_MSS_STATE;
+            return 1;
+          }
+        
 
           push @$Errors, {type => 'doctype-markup-declaration-open-005b', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
@@ -4186,8 +4655,7 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
-# XXX set-DOCTYPE-mode
-
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 } else {
 if ($EOF) {
@@ -4433,7 +4901,7 @@ $State = DOCTYPE_NAME_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 $State = DATA_STATE;
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 
           push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
@@ -4706,13 +5174,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -4729,22 +5203,71 @@ $State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = DOCTYPE_TAG_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
-# XXX
+
+          if ($DTDMode eq 'internal subset') {
+            $State = AFTER_DOCTYPE_INTERNAL_SUBSET_STATE;
+            return 1;
+          }
+        
 $State = IN_DTD_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
+} else {
+if ($EOF) {
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ELEMENT_CONTENT_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([^\	\\ \
+\\%\>]+)/gcs) {
+$Token->{q<content_keyword>} .= $1;
+
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = AFTER_ELEMENT_CONTENT_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -4760,7 +5283,7 @@ $Token->{q<name>} .= $1;
 $Token->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = BEFORE_ELEMENT_CONTENT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
@@ -4768,29 +5291,35 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
           push @$Errors, {type => 'element-name-0028', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
+$Token->{cmgroup} = $cmgroup;
+@$OpenCMGroups = ($cmgroup);
 $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
-## XXX Create a content model group and append it to the list of content model groups of the current token.
-
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           push @$Errors, {type => 'element-name-003e', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -4808,6 +5337,14 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
           push @$Errors, {type => 'element-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        $Token = {type => ELEMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $Token->{q<name>} = q@�@;
 $State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -4820,18 +5357,16 @@ $State = ELEMENT_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DTD_STATE;
-
-          push @$Errors, {type => 'dtd-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'element-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Set the current token's name to the current input character.
 
+        $Token = {type => ELEMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
 $State = ELEMENT_NAME_STATE;
 } else {
 if ($EOF) {
@@ -4843,13 +5378,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -4893,14 +5434,208 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_PUBLIC_ID__DQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\"\>]+)/gcs) {
+$Token->{q<public_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = ENTITY_PUBLIC_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_PUBLIC_ID__DQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = ENTITY_PUBLIC_ID__DQ__STATE;
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = ENTITY_PUBLIC_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = ENTITY_PUBLIC_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = ENTITY_PUBLIC_ID__DQ__STATE;
+$Token->{q<public_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_PUBLIC_ID__SQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\'\>]+)/gcs) {
+$Token->{q<public_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = ENTITY_PUBLIC_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_PUBLIC_ID__SQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = ENTITY_PUBLIC_ID__SQ__STATE;
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = ENTITY_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = ENTITY_PUBLIC_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = ENTITY_PUBLIC_ID__SQ__STATE;
+$Token->{q<public_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -4910,14 +5645,26 @@ return 0;
 $StateActions->[ENTITY_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
+
+        $Token = {type => ENTITY_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $State = BEFORE_ENTITY_TYPE_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
+
+        $Token = {type => ENTITY_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $State = PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
           push @$Errors, {type => 'entity-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+
+        $Token = {type => ENTITY_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $Token->{q<name>} = q@�@;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -4925,6 +5672,10 @@ $State = ENTITY_NAME_STATE;
           push @$Errors, {type => 'entity-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+
+        $Token = {type => ENTITY_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 
           push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
@@ -4934,14 +5685,16 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'entity-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Set the current token's name to the current input character.
 
+        $Token = {type => ENTITY_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } else {
 if ($EOF) {
@@ -4950,16 +5703,186 @@ if ($EOF) {
                           di => $DI, index => $Offset + (pos $Input)};
         
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-$State = DTD_STATE;
+        $Token = {type => ENTITY_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_SYSTEM_ID__DQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\"]+)/gcs) {
+$Token->{q<system_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = ENTITY_SYSTEM_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_SYSTEM_ID__DQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = ENTITY_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = ENTITY_SYSTEM_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$Token->{q<system_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_SYSTEM_ID__SQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\']+)/gcs) {
+$Token->{q<system_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = ENTITY_SYSTEM_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENTITY_SYSTEM_ID__SQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = ENTITY_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = ENTITY_SYSTEM_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$Token->{q<system_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -4988,14 +5911,20 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5028,14 +5957,20 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5064,14 +5999,20 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5104,14 +6045,20 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5152,13 +6099,60 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NDATA_ID_STATE] = sub {
+if ($Input =~ /\G([^\ \	\\ \
+\\%\>]+)/gcs) {
+$Token->{q<notation_name>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<notation_name>} .= q@�@;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = AFTER_ENTITY_PARAMETER_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
+push @$Tokens, $Token;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5190,14 +6184,208 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_PUBLIC_ID__DQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\"\>]+)/gcs) {
+$Token->{q<public_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = NOTATION_PUBLIC_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_PUBLIC_ID__DQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = NOTATION_PUBLIC_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
+$Token->{q<public_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_PUBLIC_ID__SQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\'\>]+)/gcs) {
+$Token->{q<public_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = NOTATION_PUBLIC_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_PUBLIC_ID__SQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
+$Token->{q<public_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<public_identifier>} .= q@
+@;
+$State = NOTATION_PUBLIC_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
+$Token->{q<public_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5215,6 +6403,10 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
           push @$Errors, {type => 'notation-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+
+        $Token = {type => NOTATION_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $Token->{q<name>} = q@�@;
 $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -5231,14 +6423,16 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'notation-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Set the current token's name to the current input character.
 
+        $Token = {type => NOTATION_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
 $State = NOTATION_NAME_STATE;
 } else {
 if ($EOF) {
@@ -5250,13 +6444,179 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_SYSTEM_ID__DQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\"]+)/gcs) {
+$Token->{q<system_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = NOTATION_SYSTEM_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_SYSTEM_ID__DQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = NOTATION_SYSTEM_ID__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+$Token->{q<system_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_SYSTEM_ID__SQ__STATE] = sub {
+if ($Input =~ /\G([^\ \\']+)/gcs) {
+$Token->{q<system_identifier>} .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = NOTATION_SYSTEM_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[NOTATION_SYSTEM_ID__SQ__STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+$Token->{q<system_identifier>} .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<system_identifier>} .= q@
+@;
+$State = NOTATION_SYSTEM_ID__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+$Token->{q<system_identifier>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5355,7 +6715,6 @@ $State = PI_TARGET_STATE;
 $Token->{q<data>} = q@?@;
 $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= $1;
-pos ($Input)--;
 } elsif ($Input =~ /\G([\])/gcs) {
 
           push @$Errors, {type => 'pi-ws', level => 'm',
@@ -5369,7 +6728,6 @@ $Token->{q<data>} = q@?@;
 $Token->{q<data>} .= q@
 @;
 $State = BOGUS_COMMENT_STATE_CR;
-pos ($Input)--;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
           push @$Errors, {type => 'pi-003f', level => 'm',
@@ -5382,7 +6740,6 @@ pos ($Input)--;
 $Token->{q<data>} = q@?@;
 $State = BOGUS_COMMENT_STATE;
 $Token->{q<data>} .= $1;
-pos ($Input)--;
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
@@ -5410,7 +6767,6 @@ $State = DATA_STATE;
                         index => $Offset + pos $Input};
         return 1;
       
-pos ($Input)--;
 } else {
 return 1;
 }
@@ -5521,43 +6877,47 @@ return 0;
 };
 $StateActions->[AFTER_ATTLIST_ATTR_DEFAULT_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-## XXX Create an attribute definition and append it to the list of attribute definitions of the current token.
-
+$Attr = {di => $DI, index => $Offset + pos $Input};
 $State = ATTLIST_ATTR_NAME_STATE;
-## XXX Set the current attribute definition's name to a U+FFFD REPLACEMENT CHARACTER character.
-
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = ATTR_VALUE__DQ__STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = ATTR_VALUE__SQ__STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Create an attribute definition and append it to the list of attribute definitions of the current token.
-
+$Attr = {di => $DI, index => $Offset + pos $Input};
 $State = ATTLIST_ATTR_NAME_STATE;
-## XXX Set the current attribute definition's name to the current input character.
-
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5587,13 +6947,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5604,25 +6970,17 @@ $StateActions->[AFTER_ATTLIST_ATTR_TYPE_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = ATTR_VALUE__DQ__STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\#])/gcs) {
 $State = BEFORE_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = ATTR_VALUE__SQ__STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\(])/gcs) {
 $State = BEFORE_ALLOWED_TOKEN_STATE;
-} elsif ($Input =~ /\G([\ ])/gcs) {
-
-          push @$Errors, {type => 'NULL', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = ATTR_VALUE__UNQUOTED__STATE;
-## XXX Set the current attribute definition's value to a U+FFFD REPLACEMENT CHARACTER character.
-
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
@@ -5635,21 +6993,26 @@ push @$Tokens, $Token;
           push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$State = ATTR_VALUE__UNQUOTED__STATE;
-$Attr->{q<value>} = $1;
+$State = BOGUS_MARKUP_DECLARATION_STATE;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -5659,8 +7022,12 @@ return 0;
 $StateActions->[AFTER_DOCTYPE_INTERNAL_SUBSET_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
-# XXX emit-end-of-DOCTYPE
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'after-doctype-internal-subset-else', level => 'm',
@@ -5674,8 +7041,12 @@ if ($EOF) {
                           di => $DI, index => $Offset + (pos $Input)};
         
 $State = DATA_STATE;
-# XXX emit-end-of-DOCTYPE
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                         di => $DI,
@@ -6107,8 +7478,7 @@ $State = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
-# XXX set-DOCTYPE-mode
-
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -6222,8 +7592,7 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
-# XXX set-DOCTYPE-mode
-
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -6259,8 +7628,7 @@ $State = BEFORE_DOCTYPE_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
-# XXX set-DOCTYPE-mode
-
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -6313,35 +7681,8 @@ return 1;
 return 0;
 };
 $StateActions->[AFTER_DTD_MSC_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-\])/gcs) {
-
-          push @$Errors, {type => 'after-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = DTD_STATE;
-} elsif ($Input =~ /\G([\%])/gcs) {
-
-          push @$Errors, {type => 'after-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-# XXX set-original-state
-
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
-} elsif ($Input =~ /\G([\<])/gcs) {
-
-          push @$Errors, {type => 'after-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = DOCTYPE_TAG_STATE;
-} elsif ($Input =~ /\G([\>])/gcs) {
-
-          push @$Errors, {type => 'after-dtd-msc-003e', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-# XXX decrement-marked-section-nesting-level
-
-$State = DTD_STATE;
+if ($Input =~ /\G([\>])/gcs) {
+pop @$OpenMarkedSections;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
           push @$Errors, {type => 'after-dtd-msc-005d', level => 'm',
@@ -6353,24 +7694,64 @@ $State = DTD_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DTD_STATE;
-
-          push @$Errors, {type => 'dtd-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } else {
 if ($EOF) {
-
-          push @$Errors, {type => 'after-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-$State = DTD_STATE;
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ELEMENT_CONTENT_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-element-content-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -6386,6 +7767,22 @@ $State = ENTITY_VALUE__DQ__STATE;
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = ENTITY_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([P])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_ENTITY_NAME_STATE_P;
+} elsif ($Input =~ /\G([S])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_ENTITY_NAME_STATE_S;
+} elsif ($Input =~ /\G([p])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_ENTITY_NAME_STATE_P;
+} elsif ($Input =~ /\G([s])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_ENTITY_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           push @$Errors, {type => 'after-entity-name-003e', level => 'm',
@@ -6394,16 +7791,6 @@ $State = ENTITY_VALUE__SQ__STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX If the next several characters are a case-sensitive match for the string "PUBLIC", then consume those characters and switch to the after ENTITY public keyword state.
-
-## XXX Otherwise, if the next several characters are an ASCII case-insensitive match for the word "PUBLIC", then this is a parse error; consume those characters and switch to the after ENTITY public keyword state.
-
-## XXX Otherwise, if the next several characters are a case-sensitive match for the string "SYSTEM", then consume those characters and switch to the after ENTITY system keyword state.
-
-## XXX Otherwise, if the next several characters are an ASCII case-insensitive match for the word "SYSTEM", then this is a parse error; consume those characters and switch to the after ENTITY system keyword state.
-
-## XXX Otherwise:
-
 
           push @$Errors, {type => 'after-entity-name-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
@@ -6415,14 +7802,422 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_P] = sub {
+if ($Input =~ /\G([U])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PU;
+} elsif ($Input =~ /\G([u])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PU;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_PU] = sub {
+if ($Input =~ /\G([B])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PUB;
+} elsif ($Input =~ /\G([b])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PUB;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_PUB] = sub {
+if ($Input =~ /\G([L])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PUBL;
+} elsif ($Input =~ /\G([l])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PUBL;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_PUBL] = sub {
+if ($Input =~ /\G([I])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PUBLI;
+} elsif ($Input =~ /\G([i])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_PUBLI;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_PUBLI] = sub {
+if ($Input =~ /\G([C])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_ENTITY_PUBLIC_KEYWORD_STATE;
+} elsif ($Input =~ /\G([c])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_ENTITY_PUBLIC_KEYWORD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_S] = sub {
+if ($Input =~ /\G([Y])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SY;
+} elsif ($Input =~ /\G([y])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SY;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_SY] = sub {
+if ($Input =~ /\G([S])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SYS;
+} elsif ($Input =~ /\G([s])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SYS;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_SYS] = sub {
+if ($Input =~ /\G([T])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SYST;
+} elsif ($Input =~ /\G([t])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SYST;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_SYST] = sub {
+if ($Input =~ /\G([E])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SYSTE;
+} elsif ($Input =~ /\G([e])/gcs) {
+$Temp .= $1;
+$State = AFTER_ENTITY_NAME_STATE_SYSTE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_NAME_STATE_SYSTE] = sub {
+if ($Input =~ /\G([M])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_ENTITY_SYSTEM_KEYWORD_STATE;
+} elsif ($Input =~ /\G([m])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_ENTITY_SYSTEM_KEYWORD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -6449,14 +8244,371 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_PUBLIC_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-identifier-0022', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = ENTITY_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-identifier-0027', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = ENTITY_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-identifier-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
 $State = DTD_STATE;
 push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_PUBLIC_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BEFORE_ENTITY_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-keyword-0022', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_ENTITY_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-keyword-0027', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_ENTITY_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-keyword-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-public-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_SYSTEM_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BEFORE_NDATA_KEYWORD_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_NDATA_KEYWORD_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_ENTITY_SYSTEM_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BEFORE_ENTITY_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'after-entity-system-keyword-0022', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_ENTITY_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'after-entity-system-keyword-0027', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_ENTITY_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'after-entity-system-keyword-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-entity-system-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_IGNORE_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_INCLUDE_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+push @$OpenMarkedSections, 'INCLUDE';
+$State = DTD_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NDATA_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BEFORE_NDATA_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'after-ndata-keyword-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-ndata-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_NDATA_ID_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -6468,6 +8620,22 @@ if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([P])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_NOTATION_NAME_STATE_P;
+} elsif ($Input =~ /\G([S])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_NOTATION_NAME_STATE_S;
+} elsif ($Input =~ /\G([p])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_NOTATION_NAME_STATE_P;
+} elsif ($Input =~ /\G([s])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_NOTATION_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           push @$Errors, {type => 'after-notation-name-003e', level => 'm',
@@ -6476,16 +8644,6 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX If the next several characters are a case-sensitive match for the string "PUBLIC", then consume those characters and switch to the after NOTATION public keyword state.
-
-## XXX Otherwise, if the next several characters are an ASCII case-insensitive match for the word "PUBLIC", then this is a parse error; consume those characters and switch to the after NOTATION public keyword state.
-
-## XXX Otherwise, if the next several characters are a case-sensitive match for the string "SYSTEM", then consume those characters and switch to the after NOTATION system keyword state.
-
-## XXX Otherwise, if the next several characters are an ASCII case-insensitive match for the word "SYSTEM", then this is a parse error; consume those characters and switch to the after NOTATION system keyword state.
-
-## XXX Otherwise:
-
 
           push @$Errors, {type => 'after-notation-name-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
@@ -6497,14 +8655,629 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
 push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_P] = sub {
+if ($Input =~ /\G([U])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PU;
+} elsif ($Input =~ /\G([u])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PU;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_PU] = sub {
+if ($Input =~ /\G([B])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PUB;
+} elsif ($Input =~ /\G([b])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PUB;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_PUB] = sub {
+if ($Input =~ /\G([L])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PUBL;
+} elsif ($Input =~ /\G([l])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PUBL;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_PUBL] = sub {
+if ($Input =~ /\G([I])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PUBLI;
+} elsif ($Input =~ /\G([i])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_PUBLI;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_PUBLI] = sub {
+if ($Input =~ /\G([C])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_NOTATION_PUBLIC_KEYWORD_STATE;
+} elsif ($Input =~ /\G([c])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_NOTATION_PUBLIC_KEYWORD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_S] = sub {
+if ($Input =~ /\G([Y])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SY;
+} elsif ($Input =~ /\G([y])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SY;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_SY] = sub {
+if ($Input =~ /\G([S])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SYS;
+} elsif ($Input =~ /\G([s])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SYS;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_SYS] = sub {
+if ($Input =~ /\G([T])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SYST;
+} elsif ($Input =~ /\G([t])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SYST;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_SYST] = sub {
+if ($Input =~ /\G([E])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SYSTE;
+} elsif ($Input =~ /\G([e])/gcs) {
+$Temp .= $1;
+$State = AFTER_NOTATION_NAME_STATE_SYSTE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_NAME_STATE_SYSTE] = sub {
+if ($Input =~ /\G([M])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_NOTATION_SYSTEM_KEYWORD_STATE;
+} elsif ($Input =~ /\G([m])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_NOTATION_SYSTEM_KEYWORD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_PUBLIC_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'after-notation-public-identifier-0022', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'after-notation-public-identifier-0027', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-public-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_PUBLIC_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BEFORE_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'after-notation-public-keyword-0022', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'after-notation-public-keyword-0027', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'after-notation-public-keyword-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-public-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_SYSTEM_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-system-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_NOTATION_SYSTEM_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BEFORE_NOTATION_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'after-notation-system-keyword-0022', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_NOTATION_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'after-notation-system-keyword-0027', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BEFORE_NOTATION_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'after-notation-system-keyword-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-notation-system-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -6588,23 +9361,15 @@ $StateActions->[AFTER_AFTER_ALLOWED_TOKEN_LIST_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = ATTR_VALUE__DQ__STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\#])/gcs) {
 $State = BEFORE_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = ATTR_VALUE__SQ__STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-} elsif ($Input =~ /\G([\ ])/gcs) {
-
-          push @$Errors, {type => 'NULL', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = ATTR_VALUE__UNQUOTED__STATE;
-## XXX Set the current attribute definition's value to a U+FFFD REPLACEMENT CHARACTER character.
-
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
@@ -6617,21 +9382,26 @@ push @$Tokens, $Token;
           push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$State = ATTR_VALUE__UNQUOTED__STATE;
-$Attr->{q<value>} = $1;
+$State = BOGUS_MARKUP_DECLARATION_STATE;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -6644,24 +9414,12 @@ if ($Input =~ /\G([\	\\ \
 $State = AFTER_AFTER_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
-} elsif ($Input =~ /\G([\ ])/gcs) {
-
-          push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-
-          push @$Errors, {type => 'NULL', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = ATTR_VALUE__UNQUOTED__STATE;
-## XXX Set the current attribute definition's value to a U+FFFD REPLACEMENT CHARACTER character.
-
 } elsif ($Input =~ /\G([\"])/gcs) {
 
           push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$State = ATTR_VALUE__DQ__STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\#])/gcs) {
 
@@ -6674,7 +9432,7 @@ $State = BEFORE_ATTLIST_ATTR_DEFAULT_STATE;
           push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$State = ATTR_VALUE__SQ__STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -6692,21 +9450,26 @@ push @$Tokens, $Token;
           push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$State = ATTR_VALUE__UNQUOTED__STATE;
-$Attr->{q<value>} = $1;
+$State = BOGUS_MARKUP_DECLARATION_STATE;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -6741,13 +9504,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -6763,8 +9532,46 @@ $State = SELF_CLOSING_START_TAG_STATE;
 $State = BEFORE_ATTR_VALUE_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
@@ -6843,7 +9650,45 @@ $State = BEFORE_ATTR_NAME_STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
           push @$Errors, {type => 'no space before attr name', level => 'm',
@@ -6914,7 +9759,7 @@ $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 
           push @$Errors, {type => 'no space before attr name', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
@@ -6953,121 +9798,98 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_CONTENT_MODEL_ELEMENT_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-\]+)/gcs) {
-} elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
-} elsif ($Input =~ /\G([\)])/gcs) {
-$State = AFTER_CONTENT_MODEL_GROUP_STATE;
-} elsif ($Input =~ /\G([\,])/gcs) {
-## XXX Append the current input character as a content model separator to the current content model container.
-
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
-} elsif ($Input =~ /\G([\>])/gcs) {
-## XXX Switch to the no cm group or error, bogus markup declaration state.
-
-$State = DTD_STATE;
-push @$Tokens, $Token;
-} elsif ($Input =~ /\G([\|])/gcs) {
-## XXX Append the current input character as a content model separator to the current content model container.
-
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
-} elsif ($Input =~ /\G([\(])/gcs) {
-
-          push @$Errors, {type => 'after-content-model-element-0028', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = BOGUS_MARKUP_DECLARATION_STATE;
-} elsif ($Input =~ /\G([\*])/gcs) {
-
-          push @$Errors, {type => 'after-content-model-element-002a', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = BOGUS_MARKUP_DECLARATION_STATE;
-} elsif ($Input =~ /\G([\+])/gcs) {
-
-          push @$Errors, {type => 'after-content-model-element-002b', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = BOGUS_MARKUP_DECLARATION_STATE;
-} elsif ($Input =~ /\G([\?])/gcs) {
-
-          push @$Errors, {type => 'after-content-model-element-003f', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = BOGUS_MARKUP_DECLARATION_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-
-          push @$Errors, {type => 'after-content-model-element-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = BOGUS_MARKUP_DECLARATION_STATE;
-} else {
-if ($EOF) {
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-$State = DTD_STATE;
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
-
-} else {
-return 1;
-}
-}
-return 0;
-};
 $StateActions->[AFTER_CONTENT_MODEL_GROUP_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-## XXX Switch to the close cm group or error(-1), bogus markup declaration state.
-
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
-## XXX Switch to the close cm group or error(-1), bogus markup declaration state.
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+
+        } else {
+          $State = AFTER_CONTENT_MODEL_GROUP_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\*])/gcs) {
-## XXX If the list of content model groups of the current token is not empty, set the 's repetition to the current input character.
-
-## XXX Switch to the close cm group or error(-1), bogus markup declaration state.
-
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+$OpenCMGroups->[-1]->{q<repetition>} = $1;
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
-## XXX If the list of content model groups of the current token is not empty, set the 's repetition to the current input character.
-
-## XXX Switch to the close cm group or error(-1), bogus markup declaration state.
-
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+$OpenCMGroups->[-1]->{q<repetition>} = $1;
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
-## XXX Switch to the close cm group or error(-1), bogus markup declaration state.
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 
-## XXX Append the current input character as a content model separator to the current content model container.
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
 
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
 $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\>])/gcs) {
-## XXX Switch to the no cm group or error, bogus markup declaration state.
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 
-$State = DTD_STATE;
+        if (@$OpenCMGroups) {
+          $State = DTD_STATE;
 push @$Tokens, $Token;
+
+        } else {
+          
+          push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\?])/gcs) {
-## XXX If the list of content model groups of the current token is not empty, set the 's repetition to the current input character.
-
-## XXX Switch to the close cm group or error(-1), bogus markup declaration state.
-
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+$OpenCMGroups->[-1]->{q<repetition>} = $1;
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
-## XXX Switch to the close cm group or error(-1), bogus markup declaration state.
+pop @$OpenCMGroups;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 
-## XXX Append the current input character as a content model separator to the current content model container.
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
 
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
 $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\(])/gcs) {
 
           push @$Errors, {type => 'after-content-model-group-0028', level => 'm',
@@ -7086,13 +9908,175 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_CONTENT_MODEL_ITEM_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\)])/gcs) {
+
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+
+        } else {
+          $State = AFTER_CONTENT_MODEL_GROUP_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\,])/gcs) {
+
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
+$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+        if (@$OpenCMGroups) {
+          $State = DTD_STATE;
+push @$Tokens, $Token;
+
+        } else {
+          
+          push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
 $State = DTD_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\|])/gcs) {
+
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
+$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\(])/gcs) {
+
+          push @$Errors, {type => 'after-content-model-item-0028', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\*])/gcs) {
+
+          push @$Errors, {type => 'after-content-model-item-002a', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\+])/gcs) {
+
+          push @$Errors, {type => 'after-content-model-item-002b', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\?])/gcs) {
+
+          push @$Errors, {type => 'after-content-model-item-003f', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-content-model-item-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_IGNORED_SECTION_MSC_STATE] = sub {
+if ($Input =~ /\G([\>])/gcs) {
+pop @$OpenMarkedSections;
+} elsif ($Input =~ /\G([\]]+)/gcs) {
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -7165,67 +10149,82 @@ return 0;
 };
 $StateActions->[AFTER_MSS_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
-\])/gcs) {
-$State = BEFORE_STATUS_KEYWORD_STATE;
+\]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-# XXX set-original-state
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([I])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_MSS_STATE_I;
+} elsif ($Input =~ /\G([i])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = AFTER_MSS_STATE_I;
+} elsif ($Input =~ /\G([\]])/gcs) {
 
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-
-          push @$Errors, {type => 'before-status-keyword-005b', level => 'm',
+          push @$Errors, {type => 'after-mss-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-# XXX increment-marked-section-nesting-level
-
-$State = IGNORED_SECTION_STATE;
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Set the temporary buffer to the current input character.
 
-$State = STATUS_KEYWORD_STATE;
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_STATUS_KEYWORD_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-\]+)/gcs) {
-} elsif ($Input =~ /\G([\%])/gcs) {
-# XXX set-original-state
+$StateActions->[AFTER_MSS_STATE_I] = sub {
+if ($Input =~ /\G([G])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IG;
+} elsif ($Input =~ /\G([N])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IN;
+} elsif ($Input =~ /\G([g])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IG;
+} elsif ($Input =~ /\G([n])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IN;
+} elsif ($Input =~ /\G([\]])/gcs) {
 
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-## XXX If the temporary buffer is equal to "INCLUDE", increment the marked section nesting level of the parser by one (1) and switch to the DTD state.
-
-## XXX Otherwise:
-
-## XXX If the temporary buffer is not equal to "IGNORE", parse error.
-
-# XXX increment-marked-section-nesting-level
-
-$State = IGNORED_SECTION_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-
-          push @$Errors, {type => 'after-status-keyword-else', level => 'm',
+          push @$Errors, {type => 'after-mss-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-# XXX increment-marked-section-nesting-level
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
 
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
 } else {
 if ($EOF) {
@@ -7233,13 +10232,445 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_IG] = sub {
+if ($Input =~ /\G([N])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IGN;
+} elsif ($Input =~ /\G([n])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IGN;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_IGN] = sub {
+if ($Input =~ /\G([O])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IGNO;
+} elsif ($Input =~ /\G([o])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IGNO;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_IGNO] = sub {
+if ($Input =~ /\G([R])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IGNOR;
+} elsif ($Input =~ /\G([r])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_IGNOR;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_IGNOR] = sub {
+if ($Input =~ /\G([E])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_IGNORE_KEYWORD_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G([e])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_IGNORE_KEYWORD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_IN] = sub {
+if ($Input =~ /\G([C])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INC;
+} elsif ($Input =~ /\G([c])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INC;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_INC] = sub {
+if ($Input =~ /\G([L])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INCL;
+} elsif ($Input =~ /\G([l])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INCL;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_INCL] = sub {
+if ($Input =~ /\G([U])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INCLU;
+} elsif ($Input =~ /\G([u])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INCLU;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_INCLU] = sub {
+if ($Input =~ /\G([D])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INCLUD;
+} elsif ($Input =~ /\G([d])/gcs) {
+$Temp .= $1;
+$State = AFTER_MSS_STATE_INCLUD;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[AFTER_MSS_STATE_INCLUD] = sub {
+if ($Input =~ /\G([E])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_INCLUDE_KEYWORD_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G([e])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_INCLUDE_KEYWORD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'after-mss-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -7261,8 +10692,7 @@ $State = BEFORE_ALLOWED_TOKEN_STATE;
           push @$Errors, {type => 'NULL', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Append a U+FFFD REPLACEMENT CHARACTER character to the current allowed token's value.
-
+$Attr->{allowed_tokens}->[-1] .= q@�@;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           push @$Errors, {type => 'allowed-token-003e', level => 'm',
@@ -7271,21 +10701,26 @@ $State = BEFORE_ALLOWED_TOKEN_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Append the current input character to the current allowed token's value.
-
+$Attr->{allowed_tokens}->[-1] .= $1;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -7294,7 +10729,7 @@ return 0;
 };
 $StateActions->[ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([^\	\\ \
-\\/\=\>ABCDEFGHJKQRVWZILMNOPSTUXY\ \"\'\<]+)/gcs) {
+\\/\=\>ABCDEFGHJKQVWZILMNOPRSTUXY\ \"\'\<]+)/gcs) {
 $Attr->{q<name>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
@@ -7358,8 +10793,46 @@ $State = BEFORE_ATTR_VALUE_STATE;
         }
       
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Attr->{q<name>} .= chr ((ord $1) + 32);
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -8150,9 +11623,9 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY]+)/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy]+)/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -8411,10 +11884,10 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy])/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -9225,9 +12698,9 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY]+)/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy]+)/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -9486,10 +12959,10 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy])/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -9581,7 +13054,45 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
           push @$Errors, {type => 'NULL', level => 'm',
@@ -9732,7 +13243,45 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\`])/gcs) {
 
           push @$Errors, {type => 'bare hcro', level => 'm',
@@ -10054,7 +13603,45 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\`])/gcs) {
 
           push @$Errors, {type => 'no refc', level => 'm',
@@ -10430,7 +14017,45 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\`])/gcs) {
 
           push @$Errors, {type => 'no refc', level => 'm',
@@ -10746,10 +14371,48 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY]+)/gcs) {
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy]+)/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -11236,7 +14899,45 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\`])/gcs) {
 
           push @$Errors, {type => 'bare nero', level => 'm',
@@ -11303,11 +15004,49 @@ $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy])/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -11396,7 +15135,45 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = ATTR_VALUE__UNQUOTED__STATE;
 
@@ -11503,13 +15280,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -11518,11 +15301,10 @@ return 0;
 };
 $StateActions->[BEFORE_ATTLIST_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-## XXX Create an attribute definition and append it to the list of attribute definitions of the current token.
-
+$Attr = {di => $DI, index => $Offset + pos $Input};
 $State = ATTLIST_ATTR_NAME_STATE;
-## XXX Set the current attribute definition's name to a U+FFFD REPLACEMENT CHARACTER character.
-
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
@@ -11531,24 +15313,29 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Create an attribute definition and append it to the list of attribute definitions of the current token.
-
+$Attr = {di => $DI, index => $Offset + pos $Input};
 $State = ATTLIST_ATTR_NAME_STATE;
-## XXX Set the current attribute definition's name to the current input character.
-
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -11565,6 +15352,10 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
           push @$Errors, {type => 'NULL', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
+
+        $Token = {type => ATTLIST_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $Token->{q<name>} = q@�@;
 $State = ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -11577,10 +15368,12 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Set the current token's name to the current input character.
 
+        $Token = {type => ATTLIST_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
 $State = ATTLIST_NAME_STATE;
 } else {
 if ($EOF) {
@@ -11588,13 +15381,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -11604,7 +15403,7 @@ return 0;
 $StateActions->[BEFORE_DOCTYPE_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 
         $Token = {type => DOCTYPE_TOKEN, tn => 0,
                   di => $DI, index => $AnchoredIndex};
@@ -11723,8 +15522,7 @@ $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
-# XXX set-DOCTYPE-mode
-
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -11762,28 +15560,114 @@ return 1;
 }
 return 0;
 };
-$StateActions->[BEFORE_ELEMENT_NAME_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<name>} = q@�@;
-$State = ELEMENT_NAME_STATE;
-} elsif ($Input =~ /\G([\	\\ \
+$StateActions->[BEFORE_ELEMENT_CONTENT_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\(])/gcs) {
+my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
+$Token->{cmgroup} = $cmgroup;
+@$OpenCMGroups = ($cmgroup);
+$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+} elsif ($Input =~ /\G([\)])/gcs) {
+
+          push @$Errors, {type => 'before-element-content-0029', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\*])/gcs) {
+
+          push @$Errors, {type => 'before-element-content-002a', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\+])/gcs) {
+
+          push @$Errors, {type => 'before-element-content-002b', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\,])/gcs) {
+
+          push @$Errors, {type => 'before-element-content-002c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'before-element-content-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+} elsif ($Input =~ /\G([\?])/gcs) {
+
+          push @$Errors, {type => 'before-element-content-003f', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\|])/gcs) {
+
+          push @$Errors, {type => 'before-element-content-007c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$Token->{q<content_keyword>} = $1;
+$State = ELEMENT_CONTENT_KEYWORD_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_ELEMENT_NAME_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        $Token = {type => ELEMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = q@�@;
+$State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
           push @$Errors, {type => 'before-element-name-003e', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DTD_STATE;
-
-          push @$Errors, {type => 'dtd-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Set the current token's name to the current input character.
 
+        $Token = {type => ELEMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
 $State = ELEMENT_NAME_STATE;
 } else {
 if ($EOF) {
@@ -11791,13 +15675,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -11822,10 +15712,8 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } else {
 if ($EOF) {
@@ -11833,13 +15721,115 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_ENTITY_PUBLIC_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = ENTITY_PUBLIC_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = ENTITY_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
 $State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-entity-public-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_ENTITY_SYSTEM_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = ENTITY_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = ENTITY_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-entity-system-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -11864,10 +15854,8 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } else {
 if ($EOF) {
@@ -11875,13 +15863,273 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NDATA_ID_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<notation_name>} = q@�@;
+$State = NDATA_ID_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
 $State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+$Token->{q<notation_name>} = $1;
+$State = NDATA_ID_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NDATA_KEYWORD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G([N])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = BEFORE_NDATA_KEYWORD_STATE_N;
+} elsif ($Input =~ /\G([n])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = BEFORE_NDATA_KEYWORD_STATE_N;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NDATA_KEYWORD_STATE_N] = sub {
+if ($Input =~ /\G([D])/gcs) {
+$Temp .= $1;
+$State = BEFORE_NDATA_KEYWORD_STATE_ND;
+} elsif ($Input =~ /\G([d])/gcs) {
+$Temp .= $1;
+$State = BEFORE_NDATA_KEYWORD_STATE_ND;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NDATA_KEYWORD_STATE_ND] = sub {
+if ($Input =~ /\G([A])/gcs) {
+$Temp .= $1;
+$State = BEFORE_NDATA_KEYWORD_STATE_NDA;
+} elsif ($Input =~ /\G([a])/gcs) {
+$Temp .= $1;
+$State = BEFORE_NDATA_KEYWORD_STATE_NDA;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NDATA_KEYWORD_STATE_NDA] = sub {
+if ($Input =~ /\G([T])/gcs) {
+$Temp .= $1;
+$State = BEFORE_NDATA_KEYWORD_STATE_NDAT;
+} elsif ($Input =~ /\G([t])/gcs) {
+$Temp .= $1;
+$State = BEFORE_NDATA_KEYWORD_STATE_NDAT;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NDATA_KEYWORD_STATE_NDAT] = sub {
+if ($Input =~ /\G([A])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_NDATA_KEYWORD_STATE;
+} elsif ($Input =~ /\G([a])/gcs) {
+
+          push @$Errors, {type => 'keyword-wrong-case', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = AFTER_NDATA_KEYWORD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -11890,6 +16138,10 @@ return 0;
 };
 $StateActions->[BEFORE_NOTATION_NAME_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
+
+        $Token = {type => NOTATION_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $Token->{q<name>} = q@�@;
 $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\	\\ \
@@ -11906,10 +16158,12 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Set the current token's name to the current input character.
 
+        $Token = {type => NOTATION_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
 $State = NOTATION_NAME_STATE;
 } else {
 if ($EOF) {
@@ -11917,13 +16171,115 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NOTATION_PUBLIC_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
 $State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-notation-public-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+push @$Tokens, $Token;
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_NOTATION_SYSTEM_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'before-notation-system-identifier-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -11940,8 +16296,7 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
           push @$Errors, {type => 'NULL', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Set the current allowed token's value to a U+FFFD REPLACEMENT CHARACTER character.
-
+$Attr->{allowed_tokens}->[-1] = q@�@;
 $State = ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
@@ -11962,10 +16317,8 @@ push @$Tokens, $Token;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Create an allowed token and append it to the list of allowed tokens of the current attribute definition.
-
-## XXX Set the current allowed token's value to the current input character.
-
+push @{$Attr->{allowed_tokens} ||= []}, '';
+$Attr->{allowed_tokens}->[-1] = $1;
 $State = ALLOWED_TOKEN_STATE;
 } else {
 if ($EOF) {
@@ -11973,13 +16326,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -12055,7 +16414,45 @@ push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -12251,7 +16648,45 @@ push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -12284,7 +16719,45 @@ push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*([^\ \	\
@@ -12413,7 +16886,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -12447,7 +16958,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -12479,7 +17028,45 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -12511,7 +17098,45 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -12665,7 +17290,45 @@ push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -12729,7 +17392,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -12760,7 +17461,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -12793,7 +17532,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -12824,7 +17601,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -12855,7 +17670,45 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -12884,7 +17737,45 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -12913,7 +17804,45 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -12944,7 +17873,45 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'[\	\
@@ -13031,7 +17998,45 @@ $State = AFTER_ATTR_NAME_STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -13058,7 +18063,45 @@ $Attr->{q<name>} .= $2;
       
 $State = AFTER_ATTR_NAME_STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
@@ -13088,7 +18131,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
@@ -13118,7 +18199,45 @@ $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
@@ -13146,7 +18265,45 @@ $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
@@ -13174,7 +18331,45 @@ $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = AFTER_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -13202,7 +18397,45 @@ $State = AFTER_ATTR_NAME_STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
@@ -13228,7 +18461,45 @@ $Attr->{q<name>} .= $2;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -13254,7 +18525,45 @@ $Attr->{q<name>} .= $2;
       
 $State = AFTER_ATTR_NAME_STATE;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
@@ -13278,7 +18587,45 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
 $Attr = {di => $DI};
@@ -13303,7 +18650,45 @@ $Attr->{q<name>} .= $2;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
 $Attr = {di => $DI};
@@ -13326,23 +18711,175 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G\/\>/gcs) {
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G\>/gcs) {
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = SELF_CLOSING_START_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $1) + 32);
 $Attr->{index} = $Offset + (pos $Input) - length $1;
@@ -13461,7 +18998,45 @@ $State = ATTR_VALUE__UNQUOTED__STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\`])/gcs) {
 
           push @$Errors, {type => 'bad attribute value', level => 'm',
@@ -13497,17 +19072,19 @@ if ($Input =~ /\G([\	\\ \
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
-## XXX Create a content model group and append it to the list of content model groups of the current token.
-
+my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
+push @{$OpenCMGroups->[-1]->{items}}, $cmgroup;
+push @$OpenCMGroups, $cmgroup;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
           push @$Errors, {type => 'NULL', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Create a content model element and append it to the current content model container.
 
-## XXX Set the 's name to a U+FFFD REPLACEMENT CHARACTER character.
-
+        push @{$OpenCMGroups->[-1]->{items}},
+            {di => $DI, index => $Offset + pos $Input};
+      
+$OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = q@�@;
 $State = CONTENT_MODEL_ELEMENT_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
@@ -13539,7 +19116,6 @@ $State = BOGUS_MARKUP_DECLARATION_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
           push @$Errors, {type => 'before-content-model-item-003f', level => 'm',
@@ -13553,10 +19129,11 @@ $State = BOGUS_MARKUP_DECLARATION_STATE;
         
 $State = BOGUS_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Create a content model element and append it to the current content model container.
 
-## XXX Set the 's name to the current input character.
-
+        push @{$OpenCMGroups->[-1]->{items}},
+            {di => $DI, index => $Offset + pos $Input};
+      
+$OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = $1;
 $State = CONTENT_MODEL_ELEMENT_STATE;
 } else {
 if ($EOF) {
@@ -13564,51 +19141,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[BEFORE_STATUS_KEYWORD_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
-\]+)/gcs) {
-} elsif ($Input =~ /\G([\%])/gcs) {
-# XXX set-original-state
-
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-
-          push @$Errors, {type => 'before-status-keyword-005b', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-# XXX increment-marked-section-nesting-level
-
-$State = IGNORED_SECTION_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-## XXX Set the temporary buffer to the current input character.
-
-$State = STATUS_KEYWORD_STATE;
-} else {
-if ($EOF) {
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-$State = DTD_STATE;
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
-
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -13627,8 +19172,7 @@ $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
-# XXX set-DOCTYPE-mode
-
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -13665,6 +19209,98 @@ return 1;
 }
 return 0;
 };
+$StateActions->[BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = ENTITY_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = ENTITY_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'between-entity-public-and-system-identifiers-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'between-notation-public-and-system-identifiers-else', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @$Tokens, $Token;
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
 $StateActions->[BOGUS_DOCTYPE_STATE] = sub {
 if ($Input =~ /\G([^\>\[]+)/gcs) {
 
@@ -13674,8 +19310,7 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
-# XXX set-DOCTYPE-mode
-
+$DTDMode = q{internal subset};
 push @$Tokens, $Token;
 } else {
 if ($EOF) {
@@ -13698,13 +19333,21 @@ if ($Input =~ /\G([^\>]+)/gcs) {
 
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
-# XXX emit-end-of-DOCTYPE
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 if ($EOF) {
 $State = DATA_STATE;
-# XXX emit-end-of-DOCTYPE
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                         di => $DI,
@@ -13791,13 +19434,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -13868,7 +19517,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
       
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
@@ -13888,7 +19537,7 @@ $State = IN_MSC_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy])/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
@@ -14261,43 +19910,92 @@ return 0;
 $StateActions->[CONTENT_MODEL_ELEMENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
-$State = AFTER_CONTENT_MODEL_GROUP_STATE;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+
+        } else {
+          $State = AFTER_CONTENT_MODEL_GROUP_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\*])/gcs) {
-## XXX Set the 's repetition to the current input character.
-
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+$OpenCMGroups->[-1]->{items}->[-1]->{q<repetition>} = $1;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
-## XXX Set the 's repetition to the current input character.
-
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+$OpenCMGroups->[-1]->{items}->[-1]->{q<repetition>} = $1;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
-## XXX Append the current input character as a content model separator to the current content model container.
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
 $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\>])/gcs) {
-## XXX Switch to the no cm group or error, bogus markup declaration state.
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 
-$State = DTD_STATE;
+        if (@$OpenCMGroups) {
+          $State = DTD_STATE;
 push @$Tokens, $Token;
+
+        } else {
+          
+          push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = DTD_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\?])/gcs) {
-## XXX Set the 's repetition to the current input character.
-
-$State = AFTER_CONTENT_MODEL_ELEMENT_STATE;
+$OpenCMGroups->[-1]->{items}->[-1]->{q<repetition>} = $1;
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
-## XXX Append the current input character as a content model separator to the current content model container.
+$State = AFTER_CONTENT_MODEL_ITEM_STATE;
 
+        if (@$OpenCMGroups) {
+          
+          push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$State = BOGUS_MARKUP_DECLARATION_STATE;
+
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
 $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+
+        }
+      
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
           push @$Errors, {type => 'NULL', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-## XXX Append a U+FFFD REPLACEMENT CHARACTER character to the 's name.
-
 } elsif ($Input =~ /\G([\(])/gcs) {
 
           push @$Errors, {type => 'content-model-element-0028', level => 'm',
@@ -14305,21 +20003,25 @@ $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
         
 $State = BOGUS_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-## XXX Append the current input character to the 's name.
-
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -15241,7 +20943,7 @@ $State = DATA_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY]+)/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
@@ -15284,7 +20986,7 @@ $State = IN_MSC_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy]+)/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -15606,7 +21308,7 @@ $State = DATA_STATE___CHARREF_NAME_STATE;
       
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -15622,7 +21324,7 @@ $State = IN_MSC_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy])/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -15731,7 +21433,7 @@ $State = DATA_STATE___CHARREF_NAME_STATE;
       
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -15747,7 +21449,7 @@ $State = IN_MSC_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
-} elsif ($Input =~ /\G([abcdefghjkqrvwzilmnopstuxy])/gcs) {
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
 $State = DATA_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -15846,6 +21548,2220 @@ $State = DATA_STATE;
 } else {
 if ($EOF) {
 $State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE] = sub {
+if ($Input =~ /\G([^\\"\&\ ]+)/gcs) {
+$Token->{q<value>} .= $1;
+
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\;])/gcs) {
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\;])/gcs) {
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([0123456789]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (1) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+} elsif ($Input =~ /\G([X])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+} elsif ($Input =~ /\G([x])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\#])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([0123456789])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE_CR] = sub {
+if ($Input =~ /\G([\
+])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE] = sub {
+if ($Input =~ /\G([^\\&\'\ ]+)/gcs) {
+$Token->{q<value>} .= $1;
+
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'bare hcro', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\;])/gcs) {
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\;])/gcs) {
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'no refc', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([0123456789]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (1) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
+$Temp .= $1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          REF: {
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE] = sub {
+if ($Input =~ /\G([0123456789])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+} elsif ($Input =~ /\G([X])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+} elsif ($Input =~ /\G([x])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'bare nero', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\#])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([0123456789])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
+} elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
+$Temp .= $1;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE_CR] = sub {
+if ($Input =~ /\G([\
+])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Token->{q<value>} .= q@
+@;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+
+          push @$Errors, {type => 'NULL', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input) - 1};
+        
+$Token->{q<value>} .= q@�@;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Token->{q<value>} .= $1;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
                         di => $DI,
@@ -15971,62 +23887,30 @@ return 1;
 }
 return 0;
 };
-$StateActions->[IGNORED_SECTION_MARKED_DECLARATION_OPEN_STATE] = sub {
-if ($Input =~ /\G([^\[]+)/gcs) {
-
-} elsif ($Input =~ /\G([\[])/gcs) {
-## XXX Increment the marked section nesting level by one (1).
-
-$State = IGNORED_SECTION_STATE;
-} else {
-if ($EOF) {
-$State = DTD_STATE;
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
-
-} else {
-return 1;
-}
-}
-return 0;
-};
 $StateActions->[IGNORED_SECTION_STATE] = sub {
-if ($Input =~ /\G([^\<]+)/gcs) {
+if ($Input =~ /\G([^\]]+)/gcs) {
 
-} elsif ($Input =~ /\G([\<])/gcs) {
-$State = IGNORED_SECTION_TAG_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+$State = IN_IGNORED_SECTION_MSC_STATE;
 } else {
 if ($EOF) {
-$State = DTD_STATE;
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+$State = DATA_STATE;
 
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[IGNORED_SECTION_TAG_STATE] = sub {
-if ($Input =~ /\G([^\!]+)/gcs) {
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
-} elsif ($Input =~ /\G([\!])/gcs) {
-$State = IGNORED_SECTION_MARKED_DECLARATION_OPEN_STATE;
-} else {
-if ($EOF) {
-$State = DTD_STATE;
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
-
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -16036,51 +23920,61 @@ return 0;
 $StateActions->[IN_DTD_MSC_STATE] = sub {
 if ($Input =~ /\G([\]])/gcs) {
 $State = AFTER_DTD_MSC_STATE;
-} elsif ($Input =~ /\G([\	\\ \
-\])/gcs) {
-
-          push @$Errors, {type => 'in-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = DTD_STATE;
-} elsif ($Input =~ /\G([\%])/gcs) {
-
-          push @$Errors, {type => 'in-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-# XXX set-original-state
-
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
-} elsif ($Input =~ /\G([\<])/gcs) {
-
-          push @$Errors, {type => 'in-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$State = DOCTYPE_TAG_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           push @$Errors, {type => 'in-dtd-msc-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $State = DTD_STATE;
-
-          push @$Errors, {type => 'dtd-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } else {
 if ($EOF) {
-
-          push @$Errors, {type => 'in-dtd-msc-else', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-$State = DTD_STATE;
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+$State = DATA_STATE;
 
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[IN_IGNORED_SECTION_MSC_STATE] = sub {
+if ($Input =~ /\G([\]])/gcs) {
+$State = AFTER_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+          push @$Errors, {type => 'parser:EOF', level => 'm',
+                          di => $DI, index => $Offset + (pos $Input)};
+        
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -17389,36 +25283,30 @@ $Token->{q<is_parameter_entity_flag>} = 1;
 $State = BEFORE_ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\`])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
@@ -17431,7 +25319,6 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } else {
@@ -17441,13 +25328,19 @@ $Token->{q<is_parameter_entity_flag>} = 1;
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -17469,8 +25362,7 @@ $State = BEFORE_ENTITY_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -17485,8 +25377,7 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
@@ -17494,8 +25385,7 @@ $State = ENTITY_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -17503,8 +25393,7 @@ $State = ENTITY_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -17512,8 +25401,7 @@ $State = ENTITY_NAME_STATE;
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -17530,15 +25418,13 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G([\`])/gcs) {
 
           push @$Errors, {type => 'parameter-entity-declaration-or-reference-0060', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
 $Token->{q<is_parameter_entity_flag>} = 1;
-## XXX Set the current token's name to the current input character.
-
+$Token->{q<name>} = $1;
 $State = ENTITY_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
@@ -17553,13 +25439,19 @@ $Token->{q<is_parameter_entity_flag>} = 1;
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -17579,7 +25471,6 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
           push @$Errors, {type => 'parameter-entity-name-in-dtd-0025', level => 'm',
@@ -17598,7 +25489,6 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
           push @$Errors, {type => 'parameter-entity-name-in-dtd-0027', level => 'm',
@@ -17609,20 +25499,25 @@ $State = DTD_STATE;
           push @$Errors, {type => 'dtd-else', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
         
-$Token->{q<internal_subset_tainted_flag>} = 1;
 } else {
 if ($EOF) {
 
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -17663,13 +25558,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -17709,13 +25610,19 @@ if ($EOF) {
           push @$Errors, {type => 'parser:EOF', level => 'm',
                           di => $DI, index => $Offset + (pos $Input)};
         
-$State = DTD_STATE;
+$State = DATA_STATE;
 
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
 } else {
 return 1;
 }
@@ -17726,7 +25633,45 @@ $StateActions->[SELF_CLOSING_START_TAG_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
           push @$Errors, {type => 'nestc has no net', level => 'm',
@@ -17810,7 +25755,7 @@ $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 
           push @$Errors, {type => 'nestc has no net', level => 'm',
                           di => $DI, index => $Offset + (pos $Input) - 1};
@@ -17849,50 +25794,9 @@ return 1;
 }
 return 0;
 };
-$StateActions->[STATUS_KEYWORD_STATE] = sub {
-if ($Input =~ /\G([^\	\\ \
-\\%\[]+)/gcs) {
-$Temp .= $1;
-
-} elsif ($Input =~ /\G([\	\\ \
-\])/gcs) {
-$State = AFTER_STATUS_KEYWORD_STATE;
-} elsif ($Input =~ /\G([\%])/gcs) {
-# XXX set-original-state
-
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
-} elsif ($Input =~ /\G([\[])/gcs) {
-## XXX If the temporary buffer is equal to "INCLUDE", increment the marked section nesting level of the parser by one (1) and switch to the DTD state.
-
-## XXX Otherwise:
-
-## XXX If the temporary buffer is not equal to "IGNORE", parse error.
-
-# XXX increment-marked-section-nesting-level
-
-$State = IGNORED_SECTION_STATE;
-} else {
-if ($EOF) {
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-$State = DTD_STATE;
-
-          push @$Errors, {type => 'parser:EOF', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        
-## XXX parse error-and-switch-and-emit-eod-and-reconsume
-
-} else {
-return 1;
-}
-}
-return 0;
-};
 $StateActions->[TAG_NAME_STATE] = sub {
 if ($Input =~ /\G([^\	\\ \
-\\/\>ABCDEFGHJKQRVWZILMNOPSTUXY\ ]+)/gcs) {
+\\/\>ABCDEFGHJKQVWZILMNOPRSTUXY\ ]+)/gcs) {
 $Token->{q<tag_name>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
@@ -17902,8 +25806,46 @@ $State = BEFORE_ATTR_NAME_STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([ABCDEFGHJKQRVWZILMNOPSTUXY])/gcs) {
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Token->{q<tag_name>} .= chr ((ord $1) + 32);
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -18388,7 +26330,45 @@ $Token->{q<tag_name>} .= $2;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \!\/\>\?])([^\ \	\
 \\\ \/\>A-Z]*)\>/gcs) {
@@ -18400,7 +26380,45 @@ $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)([^\\]])([^\\]]*)/gcs) {
 
         $Temp = '';
@@ -18450,7 +26468,45 @@ $Token->{q<tag_name>} .= $2;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)\/gcs) {
 
         $Temp = '';
@@ -18547,7 +26603,45 @@ $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
 $State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
 push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+          }
+        
 } elsif ($Input =~ /\G\?([^\ \	\
 \\\ \?])([^\ \	\
 \\\ \?]*)\?\>/gcs) {
@@ -19054,7 +27148,7 @@ sub dom_tree ($$) {
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors) {
-            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
 
             $self->onerrors->($self, $Errors) if @$Errors;
             for my $cb (@$Callbacks) {
@@ -19068,8 +27162,8 @@ sub dom_tree ($$) {
               return 0;
             }
 
-            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
+            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
           }
 
           redo unless pos $Input == length $Input; # XXX parser pause flag
@@ -19122,11 +27216,12 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -19158,11 +27253,12 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -19176,7 +27272,7 @@ $Scripting = $self->{Scripting};
       $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_start
 
@@ -19184,25 +27280,25 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->_feed_eof or die "Can't restart";
       
@@ -19236,11 +27332,12 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
         $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
         $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
 
@@ -19282,7 +27379,8 @@ $Scripting = $self->{Scripting};
       $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
-$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
@@ -19331,7 +27429,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (1);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -19340,7 +27438,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_start
 
@@ -19350,11 +27448,11 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->{byte_buffer} .= $_[1];
       $self->{byte_buffer_orig} .= $_[1];
@@ -19382,17 +27480,17 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $QUIRKS, $Scripting, $State, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State Temp TempIndex Token)};
-($AFE, $Callbacks, $Errors, $OE, $OP, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP TABLE_CHARS TEMPLATE_IMS Tokens)};
+      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       PARSER: {
         unless ($self->{parse_bytes_started}) {
