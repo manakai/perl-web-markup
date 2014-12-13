@@ -510,16 +510,30 @@ sub serialize_actions ($;%) {
   for (@{$acts->{actions}}) {
     my $type = $_->{type};
     if ($type eq 'parse error') {
-      if ($args{in_eof}) {
-        push @result, sprintf q[
-          push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input)};
-        ], $_->{error_type} // $_->{name};
+      if (defined $_->{if}) {
+        if ($_->{if} eq 'temp-wrong-case') {
+          push @result, sprintf q{
+            unless ($Temp eq q{%s}) {
+              push @$Errors, {type => '%s', level => 'm',
+                              value => $Temp,
+                              di => $DI, index => $Offset + (pos $Input) - 1};
+            }
+          }, $_->{expected_keyword}, $_->{error_type} // $_->{name};
+        } else {
+          die "Unknown condition |$_->{if}|";
+        }
       } else {
-        push @result, sprintf q[
-          push @$Errors, {type => '%s', level => 'm',
-                          di => $DI, index => $Offset + (pos $Input) - 1};
-        ], $_->{error_type} // $_->{name};
+        if ($args{in_eof}) {
+          push @result, sprintf q[
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          ], $_->{error_type} // $_->{name};
+        } else {
+          push @result, sprintf q[
+            push @$Errors, {type => '%s', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          ], $_->{error_type} // $_->{name};
+        }
       }
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
@@ -1357,7 +1371,7 @@ sub cond_to_code ($) {
       }
     } elsif ($cond->[1] eq 'non-empty') {
       if ($cond->[2] eq 'system identifier') {
-        return sprintf q{$token->{system_identifier} eq ''};
+        return sprintf q{(defined $token->{system_identifier} and length $token->{system_identifier})};
       } else {
         die "Unknown condition |@$cond|";
       }
@@ -1715,7 +1729,7 @@ sub actions_to_code ($;%) {
 
       ## As a non-HTML element can't be a form-associated element, we
       ## don't have to associate the form owner.
-    } elsif ($act->{type} eq 'create an XML element') { ## XML
+    } elsif ($act->{type} eq 'create an XML element') { # XML
       push @code, sprintf q{
         my $ns = 0; #'XXX';
         my $node = {id => $NEXT_ID++,
@@ -1727,11 +1741,12 @@ sub actions_to_code ($;%) {
                     et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
                     aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
       };
-
+    } elsif ($act->{type} eq 'insert a DOCTYPE') { # XML
+      push @code, q{push @$OP, ['doctype', $token => 0]; $NEXT_ID++;}; # id=1
     } elsif ($act->{type} eq 'append-to-document') {
       if (defined $act->{item}) {
         if ($act->{item} eq 'DocumentType') {
-          push @code, q{push @$OP, ['doctype', $token => 0];};
+          push @code, q{push @$OP, ['doctype', $token => 0];}; # HTML
         } else {
           die "Unknown item |$act->{item}|";
         }
@@ -1801,23 +1816,29 @@ sub actions_to_code ($;%) {
       } else {
         die "Unknown item |$act->{item}|";
       }
-    } elsif ($act->{type} eq 'insert a comment') {
+    } elsif ($act->{type} eq 'insert a comment' or
+             $act->{type} eq 'insert a processing instruction') {
+      my $type = $act->{type} eq 'insert a comment' ? 'comment' : 'pi';
       if (defined $act->{position}) {
         if ($act->{position} eq 'document') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token => 0];
-          };
+            push @$OP, ['%s', $token => 0];
+          }, $type;
+        } elsif ($act->{position} eq 'doctype') { # XML
+          push @code, sprintf q{
+            push @$OP, ['%s', $token => 1];
+          }, $type;
         } elsif ($act->{position} eq 'oe[0]') {
           push @code, sprintf q{
-            push @$OP, ['comment', $token => $OE->[0]->{id}];
-          };
+            push @$OP, ['%s', $token => $OE->[0]->{id}];
+          }, $type;
         } else {
           die "Unknown insertion position |$act->{position}|";
         }
       } else {
         push @code, sprintf q{
-          push @$OP, ['comment', $token => $OE->[-1]->{id}];
-        };
+          push @$OP, ['%s', $token => $OE->[-1]->{id}];
+        }, $type;
       }
     } elsif ($act->{type} eq 'insert-chars') {
       my $value_code;
@@ -2325,18 +2346,11 @@ sub actions_to_code ($;%) {
       push @code, q{my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};};
 
 # XXX
-    } elsif ($act->{type} eq 'IF') {
-      push @code, qq{# XXX $act->{type}\n};
-    } elsif ($act->{type} eq 'insert a processing instruction') {
-      push @code, qq{# XXX $act->{type}\n};
-    } elsif ($act->{type} eq 'insert a DOCTYPE') {
-      push @code, qq{# XXX $act->{type}\n};
     } elsif ({
       'process an ATTLIST token' => 1,
       'process an ELEMENT token' => 1,
       'process an ENTITY token' => 1,
       'process a NOTATION token' => 1,
-      UNPARSED => 1,
       'process an XML declaration' => 1,
       'the XML declaration is missing' => 1,
       'process the external subset' => 1,
@@ -3141,6 +3155,12 @@ sub dom_tree ($$) {
       $comment->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
       $nodes->[$op->[2]]->append_child ($comment);
+    } elsif ($op->[0] eq 'pi') {
+      my $pi = $doc->create_processing_instruction
+          ($op->[1]->{target}, $op->[1]->{data});
+      $pi->manakai_set_source_location
+          (['', $op->[1]->{di}, $op->[1]->{index}]);
+      $nodes->[$op->[2]]->append_child ($pi);
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
