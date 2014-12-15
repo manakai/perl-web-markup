@@ -664,7 +664,7 @@ push @$OP, ['doctype', $token => 0]; $NEXT_ID++;
           } else {
             
           if ((defined $token->{system_identifier} and length $token->{system_identifier})) {
-            # XXX process the external subset
+            warn "XXX process the external subset";
 
           } else {
             
@@ -1577,7 +1577,7 @@ return;
       ,
         ## [87] in subset;ATTLIST
         sub {
-          # XXX process an ATTLIST token
+          warn "XXX process an ATTLIST token";
 
         },
       ,
@@ -1593,7 +1593,7 @@ return;
       ,
         ## [90] in subset;ELEMENT
         sub {
-          # XXX process an ELEMENT token
+          warn "XXX process an ELEMENT token";
 
         },
       ,
@@ -1604,7 +1604,7 @@ return;
       ,
         ## [92] in subset;ENTITY
         sub {
-          # XXX process an ENTITY token
+          warn "XXX process an ENTITY token";
 
         },
       ,
@@ -1613,7 +1613,7 @@ return;
           my $token = $_;
 
           if ((defined $token->{system_identifier} and length $token->{system_identifier})) {
-            # XXX process the external subset
+            warn "XXX process the external subset";
 
           }
         
@@ -1630,7 +1630,7 @@ return;
       ,
         ## [95] in subset;NOTATION
         sub {
-          # XXX process a NOTATION token
+          warn "XXX process a NOTATION token";
 
         },
       ,
@@ -1673,8 +1673,11 @@ return;
         ## [99] initial;ATTLIST
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1687,8 +1690,11 @@ return;
         ## [100] initial;COMMENT
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1701,8 +1707,11 @@ return;
         ## [101] initial;DOCTYPE
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1715,8 +1724,11 @@ return;
         ## [102] initial;ELEMENT
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1729,8 +1741,11 @@ return;
         ## [103] initial;END-ELSE
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1743,8 +1758,11 @@ return;
         ## [104] initial;ENTITY
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1757,8 +1775,11 @@ return;
         ## [105] initial;EOD
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1771,8 +1792,11 @@ return;
         ## [106] initial;EOF
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1785,8 +1809,11 @@ return;
         ## [107] initial;NOTATION
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1799,32 +1826,114 @@ return;
         ## [108] initial;PI
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+          if ($token->{target} eq q@xml@) {
+            
+        my $pos = $token->{index};
+        my $req_sp = 0;
 
-          $IM = BEFORE_DOCTYPE_IM;
-          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
-        
+        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          unless ($v eq '1.0') {
+            push @$Errors, {type => 'bad XML version', # XXX
+                            level => 'm',
+                            di => $DI, index => $p};
+          }
+        } else { # XXXif XML declaration (not text declaration)
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:version',
+                          di => $DI, index => $pos};
+        }
 
-        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $p};
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          #XXX$self->_sc->check_hidden_encoding
+          #      (name => $v, onerror => sub {
+          #         $onerror->(token => $self->{t}, %$p, @_);
+          #       });
+          if (1) { # XXX XML declaration (not text declaration)
+            push @$OP, ['xml-encoding', $v];
+          }
+        } elsif (0) { # XXX text declaration
+          ## A text declaration
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:encoding',
+                          di => $DI, index => $pos};
+        }
+
+        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $pos};
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if (1) { # XXX XML declaration (not text declaration)
+              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'attribute not allowed:standalone',
+                              di => $DI, index => $pos};
+            }
+          } else {
+            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+            push @$Errors, {level => 'm',
+                            type => 'XML standalone:syntax error',
+                            di => $DI, index => $p, value => $v};
+          }
+          $pos += $+[0] - $-[0];
+        }
+
+        if (length $token->{data}) {
+          push @$Errors, {level => 'm',
+                          type => 'bogus XML declaration',
+                          di => $DI, index => $pos};
+        }
       
-        },
-      ,
-        ## [109] initial;PI:xml
-        sub {
-          # XXX process an XML declaration
-
 
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
         
+          } else {
+            
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+          }
+        
         },
       ,
-        ## [110] initial;START-ELSE
+        ## [109] initial;START-ELSE
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1834,11 +1943,14 @@ return;
       
         },
       ,
-        ## [111] initial;TEXT
+        ## [110] initial;TEXT
         sub {
           my $token = $_;
-# XXX the XML declaration is missing
 
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
 
           $IM = BEFORE_DOCTYPE_IM;
           #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
@@ -1859,7 +1971,7 @@ $ProcessIM = [undef,
 [undef, [$TCA->[51]], [$TCA->[53]], [$TCA->[54]], [$TCA->[56]], [$TCA->[59]], [$TCA->[52]], [$TCA->[55], $TCA->[55]], [$TCA->[57]], [$TCA->[58]], [$TCA->[60]], [$TCA->[61], $TCA->[61]], [$TCA->[62]]],
 [undef, [$TCA->[63]], [$TCA->[65]], [$TCA->[66]], [$TCA->[68]], [$TCA->[71]], [$TCA->[64]], [$TCA->[67], $TCA->[67]], [$TCA->[69]], [$TCA->[70]], [$TCA->[72]], [$TCA->[73], $TCA->[73]], [$TCA->[74]]],
 [undef, [$TCA->[75]], [$TCA->[77]], [$TCA->[78]], [$TCA->[80]], [$TCA->[83]], [$TCA->[76]], [$TCA->[79], $TCA->[79]], [$TCA->[81]], [$TCA->[82]], [$TCA->[84]], [$TCA->[85], $TCA->[85]], [$TCA->[86]]],
-[undef, [$TCA->[99]], [$TCA->[101]], [$TCA->[102]], [$TCA->[104]], [$TCA->[107]], [$TCA->[100]], [$TCA->[103], $TCA->[103]], [$TCA->[105]], [$TCA->[106]], [$TCA->[108]], [$TCA->[110], $TCA->[110]], [$TCA->[111]]]];
+[undef, [$TCA->[99]], [$TCA->[101]], [$TCA->[102]], [$TCA->[104]], [$TCA->[107]], [$TCA->[100]], [$TCA->[103], $TCA->[103]], [$TCA->[105]], [$TCA->[106]], [$TCA->[108]], [$TCA->[109], $TCA->[109]], [$TCA->[110]]]];
 my $ResetIMByET = {};
 my $ResetIMByETUnlessLast = {};my $StateByElementName = {};
 
@@ -27517,6 +27629,10 @@ sub dom_tree ($$) {
       $parent->remove_child ($nodes->[$op->[1]]) if defined $parent;
     } elsif ($op->[0] eq 'set-compat-mode') {
       $doc->manakai_compat_mode ($op->[1]);
+    } elsif ($op->[0] eq 'xml-encoding') {
+      $doc->xml_encoding ($op->[1]);
+    } elsif ($op->[0] eq 'xml-standalone') {
+      $doc->xml_standalone ($op->[1]);
     } else {
       die "Unknown operation |$op->[0]|";
     }

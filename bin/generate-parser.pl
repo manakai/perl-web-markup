@@ -1424,6 +1424,10 @@ sub cond_to_code ($) {
            $cond->[1] eq 'is' and
            defined $cond->[2]) {
     return sprintf q{$token->{tag_name} eq q@%s@}, $cond->[2];
+  } elsif ($cond->[0] eq 'token target' and
+           $cond->[1] eq 'is' and
+           defined $cond->[2]) {
+    return sprintf q{$token->{target} eq q@%s@}, $cond->[2];
   } elsif ($cond->[0] eq 'token[type]' and
            $cond->[1] eq 'lc is not' and
            defined $cond->[2]) {
@@ -2518,6 +2522,91 @@ sub actions_to_code ($;%) {
       push @code, q{$StopProcessing = 1;};
     } elsif ($act->{type} eq 'set-end-tag-name') {
       push @code, q{my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};};
+    } elsif ($act->{type} eq 'the XML declaration is missing') {
+      push @code, q{
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      };
+    } elsif ($act->{type} eq 'process an XML declaration') {
+      push @code, q{
+        my $pos = $token->{index};
+        my $req_sp = 0;
+
+        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          unless ($v eq '1.0') {
+            push @$Errors, {type => 'bad XML version', # XXX
+                            level => 'm',
+                            di => $DI, index => $p};
+          }
+        } else { # XXXif XML declaration (not text declaration)
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:version',
+                          di => $DI, index => $pos};
+        }
+
+        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $p};
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          #XXX$self->_sc->check_hidden_encoding
+          #      (name => $v, onerror => sub {
+          #         $onerror->(token => $self->{t}, %$p, @_);
+          #       });
+          if (1) { # XXX XML declaration (not text declaration)
+            push @$OP, ['xml-encoding', $v];
+          }
+        } elsif (0) { # XXX text declaration
+          ## A text declaration
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:encoding',
+                          di => $DI, index => $pos};
+        }
+
+        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $pos};
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if (1) { # XXX XML declaration (not text declaration)
+              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'attribute not allowed:standalone',
+                              di => $DI, index => $pos};
+            }
+          } else {
+            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+            push @$Errors, {level => 'm',
+                            type => 'XML standalone:syntax error',
+                            di => $DI, index => $p, value => $v};
+          }
+          $pos += $+[0] - $-[0];
+        }
+
+        if (length $token->{data}) {
+          push @$Errors, {level => 'm',
+                          type => 'bogus XML declaration',
+                          di => $DI, index => $pos};
+        }
+      };
+
 
 # XXX
     } elsif ({
@@ -2525,11 +2614,9 @@ sub actions_to_code ($;%) {
       'process an ELEMENT token' => 1,
       'process an ENTITY token' => 1,
       'process a NOTATION token' => 1,
-      'process an XML declaration' => 1,
-      'the XML declaration is missing' => 1,
       'process the external subset' => 1,
     }->{$act->{type}}) {
-      push @code, qq{# XXX $act->{type}\n};
+      push @code, qq{warn "XXX $act->{type}";\n};
 
     } else {
       die "Unknown tree construction action |$act->{type}|";
@@ -2778,8 +2865,6 @@ sub generate_tree_constructor ($) {
         } else {
           $short_token_type = $cond;
         }
-# XXX
-next if $short_token_type =~ /:/;
         my $token_type_id = $ShortTokenTypeToTokenTypeID->{$short_token_type}
             or die "Unknown token type |$short_token_type|";
         my $action_name = $defs->{ims}->{$im_name}->{conds}->{$cond};
@@ -3394,6 +3479,10 @@ sub dom_tree ($$) {
       $parent->remove_child ($nodes->[$op->[1]]) if defined $parent;
     } elsif ($op->[0] eq 'set-compat-mode') {
       $doc->manakai_compat_mode ($op->[1]);
+    } elsif ($op->[0] eq 'xml-encoding') {
+      $doc->xml_encoding ($op->[1]);
+    } elsif ($op->[0] eq 'xml-standalone') {
+      $doc->xml_standalone ($op->[1]);
     } else {
       die "Unknown operation |$op->[0]|";
     }

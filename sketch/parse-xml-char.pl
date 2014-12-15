@@ -24,5 +24,9 @@ print "Parsing...\n";
 $parser->parse_char_string ((decode 'utf-8', $input) => $doc);
 print "Done\n";
 
+use Data::Dumper;
+warn Dumper +{xml_version => $doc->xml_version,
+              xml_encoding => $doc->xml_encoding,
+              xml_standalone => $doc->xml_standalone};
 warn $doc->inner_html;
 print dumptree $doc;
