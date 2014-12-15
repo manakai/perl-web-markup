@@ -84,6 +84,9 @@ if ($LANG eq 'XML') {
   $Vars->{OpenMarkedSections} = {unchanged => 1, type => 'list'};
   $Vars->{OpenCMGroups} = {unchanged => 1, type => 'list'};
   $Vars->{StopProcessing} = {save => 1, type => 'boolean'};
+  $Vars->{AttrDefs} = {unchanged => 1, type => 'map'};
+  $Vars->{AllDeclsProcessed} = {save => 1, type => 'boolean'};
+  $Vars->{XMLStandalone} = {save => 1, type => 'boolean'};
 }
 
 ## ------ Input byte stream ------
@@ -1147,6 +1150,35 @@ my $TokenizerAbortingTagNames = {
   ],
       (join "\n", @sub_code);
 
+  push @def_code, q{
+
+sub _tokenize_attr_value ($) {
+  my $token = $_[0];
+  return 0 unless $token->{value} =~ / /;
+  my @value;
+  my @pos;
+  my $old_pos = 0;
+  my $new_pos = 0;
+  my @v = grep { length } split /( +)/, $token->{value}, -1;
+  for (@v) {
+    unless (/ /) {
+      push @value, $_;
+      push @pos, [$old_pos, $new_pos, 1 + length $_];
+      $new_pos += 1 + length $_;
+    }
+    $old_pos += length $_;
+  }
+  pop @value, pop @pos if @value and $value[-1] eq '';
+  shift @value, shift @pos if @value and $value[-1] eq '';
+  $pos[-1]->[2]-- if @pos;
+
+  my $old_value = $token->{value};
+  $token->{value} = join ' ', @value;
+} # _tokenize_attr_value
+
+  } if $LANG eq 'XML';
+# XXX IndexedString
+
   my $def_code = join "\n", @def_code;
   return ($def_code, $generated);
 }
@@ -1740,16 +1772,148 @@ sub actions_to_code ($;%) {
       ## As a non-HTML element can't be a form-associated element, we
       ## don't have to associate the form owner.
     } elsif ($act->{type} eq 'create an XML element') { # XML
-      push @code, sprintf q{
-        my $ns = 0; #'XXX';
-        my $node = {id => $NEXT_ID++,
-                    token => $token,
-                    di => $token->{di}, index => $token->{index},
-                    ns => $ns,
-                    local_name => $token->{tag_name},
-                    attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
+      push @code, q{
+        my $nsmap = @$OE ? {%{$OE->[-1]->{nsmap}}} : {
+          xml => q<http://www.w3.org/XML/1998/namespace>,
+          xmlns => q<http://www.w3.org/2000/xmlns/>,
+        };
+
+        my $attrs = $token->{attrs};
+        my $attrdefs = $AttrDefs->{$token->{tag_name}};
+        for my $attr_name (@$attrdefs) {
+          my $def = $attrdefs->{$attr_name};
+          if (defined $attrs->{$attr_name}) {
+            $attrs->{$attr_name}->{declared_type} = $def->{declared_type} || 0;
+            if ($def->{tokenize}) {
+              if (_tokenize_attr_value $attrs->{$attr_name} and
+                  $def->{external} and
+                  not $def->{external}->{vc_error_reported} and
+                  $XMLStandalone) {
+                push @$Errors, {level => 'm',
+                                type => 'VC:Standalone Document Declaration:attr',
+                                di => $def->{di}, index => $def->{index},
+                                value => $attr_name};
+                $def->{external}->{vc_error_reported} = 1;
+              }
+            }
+          } elsif (defined $def->{value}) {
+            push @{$token->{attr_list}},
+            $attrs->{$attr_name} = {
+              value => $def->{value},
+              declared_type => $def->{declared_type} || 0,
+              not_specified => 1,
+              di => $def->{di}, index => $def->{index},
+            };
+
+            if ($def->{external} and
+                not $def->{external}->{vc_error_reported} and
+                $XMLStandalone) {
+              push @$Errors, {level => 'm',
+                              type => 'VC:Standalone Document Declaration:attr',
+                                di => $def->{di}, index => $def->{index},
+                                value => $attr_name};
+              $def->{external}->{vc_error_reported} = 1;
+            }
+          }
+        }
+        
+        for (keys %$attrs) {
+          if (/^xmlns:./s) {
+            my $prefix = substr $_, 6;
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($prefix eq 'xml' or $prefix eq 'xmlns' or
+                $value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{$prefix} = $value;
+            } else {
+              delete $nsmap->{$prefix};
+            }
+          } elsif ($_ eq 'xmlns') {
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{''} = $value;
+            } else {
+              delete $nsmap->{''};
+            }
+          }
+        }
+        
+        my $ns;
+        my ($prefix, $ln) = split /:/, $token->{tag_name}, 2;
+        
+        if (defined $ln and $prefix ne '' and $ln ne '') { # prefixed
+          if (defined $nsmap->{$prefix}) {
+            $ns = $nsmap->{$prefix};
+          } else {
+            ## NOTE: Error should be detected at the DOM layer.
+            ($prefix, $ln) = (undef, $token->{tag_name});
+          }
+        } else {
+          $ns = $nsmap->{''} if $prefix ne '' and not defined $ln;
+          ($prefix, $ln) = (undef, $token->{tag_name});
+        }
+
+        my $node = {
+          id => $NEXT_ID++,
+          token => $token,
+          di => $token->{di}, index => $token->{index},
+          nsmap => $nsmap,
+          ns => $ns, prefix => $prefix, local_name => $ln,
+          attr_list => $token->{attr_list},
+          et => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+          aet => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+        };
+        #XXX
+        #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
+        #$self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
+
+        my $has_attr;
+        for my $attr (@{$node->{attr_list}}) {
+          my $ns;
+          my ($p, $l) = split /:/, $attr->{name}, 2;
+
+          if ($attr->{name} eq 'xmlns:xmlns') {
+            ($p, $l) = (undef, $attr->{name});
+          } elsif (defined $l and $p ne '' and $l ne '') { # prefixed
+            if (defined $nsmap->{$p}) {
+              $ns = $nsmap->{$p};
+            } else {
+              ## NOTE: Error should be detected at the DOM-layer.
+              ($p, $l) = (undef, $attr->{name});
+            }
+          } else {
+            if ($attr->{name} eq 'xmlns') {
+              $ns = $nsmap->{xmlns};
+            }
+            ($p, $l) = (undef, $attr->{name});
+          }
+          
+          if ($has_attr->{defined $ns ? $ns : ''}->{$l}) {
+            $ns = undef;
+            ($p, $l) = (undef, $attr->{name});
+          } else {
+            $has_attr->{defined $ns ? $ns : ''}->{$l} = 1;
+          }
+
+          $attr->{name_args} = [$ns, [$p, $l]];
+          #XXX
+          #$self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
+          #$self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
+          if (defined $attr->{declared_type}) {
+            #
+          } elsif ($AllDeclsProcessed) {
+            $attr->{declared_type} = 0; # no value
+          } else {
+            $attr->{declared_type} = 11; # unknown
+          }
+        }
       };
     } elsif ($act->{type} eq 'insert a DOCTYPE') { # XML
       push @code, q{push @$OP, ['doctype', $token => 0]; $NEXT_ID++;}; # id=1
@@ -3080,14 +3244,14 @@ sub dom_tree ($$) {
         $op->[0] eq 'create') {
       my $data = $op->[1];
       my $el = $doc->create_element_ns
-          ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
+          (%s, [$data->{prefix}, $data->{local_name}]);
       $el->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       ## Note that $data->{ns} can be 0.
-      for my $attr (@{$data->{attr_list} or []}) {
+      for my $attr (@{$data->{attr_list} or []}) { # XXXxml
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
-      if ($data->{ns} == HTMLNS and $data->{local_name} eq 'template') {
+      if (%s) {
         $nodes->[$data->{id}] = $el->content;
         $el->content->manakai_set_source_location
             (['', $data->{di}, $data->{index}]);
@@ -3238,7 +3402,10 @@ sub dom_tree ($$) {
   $doc->strict_error_checking ($strict);
 } # dom_tree
 
-  }, $grep_popped_code, $grep_popped_code, $grep_popped_code;
+  },
+      ($LANG eq 'HTML' ? q{$NSToURL->[$data->{ns}]} : q{$data->{ns}}),
+      ($LANG eq 'HTML' ? q{$data->{ns} == HTMLNS and $data->{local_name} eq 'template'} : q{defined $data->{ns} and $data->{ns} eq HTMLNS and $data->{local_name} eq 'template'}),
+      $grep_popped_code, $grep_popped_code, $grep_popped_code;
   return $code;
 } # generate_dom_glue
 
@@ -3284,6 +3451,10 @@ sub generate_api ($) {
     push @init_code, q[$self->{saved_lists} = {] . (join ', ', map {
       sprintf q{%s => ($%s = [])}, $_, $_;
     } @list_var) . q[};];
+    my @map_var = sort { $a cmp $b } grep { $Vars->{$_}->{type} eq 'map' } keys %$Vars;
+    push @init_code, q[$self->{saved_maps} = {] . (join ', ', map {
+      sprintf q{%s => ($%s = {})}, $_, $_;
+    } @map_var) . q[};];
     $vars_codes->{INIT} = join "\n", @init_code;
 
     $vars_codes->{RESET} = join "\n", map {
@@ -3889,20 +4060,7 @@ sub generate ($) {
     use Web::Encoding;
     use Web::HTML::ParserData;
 
-    sub HTMLNS () { 1 }
-    sub SVGNS () { 2 }
-    sub MATHMLNS () { 3 }
-    my $NSToURL = [
-      undef,
-      'http://www.w3.org/1999/xhtml',
-      'http://www.w3.org/2000/svg',
-      'http://www.w3.org/1998/Math/MathML',
-    ];
-    my $ForeignAttrMap = [
-      undef, undef,
-      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/2000/svg'},
-      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/1998/Math/MathML'},
-    ];
+    %s
     my $TagName2Group = {};
 
     ## ------ Common handlers ------
@@ -4040,6 +4198,24 @@ it under the same terms as Perl itself.
   },
       $self->package_name,
       $UseLibCode,
+      ($LANG eq 'HTML' ? q{
+    sub HTMLNS () { 1 }
+    sub SVGNS () { 2 }
+    sub MATHMLNS () { 3 }
+    my $NSToURL = [
+      undef,
+      'http://www.w3.org/1999/xhtml',
+      'http://www.w3.org/2000/svg',
+      'http://www.w3.org/1998/Math/MathML',
+    ];
+    my $ForeignAttrMap = [
+      undef, undef,
+      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/2000/svg'},
+      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/1998/Math/MathML'},
+    ];
+      } : q{
+        sub HTMLNS () { q<http://www.w3.org/1999/xhtml> }
+      }),
       $var_decls,
       $tokenizer_defs_code,
       $tree_defs_code, $api_defs_code,

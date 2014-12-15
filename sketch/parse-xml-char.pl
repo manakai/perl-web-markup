@@ -24,4 +24,5 @@ print "Parsing...\n";
 $parser->parse_char_string ((decode 'utf-8', $input) => $doc);
 print "Done\n";
 
+warn $doc->inner_html;
 print dumptree $doc;

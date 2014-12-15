@@ -14,20 +14,9 @@
     use Web::Encoding;
     use Web::HTML::ParserData;
 
-    sub HTMLNS () { 1 }
-    sub SVGNS () { 2 }
-    sub MATHMLNS () { 3 }
-    my $NSToURL = [
-      undef,
-      'http://www.w3.org/1999/xhtml',
-      'http://www.w3.org/2000/svg',
-      'http://www.w3.org/1998/Math/MathML',
-    ];
-    my $ForeignAttrMap = [
-      undef, undef,
-      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/2000/svg'},
-      $Web::HTML::ParserData::ForeignAttrNameToArgs->{'http://www.w3.org/1998/Math/MathML'},
-    ];
+    
+        sub HTMLNS () { q<http://www.w3.org/1999/xhtml> }
+      
     my $TagName2Group = {};
 
     ## ------ Common handlers ------
@@ -134,7 +123,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;
+    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $AttrDefs;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
     ## ------ Tokenizer defs ------
     sub ATTLIST_TOKEN () { 1 }
 sub DOCTYPE_TOKEN () { 2 }
@@ -442,6 +431,33 @@ my $TokenizerAbortingTagNames = {
   #html => 1, # for <html manifest> -> see the line with "first start tag"
   #meta => 1, # for <meta charset>
 };
+  
+
+
+sub _tokenize_attr_value ($) {
+  my $token = $_[0];
+  return 0 unless $token->{value} =~ / /;
+  my @value;
+  my @pos;
+  my $old_pos = 0;
+  my $new_pos = 0;
+  my @v = grep { length } split /( +)/, $token->{value}, -1;
+  for (@v) {
+    unless (/ /) {
+      push @value, $_;
+      push @pos, [$old_pos, $new_pos, 1 + length $_];
+      $new_pos += 1 + length $_;
+    }
+    $old_pos += length $_;
+  }
+  pop @value, pop @pos if @value and $value[-1] eq '';
+  shift @value, shift @pos if @value and $value[-1] eq '';
+  $pos[-1]->[2]-- if @pos;
+
+  my $old_value = $token->{value};
+  $token->{value} = join ' ', @value;
+} # _tokenize_attr_value
+
   
     ## ------ Tree constructor defs ------
     my $Element2Type = [];
@@ -838,15 +854,147 @@ push @$OP, ['stop-parsing'];
         sub {
           my $token = $_;
 
-        my $ns = 0; #'XXX';
-        my $node = {id => $NEXT_ID++,
-                    token => $token,
-                    di => $token->{di}, index => $token->{index},
-                    ns => $ns,
-                    local_name => $token->{tag_name},
-                    attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
+        my $nsmap = @$OE ? {%{$OE->[-1]->{nsmap}}} : {
+          xml => q<http://www.w3.org/XML/1998/namespace>,
+          xmlns => q<http://www.w3.org/2000/xmlns/>,
+        };
+
+        my $attrs = $token->{attrs};
+        my $attrdefs = $AttrDefs->{$token->{tag_name}};
+        for my $attr_name (@$attrdefs) {
+          my $def = $attrdefs->{$attr_name};
+          if (defined $attrs->{$attr_name}) {
+            $attrs->{$attr_name}->{declared_type} = $def->{declared_type} || 0;
+            if ($def->{tokenize}) {
+              if (_tokenize_attr_value $attrs->{$attr_name} and
+                  $def->{external} and
+                  not $def->{external}->{vc_error_reported} and
+                  $XMLStandalone) {
+                push @$Errors, {level => 'm',
+                                type => 'VC:Standalone Document Declaration:attr',
+                                di => $def->{di}, index => $def->{index},
+                                value => $attr_name};
+                $def->{external}->{vc_error_reported} = 1;
+              }
+            }
+          } elsif (defined $def->{value}) {
+            push @{$token->{attr_list}},
+            $attrs->{$attr_name} = {
+              value => $def->{value},
+              declared_type => $def->{declared_type} || 0,
+              not_specified => 1,
+              di => $def->{di}, index => $def->{index},
+            };
+
+            if ($def->{external} and
+                not $def->{external}->{vc_error_reported} and
+                $XMLStandalone) {
+              push @$Errors, {level => 'm',
+                              type => 'VC:Standalone Document Declaration:attr',
+                                di => $def->{di}, index => $def->{index},
+                                value => $attr_name};
+              $def->{external}->{vc_error_reported} = 1;
+            }
+          }
+        }
+        
+        for (keys %$attrs) {
+          if (/^xmlns:./s) {
+            my $prefix = substr $_, 6;
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($prefix eq 'xml' or $prefix eq 'xmlns' or
+                $value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{$prefix} = $value;
+            } else {
+              delete $nsmap->{$prefix};
+            }
+          } elsif ($_ eq 'xmlns') {
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{''} = $value;
+            } else {
+              delete $nsmap->{''};
+            }
+          }
+        }
+        
+        my $ns;
+        my ($prefix, $ln) = split /:/, $token->{tag_name}, 2;
+        
+        if (defined $ln and $prefix ne '' and $ln ne '') { # prefixed
+          if (defined $nsmap->{$prefix}) {
+            $ns = $nsmap->{$prefix};
+          } else {
+            ## NOTE: Error should be detected at the DOM layer.
+            ($prefix, $ln) = (undef, $token->{tag_name});
+          }
+        } else {
+          $ns = $nsmap->{''} if $prefix ne '' and not defined $ln;
+          ($prefix, $ln) = (undef, $token->{tag_name});
+        }
+
+        my $node = {
+          id => $NEXT_ID++,
+          token => $token,
+          di => $token->{di}, index => $token->{index},
+          nsmap => $nsmap,
+          ns => $ns, prefix => $prefix, local_name => $ln,
+          attr_list => $token->{attr_list},
+          et => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+          aet => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+        };
+        #XXX
+        #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
+        #$self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
+
+        my $has_attr;
+        for my $attr (@{$node->{attr_list}}) {
+          my $ns;
+          my ($p, $l) = split /:/, $attr->{name}, 2;
+
+          if ($attr->{name} eq 'xmlns:xmlns') {
+            ($p, $l) = (undef, $attr->{name});
+          } elsif (defined $l and $p ne '' and $l ne '') { # prefixed
+            if (defined $nsmap->{$p}) {
+              $ns = $nsmap->{$p};
+            } else {
+              ## NOTE: Error should be detected at the DOM-layer.
+              ($p, $l) = (undef, $attr->{name});
+            }
+          } else {
+            if ($attr->{name} eq 'xmlns') {
+              $ns = $nsmap->{xmlns};
+            }
+            ($p, $l) = (undef, $attr->{name});
+          }
+          
+          if ($has_attr->{defined $ns ? $ns : ''}->{$l}) {
+            $ns = undef;
+            ($p, $l) = (undef, $attr->{name});
+          } else {
+            $has_attr->{defined $ns ? $ns : ''}->{$l} = 1;
+          }
+
+          $attr->{name_args} = [$ns, [$p, $l]];
+          #XXX
+          #$self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
+          #$self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
+          if (defined $attr->{declared_type}) {
+            #
+          } elsif ($AllDeclsProcessed) {
+            $attr->{declared_type} = 0; # no value
+          } else {
+            $attr->{declared_type} = 11; # unknown
+          }
+        }
       
 push @$OP, ['insert', $node => 0];
 push @$OE, $node;
@@ -1025,15 +1173,147 @@ push @$OP, ['stop-parsing'];
         sub {
           my $token = $_;
 
-        my $ns = 0; #'XXX';
-        my $node = {id => $NEXT_ID++,
-                    token => $token,
-                    di => $token->{di}, index => $token->{index},
-                    ns => $ns,
-                    local_name => $token->{tag_name},
-                    attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
+        my $nsmap = @$OE ? {%{$OE->[-1]->{nsmap}}} : {
+          xml => q<http://www.w3.org/XML/1998/namespace>,
+          xmlns => q<http://www.w3.org/2000/xmlns/>,
+        };
+
+        my $attrs = $token->{attrs};
+        my $attrdefs = $AttrDefs->{$token->{tag_name}};
+        for my $attr_name (@$attrdefs) {
+          my $def = $attrdefs->{$attr_name};
+          if (defined $attrs->{$attr_name}) {
+            $attrs->{$attr_name}->{declared_type} = $def->{declared_type} || 0;
+            if ($def->{tokenize}) {
+              if (_tokenize_attr_value $attrs->{$attr_name} and
+                  $def->{external} and
+                  not $def->{external}->{vc_error_reported} and
+                  $XMLStandalone) {
+                push @$Errors, {level => 'm',
+                                type => 'VC:Standalone Document Declaration:attr',
+                                di => $def->{di}, index => $def->{index},
+                                value => $attr_name};
+                $def->{external}->{vc_error_reported} = 1;
+              }
+            }
+          } elsif (defined $def->{value}) {
+            push @{$token->{attr_list}},
+            $attrs->{$attr_name} = {
+              value => $def->{value},
+              declared_type => $def->{declared_type} || 0,
+              not_specified => 1,
+              di => $def->{di}, index => $def->{index},
+            };
+
+            if ($def->{external} and
+                not $def->{external}->{vc_error_reported} and
+                $XMLStandalone) {
+              push @$Errors, {level => 'm',
+                              type => 'VC:Standalone Document Declaration:attr',
+                                di => $def->{di}, index => $def->{index},
+                                value => $attr_name};
+              $def->{external}->{vc_error_reported} = 1;
+            }
+          }
+        }
+        
+        for (keys %$attrs) {
+          if (/^xmlns:./s) {
+            my $prefix = substr $_, 6;
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($prefix eq 'xml' or $prefix eq 'xmlns' or
+                $value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{$prefix} = $value;
+            } else {
+              delete $nsmap->{$prefix};
+            }
+          } elsif ($_ eq 'xmlns') {
+            my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
+            if ($value eq q<http://www.w3.org/XML/1998/namespace> or
+                $value eq q<http://www.w3.org/2000/xmlns/>) {
+              ## NOTE: Error should be detected at the DOM layer.
+              #
+            } elsif (length $value) {
+              $nsmap->{''} = $value;
+            } else {
+              delete $nsmap->{''};
+            }
+          }
+        }
+        
+        my $ns;
+        my ($prefix, $ln) = split /:/, $token->{tag_name}, 2;
+        
+        if (defined $ln and $prefix ne '' and $ln ne '') { # prefixed
+          if (defined $nsmap->{$prefix}) {
+            $ns = $nsmap->{$prefix};
+          } else {
+            ## NOTE: Error should be detected at the DOM layer.
+            ($prefix, $ln) = (undef, $token->{tag_name});
+          }
+        } else {
+          $ns = $nsmap->{''} if $prefix ne '' and not defined $ln;
+          ($prefix, $ln) = (undef, $token->{tag_name});
+        }
+
+        my $node = {
+          id => $NEXT_ID++,
+          token => $token,
+          di => $token->{di}, index => $token->{index},
+          nsmap => $nsmap,
+          ns => $ns, prefix => $prefix, local_name => $ln,
+          attr_list => $token->{attr_list},
+          et => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+          aet => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+        };
+        #XXX
+        #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
+        #$self->{el_ncnames}->{$ln} ||= $self->{t} if defined $ln;
+
+        my $has_attr;
+        for my $attr (@{$node->{attr_list}}) {
+          my $ns;
+          my ($p, $l) = split /:/, $attr->{name}, 2;
+
+          if ($attr->{name} eq 'xmlns:xmlns') {
+            ($p, $l) = (undef, $attr->{name});
+          } elsif (defined $l and $p ne '' and $l ne '') { # prefixed
+            if (defined $nsmap->{$p}) {
+              $ns = $nsmap->{$p};
+            } else {
+              ## NOTE: Error should be detected at the DOM-layer.
+              ($p, $l) = (undef, $attr->{name});
+            }
+          } else {
+            if ($attr->{name} eq 'xmlns') {
+              $ns = $nsmap->{xmlns};
+            }
+            ($p, $l) = (undef, $attr->{name});
+          }
+          
+          if ($has_attr->{defined $ns ? $ns : ''}->{$l}) {
+            $ns = undef;
+            ($p, $l) = (undef, $attr->{name});
+          } else {
+            $has_attr->{defined $ns ? $ns : ''}->{$l} = 1;
+          }
+
+          $attr->{name_args} = [$ns, [$p, $l]];
+          #XXX
+          #$self->{el_ncnames}->{$p} ||= $attr_t if defined $p;
+          #$self->{el_ncnames}->{$l} ||= $attr_t if defined $l;
+          if (defined $attr->{declared_type}) {
+            #
+          } elsif ($AllDeclsProcessed) {
+            $attr->{declared_type} = 0; # no value
+          } else {
+            $attr->{declared_type} = 11; # unknown
+          }
+        }
       
 push @$OP, ['insert', $node => $OE->[-1]->{id}];
 push @$OE, $node;
@@ -27087,14 +27367,14 @@ sub dom_tree ($$) {
         $op->[0] eq 'create') {
       my $data = $op->[1];
       my $el = $doc->create_element_ns
-          ($NSToURL->[$data->{ns}], [undef, $data->{local_name}]);
+          ($data->{ns}, [$data->{prefix}, $data->{local_name}]);
       $el->manakai_set_source_location (['', $data->{di}, $data->{index}]);
       ## Note that $data->{ns} can be 0.
-      for my $attr (@{$data->{attr_list} or []}) {
+      for my $attr (@{$data->{attr_list} or []}) { # XXXxml
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
-      if ($data->{ns} == HTMLNS and $data->{local_name} eq 'template') {
+      if (defined $data->{ns} and $data->{ns} eq HTMLNS and $data->{local_name} eq 'template') {
         $nodes->[$data->{id}] = $el->content;
         $el->content->manakai_set_source_location
             (['', $data->{di}, $data->{index}]);
@@ -27284,7 +27564,7 @@ sub dom_tree ($$) {
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors) {
-            $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+            $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
 
             $self->onerrors->($self, $Errors) if @$Errors;
             for my $cb (@$Callbacks) {
@@ -27298,7 +27578,7 @@ sub dom_tree ($$) {
               return 0;
             }
 
-            ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+            ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
           }
 
@@ -27352,12 +27632,13 @@ sub dom_tree ($$) {
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -27389,12 +27670,13 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -27408,7 +27690,7 @@ $Scripting = $self->{Scripting};
       $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_chars_start
 
@@ -27416,24 +27698,24 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->_feed_eof or die "Can't restart";
@@ -27468,12 +27750,13 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
         $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
         $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
 
@@ -27517,6 +27800,7 @@ $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
@@ -27565,7 +27849,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (1);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -27574,7 +27858,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_start
 
@@ -27584,10 +27868,10 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       $self->{byte_buffer} .= $_[1];
@@ -27616,16 +27900,16 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token) = @{$self->{saved_states}}{qw(AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 
       PARSER: {
