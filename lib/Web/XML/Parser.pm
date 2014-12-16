@@ -44,7 +44,12 @@ our $DefaultErrorHandler = sub {
   $index = -1 if not defined $index;
   my $text = defined $error->{text} ? qq{ - $error->{text}} : '';
   my $value = defined $error->{value} ? qq{ "$error->{value}"} : '';
-  warn "Parse error ($error->{type}$text) at index $index$value\n";
+  my $level = {
+    m => 'Parse error',
+    s => 'SHOULD-level error',
+    w => 'Warning',
+  }->{$error->{level} || ''} || $error->{level};
+  warn "$level ($error->{type}$text) at index $index$value\n";
 }; # $DefaultErrorHandler
 
 sub onerror ($;$) {
@@ -123,7 +128,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $AttrDefs;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
+    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
     ## ------ Tokenizer defs ------
     sub ATTLIST_TOKEN () { 1 }
 sub DOCTYPE_TOKEN () { 2 }
@@ -656,6 +661,12 @@ return;
           my $token = $_;
 push @$OP, ['doctype', $token => 0]; $NEXT_ID++;
 
+        if (not length $token->{system_identifier}) {
+          push @$OP, ['construct-doctype'];
+        }
+      
+$DTDDefs->{system_id} = $token->{system_identifier};
+
           if ($token->{has_internal_subset_flag}) {
             
           $IM = IN_SUBSET_IM;
@@ -663,9 +674,11 @@ push @$OP, ['doctype', $token => 0]; $NEXT_ID++;
         
           } else {
             
-          if ((defined $token->{system_identifier} and length $token->{system_identifier})) {
-            warn "XXX process the external subset";
-
+          if (length $DTDDefs->{system_id}) {
+            
+        warn "XXX external subset not implemented yet";
+        push @$OP, ['construct-doctype'];
+      
           } else {
             
           $IM = BEFORE_ROOT_ELEMENT_IM;
@@ -860,9 +873,9 @@ push @$OP, ['stop-parsing'];
         };
 
         my $attrs = $token->{attrs};
-        my $attrdefs = $AttrDefs->{$token->{tag_name}};
-        for my $attr_name (@$attrdefs) {
-          my $def = $attrdefs->{$attr_name};
+        my $attrdefs = $DTDDefs->{attrdefs}->{$token->{tag_name}};
+        for my $def (@{$attrdefs or []}) {
+          my $attr_name = $def->{name};
           if (defined $attrs->{$attr_name}) {
             $attrs->{$attr_name}->{declared_type} = $def->{declared_type} || 0;
             if ($def->{tokenize}) {
@@ -880,6 +893,7 @@ push @$OP, ['stop-parsing'];
           } elsif (defined $def->{value}) {
             push @{$token->{attr_list}},
             $attrs->{$attr_name} = {
+              name => $attr_name,
               value => $def->{value},
               declared_type => $def->{declared_type} || 0,
               not_specified => 1,
@@ -1002,13 +1016,7 @@ push @$OP, ['appcache'];
 
           if ($token->{self_closing_flag}) {
             push @$OP, ['popped', [pop @$OE]];
-
-          if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'nestc', level => 'w',
-                            text => $token->{tag_name},
-                            di => $token->{di}, index => $token->{index}};
-          }
-        
+delete $token->{self_closing_flag};
 
           $IM = AFTER_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |after root element| ($IM)";
@@ -1179,9 +1187,9 @@ push @$OP, ['stop-parsing'];
         };
 
         my $attrs = $token->{attrs};
-        my $attrdefs = $AttrDefs->{$token->{tag_name}};
-        for my $attr_name (@$attrdefs) {
-          my $def = $attrdefs->{$attr_name};
+        my $attrdefs = $DTDDefs->{attrdefs}->{$token->{tag_name}};
+        for my $def (@{$attrdefs or []}) {
+          my $attr_name = $def->{name};
           if (defined $attrs->{$attr_name}) {
             $attrs->{$attr_name}->{declared_type} = $def->{declared_type} || 0;
             if ($def->{tokenize}) {
@@ -1199,6 +1207,7 @@ push @$OP, ['stop-parsing'];
           } elsif (defined $def->{value}) {
             push @{$token->{attr_list}},
             $attrs->{$attr_name} = {
+              name => $attr_name,
               value => $def->{value},
               declared_type => $def->{declared_type} || 0,
               not_specified => 1,
@@ -1320,13 +1329,7 @@ push @$OE, $node;
 
           if ($token->{self_closing_flag}) {
             push @$OP, ['popped', [pop @$OE]];
-
-          if (delete $token->{self_closing_flag}) {
-            push @$Errors, {type => 'nestc', level => 'w',
-                            text => $token->{tag_name},
-                            di => $token->{di}, index => $token->{index}};
-          }
-        
+delete $token->{self_closing_flag};
           }
         
         },
@@ -1577,8 +1580,117 @@ return;
       ,
         ## [87] in subset;ATTLIST
         sub {
-          warn "XXX process an ATTLIST token";
+          my $token = $_;
 
+        #XXX$self->_sc->check_hidden_name
+        #    (name => $self->{t}->{name},
+        #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        if ($StopProcessing) {
+          push @$Errors, {level => 'w',
+                          type => 'xml:dtd:attlist ignored',
+                          di => $DI, index => $Offset + pos $Input};
+        } else { # not $StopProcessing
+          push @$Errors, {level => 'w',
+                          type => 'xml:dtd:ext decl',
+                          di => $DI, index => $Offset + pos $Input}
+              unless $DTDMode eq 'internal subset'; # not in parameter entity
+
+          if (not defined $DTDDefs->{elements}->{$token->{name}}) {
+            $DTDDefs->{elements}->{$token->{name}}->{name} = $token->{name};
+            $DTDDefs->{elements}->{$token->{name}}->{di} = $token->{di};
+            $DTDDefs->{elements}->{$token->{name}}->{index} = $token->{index};
+          } elsif ($DTDDefs->{elements}->{$token->{name}}->{has_attlist}) {
+            push @$Errors, {level => 'w',
+                            type => 'duplicate attlist decl', ## TODO: type
+                            value => $token->{name},
+                            di => $DI, index => $Offset + pos $Input};
+          }
+          $DTDDefs->{elements}->{$token->{name}}->{has_attlist} = 1;
+
+          unless (@{$token->{attr_list} or []}) {
+            push @$Errors, {level => 'w',
+                            type => 'empty attlist decl', ## TODO: type
+                            value => $token->{name},
+                            di => $DI, index => $Offset + pos $Input};
+          }
+        } # not $StopProcessing
+        
+        for my $at (@{$token->{attr_list} or []}) {
+          my $type = defined $at->{declared_type} ? {
+            CDATA => 1, ID => 2, IDREF => 3, IDREFS => 4, ENTITY => 5,
+            ENTITIES => 6, NMTOKEN => 7, NMTOKENS => 8, NOTATION => 9,
+          }->{$at->{declared_type}} : 10;
+          if (defined $type) {
+            $at->{declared_type} = $type;
+          } else {
+            $at->{declared_type} = $type = 0;
+            push @$Errors, {level => 'm',
+                            type => 'unknown declared type', ## TODO: type
+                            value => $at->{declared_type},
+                            di => $DI, index => $Offset + pos $Input};
+          }
+          
+          my $default = defined $at->{default_type} ? {
+            FIXED => 1, REQUIRED => 2, IMPLIED => 3,
+          }->{$at->{default_type}} : 4;
+          if (defined $default) {
+            $at->{default_type} = $default;
+            if (defined $at->{value}) { # XXX IndexedString
+              if ($default == 1 or $default == 4) {
+                #
+              } elsif (length $at->{value}) {
+                push @$Errors, {level => 'm',
+                                type => 'default value not allowed',
+                                di => $DI, index => $Offset + pos $Input};
+              }
+            } else {
+              if ($default == 1 or $default == 4) {
+                push @$Errors, {level => 'm',
+                                type => 'default value not provided',
+                                di => $DI, index => $Offset + pos $Input};
+              }
+            }
+          } else {
+            $at->{default_type} = 0;
+            push @$Errors, {level => 'm',
+                            type => 'unknown default type', ## TODO: type
+                            value => $at->{default_type},
+                            di => $DI, index => $Offset + pos $Input};
+          }
+          $at->{value} = ($at->{default_type} and ($at->{default_type} == 1 or $at->{default_type} == 4))
+              ? defined $at->{value} ? $at->{value} : '' : undef;
+
+          $at->{tokenize} = (2 <= $type and $type <= 10);
+
+          if (defined $at->{value}) { # XXX IndexedString
+            _tokenize_attr_value $at if $at->{tokenize};
+          }
+
+          if (not $StopProcessing) {
+            if (not defined $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}}) {
+              $DTDDefs->{attrdef_by_name}->{$token->{name}}->{$at->{name}} = $at;
+              push @{$DTDDefs->{attrdefs}->{$token->{name}} ||= []}, $at;
+              $at->{external} = {} unless $DTDMode eq 'internal subset'; # not in parameter entity
+            } else {
+              push @$Errors, {level => 'w',
+                              type => 'duplicate attrdef', ## TODO: type
+                              value => $at->{name},
+                              di => $DI, index => $Offset + pos $Input};
+              if ($at->{declared_type} == 10) { # ENUMERATION
+                #XXXfor (@{$at->{tokens} or []}) {
+                #  $self->_sc->check_hidden_nmtoken
+                #      (name => $_, onerror => $onerror);
+                #}
+              } elsif ($at->{declared_type} == 9) { # NOTATION
+                #XXXfor (@{$at->{tokens} or []}) {
+                #  $self->_sc->check_hidden_name
+                #      (name => $_, onerror => $onerror);
+                #}
+              }
+            }
+          } # not $StopProcessing
+        } # attr_list
+      
         },
       ,
         ## [88] in subset;COMMENT
@@ -1593,8 +1705,30 @@ return;
       ,
         ## [90] in subset;ELEMENT
         sub {
-          warn "XXX process an ELEMENT token";
+          my $token = $_;
 
+        unless ($DTDDefs->{elements}->{$token->{name}}->{has_element_decl}) {
+          push @$Errors, {level => 'w',
+                          type => 'xml:dtd:ext decl',
+                          di => $DI, index => $Offset + pos $Input}
+              unless $DTDMode eq 'internal subset'; # not in parameter entity
+          #XXX$self->_sc->check_hidden_name
+          #    (name => $self->{t}->{name},
+          #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+
+          my $def = $DTDDefs->{elements}->{$token->{name}};
+          for (qw(name di index content_keyword cmgroup)) {
+            $def->{$_} = $token->{$_};
+          }
+        } else {
+          push @$Errors, {level => 'm',
+                          type => 'duplicate element decl', ## TODO: type
+                          value => $token->{name},
+                          di => $DI, index => $Offset + pos $Input};
+          $DTDDefs->{elements}->{$token->{name}}->{has_element_decl} = 1;
+        }
+        ## TODO: $self->{t}->{content} syntax check.
+      
         },
       ,
         ## [91] in subset;END-ELSE
@@ -1604,17 +1738,115 @@ return;
       ,
         ## [92] in subset;ENTITY
         sub {
-          warn "XXX process an ENTITY token";
+          my $token = $_;
 
+        if ($StopProcessing) {
+          push @$Errors, {level => 'w',
+                          type => 'xml:dtd:entity ignored',
+                          di => $DI, index => $Offset + pos $Input};
+          #XXX$self->_sc->check_hidden_name
+          #    (name => $self->{t}->{name},
+          #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        } else { # not stop processing
+          if ($token->{is_parameter_entity}) {
+            if (not $DTDDefs->{pe}->{$token->{name} . ';'}) {
+              push @$Errors, {level => 'w',
+                              type => 'xml:dtd:ext decl',
+                              di => $DI, index => $Offset + pos $Input}
+                unless $DTDMode eq 'internal subset'; # and not in param entity
+              #XXX$self->_sc->check_hidden_name
+              #  (name => $self->{t}->{name},
+              #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+
+              $DTDDefs->{pe}->{$token->{name} . ';'} = $token;
+            } else {
+              push @$Errors, {level => 'w',
+                              type => 'duplicate para entity decl', ## TODO: type
+                              value => $token->{name},
+                              di => $DI, index => $Offset + pos $Input};
+            }
+          } else { # general entity
+            if ({
+              amp => 1, apos => 1, quot => 1, lt => 1, gt => 1,
+            }->{$token->{name}}) {
+              if (not defined $token->{value} or # external entity
+                  not $token->{value} =~ { # XXX IndexedString
+                    amp => qr/\A&#(?:x0*26|0*38);\z/,
+                    lt => qr/\A&#(?:x0*3[Cc]|0*60);\z/,
+                    gt => qr/\A(?>&#(?:x0*3[Ee]|0*62);|>)\z/,
+                    quot => qr/\A(?>&#(?:x0*22|0*34);|")\z/,
+                    apos => qr/\A(?>&#(?:x0*27|0*39);|')\z/,
+                  }->{$token->{name}}) {
+                push @$Errors, {level => 'm',
+                                type => 'bad predefined entity decl', ## TODO: type
+                                value => $token->{name},
+                                di => $DI, index => $Offset + pos $Input};
+              }
+
+              $DTDDefs->{ge}->{$token->{name}.';'} = {
+                name => $token->{name},
+                value => {
+                  amp => '&',
+                  lt => '<',
+                  gt => '>',
+                  quot => '"',
+                  apos => "'",
+                }->{$token->{name}},
+                only_text => 1,
+              };
+            } elsif (not $DTDDefs->{ge}->{$token->{name}.';'}) {
+              my $is_external = not $DTDMode eq 'internal subset';
+                           #XXXnot ($self->{in_subset}->{internal_subset} and
+                              #not $self->{in_subset}->{param_entity});
+              push @$Errors, {level => 'w',
+                              type => 'xml:dtd:ext decl',
+                              di => $DI, index => $Offset + pos $Input}
+                  if $is_external;
+              #XXX$self->_sc->check_hidden_name
+              #(name => $self->{t}->{name},
+              #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+
+              $DTDDefs->{ge}->{$token->{name}.';'} = $token;
+              if (defined $token->{value} and # XXX IndexedString
+                  $token->{value} !~ /[&<]/) {
+                $token->{only_text} = 1;
+              }
+              $token->{external} = {} if $is_external;
+            } else {
+              push @$Errors, {level => 'w',
+                              type => 'duplicate general entity decl', ## TODO: type
+                              value => $token->{name},
+                              di => $DI, index => $Offset + pos $Input};
+            }
+          }
+
+          #XXXif (defined $self->{t}->{pubid}) {
+          #  $self->_sc->check_hidden_pubid
+          #      (name => $self->{t}->{pubid},
+          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          #}
+          #if (defined $self->{t}->{sysid}) {
+          #    $self->_sc->check_hidden_sysid
+          #    (name => $self->{t}->{sysid},
+          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          #}
+          #if (defined $self->{t}->{notation}) {
+          #  $self->_sc->check_hidden_name
+          #    (name => $self->{t}->{notation},
+          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          #}
+        } # not stop processing
+      
         },
       ,
         ## [93] in subset;EOD
         sub {
-          my $token = $_;
-
-          if ((defined $token->{system_identifier} and length $token->{system_identifier})) {
-            warn "XXX process the external subset";
-
+          
+          if (length $DTDDefs->{system_id}) {
+            
+        warn "XXX external subset not implemented yet";
+        push @$OP, ['construct-doctype'];
+      
           }
         
 
@@ -1625,13 +1857,54 @@ return;
       ,
         ## [94] in subset;EOF
         sub {
-          push @$OP, ['stop-parsing'];
+          my $token = $_;
+push @$Errors, {type => 'in-subset-eof',
+                                            level => 'm',
+                                            di => $token->{di},
+                                index => $token->{index}};
+
+          if (length $DTDDefs->{system_id}) {
+            
+        warn "XXX external subset not implemented yet";
+        push @$OP, ['construct-doctype'];
+      
+          }
+        
+push @$OP, ['stop-parsing'];
         },
       ,
         ## [95] in subset;NOTATION
         sub {
-          warn "XXX process a NOTATION token";
+          my $token = $_;
 
+        if (defined $DTDDefs->{notations}->{$token->{name}}) {
+          push @$Errors, {level => 'm',
+                          type => 'duplicate notation decl', ## TODO: type
+                          value => $token->{name},
+                          di => $DI, index => $Offset + pos $Input};
+        } else {
+          push @$Errors, {level => 'w',
+                          type => 'xml:dtd:ext decl',
+                          di => $DI, index => $Offset + pos $Input}
+              unless $DTDMode eq 'internal subset'; # not in param entity
+          #XXX$self->_sc->check_hidden_name
+          #    (name => $self->{t}->{name},
+          #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+          # XXX $token->{base_url}
+          $DTDDefs->{notations}->{$token->{name}} = $token;
+        }
+        #XXX
+        #if (defined $self->{t}->{pubid}) {
+        #  $self->_sc->check_hidden_pubid
+        #      (name => $self->{t}->{pubid},
+        #       onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        #}
+        #if (defined $self->{t}->{sysid}) {
+        #  $self->_sc->check_hidden_sysid
+        #      (name => $self->{t}->{sysid},
+        #       onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
+        #}
+      
         },
       ,
         ## [96] in subset;PI
@@ -2348,7 +2621,11 @@ sub _change_the_encoding ($$$) {
     
     my $StateActions = [];
     $StateActions->[ATTLIST_ATTR_DEFAULT_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
+if ($Input =~ /\G([^\	\\ \
+\\%\>\"\']+)/gcs) {
+$Attr->{q<default_type>} .= $1;
+
+} elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = AFTER_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
@@ -2356,15 +2633,6 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
-} elsif ($Input =~ /\G([\ ])/gcs) {
-
-            push @$Errors, {type => 'attlist-attribute-default-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-$Attr = {di => $DI, index => $Offset + pos $Input};
-$State = ATTLIST_ATTR_NAME_STATE;
-$Attr->{q<name>} = q@�@;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'attlist-attribute-default-0022', level => 'm',
@@ -2379,15 +2647,6 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
           
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-} elsif ($Input =~ /\G(.)/gcs) {
-
-            push @$Errors, {type => 'attlist-attribute-default-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
-$Attr = {di => $DI, index => $Offset + pos $Input};
-$State = ATTLIST_ATTR_NAME_STATE;
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + (pos $Input) - length $1;
 } else {
 if ($EOF) {
 
@@ -2441,7 +2700,6 @@ $State = BEFORE_ALLOWED_TOKEN_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
@@ -2491,7 +2749,6 @@ $State = AFTER_ATTLIST_ATTR_TYPE_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
@@ -2539,7 +2796,6 @@ $Token->{q<name>} .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } else {
 if ($EOF) {
 
@@ -2596,10 +2852,6 @@ $State = ATTLIST_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'dtd-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'attlist-else', level => 'm',
@@ -7314,7 +7566,10 @@ return 0;
 };
 $StateActions->[AFTER_ATTLIST_ATTR_DEFAULT_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-$Attr = {di => $DI, index => $Offset + pos $Input};
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
 $State = ATTLIST_ATTR_NAME_STATE;
 $Attr->{q<name>} = q@�@;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
@@ -7332,7 +7587,10 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Attr = {di => $DI, index => $Offset + pos $Input};
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
 $State = ATTLIST_ATTR_NAME_STATE;
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
@@ -7374,7 +7632,6 @@ $State = BEFORE_ALLOWED_TOKEN_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ATTLIST_ATTR_TYPE_STATE;
 $Attr->{q<declared_type>} = $1;
@@ -7424,7 +7681,6 @@ $State = BEFORE_ALLOWED_TOKEN_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
@@ -9866,7 +10122,6 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
@@ -9930,7 +10185,6 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
@@ -9981,7 +10235,6 @@ $State = BEFORE_ALLOWED_TOKEN_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-else', level => 'm',
@@ -11205,7 +11458,6 @@ $Attr->{allowed_tokens}->[-1] .= q@�@;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Attr->{allowed_tokens}->[-1] .= $1;
 } else {
@@ -15776,7 +16028,6 @@ $State = BOGUS_MARKUP_DECLARATION_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Attr->{q<default_type>} .= $1;
 $State = ATTLIST_ATTR_DEFAULT_STATE;
@@ -15807,7 +16058,10 @@ return 0;
 };
 $StateActions->[BEFORE_ATTLIST_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-$Attr = {di => $DI, index => $Offset + pos $Input};
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
 $State = ATTLIST_ATTR_NAME_STATE;
 $Attr->{q<name>} = q@�@;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
@@ -15819,7 +16073,10 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 $State = DTD_STATE;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G(.)/gcs) {
-$Attr = {di => $DI, index => $Offset + pos $Input};
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
 $State = ATTLIST_ATTR_NAME_STATE;
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
@@ -15870,10 +16127,6 @@ $State = ATTLIST_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'dtd-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
 
         $Token = {type => ATTLIST_TOKEN, tn => 0,
@@ -16824,7 +17077,6 @@ $State = AFTER_ALLOWED_TOKEN_LIST_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\|])/gcs) {
 
             push @$Errors, {type => 'before-allowed-token-007c', level => 'm',
@@ -22076,11 +22328,11 @@ return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE] = sub {
 if ($Input =~ /\G([^\\"\&\ ]+)/gcs) {
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = BEFORE_ATTLIST_ATTR_NAME_STATE;
@@ -22091,7 +22343,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -22132,15 +22384,15 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -22163,7 +22415,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -22247,7 +22499,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -22272,8 +22524,8 @@ $Token->{q<value>} .= q@�@;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -22350,7 +22602,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -22452,7 +22704,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -22477,8 +22729,8 @@ $Token->{q<value>} .= q@�@;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -22555,7 +22807,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -22646,8 +22898,8 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -22820,7 +23072,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
@@ -22871,7 +23123,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
           REF: {
@@ -22914,7 +23166,7 @@ $Token->{q<value>} .= q@�@;
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -23001,15 +23253,15 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -23032,7 +23284,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE;
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -23068,11 +23320,11 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -23089,7 +23341,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
@@ -23103,11 +23355,11 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -23139,8 +23391,8 @@ if ($Input =~ /\G([\
 ])/gcs) {
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = BEFORE_ATTLIST_ATTR_NAME_STATE;
@@ -23152,10 +23404,10 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -23183,11 +23435,11 @@ return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE] = sub {
 if ($Input =~ /\G([^\\&\'\ ]+)/gcs) {
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
@@ -23198,7 +23450,7 @@ $State = BEFORE_ATTLIST_ATTR_NAME_STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -23239,15 +23491,15 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -23270,7 +23522,7 @@ $State = BEFORE_ATTLIST_ATTR_NAME_STATE;
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -23354,7 +23606,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -23379,8 +23631,8 @@ $Token->{q<value>} .= q@�@;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -23457,7 +23709,7 @@ $State = BEFORE_ATTLIST_ATTR_NAME_STATE;
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -23559,7 +23811,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -23584,8 +23836,8 @@ $Token->{q<value>} .= q@�@;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -23662,7 +23914,7 @@ $State = BEFORE_ATTLIST_ATTR_NAME_STATE;
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -23753,8 +24005,8 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -23927,7 +24179,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
@@ -23978,7 +24230,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
           REF: {
@@ -24021,7 +24273,7 @@ $Token->{q<value>} .= q@�@;
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -24108,15 +24360,15 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -24139,7 +24391,7 @@ $State = BEFORE_ATTLIST_ATTR_NAME_STATE;
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -24175,11 +24427,11 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
@@ -24196,7 +24448,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
@@ -24210,11 +24462,11 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -24246,8 +24498,8 @@ if ($Input =~ /\G([\
 ])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$Token->{q<value>} .= q@
-@;
+push @{$Attr->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
@@ -24259,10 +24511,10 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$Token->{q<value>} .= q@�@;
+push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-$Token->{q<value>} .= $1;
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -27627,12 +27879,59 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'remove') {
       my $parent = $nodes->[$op->[1]]->parent_node;
       $parent->remove_child ($nodes->[$op->[1]]) if defined $parent;
+
     } elsif ($op->[0] eq 'set-compat-mode') {
       $doc->manakai_compat_mode ($op->[1]);
     } elsif ($op->[0] eq 'xml-encoding') {
       $doc->xml_encoding ($op->[1]);
     } elsif ($op->[0] eq 'xml-standalone') {
       $doc->xml_standalone ($op->[1]);
+
+    } elsif ($op->[0] eq 'construct-doctype') {
+      for my $data (values %{$DTDDefs->{elements} or {}}) {
+        my $node = $doc->create_element_type_definition ($data->{name});
+        $node->content_model_text ($data->{content_keyword})
+            if defined $data->{content_keyword};
+        $node->manakai_set_source_location (['', $data->{di}, $data->{index}])
+            if defined $data->{index};
+        $doc->doctype->set_element_type_definition_node ($node);
+      }
+      for my $elname (keys %{$DTDDefs->{attrdefs} or {}}) {
+        my $et = $doc->doctype->get_element_type_definition_node ($elname);
+        for my $data (@{$DTDDefs->{attrdefs}->{$elname}}) {
+          my $node = $doc->create_attribute_definition ($data->{name});
+          $node->declared_type ($data->{declared_type} || 0);
+          push @{$node->allowed_tokens}, @{$data->{allowed_tokens} or []};
+          $node->default_type ($data->{default_type} || 0);
+          #XXX$node->manakai_append_indexed_string ($data->{value})
+    use Data::Dumper;
+warn Dumper $data;
+          $node->node_value (join '', map { $_->[0] } @{$data->{value}})
+              if defined $data->{value};
+          $et->set_attribute_definition_node ($node);
+          $node->manakai_set_source_location
+              (['', $data->{di}, $data->{index}]);
+        }
+      }
+      for my $data (values %{$DTDDefs->{notations} or {}}) {
+        my $node = $doc->create_notation ($data->{name});
+        $node->public_id ($data->{public_identifier}); # or undef
+        $node->system_id ($data->{system_identifier}); # or undef
+        # XXX base URL
+        $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
+        $doc->doctype->set_notation_node ($node);
+      }
+      for my $data (values %{$DTDDefs->{ge} or {}}) {
+        next unless defined $data->{notation_name};
+        my $node = $doc->create_general_entity ($data->{name});
+        $node->public_id ($data->{public_identifier}); # or undef
+        $node->system_id ($data->{system_identifier}); # or undef
+        $node->notation_name ($data->{notation_name}); # or undef
+        # XXX base URL
+        $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
+        $doc->doctype->set_general_entity_node ($node);
+      }
+
     } else {
       die "Unknown operation |$op->[0]|";
     }
@@ -27737,6 +28036,7 @@ sub dom_tree ($$) {
       push @{$self->{input_stream}}, [undef];
       return $self->_run;
     } # _feed_eof
+  
 
     sub parse_char_string ($$$) {
       my $self = $_[0];
@@ -27744,17 +28044,17 @@ sub dom_tree ($$) {
 
       $self->{document} = my $doc = $_[2];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (0);
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -27781,18 +28081,18 @@ $Scripting = $self->{Scripting};
       $self->{input_stream} = [];
       $self->{document} = $doc;
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (0);
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
@@ -27809,12 +28109,13 @@ $Scripting = $self->{Scripting};
       $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_chars_start
+  
 
     sub parse_chars_feed ($$) {
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
@@ -27828,7 +28129,7 @@ $Scripting = $self->{Scripting};
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
@@ -27852,12 +28153,14 @@ $Scripting = $self->{Scripting};
 ## XXX The policy mentioned above might change when we implement
 ## Encoding Standard spec.
 
+  
+
     sub parse_byte_string ($$$$) {
       my $self = $_[0];
 
       $self->{document} = my $doc = $_[3];
       $self->{IframeSrcdoc} = $doc->manakai_is_srcdoc;
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (0);
       $doc->manakai_compat_mode ('no quirks');
       $self->{can_restart} = 1;
 
@@ -27866,13 +28169,13 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
         $FRAMESET_OK = 1;
 $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
         $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
 
@@ -27900,6 +28203,7 @@ $Scripting = $self->{Scripting};
       $self->_cleanup_states;
       return;
     } # parse_byte_string
+  
 
     sub _parse_bytes_init ($) {
       my $self = $_[0];
@@ -27916,7 +28220,7 @@ $NEXT_ID = 1;
 $Offset = 0;
 $DTDMode = q{N/A};
 $self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
-$self->{saved_maps} = {AttrDefs => ($AttrDefs = {})};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
@@ -27929,6 +28233,7 @@ $Scripting = $self->{Scripting};
       $dids->[$source_di] ||= {} if $source_di >= 0; # the main data source of the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
     } # _parse_bytes_init
+  
 
     sub _parse_bytes_start_parsing ($;%) {
       my ($self, %args) = @_;
@@ -27945,7 +28250,6 @@ $Scripting = $self->{Scripting};
       $self->{document}->input_encoding ($self->{input_encoding});
 
       $self->{parse_bytes_started} = 1;
-      #XXXxml $self->{is_xml} = 1;
 
       my $input = [decode $self->{input_encoding}, $self->{byte_buffer}, Encode::FB_QUIET]; # XXXencoding
 
@@ -27953,6 +28257,7 @@ $Scripting = $self->{Scripting};
 
       return 1;
     } # _parse_bytes_start_parsing
+  
 
     sub parse_bytes_start ($$$) {
       my $self = $_[0];
@@ -27962,10 +28267,10 @@ $Scripting = $self->{Scripting};
       $self->{transport_encoding_label} = $_[1];
 
       $self->{document} = my $doc = $_[2];
-      $doc->manakai_is_html (1);
+      $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -27977,6 +28282,7 @@ $Scripting = $self->{Scripting};
       $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_start
+  
 
     ## The $args{start_parsing} flag should be set true if it has
     ## taken more than 500ms from the start of overall parsing
@@ -27984,7 +28290,7 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
@@ -28022,7 +28328,7 @@ $Scripting = $self->{Scripting};
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $AttrDefs, $CONTEXT, $Callbacks, $Confident, $DI, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};

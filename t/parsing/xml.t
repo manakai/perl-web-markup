@@ -50,6 +50,7 @@ if ($DEBUG) {
 
 use Web::XML::Parser;
 use Web::HTML::Dumper qw/dumptree/;
+use Web::HTML::SourceMap;
 
 my $dom_class = $ENV{DOM_IMPL_CLASS} || 'Web::DOM::Implementation';
 eval qq{ require $dom_class } or die $@;
@@ -76,14 +77,16 @@ sub _test ($$) {
   my $ges = $p->{ge} ||= {};
   my $pes = $p->{pe} ||= {};
 
+  my $data = $test->{data}->[0];
+  my $ip = [undef, {lc_map => create_index_lc_mapping $data}];
+
   my @errors;
   $p->onerror (sub {
     my %opt = @_;
     my $di = $opt{di};
-    $di = $opt{token}->{di} if not defined $di and defined $opt{token};
+    my ($l, $c) = index_pair_to_lc_pair $ip, $di, $opt{index};
     push @errors, join ';',
-        ($di ? "[$di]" : '') . ($opt{line} || $opt{token}->{line}),
-        defined $opt{column} ? $opt{column} : $opt{token}->{column},
+        ($di != 1 ? "[$di]" : '') . ($l || 0), ($c || 0),
         $opt{type},
         defined $opt{text} ? $opt{text} : '',
         defined $opt{value} ? $opt{value} : '',
@@ -156,26 +159,31 @@ sub _test ($$) {
     for (@{$test->{resource}}) {
       $res{defined $_->[1]->[0] ? $_->[1]->[0] : ''} = [++$i, $_->[0]];
     }
-    $p->onextentref (sub {
-      my ($parser, $ent, $subparser) = @_;
-      my $e = $res{$ent->{entdef}->{sysid} || ''}; # XXX
-      $subparser->di ($e->[0]) if defined $e;
-      $subparser->parse_bytes_start ('utf-8');
-      $subparser->parse_bytes_feed (encode 'utf-8', defined $e->[1] ? $e->[1] : '<?xml encoding="utf-8"?>'); # XXX
-      $subparser->parse_bytes_end;
-    });
-    $p->onparsed (sub {
-      test {
-        $result = dumptree ($doc);
-        $code->();
-      } $c;
-    });
+#XXX
+#    $p->onextentref (sub {
+#      my ($parser, $ent, $subparser) = @_;
+#      my $e = $res{$ent->{entdef}->{sysid} || ''}; # XXX
+#      $subparser->di ($e->[0]) if defined $e;
+#      $subparser->parse_bytes_start ('utf-8');
+#      $subparser->parse_bytes_feed (encode 'utf-8', defined $e->[1] ? $e->[1] : '<?xml encoding="utf-8"?>'); # XXX
+#      $subparser->parse_bytes_end;
+#    });
+#    $p->onparsed (sub {
+#      test {
+#        $result = dumptree ($doc);
+#        $code->();
+#      } $c;
+#    });
 
     $p->parse_bytes_start (undef, $doc);
-    $p->parse_bytes_feed (encode 'utf-8', $test->{data}->[0]);
+    $p->parse_bytes_feed (encode 'utf-8', $data);
     $p->parse_bytes_end;
+
+#XXX
+$result = dumptree ($doc);
+$code->();
   } elsif (not defined $test->{element}) {
-    $p->parse_char_string ($test->{data}->[0] => $doc);
+    $p->parse_char_string ($data => $doc);
     $result = dumptree ($doc);
     $code->();
   } else {
@@ -193,7 +201,7 @@ sub _test ($$) {
           (q<http://www.w3.org/1999/xhtml>, [undef, $test->{element}]);
     }
     my $children = $p->parse_char_string_with_context
-        ($test->{data}->[0], $el, $dom->create_document);
+        ($data, $el, $dom->create_document);
     $el->append_child ($_) for $children->to_list;
     $result = dumptree ($el);
     $code->();
