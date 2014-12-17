@@ -625,15 +625,17 @@ return;
         sub {
           my $token = $_;
 
-            while ($token->{value} =~ /(.)/gs) {
-              push @$Errors, {type => 'after-root-element-char',
+        if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+          
+          $token->{index} += length $1;
+        }
+        if (length $token->{value}) {
+          push @$Errors, {type => 'after-root-element-char',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-              $token->{index}++;
-            }
-            
-          
+        }
+      
         },
       ,
         ## [13] before DOCTYPE;ATTLIST
@@ -652,7 +654,8 @@ return;
         ## [15] before DOCTYPE;DOCTYPE
         sub {
           my $token = $_;
-push @$OP, ['doctype', $token => 0]; $NEXT_ID++;
+
+        push @$OP, ['doctype', $token => 0];
 
         if (not length $token->{system_identifier}) {
           push @$OP, ['construct-doctype'];
@@ -749,15 +752,17 @@ return;
         sub {
           my $token = $_;
 
-            while ($token->{value} =~ /(.)/gs) {
-              push @$Errors, {type => 'before-doctype-char',
+        if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+          
+          $token->{index} += length $1;
+        }
+        if (length $token->{value}) {
+          push @$Errors, {type => 'before-doctype-char',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-              $token->{index}++;
-            }
-            
-          
+        }
+      
         },
       ,
         ## [25] before ignored newline;ELSE
@@ -1028,15 +1033,17 @@ delete $token->{self_closing_flag};
         sub {
           my $token = $_;
 
-            while ($token->{value} =~ /(.)/gs) {
-              push @$Errors, {type => 'before-root-element-char',
+        if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+          
+          $token->{index} += length $1;
+        }
+        if (length $token->{value}) {
+          push @$Errors, {type => 'before-root-element-char',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-              $token->{index}++;
-            }
-            
-          
+        }
+      
         },
       ,
         ## [39] in element;ATTLIST
@@ -1927,15 +1934,17 @@ push @$OP, ['stop-parsing'];
         sub {
           my $token = $_;
 
-            while ($token->{value} =~ /(.)/gs) {
-              push @$Errors, {type => 'in-subset-char',
+        if ($token->{value} =~ s/^([\x09\x0A\x0C\x20]+)//) {
+          
+          $token->{index} += length $1;
+        }
+        if (length $token->{value}) {
+          push @$Errors, {type => 'in-subset-char',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
-              $token->{index}++;
-            }
-            
-          
+        }
+      
         },
       ,
         ## [99] initial;ATTLIST
@@ -2106,11 +2115,13 @@ push @$OP, ['stop-parsing'];
           my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
-          unless ($v eq '1.0') {
-            push @$Errors, {type => 'bad XML version', # XXX
-                            level => 'm',
-                            di => $DI, index => $p};
-          }
+          push @$OP, ['xml-version', $v];
+          # XXX if text declaration
+          #unless ($v eq '1.0') {
+          #  push @$Errors, {type => 'bad XML version', # XXX
+          #                  level => 'm',
+          #                  di => $DI, index => $p};
+          #}
         } else { # XXXif XML declaration (not text declaration)
           push @$Errors, {level => 'm',
                           type => 'attribute missing:version',
@@ -27718,6 +27729,8 @@ sub dom_tree ($$) {
   my $doc = $self->{document};
   my $strict = $doc->strict_error_checking;
   $doc->strict_error_checking (0);
+  my $doctype_children = $doc->dom_config->{manakai_allow_doctype_children};
+  $doc->dom_config->{manakai_allow_doctype_children} = 1;
 
   my $nodes = $self->{nodes};
   for my $op (@$ops) {
@@ -27824,6 +27837,7 @@ sub dom_tree ($$) {
            defined $data->{public_identifier} ? $data->{public_identifier} : '',
            defined $data->{system_identifier} ? $data->{system_identifier} : '');
       $dt->manakai_set_source_location (['', $data->{di}, $data->{index}]);
+      $nodes->[1] = $dt;
       $nodes->[$op->[2]]->append_child ($dt);
 
     } elsif ($op->[0] eq 'set-if-missing') {
@@ -27877,6 +27891,8 @@ sub dom_tree ($$) {
 
     } elsif ($op->[0] eq 'set-compat-mode') {
       $doc->manakai_compat_mode ($op->[1]);
+    } elsif ($op->[0] eq 'xml-version') {
+      $doc->xml_version ($op->[1]);
     } elsif ($op->[0] eq 'xml-encoding') {
       $doc->xml_encoding ($op->[1]);
     } elsif ($op->[0] eq 'xml-standalone') {
@@ -27899,8 +27915,6 @@ sub dom_tree ($$) {
           push @{$node->allowed_tokens}, @{$data->{allowed_tokens} or []};
           $node->default_type ($data->{default_type} || 0);
           #XXX$node->manakai_append_indexed_string ($data->{value})
-    use Data::Dumper;
-warn Dumper $data;
           $node->node_value (join '', map { $_->[0] } @{$data->{value}})
               if defined $data->{value};
           $et->set_attribute_definition_node ($node);
@@ -27933,6 +27947,7 @@ warn Dumper $data;
   }
 
   $doc->strict_error_checking ($strict);
+  $doc->dom_config->{manakai_allow_doctype_children} = $doctype_children;
 } # dom_tree
 
   
