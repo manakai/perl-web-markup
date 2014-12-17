@@ -465,7 +465,7 @@ sub _tokenize_attr_value ($) {
 
   
     ## ------ Tree constructor defs ------
-    my $Element2Type = [];
+    my $Element2Type = {};
 my $ProcessIM = [];
 sub TAG_NAME_BUTTON_FIELDSET_IMG_INPUT_KEYGEN_LABEL_OBJECT_OUTPUT_SELECT_TEXTAREA () { 1 }
 $TagName2Group->{q@button@} = 1;
@@ -498,25 +498,25 @@ $TagName2Group->{q@textarea@} = 1;
         ## HTML:object
         sub OBJ_ELS () { 16 }
       
-$Element2Type->[HTMLNS]->{q@*@} = HTML_NS_ELS;
-$Element2Type->[HTMLNS]->{q@applet@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
-$Element2Type->[HTMLNS]->{q@audio@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
-$Element2Type->[HTMLNS]->{q@button@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->[HTMLNS]->{q@fieldset@} = HTML_NS_ELS | BFIKLOST_ELS;
-sub HEAD_EL () { HTML_NS_ELS | 32 } $Element2Type->[HTMLNS]->{q@head@} = HEAD_EL;
-sub HTML_EL () { HTML_NS_ELS | 64 } $Element2Type->[HTMLNS]->{q@html@} = HTML_EL;
-$Element2Type->[HTMLNS]->{q@img@} = HTML_NS_ELS | IMG_ELS;
-$Element2Type->[HTMLNS]->{q@input@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->[HTMLNS]->{q@keygen@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->[HTMLNS]->{q@label@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->[HTMLNS]->{q@object@} = HTML_NS_ELS | OBJ_ELS;
-$Element2Type->[HTMLNS]->{q@output@} = HTML_NS_ELS | BFIKLOST_ELS;
-sub SELECT_EL () { HTML_NS_ELS | BFIKLOST_ELS } $Element2Type->[HTMLNS]->{q@select@} = SELECT_EL;
-$Element2Type->[HTMLNS]->{q@style@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
-sub TABLE_EL () { HTML_NS_ELS | 96 } $Element2Type->[HTMLNS]->{q@table@} = TABLE_EL;
-sub TEMPLATE_EL () { HTML_NS_ELS | 128 } $Element2Type->[HTMLNS]->{q@template@} = TEMPLATE_EL;
-$Element2Type->[HTMLNS]->{q@textarea@} = HTML_NS_ELS | BFIKLOST_ELS;
-$Element2Type->[HTMLNS]->{q@video@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
+$Element2Type->{(HTMLNS)}->{q@*@} = HTML_NS_ELS;
+$Element2Type->{(HTMLNS)}->{q@applet@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
+$Element2Type->{(HTMLNS)}->{q@audio@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
+$Element2Type->{(HTMLNS)}->{q@button@} = HTML_NS_ELS | BFIKLOST_ELS;
+$Element2Type->{(HTMLNS)}->{q@fieldset@} = HTML_NS_ELS | BFIKLOST_ELS;
+sub HEAD_EL () { HTML_NS_ELS | 32 } $Element2Type->{(HTMLNS)}->{q@head@} = HEAD_EL;
+sub HTML_EL () { HTML_NS_ELS | 64 } $Element2Type->{(HTMLNS)}->{q@html@} = HTML_EL;
+$Element2Type->{(HTMLNS)}->{q@img@} = HTML_NS_ELS | IMG_ELS;
+$Element2Type->{(HTMLNS)}->{q@input@} = HTML_NS_ELS | BFIKLOST_ELS;
+$Element2Type->{(HTMLNS)}->{q@keygen@} = HTML_NS_ELS | BFIKLOST_ELS;
+$Element2Type->{(HTMLNS)}->{q@label@} = HTML_NS_ELS | BFIKLOST_ELS;
+$Element2Type->{(HTMLNS)}->{q@object@} = HTML_NS_ELS | OBJ_ELS;
+$Element2Type->{(HTMLNS)}->{q@output@} = HTML_NS_ELS | BFIKLOST_ELS;
+sub SELECT_EL () { HTML_NS_ELS | BFIKLOST_ELS } $Element2Type->{(HTMLNS)}->{q@select@} = SELECT_EL;
+$Element2Type->{(HTMLNS)}->{q@style@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
+sub TABLE_EL () { HTML_NS_ELS | 96 } $Element2Type->{(HTMLNS)}->{q@table@} = TABLE_EL;
+sub TEMPLATE_EL () { HTML_NS_ELS | 128 } $Element2Type->{(HTMLNS)}->{q@template@} = TEMPLATE_EL;
+$Element2Type->{(HTMLNS)}->{q@textarea@} = HTML_NS_ELS | BFIKLOST_ELS;
+$Element2Type->{(HTMLNS)}->{q@video@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
 sub AFTER_ROOT_ELEMENT_IM () { 1 }
 sub BEFORE_DOCTYPE_IM () { 2 }
 sub BEFORE_IGNORED_NEWLINE_IM () { 3 }
@@ -527,13 +527,6 @@ sub IN_SUBSET_AFTER_ROOT_ELEMENT_IM () { 7 }
 sub IN_SUBSET_BEFORE_ROOT_ELEMENT_IM () { 8 }
 sub IN_SUBSET_IN_ELEMENT_IM () { 9 }
 sub INITIAL_IM () { 10 }
-my $QPublicIDPrefixPattern = qr{};
-my $LQPublicIDPrefixPattern = qr{};
-my $QorLQPublicIDPrefixPattern = qr{};
-my $QPublicIDs = {};
-my $QSystemIDs = {};
-my $OPPublicIDToSystemID = {};
-my $OPPublicIDOnly = {};
 
       my $TCA = [undef,
         ## [1] after root element;ATTLIST
@@ -955,6 +948,7 @@ push @$OP, ['stop-parsing'];
           ($prefix, $ln) = (undef, $token->{tag_name});
         }
 
+        my $nse = defined $ns ? $ns : '';
         my $node = {
           id => $NEXT_ID++,
           token => $token,
@@ -962,8 +956,8 @@ push @$OP, ['stop-parsing'];
           nsmap => $nsmap,
           ns => $ns, prefix => $prefix, local_name => $ln,
           attr_list => $token->{attr_list},
-          et => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-          aet => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+          et => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
+          aet => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
         };
         #XXX
         #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
@@ -1269,6 +1263,7 @@ push @$OP, ['stop-parsing'];
           ($prefix, $ln) = (undef, $token->{tag_name});
         }
 
+        my $nse = defined $ns ? $ns : '';
         my $node = {
           id => $NEXT_ID++,
           token => $token,
@@ -1276,8 +1271,8 @@ push @$OP, ['stop-parsing'];
           nsmap => $nsmap,
           ns => $ns, prefix => $prefix, local_name => $ln,
           attr_list => $token->{attr_list},
-          et => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-          aet => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+          et => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
+          aet => $Element2Type->{($nse)}->{$token->{tag_name}} || $Element2Type->{($nse)}->{'*'} || 0,
         };
         #XXX
         #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
@@ -27738,7 +27733,7 @@ sub dom_tree ($$) {
         $el->manakai_set_attribute_indexed_string_ns
             (@{$attr->{name_args}} => $attr->{value}); # IndexedString
       }
-      if (defined $data->{ns} and $data->{ns} eq HTMLNS and $data->{local_name} eq 'template') {
+      if ($data->{et} == TEMPLATE_EL) {
         $nodes->[$data->{id}] = $el->content;
         $el->content->manakai_set_source_location
             (['', $data->{di}, $data->{index}]);

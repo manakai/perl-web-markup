@@ -1230,9 +1230,7 @@ sub pattern_to_code ($$) {
       my @const;
       for (split / /, $pattern) {
         my $const = $GroupNameToElementTypeConst->{$_}
-or next;
-#XXX
-#            or die "|$_| has no const";
+            or die "|$_| has no const";
         push @const, $const;
       }
       if (@const == 1 and $const[0] =~ /_EL$/) {
@@ -1514,6 +1512,14 @@ sub foster_code ($$$;$) {
   }
 } # foster_code
 
+sub E2Tns ($) {
+  if ($LANG eq 'HTML') {
+    return sprintf q{$Element2Type->[%s]}, $_[0];
+  } else {
+    return sprintf q{$Element2Type->{(%s)}}, $_[0];
+  }
+} # E2Tns
+
 sub actions_to_code ($;%);
 sub actions_to_code ($;%) {
   my ($actions, %args) = @_;
@@ -1608,7 +1614,8 @@ sub actions_to_code ($;%) {
         $et_code = '(' . ($ElementToElementGroupExpr->{HTML}->{$tag_name} ||
                           $ElementToElementGroupExpr->{HTML}->{'*'}) . ')';
       } else {
-        $et_code = sprintf q{$Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+        $et_code = sprintf q{%s->{$token->{tag_name}} || %s->{'*'}},
+            E2Tns 'HTMLNS', E2Tns 'HTMLNS';
       }
       push @code, sprintf q{
         my %s = {id => $NEXT_ID++,
@@ -1682,7 +1689,8 @@ sub actions_to_code ($;%) {
         $et_code = '(' . ($ElementToElementGroupExpr->{HTML}->{$tag_name} ||
                           $ElementToElementGroupExpr->{HTML}->{'*'}) . ')';
       } else {
-        $et_code = sprintf q{$Element2Type->[HTMLNS]->{$token->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+        $et_code = sprintf q{%s->{$token->{tag_name}} || %s->{'*'}},
+            E2Tns 'HTMLNS', E2Tns 'HTMLNS';
       }
       push @code, sprintf q{
         my $node = {id => $NEXT_ID++,
@@ -1719,9 +1727,9 @@ sub actions_to_code ($;%) {
                     ns => $ns,
                     local_name => $token->{tag_name},
                     attr_list => $token->{attr_list},
-                    et => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-                    aet => $Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0};
-      };
+                    et => %s->{$token->{tag_name}} || %s->{'*'} || 0,
+                    aet => %s->{$token->{tag_name}} || %s->{'*'} || 0};
+      }, E2Tns '$ns', E2Tns '$ns', E2Tns '$ns', E2Tns '$ns';
       if ($act->{ns} eq 'inherit') {
         push @code, sprintf q{
           if ($ns == MATHMLNS and $node->{local_name} eq 'annotation-xml' and
@@ -1782,8 +1790,8 @@ sub actions_to_code ($;%) {
       ## As a non-HTML element can't be a form-associated element, we
       ## don't have to associate the form owner.
     } elsif ($act->{type} eq 'create an XML element') { # XML
-      push @code, q{
-        my $nsmap = @$OE ? {%{$OE->[-1]->{nsmap}}} : {
+      push @code, sprintf q{
+        my $nsmap = @$OE ? {%%{$OE->[-1]->{nsmap}}} : {
           xml => q<http://www.w3.org/XML/1998/namespace>,
           xmlns => q<http://www.w3.org/2000/xmlns/>,
         };
@@ -1828,7 +1836,7 @@ sub actions_to_code ($;%) {
           }
         }
         
-        for (keys %$attrs) {
+        for (keys %%$attrs) {
           if (/^xmlns:./s) {
             my $prefix = substr $_, 6;
             my $value = join '', map { $_->[0] } @{$attrs->{$_}->{value}};
@@ -1871,6 +1879,7 @@ sub actions_to_code ($;%) {
           ($prefix, $ln) = (undef, $token->{tag_name});
         }
 
+        my $nse = defined $ns ? $ns : '';
         my $node = {
           id => $NEXT_ID++,
           token => $token,
@@ -1878,8 +1887,8 @@ sub actions_to_code ($;%) {
           nsmap => $nsmap,
           ns => $ns, prefix => $prefix, local_name => $ln,
           attr_list => $token->{attr_list},
-          et => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
-          aet => 0, # XXX$Element2Type->[$ns]->{$token->{tag_name}} || $Element2Type->[$ns]->{'*'} || 0,
+          et => %s->{$token->{tag_name}} || %s->{'*'} || 0,
+          aet => %s->{$token->{tag_name}} || %s->{'*'} || 0,
         };
         #XXX
         #$self->{el_ncnames}->{$prefix} ||= $self->{t} if defined $prefix;
@@ -1925,7 +1934,7 @@ sub actions_to_code ($;%) {
             $attr->{declared_type} = 11; # unknown
           }
         }
-      };
+      }, E2Tns '$nse', E2Tns '$nse', E2Tns '$nse', E2Tns '$nse';
     } elsif ($act->{type} eq 'insert a DOCTYPE') { # XML
       push @code, q{push @$OP, ['doctype', $token => 0]; $NEXT_ID++;}; # id=1
       push @code, q{
@@ -2936,7 +2945,7 @@ sub generate_tree_constructor ($) {
   }
 
   ## ---- DOCTYPE definitions ----
-  {
+  if ($LANG eq 'HTML') {
     push @def_code, sprintf q{my $QPublicIDPrefixPattern = qr{%s};},
         $defs->{doctype_switch}->{quirks}->{regexp}->{public_id_prefix};
     push @def_code, sprintf q{my $LQPublicIDPrefixPattern = qr{%s};},
@@ -3082,15 +3091,15 @@ sub generate_tree_constructor ($) {
           $const_name = (uc $const_name) . '_EL';
           $const_name =~ s/[^A-Z0-9]/_/g;
           push @group_code,
-              sprintf q{sub %s () { %s } $Element2Type->[%s]->{q@%s@} = %s;},
+              sprintf q{sub %s () { %s } %s->{q@%s@} = %s;},
                   $const_name, $et_codes->{$ns}->{$ln},
-                  ns_const $ns, $ln, $const_name;
+                  E2Tns (ns_const $ns), $ln, $const_name;
           $GroupNameToElementTypeConst->{"$ns:$ln"} ||= $const_name;
           $ElementToElementGroupExpr->{$ns}->{$ln} = $const_name;
         } else {
           push @group_code,
-              sprintf q{$Element2Type->[%s]->{q@%s@} = %s;},
-                  ns_const $ns, $ln, $et_codes->{$ns}->{$ln};
+              sprintf q{%s->{q@%s@} = %s;},
+                  E2Tns (ns_const $ns), $ln, $et_codes->{$ns}->{$ln};
           $ElementToElementGroupExpr->{$ns}->{$ln} = $et_codes->{$ns}->{$ln};
         }
       }
@@ -3253,8 +3262,10 @@ sub generate_tree_constructor ($) {
     } if $LANG eq 'HTML';
 
     for (
-      ['aaa', (foster_code {}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
-      ['aaa_foster', (foster_code {foster_parenting => 1}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
+      $LANG eq 'HTML' ? (
+        ['aaa', (foster_code {}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
+        ['aaa_foster', (foster_code {foster_parenting => 1}, 'append', q{$last_node->{id}}, q{$common_ancestor})],
+      ) : (),
     ) {
       my $aaa_code = sprintf q{
         sub %s ($$;%%) {
@@ -3396,7 +3407,7 @@ sub generate_tree_constructor ($) {
                    ns => HTMLNS,
                    local_name => $node->{token}->{tag_name},
                    attr_list => $node->{token}->{attr_list},
-                   et => $Element2Type->[HTMLNS]->{$node->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+                   et => %s->{$node->{token}->{tag_name}} || %s->{'*'}};
           $node->{aet} = $node->{et};
           $AFE->[$node_afe_i] = $node;
           $OE->[$node_i] = $node;
@@ -3462,13 +3473,16 @@ sub generate_tree_constructor ($) {
       },
           $_->[0],
           im_const 'in body',
+          E2Tns 'HTMLNS', E2Tns 'HTMLNS',
           $_->[1];
-      push @substep_code, $aaa_code if $LANG eq 'HTML';
+      push @substep_code, $aaa_code;
     }
 
     for (
-      ['reconstruct_afe', (foster_code {}, 'insert', '$node')],
-      ['reconstruct_afe_foster', (foster_code {foster_parenting => 1}, 'insert', '$node')],
+      $LANG eq 'HTML' ? (
+        ['reconstruct_afe', (foster_code {}, 'insert', '$node')],
+        ['reconstruct_afe_foster', (foster_code {foster_parenting => 1}, 'insert', '$node')],
+      ) : (),
     ) {
       my $reconstruct_code = sprintf q{
         sub %s () {
@@ -3501,7 +3515,7 @@ sub generate_tree_constructor ($) {
                         ns => HTMLNS,
                         local_name => $entry->{token}->{tag_name},
                         attr_list => $entry->{token}->{attr_list},
-                        et => $Element2Type->[HTMLNS]->{$entry->{token}->{tag_name}} || $Element2Type->[HTMLNS]->{'*'}};
+                        et => %s->{$entry->{token}->{tag_name}} || %s->{'*'}};
             $node->{aet} = $node->{et};
             %s
             push @$OE, $node;
@@ -3509,8 +3523,8 @@ sub generate_tree_constructor ($) {
             $AFE->[$entry_i] = $node;
           }
         }
-      }, $_->[0], $_->[1];
-      push @substep_code, $reconstruct_code if $LANG eq 'HTML';
+      }, $_->[0], E2Tns 'HTMLNS', E2Tns 'HTMLNS', $_->[1];
+      push @substep_code, $reconstruct_code;
     }
 
     for (@substep_code) {
@@ -3529,7 +3543,7 @@ sub generate_tree_constructor ($) {
   }
 
   my $def_code = join "\n",
-      q{my $Element2Type = [];},
+      ($LANG eq 'HTML' ? q{my $Element2Type = [];} : q{my $Element2Type = {};}),
       q{my $ProcessIM = [];},
       (join "\n", @group_code),
       (join "\n", @im_code),
@@ -3814,7 +3828,7 @@ warn Dumper $data;
 
   },
       ($LANG eq 'HTML' ? q{$NSToURL->[$data->{ns}]} : q{$data->{ns}}),
-      ($LANG eq 'HTML' ? q{$data->{ns} == HTMLNS and $data->{local_name} eq 'template'} : q{defined $data->{ns} and $data->{ns} eq HTMLNS and $data->{local_name} eq 'template'}),
+      (pattern_to_code 'HTML:template', '$data'),
       $grep_popped_code, $grep_popped_code, $grep_popped_code;
   return $code;
 } # generate_dom_glue
@@ -4073,8 +4087,8 @@ sub generate_api ($) {
                       ns => HTMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
-                      et => $Element2Type->[HTMLNS]->{$node_ln} || $Element2Type->[HTMLNS]->{'*'},
-                      aet => $Element2Type->[HTMLNS]->{$node_ln} || $Element2Type->[HTMLNS]->{'*'}};
+                      et => %s->{$node_ln} || %s->{'*'},
+                      aet => %s->{$node_ln} || %s->{'*'}};
         } elsif ($node_ns eq 'http://www.w3.org/2000/svg') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -4082,8 +4096,8 @@ sub generate_api ($) {
                       ns => SVGNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
-                      et => $Element2Type->[SVGNS]->{$node_ln} || $Element2Type->[SVGNS]->{'*'},
-                      aet => $Element2Type->[SVGNS]->{$node_ln} || $Element2Type->[SVGNS]->{'*'}};
+                      et => %s->{$node_ln} || %s->{'*'},
+                      aet => %s->{$node_ln} || %s->{'*'}};
         } elsif ($node_ns eq 'http://www.w3.org/1998/Math/MathML') {
           $CONTEXT = {id => $NEXT_ID++,
                       #token => undef,
@@ -4091,8 +4105,8 @@ sub generate_api ($) {
                       ns => MATHMLNS,
                       local_name => $node_ln,
                       attr_list => {}, # not relevant
-                      et => $Element2Type->[MATHMLNS]->{$node_ln} || $Element2Type->[MATHMLNS]->{'*'},
-                      aet => $Element2Type->[MATHMLNS]->{$node_ln} || $Element2Type->[MATHMLNS]->{'*'}};
+                      et => %s->{$node_ln} || %s->{'*'},
+                      aet => %s->{$node_ln} || %s->{'*'}};
           if ($node_ln eq 'annotation-xml') {
             my $encoding = $context->get_attribute_ns (undef, 'encoding');
             if (defined $encoding) {
@@ -4129,7 +4143,7 @@ sub generate_api ($) {
                  ns => HTMLNS,
                  local_name => 'html',
                  attr_list => {},
-                 et => $Element2Type->[HTMLNS]->{html},
+                 et => %s->{html},
                  aet => $CONTEXT->{aet}});
 
         ## 4.5.
@@ -4157,8 +4171,8 @@ sub generate_api ($) {
                                ns => HTMLNS,
                                local_name => 'form',
                                attr_list => {}, # not relevant
-                               et => $Element2Type->[HTMLNS]->{form},
-                               aet => $Element2Type->[HTMLNS]->{form}};
+                               et => %s->{form},
+                               aet => %s->{form}};
             }
             last;
           }
@@ -4178,7 +4192,12 @@ sub generate_api ($) {
       ## 7.
       return defined $context ? $root->child_nodes : $doc->child_nodes;
     } # parse_char_string_with_context
-  } if $LANG eq 'HTML';
+  },
+    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS',
+    E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS', E2Tns 'SVGNS',
+    E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS', E2Tns 'MATHMLNS',
+    E2Tns 'HTMLNS', E2Tns 'HTMLNS', E2Tns 'HTMLNS',
+  if $LANG eq 'HTML';
   # XXX XML
 
   push @sub_code, sprintf q{
