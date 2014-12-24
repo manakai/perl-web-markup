@@ -668,6 +668,7 @@ sub serialize_actions ($;%) {
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         };
       }
@@ -942,7 +943,7 @@ sub serialize_actions ($;%) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => %d}];
                   $TempIndex += length $Temp;
@@ -1027,13 +1028,80 @@ sub serialize_actions ($;%) {
                 if $Temp =~ /;\z/;
           } # REF
         }, !!$_->{in_default_attr}, !!$_->{before_equals};
-        $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
-        $return = '1 if $return';
       } elsif ($_->{in_entity_value}) { ## XML only
         die;
       } else { # in content
         push @result, q{
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+                # XXX
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -1050,6 +1118,36 @@ sub serialize_actions ($;%) {
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -1062,6 +1160,8 @@ sub serialize_actions ($;%) {
         # XXX  return 1 if XXX;
         };
       }
+      $return = '1 if $return';
+      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
     } elsif ($type eq 'validate-temp-as-entref') {
       push @result, q{}; # XXXxml validate $Temp as XML entref
 
@@ -3821,6 +3921,8 @@ sub dom_tree ($$) {
 
     } elsif ($op->[0] eq 'append') {
       $nodes->[$op->[2]]->append_child ($nodes->[$op->[1]]);
+    } elsif ($op->[0] eq 'append-by-list') {
+      $nodes->[$op->[2]]->append_child ($_) for $op->[1]->to_list;
     } elsif ($op->[0] eq 'append-foster') {
       my $next_sibling = $nodes->[$op->[2]];
       my $parent = $next_sibling->parent_node;
@@ -4092,19 +4194,22 @@ sub generate_api ($) {
 
           if (@$Callbacks or @$Errors) {
             VARS::SAVE;
+            {
+              my $Errors = $Errors;
+              my $Callbacks = $Callbacks;
 
-            $self->onerrors->($self, $Errors) if @$Errors;
-            for my $cb (@$Callbacks) {
-              $cb->[0]->($self, $cb->[1]);
+              $self->onerrors->($self, $Errors) if @$Errors;
+              @$Errors = ();
+              for my $cb (@$Callbacks) {
+                $cb->[0]->($self, $cb->[1]);
+              }
+              @$Callbacks = ();
+
+              if ($self->{restart}) {
+                delete $self->{restart};
+                return 0;
+              }
             }
-            @$Errors = ();
-            @$Callbacks = ();
-
-            if ($self->{restart}) {
-              delete $self->{restart};
-              return 0;
-            }
-
             VARS::RESTORE;
           }
 
@@ -4622,14 +4727,14 @@ sub generate_api ($) {
   push @sub_code, q{
 
 {
-  package XXX::SubParser;
+  package XXX::AttrEntityParser;
   push our @ISA, qw(Web::XML::Parser);
 
-  sub parse ($$$%) {
-    my ($self, $main, undef, %args) = @_;
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
 
-    my $doc = $self->{document} = $main->{document};
-    for (qw(IframeSrcdoc onerror onerrors)) {
+    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
+    for (qw(onerror onerrors)) {
       $self->{$_} = $main->{$_};
     }
 
@@ -4640,7 +4745,7 @@ sub generate_api ($) {
     $Confident = 1; # irrelevant
     {
       package Web::XML::Parser;
-      if ($args{in_default_attr}) {
+      if ($in->{in_default_attr}) {
         SWITCH_STATE ("default attribute value in entity state");
       } else {
         SWITCH_STATE ("attribute value in entity state");
@@ -4648,7 +4753,7 @@ sub generate_api ($) {
       $IM = IM ("initial");
     }
 
-    $self->{input_stream} = [@{$_[2]}];
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = @$dids;
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
@@ -4665,6 +4770,57 @@ sub generate_api ($) {
   sub _construct_tree ($) {
     #
   } # _construct_tree
+}
+
+{
+  package XXX::ContentEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
+    for (qw(onerror onerrors)) {
+      $self->{$_} = $main->{$_};
+    }
+
+    $self->{nodes} = [$doc];
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("data state");
+      $IM = IM ("in element");
+    }
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    my $root = $doc->create_element_ns (undef, 'dummy');
+    @$OE = ({id => $NEXT_ID++,
+             #token => undef,
+             #di => $token->{di}, index => $token->{index},
+             ns => undef,
+             local_name => 'dummy',
+             attr_list => {},
+             nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             et => 0,
+             aet => 0});
+    $self->{nodes}->[$OE->[-1]->{id}] = $root;
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+
+    $self->_cleanup_states;
+
+    return $root->child_nodes;
+  } # parse
 }
 
   } if $LANG eq 'XML';
@@ -4771,11 +4927,18 @@ sub onscript ($;$) {
   return $_[0]->{onscript} || sub { };
 } # onscript
 
-my $OnGERefInAttr = sub {
-  my $sub = XXX::SubParser->new;
-  local $_[1]->{entity}->{open} = 1;
-  $sub->parse ($_[0], $_[1]->{entity}->{value}, in_default_attr => $_[1]->{in_default_attr});
-};
+my $OnAttrEntityReference = sub {
+  my $sub = XXX::AttrEntityParser->new;
+  local $_[1]->{entity}->{open} = 1; # XXXlocal
+  $sub->parse ($_[0], $_[1]);
+}; # $OnAttrEntityReference
+
+my $OnContentEntityReference = sub {
+  my $sub = XXX::ContentEntityParser->new;
+  local $_[1]->{entity}->{open} = 1; # XXXlocal
+  my $nodes = $sub->parse ($_[0], $_[1]);
+  push @{$_[1]->{ops}}, ['append-by-list', $nodes => $_[1]->{current_node_id}];
+}; # $OnContentEntityReference
 
 sub onelementspopped ($;$) {
   if (@_ > 1) {

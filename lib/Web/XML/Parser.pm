@@ -84,44 +84,18 @@ sub onscript ($;$) {
   return $_[0]->{onscript} || sub { };
 } # onscript
 
+my $OnAttrEntityReference = sub {
+  my $sub = XXX::AttrEntityParser->new;
+  local $_[1]->{entity}->{open} = 1; # XXXlocal
+  $sub->parse ($_[0], $_[1]);
+}; # $OnAttrEntityReference
 
-my $OnGERefInAttr = sub {
-  my $sub = XXX::SubParser->new;
-  local $_[1]->{entity}->{open} = 1;
-  $sub->parse ($_[0], $_[1]->{entity}->{value}, in_default_attr => $_[1]->{in_default_attr});
-};
-
-=pod
-
-    ## If the entity value contains a "&" character...
-    my $context = $self->{document}->create_element_ns (undef, 'dummy');
-
-    my $map_parsed = create_pos_lc_map $self->{ge}->{$name}->{value};
-    my $map_source = $self->{ge}->{$name}->{sps} || [];
-
-    ## XXX don't invoke tree construction phase, but only use tokenizer
-    my $doc = $self->{document}->implementation->create_document;
-    my $parser = (ref $self)->new;
-    $parser->{tokenizer_initial_state} = ATTR_VALUE_ENTITY_STATE;
-    $parser->onerror (sub {
-      my %args = @_;
-      lc_lc_mapper $map_parsed => $map_source, \%args;
-      $self->onerror->(%args);
-    });
-    $parser->{ge} = $self->{ge};
-    local $parser->{ge}->{$name}->{open} = 1;
-    my $list = $parser->parse_char_string_with_context
-        ($self->{ge}->{$name}->{value}, $context, $doc);
-    for (@$list) {
-      my $sps = combined_sps $_->get_user_data ('manakai_sps') || [],
-          $map_parsed => $map_source;
-      push @{$ca->{sps}}, @{sps_with_offset $sps, length $ca->{value}};
-    }
-    $ca->{value} .= join '', map { $_->text_content } @$list;
-
-=cut
-
-
+my $OnContentEntityReference = sub {
+  my $sub = XXX::ContentEntityParser->new;
+  local $_[1]->{entity}->{open} = 1; # XXXlocal
+  my $nodes = $sub->parse ($_[0], $_[1]);
+  push @{$_[1]->{ops}}, ['append-by-list', $nodes => $_[1]->{current_node_id}];
+}; # $OnContentEntityReference
 
 sub onelementspopped ($;$) {
   if (@_ > 1) {
@@ -13152,6 +13126,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -13270,6 +13245,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -14443,6 +14419,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -15070,7 +15047,7 @@ if ($Input =~ /\G([\])/gcs) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -15212,7 +15189,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -15352,7 +15329,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -15497,7 +15474,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -15637,7 +15614,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -15782,7 +15759,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -15927,7 +15904,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -16069,7 +16046,7 @@ if ($EOF) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -16929,7 +16906,7 @@ if ($Input =~ /\G([\])/gcs) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -17071,7 +17048,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -17213,7 +17190,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -17356,7 +17333,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -17496,7 +17473,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -17641,7 +17618,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -17786,7 +17763,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -17928,7 +17905,7 @@ if ($EOF) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -18272,6 +18249,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -18461,6 +18439,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -18821,6 +18800,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -19235,6 +19215,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -19389,7 +19370,7 @@ if ($Input =~ /\G([\	\\ \
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -19529,7 +19510,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -19669,7 +19650,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -19814,7 +19795,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -19954,7 +19935,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -20078,6 +20059,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 return 1 if $return;
@@ -20137,7 +20119,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -20282,7 +20264,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -20427,7 +20409,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -20572,7 +20554,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -20717,7 +20699,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -20862,7 +20844,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -21007,7 +20989,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -21149,7 +21131,7 @@ if ($EOF) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -21391,6 +21373,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -21496,6 +21479,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -21627,6 +21611,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -22185,7 +22170,7 @@ if ($Input =~ /\G([\])/gcs) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -22327,7 +22312,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -22472,7 +22457,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -22612,7 +22597,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -22757,7 +22742,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -22902,7 +22887,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -23044,7 +23029,7 @@ if ($EOF) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 0}];
                   $TempIndex += length $Temp;
@@ -24561,6 +24546,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -24795,6 +24781,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -24866,6 +24853,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -25033,6 +25021,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25105,6 +25094,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25175,6 +25165,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25245,6 +25236,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25437,6 +25429,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -25539,6 +25532,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25608,6 +25602,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -25679,6 +25674,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25748,6 +25744,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -25817,6 +25814,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25884,6 +25882,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -25951,6 +25950,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26020,6 +26020,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26145,6 +26146,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -26210,6 +26212,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26278,6 +26281,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26346,6 +26350,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26412,6 +26417,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26478,6 +26484,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26544,6 +26551,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -26608,6 +26616,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26672,6 +26681,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -26734,6 +26744,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26797,6 +26808,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
@@ -26858,6 +26870,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G\/\>/gcs) {
@@ -26901,6 +26914,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G\>/gcs) {
@@ -26942,6 +26956,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\	\\ \
@@ -26987,6 +27002,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -27145,6 +27161,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\`])/gcs) {
@@ -28934,7 +28951,75 @@ return 0;
 $StateActions->[DATA_STATE___CHARREF_NAME_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -28951,6 +29036,36 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -28975,9 +29090,78 @@ if ($Input =~ /\G([\])/gcs) {
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 0};
         
 $State = DATA_STATE_CR;
+return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -28994,6 +29178,36 @@ $State = DATA_STATE_CR;
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29012,12 +29226,81 @@ $State = DATA_STATE_CR;
                         index => $TempIndex} if length $Temp;
       
 $State = CHARREF_IN_DATA_STATE;
+return 1 if $return;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -29034,6 +29317,36 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29052,9 +29365,78 @@ $Temp .= $1;
                         index => $TempIndex} if length $Temp;
       
 $State = DATA_STATE;
+return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -29071,6 +29453,36 @@ $State = DATA_STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29090,9 +29502,78 @@ $State = DATA_STATE;
       
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
+return 1 if $return;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -29109,6 +29590,36 @@ $AnchoredIndex = $Offset + (pos $Input) - 1;
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29132,11 +29643,80 @@ $State = DATA_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
+return 1 if $return;
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -29153,6 +29733,36 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29176,11 +29786,80 @@ $State = IN_MSC_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
+return 1 if $return;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -29197,6 +29876,36 @@ $Temp .= $1;
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29224,9 +29933,78 @@ $State = DATA_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
+return 1 if $return;
 } elsif ($Input =~ /\G(.)/gcs) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -29243,6 +30021,36 @@ $State = DATA_STATE;
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29266,10 +30074,79 @@ $State = DATA_STATE;
                           value => $1,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
+return 1 if $return;
 } else {
 if ($EOF) {
 
+          my $return;
           REF: {
+            ## <XML>
+
+            unless (@$OE) {
+              push @$Errors, {level => 'm',
+                              type => 'ref outside of root element',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              $TempIndex += length $Temp;
+              $Temp = '';
+              last REF;
+            }
+
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+
+                ## A variant of |emit-temp|
+                push @$Tokens, {type => TEXT_TOKEN, tn => 0,
+                                value => $_->[0],
+                                di => $_->[1], index => $_->[2]}
+                    for @{$ent->{value}};
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                # XXX IndexedString mapping
+                push @$Callbacks, [$OnContentEntityReference,
+                                   {entity => $ent,
+                                    current_node_id => $OE->[-1]->{id},
+                                    ops => $OP}];
+                $TempIndex += length $Temp;
+                $Temp = '';
+                $return = 1;
+              } else {
+                ## External parsed entity
+
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -29286,6 +30163,36 @@ if ($EOF) {
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 substr ($Temp, 0, $_) = $value;
                 last REF;
               }
@@ -29310,6 +30217,7 @@ $State = DATA_STATE;
                         index => $Offset + pos $Input};
         return 1;
       
+return 1 if $return;
 } else {
 return 1;
 }
@@ -30348,7 +31256,7 @@ if ($Input =~ /\G([\])/gcs) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -30490,7 +31398,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -30630,7 +31538,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -30775,7 +31683,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -30915,7 +31823,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -31060,7 +31968,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -31205,7 +32113,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -31347,7 +32255,7 @@ if ($EOF) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -32263,7 +33171,7 @@ if ($Input =~ /\G([\])/gcs) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -32405,7 +33313,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -32547,7 +33455,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -32690,7 +33598,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -32830,7 +33738,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -32975,7 +33883,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -33120,7 +34028,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -33262,7 +34170,7 @@ if ($EOF) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -34075,7 +34983,7 @@ if ($Input =~ /\G([\])/gcs) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -34217,7 +35125,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -34362,7 +35270,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -34502,7 +35410,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -34647,7 +35555,7 @@ $Temp .= $1;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -34792,7 +35700,7 @@ return 1 if $return;
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -34934,7 +35842,7 @@ if ($EOF) {
                   last REF;
                 } else {
                   # XXX IndexedString mapping
-                  push @$Callbacks, [$OnGERefInAttr,
+                  push @$Callbacks, [$OnAttrEntityReference,
                                      {entity => $ent,
                                       in_default_attr => 1}];
                   $TempIndex += length $Temp;
@@ -35279,6 +36187,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -37293,6 +38202,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -37466,6 +38376,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -38008,6 +38919,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G([^\ \	\
@@ -38058,6 +38970,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)([^\\]])([^\\]]*)/gcs) {
@@ -38146,6 +39059,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)\/gcs) {
@@ -38281,6 +39195,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G\?([^\ \	\
@@ -38549,6 +39464,7 @@ push @$Tokens, $Token;
             undef $InForeign;
             $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
             return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
           }
         
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -38685,6 +39601,8 @@ sub dom_tree ($$) {
 
     } elsif ($op->[0] eq 'append') {
       $nodes->[$op->[2]]->append_child ($nodes->[$op->[1]]);
+    } elsif ($op->[0] eq 'append-by-list') {
+      $nodes->[$op->[2]]->append_child ($_) for $op->[1]->to_list;
     } elsif ($op->[0] eq 'append-foster') {
       my $next_sibling = $nodes->[$op->[2]];
       my $parent = $next_sibling->parent_node;
@@ -38875,19 +39793,22 @@ sub dom_tree ($$) {
 
           if (@$Callbacks or @$Errors) {
             $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+            {
+              my $Errors = $Errors;
+              my $Callbacks = $Callbacks;
 
-            $self->onerrors->($self, $Errors) if @$Errors;
-            for my $cb (@$Callbacks) {
-              $cb->[0]->($self, $cb->[1]);
+              $self->onerrors->($self, $Errors) if @$Errors;
+              @$Errors = ();
+              for my $cb (@$Callbacks) {
+                $cb->[0]->($self, $cb->[1]);
+              }
+              @$Callbacks = ();
+
+              if ($self->{restart}) {
+                delete $self->{restart};
+                return 0;
+              }
             }
-            @$Errors = ();
-            @$Callbacks = ();
-
-            if ($self->{restart}) {
-              delete $self->{restart};
-              return 0;
-            }
-
             ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
@@ -39267,14 +40188,14 @@ $Scripting = $self->{Scripting};
 
 
 {
-  package XXX::SubParser;
+  package XXX::AttrEntityParser;
   push our @ISA, qw(Web::XML::Parser);
 
-  sub parse ($$$%) {
-    my ($self, $main, undef, %args) = @_;
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
 
-    my $doc = $self->{document} = $main->{document};
-    for (qw(IframeSrcdoc onerror onerrors)) {
+    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
+    for (qw(onerror onerrors)) {
       $self->{$_} = $main->{$_};
     }
 
@@ -39291,7 +40212,7 @@ $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
     {
       package Web::XML::Parser;
-      if ($args{in_default_attr}) {
+      if ($in->{in_default_attr}) {
         $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;;
       } else {
         $State = ATTR_VALUE_IN_ENTITY_STATE;;
@@ -39299,7 +40220,7 @@ $Scripting = $self->{Scripting};
       $IM = INITIAL_IM;
     }
 
-    $self->{input_stream} = [@{$_[2]}];
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
     $DI = $self->{di} = @$dids;
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
@@ -39316,6 +40237,63 @@ $Scripting = $self->{Scripting};
   sub _construct_tree ($) {
     #
   } # _construct_tree
+}
+
+{
+  package XXX::ContentEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
+    for (qw(onerror onerrors)) {
+      $self->{$_} = $main->{$_};
+    }
+
+    $self->{nodes} = [$doc];
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    $FRAMESET_OK = 1;
+$NEXT_ID = 1;
+$Offset = 0;
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
+    $IframeSrcdoc = $self->{IframeSrcdoc};
+$Scripting = $self->{Scripting};
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      $State = DATA_STATE;;
+      $IM = IN_ELEMENT_IM;
+    }
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    my $root = $doc->create_element_ns (undef, 'dummy');
+    @$OE = ({id => $NEXT_ID++,
+             #token => undef,
+             #di => $token->{di}, index => $token->{index},
+             ns => undef,
+             local_name => 'dummy',
+             attr_list => {},
+             nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             et => 0,
+             aet => 0});
+    $self->{nodes}->[$OE->[-1]->{id}] = $root;
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+
+    $self->_cleanup_states;
+
+    return $root->child_nodes;
+  } # parse
 }
 
   
