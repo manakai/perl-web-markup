@@ -519,6 +519,7 @@ sub serialize_actions ($;%) {
   ## Generate |return 1| to abort tokenizer, |return 0| to abort
   ## current steps.
   my @result;
+  my $return;
   my $reconsume;
   for (@{$acts->{actions}}) {
     my $type = $_->{type};
@@ -550,7 +551,17 @@ sub serialize_actions ($;%) {
       }
     } elsif ($type eq 'switch') {
       if (not defined $_->{if}) {
-        push @result, switch_state_code $_->{state};
+        if (defined $_->{dtd_state}) {
+          push @result, sprintf q{
+            if ($DTDMode eq 'N/A') {
+              %s
+            } else {
+              %s
+            }
+          }, switch_state_code $_->{state}, switch_state_code $_->{dtd_state};
+        } else {
+          push @result, switch_state_code $_->{state};
+        }
       } elsif ($_->{if} eq 'appropriate end tag') {
         die unless $_->{break};
         push @result, sprintf q[
@@ -660,6 +671,9 @@ sub serialize_actions ($;%) {
           }
         };
       }
+      if ($_->{possible_token_types}->{'ENTITY token'}) {
+        $return = q{1 if $Token->{type} == ENTITY_TOKEN};
+      }
     } elsif ($type eq 'emit-eof') {
       push @result, q{
         push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
@@ -734,7 +748,16 @@ sub serialize_actions ($;%) {
           }
         }
       } elsif ($type eq 'append') {
-        push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
+        if ($field eq 'value') {
+          # IndexedString
+          if (defined $_->{capture_index}) {
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + $-[%d]];], $field, $value, $_->{capture_index};
+          } else {
+            push @result, sprintf q[push @{$Token->{q<%s>}}, [%s, $DI, $Offset + (pos $Input) - length $1];], $field, $value;
+          }
+        } else {
+          push @result, sprintf q[$Token->{q<%s>} .= %s;], $field, $value;
+        }
       } elsif ($type eq 'append-to-attr') {
         if ($field eq 'value') {
           # IndexedString
@@ -790,7 +813,11 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'set-empty') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      push @result, sprintf q[$Token->{q<%s>} = '';], $field;
+      if ($field eq 'value') {
+        push @result, sprintf q[$Token->{q<%s>} = [['', $DI, $Offset + pos $Input]];], $field; # IndexedString
+      } else {
+        push @result, sprintf q[$Token->{q<%s>} = '';], $field;
+      }
     } elsif ($type eq 'set-empty-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
@@ -807,12 +834,16 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'append-temp') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
-      push @result, sprintf q[$Token->{q<%s>} .= $Temp;], $field;
+      if ($field eq 'value') {
+        push @result, sprintf q[push @{$Token->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field; # IndexedString
+      } else {
+        push @result, sprintf q[$Token->{q<%s>} .= $Temp;], $field;
+      }
     } elsif ($type eq 'append-temp-to-attr') {
       my $field = $_->{field};
       $field =~ tr/ -/__/ if defined $field;
       if ($field eq 'value') {
-        push @result, sprintf q[push @{$Attr->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field;
+        push @result, sprintf q[push @{$Attr->{q<%s>}}, [$Temp, $DI, $TempIndex];], $field; # IndexedString
       } else {
         push @result, sprintf q[$Attr->{q<%s>} .= $Temp;], $field;
       }
@@ -861,7 +892,74 @@ sub serialize_actions ($;%) {
     } elsif ($type eq 'process-temp-as-named') {
       if ($_->{in_attr}) {
         push @result, sprintf q{
+          my $return;
           REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if ($ent->{only_text}) {
+                ## Internal entity with no "&" or "<"
+                my $value = $ent->{value}; # XXX IndexedString
+                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
+                
+                ## A variant of |append-to-attr|
+                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
+                $TempIndex += length $Temp;
+                $Temp = '';
+                last REF;
+              } elsif (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnGERefInAttr,
+                                     {entity => $ent,
+                                      in_default_attr => %d}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
             for (reverse (2 .. length $Temp)) {
               my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
               if (defined $value) {
@@ -887,6 +985,36 @@ sub serialize_actions ($;%) {
                   $TempIndex += $_;
                   $value = '';
                 }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
                 $Attr->{has_ref} = 1;
                 substr ($Temp, 0, $_) = $value;
                 last REF;
@@ -898,7 +1026,11 @@ sub serialize_actions ($;%) {
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
           } # REF
-        }, !!$_->{before_equals};
+        }, !!$_->{in_default_attr}, !!$_->{before_equals};
+        $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
+        $return = '1 if $return';
+      } elsif ($_->{in_entity_value}) { ## XML only
+        die;
       } else { # in content
         push @result, q{
           REF: {
@@ -927,8 +1059,11 @@ sub serialize_actions ($;%) {
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
           } # REF
+        # XXX  return 1 if XXX;
         };
       }
+    } elsif ($type eq 'validate-temp-as-entref') {
+      push @result, q{}; # XXXxml validate $Temp as XML entref
 
     } elsif ($type eq 'set-DTD-mode') {
       push @result, sprintf q{$DTDMode = q{%s};}, $_->{value};
@@ -1000,6 +1135,9 @@ sub serialize_actions ($;%) {
     }
   }
   push @result, q[pos ($Input)--;] if $reconsume;
+  if (defined $return) {
+    push @result, qq{return $return;};
+  }
   return join '', map { $_ . "\n" } @result;
 } # serialize_actions
 
@@ -2813,7 +2951,7 @@ sub actions_to_code ($;%) {
                                 di => $DI, index => $Offset + pos $Input};
               }
 
-              $DTDDefs->{ge}->{$token->{name}.';'} = {
+              $DTDDefs->{ge}->{'&'.$token->{name}.';'} = {
                 name => $token->{name},
                 value => {
                   amp => '&',
@@ -2824,7 +2962,7 @@ sub actions_to_code ($;%) {
                 }->{$token->{name}},
                 only_text => 1,
               };
-            } elsif (not $DTDDefs->{ge}->{$token->{name}.';'}) {
+            } elsif (not $DTDDefs->{ge}->{'&'.$token->{name}.';'}) {
               my $is_external = not $DTDMode eq 'internal subset';
                            #XXXnot ($self->{in_subset}->{internal_subset} and
                               #not $self->{in_subset}->{param_entity});
@@ -2836,9 +2974,9 @@ sub actions_to_code ($;%) {
               #(name => $self->{t}->{name},
               #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
-              $DTDDefs->{ge}->{$token->{name}.';'} = $token;
-              if (defined $token->{value} and # XXX IndexedString
-                  $token->{value} !~ /[&<]/) {
+              $DTDDefs->{ge}->{'&'.$token->{name}.';'} = $token;
+              if (defined $token->{value} and # IndexedString
+                  not join ('', map { $_->[0] } @{$token->{value}}) =~ /[&<]/) {
                 $token->{only_text} = 1;
               }
               $token->{external} = {} if $is_external;
@@ -3909,6 +4047,9 @@ sub generate_api ($) {
     push @restore_code, sprintf q{(%s) = @{$self->{saved_lists}}{qw(%s)};},
         (join ', ', map { sprintf q{$%s}, $_ } @list_var),
         (join ' ', @list_var);
+    push @restore_code, sprintf q{(%s) = @{$self->{saved_maps}}{qw(%s)};},
+        (join ', ', map { sprintf q{$%s}, $_ } @map_var),
+        (join ' ', @map_var);
     $vars_codes->{RESTORE} = join "\n", @restore_code;
   }
 
@@ -3979,6 +4120,7 @@ sub generate_api ($) {
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
+#XXXxml
       while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
         my $index = $-[0];
         my $char = ord substr $input->[0], $index, 1;
@@ -4476,6 +4618,57 @@ sub generate_api ($) {
       return;
     } # parse_bytes_end
   };
+
+  push @sub_code, q{
+
+{
+  package XXX::SubParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$%) {
+    my ($self, $main, undef, %args) = @_;
+
+    my $doc = $self->{document} = $main->{document};
+    for (qw(IframeSrcdoc onerror onerrors)) {
+      $self->{$_} = $main->{$_};
+    }
+
+    $self->{nodes} = [$doc];
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      if ($args{in_default_attr}) {
+        SWITCH_STATE ("default attribute value in entity state");
+      } else {
+        SWITCH_STATE ("attribute value in entity state");
+      }
+      $IM = IM ("initial");
+    }
+
+    $self->{input_stream} = [@{$_[2]}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $Attr = $main->{saved_states}->{Attr};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+
+    $self->_cleanup_states;
+  } # parse
+
+  sub _construct_tree ($) {
+    #
+  } # _construct_tree
+}
+
+  } if $LANG eq 'XML';
+
   for (@sub_code) {
     s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
     s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
@@ -4543,7 +4736,8 @@ our $DefaultErrorHandler = sub {
     s => 'SHOULD-level error',
     w => 'Warning',
   }->{$error->{level} || ''} || $error->{level};
-  warn "$level ($error->{type}$text) at index $index$value\n";
+  my $di = defined $error->{di} && $error->{di} != 1 ? "document #$error->{di} " : '';
+  warn "$level ($error->{type}$text) at ${di}index $index$value\n";
 }; # $DefaultErrorHandler
 
 sub onerror ($;$) {
@@ -4576,6 +4770,12 @@ sub onscript ($;$) {
   }
   return $_[0]->{onscript} || sub { };
 } # onscript
+
+my $OnGERefInAttr = sub {
+  my $sub = XXX::SubParser->new;
+  local $_[1]->{entity}->{open} = 1;
+  $sub->parse ($_[0], $_[1]->{entity}->{value}, in_default_attr => $_[1]->{in_default_attr});
+};
 
 sub onelementspopped ($;$) {
   if (@_ > 1) {
