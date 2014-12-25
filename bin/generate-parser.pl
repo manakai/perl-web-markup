@@ -1152,7 +1152,6 @@ sub serialize_actions ($;%) {
                             di => $DI, index => $TempIndex}
                 if $Temp =~ /;\z/;
           } # REF
-        # XXX  return 1 if XXX;
         };
       }
       $return = '1 if $return';
@@ -4198,10 +4197,10 @@ sub generate_api ($) {
 
               $self->onerrors->($self, $Errors) if @$Errors;
               @$Errors = ();
-              for my $cb (@$Callbacks) {
+              while (@$Callbacks) {
+                my $cb = shift @$Callbacks;
                 $cb->[0]->($self, $cb->[1]);
               }
-              @$Callbacks = ();
 
               if ($self->{restart}) {
                 delete $self->{restart};
@@ -4753,10 +4752,14 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref)) {
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
@@ -4795,10 +4798,14 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref)) {
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
@@ -4863,10 +4870,14 @@ sub generate_api ($) {
     my $doc = $self->{document} = $main->{document}->implementation->create_document;
     $doc->manakai_is_html ($main->{document}->manakai_is_html);
     $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
-    for (qw(onerror onerrors onextentref)) {
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
       $self->{$_} = $main->{$_};
     }
     $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
 
     $self->{input_stream} = [];
     $self->{di_data_set} = my $dids = $main->di_data_set;
@@ -5022,32 +5033,88 @@ sub onextentref ($;$) {
   };
 } # onextentref
 
+sub max_entity_depth ($;$) {
+  if (@_ > 1) {
+    $_[0]->{max_entity_depth} = $_[1];
+  }
+  return $_[0]->{max_entity_depth} || 10;
+} # max_entity_depth
+
+sub max_entity_expansions ($;$) {
+  if (@_ > 1) {
+    return $_[0]->{max_entity_expansions} = $_[1];
+  }
+  return $_[0]->{max_entity_expansions} || 1000;
+} # max_entity_expansions
+
 my $OnAttrEntityReference = sub {
-  my $sub = XXX::AttrEntityParser->new;
-  local $_[1]->{entity}->{open} = 1; # XXXlocal
-  $sub->parse ($_[0], $_[1]);
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } else {
+    my $sub = XXX::AttrEntityParser->new;
+    local $data->{entity}->{open} = 1;
+    $sub->parse ($main, $data);
+  }
 }; # $OnAttrEntityReference
 
 my $OnContentEntityReference = sub {
   my ($main, $data) = @_;
-  my $sub = XXX::ContentEntityParser->new;
-  my $ops = $data->{ops};
-  my $parent_id = $data->{current_node_id};
-  $sub->onparsed (sub {
-    my $sub = $_[0];
-    my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
-    push @$ops, ['append-by-list', $nodes => $parent_id];
-    $data->{entity}->{open}--;
-    $main->{pause}--;
-    $main->_parse_sub_done;
-    undef $main;
-  });
-  $data->{entity}->{open}++;
-  $main->{pause}++;
-  if (defined $data->{entity}->{value}) { # internal
-    $sub->parse ($_[0], $_[1]);
-  } else { # external
-    $main->onextentref->($main, $data, $sub);
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } else {
+    my $sub = XXX::ContentEntityParser->new;
+    my $ops = $data->{ops};
+    my $parent_id = $data->{current_node_id};
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->onparsed (sub {
+        my $sub = $_[0];
+        my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
+        push @$ops, ['append-by-list', $nodes => $parent_id];
+        $data->{entity}->{open}--;
+        $main->{pause}--;
+        #$main->_parse_sub_done;
+        undef $main;
+      });
+      $sub->parse ($_[0], $_[1]);
+    } else { # external
+      $sub->onparsed (sub {
+        my $sub = $_[0];
+        my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
+        push @$ops, ['append-by-list', $nodes => $parent_id];
+        $data->{entity}->{open}--;
+        $main->{pause}--;
+        $main->_parse_sub_done;
+        undef $main;
+      });
+      $main->onextentref->($main, $data, $sub);
+    }
   }
 }; # $OnContentEntityReference
 

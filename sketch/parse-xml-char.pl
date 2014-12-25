@@ -42,12 +42,10 @@ if (1) {
   $parser->parse_char_string ((decode 'utf-8', $input) => $doc);
 }
 print "Method done\n";
-  $subs->[0]->parse_bytes_feed ('(0);');
-  $subs->[0]->parse_bytes_end;
-  $subs->[1]->parse_bytes_feed ('(1);');
-  $subs->[1]->parse_bytes_end;
-  $subs->[2]->parse_bytes_feed ('(2);');
-  $subs->[2]->parse_bytes_end;
+for (0..$#$subs) {
+  $subs->[$_]->parse_bytes_feed ('('.$_.');');
+  $subs->[$_]->parse_bytes_end;
+}
 
 use Data::Dumper;
 warn Dumper +{xml_version => $doc->xml_version,
