@@ -20,12 +20,14 @@ if (defined $input) {
   $input = <>;
 }
 
+my $subs = [];
 $parser->onextentref (sub {
   my ($self, $data, $sub) = @_;
   $sub->parse_bytes_start (undef, $self);
   $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
   $sub->parse_bytes_feed ('(' . $data->{entity}->{name} . ')');
-  $sub->parse_bytes_end;
+  $sub->parse_bytes_feed ('&aa;') if $data->{entity}->{name} eq 'bb';
+push @$subs, $sub;
 });
 
 $parser->onparsed (sub {
@@ -40,6 +42,12 @@ if (1) {
   $parser->parse_char_string ((decode 'utf-8', $input) => $doc);
 }
 print "Method done\n";
+  $subs->[0]->parse_bytes_feed ('(0);');
+  $subs->[0]->parse_bytes_end;
+  $subs->[1]->parse_bytes_feed ('(1);');
+  $subs->[1]->parse_bytes_end;
+  $subs->[2]->parse_bytes_feed ('(2);');
+  $subs->[2]->parse_bytes_end;
 
 use Data::Dumper;
 warn Dumper +{xml_version => $doc->xml_version,

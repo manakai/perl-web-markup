@@ -2796,17 +2796,17 @@ sub actions_to_code ($;%) {
           my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
-          push @$OP, ['xml-version', $v];
-          # XXX if text declaration
-          #unless ($v eq '1.0') {
-          #  push @$Errors, {type => 'bad XML version', # XXX
-          #                  level => 'm',
-          #                  di => $DI, index => $p};
-          #}
-        } else { # XXXif XML declaration (not text declaration)
-          push @$Errors, {level => 'm',
-                          type => 'attribute missing:version',
-                          di => $DI, index => $pos};
+          if (defined $CONTEXT) { # text declaration
+            # XXX hidden XML version validation
+          } else { # XML declaration
+            push @$OP, ['xml-version', $v];
+          }
+        } else {
+          if (not defined $CONTEXT) { # XML declaration
+            push @$Errors, {level => 'm',
+                            type => 'attribute missing:version',
+                            di => $DI, index => $pos};
+          }
         }
 
         if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
@@ -2820,18 +2820,20 @@ sub actions_to_code ($;%) {
           }
           $pos += $+[0] - $-[0];
           $req_sp = not length $3;
+          if (defined $CONTEXT) { # text declaration
           #XXX$self->_sc->check_hidden_encoding
           #      (name => $v, onerror => sub {
           #         $onerror->(token => $self->{t}, %$p, @_);
           #       });
-          if (1) { # XXX XML declaration (not text declaration)
+          } else { # XML declaration
             push @$OP, ['xml-encoding', $v];
           }
-        } elsif (0) { # XXX text declaration
-          ## A text declaration
-          push @$Errors, {level => 'm',
-                          type => 'attribute missing:encoding',
-                          di => $DI, index => $pos};
+        } else {
+          if (defined $CONTEXT) { # text declaration
+            push @$Errors, {level => 'm',
+                            type => 'attribute missing:encoding',
+                            di => $DI, index => $pos};
+          }
         }
 
         if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
@@ -2843,12 +2845,12 @@ sub actions_to_code ($;%) {
                             di => $DI, index => $pos};
           }
           if ($v eq 'yes' or $v eq 'no') {
-            if (1) { # XXX XML declaration (not text declaration)
-              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
-            } else {
+            if (defined $CONTEXT) { # text declaration
               push @$Errors, {level => 'm',
                               type => 'attribute not allowed:standalone',
                               di => $DI, index => $pos};
+            } else {
+              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
             }
           } else {
             my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
@@ -4154,6 +4156,7 @@ sub generate_api ($) {
   push @sub_code, sprintf q{
     sub _run ($) {
       my ($self) = @_;
+      return 1 if $self->{pause};
       my $is = $self->{input_stream};
       # XXX rewrite loop conditions
       my $length = @$is == 0 ? 0 : defined $is->[0]->[0] ? length $is->[0]->[0] : 0;
@@ -4204,6 +4207,13 @@ sub generate_api ($) {
                 delete $self->{restart};
                 return 0;
               }
+
+              if ($self->{pause}) {
+                my $pos = pos $Input;
+                $is->[0] = [substr $is->[0]->[0], $in_offset + $pos];
+                $Offset += $pos;
+                return 1;
+              }
             }
             VARS::RESTORE;
           }
@@ -4216,6 +4226,7 @@ sub generate_api ($) {
       }
       if ($EOF) {
         $self->onparsed->($self);
+        $self->_cleanup_states;
       }
       return 1;
     } # _run
@@ -4280,7 +4291,6 @@ sub generate_api ($) {
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
 
-      $self->_cleanup_states;
       return;
     } # parse_char_string
   }, $LANG eq 'HTML';
@@ -4439,8 +4449,6 @@ sub generate_api ($) {
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
 
-      $self->_cleanup_states;
-
       ## 7.
       return defined $context ? $root->child_nodes : $doc->child_nodes;
     } # parse_char_string_with_context
@@ -4506,7 +4514,6 @@ sub generate_api ($) {
 
       $self->_feed_eof or die "Can't restart";
       
-      $self->_cleanup_states;
       return;
     } # parse_chars_end
 
@@ -4564,7 +4571,6 @@ sub generate_api ($) {
         $self->_feed_eof or redo PARSER;
       } # PARSER
 
-      $self->_cleanup_states;
       return;
     } # parse_byte_string
   }, $LANG eq 'HTML';
@@ -4717,7 +4723,6 @@ sub generate_api ($) {
         };
       } # PARSER
       
-      $self->_cleanup_states;
       return;
     } # parse_bytes_end
   };
@@ -4763,8 +4768,6 @@ sub generate_api ($) {
 
     $self->_run or die "Can't restart";
     $self->_feed_eof or die "Can't restart";
-
-    $self->_cleanup_states;
   } # parse
 
   sub _construct_tree ($) {
@@ -4814,12 +4817,10 @@ sub generate_api ($) {
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
              et => 0,
              aet => 0});
-    $self->{nodes}->[$OE->[-1]->{id}] = $root;
+    $self->{nodes}->[$CONTEXT = $OE->[-1]->{id}] = $root;
 
     $self->_run or die "Can't restart";
     $self->_feed_eof or die "Can't restart";
-
-    $self->_cleanup_states;
   } # parse
 
     sub parse_bytes_start ($$$) {
@@ -4859,8 +4860,10 @@ sub generate_api ($) {
       $IM = IM ("before content text declaration");
     }
 
-    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
-    for (qw(onerror onerrors)) {
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref)) {
       $self->{$_} = $main->{$_};
     }
     $self->{nodes} = [$doc];
@@ -4882,10 +4885,18 @@ sub generate_api ($) {
              nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
              et => 0,
              aet => 0});
-    $self->{nodes}->[$OE->[-1]->{id}] = $root;
+    $self->{nodes}->[$CONTEXT = $OE->[-1]->{id}] = $root;
   } # _parse_bytes_init
 }
 
+    sub _parse_sub_done ($) {
+      my $self = $_[0];
+      VARS::LOCAL;
+      VARS::RESET;
+      VARS::RESTORE;
+
+      $self->_run or die "Can't restart";
+    } # _parse_sub_done
   } if $LANG eq 'XML';
 
   for (@sub_code) {
@@ -4957,6 +4968,7 @@ our $DefaultErrorHandler = sub {
     m => 'Parse error',
     s => 'SHOULD-level error',
     w => 'Warning',
+    i => 'Information',
   }->{$error->{level} || ''} || $error->{level};
   my $di = defined $error->{di} && $error->{di} != 1 ? "document #$error->{di} " : '';
   warn "$level ($error->{type}$text) at ${di}index $index$value\n";
@@ -5001,7 +5013,7 @@ sub onextentref ($;$) {
     my ($self, $data, $sub) = @_;
     $self->onerrors->($self, [{level => 'i',
                                type => 'external entref',
-                               value => $data->{entity}->{name},
+                               value => '&'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
     $sub->parse_bytes_start (undef, $self);
@@ -5026,8 +5038,12 @@ my $OnContentEntityReference = sub {
     my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
     push @$ops, ['append-by-list', $nodes => $parent_id];
     $data->{entity}->{open}--;
+    $main->{pause}--;
+    $main->_parse_sub_done;
+    undef $main;
   });
   $data->{entity}->{open}++;
+  $main->{pause}++;
   if (defined $data->{entity}->{value}) { # internal
     $sub->parse ($_[0], $_[1]);
   } else { # external
@@ -5080,10 +5096,13 @@ sub onrestartwithencoding ($;$) {
       delete $self->{input_encoding};
       delete $self->{saved_states};
       delete $self->{saved_lists};
+      delete $self->{saved_maps};
       delete $self->{nodes};
       delete $self->{document};
       delete $self->{can_restart};
       delete $self->{restart};
+      delete $self->{pause};
+      delete $self->{main_parser};
     } # _cleanup_states
 
     ## ------ Common defs ------

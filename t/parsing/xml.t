@@ -164,29 +164,24 @@ ok 1;
     for (@{$test->{resource}}) {
       $res{defined $_->[1]->[0] ? $_->[1]->[0] : ''} = [++$i, $_->[0]];
     }
-#XXX
-#    $p->onextentref (sub {
-#      my ($parser, $ent, $subparser) = @_;
-#      my $e = $res{$ent->{entdef}->{sysid} || ''}; # XXX
-#      $subparser->di ($e->[0]) if defined $e;
-#      $subparser->parse_bytes_start ('utf-8');
-#      $subparser->parse_bytes_feed (encode 'utf-8', defined $e->[1] ? $e->[1] : '<?xml encoding="utf-8"?>'); # XXX
-#      $subparser->parse_bytes_end;
-#    });
-#    $p->onparsed (sub {
-#      test {
-#        $result = dumptree ($doc);
-#        $code->();
-#      } $c;
-#    });
+    $p->onextentref (sub {
+      my ($parser, $data, $subparser) = @_;
+      my $e = $res{$data->{entity}->{system_identifier} || ''}; # XXX
+      $subparser->di ($e->[0]) if defined $e;
+      $subparser->parse_bytes_start ('utf-8', $parser);
+      $subparser->parse_bytes_feed (encode 'utf-8', defined $e->[1] ? $e->[1] : '<?xml encoding="utf-8"?>'); # XXX
+      $subparser->parse_bytes_end;
+    });
+    $p->onparsed (sub {
+      test {
+        $result = dumptree ($doc);
+        $code->();
+      } $c;
+    });
 
     $p->parse_bytes_start (undef, $doc);
     $p->parse_bytes_feed (encode 'utf-8', $data);
     $p->parse_bytes_end;
-
-#XXX
-$result = dumptree ($doc);
-$code->();
   } elsif (not defined $test->{element}) {
     $p->parse_char_string ($data => $doc);
     $result = dumptree ($doc);
