@@ -20,9 +20,26 @@ if (defined $input) {
   $input = <>;
 }
 
+$parser->onextentref (sub {
+  my ($self, $data, $sub) = @_;
+  $sub->parse_bytes_start (undef, $self);
+  $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+  $sub->parse_bytes_feed ('(' . $data->{entity}->{name} . ')');
+  $sub->parse_bytes_end;
+});
+
+$parser->onparsed (sub {
+  print "Parsing done\n";
+});
 print "Parsing...\n";
-$parser->parse_char_string ((decode 'utf-8', $input) => $doc);
-print "Done\n";
+if (1) {
+  $parser->parse_chars_start ($doc);
+  $parser->parse_chars_feed (decode 'utf-8', $input);
+  $parser->parse_chars_end;
+} else {
+  $parser->parse_char_string ((decode 'utf-8', $input) => $doc);
+}
+print "Method done\n";
 
 use Data::Dumper;
 warn Dumper +{xml_version => $doc->xml_version,

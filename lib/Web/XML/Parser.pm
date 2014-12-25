@@ -84,6 +84,23 @@ sub onscript ($;$) {
   return $_[0]->{onscript} || sub { };
 } # onscript
 
+sub onextentref ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onextentref} = $_[1];
+  }
+  return $_[0]->{onextentref} || sub {
+    my ($self, $data, $sub) = @_;
+    $self->onerrors->($self, [{level => 'i',
+                               type => 'external entref',
+                               value => $data->{entity}->{name},
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+    $sub->parse_bytes_start (undef, $self);
+    $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+    $sub->parse_bytes_end;
+  };
+} # onextentref
+
 my $OnAttrEntityReference = sub {
   my $sub = XXX::AttrEntityParser->new;
   local $_[1]->{entity}->{open} = 1; # XXXlocal
@@ -91,10 +108,22 @@ my $OnAttrEntityReference = sub {
 }; # $OnAttrEntityReference
 
 my $OnContentEntityReference = sub {
+  my ($main, $data) = @_;
   my $sub = XXX::ContentEntityParser->new;
-  local $_[1]->{entity}->{open} = 1; # XXXlocal
-  my $nodes = $sub->parse ($_[0], $_[1]);
-  push @{$_[1]->{ops}}, ['append-by-list', $nodes => $_[1]->{current_node_id}];
+  my $ops = $data->{ops};
+  my $parent_id = $data->{current_node_id};
+  $sub->onparsed (sub {
+    my $sub = $_[0];
+    my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
+    push @$ops, ['append-by-list', $nodes => $parent_id];
+    $data->{entity}->{open}--;
+  });
+  $data->{entity}->{open}++;
+  if (defined $data->{entity}->{value}) { # internal
+    $sub->parse ($_[0], $_[1]);
+  } else { # external
+    $main->onextentref->($main, $data, $sub);
+  }
 }; # $OnContentEntityReference
 
 sub onelementspopped ($;$) {
@@ -128,6 +157,13 @@ sub onrestartwithencoding ($;$) {
       }
       return $_[0]->{Scripting};
     } # scripting
+
+    sub onparsed ($;$) {
+      if (@_ > 1) {
+        $_[0]->{onparsed} = $_[1];
+      }
+      return $_[0]->{onparsed} || sub { };
+    } # onparsed
 
     sub _cleanup_states ($) {
       my $self = $_[0];
@@ -568,14 +604,16 @@ $Element2Type->{(HTMLNS)}->{q@textarea@} = HTML_NS_ELS | BFIKLOST_ELS;
 $Element2Type->{(HTMLNS)}->{q@video@} = HTML_NS_ELS | APP_AUD_STY_VID_ELS;
 sub AFTER_ROOT_ELEMENT_IM () { 1 }
 sub BEFORE_DOCTYPE_IM () { 2 }
-sub BEFORE_IGNORED_NEWLINE_IM () { 3 }
-sub BEFORE_ROOT_ELEMENT_IM () { 4 }
-sub IN_ELEMENT_IM () { 5 }
-sub IN_SUBSET_IM () { 6 }
-sub IN_SUBSET_AFTER_ROOT_ELEMENT_IM () { 7 }
-sub IN_SUBSET_BEFORE_ROOT_ELEMENT_IM () { 8 }
-sub IN_SUBSET_IN_ELEMENT_IM () { 9 }
-sub INITIAL_IM () { 10 }
+sub BEFORE_XML_DECLARATION_IM () { 3 }
+sub BEFORE_CONTENT_TEXT_DECLARATION_IM () { 4 }
+sub BEFORE_IGNORED_NEWLINE_IM () { 5 }
+sub BEFORE_ROOT_ELEMENT_IM () { 6 }
+sub IN_ELEMENT_IM () { 7 }
+sub IN_SUBSET_IM () { 8 }
+sub IN_SUBSET_AFTER_ROOT_ELEMENT_IM () { 9 }
+sub IN_SUBSET_BEFORE_ROOT_ELEMENT_IM () { 10 }
+sub IN_SUBSET_IN_ELEMENT_IM () { 11 }
+sub INITIAL_IM () { 12 }
 
       my $TCA = [undef,
         ## [1] after root element;ATTLIST
@@ -814,7 +852,591 @@ return;
       
         },
       ,
-        ## [25] before ignored newline;ELSE
+        ## [25] before XML declaration;ATTLIST
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [26] before XML declaration;COMMENT
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [27] before XML declaration;DOCTYPE
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [28] before XML declaration;ELEMENT
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [29] before XML declaration;END-ELSE
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [30] before XML declaration;ENTITY
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [31] before XML declaration;EOD
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [32] before XML declaration;EOF
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [33] before XML declaration;NOTATION
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [34] before XML declaration;PI
+        sub {
+          my $token = $_;
+
+          if ($token->{target} eq q@xml@) {
+            
+        my $pos = $token->{index};
+        my $req_sp = 0;
+
+        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          push @$OP, ['xml-version', $v];
+          # XXX if text declaration
+          #unless ($v eq '1.0') {
+          #  push @$Errors, {type => 'bad XML version', # XXX
+          #                  level => 'm',
+          #                  di => $DI, index => $p};
+          #}
+        } else { # XXXif XML declaration (not text declaration)
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:version',
+                          di => $DI, index => $pos};
+        }
+
+        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $p};
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          #XXX$self->_sc->check_hidden_encoding
+          #      (name => $v, onerror => sub {
+          #         $onerror->(token => $self->{t}, %$p, @_);
+          #       });
+          if (1) { # XXX XML declaration (not text declaration)
+            push @$OP, ['xml-encoding', $v];
+          }
+        } elsif (0) { # XXX text declaration
+          ## A text declaration
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:encoding',
+                          di => $DI, index => $pos};
+        }
+
+        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $pos};
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if (1) { # XXX XML declaration (not text declaration)
+              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'attribute not allowed:standalone',
+                              di => $DI, index => $pos};
+            }
+          } else {
+            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+            push @$Errors, {level => 'm',
+                            type => 'XML standalone:syntax error',
+                            di => $DI, index => $p, value => $v};
+          }
+          $pos += $+[0] - $-[0];
+        }
+
+        if (length $token->{data}) {
+          push @$Errors, {level => 'm',
+                          type => 'bogus XML declaration',
+                          di => $DI, index => $pos};
+        }
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+          } else {
+            
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+          }
+        
+        },
+      ,
+        ## [35] before XML declaration;START-ELSE
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [36] before XML declaration;TEXT
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = BEFORE_DOCTYPE_IM;
+          #warn "Insertion mode changed to |before DOCTYPE| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [37] before content text declaration;ATTLIST
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [38] before content text declaration;COMMENT
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [39] before content text declaration;DOCTYPE
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [40] before content text declaration;ELEMENT
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [41] before content text declaration;END-ELSE
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [42] before content text declaration;ENTITY
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [43] before content text declaration;EOD
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [44] before content text declaration;EOF
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [45] before content text declaration;NOTATION
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [46] before content text declaration;PI
+        sub {
+          my $token = $_;
+
+          if ($token->{target} eq q@xml@) {
+            
+        my $pos = $token->{index};
+        my $req_sp = 0;
+
+        if ($token->{data} =~ s/\Aversion[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          push @$OP, ['xml-version', $v];
+          # XXX if text declaration
+          #unless ($v eq '1.0') {
+          #  push @$Errors, {type => 'bad XML version', # XXX
+          #                  level => 'm',
+          #                  di => $DI, index => $p};
+          #}
+        } else { # XXXif XML declaration (not text declaration)
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:version',
+                          di => $DI, index => $pos};
+        }
+
+        if ($token->{data} =~ s/\Aencoding[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')([\x09\x0A\x20]*)//x) {
+          my $v = defined $1 ? $1 : $2;
+          my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $p};
+          }
+          $pos += $+[0] - $-[0];
+          $req_sp = not length $3;
+          #XXX$self->_sc->check_hidden_encoding
+          #      (name => $v, onerror => sub {
+          #         $onerror->(token => $self->{t}, %$p, @_);
+          #       });
+          if (1) { # XXX XML declaration (not text declaration)
+            push @$OP, ['xml-encoding', $v];
+          }
+        } elsif (0) { # XXX text declaration
+          ## A text declaration
+          push @$Errors, {level => 'm',
+                          type => 'attribute missing:encoding',
+                          di => $DI, index => $pos};
+        }
+
+        if ($token->{data} =~ s/\Astandalone[\x09\x0A\x20]*=[\x09\x0A\x20]*
+                                  (?>"([^"]*)"|'([^']*)')[\x09\x0A\x20]*//x) {
+          my $v = defined $1 ? $1 : $2;
+          if ($req_sp) {
+            push @$Errors, {level => 'm',
+                            type => 'no space before attr name',
+                            di => $DI, index => $pos};
+          }
+          if ($v eq 'yes' or $v eq 'no') {
+            if (1) { # XXX XML declaration (not text declaration)
+              push @$OP, ['xml-standalone', $XMLStandalone = ($v ne 'no')];
+            } else {
+              push @$Errors, {level => 'm',
+                              type => 'attribute not allowed:standalone',
+                              di => $DI, index => $pos};
+            }
+          } else {
+            my $p = $pos + (defined $-[1] ? $-[1] : $-[2]);
+            push @$Errors, {level => 'm',
+                            type => 'XML standalone:syntax error',
+                            di => $DI, index => $p, value => $v};
+          }
+          $pos += $+[0] - $-[0];
+        }
+
+        if (length $token->{data}) {
+          push @$Errors, {level => 'm',
+                          type => 'bogus XML declaration',
+                          di => $DI, index => $pos};
+        }
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+          } else {
+            
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+          }
+        
+        },
+      ,
+        ## [47] before content text declaration;START-ELSE
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [48] before content text declaration;TEXT
+        sub {
+          my $token = $_;
+
+        push @$Errors, {level => 's',
+                        type => 'no XML decl',
+                        di => $token->{di}, index => $token->{index}};
+      
+
+          $IM = IN_ELEMENT_IM;
+          #warn "Insertion mode changed to |in element| ($IM)";
+        
+
+        goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
+      
+        },
+      ,
+        ## [49] before ignored newline;ELSE
         sub {
           
     $IM = $ORIGINAL_IM;
@@ -822,7 +1444,7 @@ return;
   
         },
       ,
-        ## [26] before ignored newline;TEXT
+        ## [50] before ignored newline;TEXT
         sub {
           
     $_->{index}++ if $_->{value} =~ s/^\x0A//;
@@ -831,12 +1453,12 @@ return;
   
         },
       ,
-        ## [27] before root element;ATTLIST
+        ## [51] before root element;ATTLIST
         sub {
           
         },
       ,
-        ## [28] before root element;COMMENT
+        ## [52] before root element;COMMENT
         sub {
           my $token = $_;
 
@@ -844,7 +1466,7 @@ return;
           
         },
       ,
-        ## [29] before root element;DOCTYPE
+        ## [53] before root element;DOCTYPE
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-root-element-doctype',
@@ -862,12 +1484,12 @@ push @$Errors, {type => 'before-root-element-doctype',
         
         },
       ,
-        ## [30] before root element;ELEMENT
+        ## [54] before root element;ELEMENT
         sub {
           
         },
       ,
-        ## [31] before root element;END-ELSE
+        ## [55] before root element;END-ELSE
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-root-element-end-else',
@@ -877,17 +1499,17 @@ push @$Errors, {type => 'before-root-element-end-else',
 return;
         },
       ,
-        ## [32] before root element;ENTITY
+        ## [56] before root element;ENTITY
         sub {
           
         },
       ,
-        ## [33] before root element;EOD
+        ## [57] before root element;EOD
         sub {
           
         },
       ,
-        ## [34] before root element;EOF
+        ## [58] before root element;EOF
         sub {
           my $token = $_;
 push @$Errors, {type => 'before-root-element-eof',
@@ -897,12 +1519,12 @@ push @$Errors, {type => 'before-root-element-eof',
 push @$OP, ['stop-parsing'];
         },
       ,
-        ## [35] before root element;NOTATION
+        ## [59] before root element;NOTATION
         sub {
           
         },
       ,
-        ## [36] before root element;PI
+        ## [60] before root element;PI
         sub {
           my $token = $_;
 
@@ -910,7 +1532,7 @@ push @$OP, ['stop-parsing'];
           
         },
       ,
-        ## [37] before root element;START-ELSE
+        ## [61] before root element;START-ELSE
         sub {
           my $token = $_;
 
@@ -1078,7 +1700,7 @@ delete $token->{self_closing_flag};
         
         },
       ,
-        ## [38] before root element;TEXT
+        ## [62] before root element;TEXT
         sub {
           my $token = $_;
 
@@ -1095,12 +1717,12 @@ delete $token->{self_closing_flag};
       
         },
       ,
-        ## [39] in element;ATTLIST
+        ## [63] in element;ATTLIST
         sub {
           
         },
       ,
-        ## [40] in element;COMMENT
+        ## [64] in element;COMMENT
         sub {
           my $token = $_;
 
@@ -1108,7 +1730,7 @@ delete $token->{self_closing_flag};
         
         },
       ,
-        ## [41] in element;DOCTYPE
+        ## [65] in element;DOCTYPE
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-element-doctype',
@@ -1126,12 +1748,12 @@ push @$Errors, {type => 'in-element-doctype',
         
         },
       ,
-        ## [42] in element;ELEMENT
+        ## [66] in element;ELEMENT
         sub {
           
         },
       ,
-        ## [43] in element;END-ELSE
+        ## [67] in element;END-ELSE
         sub {
           my $token = $_;
 my $tag_name = length $token->{tag_name} ? $token->{tag_name} : $OE->[-1]->{token}->{tag_name};
@@ -1180,17 +1802,17 @@ return;
         
         },
       ,
-        ## [44] in element;ENTITY
+        ## [68] in element;ENTITY
         sub {
           
         },
       ,
-        ## [45] in element;EOD
+        ## [69] in element;EOD
         sub {
           
         },
       ,
-        ## [46] in element;EOF
+        ## [70] in element;EOF
         sub {
           my $token = $_;
 
@@ -1214,12 +1836,12 @@ push @$OP, ['stop-parsing'];
         
         },
       ,
-        ## [47] in element;NOTATION
+        ## [71] in element;NOTATION
         sub {
           
         },
       ,
-        ## [48] in element;PI
+        ## [72] in element;PI
         sub {
           my $token = $_;
 
@@ -1227,7 +1849,7 @@ push @$OP, ['stop-parsing'];
         
         },
       ,
-        ## [49] in element;START-ELSE
+        ## [73] in element;START-ELSE
         sub {
           my $token = $_;
 
@@ -1385,7 +2007,7 @@ delete $token->{self_closing_flag};
         
         },
       ,
-        ## [50] in element;TEXT
+        ## [74] in element;TEXT
         sub {
           my $token = $_;
 
@@ -1413,37 +2035,37 @@ delete $token->{self_closing_flag};
         
         },
       ,
-        ## [51] in subset after root element;ATTLIST
+        ## [75] in subset after root element;ATTLIST
         sub {
           return;
         },
       ,
-        ## [52] in subset after root element;COMMENT
+        ## [76] in subset after root element;COMMENT
         sub {
           return;
         },
       ,
-        ## [53] in subset after root element;DOCTYPE
+        ## [77] in subset after root element;DOCTYPE
         sub {
           return;
         },
       ,
-        ## [54] in subset after root element;ELEMENT
+        ## [78] in subset after root element;ELEMENT
         sub {
           return;
         },
       ,
-        ## [55] in subset after root element;END-ELSE
+        ## [79] in subset after root element;END-ELSE
         sub {
           return;
         },
       ,
-        ## [56] in subset after root element;ENTITY
+        ## [80] in subset after root element;ENTITY
         sub {
           return;
         },
       ,
-        ## [57] in subset after root element;EOD
+        ## [81] in subset after root element;EOD
         sub {
           
           $IM = AFTER_ROOT_ELEMENT_IM;
@@ -1451,22 +2073,22 @@ delete $token->{self_closing_flag};
         
         },
       ,
-        ## [58] in subset after root element;EOF
+        ## [82] in subset after root element;EOF
         sub {
           push @$OP, ['stop-parsing'];
         },
       ,
-        ## [59] in subset after root element;NOTATION
+        ## [83] in subset after root element;NOTATION
         sub {
           return;
         },
       ,
-        ## [60] in subset after root element;PI
+        ## [84] in subset after root element;PI
         sub {
           return;
         },
       ,
-        ## [61] in subset after root element;START-ELSE
+        ## [85] in subset after root element;START-ELSE
         sub {
           my $token = $_;
 
@@ -1480,42 +2102,42 @@ delete $token->{self_closing_flag};
 return;
         },
       ,
-        ## [62] in subset after root element;TEXT
+        ## [86] in subset after root element;TEXT
         sub {
           
         },
       ,
-        ## [63] in subset before root element;ATTLIST
+        ## [87] in subset before root element;ATTLIST
         sub {
           return;
         },
       ,
-        ## [64] in subset before root element;COMMENT
+        ## [88] in subset before root element;COMMENT
         sub {
           return;
         },
       ,
-        ## [65] in subset before root element;DOCTYPE
+        ## [89] in subset before root element;DOCTYPE
         sub {
           return;
         },
       ,
-        ## [66] in subset before root element;ELEMENT
+        ## [90] in subset before root element;ELEMENT
         sub {
           return;
         },
       ,
-        ## [67] in subset before root element;END-ELSE
+        ## [91] in subset before root element;END-ELSE
         sub {
           return;
         },
       ,
-        ## [68] in subset before root element;ENTITY
+        ## [92] in subset before root element;ENTITY
         sub {
           return;
         },
       ,
-        ## [69] in subset before root element;EOD
+        ## [93] in subset before root element;EOD
         sub {
           
           $IM = BEFORE_ROOT_ELEMENT_IM;
@@ -1523,22 +2145,22 @@ return;
         
         },
       ,
-        ## [70] in subset before root element;EOF
+        ## [94] in subset before root element;EOF
         sub {
           push @$OP, ['stop-parsing'];
         },
       ,
-        ## [71] in subset before root element;NOTATION
+        ## [95] in subset before root element;NOTATION
         sub {
           return;
         },
       ,
-        ## [72] in subset before root element;PI
+        ## [96] in subset before root element;PI
         sub {
           return;
         },
       ,
-        ## [73] in subset before root element;START-ELSE
+        ## [97] in subset before root element;START-ELSE
         sub {
           my $token = $_;
 
@@ -1552,42 +2174,42 @@ return;
 return;
         },
       ,
-        ## [74] in subset before root element;TEXT
+        ## [98] in subset before root element;TEXT
         sub {
           
         },
       ,
-        ## [75] in subset in element;ATTLIST
+        ## [99] in subset in element;ATTLIST
         sub {
           return;
         },
       ,
-        ## [76] in subset in element;COMMENT
+        ## [100] in subset in element;COMMENT
         sub {
           return;
         },
       ,
-        ## [77] in subset in element;DOCTYPE
+        ## [101] in subset in element;DOCTYPE
         sub {
           return;
         },
       ,
-        ## [78] in subset in element;ELEMENT
+        ## [102] in subset in element;ELEMENT
         sub {
           return;
         },
       ,
-        ## [79] in subset in element;END-ELSE
+        ## [103] in subset in element;END-ELSE
         sub {
           return;
         },
       ,
-        ## [80] in subset in element;ENTITY
+        ## [104] in subset in element;ENTITY
         sub {
           return;
         },
       ,
-        ## [81] in subset in element;EOD
+        ## [105] in subset in element;EOD
         sub {
           
           $IM = IN_ELEMENT_IM;
@@ -1595,22 +2217,22 @@ return;
         
         },
       ,
-        ## [82] in subset in element;EOF
+        ## [106] in subset in element;EOF
         sub {
           push @$OP, ['stop-parsing'];
         },
       ,
-        ## [83] in subset in element;NOTATION
+        ## [107] in subset in element;NOTATION
         sub {
           return;
         },
       ,
-        ## [84] in subset in element;PI
+        ## [108] in subset in element;PI
         sub {
           return;
         },
       ,
-        ## [85] in subset in element;START-ELSE
+        ## [109] in subset in element;START-ELSE
         sub {
           my $token = $_;
 
@@ -1624,12 +2246,12 @@ return;
 return;
         },
       ,
-        ## [86] in subset in element;TEXT
+        ## [110] in subset in element;TEXT
         sub {
           
         },
       ,
-        ## [87] in subset;ATTLIST
+        ## [111] in subset;ATTLIST
         sub {
           my $token = $_;
 
@@ -1744,17 +2366,17 @@ return;
       
         },
       ,
-        ## [88] in subset;COMMENT
+        ## [112] in subset;COMMENT
         sub {
           return;
         },
       ,
-        ## [89] in subset;DOCTYPE
+        ## [113] in subset;DOCTYPE
         sub {
           
         },
       ,
-        ## [90] in subset;ELEMENT
+        ## [114] in subset;ELEMENT
         sub {
           my $token = $_;
 
@@ -1782,12 +2404,12 @@ return;
       
         },
       ,
-        ## [91] in subset;END-ELSE
+        ## [115] in subset;END-ELSE
         sub {
           
         },
       ,
-        ## [92] in subset;ENTITY
+        ## [116] in subset;ENTITY
         sub {
           my $token = $_;
 
@@ -1890,7 +2512,7 @@ return;
       
         },
       ,
-        ## [93] in subset;EOD
+        ## [117] in subset;EOD
         sub {
           
           if (length $DTDDefs->{system_id}) {
@@ -1906,7 +2528,7 @@ return;
         
         },
       ,
-        ## [94] in subset;EOF
+        ## [118] in subset;EOF
         sub {
           my $token = $_;
 push @$Errors, {type => 'in-subset-eof',
@@ -1924,7 +2546,7 @@ push @$Errors, {type => 'in-subset-eof',
 push @$OP, ['stop-parsing'];
         },
       ,
-        ## [95] in subset;NOTATION
+        ## [119] in subset;NOTATION
         sub {
           my $token = $_;
 
@@ -1958,7 +2580,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [96] in subset;PI
+        ## [120] in subset;PI
         sub {
           my $token = $_;
 
@@ -1966,7 +2588,7 @@ push @$OP, ['stop-parsing'];
           
         },
       ,
-        ## [97] in subset;START-ELSE
+        ## [121] in subset;START-ELSE
         sub {
           my $token = $_;
 
@@ -1979,7 +2601,7 @@ push @$OP, ['stop-parsing'];
         
         },
       ,
-        ## [98] in subset;TEXT
+        ## [122] in subset;TEXT
         sub {
           my $token = $_;
 
@@ -1996,7 +2618,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [99] initial;ATTLIST
+        ## [123] initial;ATTLIST
         sub {
           my $token = $_;
 
@@ -2013,7 +2635,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [100] initial;COMMENT
+        ## [124] initial;COMMENT
         sub {
           my $token = $_;
 
@@ -2030,7 +2652,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [101] initial;DOCTYPE
+        ## [125] initial;DOCTYPE
         sub {
           my $token = $_;
 
@@ -2047,7 +2669,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [102] initial;ELEMENT
+        ## [126] initial;ELEMENT
         sub {
           my $token = $_;
 
@@ -2064,7 +2686,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [103] initial;END-ELSE
+        ## [127] initial;END-ELSE
         sub {
           my $token = $_;
 
@@ -2081,7 +2703,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [104] initial;ENTITY
+        ## [128] initial;ENTITY
         sub {
           my $token = $_;
 
@@ -2098,7 +2720,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [105] initial;EOD
+        ## [129] initial;EOD
         sub {
           my $token = $_;
 
@@ -2115,7 +2737,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [106] initial;EOF
+        ## [130] initial;EOF
         sub {
           my $token = $_;
 
@@ -2132,7 +2754,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [107] initial;NOTATION
+        ## [131] initial;NOTATION
         sub {
           my $token = $_;
 
@@ -2149,7 +2771,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [108] initial;PI
+        ## [132] initial;PI
         sub {
           my $token = $_;
 
@@ -2254,7 +2876,7 @@ push @$OP, ['stop-parsing'];
         
         },
       ,
-        ## [109] initial;START-ELSE
+        ## [133] initial;START-ELSE
         sub {
           my $token = $_;
 
@@ -2271,7 +2893,7 @@ push @$OP, ['stop-parsing'];
       
         },
       ,
-        ## [110] initial;TEXT
+        ## [134] initial;TEXT
         sub {
           my $token = $_;
 
@@ -2292,14 +2914,16 @@ push @$OP, ['stop-parsing'];
 $ProcessIM = [undef,
 [undef, [$TCA->[1]], [$TCA->[3]], [$TCA->[4]], [$TCA->[6]], [$TCA->[9]], [$TCA->[2]], [$TCA->[5], $TCA->[5]], [$TCA->[7]], [$TCA->[8]], [$TCA->[10]], [$TCA->[11], $TCA->[11]], [$TCA->[12]]],
 [undef, [$TCA->[13]], [$TCA->[15]], [$TCA->[16]], [$TCA->[18]], [$TCA->[21]], [$TCA->[14]], [$TCA->[17], $TCA->[17]], [$TCA->[19]], [$TCA->[20]], [$TCA->[22]], [$TCA->[23], $TCA->[23]], [$TCA->[24]]],
-[undef, [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25], $TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25]], [$TCA->[25], $TCA->[25]], [$TCA->[26]]],
-[undef, [$TCA->[27]], [$TCA->[29]], [$TCA->[30]], [$TCA->[32]], [$TCA->[35]], [$TCA->[28]], [$TCA->[31], $TCA->[31]], [$TCA->[33]], [$TCA->[34]], [$TCA->[36]], [$TCA->[37], $TCA->[37]], [$TCA->[38]]],
-[undef, [$TCA->[39]], [$TCA->[41]], [$TCA->[42]], [$TCA->[44]], [$TCA->[47]], [$TCA->[40]], [$TCA->[43], $TCA->[43]], [$TCA->[45]], [$TCA->[46]], [$TCA->[48]], [$TCA->[49], $TCA->[49]], [$TCA->[50]]],
-[undef, [$TCA->[87]], [$TCA->[89]], [$TCA->[90]], [$TCA->[92]], [$TCA->[95]], [$TCA->[88]], [$TCA->[91], $TCA->[91]], [$TCA->[93]], [$TCA->[94]], [$TCA->[96]], [$TCA->[97], $TCA->[97]], [$TCA->[98]]],
+[undef, [$TCA->[25]], [$TCA->[27]], [$TCA->[28]], [$TCA->[30]], [$TCA->[33]], [$TCA->[26]], [$TCA->[29], $TCA->[29]], [$TCA->[31]], [$TCA->[32]], [$TCA->[34]], [$TCA->[35], $TCA->[35]], [$TCA->[36]]],
+[undef, [$TCA->[37]], [$TCA->[39]], [$TCA->[40]], [$TCA->[42]], [$TCA->[45]], [$TCA->[38]], [$TCA->[41], $TCA->[41]], [$TCA->[43]], [$TCA->[44]], [$TCA->[46]], [$TCA->[47], $TCA->[47]], [$TCA->[48]]],
+[undef, [$TCA->[49]], [$TCA->[49]], [$TCA->[49]], [$TCA->[49]], [$TCA->[49]], [$TCA->[49]], [$TCA->[49], $TCA->[49]], [$TCA->[49]], [$TCA->[49]], [$TCA->[49]], [$TCA->[49], $TCA->[49]], [$TCA->[50]]],
 [undef, [$TCA->[51]], [$TCA->[53]], [$TCA->[54]], [$TCA->[56]], [$TCA->[59]], [$TCA->[52]], [$TCA->[55], $TCA->[55]], [$TCA->[57]], [$TCA->[58]], [$TCA->[60]], [$TCA->[61], $TCA->[61]], [$TCA->[62]]],
 [undef, [$TCA->[63]], [$TCA->[65]], [$TCA->[66]], [$TCA->[68]], [$TCA->[71]], [$TCA->[64]], [$TCA->[67], $TCA->[67]], [$TCA->[69]], [$TCA->[70]], [$TCA->[72]], [$TCA->[73], $TCA->[73]], [$TCA->[74]]],
+[undef, [$TCA->[111]], [$TCA->[113]], [$TCA->[114]], [$TCA->[116]], [$TCA->[119]], [$TCA->[112]], [$TCA->[115], $TCA->[115]], [$TCA->[117]], [$TCA->[118]], [$TCA->[120]], [$TCA->[121], $TCA->[121]], [$TCA->[122]]],
 [undef, [$TCA->[75]], [$TCA->[77]], [$TCA->[78]], [$TCA->[80]], [$TCA->[83]], [$TCA->[76]], [$TCA->[79], $TCA->[79]], [$TCA->[81]], [$TCA->[82]], [$TCA->[84]], [$TCA->[85], $TCA->[85]], [$TCA->[86]]],
-[undef, [$TCA->[99]], [$TCA->[101]], [$TCA->[102]], [$TCA->[104]], [$TCA->[107]], [$TCA->[100]], [$TCA->[103], $TCA->[103]], [$TCA->[105]], [$TCA->[106]], [$TCA->[108]], [$TCA->[109], $TCA->[109]], [$TCA->[110]]]];
+[undef, [$TCA->[87]], [$TCA->[89]], [$TCA->[90]], [$TCA->[92]], [$TCA->[95]], [$TCA->[88]], [$TCA->[91], $TCA->[91]], [$TCA->[93]], [$TCA->[94]], [$TCA->[96]], [$TCA->[97], $TCA->[97]], [$TCA->[98]]],
+[undef, [$TCA->[99]], [$TCA->[101]], [$TCA->[102]], [$TCA->[104]], [$TCA->[107]], [$TCA->[100]], [$TCA->[103], $TCA->[103]], [$TCA->[105]], [$TCA->[106]], [$TCA->[108]], [$TCA->[109], $TCA->[109]], [$TCA->[110]]],
+[undef, [$TCA->[123]], [$TCA->[125]], [$TCA->[126]], [$TCA->[128]], [$TCA->[131]], [$TCA->[124]], [$TCA->[127], $TCA->[127]], [$TCA->[129]], [$TCA->[130]], [$TCA->[132]], [$TCA->[133], $TCA->[133]], [$TCA->[134]]]];
 my $ResetIMByET = {};
 my $ResetIMByETUnlessLast = {};my $StateByElementName = {};
 
@@ -29002,10 +29626,9 @@ if ($Input =~ /\G([\])/gcs) {
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29013,9 +29636,6 @@ if ($Input =~ /\G([\])/gcs) {
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -29144,10 +29764,9 @@ return 1 if $return;
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29155,9 +29774,6 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -29283,10 +29899,9 @@ $Temp .= $1;
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29294,9 +29909,6 @@ $Temp .= $1;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -29419,10 +30031,9 @@ return 1 if $return;
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29430,9 +30041,6 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -29556,10 +30164,9 @@ return 1 if $return;
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29567,9 +30174,6 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -29699,10 +30303,9 @@ $Temp .= $1;
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29710,9 +30313,6 @@ $Temp .= $1;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -29842,10 +30442,9 @@ $Temp .= $1;
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29853,9 +30452,6 @@ $Temp .= $1;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -29987,10 +30583,9 @@ return 1 if $return;
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -29998,9 +30593,6 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -30129,10 +30721,9 @@ if ($EOF) {
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -30140,9 +30731,6 @@ if ($EOF) {
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
               }
             }
             ## </XML>
@@ -39820,6 +40408,9 @@ sub dom_tree ($$) {
         $in_offset += $len;
         redo unless $EOF;
       }
+      if ($EOF) {
+        $self->onparsed->($self);
+      }
       return 1;
     } # _run
 
@@ -39877,7 +40468,7 @@ $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
-      $IM = INITIAL_IM;
+      $IM = BEFORE_XML_DECLARATION_IM;
 
       $self->{input_stream} = [];
       my $dids = $self->di_data_set;
@@ -39915,7 +40506,7 @@ $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
 $Scripting = $self->{Scripting};
       $Confident = 1; # irrelevant
       $State = DATA_STATE;;
-      $IM = INITIAL_IM;
+      $IM = BEFORE_XML_DECLARATION_IM;
 
       my $dids = $self->di_data_set;
       $DI = @$dids || 1;
@@ -40014,7 +40605,7 @@ $Scripting = $self->{Scripting};
         $doc->manakai_set_source_location (['', $DI, 0]);
 
         $State = DATA_STATE;;
-        $IM = INITIAL_IM;
+        $IM = BEFORE_XML_DECLARATION_IM;
 
         $self->_feed_chars ($input) or redo PARSER;
         $self->_feed_eof or redo PARSER;
@@ -40044,7 +40635,7 @@ $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
-      $IM = INITIAL_IM;
+      $IM = BEFORE_XML_DECLARATION_IM;
 
       my $dids = $self->di_data_set;
       $DI = @$dids || 1;
@@ -40194,12 +40785,6 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
-    for (qw(onerror onerrors)) {
-      $self->{$_} = $main->{$_};
-    }
-
-    $self->{nodes} = [$doc];
     local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $NEXT_ID = 1;
@@ -40217,8 +40802,16 @@ $Scripting = $self->{Scripting};
       } else {
         $State = ATTR_VALUE_IN_ENTITY_STATE;;
       }
-      $IM = INITIAL_IM;
+      $IM = BEFORE_XML_DECLARATION_IM;
     }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
@@ -40246,12 +40839,6 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
-    for (qw(onerror onerrors)) {
-      $self->{$_} = $main->{$_};
-    }
-
-    $self->{nodes} = [$doc];
     local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $NEXT_ID = 1;
@@ -40267,6 +40854,14 @@ $Scripting = $self->{Scripting};
       $State = DATA_STATE;;
       $IM = IN_ELEMENT_IM;
     }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
@@ -40291,9 +40886,76 @@ $Scripting = $self->{Scripting};
     $self->_feed_eof or die "Can't restart";
 
     $self->_cleanup_states;
-
-    return $root->child_nodes;
   } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    $FRAMESET_OK = 1;
+$NEXT_ID = 1;
+$Offset = 0;
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
+    $IframeSrcdoc = $self->{IframeSrcdoc};
+$Scripting = $self->{Scripting};
+    {
+      package Web::XML::Parser;
+      $State = DATA_STATE;;
+      $IM = BEFORE_CONTENT_TEXT_DECLARATION_IM;
+    }
+
+    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
+    for (qw(onerror onerrors)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    my $root = $doc->create_element_ns (undef, 'dummy');
+    @$OE = ({id => $NEXT_ID++,
+             #token => undef,
+             #di => $token->{di}, index => $token->{index},
+             ns => undef,
+             local_name => 'dummy',
+             attr_list => {},
+             nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             et => 0,
+             aet => 0});
+    $self->{nodes}->[$OE->[-1]->{id}] = $root;
+  } # _parse_bytes_init
 }
 
   

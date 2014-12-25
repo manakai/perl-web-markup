@@ -1083,10 +1083,9 @@ sub serialize_actions ($;%) {
                                 value => $Temp,
                                 di => $DI, index => $TempIndex};
                 last REF;
-              } elsif (defined $ent->{value}) {
+              } else {
                 ## Internal entity with "&" and/or "<"
-                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
-                # XXX IndexedString mapping
+                ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
                                     current_node_id => $OE->[-1]->{id},
@@ -1094,10 +1093,6 @@ sub serialize_actions ($;%) {
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
-              } else {
-                ## External parsed entity
-
-                # XXX
               }
             }
             ## </XML>
@@ -4219,6 +4214,9 @@ sub generate_api ($) {
         $in_offset += $len;
         redo unless $EOF;
       }
+      if ($EOF) {
+        $self->onparsed->($self);
+      }
       return 1;
     } # _run
 
@@ -4271,7 +4269,7 @@ sub generate_api ($) {
       VARS::RESET;
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
 
       $self->{input_stream} = [];
       my $dids = $self->di_data_set;
@@ -4314,7 +4312,7 @@ sub generate_api ($) {
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
 
       ## 3.
       my $input = [$_[1]]; # string copy
@@ -4471,7 +4469,7 @@ sub generate_api ($) {
       VARS::RESET;
       $Confident = 1; # irrelevant
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
 
       my $dids = $self->di_data_set;
       $DI = @$dids || 1;
@@ -4560,7 +4558,7 @@ sub generate_api ($) {
         $doc->manakai_set_source_location (['', $DI, 0]);
 
         SWITCH_STATE ("data state");
-        $IM = IM ("initial");
+        $IM = IM (HTML => "initial", XML => "before XML declaration");
 
         $self->_feed_chars ($input) or redo PARSER;
         $self->_feed_eof or redo PARSER;
@@ -4585,7 +4583,7 @@ sub generate_api ($) {
       VARS::INIT;
       VARS::RESET;
       SWITCH_STATE ("data state");
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
 
       my $dids = $self->di_data_set;
       $DI = @$dids || 1;
@@ -4733,12 +4731,6 @@ sub generate_api ($) {
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
-    for (qw(onerror onerrors)) {
-      $self->{$_} = $main->{$_};
-    }
-
-    $self->{nodes} = [$doc];
     VARS::LOCAL;
     VARS::INIT;
     VARS::RESET;
@@ -4750,8 +4742,16 @@ sub generate_api ($) {
       } else {
         SWITCH_STATE ("attribute value in entity state");
       }
-      $IM = IM ("initial");
+      $IM = IM (HTML => "initial", XML => "before XML declaration");
     }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
@@ -4779,12 +4779,6 @@ sub generate_api ($) {
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
-    for (qw(onerror onerrors)) {
-      $self->{$_} = $main->{$_};
-    }
-
-    $self->{nodes} = [$doc];
     VARS::LOCAL;
     VARS::INIT;
     VARS::RESET;
@@ -4794,6 +4788,14 @@ sub generate_api ($) {
       SWITCH_STATE ("data state");
       $IM = IM ("in element");
     }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
 
     $self->{input_stream} = [@{$in->{entity}->{value}}];
     $self->{di_data_set} = my $dids = $main->di_data_set;
@@ -4818,15 +4820,79 @@ sub generate_api ($) {
     $self->_feed_eof or die "Can't restart";
 
     $self->_cleanup_states;
-
-    return $root->child_nodes;
   } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      VARS::LOCAL;
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      VARS::SAVE;
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    VARS::INIT;
+    VARS::RESET;
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("data state");
+      $IM = IM ("before content text declaration");
+    }
+
+    my $doc = $self->{document} = $main->{document}->create_element ('template')->content->owner_document;
+    for (qw(onerror onerrors)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    my $root = $doc->create_element_ns (undef, 'dummy');
+    @$OE = ({id => $NEXT_ID++,
+             #token => undef,
+             #di => $token->{di}, index => $token->{index},
+             ns => undef,
+             local_name => 'dummy',
+             attr_list => {},
+             nsmap => $main->{saved_lists}->{OE}->[-1]->{nsmap},
+             et => 0,
+             aet => 0});
+    $self->{nodes}->[$OE->[-1]->{id}] = $root;
+  } # _parse_bytes_init
 }
 
   } if $LANG eq 'XML';
 
   for (@sub_code) {
     s/\bSWITCH_STATE\s*\("([^"]+)"\)/switch_state_code $1/ge;
+    s{\bIM\s*\(HTML\s*=>\s*"([^"]+)"\s*,\s*XML\s*=>\s*"([^"]+)"\)}{
+      im_const ($LANG eq 'HTML' ? $1 : $2);
+    }ge;
     s/\bIM\s*\("([^"]+)"\)/im_const $1/ge;
     s/\bVARS::(\w+);/$vars_codes->{$1}/ge;
   }
@@ -4927,6 +4993,23 @@ sub onscript ($;$) {
   return $_[0]->{onscript} || sub { };
 } # onscript
 
+sub onextentref ($;$) {
+  if (@_ > 1) {
+    $_[0]->{onextentref} = $_[1];
+  }
+  return $_[0]->{onextentref} || sub {
+    my ($self, $data, $sub) = @_;
+    $self->onerrors->($self, [{level => 'i',
+                               type => 'external entref',
+                               value => $data->{entity}->{name},
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+    $sub->parse_bytes_start (undef, $self);
+    $sub->parse_bytes_feed ('<?xml encoding="utf-8"?>');
+    $sub->parse_bytes_end;
+  };
+} # onextentref
+
 my $OnAttrEntityReference = sub {
   my $sub = XXX::AttrEntityParser->new;
   local $_[1]->{entity}->{open} = 1; # XXXlocal
@@ -4934,10 +5017,22 @@ my $OnAttrEntityReference = sub {
 }; # $OnAttrEntityReference
 
 my $OnContentEntityReference = sub {
+  my ($main, $data) = @_;
   my $sub = XXX::ContentEntityParser->new;
-  local $_[1]->{entity}->{open} = 1; # XXXlocal
-  my $nodes = $sub->parse ($_[0], $_[1]);
-  push @{$_[1]->{ops}}, ['append-by-list', $nodes => $_[1]->{current_node_id}];
+  my $ops = $data->{ops};
+  my $parent_id = $data->{current_node_id};
+  $sub->onparsed (sub {
+    my $sub = $_[0];
+    my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
+    push @$ops, ['append-by-list', $nodes => $parent_id];
+    $data->{entity}->{open}--;
+  });
+  $data->{entity}->{open}++;
+  if (defined $data->{entity}->{value}) { # internal
+    $sub->parse ($_[0], $_[1]);
+  } else { # external
+    $main->onextentref->($main, $data, $sub);
+  }
 }; # $OnContentEntityReference
 
 sub onelementspopped ($;$) {
@@ -4971,6 +5066,13 @@ sub onrestartwithencoding ($;$) {
       }
       return $_[0]->{Scripting};
     } # scripting
+
+    sub onparsed ($;$) {
+      if (@_ > 1) {
+        $_[0]->{onparsed} = $_[1];
+      }
+      return $_[0]->{onparsed} || sub { };
+    } # onparsed
 
     sub _cleanup_states ($) {
       my $self = $_[0];
