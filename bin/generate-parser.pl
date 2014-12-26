@@ -50,7 +50,7 @@ my $Vars = {
   IframeSrcdoc => {input => 1, type => 'boolean'},
   Confident => {save => 1, type => 'boolean'},
   DI => {save => 1, type => 'index'},
-  AnchoredIndex => {save => 1, type => 'index'},
+  AnchoredIndex => {save => 1, type => 'index', default => 0},
   EOF => {save => 1, type => 'boolean'},
   Offset => {save => 1, type => 'index', default => 0},
   State => {save => 1, type => 'enum'},
@@ -671,6 +671,10 @@ sub serialize_actions ($;%) {
             return 1 if @$OE <= 1;
           }
         };
+      }
+      if ($_->{possible_token_types}->{'DOCTYPE token'} and
+          $LANG eq 'XML') {
+        $return = q{1 if $Token->{type} == DOCTYPE_TOKEN};
       }
       if ($_->{possible_token_types}->{'ENTITY token'}) {
         $return = q{1 if $Token->{type} == ENTITY_TOKEN};
@@ -3134,10 +3138,8 @@ sub actions_to_code ($;%) {
 
     } elsif ($act->{type} eq 'process the external subset') { # XML
       push @code, q{
-        warn "XXX external subset not implemented yet";
-        push @$OP, ['construct-doctype'];
+        push @$Callbacks, [$OnDTDEntityReference, {entity => $token}];
       };
-
     } else {
       die "Unknown tree construction action |$act->{type}|";
     }
@@ -3846,8 +3848,6 @@ sub dom_tree ($$) {
   my $doc = $self->{document};
   my $strict = $doc->strict_error_checking;
   $doc->strict_error_checking (0);
-  my $doctype_children = $doc->dom_config->{manakai_allow_doctype_children};
-  $doc->dom_config->{manakai_allow_doctype_children} = 1;
 
   my $nodes = $self->{nodes};
   for my $op (@$ops) {
@@ -3948,7 +3948,12 @@ sub dom_tree ($$) {
           ($op->[1]->{target}, $op->[1]->{data});
       $pi->manakai_set_source_location
           (['', $op->[1]->{di}, $op->[1]->{index}]);
-      $nodes->[$op->[2]]->append_child ($pi);
+      if ($op->[2] == 1) { # DOCTYPE
+        local $nodes->[$op->[2]]->owner_document->dom_config->{manakai_allow_doctype_children} = 1;
+        $nodes->[$op->[2]]->append_child ($pi);
+      } else {
+        $nodes->[$op->[2]]->append_child ($pi);
+      }
     } elsif ($op->[0] eq 'doctype') {
       my $data = $op->[1];
       my $dt = $doc->implementation->create_document_type
@@ -4066,7 +4071,6 @@ sub dom_tree ($$) {
   }
 
   $doc->strict_error_checking ($strict);
-  $doc->dom_config->{manakai_allow_doctype_children} = $doctype_children;
 } # dom_tree
 
   },
@@ -4209,7 +4213,8 @@ sub generate_api ($) {
 
               if ($self->{pause}) {
                 my $pos = pos $Input;
-                $is->[0] = [substr $is->[0]->[0], $in_offset + $pos];
+                $is->[0] = [substr $is->[0]->[0], $in_offset + $pos]
+                    if defined $is->[0]->[0];
                 $Offset += $pos;
                 return 1;
               }
@@ -4287,6 +4292,7 @@ sub generate_api ($) {
       $dids->[$DI] ||= {} if $DI >= 0;
       $doc->manakai_set_source_location (['', $DI, 0]);
 
+      local $self->{onextentref};
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
 
@@ -4445,6 +4451,7 @@ sub generate_api ($) {
       $Confident = 1; # irrelevant
 
       ## 6.
+      local $self->{onextentref};
       $self->_feed_chars ($input) or die "Can't restart";
       $self->_feed_eof or die "Can't restart";
 
@@ -4566,6 +4573,7 @@ sub generate_api ($) {
         SWITCH_STATE ("data state");
         $IM = IM (HTML => "initial", XML => "before XML declaration");
 
+        local $self->{onextentref};
         $self->_feed_chars ($input) or redo PARSER;
         $self->_feed_eof or redo PARSER;
       } # PARSER
@@ -4900,6 +4908,110 @@ sub generate_api ($) {
   } # _parse_bytes_init
 }
 
+{
+  package XXX::DTDEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("DTD state");
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      VARS::LOCAL;
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      VARS::SAVE;
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    VARS::INIT;
+    VARS::RESET;
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("DTD state");
+      $IM = IM ("before DTD text declaration");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+  } # _parse_bytes_init
+}
+
     sub _parse_sub_done ($) {
       my $self = $_[0];
       VARS::LOCAL;
@@ -5090,33 +5202,65 @@ my $OnContentEntityReference = sub {
     my $sub = XXX::ContentEntityParser->new;
     my $ops = $data->{ops};
     my $parent_id = $data->{current_node_id};
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
+      push @$ops, ['append-by-list', $nodes => $parent_id];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
     $data->{entity}->{open}++;
     $main->{pause}++;
+    $main->{pause}++;
     if (defined $data->{entity}->{value}) { # internal
-      $sub->onparsed (sub {
-        my $sub = $_[0];
-        my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
-        push @$ops, ['append-by-list', $nodes => $parent_id];
-        $data->{entity}->{open}--;
-        $main->{pause}--;
-        #$main->_parse_sub_done;
-        undef $main;
-      });
       $sub->parse ($_[0], $_[1]);
     } else { # external
-      $sub->onparsed (sub {
-        my $sub = $_[0];
-        my $nodes = $sub->{nodes}->[$sub->{saved_lists}->{OE}->[0]->{id}]->child_nodes;
-        push @$ops, ['append-by-list', $nodes => $parent_id];
-        $data->{entity}->{open}--;
-        $main->{pause}--;
-        $main->_parse_sub_done;
-        undef $main;
-      });
       $main->onextentref->($main, $data, $sub);
     }
+    $main->{pause}--;
   }
 }; # $OnContentEntityReference
+
+my $OnDTDEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } else {
+    my $sub = XXX::DTDEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($_[0], $_[1]);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnDTDEntityReference
 
 sub onelementspopped ($;$) {
   if (@_ > 1) {
