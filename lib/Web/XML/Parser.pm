@@ -219,6 +219,44 @@ my $OnDTDEntityReference = sub {
   }
 }; # $OnDTDEntityReference
 
+my $OnEntityValueEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } else {
+    my $sub = XXX::EntityValueEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($_[0], $_[1]);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnEntityValueEntityReference
+
 sub onelementspopped ($;$) {
   if (@_ > 1) {
     $_[0]->{onelementspopped} = $_[1];
@@ -510,97 +548,101 @@ sub BEFORE_ENTITY_NAME_STATE () { 219 }
 sub BEFORE_ENTITY_PUBLIC_ID_STATE () { 220 }
 sub BEFORE_ENTITY_SYSTEM_ID_STATE () { 221 }
 sub BEFORE_ENTITY_TYPE_STATE () { 222 }
-sub BEFORE_NDATA_ID_STATE () { 223 }
-sub BEFORE_NDATA_KEYWORD_STATE () { 224 }
-sub BEFORE_NDATA_KEYWORD_STATE_N () { 225 }
-sub BEFORE_NDATA_KEYWORD_STATE_ND () { 226 }
-sub BEFORE_NDATA_KEYWORD_STATE_NDA () { 227 }
-sub BEFORE_NDATA_KEYWORD_STATE_NDAT () { 228 }
-sub BEFORE_NOTATION_NAME_STATE () { 229 }
-sub BEFORE_NOTATION_PUBLIC_ID_STATE () { 230 }
-sub BEFORE_NOTATION_SYSTEM_ID_STATE () { 231 }
-sub BEFORE_ALLOWED_TOKEN_STATE () { 232 }
-sub BEFORE_ATTR_NAME_STATE () { 233 }
-sub BEFORE_ATTR_VALUE_STATE () { 234 }
-sub BEFORE_CONTENT_MODEL_ITEM_STATE () { 235 }
-sub BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE () { 236 }
-sub BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE () { 237 }
-sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE () { 238 }
-sub BOGUS_DOCTYPE_STATE () { 239 }
-sub BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 240 }
-sub BOGUS_COMMENT_STATE () { 241 }
-sub BOGUS_COMMENT_STATE_CR () { 242 }
-sub BOGUS_MARKUP_DECLARATION_STATE () { 243 }
-sub CHARREF_IN_DATA_STATE () { 244 }
-sub COMMENT_END_BANG_STATE () { 245 }
-sub COMMENT_END_DASH_STATE () { 246 }
-sub COMMENT_END_STATE () { 247 }
-sub COMMENT_START_DASH_STATE () { 248 }
-sub COMMENT_START_STATE () { 249 }
-sub COMMENT_STATE () { 250 }
-sub COMMENT_STATE_CR () { 251 }
-sub CONTENT_MODEL_ELEMENT_STATE () { 252 }
-sub DATA_STATE () { 253 }
-sub DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 254 }
-sub DATA_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 255 }
-sub DATA_STATE___CHARREF_HEX_NUMBER_STATE () { 256 }
-sub DATA_STATE___CHARREF_NAME_STATE () { 257 }
-sub DATA_STATE___CHARREF_NUMBER_STATE () { 258 }
-sub DATA_STATE___CHARREF_STATE () { 259 }
-sub DATA_STATE___CHARREF_STATE_CR () { 260 }
-sub DATA_STATE_CR () { 261 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE () { 262 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 263 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 264 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 265 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 266 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 267 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 268 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE_CR () { 269 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE () { 270 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 271 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 272 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 273 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 274 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 275 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 276 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE_CR () { 277 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE () { 278 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 279 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 280 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE () { 281 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE () { 282 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE () { 283 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE () { 284 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR () { 285 }
-sub END_TAG_OPEN_STATE () { 286 }
-sub IGNORED_SECTION_STATE () { 287 }
-sub IN_DTD_MSC_STATE () { 288 }
-sub IN_IGNORED_SECTION_MSC_STATE () { 289 }
-sub IN_MSC_STATE () { 290 }
-sub IN_PIC_STATE () { 291 }
-sub MDO_STATE () { 292 }
-sub MDO_STATE__ () { 293 }
-sub MDO_STATE_D () { 294 }
-sub MDO_STATE_DO () { 295 }
-sub MDO_STATE_DOC () { 296 }
-sub MDO_STATE_DOCT () { 297 }
-sub MDO_STATE_DOCTY () { 298 }
-sub MDO_STATE_DOCTYP () { 299 }
-sub MDO_STATE__5B () { 300 }
-sub MDO_STATE__5BC () { 301 }
-sub MDO_STATE__5BCD () { 302 }
-sub MDO_STATE__5BCDA () { 303 }
-sub MDO_STATE__5BCDAT () { 304 }
-sub MDO_STATE__5BCDATA () { 305 }
-sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_AFTER_SPACE_STATE () { 306 }
-sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE () { 307 }
-sub PARAMETER_ENTITY_NAME_IN_DTD_STATE () { 308 }
-sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE () { 309 }
-sub PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE () { 310 }
-sub SELF_CLOSING_START_TAG_STATE () { 311 }
-sub TAG_NAME_STATE () { 312 }
-sub TAG_OPEN_STATE () { 313 }
+sub BEFORE_ENTITY_VALUE_IN_ENTITY_STATE () { 223 }
+sub BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR () { 224 }
+sub BEFORE_NDATA_ID_STATE () { 225 }
+sub BEFORE_NDATA_KEYWORD_STATE () { 226 }
+sub BEFORE_NDATA_KEYWORD_STATE_N () { 227 }
+sub BEFORE_NDATA_KEYWORD_STATE_ND () { 228 }
+sub BEFORE_NDATA_KEYWORD_STATE_NDA () { 229 }
+sub BEFORE_NDATA_KEYWORD_STATE_NDAT () { 230 }
+sub BEFORE_NOTATION_NAME_STATE () { 231 }
+sub BEFORE_NOTATION_PUBLIC_ID_STATE () { 232 }
+sub BEFORE_NOTATION_SYSTEM_ID_STATE () { 233 }
+sub BEFORE_ALLOWED_TOKEN_STATE () { 234 }
+sub BEFORE_ATTR_NAME_STATE () { 235 }
+sub BEFORE_ATTR_VALUE_STATE () { 236 }
+sub BEFORE_CONTENT_MODEL_ITEM_STATE () { 237 }
+sub BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE () { 238 }
+sub BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE () { 239 }
+sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE () { 240 }
+sub BOGUS_DOCTYPE_STATE () { 241 }
+sub BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 242 }
+sub BOGUS_COMMENT_STATE () { 243 }
+sub BOGUS_COMMENT_STATE_CR () { 244 }
+sub BOGUS_MARKUP_DECLARATION_STATE () { 245 }
+sub CHARREF_IN_DATA_STATE () { 246 }
+sub COMMENT_END_BANG_STATE () { 247 }
+sub COMMENT_END_DASH_STATE () { 248 }
+sub COMMENT_END_STATE () { 249 }
+sub COMMENT_START_DASH_STATE () { 250 }
+sub COMMENT_START_STATE () { 251 }
+sub COMMENT_STATE () { 252 }
+sub COMMENT_STATE_CR () { 253 }
+sub CONTENT_MODEL_ELEMENT_STATE () { 254 }
+sub DATA_STATE () { 255 }
+sub DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 256 }
+sub DATA_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 257 }
+sub DATA_STATE___CHARREF_HEX_NUMBER_STATE () { 258 }
+sub DATA_STATE___CHARREF_NAME_STATE () { 259 }
+sub DATA_STATE___CHARREF_NUMBER_STATE () { 260 }
+sub DATA_STATE___CHARREF_STATE () { 261 }
+sub DATA_STATE___CHARREF_STATE_CR () { 262 }
+sub DATA_STATE_CR () { 263 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE () { 264 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 265 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 266 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 267 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 268 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 269 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 270 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE_CR () { 271 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE () { 272 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 273 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 274 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 275 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 276 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 277 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 278 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE_CR () { 279 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE () { 280 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 281 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 282 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE () { 283 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE () { 284 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE () { 285 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE () { 286 }
+sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR () { 287 }
+sub END_TAG_OPEN_STATE () { 288 }
+sub IGNORED_SECTION_STATE () { 289 }
+sub IN_DTD_MSC_STATE () { 290 }
+sub IN_IGNORED_SECTION_MSC_STATE () { 291 }
+sub IN_MSC_STATE () { 292 }
+sub IN_PIC_STATE () { 293 }
+sub MDO_STATE () { 294 }
+sub MDO_STATE__ () { 295 }
+sub MDO_STATE_D () { 296 }
+sub MDO_STATE_DO () { 297 }
+sub MDO_STATE_DOC () { 298 }
+sub MDO_STATE_DOCT () { 299 }
+sub MDO_STATE_DOCTY () { 300 }
+sub MDO_STATE_DOCTYP () { 301 }
+sub MDO_STATE__5B () { 302 }
+sub MDO_STATE__5BC () { 303 }
+sub MDO_STATE__5BCD () { 304 }
+sub MDO_STATE__5BCDA () { 305 }
+sub MDO_STATE__5BCDAT () { 306 }
+sub MDO_STATE__5BCDATA () { 307 }
+sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_AFTER_SPACE_STATE () { 308 }
+sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE () { 309 }
+sub PARAMETER_ENTITY_NAME_IN_DTD_STATE () { 310 }
+sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE () { 311 }
+sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE () { 312 }
+sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE () { 313 }
+sub PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE () { 314 }
+sub SELF_CLOSING_START_TAG_STATE () { 315 }
+sub TAG_NAME_STATE () { 316 }
+sub TAG_OPEN_STATE () { 317 }
 
 my $TokenizerAbortingTagNames = {
   title => 1,
@@ -840,10 +882,6 @@ return;
           my $token = $_;
 
         push @$OP, ['doctype', $token => 0];
-
-        if (not length $token->{system_identifier}) {
-          push @$OP, ['construct-doctype'];
-        }
       
 $DTDDefs->{system_id} = $token->{system_identifier};
 
@@ -863,6 +901,7 @@ $DTDDefs->{system_id} = $token->{system_identifier};
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
         
+push @$OP, ['construct-doctype'];
           }
         
           }
@@ -901,6 +940,7 @@ return;
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
         
+push @$OP, ['construct-doctype'];
 
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
       
@@ -926,6 +966,7 @@ return;
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
         
+push @$OP, ['construct-doctype'];
 
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
       
@@ -2537,6 +2578,7 @@ return;
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
         
+push @$OP, ['construct-doctype'];
         },
       ,
         ## [106] in subset before root element;EOF
@@ -2815,8 +2857,8 @@ return;
           #    (name => $self->{t}->{name},
           #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         } else { # not stop processing
-          if ($token->{is_parameter_entity}) {
-            if (not $DTDDefs->{pe}->{$token->{name} . ';'}) {
+          if ($token->{is_parameter_entity_flag}) {
+            if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
@@ -2825,7 +2867,7 @@ return;
               #  (name => $self->{t}->{name},
               #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
-              $DTDDefs->{pe}->{$token->{name} . ';'} = $token;
+              $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
             } else {
               push @$Errors, {level => 'w',
                               type => 'duplicate para entity decl', ## TODO: type
@@ -2920,6 +2962,7 @@ return;
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
         
+push @$OP, ['construct-doctype'];
         },
       ,
         ## [130] in subset;EOF
@@ -2951,6 +2994,7 @@ push @$OP, ['stop-parsing'];
           #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
           # XXX $token->{base_url}
           $DTDDefs->{notations}->{$token->{name}} = $token;
+warn "pb notation";
         }
         #XXX
         #if (defined $self->{t}->{pubid}) {
@@ -3247,6 +3291,7 @@ push @$OP, ['stop-parsing'];
           $IM = BEFORE_ROOT_ELEMENT_IM;
           #warn "Insertion mode changed to |before root element| ($IM)";
         
+push @$OP, ['construct-doctype'];
           } else {
             
         push @$Errors, {level => 's',
@@ -7285,6 +7330,8 @@ if ($Input =~ /\G([\	\\ \
 } elsif ($Input =~ /\G([\%])/gcs) {
 # XXX set-original-state
 
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = DOCTYPE_TAG_STATE;
@@ -8018,7 +8065,9 @@ $State = ENTITY_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = AFTER_ENTITY_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -8085,7 +8134,9 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -8257,7 +8308,9 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8480,7 +8533,9 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8601,7 +8656,9 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -8694,7 +8751,9 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -8768,7 +8827,9 @@ $Temp .= $1;
 $State = ENTITY_VALUE__DQ__STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -8834,7 +8895,9 @@ $State = ENTITY_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = AFTER_ENTITY_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -8881,7 +8944,9 @@ push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ENTITY_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -8943,7 +9008,9 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -9098,7 +9165,9 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9321,7 +9390,9 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9462,7 +9533,9 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -9552,7 +9625,9 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -9630,7 +9705,9 @@ $Temp .= $1;
 $State = ENTITY_VALUE__SQ__STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -9697,7 +9774,9 @@ push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ENTITY_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -9746,7 +9825,9 @@ push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -9805,7 +9886,9 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -9952,7 +10035,9 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10150,7 +10235,9 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10266,7 +10353,9 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -10351,7 +10440,9 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -10421,7 +10512,9 @@ $Temp .= $1;
 $State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -10484,7 +10577,9 @@ push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -25013,6 +25108,173 @@ return 1;
 }
 return 0;
 };
+$StateActions->[BEFORE_ENTITY_VALUE_IN_ENTITY_STATE] = sub {
+if ($Input =~ /\G([^\ \\%\&]+)/gcs) {
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+} else {
+if ($EOF) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+
+# XXX di/index
+warn "???????????? ";
+use Data::Dumper;
+warn Dumper $Token->{value};
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
 $StateActions->[BEFORE_NDATA_ID_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<notation_name>} = q@�@;
@@ -39008,8 +39270,47 @@ return 1;
 return 0;
 };
 $StateActions->[PARAMETER_ENTITY_NAME_IN_DTD_STATE] = sub {
-if ($Input =~ /\G([^\"\%\&\']+)/gcs) {
+if ($Input =~ /\G([^\ \;\	\\ \
+\\"\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
 
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
+
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnDTDEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      
+$State = DTD_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-dtd-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-dtd-0022', level => 'm',
@@ -39027,6 +39328,8 @@ $State = DTD_STATE;
           
 # XXX set-original-state
 
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -39041,6 +39344,42 @@ $State = DTD_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-dtd-0027', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+
+            push @$Errors, {type => 'dtd-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-dtd-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DOCTYPE_TAG_STATE;
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-dtd-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+
+            push @$Errors, {type => 'dtd-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-dtd-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+
+            push @$Errors, {type => 'dtd-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-dtd-0060', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
@@ -39074,35 +39413,412 @@ return 1;
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE] = sub {
-if ($Input =~ /\G([^\"\%\&\']+)/gcs) {
+$StateActions->[PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE] = sub {
+if ($Input =~ /\G([^\ \;\	\\ \
+\\"\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
 
-} elsif ($Input =~ /\G([\"])/gcs) {
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-0022', level => 'm',
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnEntityValueEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      
+$State = ENTITY_VALUE__DQ__STATE;
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = ENTITY_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0022', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = AFTER_ENTITY_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-0025', level => 'm',
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_STATE;
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-0026', level => 'm',
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0026', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
-            push @$Errors, {type => 'parameter-entity-name-in-entity-value-0027', level => 'm',
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ENTITY_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0060', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE] = sub {
+if ($Input =~ /\G([^\ \;\	\\ \
+\\"\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
+
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnEntityValueEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      
+$State = ENTITY_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = ENTITY_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0022', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0027', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = AFTER_ENTITY_PARAMETER_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0060', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE] = sub {
+if ($Input =~ /\G([^\ \;\	\\ \
+\\"\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
+
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnEntityValueEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0022', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0027', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0060', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENTITY_VALUE_IN_ENTITY_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -40727,16 +41443,17 @@ sub dom_tree ($$) {
       $doc->xml_standalone ($op->[1]);
 
     } elsif ($op->[0] eq 'construct-doctype') {
+      my $doctype = $nodes->[1];
       for my $data (values %{$DTDDefs->{elements} or {}}) {
         my $node = $doc->create_element_type_definition ($data->{name});
         $node->content_model_text ($data->{content_keyword})
             if defined $data->{content_keyword};
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}])
             if defined $data->{index};
-        $doc->doctype->set_element_type_definition_node ($node);
+        $doctype->set_element_type_definition_node ($node);
       }
       for my $elname (keys %{$DTDDefs->{attrdefs} or {}}) {
-        my $et = $doc->doctype->get_element_type_definition_node ($elname);
+        my $et = $doctype->get_element_type_definition_node ($elname);
         for my $data (@{$DTDDefs->{attrdefs}->{$elname}}) {
           my $node = $doc->create_attribute_definition ($data->{name});
           $node->declared_type ($data->{declared_type} || 0);
@@ -40750,13 +41467,14 @@ sub dom_tree ($$) {
               (['', $data->{di}, $data->{index}]);
         }
       }
+warn 1;
       for my $data (values %{$DTDDefs->{notations} or {}}) {
         my $node = $doc->create_notation ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
         $node->system_id ($data->{system_identifier}); # or undef
         # XXX base URL
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
-        $doc->doctype->set_notation_node ($node);
+        $doctype->set_notation_node ($node);
       }
       for my $data (values %{$DTDDefs->{ge} or {}}) {
         next unless defined $data->{notation_name};
@@ -40766,7 +41484,7 @@ sub dom_tree ($$) {
         $node->notation_name ($data->{notation_name}); # or undef
         # XXX base URL
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
-        $doc->doctype->set_general_entity_node ($node);
+        $doctype->set_general_entity_node ($node);
       }
 
     } else {
@@ -41530,6 +42248,126 @@ $Scripting = $self->{Scripting};
     $DI = $self->{di} = @$dids;
     $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
 
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+  } # _parse_bytes_init
+}
+
+{
+  package XXX::EntityValueEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    $FRAMESET_OK = 1;
+$AnchoredIndex = 0;
+$NEXT_ID = 1;
+$Offset = 0;
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
+    $IframeSrcdoc = $self->{IframeSrcdoc};
+$Scripting = $self->{Scripting};
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      $State = ENTITY_VALUE_IN_ENTITY_STATE;;
+      $IM = IN_SUBSET_IM;
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $Token = $main->{saved_states}->{Token};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    $FRAMESET_OK = 1;
+$AnchoredIndex = 0;
+$NEXT_ID = 1;
+$Offset = 0;
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
+    $IframeSrcdoc = $self->{IframeSrcdoc};
+$Scripting = $self->{Scripting};
+    {
+      package Web::XML::Parser;
+      $State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE;;
+      $IM = IN_SUBSET_IM;
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $Token = $main->{saved_states}->{Token};
     $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
 
     $NEXT_ID++;

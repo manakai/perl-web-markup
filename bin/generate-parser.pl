@@ -1162,6 +1162,67 @@ sub serialize_actions ($;%) {
       $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
     } elsif ($type eq 'validate-temp-as-entref') {
       push @result, q{}; # XXXxml validate $Temp as XML entref
+    } elsif ($type eq 'process-temp-as-peref-dtd') { # XML only
+      push @result, q{
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnDTDEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      };
+    } elsif ($type eq 'process-temp-as-peref-entity-value') { # XML only
+      push @result, q{
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnEntityValueEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      };
+#XXX
+
+    } elsif ($type eq 'process-xml-declaration-in-value') {
+      push @result, q{
+# XXX di/index
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>";
+        }
+      };
 
     } elsif ($type eq 'set-DTD-mode') {
       push @result, sprintf q{$DTDMode = q{%s};}, $_->{value};
@@ -1825,6 +1886,9 @@ sub actions_to_code ($;%) {
         }, im_const $act->{im}, $act->{im};
         $new_im = $act->{im};
       }
+      if ($act->{im} eq 'before root element') {
+        push @code, q{push @$OP, ['construct-doctype'];};
+      }
     } elsif ($act->{type} eq 'reprocess the token') {
       push @code, sprintf q{
         goto &{$ProcessIM->[$IM]->[$token->{type}]->[$token->{tn}]};
@@ -2174,10 +2238,6 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'insert a DOCTYPE') { # XML
       push @code, q{
         push @$OP, ['doctype', $token => 0];
-
-        if (not length $token->{system_identifier}) {
-          push @$OP, ['construct-doctype'];
-        }
       };
     } elsif ($act->{type} eq 'append-to-document') {
       if (defined $act->{item}) {
@@ -3016,8 +3076,8 @@ sub actions_to_code ($;%) {
           #    (name => $self->{t}->{name},
           #    onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
         } else { # not stop processing
-          if ($token->{is_parameter_entity}) {
-            if (not $DTDDefs->{pe}->{$token->{name} . ';'}) {
+          if ($token->{is_parameter_entity_flag}) {
+            if (not $DTDDefs->{pe}->{'%'.$token->{name} . ';'}) {
               push @$Errors, {level => 'w',
                               type => 'xml:dtd:ext decl',
                               di => $DI, index => $Offset + pos $Input}
@@ -3026,7 +3086,7 @@ sub actions_to_code ($;%) {
               #  (name => $self->{t}->{name},
               #onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
 
-              $DTDDefs->{pe}->{$token->{name} . ';'} = $token;
+              $DTDDefs->{pe}->{'%'.$token->{name} . ';'} = $token;
             } else {
               push @$Errors, {level => 'w',
                               type => 'duplicate para entity decl', ## TODO: type
@@ -3122,6 +3182,7 @@ sub actions_to_code ($;%) {
           #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
           # XXX $token->{base_url}
           $DTDDefs->{notations}->{$token->{name}} = $token;
+warn "pb notation";
         }
         #XXX
         #if (defined $self->{t}->{pubid}) {
@@ -4023,16 +4084,17 @@ sub dom_tree ($$) {
       $doc->xml_standalone ($op->[1]);
 
     } elsif ($op->[0] eq 'construct-doctype') {
+      my $doctype = $nodes->[1];
       for my $data (values %%{$DTDDefs->{elements} or {}}) {
         my $node = $doc->create_element_type_definition ($data->{name});
         $node->content_model_text ($data->{content_keyword})
             if defined $data->{content_keyword};
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}])
             if defined $data->{index};
-        $doc->doctype->set_element_type_definition_node ($node);
+        $doctype->set_element_type_definition_node ($node);
       }
       for my $elname (keys %%{$DTDDefs->{attrdefs} or {}}) {
-        my $et = $doc->doctype->get_element_type_definition_node ($elname);
+        my $et = $doctype->get_element_type_definition_node ($elname);
         for my $data (@{$DTDDefs->{attrdefs}->{$elname}}) {
           my $node = $doc->create_attribute_definition ($data->{name});
           $node->declared_type ($data->{declared_type} || 0);
@@ -4046,13 +4108,14 @@ sub dom_tree ($$) {
               (['', $data->{di}, $data->{index}]);
         }
       }
+warn 1;
       for my $data (values %%{$DTDDefs->{notations} or {}}) {
         my $node = $doc->create_notation ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
         $node->system_id ($data->{system_identifier}); # or undef
         # XXX base URL
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
-        $doc->doctype->set_notation_node ($node);
+        $doctype->set_notation_node ($node);
       }
       for my $data (values %%{$DTDDefs->{ge} or {}}) {
         next unless defined $data->{notation_name};
@@ -4062,7 +4125,7 @@ sub dom_tree ($$) {
         $node->notation_name ($data->{notation_name}); # or undef
         # XXX base URL
         $node->manakai_set_source_location (['', $data->{di}, $data->{index}]);
-        $doc->doctype->set_general_entity_node ($node);
+        $doctype->set_general_entity_node ($node);
       }
 
     } else {
@@ -5012,6 +5075,112 @@ sub generate_api ($) {
   } # _parse_bytes_init
 }
 
+{
+  package XXX::EntityValueEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    VARS::LOCAL;
+    VARS::INIT;
+    VARS::RESET;
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("ENTITY value in entity state");
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $Token = $main->{saved_states}->{Token};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      VARS::LOCAL;
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      VARS::SAVE;
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    VARS::INIT;
+    VARS::RESET;
+    {
+      package Web::XML::Parser;
+      SWITCH_STATE ("before ENTITY value in entity state");
+      $IM = IM ("in subset");
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $Token = $main->{saved_states}->{Token};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+  } # _parse_bytes_init
+}
+
     sub _parse_sub_done ($) {
       my $self = $_[0];
       VARS::LOCAL;
@@ -5261,6 +5430,44 @@ my $OnDTDEntityReference = sub {
     $main->{pause}--;
   }
 }; # $OnDTDEntityReference
+
+my $OnEntityValueEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '&'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } else {
+    my $sub = XXX::EntityValueEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($_[0], $_[1]);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnEntityValueEntityReference
 
 sub onelementspopped ($;$) {
   if (@_ > 1) {
