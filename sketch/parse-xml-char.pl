@@ -25,6 +25,14 @@ my $subs = [];
 $parser->onextentref (sub {
   my ($self, $data, $sub) = @_;
   $sub->parse_bytes_start (undef, $self);
+
+  if (not defined $data->{entity}->{system_identifier}) {
+    $sub->parse_bytes_feed ($data->{entity}->{name});
+      $sub->parse_bytes_feed (' no system id');
+      $sub->parse_bytes_end;
+    return;
+  }
+
   if ($data->{entity}->{system_identifier} =~ /^\#([0-9]+)$/) {
     my $id = $1;
     if (defined $input[$id]) {

@@ -183,18 +183,20 @@ my $OnContentEntityReference = sub {
 
 my $OnDTDEntityReference = sub {
   my ($main, $data) = @_;
-  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+  if (defined $data->{entity}->{name} and
+      ($main->{entity_depth} || 0) > $main->max_entity_depth) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
-                               value => '&'.$data->{entity}->{name}.';',
+                               value => '%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
-  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+  } elsif (defined $data->{entity}->{name} and
+           (${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
-                               value => '&'.$data->{entity}->{name}.';',
+                               value => '%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } else {
@@ -225,14 +227,14 @@ my $OnEntityValueEntityReference = sub {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too deep',
                                text => $main->max_entity_depth,
-                               value => '&'.$data->{entity}->{name}.';',
+                               value => '%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
     $main->onerrors->($main, [{level => 'm',
                                type => 'entity:too many refs',
                                text => $main->max_entity_expansions,
-                               value => '&'.$data->{entity}->{name}.';',
+                               value => '%'.$data->{entity}->{name}.';',
                                di => $data->{entity}->{di},
                                index => $data->{entity}->{index}}]);
   } else {
@@ -256,6 +258,45 @@ my $OnEntityValueEntityReference = sub {
     $main->{pause}--;
   }
 }; # $OnEntityValueEntityReference
+
+my $OnMDEntityReference = sub {
+  my ($main, $data) = @_;
+  if (($main->{entity_depth} || 0) > $main->max_entity_depth) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too deep',
+                               text => $main->max_entity_depth,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } elsif ((${$main->{entity_expansion_count} || \0}) > $main->max_entity_expansions + 1) {
+    $main->onerrors->($main, [{level => 'm',
+                               type => 'entity:too many refs',
+                               text => $main->max_entity_expansions,
+                               value => '%'.$data->{entity}->{name}.';',
+                               di => $data->{entity}->{di},
+                               index => $data->{entity}->{index}}]);
+  } else {
+    my $sub = XXX::MDEntityParser->new;
+    my $main2 = $main;
+    $sub->onparsed (sub {
+      my $sub = $_[0];
+      $main2->{saved_states}->{State} = $sub->{saved_states}->{State};
+      $data->{entity}->{open}--;
+      $main2->{pause}--;
+      $main2->_parse_sub_done;
+      undef $main2;
+    });
+    $data->{entity}->{open}++;
+    $main->{pause}++;
+    $main->{pause}++;
+    if (defined $data->{entity}->{value}) { # internal
+      $sub->parse ($_[0], $_[1]);
+    } else { # external
+      $main->onextentref->($main, $data, $sub);
+    }
+    $main->{pause}--;
+  }
+}; # $OnMDEntityReference
 
 sub onelementspopped ($;$) {
   if (@_ > 1) {
@@ -312,7 +353,7 @@ sub onrestartwithencoding ($;$) {
     } # _cleanup_states
 
     ## ------ Common defs ------
-    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
+    our $AFE;our $AllDeclsProcessed;our $AnchoredIndex;our $Attr;our $CONTEXT;our $Callbacks;our $Confident;our $DI;our $DTDDefs;our $DTDMode;our $EOF;our $Errors;our $FORM_ELEMENT;our $FRAMESET_OK;our $HEAD_ELEMENT;our $IM;our $IframeSrcdoc;our $InForeign;our $Input;our $LastStartTagName;our $NEXT_ID;our $OE;our $OP;our $ORIGINAL_IM;our $Offset;our $OpenCMGroups;our $OpenMarkedSections;our $OriginalState;our $QUIRKS;our $Scripting;our $State;our $StopProcessing;our $TABLE_CHARS;our $TEMPLATE_IMS;our $Temp;our $TempIndex;our $Token;our $Tokens;our $XMLStandalone;
     ## ------ Tokenizer defs ------
     sub ATTLIST_TOKEN () { 1 }
 sub DOCTYPE_TOKEN () { 2 }
@@ -372,43 +413,43 @@ sub DOCTYPE_SYSTEM_ID__SQ__STATE () { 43 }
 sub DOCTYPE_SYSTEM_ID__SQ__STATE_CR () { 44 }
 sub DOCTYPE_TAG_STATE () { 45 }
 sub DTD_STATE () { 46 }
-sub ELEMENT_CONTENT_KEYWORD_STATE () { 47 }
+sub ELEMENT_CONTENT_KWD_STATE () { 47 }
 sub ELEMENT_NAME_STATE () { 48 }
 sub ELEMENT_STATE () { 49 }
-sub ENTITY_NAME_STATE () { 50 }
-sub ENTITY_PUBLIC_ID__DQ__STATE () { 51 }
-sub ENTITY_PUBLIC_ID__DQ__STATE_CR () { 52 }
-sub ENTITY_PUBLIC_ID__SQ__STATE () { 53 }
-sub ENTITY_PUBLIC_ID__SQ__STATE_CR () { 54 }
-sub ENTITY_STATE () { 55 }
-sub ENTITY_SYSTEM_ID__DQ__STATE () { 56 }
-sub ENTITY_SYSTEM_ID__DQ__STATE_CR () { 57 }
-sub ENTITY_SYSTEM_ID__SQ__STATE () { 58 }
-sub ENTITY_SYSTEM_ID__SQ__STATE_CR () { 59 }
-sub ENTITY_VALUE__DQ__STATE () { 60 }
-sub ENTITY_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 61 }
-sub ENTITY_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 62 }
-sub ENTITY_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 63 }
-sub ENTITY_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 64 }
-sub ENTITY_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 65 }
-sub ENTITY_VALUE__DQ__STATE___CHARREF_STATE () { 66 }
-sub ENTITY_VALUE__DQ__STATE_CR () { 67 }
-sub ENTITY_VALUE__SQ__STATE () { 68 }
-sub ENTITY_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 69 }
-sub ENTITY_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 70 }
-sub ENTITY_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 71 }
-sub ENTITY_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 72 }
-sub ENTITY_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 73 }
-sub ENTITY_VALUE__SQ__STATE___CHARREF_STATE () { 74 }
-sub ENTITY_VALUE__SQ__STATE_CR () { 75 }
-sub ENTITY_VALUE_IN_ENTITY_STATE () { 76 }
-sub ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 77 }
-sub ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 78 }
-sub ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE () { 79 }
-sub ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE () { 80 }
-sub ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE () { 81 }
-sub ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE () { 82 }
-sub ENTITY_VALUE_IN_ENTITY_STATE_CR () { 83 }
+sub ENT_NAME_STATE () { 50 }
+sub ENT_PUBLIC_ID__DQ__STATE () { 51 }
+sub ENT_PUBLIC_ID__DQ__STATE_CR () { 52 }
+sub ENT_PUBLIC_ID__SQ__STATE () { 53 }
+sub ENT_PUBLIC_ID__SQ__STATE_CR () { 54 }
+sub ENT_STATE () { 55 }
+sub ENT_SYSTEM_ID__DQ__STATE () { 56 }
+sub ENT_SYSTEM_ID__DQ__STATE_CR () { 57 }
+sub ENT_SYSTEM_ID__SQ__STATE () { 58 }
+sub ENT_SYSTEM_ID__SQ__STATE_CR () { 59 }
+sub ENT_VALUE__DQ__STATE () { 60 }
+sub ENT_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 61 }
+sub ENT_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 62 }
+sub ENT_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE () { 63 }
+sub ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 64 }
+sub ENT_VALUE__DQ__STATE___CHARREF_NUM_STATE () { 65 }
+sub ENT_VALUE__DQ__STATE___CHARREF_STATE () { 66 }
+sub ENT_VALUE__DQ__STATE_CR () { 67 }
+sub ENT_VALUE__SQ__STATE () { 68 }
+sub ENT_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 69 }
+sub ENT_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 70 }
+sub ENT_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE () { 71 }
+sub ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 72 }
+sub ENT_VALUE__SQ__STATE___CHARREF_NUM_STATE () { 73 }
+sub ENT_VALUE__SQ__STATE___CHARREF_STATE () { 74 }
+sub ENT_VALUE__SQ__STATE_CR () { 75 }
+sub ENT_VALUE_IN_ENT_STATE () { 76 }
+sub ENT_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 77 }
+sub ENT_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE () { 78 }
+sub ENT_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE () { 79 }
+sub ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE () { 80 }
+sub ENT_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE () { 81 }
+sub ENT_VALUE_IN_ENT_STATE___CHARREF_STATE () { 82 }
+sub ENT_VALUE_IN_ENT_STATE_CR () { 83 }
 sub NDATA_ID_STATE () { 84 }
 sub NOTATION_NAME_STATE () { 85 }
 sub NOTATION_PUBLIC_ID__DQ__STATE () { 86 }
@@ -425,224 +466,317 @@ sub PI_DATA_STATE_CR () { 96 }
 sub PI_STATE () { 97 }
 sub PI_TARGET_QUESTION_STATE () { 98 }
 sub PI_TARGET_STATE () { 99 }
-sub AFTER_ATTLIST_ATTR_DEFAULT_STATE () { 100 }
-sub AFTER_ATTLIST_ATTR_NAME_STATE () { 101 }
-sub AFTER_ATTLIST_ATTR_TYPE_STATE () { 102 }
-sub AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 103 }
-sub AFTER_DOCTYPE_NAME_STATE () { 104 }
-sub AFTER_DOCTYPE_NAME_STATE_P () { 105 }
-sub AFTER_DOCTYPE_NAME_STATE_PU () { 106 }
-sub AFTER_DOCTYPE_NAME_STATE_PUB () { 107 }
-sub AFTER_DOCTYPE_NAME_STATE_PUBL () { 108 }
-sub AFTER_DOCTYPE_NAME_STATE_PUBLI () { 109 }
-sub AFTER_DOCTYPE_NAME_STATE_S () { 110 }
-sub AFTER_DOCTYPE_NAME_STATE_SY () { 111 }
-sub AFTER_DOCTYPE_NAME_STATE_SYS () { 112 }
-sub AFTER_DOCTYPE_NAME_STATE_SYST () { 113 }
-sub AFTER_DOCTYPE_NAME_STATE_SYSTE () { 114 }
-sub AFTER_DOCTYPE_PUBLIC_ID_STATE () { 115 }
-sub AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE () { 116 }
-sub AFTER_DOCTYPE_SYSTEM_ID_STATE () { 117 }
-sub AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE () { 118 }
-sub AFTER_DTD_MSC_STATE () { 119 }
-sub AFTER_ELEMENT_CONTENT_STATE () { 120 }
-sub AFTER_ENTITY_NAME_STATE () { 121 }
-sub AFTER_ENTITY_NAME_STATE_P () { 122 }
-sub AFTER_ENTITY_NAME_STATE_PU () { 123 }
-sub AFTER_ENTITY_NAME_STATE_PUB () { 124 }
-sub AFTER_ENTITY_NAME_STATE_PUBL () { 125 }
-sub AFTER_ENTITY_NAME_STATE_PUBLI () { 126 }
-sub AFTER_ENTITY_NAME_STATE_S () { 127 }
-sub AFTER_ENTITY_NAME_STATE_SY () { 128 }
-sub AFTER_ENTITY_NAME_STATE_SYS () { 129 }
-sub AFTER_ENTITY_NAME_STATE_SYST () { 130 }
-sub AFTER_ENTITY_NAME_STATE_SYSTE () { 131 }
-sub AFTER_ENTITY_PARAMETER_STATE () { 132 }
-sub AFTER_ENTITY_PUBLIC_ID_STATE () { 133 }
-sub AFTER_ENTITY_PUBLIC_KEYWORD_STATE () { 134 }
-sub AFTER_ENTITY_SYSTEM_ID_STATE () { 135 }
-sub AFTER_ENTITY_SYSTEM_KEYWORD_STATE () { 136 }
-sub AFTER_IGNORE_KEYWORD_STATE () { 137 }
-sub AFTER_INCLUDE_KEYWORD_STATE () { 138 }
-sub AFTER_NDATA_KEYWORD_STATE () { 139 }
-sub AFTER_NOTATION_NAME_STATE () { 140 }
-sub AFTER_NOTATION_NAME_STATE_P () { 141 }
-sub AFTER_NOTATION_NAME_STATE_PU () { 142 }
-sub AFTER_NOTATION_NAME_STATE_PUB () { 143 }
-sub AFTER_NOTATION_NAME_STATE_PUBL () { 144 }
-sub AFTER_NOTATION_NAME_STATE_PUBLI () { 145 }
-sub AFTER_NOTATION_NAME_STATE_S () { 146 }
-sub AFTER_NOTATION_NAME_STATE_SY () { 147 }
-sub AFTER_NOTATION_NAME_STATE_SYS () { 148 }
-sub AFTER_NOTATION_NAME_STATE_SYST () { 149 }
-sub AFTER_NOTATION_NAME_STATE_SYSTE () { 150 }
-sub AFTER_NOTATION_PUBLIC_ID_STATE () { 151 }
-sub AFTER_NOTATION_PUBLIC_KEYWORD_STATE () { 152 }
-sub AFTER_NOTATION_SYSTEM_ID_STATE () { 153 }
-sub AFTER_NOTATION_SYSTEM_KEYWORD_STATE () { 154 }
-sub AFTER_PI_TARGET_STATE () { 155 }
-sub AFTER_PI_TARGET_STATE_CR () { 156 }
-sub AFTER_AFTER_ALLOWED_TOKEN_LIST_STATE () { 157 }
-sub AFTER_ALLOWED_TOKEN_LIST_STATE () { 158 }
-sub AFTER_ALLOWED_TOKEN_STATE () { 159 }
-sub AFTER_ATTR_NAME_STATE () { 160 }
-sub AFTER_ATTR_VALUE__QUOTED__STATE () { 161 }
-sub AFTER_CONTENT_MODEL_GROUP_STATE () { 162 }
-sub AFTER_CONTENT_MODEL_ITEM_STATE () { 163 }
-sub AFTER_IGNORED_SECTION_MSC_STATE () { 164 }
-sub AFTER_MSC_STATE () { 165 }
-sub AFTER_MSS_STATE () { 166 }
-sub AFTER_MSS_STATE_I () { 167 }
-sub AFTER_MSS_STATE_IG () { 168 }
-sub AFTER_MSS_STATE_IGN () { 169 }
-sub AFTER_MSS_STATE_IGNO () { 170 }
-sub AFTER_MSS_STATE_IGNOR () { 171 }
-sub AFTER_MSS_STATE_IN () { 172 }
-sub AFTER_MSS_STATE_INC () { 173 }
-sub AFTER_MSS_STATE_INCL () { 174 }
-sub AFTER_MSS_STATE_INCLU () { 175 }
-sub AFTER_MSS_STATE_INCLUD () { 176 }
-sub ALLOWED_TOKEN_STATE () { 177 }
-sub ATTR_NAME_STATE () { 178 }
-sub ATTR_VALUE__DQ__STATE () { 179 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 180 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 181 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 182 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 183 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 184 }
-sub ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 185 }
-sub ATTR_VALUE__DQ__STATE_CR () { 186 }
-sub ATTR_VALUE__SQ__STATE () { 187 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 188 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 189 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 190 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 191 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 192 }
-sub ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 193 }
-sub ATTR_VALUE__SQ__STATE_CR () { 194 }
-sub ATTR_VALUE__UNQUOTED__STATE () { 195 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 196 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 197 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUMBER_STATE () { 198 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NAME_STATE () { 199 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUMBER_STATE () { 200 }
-sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE () { 201 }
-sub ATTR_VALUE__UNQUOTED__STATE_CR () { 202 }
-sub ATTR_VALUE_IN_ENTITY_STATE () { 203 }
-sub ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 204 }
-sub ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 205 }
-sub ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE () { 206 }
-sub ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE () { 207 }
-sub ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE () { 208 }
-sub ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE () { 209 }
-sub ATTR_VALUE_IN_ENTITY_STATE_CR () { 210 }
-sub BEFORE_ATTLIST_ATTR_DEFAULT_STATE () { 211 }
-sub BEFORE_ATTLIST_ATTR_NAME_STATE () { 212 }
-sub BEFORE_ATTLIST_NAME_STATE () { 213 }
-sub BEFORE_DOCTYPE_NAME_STATE () { 214 }
-sub BEFORE_DOCTYPE_PUBLIC_ID_STATE () { 215 }
-sub BEFORE_DOCTYPE_SYSTEM_ID_STATE () { 216 }
-sub BEFORE_ELEMENT_CONTENT_STATE () { 217 }
-sub BEFORE_ELEMENT_NAME_STATE () { 218 }
-sub BEFORE_ENTITY_NAME_STATE () { 219 }
-sub BEFORE_ENTITY_PUBLIC_ID_STATE () { 220 }
-sub BEFORE_ENTITY_SYSTEM_ID_STATE () { 221 }
-sub BEFORE_ENTITY_TYPE_STATE () { 222 }
-sub BEFORE_ENTITY_VALUE_IN_ENTITY_STATE () { 223 }
-sub BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR () { 224 }
-sub BEFORE_NDATA_ID_STATE () { 225 }
-sub BEFORE_NDATA_KEYWORD_STATE () { 226 }
-sub BEFORE_NDATA_KEYWORD_STATE_N () { 227 }
-sub BEFORE_NDATA_KEYWORD_STATE_ND () { 228 }
-sub BEFORE_NDATA_KEYWORD_STATE_NDA () { 229 }
-sub BEFORE_NDATA_KEYWORD_STATE_NDAT () { 230 }
-sub BEFORE_NOTATION_NAME_STATE () { 231 }
-sub BEFORE_NOTATION_PUBLIC_ID_STATE () { 232 }
-sub BEFORE_NOTATION_SYSTEM_ID_STATE () { 233 }
-sub BEFORE_ALLOWED_TOKEN_STATE () { 234 }
-sub BEFORE_ATTR_NAME_STATE () { 235 }
-sub BEFORE_ATTR_VALUE_STATE () { 236 }
-sub BEFORE_CONTENT_MODEL_ITEM_STATE () { 237 }
-sub BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE () { 238 }
-sub BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE () { 239 }
-sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE () { 240 }
-sub BOGUS_DOCTYPE_STATE () { 241 }
-sub BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 242 }
-sub BOGUS_COMMENT_STATE () { 243 }
-sub BOGUS_COMMENT_STATE_CR () { 244 }
-sub BOGUS_MARKUP_DECLARATION_STATE () { 245 }
-sub CHARREF_IN_DATA_STATE () { 246 }
-sub COMMENT_END_BANG_STATE () { 247 }
-sub COMMENT_END_DASH_STATE () { 248 }
-sub COMMENT_END_STATE () { 249 }
-sub COMMENT_START_DASH_STATE () { 250 }
-sub COMMENT_START_STATE () { 251 }
-sub COMMENT_STATE () { 252 }
-sub COMMENT_STATE_CR () { 253 }
-sub CONTENT_MODEL_ELEMENT_STATE () { 254 }
-sub DATA_STATE () { 255 }
-sub DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 256 }
-sub DATA_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 257 }
-sub DATA_STATE___CHARREF_HEX_NUMBER_STATE () { 258 }
-sub DATA_STATE___CHARREF_NAME_STATE () { 259 }
-sub DATA_STATE___CHARREF_NUMBER_STATE () { 260 }
-sub DATA_STATE___CHARREF_STATE () { 261 }
-sub DATA_STATE___CHARREF_STATE_CR () { 262 }
-sub DATA_STATE_CR () { 263 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE () { 264 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 265 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 266 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE () { 267 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 268 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE () { 269 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 270 }
-sub DEFAULT_ATTR_VALUE__DQ__STATE_CR () { 271 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE () { 272 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 273 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE () { 274 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE () { 275 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 276 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE () { 277 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 278 }
-sub DEFAULT_ATTR_VALUE__SQ__STATE_CR () { 279 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE () { 280 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE () { 281 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE () { 282 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE () { 283 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE () { 284 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE () { 285 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE () { 286 }
-sub DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR () { 287 }
-sub END_TAG_OPEN_STATE () { 288 }
-sub IGNORED_SECTION_STATE () { 289 }
-sub IN_DTD_MSC_STATE () { 290 }
-sub IN_IGNORED_SECTION_MSC_STATE () { 291 }
-sub IN_MSC_STATE () { 292 }
-sub IN_PIC_STATE () { 293 }
-sub MDO_STATE () { 294 }
-sub MDO_STATE__ () { 295 }
-sub MDO_STATE_D () { 296 }
-sub MDO_STATE_DO () { 297 }
-sub MDO_STATE_DOC () { 298 }
-sub MDO_STATE_DOCT () { 299 }
-sub MDO_STATE_DOCTY () { 300 }
-sub MDO_STATE_DOCTYP () { 301 }
-sub MDO_STATE__5B () { 302 }
-sub MDO_STATE__5BC () { 303 }
-sub MDO_STATE__5BCD () { 304 }
-sub MDO_STATE__5BCDA () { 305 }
-sub MDO_STATE__5BCDAT () { 306 }
-sub MDO_STATE__5BCDATA () { 307 }
-sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_AFTER_SPACE_STATE () { 308 }
-sub PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE () { 309 }
-sub PARAMETER_ENTITY_NAME_IN_DTD_STATE () { 310 }
-sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE () { 311 }
-sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE () { 312 }
-sub PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE () { 313 }
-sub PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE () { 314 }
-sub SELF_CLOSING_START_TAG_STATE () { 315 }
-sub TAG_NAME_STATE () { 316 }
-sub TAG_OPEN_STATE () { 317 }
+sub A_ATTLIST_ATTR_DEFAULT_STATE () { 100 }
+sub A_ATTLIST_ATTR_DEFAULT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 101 }
+sub A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 102 }
+sub A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 103 }
+sub A_ATTLIST_ATTR_NAME_STATE () { 104 }
+sub A_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 105 }
+sub A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 106 }
+sub A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 107 }
+sub A_ATTLIST_ATTR_TYPE_STATE () { 108 }
+sub A_ATTLIST_ATTR_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 109 }
+sub A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 110 }
+sub A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 111 }
+sub A_DOCTYPE_INTERNAL_SUBSET_STATE () { 112 }
+sub A_DOCTYPE_NAME_STATE () { 113 }
+sub A_DOCTYPE_NAME_STATE_P () { 114 }
+sub A_DOCTYPE_NAME_STATE_PU () { 115 }
+sub A_DOCTYPE_NAME_STATE_PUB () { 116 }
+sub A_DOCTYPE_NAME_STATE_PUBL () { 117 }
+sub A_DOCTYPE_NAME_STATE_PUBLI () { 118 }
+sub A_DOCTYPE_NAME_STATE_S () { 119 }
+sub A_DOCTYPE_NAME_STATE_SY () { 120 }
+sub A_DOCTYPE_NAME_STATE_SYS () { 121 }
+sub A_DOCTYPE_NAME_STATE_SYST () { 122 }
+sub A_DOCTYPE_NAME_STATE_SYSTE () { 123 }
+sub A_DOCTYPE_PUBLIC_ID_STATE () { 124 }
+sub A_DOCTYPE_PUBLIC_KWD_STATE () { 125 }
+sub A_DOCTYPE_SYSTEM_ID_STATE () { 126 }
+sub A_DOCTYPE_SYSTEM_KWD_STATE () { 127 }
+sub A_DTD_MSC_STATE () { 128 }
+sub A_ELEMENT_CONTENT_STATE () { 129 }
+sub A_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 130 }
+sub A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 131 }
+sub A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 132 }
+sub A_ENT_NAME_STATE () { 133 }
+sub A_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 134 }
+sub A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 135 }
+sub A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 136 }
+sub A_ENT_NAME_STATE_P () { 137 }
+sub A_ENT_NAME_STATE_PU () { 138 }
+sub A_ENT_NAME_STATE_PUB () { 139 }
+sub A_ENT_NAME_STATE_PUBL () { 140 }
+sub A_ENT_NAME_STATE_PUBLI () { 141 }
+sub A_ENT_NAME_STATE_S () { 142 }
+sub A_ENT_NAME_STATE_SY () { 143 }
+sub A_ENT_NAME_STATE_SYS () { 144 }
+sub A_ENT_NAME_STATE_SYST () { 145 }
+sub A_ENT_NAME_STATE_SYSTE () { 146 }
+sub A_ENT_PARAMETER_STATE () { 147 }
+sub A_ENT_PARAMETER_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 148 }
+sub A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 149 }
+sub A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 150 }
+sub A_ENT_PUBLIC_ID_STATE () { 151 }
+sub A_ENT_PUBLIC_KWD_STATE () { 152 }
+sub A_ENT_SYSTEM_ID_STATE () { 153 }
+sub A_ENT_SYSTEM_KWD_STATE () { 154 }
+sub A_IGNORE_KWD_STATE () { 155 }
+sub A_IGNORE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 156 }
+sub A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 157 }
+sub A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 158 }
+sub A_INCLUDE_KWD_STATE () { 159 }
+sub A_INCLUDE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 160 }
+sub A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 161 }
+sub A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 162 }
+sub A_NDATA_KWD_STATE () { 163 }
+sub A_NOTATION_NAME_STATE () { 164 }
+sub A_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 165 }
+sub A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 166 }
+sub A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 167 }
+sub A_NOTATION_NAME_STATE_P () { 168 }
+sub A_NOTATION_NAME_STATE_PU () { 169 }
+sub A_NOTATION_NAME_STATE_PUB () { 170 }
+sub A_NOTATION_NAME_STATE_PUBL () { 171 }
+sub A_NOTATION_NAME_STATE_PUBLI () { 172 }
+sub A_NOTATION_NAME_STATE_S () { 173 }
+sub A_NOTATION_NAME_STATE_SY () { 174 }
+sub A_NOTATION_NAME_STATE_SYS () { 175 }
+sub A_NOTATION_NAME_STATE_SYST () { 176 }
+sub A_NOTATION_NAME_STATE_SYSTE () { 177 }
+sub A_NOTATION_PUBLIC_ID_STATE () { 178 }
+sub A_NOTATION_PUBLIC_KWD_STATE () { 179 }
+sub A_NOTATION_SYSTEM_ID_STATE () { 180 }
+sub A_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 181 }
+sub A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 182 }
+sub A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 183 }
+sub A_NOTATION_SYSTEM_KWD_STATE () { 184 }
+sub A_PI_TARGET_STATE () { 185 }
+sub A_PI_TARGET_STATE_CR () { 186 }
+sub A_AFTER_ALLOWED_TOKEN_LIST_STATE () { 187 }
+sub A_AFTER_ALLOWED_TOKEN_LIST_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 188 }
+sub A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 189 }
+sub A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 190 }
+sub A_ALLOWED_TOKEN_LIST_STATE () { 191 }
+sub A_ALLOWED_TOKEN_STATE () { 192 }
+sub A_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 193 }
+sub A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 194 }
+sub A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 195 }
+sub A_ATTR_NAME_STATE () { 196 }
+sub A_ATTR_VALUE__QUOTED__STATE () { 197 }
+sub A_CM_GROUP_STATE () { 198 }
+sub A_CM_ITEM_STATE () { 199 }
+sub A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 200 }
+sub A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 201 }
+sub A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 202 }
+sub A_IGNORED_SECTION_MSC_STATE () { 203 }
+sub A_MSC_STATE () { 204 }
+sub A_MSS_STATE () { 205 }
+sub A_MSS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 206 }
+sub A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 207 }
+sub A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 208 }
+sub A_MSS_STATE_I () { 209 }
+sub A_MSS_STATE_IG () { 210 }
+sub A_MSS_STATE_IGN () { 211 }
+sub A_MSS_STATE_IGNO () { 212 }
+sub A_MSS_STATE_IGNOR () { 213 }
+sub A_MSS_STATE_IN () { 214 }
+sub A_MSS_STATE_INC () { 215 }
+sub A_MSS_STATE_INCL () { 216 }
+sub A_MSS_STATE_INCLU () { 217 }
+sub A_MSS_STATE_INCLUD () { 218 }
+sub ALLOWED_TOKEN_STATE () { 219 }
+sub ATTR_NAME_STATE () { 220 }
+sub ATTR_VALUE__DQ__STATE () { 221 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 222 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 223 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE () { 224 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 225 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE () { 226 }
+sub ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 227 }
+sub ATTR_VALUE__DQ__STATE_CR () { 228 }
+sub ATTR_VALUE__SQ__STATE () { 229 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 230 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 231 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE () { 232 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 233 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE () { 234 }
+sub ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 235 }
+sub ATTR_VALUE__SQ__STATE_CR () { 236 }
+sub ATTR_VALUE__UNQUOTED__STATE () { 237 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 238 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUM_STATE () { 239 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUM_STATE () { 240 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NAME_STATE () { 241 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUM_STATE () { 242 }
+sub ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE () { 243 }
+sub ATTR_VALUE__UNQUOTED__STATE_CR () { 244 }
+sub ATTR_VALUE_IN_ENT_STATE () { 245 }
+sub ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 246 }
+sub ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE () { 247 }
+sub ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE () { 248 }
+sub ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE () { 249 }
+sub ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE () { 250 }
+sub ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE () { 251 }
+sub ATTR_VALUE_IN_ENT_STATE_CR () { 252 }
+sub B_ATTLIST_ATTR_DEFAULT_STATE () { 253 }
+sub B_ATTLIST_ATTR_NAME_STATE () { 254 }
+sub B_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 255 }
+sub B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 256 }
+sub B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 257 }
+sub B_ATTLIST_NAME_STATE () { 258 }
+sub B_ATTLIST_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 259 }
+sub B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 260 }
+sub B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 261 }
+sub B_DOCTYPE_NAME_STATE () { 262 }
+sub B_DOCTYPE_PUBLIC_ID_STATE () { 263 }
+sub B_DOCTYPE_SYSTEM_ID_STATE () { 264 }
+sub B_ELEMENT_CONTENT_STATE () { 265 }
+sub B_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 266 }
+sub B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 267 }
+sub B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 268 }
+sub B_ELEMENT_NAME_STATE () { 269 }
+sub B_ELEMENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 270 }
+sub B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 271 }
+sub B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 272 }
+sub B_ENT_NAME_STATE () { 273 }
+sub B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 274 }
+sub B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 275 }
+sub B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 276 }
+sub B_ENT_PUBLIC_ID_STATE () { 277 }
+sub B_ENT_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 278 }
+sub B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 279 }
+sub B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 280 }
+sub B_ENT_SYSTEM_ID_STATE () { 281 }
+sub B_ENT_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 282 }
+sub B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 283 }
+sub B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 284 }
+sub B_ENT_TYPE_STATE () { 285 }
+sub B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 286 }
+sub B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 287 }
+sub B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 288 }
+sub B_ENT_VALUE_IN_ENT_STATE () { 289 }
+sub B_ENT_VALUE_IN_ENT_STATE_CR () { 290 }
+sub B_NDATA_ID_STATE () { 291 }
+sub B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 292 }
+sub B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 293 }
+sub B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 294 }
+sub B_NDATA_KWD_STATE () { 295 }
+sub B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 296 }
+sub B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 297 }
+sub B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 298 }
+sub B_NDATA_KWD_STATE_N () { 299 }
+sub B_NDATA_KWD_STATE_ND () { 300 }
+sub B_NDATA_KWD_STATE_NDA () { 301 }
+sub B_NDATA_KWD_STATE_NDAT () { 302 }
+sub B_NOTATION_NAME_STATE () { 303 }
+sub B_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 304 }
+sub B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 305 }
+sub B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 306 }
+sub B_NOTATION_PUBLIC_ID_STATE () { 307 }
+sub B_NOTATION_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 308 }
+sub B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 309 }
+sub B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 310 }
+sub B_NOTATION_SYSTEM_ID_STATE () { 311 }
+sub B_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 312 }
+sub B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 313 }
+sub B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 314 }
+sub B_ALLOWED_TOKEN_STATE () { 315 }
+sub B_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 316 }
+sub B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 317 }
+sub B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 318 }
+sub B_ATTR_NAME_STATE () { 319 }
+sub B_ATTR_VALUE_STATE () { 320 }
+sub B_CM_ITEM_STATE () { 321 }
+sub B_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 322 }
+sub B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 323 }
+sub B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 324 }
+sub BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE () { 325 }
+sub BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE () { 326 }
+sub BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 327 }
+sub BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 328 }
+sub BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 329 }
+sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE () { 330 }
+sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE () { 331 }
+sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE () { 332 }
+sub BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR () { 333 }
+sub BOGUS_DOCTYPE_STATE () { 334 }
+sub BOGUS_AFTER_DOCTYPE_INTERNAL_SUBSET_STATE () { 335 }
+sub BOGUS_COMMENT_STATE () { 336 }
+sub BOGUS_COMMENT_STATE_CR () { 337 }
+sub BOGUS_MARKUP_DECL_STATE () { 338 }
+sub CHARREF_IN_DATA_STATE () { 339 }
+sub COMMENT_END_BANG_STATE () { 340 }
+sub COMMENT_END_DASH_STATE () { 341 }
+sub COMMENT_END_STATE () { 342 }
+sub COMMENT_START_DASH_STATE () { 343 }
+sub COMMENT_START_STATE () { 344 }
+sub COMMENT_STATE () { 345 }
+sub COMMENT_STATE_CR () { 346 }
+sub CM_ELEMENT_STATE () { 347 }
+sub DATA_STATE () { 348 }
+sub DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 349 }
+sub DATA_STATE___CHARREF_DECIMAL_NUM_STATE () { 350 }
+sub DATA_STATE___CHARREF_HEX_NUM_STATE () { 351 }
+sub DATA_STATE___CHARREF_NAME_STATE () { 352 }
+sub DATA_STATE___CHARREF_NUM_STATE () { 353 }
+sub DATA_STATE___CHARREF_STATE () { 354 }
+sub DATA_STATE___CHARREF_STATE_CR () { 355 }
+sub DATA_STATE_CR () { 356 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE () { 357 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 358 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 359 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE () { 360 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE () { 361 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE () { 362 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_STATE () { 363 }
+sub DEFAULT_ATTR_VALUE__DQ__STATE_CR () { 364 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE () { 365 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 366 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE () { 367 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE () { 368 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE () { 369 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE () { 370 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE () { 371 }
+sub DEFAULT_ATTR_VALUE__SQ__STATE_CR () { 372 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE () { 373 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE () { 374 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE () { 375 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE () { 376 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE () { 377 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE () { 378 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE () { 379 }
+sub DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR () { 380 }
+sub END_TAG_OPEN_STATE () { 381 }
+sub IGNORED_SECTION_STATE () { 382 }
+sub IN_DTD_MSC_STATE () { 383 }
+sub IN_IGNORED_SECTION_MSC_STATE () { 384 }
+sub IN_MSC_STATE () { 385 }
+sub IN_PIC_STATE () { 386 }
+sub MDO_STATE () { 387 }
+sub MDO_STATE__ () { 388 }
+sub MDO_STATE_D () { 389 }
+sub MDO_STATE_DO () { 390 }
+sub MDO_STATE_DOC () { 391 }
+sub MDO_STATE_DOCT () { 392 }
+sub MDO_STATE_DOCTY () { 393 }
+sub MDO_STATE_DOCTYP () { 394 }
+sub MDO_STATE__5B () { 395 }
+sub MDO_STATE__5BC () { 396 }
+sub MDO_STATE__5BCD () { 397 }
+sub MDO_STATE__5BCDA () { 398 }
+sub MDO_STATE__5BCDAT () { 399 }
+sub MDO_STATE__5BCDATA () { 400 }
+sub PE_DECL_OR_REF_AFTER_SPACE_STATE () { 401 }
+sub PE_DECL_OR_REF_STATE () { 402 }
+sub PE_NAME_IN_DTD_STATE () { 403 }
+sub PE_NAME_IN_ENT_VALUE__DQ__STATE () { 404 }
+sub PE_NAME_IN_ENT_VALUE__SQ__STATE () { 405 }
+sub PE_NAME_IN_ENT_VALUE_IN_ENT_STATE () { 406 }
+sub PE_NAME_IN_MARKUP_DECL_STATE () { 407 }
+sub SELF_CLOSING_START_TAG_STATE () { 408 }
+sub TAG_NAME_STATE () { 409 }
+sub TAG_OPEN_STATE () { 410 }
 
 my $TokenizerAbortingTagNames = {
   title => 1,
@@ -883,7 +1017,11 @@ return;
 
         push @$OP, ['doctype', $token => 0];
       
-$DTDDefs->{system_id} = $token->{system_identifier};
+
+        $DTDDefs->{system_identifier} = $token->{system_identifier};
+        $DTDDefs->{di} = $token->{di};
+        $DTDDefs->{index} = $token->{index};
+      
 
           if ($token->{has_internal_subset_flag}) {
             
@@ -892,9 +1030,12 @@ $DTDDefs->{system_id} = $token->{system_identifier};
         
           } else {
             
-          if (length $DTDDefs->{system_id}) {
+          if (length $DTDDefs->{system_identifier}) {
             
-        push @$Callbacks, [$OnDTDEntityReference, {entity => $token}];
+        push @$Callbacks, [$OnDTDEntityReference,
+                           {entity => {system_identifier => $DTDDefs->{system_identifier},
+                                       di => $DTDDefs->{di},
+                                       index => $DTDDefs->{index}}}];
       
           } else {
             
@@ -2950,11 +3091,13 @@ return;
       ,
         ## [129] in subset;EOD
         sub {
-          my $token = $_;
-
-          if (length $DTDDefs->{system_id}) {
+          
+          if (length $DTDDefs->{system_identifier}) {
             
-        push @$Callbacks, [$OnDTDEntityReference, {entity => $token}];
+        push @$Callbacks, [$OnDTDEntityReference,
+                           {entity => {system_identifier => $DTDDefs->{system_identifier},
+                                       di => $DTDDefs->{di},
+                                       index => $DTDDefs->{index}}}];
       
           }
         
@@ -2968,10 +3111,14 @@ push @$OP, ['construct-doctype'];
         ## [130] in subset;EOF
         sub {
           my $token = $_;
-push @$Errors, {type => 'in-subset-eof',
+
+          if (not defined $CONTEXT) {
+            push @$Errors, {type => 'in-subset-eof',
                                             level => 'm',
                                             di => $token->{di},
                                 index => $token->{index}};
+          }
+        
 push @$OP, ['stop-parsing'];
         },
       ,
@@ -2994,7 +3141,6 @@ push @$OP, ['stop-parsing'];
           #     onerror => sub { $self->{onerror}->(token => $self->{t}, @_) });
           # XXX $token->{base_url}
           $DTDDefs->{notations}->{$token->{name}} = $token;
-warn "pb notation";
         }
         #XXX
         #if (defined $self->{t}->{pubid}) {
@@ -3740,9 +3886,12 @@ $Attr->{q<default_type>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_ATTLIST_ATTR_DEFAULT_STATE;
+$State = A_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_DEFAULT_STATE, A_ATTLIST_ATTR_DEFAULT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -3766,6 +3915,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -3775,11 +3932,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -3793,9 +3950,12 @@ $Attr->{q<name>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_ATTLIST_ATTR_NAME_STATE;
+$State = A_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_NAME_STATE, A_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -3807,7 +3967,7 @@ $Attr->{q<name>} .= q@�@;
             push @$Errors, {type => 'attlist-attribute-name-0028', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_ALLOWED_TOKEN_STATE;
+$State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'attlist-attribute-name-003e', level => 'm',
@@ -3820,6 +3980,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -3829,11 +3997,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -3847,17 +4015,20 @@ $Attr->{q<declared_type>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_ATTLIST_ATTR_TYPE_STATE;
+$State = A_ATTLIST_ATTR_TYPE_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_TYPE_STATE, A_ATTLIST_ATTR_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
-$State = BEFORE_ALLOWED_TOKEN_STATE;
+$State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 
             push @$Errors, {type => 'attlist-attribute-type-0023', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = AFTER_ATTLIST_ATTR_TYPE_STATE;
+$State = A_ATTLIST_ATTR_TYPE_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'attlist-attribute-type-003e', level => 'm',
@@ -3870,6 +4041,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -3879,11 +4058,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -3897,9 +4076,12 @@ $Token->{q<name>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -3918,6 +4100,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -3927,11 +4117,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -3941,9 +4131,12 @@ return 0;
 $StateActions->[ATTLIST_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ATTLIST_NAME_STATE;
+$State = B_ATTLIST_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ATTLIST_NAME_STATE, B_ATTLIST_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'attlist-else', level => 'm',
@@ -3990,6 +4183,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -3999,11 +4200,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4034,11 +4235,11 @@ $State = CDATA_SECTION_STATE__5D;
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4086,11 +4287,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4143,11 +4344,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4181,11 +4382,11 @@ $State = CDATA_SECTION_STATE;
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4270,7 +4471,7 @@ push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\[])/gcs) {
 
           unless ($DTDMode eq 'internal subset') {
-            $State = AFTER_MSS_STATE;
+            $State = A_MSS_STATE;
             return 1;
           }
         
@@ -4320,11 +4521,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4419,11 +4620,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4517,11 +4718,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4615,11 +4816,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4713,11 +4914,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4811,11 +5012,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -4909,11 +5110,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5021,11 +5222,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5125,11 +5326,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5223,11 +5424,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5321,11 +5522,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5419,11 +5620,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5517,11 +5718,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5629,11 +5830,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5727,11 +5928,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5825,11 +6026,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5923,11 +6124,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -5990,7 +6191,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = ENTITY_STATE;
+$State = ENT_STATE;
 } elsif ($Input =~ /\G([y])/gcs) {
 $Temp .= $1;
 
@@ -6000,7 +6201,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = ENTITY_STATE;
+$State = ENT_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'doctype-markup-declaration-open-else', level => 'm',
@@ -6035,11 +6236,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6133,11 +6334,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6231,11 +6432,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6329,11 +6530,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6427,11 +6628,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6525,11 +6726,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6623,11 +6824,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6735,11 +6936,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -6755,7 +6956,7 @@ $Token->{q<name>} .= $1;
 $Token->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_DOCTYPE_NAME_STATE;
+$State = A_DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
@@ -6776,11 +6977,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -6797,7 +6998,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = DOCTYPE_PUBLIC_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_DOCTYPE_PUBLIC_ID_STATE;
+$State = A_DOCTYPE_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -6823,11 +7024,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -6844,7 +7045,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = DOCTYPE_PUBLIC_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_DOCTYPE_PUBLIC_ID_STATE;
+$State = A_DOCTYPE_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = DOCTYPE_PUBLIC_ID__DQ__STATE;
 
@@ -6874,11 +7075,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -6895,7 +7096,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = DOCTYPE_PUBLIC_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_DOCTYPE_PUBLIC_ID_STATE;
+$State = A_DOCTYPE_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -6921,11 +7122,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -6942,7 +7143,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = DOCTYPE_PUBLIC_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_DOCTYPE_PUBLIC_ID_STATE;
+$State = A_DOCTYPE_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = DOCTYPE_PUBLIC_ID__SQ__STATE;
 
@@ -6972,11 +7173,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -6987,7 +7188,7 @@ return 0;
 $StateActions->[DOCTYPE_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_DOCTYPE_NAME_STATE;
+$State = B_DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -7056,11 +7257,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -7077,7 +7278,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = DOCTYPE_SYSTEM_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_DOCTYPE_SYSTEM_ID_STATE;
+$State = A_DOCTYPE_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\>]+)/gcs) {
 $Token->{q<system_identifier>} .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -7096,11 +7297,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -7117,7 +7318,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = DOCTYPE_SYSTEM_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_DOCTYPE_SYSTEM_ID_STATE;
+$State = A_DOCTYPE_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DOCTYPE_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= $1;
@@ -7141,11 +7342,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -7162,7 +7363,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_DOCTYPE_SYSTEM_ID_STATE;
+$State = A_DOCTYPE_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\>]+)/gcs) {
 $Token->{q<system_identifier>} .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -7181,11 +7382,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -7202,7 +7403,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_DOCTYPE_SYSTEM_ID_STATE;
+$State = A_DOCTYPE_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DOCTYPE_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= $1;
@@ -7226,11 +7427,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -7304,6 +7505,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7313,11 +7522,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -7328,17 +7537,15 @@ $StateActions->[DTD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-# XXX set-original-state
-
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
+$State = PE_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $State = DOCTYPE_TAG_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
           if ($DTDMode eq 'internal subset') {
-            $State = AFTER_DOCTYPE_INTERNAL_SUBSET_STATE;
+            $State = A_DOCTYPE_INTERNAL_SUBSET_STATE;
             return 1;
           }
         
@@ -7350,44 +7557,13 @@ $State = IN_DTD_MSC_STATE;
           
 } else {
 if ($EOF) {
-$DTDMode = q{N/A};
-$State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[ELEMENT_CONTENT_KEYWORD_STATE] = sub {
-if ($Input =~ /\G([^\	\\ \
-\\%\>]+)/gcs) {
-$Token->{q<content_keyword>} .= $1;
-
-} elsif ($Input =~ /\G([\	\\ \
-\])/gcs) {
-$State = AFTER_ELEMENT_CONTENT_STATE;
-} elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
-} elsif ($Input =~ /\G([\>])/gcs) {
-$State = DTD_STATE;
-push @$Tokens, $Token;
-} else {
-if ($EOF) {
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -7398,11 +7574,61 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ELEMENT_CONTENT_KWD_STATE] = sub {
+if ($Input =~ /\G([^\	\\ \
+\\%\>]+)/gcs) {
+$Token->{q<content_keyword>} .= $1;
+
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_ELEMENT_CONTENT_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ELEMENT_CONTENT_STATE, A_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
         return 1;
       
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -7418,9 +7644,12 @@ $Token->{q<name>} .= $1;
 $Token->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ELEMENT_CONTENT_STATE;
+$State = B_ELEMENT_CONTENT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ELEMENT_CONTENT_STATE, B_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
 
             push @$Errors, {type => 'element-name-0028', level => 'm',
@@ -7429,7 +7658,7 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
 my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
 $Token->{cmgroup} = $cmgroup;
 @$OpenCMGroups = ($cmgroup);
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'element-name-003e', level => 'm',
@@ -7442,6 +7671,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7451,11 +7688,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -7465,9 +7702,12 @@ return 0;
 $StateActions->[ELEMENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ELEMENT_NAME_STATE;
+$State = B_ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ELEMENT_NAME_STATE, B_ELEMENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'element-else', level => 'm',
@@ -7514,6 +7754,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7523,18 +7771,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_NAME_STATE] = sub {
+$StateActions->[ENT_NAME_STATE] = sub {
 if ($Input =~ /\G([^\ \	\\ \
 \\%\"\'\>]+)/gcs) {
 $Token->{q<name>} .= $1;
@@ -7543,22 +7791,25 @@ $Token->{q<name>} .= $1;
 $Token->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_ENTITY_NAME_STATE;
+$State = A_ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ENT_NAME_STATE, A_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'entity-name-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'entity-name-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -7566,15 +7817,20 @@ $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
-return 1 if $Token->{type} == ENTITY_TOKEN;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7584,19 +7840,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_PUBLIC_ID__DQ__STATE] = sub {
+$StateActions->[ENT_PUBLIC_ID__DQ__STATE] = sub {
 if ($Input =~ /\G([^\ \\"\>]+)/gcs) {
 $Token->{q<public_identifier>} .= $1;
 
@@ -7605,9 +7860,9 @@ $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<public_identifier>} .= q@
 @;
-$State = ENTITY_PUBLIC_ID__DQ__STATE_CR;
+$State = ENT_PUBLIC_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+$State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
@@ -7622,7 +7877,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7632,31 +7894,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_PUBLIC_ID__DQ__STATE_CR] = sub {
+$StateActions->[ENT_PUBLIC_ID__DQ__STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-$State = ENTITY_PUBLIC_ID__DQ__STATE;
+$State = ENT_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\
 ])/gcs) {
-$State = ENTITY_PUBLIC_ID__DQ__STATE;
+$State = ENT_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<public_identifier>} .= q@
 @;
-$State = ENTITY_PUBLIC_ID__DQ__STATE_CR;
+$State = ENT_PUBLIC_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+$State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'entity-public-identifier-double-quoted-003e', level => 'm',
@@ -7666,7 +7927,7 @@ $State = DTD_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = ENTITY_PUBLIC_ID__DQ__STATE;
+$State = ENT_PUBLIC_ID__DQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
@@ -7674,7 +7935,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7684,19 +7952,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_PUBLIC_ID__SQ__STATE] = sub {
+$StateActions->[ENT_PUBLIC_ID__SQ__STATE] = sub {
 if ($Input =~ /\G([^\ \\'\>]+)/gcs) {
 $Token->{q<public_identifier>} .= $1;
 
@@ -7705,9 +7972,9 @@ $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<public_identifier>} .= q@
 @;
-$State = ENTITY_PUBLIC_ID__SQ__STATE_CR;
+$State = ENT_PUBLIC_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+$State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
@@ -7722,7 +7989,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7732,31 +8006,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_PUBLIC_ID__SQ__STATE_CR] = sub {
+$StateActions->[ENT_PUBLIC_ID__SQ__STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-$State = ENTITY_PUBLIC_ID__SQ__STATE;
+$State = ENT_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\
 ])/gcs) {
-$State = ENTITY_PUBLIC_ID__SQ__STATE;
+$State = ENT_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<public_identifier>} .= q@
 @;
-$State = ENTITY_PUBLIC_ID__SQ__STATE_CR;
+$State = ENT_PUBLIC_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ENTITY_PUBLIC_ID_STATE;
+$State = A_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'entity-public-identifier-single-quoted-003e', level => 'm',
@@ -7766,7 +8039,7 @@ $State = DTD_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = ENTITY_PUBLIC_ID__SQ__STATE;
+$State = ENT_PUBLIC_ID__SQ__STATE;
 $Token->{q<public_identifier>} .= $1;
 } else {
 if ($EOF) {
@@ -7774,7 +8047,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7784,32 +8064,31 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_STATE] = sub {
+$StateActions->[ENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
         $Token = {type => ENTITY_TOKEN, tn => 0,
                   di => $DI, index => $AnchoredIndex};
       
-$State = BEFORE_ENTITY_TYPE_STATE;
+$State = B_ENT_TYPE_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
         $Token = {type => ENTITY_TOKEN, tn => 0,
                   di => $DI, index => $AnchoredIndex};
       
-$State = PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE;
+$State = PE_DECL_OR_REF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'entity-else', level => 'm',
@@ -7820,7 +8099,7 @@ $State = PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE;
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = q@�@;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'entity-else', level => 'm',
@@ -7835,10 +8114,6 @@ $State = ENTITY_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'dtd-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'entity-else', level => 'm',
@@ -7849,7 +8124,7 @@ $State = DTD_STATE;
                   di => $DI, index => $AnchoredIndex};
       
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } else {
 if ($EOF) {
 
@@ -7864,6 +8139,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7873,18 +8156,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_SYSTEM_ID__DQ__STATE] = sub {
+$StateActions->[ENT_SYSTEM_ID__DQ__STATE] = sub {
 if ($Input =~ /\G([^\ \\"]+)/gcs) {
 $Token->{q<system_identifier>} .= $1;
 
@@ -7893,16 +8176,23 @@ $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<system_identifier>} .= q@
 @;
-$State = ENTITY_SYSTEM_ID__DQ__STATE_CR;
+$State = ENT_SYSTEM_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+$State = A_ENT_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7912,33 +8202,32 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_SYSTEM_ID__DQ__STATE_CR] = sub {
+$StateActions->[ENT_SYSTEM_ID__DQ__STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$State = ENT_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\
 ])/gcs) {
-$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$State = ENT_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<system_identifier>} .= q@
 @;
-$State = ENTITY_SYSTEM_ID__DQ__STATE_CR;
+$State = ENT_SYSTEM_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+$State = A_ENT_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$State = ENT_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
@@ -7946,7 +8235,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7956,19 +8252,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_SYSTEM_ID__SQ__STATE] = sub {
+$StateActions->[ENT_SYSTEM_ID__SQ__STATE] = sub {
 if ($Input =~ /\G([^\ \\']+)/gcs) {
 $Token->{q<system_identifier>} .= $1;
 
@@ -7977,16 +8272,23 @@ $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<system_identifier>} .= q@
 @;
-$State = ENTITY_SYSTEM_ID__SQ__STATE_CR;
+$State = ENT_SYSTEM_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+$State = A_ENT_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -7996,33 +8298,32 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_SYSTEM_ID__SQ__STATE_CR] = sub {
+$StateActions->[ENT_SYSTEM_ID__SQ__STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$State = ENT_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= q@�@;
 } elsif ($Input =~ /\G([\
 ])/gcs) {
-$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<system_identifier>} .= q@
 @;
-$State = ENTITY_SYSTEM_ID__SQ__STATE_CR;
+$State = ENT_SYSTEM_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ENTITY_SYSTEM_ID_STATE;
+$State = A_ENT_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$State = ENT_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= $1;
 } else {
 if ($EOF) {
@@ -8030,7 +8331,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8040,45 +8348,55 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__DQ__STATE] = sub {
-if ($Input =~ /\G([^\ \\"\%\&]+)/gcs) {
+$StateActions->[ENT_VALUE__DQ__STATE] = sub {
+if ($Input =~ /\G([^\\"\%\&\ ]+)/gcs) {
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8088,29 +8406,32 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -8120,14 +8441,14 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -8136,7 +8457,7 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -8145,14 +8466,14 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -8165,7 +8486,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8175,19 +8503,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -8209,7 +8536,7 @@ $Temp .= $1;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8233,7 +8560,11 @@ $State = ENTITY_VALUE__DQ__STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -8260,7 +8591,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8284,7 +8615,7 @@ $State = ENTITY_VALUE__DQ__STATE_CR;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8310,7 +8641,7 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8336,7 +8667,7 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8360,7 +8691,7 @@ $State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -8390,7 +8721,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8400,19 +8738,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -8434,7 +8771,7 @@ $Temp .= $1;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8458,7 +8795,11 @@ $State = ENTITY_VALUE__DQ__STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -8485,7 +8826,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8509,7 +8850,7 @@ $State = ENTITY_VALUE__DQ__STATE_CR;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8535,7 +8876,7 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8561,7 +8902,7 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -8585,7 +8926,7 @@ $State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -8615,7 +8956,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8625,61 +8973,64 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__DQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
+$StateActions->[ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -8689,7 +9040,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8699,35 +9057,38 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__DQ__STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__DQ__STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -8737,14 +9098,14 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -8753,7 +9114,7 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -8762,14 +9123,14 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -8782,7 +9143,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8792,174 +9160,84 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__DQ__STATE___CHARREF_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\	\\ \
+$StateActions->[ENT_VALUE__DQ__STATE___CHARREF_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_NUMBER_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_NAME_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_NAME_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} else {
-if ($EOF) {
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-push @$Tokens, $Token;
-$DTDMode = q{N/A};
-$State = DATA_STATE;
-
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[ENTITY_VALUE__DQ__STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = ENTITY_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\
-])/gcs) {
-$State = ENTITY_VALUE__DQ__STATE;
-} elsif ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
-} elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ENTITY_PARAMETER_STATE;
-} elsif ($Input =~ /\G([\%])/gcs) {
-$Temp = q@%@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
-} elsif ($Input =~ /\G([\&])/gcs) {
-$Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-$State = ENTITY_VALUE__DQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} else {
-if ($EOF) {
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-push @$Tokens, $Token;
-$DTDMode = q{N/A};
-$State = DATA_STATE;
-
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[ENTITY_VALUE__SQ__STATE] = sub {
-if ($Input =~ /\G([^\ \\%\&\']+)/gcs) {
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-
+$State = ENT_VALUE__DQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
-} elsif ($Input =~ /\G([\%])/gcs) {
-$Temp = q@%@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
-} elsif ($Input =~ /\G([\&])/gcs) {
-$Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
-} elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ENTITY_PARAMETER_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -8969,29 +9247,152 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__DQ__STATE_CR] = sub {
+if ($Input =~ /\G([\
+])/gcs) {
+$State = ENT_VALUE__DQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = ENT_VALUE__DQ__STATE_CR;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = A_ENT_PARAMETER_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = ENT_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENT_VALUE__SQ__STATE] = sub {
+if ($Input =~ /\G([^\\%\&\'\ ]+)/gcs) {
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = ENT_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = A_ENT_PARAMETER_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENT_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -9001,7 +9402,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
+$State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -9010,7 +9411,7 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -9019,21 +9420,21 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -9046,7 +9447,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -9056,19 +9464,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -9090,7 +9497,7 @@ $Temp .= $1;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9114,7 +9521,11 @@ $State = ENTITY_VALUE__SQ__STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -9141,7 +9552,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
+$State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9167,7 +9578,7 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9193,7 +9604,7 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9217,7 +9628,7 @@ $State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9241,7 +9652,7 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -9271,7 +9682,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -9281,19 +9699,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -9315,7 +9732,7 @@ $Temp .= $1;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9339,7 +9756,11 @@ $State = ENTITY_VALUE__SQ__STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -9366,7 +9787,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
+$State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9392,7 +9813,7 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9418,7 +9839,7 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9442,7 +9863,7 @@ $State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9466,7 +9887,7 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -9496,7 +9917,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -9506,61 +9934,64 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__SQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
+$StateActions->[ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
+$State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -9570,7 +10001,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -9580,35 +10018,38 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__SQ__STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__SQ__STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -9618,7 +10059,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
+$State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -9627,7 +10068,7 @@ $State = ENTITY_VALUE__SQ__STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -9636,21 +10077,21 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -9663,7 +10104,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -9673,172 +10121,84 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE__SQ__STATE___CHARREF_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\	\\ \
+$StateActions->[ENT_VALUE__SQ__STATE___CHARREF_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
+$State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_NUMBER_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_NAME_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_NAME_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} else {
-if ($EOF) {
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-push @$Tokens, $Token;
-$DTDMode = q{N/A};
-$State = DATA_STATE;
-
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[ENTITY_VALUE__SQ__STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = ENTITY_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\
-])/gcs) {
-$State = ENTITY_VALUE__SQ__STATE;
-} elsif ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
-} elsif ($Input =~ /\G([\%])/gcs) {
-$Temp = q@%@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
-} elsif ($Input =~ /\G([\&])/gcs) {
-$Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
-} elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ENTITY_PARAMETER_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-$State = ENTITY_VALUE__SQ__STATE;
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-} else {
-if ($EOF) {
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
-          
-push @$Tokens, $Token;
-$DTDMode = q{N/A};
-$State = DATA_STATE;
-
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE] = sub {
-if ($Input =~ /\G([^\ \\%\&]+)/gcs) {
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
-
+$State = ENT_VALUE__SQ__STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
-} elsif ($Input =~ /\G([\%])/gcs) {
-$Temp = q@%@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
-} elsif ($Input =~ /\G([\&])/gcs) {
-$Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -9848,28 +10208,150 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE__SQ__STATE_CR] = sub {
+if ($Input =~ /\G([\
+])/gcs) {
+$State = ENT_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = ENT_VALUE__SQ__STATE_CR;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = A_ENT_PARAMETER_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = ENT_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENT_VALUE_IN_ENT_STATE] = sub {
+if ($Input =~ /\G([^\\%\&\ ]+)/gcs) {
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = ENT_VALUE_IN_ENT_STATE_CR;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[ENT_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -9879,7 +10361,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -9888,7 +10370,7 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -9897,14 +10379,14 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -9917,7 +10399,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -9927,18 +10416,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -9960,7 +10449,7 @@ $Temp .= $1;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -9984,7 +10473,11 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -10011,7 +10504,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10037,7 +10530,7 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10063,7 +10556,7 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10087,7 +10580,7 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -10117,7 +10610,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10127,18 +10627,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -10160,7 +10660,7 @@ $Temp .= $1;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10184,7 +10684,11 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -10211,7 +10715,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10237,7 +10741,7 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10263,7 +10767,7 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -10287,7 +10791,7 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
         $Temp = chr $code;
       
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -10317,7 +10821,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10327,56 +10838,60 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
+$StateActions->[ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE] = sub {
+if ($Input =~ /\G([\])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy]+)/gcs) {
 $Temp .= $1;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -10386,7 +10901,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10396,34 +10918,38 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[ENT_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -10433,7 +10959,7 @@ push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -10442,7 +10968,7 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -10451,14 +10977,14 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -10471,7 +10997,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10481,61 +11014,65 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\	\\ \
+$StateActions->[ENT_VALUE_IN_ENT_STATE___CHARREF_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -10544,7 +11081,14 @@ push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10554,38 +11098,42 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ENTITY_VALUE_IN_ENTITY_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\
+$StateActions->[ENT_VALUE_IN_ENT_STATE_CR] = sub {
+if ($Input =~ /\G([\
 ])/gcs) {
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -10593,7 +11141,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10603,11 +11158,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10623,9 +11178,12 @@ $Token->{q<notation_name>} .= $1;
 $Token->{q<notation_name>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ENT_PARAMETER_STATE, A_ENT_PARAMETER_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -10636,7 +11194,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10646,12 +11211,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10667,9 +11231,12 @@ $Token->{q<name>} .= $1;
 $Token->{q<name>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_NOTATION_NAME_STATE;
+$State = A_NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_NOTATION_NAME_STATE, A_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'notation-name-003e', level => 'm',
@@ -10684,6 +11251,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10693,11 +11268,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10715,7 +11290,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = NOTATION_PUBLIC_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+$State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
@@ -10730,6 +11305,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10739,11 +11322,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10762,7 +11345,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = NOTATION_PUBLIC_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+$State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'notation-public-identifier-double-quoted-003e', level => 'm',
@@ -10780,6 +11363,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10789,11 +11380,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10811,7 +11402,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = NOTATION_PUBLIC_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+$State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
@@ -10826,6 +11417,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10835,11 +11434,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10858,7 +11457,7 @@ $Token->{q<public_identifier>} .= q@
 @;
 $State = NOTATION_PUBLIC_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_NOTATION_PUBLIC_ID_STATE;
+$State = A_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'notation-public-identifier-single-quoted-003e', level => 'm',
@@ -10876,6 +11475,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10885,11 +11492,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10899,9 +11506,12 @@ return 0;
 $StateActions->[NOTATION_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_NOTATION_NAME_STATE;
+$State = B_NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_NAME_STATE, B_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'notation-else', level => 'm',
@@ -10948,6 +11558,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10957,11 +11575,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -10979,7 +11597,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = NOTATION_SYSTEM_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+$State = A_NOTATION_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
 
@@ -10987,6 +11605,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -10996,11 +11622,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11019,7 +11645,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = NOTATION_SYSTEM_ID__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+$State = A_NOTATION_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = NOTATION_SYSTEM_ID__DQ__STATE;
 $Token->{q<system_identifier>} .= $1;
@@ -11030,6 +11656,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -11039,11 +11673,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11061,7 +11695,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = NOTATION_SYSTEM_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+$State = A_NOTATION_SYSTEM_ID_STATE;
 } else {
 if ($EOF) {
 
@@ -11069,6 +11703,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -11078,11 +11720,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11101,7 +11743,7 @@ $Token->{q<system_identifier>} .= q@
 @;
 $State = NOTATION_SYSTEM_ID__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_NOTATION_SYSTEM_ID_STATE;
+$State = A_NOTATION_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 $Token->{q<system_identifier>} .= $1;
@@ -11112,6 +11754,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -11121,11 +11771,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11158,11 +11808,11 @@ if ($EOF) {
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11199,11 +11849,11 @@ if ($EOF) {
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11289,11 +11939,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11361,11 +12011,11 @@ $Token->{q<data>} = q@?@;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -11379,14 +12029,14 @@ $Token->{q<target>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp = q@
 @;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = AFTER_PI_TARGET_STATE_CR;
+$State = A_PI_TARGET_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = PI_TARGET_QUESTION_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -11409,18 +12059,18 @@ if ($EOF) {
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ATTLIST_ATTR_DEFAULT_STATE] = sub {
+$StateActions->[A_ATTLIST_ATTR_DEFAULT_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 
         $Attr = {di => $DI, index => $Offset + pos $Input};
@@ -11435,7 +12085,10 @@ $Attr->{index} = $Offset + (pos $Input) - length $1;
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_DEFAULT_STATE, A_ATTLIST_ATTR_DEFAULT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
@@ -11456,6 +12109,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -11465,24 +12126,261 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ATTLIST_ATTR_NAME_STATE] = sub {
+$StateActions->[A_ATTLIST_ATTR_DEFAULT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
+$State = ATTLIST_ATTR_NAME_STATE;
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_ATTLIST_ATTR_DEFAULT_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_DEFAULT_STATE, A_ATTLIST_ATTR_DEFAULT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
+$State = ATTLIST_ATTR_NAME_STATE;
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ATTLIST_ATTR_DEFAULT_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ATTLIST_ATTR_DEFAULT_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-default-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_ATTLIST_ATTR_DEFAULT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_NAME_STATE, A_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
-$State = BEFORE_ALLOWED_TOKEN_STATE;
+$State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
@@ -11498,6 +12396,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -11507,32 +12413,255 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ATTLIST_ATTR_TYPE_STATE] = sub {
+$StateActions->[A_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_NAME_STATE, A_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\(])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = ATTLIST_ATTR_TYPE_STATE;
+$Attr->{q<declared_type>} = $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ATTLIST_ATTR_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ATTLIST_ATTR_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_TYPE_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\#])/gcs) {
-$State = BEFORE_ATTLIST_ATTR_DEFAULT_STATE;
+$State = B_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_TYPE_STATE, A_ATTLIST_ATTR_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\(])/gcs) {
-$State = BEFORE_ALLOWED_TOKEN_STATE;
+$State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
@@ -11544,12 +12673,20 @@ $State = DTD_STATE;
             push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -11560,18 +12697,249 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_INTERNAL_SUBSET_STATE] = sub {
+$StateActions->[A_ATTLIST_ATTR_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_ATTLIST_ATTR_TYPE_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+} elsif ($Input =~ /\G([\#])/gcs) {
+$State = B_ATTLIST_ATTR_DEFAULT_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ATTLIST_ATTR_TYPE_STATE, A_ATTLIST_ATTR_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+} elsif ($Input =~ /\G([\(])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ATTLIST_ATTR_TYPE_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ATTLIST_ATTR_TYPE_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-attlist-attribute-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_ATTLIST_ATTR_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_DOCTYPE_INTERNAL_SUBSET_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -11603,18 +12971,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -11624,11 +12992,11 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([P])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_DOCTYPE_NAME_STATE_P;
+$State = A_DOCTYPE_NAME_STATE_P;
 } elsif ($Input =~ /\G([S])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_DOCTYPE_NAME_STATE_S;
+$State = A_DOCTYPE_NAME_STATE_S;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
@@ -11638,11 +13006,11 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } elsif ($Input =~ /\G([p])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_DOCTYPE_NAME_STATE_P;
+$State = A_DOCTYPE_NAME_STATE_P;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_DOCTYPE_NAME_STATE_S;
+$State = A_DOCTYPE_NAME_STATE_S;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11660,11 +13028,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11672,13 +13040,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_P] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_P] = sub {
 if ($Input =~ /\G([U])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PU;
+$State = A_DOCTYPE_NAME_STATE_PU;
 } elsif ($Input =~ /\G([u])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PU;
+$State = A_DOCTYPE_NAME_STATE_PU;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11696,11 +13064,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11708,13 +13076,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_PU] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_PU] = sub {
 if ($Input =~ /\G([B])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PUB;
+$State = A_DOCTYPE_NAME_STATE_PUB;
 } elsif ($Input =~ /\G([b])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PUB;
+$State = A_DOCTYPE_NAME_STATE_PUB;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11732,11 +13100,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11744,13 +13112,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_PUB] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_PUB] = sub {
 if ($Input =~ /\G([L])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PUBL;
+$State = A_DOCTYPE_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G([l])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PUBL;
+$State = A_DOCTYPE_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11768,11 +13136,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11780,13 +13148,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_PUBL] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_PUBL] = sub {
 if ($Input =~ /\G([I])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PUBLI;
+$State = A_DOCTYPE_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G([i])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_PUBLI;
+$State = A_DOCTYPE_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11804,11 +13172,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11816,7 +13184,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_PUBLI] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_PUBLI] = sub {
 if ($Input =~ /\G([C])/gcs) {
 $Temp .= $1;
 
@@ -11826,7 +13194,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE;
+$State = A_DOCTYPE_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G([c])/gcs) {
 $Temp .= $1;
 
@@ -11836,7 +13204,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE;
+$State = A_DOCTYPE_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11854,11 +13222,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11866,13 +13234,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_S] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_S] = sub {
 if ($Input =~ /\G([Y])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SY;
+$State = A_DOCTYPE_NAME_STATE_SY;
 } elsif ($Input =~ /\G([y])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SY;
+$State = A_DOCTYPE_NAME_STATE_SY;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11890,11 +13258,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11902,13 +13270,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_SY] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_SY] = sub {
 if ($Input =~ /\G([S])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SYS;
+$State = A_DOCTYPE_NAME_STATE_SYS;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SYS;
+$State = A_DOCTYPE_NAME_STATE_SYS;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11926,11 +13294,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11938,13 +13306,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_SYS] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_SYS] = sub {
 if ($Input =~ /\G([T])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SYST;
+$State = A_DOCTYPE_NAME_STATE_SYST;
 } elsif ($Input =~ /\G([t])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SYST;
+$State = A_DOCTYPE_NAME_STATE_SYST;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11962,11 +13330,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -11974,13 +13342,13 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_SYST] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_SYST] = sub {
 if ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SYSTE;
+$State = A_DOCTYPE_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G([e])/gcs) {
 $Temp .= $1;
-$State = AFTER_DOCTYPE_NAME_STATE_SYSTE;
+$State = A_DOCTYPE_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -11998,11 +13366,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -12010,7 +13378,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_NAME_STATE_SYSTE] = sub {
+$StateActions->[A_DOCTYPE_NAME_STATE_SYSTE] = sub {
 if ($Input =~ /\G([M])/gcs) {
 $Temp .= $1;
 
@@ -12020,7 +13388,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE;
+$State = A_DOCTYPE_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G([m])/gcs) {
 $Temp .= $1;
 
@@ -12030,7 +13398,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE;
+$State = A_DOCTYPE_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bogus DOCTYPE', level => 'm',
@@ -12048,11 +13416,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -12060,7 +13428,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_PUBLIC_ID_STATE] = sub {
+$StateActions->[A_DOCTYPE_PUBLIC_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDS_STATE;
@@ -12109,11 +13477,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -12121,10 +13489,10 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_PUBLIC_KEYWORD_STATE] = sub {
+$StateActions->[A_DOCTYPE_PUBLIC_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_DOCTYPE_PUBLIC_ID_STATE;
+$State = B_DOCTYPE_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no space before literal', level => 'm',
@@ -12165,11 +13533,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -12177,7 +13545,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_SYSTEM_ID_STATE] = sub {
+$StateActions->[A_DOCTYPE_SYSTEM_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -12206,11 +13574,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -12218,10 +13586,10 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DOCTYPE_SYSTEM_KEYWORD_STATE] = sub {
+$StateActions->[A_DOCTYPE_SYSTEM_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_DOCTYPE_SYSTEM_ID_STATE;
+$State = B_DOCTYPE_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
@@ -12268,11 +13636,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -12280,7 +13648,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[AFTER_DTD_MSC_STATE] = sub {
+$StateActions->[A_DTD_MSC_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
 pop @$OpenMarkedSections;
 } elsif ($Input =~ /\G([\]])/gcs) {
@@ -12300,6 +13668,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12309,22 +13685,25 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ELEMENT_CONTENT_STATE] = sub {
+$StateActions->[A_ELEMENT_CONTENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ELEMENT_CONTENT_STATE, A_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -12333,12 +13712,20 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'after-element-content-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -12349,65 +13736,291 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE] = sub {
+$StateActions->[A_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_ELEMENT_CONTENT_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ELEMENT_CONTENT_STATE, A_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-element-content-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ELEMENT_CONTENT_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ELEMENT_CONTENT_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ENT_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ENT_NAME_STATE, A_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 $Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
 } elsif ($Input =~ /\G([P])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_ENTITY_NAME_STATE_P;
+$State = A_ENT_NAME_STATE_P;
 } elsif ($Input =~ /\G([S])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_ENTITY_NAME_STATE_S;
+$State = A_ENT_NAME_STATE_S;
 } elsif ($Input =~ /\G([p])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_ENTITY_NAME_STATE_P;
+$State = A_ENT_NAME_STATE_P;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_ENTITY_NAME_STATE_S;
+$State = A_ENT_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
-return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12417,38 +14030,287 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_P] = sub {
+$StateActions->[A_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = ENT_VALUE__DQ__STATE;
+$Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ENT_NAME_STATE, A_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = ENT_VALUE__SQ__STATE;
+$Token->{q<value>} = [['', $DI, $Offset + pos $Input]];
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([P])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ENT_NAME_STATE_P;
+} elsif ($Input =~ /\G([S])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ENT_NAME_STATE_S;
+} elsif ($Input =~ /\G([p])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ENT_NAME_STATE_P;
+} elsif ($Input =~ /\G([s])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ENT_NAME_STATE_S;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ENT_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ENT_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ENT_NAME_STATE_P] = sub {
 if ($Input =~ /\G([U])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PU;
+$State = A_ENT_NAME_STATE_PU;
 } elsif ($Input =~ /\G([u])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PU;
+$State = A_ENT_NAME_STATE_PU;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12458,38 +14320,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_PU] = sub {
+$StateActions->[A_ENT_NAME_STATE_PU] = sub {
 if ($Input =~ /\G([B])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PUB;
+$State = A_ENT_NAME_STATE_PUB;
 } elsif ($Input =~ /\G([b])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PUB;
+$State = A_ENT_NAME_STATE_PUB;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12499,38 +14367,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_PUB] = sub {
+$StateActions->[A_ENT_NAME_STATE_PUB] = sub {
 if ($Input =~ /\G([L])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PUBL;
+$State = A_ENT_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G([l])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PUBL;
+$State = A_ENT_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12540,38 +14414,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_PUBL] = sub {
+$StateActions->[A_ENT_NAME_STATE_PUBL] = sub {
 if ($Input =~ /\G([I])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PUBLI;
+$State = A_ENT_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G([i])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_PUBLI;
+$State = A_ENT_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12581,19 +14461,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_PUBLI] = sub {
+$StateActions->[A_ENT_NAME_STATE_PUBLI] = sub {
 if ($Input =~ /\G([C])/gcs) {
 $Temp .= $1;
 
@@ -12603,7 +14482,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_ENTITY_PUBLIC_KEYWORD_STATE;
+$State = A_ENT_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G([c])/gcs) {
 $Temp .= $1;
 
@@ -12613,20 +14492,27 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_ENTITY_PUBLIC_KEYWORD_STATE;
+$State = A_ENT_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12636,38 +14522,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_S] = sub {
+$StateActions->[A_ENT_NAME_STATE_S] = sub {
 if ($Input =~ /\G([Y])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SY;
+$State = A_ENT_NAME_STATE_SY;
 } elsif ($Input =~ /\G([y])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SY;
+$State = A_ENT_NAME_STATE_SY;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12677,38 +14569,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_SY] = sub {
+$StateActions->[A_ENT_NAME_STATE_SY] = sub {
 if ($Input =~ /\G([S])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SYS;
+$State = A_ENT_NAME_STATE_SYS;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SYS;
+$State = A_ENT_NAME_STATE_SYS;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12718,38 +14616,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_SYS] = sub {
+$StateActions->[A_ENT_NAME_STATE_SYS] = sub {
 if ($Input =~ /\G([T])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SYST;
+$State = A_ENT_NAME_STATE_SYST;
 } elsif ($Input =~ /\G([t])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SYST;
+$State = A_ENT_NAME_STATE_SYST;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12759,38 +14663,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_SYST] = sub {
+$StateActions->[A_ENT_NAME_STATE_SYST] = sub {
 if ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SYSTE;
+$State = A_ENT_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G([e])/gcs) {
 $Temp .= $1;
-$State = AFTER_ENTITY_NAME_STATE_SYSTE;
+$State = A_ENT_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12800,19 +14710,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_NAME_STATE_SYSTE] = sub {
+$StateActions->[A_ENT_NAME_STATE_SYSTE] = sub {
 if ($Input =~ /\G([M])/gcs) {
 $Temp .= $1;
 
@@ -12822,7 +14731,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_ENTITY_SYSTEM_KEYWORD_STATE;
+$State = A_ENT_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G([m])/gcs) {
 $Temp .= $1;
 
@@ -12832,20 +14741,27 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_ENTITY_SYSTEM_KEYWORD_STATE;
+$State = A_ENT_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12855,23 +14771,25 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_PARAMETER_STATE] = sub {
+$StateActions->[A_ENT_PARAMETER_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ENT_PARAMETER_STATE, A_ENT_PARAMETER_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -12881,14 +14799,21 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
             push @$Errors, {type => 'after-entity-parameter-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12898,36 +14823,257 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_PUBLIC_ID_STATE] = sub {
+$StateActions->[A_ENT_PARAMETER_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ENT_PARAMETER_STATE, A_ENT_PARAMETER_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+return 1 if $Token->{type} == ENTITY_TOKEN;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ENT_PARAMETER_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ENT_PARAMETER_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-entity-parameter-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_ENT_PARAMETER_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ENT_PUBLIC_ID_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'after-entity-public-identifier-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$State = ENT_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'after-entity-public-identifier-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-entity-public-identifier-003e', level => 'm',
@@ -12941,14 +15087,21 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
             push @$Errors, {type => 'after-entity-public-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -12958,57 +15111,64 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_PUBLIC_KEYWORD_STATE] = sub {
+$StateActions->[A_ENT_PUBLIC_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ENTITY_PUBLIC_ID_STATE;
+$State = B_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_PUBLIC_ID_STATE, B_ENT_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'after-entity-public-keyword-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_ENTITY_PUBLIC_ID_STATE;
+$State = B_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'after-entity-public-keyword-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_ENTITY_PUBLIC_ID_STATE;
+$State = B_ENT_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-entity-public-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
-return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-public-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13018,24 +15178,26 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_SYSTEM_ID_STATE] = sub {
+$StateActions->[A_ENT_SYSTEM_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_NDATA_KEYWORD_STATE;
+$State = B_NDATA_KWD_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NDATA_KWD_STATE, B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -13045,14 +15207,21 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
             push @$Errors, {type => 'after-entity-system-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_NDATA_KEYWORD_STATE;
+$State = B_NDATA_KWD_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13062,57 +15231,64 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ENTITY_SYSTEM_KEYWORD_STATE] = sub {
+$StateActions->[A_ENT_SYSTEM_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ENTITY_SYSTEM_ID_STATE;
+$State = B_ENT_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_SYSTEM_ID_STATE, B_ENT_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'after-entity-system-keyword-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_ENTITY_SYSTEM_ID_STATE;
+$State = ENT_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'after-entity-system-keyword-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_ENTITY_SYSTEM_ID_STATE;
+$State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-entity-system-keyword-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
-return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-entity-system-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13122,23 +15298,25 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_IGNORE_KEYWORD_STATE] = sub {
+$StateActions->[A_IGNORE_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_IGNORE_KWD_STATE, A_IGNORE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 push @$OpenMarkedSections, 'IGNORE';
 $State = IGNORED_SECTION_STATE;
@@ -13162,6 +15340,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13171,22 +15357,251 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_INCLUDE_KEYWORD_STATE] = sub {
+$StateActions->[A_IGNORE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_IGNORE_KWD_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_IGNORE_KWD_STATE, A_IGNORE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_IGNORE_KWD_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_IGNORE_KWD_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-ignore-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_IGNORE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_INCLUDE_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_INCLUDE_KWD_STATE, A_INCLUDE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\[])/gcs) {
 push @$OpenMarkedSections, 'INCLUDE';
 $State = DTD_STATE;
@@ -13210,6 +15625,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13219,23 +15642,252 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NDATA_KEYWORD_STATE] = sub {
+$StateActions->[A_INCLUDE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_NDATA_ID_STATE;
+$State = A_INCLUDE_KWD_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_INCLUDE_KWD_STATE, A_INCLUDE_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\[])/gcs) {
+push @$OpenMarkedSections, 'INCLUDE';
+$State = DTD_STATE;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_INCLUDE_KWD_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_INCLUDE_KWD_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-include-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_INCLUDE_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_NDATA_KWD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_NDATA_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-ndata-keyword-003e', level => 'm',
@@ -13249,14 +15901,21 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
             push @$Errors, {type => 'after-ndata-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_NDATA_ID_STATE;
+$State = B_NDATA_ID_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13266,39 +15925,41 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE] = sub {
+$StateActions->[A_NOTATION_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_NOTATION_NAME_STATE, A_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([P])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_NOTATION_NAME_STATE_P;
+$State = A_NOTATION_NAME_STATE_P;
 } elsif ($Input =~ /\G([S])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_NOTATION_NAME_STATE_S;
+$State = A_NOTATION_NAME_STATE_S;
 } elsif ($Input =~ /\G([p])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_NOTATION_NAME_STATE_P;
+$State = A_NOTATION_NAME_STATE_P;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_NOTATION_NAME_STATE_S;
+$State = A_NOTATION_NAME_STATE_S;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-notation-name-003e', level => 'm',
@@ -13311,7 +15972,7 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13319,6 +15980,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13328,30 +15997,269 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_P] = sub {
+$StateActions->[A_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_NOTATION_NAME_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_NOTATION_NAME_STATE, A_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([P])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_NOTATION_NAME_STATE_P;
+} elsif ($Input =~ /\G([S])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_NOTATION_NAME_STATE_S;
+} elsif ($Input =~ /\G([p])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_NOTATION_NAME_STATE_P;
+} elsif ($Input =~ /\G([s])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_NOTATION_NAME_STATE_S;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_NOTATION_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_NOTATION_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_NOTATION_NAME_STATE_P] = sub {
 if ($Input =~ /\G([U])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PU;
+$State = A_NOTATION_NAME_STATE_PU;
 } elsif ($Input =~ /\G([u])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PU;
+$State = A_NOTATION_NAME_STATE_PU;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13359,6 +16267,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13368,30 +16284,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_PU] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_PU] = sub {
 if ($Input =~ /\G([B])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PUB;
+$State = A_NOTATION_NAME_STATE_PUB;
 } elsif ($Input =~ /\G([b])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PUB;
+$State = A_NOTATION_NAME_STATE_PUB;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13399,6 +16315,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13408,30 +16332,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_PUB] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_PUB] = sub {
 if ($Input =~ /\G([L])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PUBL;
+$State = A_NOTATION_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G([l])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PUBL;
+$State = A_NOTATION_NAME_STATE_PUBL;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13439,6 +16363,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13448,30 +16380,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_PUBL] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_PUBL] = sub {
 if ($Input =~ /\G([I])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PUBLI;
+$State = A_NOTATION_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G([i])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_PUBLI;
+$State = A_NOTATION_NAME_STATE_PUBLI;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13479,6 +16411,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13488,18 +16428,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_PUBLI] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_PUBLI] = sub {
 if ($Input =~ /\G([C])/gcs) {
 $Temp .= $1;
 
@@ -13509,7 +16449,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_NOTATION_PUBLIC_KEYWORD_STATE;
+$State = A_NOTATION_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G([c])/gcs) {
 $Temp .= $1;
 
@@ -13519,13 +16459,13 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_NOTATION_PUBLIC_KEYWORD_STATE;
+$State = A_NOTATION_PUBLIC_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13533,6 +16473,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13542,30 +16490,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_S] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_S] = sub {
 if ($Input =~ /\G([Y])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SY;
+$State = A_NOTATION_NAME_STATE_SY;
 } elsif ($Input =~ /\G([y])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SY;
+$State = A_NOTATION_NAME_STATE_SY;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13573,6 +16521,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13582,30 +16538,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_SY] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_SY] = sub {
 if ($Input =~ /\G([S])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SYS;
+$State = A_NOTATION_NAME_STATE_SYS;
 } elsif ($Input =~ /\G([s])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SYS;
+$State = A_NOTATION_NAME_STATE_SYS;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13613,6 +16569,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13622,30 +16586,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_SYS] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_SYS] = sub {
 if ($Input =~ /\G([T])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SYST;
+$State = A_NOTATION_NAME_STATE_SYST;
 } elsif ($Input =~ /\G([t])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SYST;
+$State = A_NOTATION_NAME_STATE_SYST;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13653,6 +16617,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13662,30 +16634,30 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_SYST] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_SYST] = sub {
 if ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SYSTE;
+$State = A_NOTATION_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G([e])/gcs) {
 $Temp .= $1;
-$State = AFTER_NOTATION_NAME_STATE_SYSTE;
+$State = A_NOTATION_NAME_STATE_SYSTE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13693,6 +16665,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13702,18 +16682,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_NAME_STATE_SYSTE] = sub {
+$StateActions->[A_NOTATION_NAME_STATE_SYSTE] = sub {
 if ($Input =~ /\G([M])/gcs) {
 $Temp .= $1;
 
@@ -13723,7 +16703,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_NOTATION_SYSTEM_KEYWORD_STATE;
+$State = A_NOTATION_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G([m])/gcs) {
 $Temp .= $1;
 
@@ -13733,13 +16713,13 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_NOTATION_SYSTEM_KEYWORD_STATE;
+$State = A_NOTATION_SYSTEM_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-notation-name-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13747,6 +16727,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13756,23 +16744,26 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_PUBLIC_ID_STATE] = sub {
+$StateActions->[A_NOTATION_PUBLIC_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -13793,7 +16784,7 @@ $State = NOTATION_SYSTEM_ID__SQ__STATE;
             push @$Errors, {type => 'after-notation-public-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13801,6 +16792,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13810,35 +16809,38 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_PUBLIC_KEYWORD_STATE] = sub {
+$StateActions->[A_NOTATION_PUBLIC_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_NOTATION_PUBLIC_ID_STATE;
+$State = B_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_PUBLIC_ID_STATE, B_NOTATION_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'after-notation-public-keyword-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_NOTATION_PUBLIC_ID_STATE;
+$State = B_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'after-notation-public-keyword-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_NOTATION_PUBLIC_ID_STATE;
+$State = B_NOTATION_PUBLIC_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-notation-public-keyword-003e', level => 'm',
@@ -13851,7 +16853,7 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'after-notation-public-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13859,6 +16861,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13868,22 +16878,25 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_SYSTEM_ID_STATE] = sub {
+$StateActions->[A_NOTATION_SYSTEM_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_NOTATION_SYSTEM_ID_STATE, A_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -13892,7 +16905,7 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'after-notation-system-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13900,6 +16913,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13909,35 +16930,257 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_NOTATION_SYSTEM_KEYWORD_STATE] = sub {
+$StateActions->[A_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_NOTATION_SYSTEM_ID_STATE;
+$State = A_NOTATION_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_NOTATION_SYSTEM_ID_STATE, A_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_NOTATION_SYSTEM_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_NOTATION_SYSTEM_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_NOTATION_SYSTEM_KWD_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_NOTATION_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_SYSTEM_ID_STATE, B_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'after-notation-system-keyword-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_NOTATION_SYSTEM_ID_STATE;
+$State = B_NOTATION_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'after-notation-system-keyword-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_NOTATION_SYSTEM_ID_STATE;
+$State = B_NOTATION_SYSTEM_ID_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-notation-system-keyword-003e', level => 'm',
@@ -13950,7 +17193,7 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'after-notation-system-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -13958,6 +17201,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -13967,18 +17218,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_PI_TARGET_STATE] = sub {
+$StateActions->[A_PI_TARGET_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $State = PI_DATA_STATE;
 $Token->{q<data>} .= q@�@;
@@ -13988,7 +17239,7 @@ $Temp .= $1;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
-$State = AFTER_PI_TARGET_STATE_CR;
+$State = A_PI_TARGET_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -14008,31 +17259,31 @@ if ($EOF) {
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_PI_TARGET_STATE_CR] = sub {
+$StateActions->[A_PI_TARGET_STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $State = PI_DATA_STATE;
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\	\\ ])/gcs) {
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\
 ])/gcs) {
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Temp .= q@
 @;
-$State = AFTER_PI_TARGET_STATE_CR;
+$State = A_PI_TARGET_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
@@ -14052,27 +17303,30 @@ if ($EOF) {
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_AFTER_ALLOWED_TOKEN_LIST_STATE] = sub {
+$StateActions->[A_AFTER_ALLOWED_TOKEN_LIST_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 } elsif ($Input =~ /\G([\#])/gcs) {
-$State = BEFORE_ATTLIST_ATTR_DEFAULT_STATE;
+$State = B_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_AFTER_ALLOWED_TOKEN_LIST_STATE, A_AFTER_ALLOWED_TOKEN_LIST_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
@@ -14087,12 +17341,20 @@ $State = DTD_STATE;
             push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -14103,23 +17365,255 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ALLOWED_TOKEN_LIST_STATE] = sub {
+$StateActions->[A_AFTER_ALLOWED_TOKEN_LIST_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_AFTER_ALLOWED_TOKEN_LIST_STATE;
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+} elsif ($Input =~ /\G([\#])/gcs) {
+$State = B_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_AFTER_ALLOWED_TOKEN_LIST_STATE, A_AFTER_ALLOWED_TOKEN_LIST_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-after-allowed-token-list-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ALLOWED_TOKEN_LIST_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_AFTER_ALLOWED_TOKEN_LIST_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_AFTER_ALLOWED_TOKEN_LIST_STATE, A_AFTER_ALLOWED_TOKEN_LIST_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
@@ -14132,7 +17626,7 @@ $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
             push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_ATTLIST_ATTR_DEFAULT_STATE;
+$State = B_ATTLIST_ATTR_DEFAULT_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-list-else', level => 'm',
@@ -14155,12 +17649,20 @@ $State = DTD_STATE;
             push @$Errors, {type => 'after-after-allowed-token-list-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -14171,26 +17673,29 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ALLOWED_TOKEN_STATE] = sub {
+$StateActions->[A_ALLOWED_TOKEN_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ALLOWED_TOKEN_STATE, A_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
-$State = AFTER_ALLOWED_TOKEN_LIST_STATE;
+$State = A_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
-$State = BEFORE_ALLOWED_TOKEN_STATE;
+$State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
@@ -14202,12 +17707,20 @@ $State = DTD_STATE;
             push @$Errors, {type => 'after-allowed-token-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -14218,24 +17731,249 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ATTR_NAME_STATE] = sub {
+$StateActions->[A_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_ALLOWED_TOKEN_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ALLOWED_TOKEN_STATE, A_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\)])/gcs) {
+$State = A_ALLOWED_TOKEN_LIST_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\|])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ALLOWED_TOKEN_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_ALLOWED_TOKEN_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = SELF_CLOSING_START_TAG_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DATA_STATE;
 
@@ -14338,21 +18076,21 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_ATTR_VALUE__QUOTED__STATE] = sub {
+$StateActions->[A_ATTR_VALUE__QUOTED__STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = SELF_CLOSING_START_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -14495,71 +18233,75 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_CONTENT_MODEL_GROUP_STATE] = sub {
+$StateActions->[A_CM_GROUP_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+pop @$OpenCMGroups;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_CM_ITEM_STATE, A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
-          $State = AFTER_CONTENT_MODEL_GROUP_STATE;
+          $State = A_CM_GROUP_STATE;
 
         }
       
 } elsif ($Input =~ /\G([\*])/gcs) {
 $OpenCMGroups->[-1]->{q<repetition>} = $1;
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 $OpenCMGroups->[-1]->{q<repetition>} = $1;
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
           
         push @{$OpenCMGroups->[-1]->{separators}},
             {di => $DI, index => $Offset + pos $Input, type => $1};
       
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 
         }
       
 } elsif ($Input =~ /\G([\>])/gcs) {
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           $State = DTD_STATE;
@@ -14577,24 +18319,24 @@ $State = DTD_STATE;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $OpenCMGroups->[-1]->{q<repetition>} = $1;
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
 pop @$OpenCMGroups;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
           
         push @{$OpenCMGroups->[-1]->{separators}},
             {di => $DI, index => $Offset + pos $Input, type => $1};
       
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 
         }
       
@@ -14603,18 +18345,26 @@ $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
             push @$Errors, {type => 'after-content-model-group-0028', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-content-model-group-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -14625,22 +18375,25 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_CONTENT_MODEL_ITEM_STATE] = sub {
+$StateActions->[A_CM_ITEM_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_CM_ITEM_STATE, A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
         if (@$OpenCMGroups) {
@@ -14648,10 +18401,10 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
             push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
-          $State = AFTER_CONTENT_MODEL_GROUP_STATE;
+          $State = A_CM_GROUP_STATE;
 
         }
       
@@ -14662,14 +18415,14 @@ $State = BOGUS_MARKUP_DECLARATION_STATE;
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
           
         push @{$OpenCMGroups->[-1]->{separators}},
             {di => $DI, index => $Offset + pos $Input, type => $1};
       
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 
         }
       
@@ -14695,14 +18448,14 @@ $State = DTD_STATE;
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
           
         push @{$OpenCMGroups->[-1]->{separators}},
             {di => $DI, index => $Offset + pos $Input, type => $1};
       
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 
         }
       
@@ -14711,36 +18464,44 @@ $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
             push @$Errors, {type => 'after-content-model-item-0028', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\*])/gcs) {
 
             push @$Errors, {type => 'after-content-model-item-002a', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 
             push @$Errors, {type => 'after-content-model-item-002b', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\?])/gcs) {
 
             push @$Errors, {type => 'after-content-model-item-003f', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-content-model-item-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -14751,18 +18512,326 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_IGNORED_SECTION_MSC_STATE] = sub {
+$StateActions->[A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_CM_ITEM_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_CM_ITEM_STATE, A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\)])/gcs) {
+$State = A_CM_ITEM_STATE;
+
+        if (@$OpenCMGroups) {
+          
+            push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+
+        } else {
+          $State = A_CM_GROUP_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\,])/gcs) {
+$State = A_CM_ITEM_STATE;
+
+        if (@$OpenCMGroups) {
+          
+            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
+$State = B_CM_ITEM_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_CM_ITEM_STATE;
+
+        if (@$OpenCMGroups) {
+          $State = DTD_STATE;
+push @$Tokens, $Token;
+
+        } else {
+          
+            push @$Errors, {type => 'after-content-model-item-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\|])/gcs) {
+$State = A_CM_ITEM_STATE;
+
+        if (@$OpenCMGroups) {
+          
+            push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+
+        } else {
+          
+        push @{$OpenCMGroups->[-1]->{separators}},
+            {di => $DI, index => $Offset + pos $Input, type => $1};
+      
+$State = B_CM_ITEM_STATE;
+
+        }
+      
+} elsif ($Input =~ /\G([\(])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-0028', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\*])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-002a', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\+])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-002b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\?])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-003f', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_CM_ITEM_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_CM_ITEM_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_IGNORED_SECTION_MSC_STATE] = sub {
 if ($Input =~ /\G([\>])/gcs) {
 pop @$OpenMarkedSections;
 } elsif ($Input =~ /\G([\]]+)/gcs) {
@@ -14774,6 +18843,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -14783,18 +18860,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSC_STATE] = sub {
+$StateActions->[A_MSC_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -14847,30 +18924,33 @@ $State = DATA_STATE;
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE] = sub {
+$StateActions->[A_MSS_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_MSS_STATE, A_MSS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([I])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_MSS_STATE_I;
+$State = A_MSS_STATE_I;
 } elsif ($Input =~ /\G([i])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = AFTER_MSS_STATE_I;
+$State = A_MSS_STATE_I;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -14891,6 +18971,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -14900,30 +18988,261 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_I] = sub {
+$StateActions->[A_MSS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = A_MSS_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_MSS_STATE, A_MSS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([I])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_MSS_STATE_I;
+} elsif ($Input =~ /\G([i])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = A_MSS_STATE_I;
+} elsif ($Input =~ /\G([\]])/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IN_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'after-mss-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @$OpenMarkedSections, 'IGNORE';
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_MSS_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = A_MSS_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'after-mss-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = A_MSS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[A_MSS_STATE_I] = sub {
 if ($Input =~ /\G([G])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IG;
+$State = A_MSS_STATE_IG;
 } elsif ($Input =~ /\G([N])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IN;
+$State = A_MSS_STATE_IN;
 } elsif ($Input =~ /\G([g])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IG;
+$State = A_MSS_STATE_IG;
 } elsif ($Input =~ /\G([n])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IN;
+$State = A_MSS_STATE_IN;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -14944,6 +19263,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -14953,24 +19280,24 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_IG] = sub {
+$StateActions->[A_MSS_STATE_IG] = sub {
 if ($Input =~ /\G([N])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IGN;
+$State = A_MSS_STATE_IGN;
 } elsif ($Input =~ /\G([n])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IGN;
+$State = A_MSS_STATE_IGN;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -14991,6 +19318,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15000,24 +19335,24 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_IGN] = sub {
+$StateActions->[A_MSS_STATE_IGN] = sub {
 if ($Input =~ /\G([O])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IGNO;
+$State = A_MSS_STATE_IGNO;
 } elsif ($Input =~ /\G([o])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IGNO;
+$State = A_MSS_STATE_IGNO;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15038,6 +19373,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15047,24 +19390,24 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_IGNO] = sub {
+$StateActions->[A_MSS_STATE_IGNO] = sub {
 if ($Input =~ /\G([R])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IGNOR;
+$State = A_MSS_STATE_IGNOR;
 } elsif ($Input =~ /\G([r])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_IGNOR;
+$State = A_MSS_STATE_IGNOR;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15085,6 +19428,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15094,18 +19445,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_IGNOR] = sub {
+$StateActions->[A_MSS_STATE_IGNOR] = sub {
 if ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
 
@@ -15115,7 +19466,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_IGNORE_KEYWORD_STATE;
+$State = A_IGNORE_KWD_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15132,7 +19483,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_IGNORE_KEYWORD_STATE;
+$State = A_IGNORE_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15146,6 +19497,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15155,24 +19514,24 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_IN] = sub {
+$StateActions->[A_MSS_STATE_IN] = sub {
 if ($Input =~ /\G([C])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INC;
+$State = A_MSS_STATE_INC;
 } elsif ($Input =~ /\G([c])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INC;
+$State = A_MSS_STATE_INC;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15193,6 +19552,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15202,24 +19569,24 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_INC] = sub {
+$StateActions->[A_MSS_STATE_INC] = sub {
 if ($Input =~ /\G([L])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INCL;
+$State = A_MSS_STATE_INCL;
 } elsif ($Input =~ /\G([l])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INCL;
+$State = A_MSS_STATE_INCL;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15240,6 +19607,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15249,24 +19624,24 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_INCL] = sub {
+$StateActions->[A_MSS_STATE_INCL] = sub {
 if ($Input =~ /\G([U])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INCLU;
+$State = A_MSS_STATE_INCLU;
 } elsif ($Input =~ /\G([u])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INCLU;
+$State = A_MSS_STATE_INCLU;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15287,6 +19662,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15296,24 +19679,24 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_INCLU] = sub {
+$StateActions->[A_MSS_STATE_INCLU] = sub {
 if ($Input =~ /\G([D])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INCLUD;
+$State = A_MSS_STATE_INCLUD;
 } elsif ($Input =~ /\G([d])/gcs) {
 $Temp .= $1;
-$State = AFTER_MSS_STATE_INCLUD;
+$State = A_MSS_STATE_INCLUD;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15334,6 +19717,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15343,18 +19734,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[AFTER_MSS_STATE_INCLUD] = sub {
+$StateActions->[A_MSS_STATE_INCLUD] = sub {
 if ($Input =~ /\G([E])/gcs) {
 $Temp .= $1;
 
@@ -15364,7 +19755,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_INCLUDE_KEYWORD_STATE;
+$State = A_INCLUDE_KWD_STATE;
 } elsif ($Input =~ /\G([\]])/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15381,7 +19772,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_INCLUDE_KEYWORD_STATE;
+$State = A_INCLUDE_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'after-mss-else', level => 'm',
@@ -15395,6 +19786,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15404,11 +19803,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -15418,13 +19817,16 @@ return 0;
 $StateActions->[ALLOWED_TOKEN_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_ALLOWED_TOKEN_STATE;
+$State = A_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_ALLOWED_TOKEN_STATE, A_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
-$State = AFTER_ALLOWED_TOKEN_LIST_STATE;
+$State = A_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
-$State = BEFORE_ALLOWED_TOKEN_STATE;
+$State = B_ALLOWED_TOKEN_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -15445,6 +19847,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -15454,11 +19864,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -15485,7 +19895,7 @@ $Attr->{q<name>} .= $1;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -15515,7 +19925,7 @@ $State = SELF_CLOSING_START_TAG_STATE;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
@@ -15618,11 +20028,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -15638,7 +20048,7 @@ push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -15657,21 +20067,21 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -15699,7 +20109,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -15730,18 +20140,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -15846,7 +20256,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -15931,18 +20341,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -16047,7 +20457,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -16132,11 +20542,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -16202,6 +20612,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -16344,6 +20755,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -16424,7 +20836,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -16484,6 +20896,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -16629,6 +21042,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -16769,6 +21183,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -16914,6 +21329,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -17059,6 +21475,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -17201,6 +21618,7 @@ if ($EOF) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -17287,11 +21705,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -17299,16 +21717,16 @@ return 1;
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -17336,7 +21754,7 @@ $State = ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -17367,11 +21785,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -17391,10 +21809,10 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE;
+$State = ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -17434,11 +21852,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -17454,7 +21872,7 @@ push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -17477,11 +21895,11 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -17501,7 +21919,7 @@ $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -17516,21 +21934,21 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -17567,7 +21985,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -17589,18 +22007,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -17732,7 +22150,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -17790,18 +22208,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -17933,7 +22351,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -17991,11 +22409,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -18061,6 +22479,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -18203,6 +22622,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -18345,6 +22765,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -18425,7 +22846,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
@@ -18488,6 +22909,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -18628,6 +23050,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -18773,6 +23196,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -18918,6 +23342,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -19060,6 +23485,7 @@ if ($EOF) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -19146,11 +23572,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -19158,16 +23584,16 @@ return 1;
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -19204,7 +23630,7 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -19226,11 +23652,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -19250,7 +23676,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE;
+$State = ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -19258,7 +23684,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
@@ -19293,11 +23719,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -19317,7 +23743,7 @@ $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = ATTR_VALUE__SQ__STATE;
 
@@ -19336,11 +23762,11 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -19354,7 +23780,7 @@ push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -19445,21 +23871,21 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -19479,14 +23905,14 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -19624,18 +24050,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -19714,7 +24140,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -19739,7 +24165,7 @@ $State = BEFORE_ATTR_NAME_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -20039,18 +24465,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -20129,7 +24555,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -20154,7 +24580,7 @@ $State = BEFORE_ATTR_NAME_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -20454,11 +24880,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -20525,6 +24951,7 @@ if ($Input =~ /\G([\	\\ \
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -20605,7 +25032,7 @@ if ($Input =~ /\G([\	\\ \
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -20665,6 +25092,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -20745,7 +25173,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -20805,6 +25233,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -20950,6 +25379,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -21090,6 +25520,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -21274,6 +25705,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -21419,6 +25851,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -21564,6 +25997,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -21709,6 +26143,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -21854,6 +26289,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -21999,6 +26435,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -22144,6 +26581,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -22286,6 +26724,7 @@ if ($EOF) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -22372,11 +26811,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -22384,16 +26823,16 @@ return 1;
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -22413,14 +26852,14 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -22558,11 +26997,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -22573,13 +27012,13 @@ $StateActions->[ATTR_VALUE__UNQUOTED__STATE___CHARREF_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUMBER_STATE;
+$State = ATTR_VALUE__UNQUOTED__STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -22698,11 +27137,11 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -22711,12 +27150,12 @@ return 0;
 };
 $StateActions->[ATTR_VALUE__UNQUOTED__STATE_CR] = sub {
 if ($Input =~ /\G([\	\\ ])/gcs) {
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = ATTR_VALUE__UNQUOTED__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -22816,29 +27255,29 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE] = sub {
 if ($Input =~ /\G([^\\&\ ]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -22849,28 +27288,28 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -22884,7 +27323,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -22893,14 +27332,14 @@ $State = ATTR_VALUE_IN_ENTITY_STATE_CR;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -22911,18 +27350,18 @@ if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -22945,7 +27384,7 @@ $Temp .= $1;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -22970,7 +27409,7 @@ $State = ATTR_VALUE_IN_ENTITY_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -23002,7 +27441,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -23029,7 +27468,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -23054,7 +27493,7 @@ $State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -23083,18 +27522,18 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -23117,7 +27556,7 @@ $Temp .= $1;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -23142,7 +27581,7 @@ $State = ATTR_VALUE_IN_ENTITY_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -23174,7 +27613,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -23201,7 +27640,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -23226,7 +27665,7 @@ $State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -23255,18 +27694,18 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
           my $return;
@@ -23325,6 +27764,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -23407,7 +27847,7 @@ if ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -23467,6 +27907,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -23549,7 +27990,7 @@ return 1 if $return;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
@@ -23612,6 +28053,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -23692,7 +28134,7 @@ $Temp .= $1;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -23752,6 +28194,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -23832,7 +28275,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
@@ -23897,6 +28340,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -23977,7 +28421,7 @@ $Temp .= $1;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -24042,6 +28486,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -24122,7 +28567,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } else {
@@ -24184,6 +28629,7 @@ if ($EOF) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -24266,11 +28712,11 @@ if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -24278,23 +28724,23 @@ return 1;
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -24308,7 +28754,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -24317,14 +28763,14 @@ $State = ATTR_VALUE_IN_ENTITY_STATE_CR;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -24335,52 +28781,52 @@ if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -24388,87 +28834,87 @@ $State = ATTR_VALUE_IN_ENTITY_STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[ATTR_VALUE_IN_ENTITY_STATE_CR] = sub {
+$StateActions->[ATTR_VALUE_IN_ENT_STATE_CR] = sub {
 if ($Input =~ /\G([\
 ])/gcs) {
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = ATTR_VALUE_IN_ENTITY_STATE;
+$State = ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ATTLIST_ATTR_DEFAULT_STATE] = sub {
+$StateActions->[B_ATTLIST_ATTR_DEFAULT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
             push @$Errors, {type => 'before-attlist-attribute-default-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'before-attlist-attribute-default-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'before-attlist-attribute-default-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'before-attlist-attribute-default-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-attlist-attribute-default-003e', level => 'm',
@@ -24484,6 +28930,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -24493,18 +28947,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ATTLIST_ATTR_NAME_STATE] = sub {
+$StateActions->[B_ATTLIST_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 
         $Attr = {di => $DI, index => $Offset + pos $Input};
@@ -24516,7 +28970,10 @@ $Attr->{index} = $Offset + (pos $Input) - length $1;
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -24534,6 +28991,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -24543,22 +29008,253 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ATTLIST_NAME_STATE] = sub {
+$StateActions->[B_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
+$State = ATTLIST_ATTR_NAME_STATE;
+$Attr->{q<name>} = q@�@;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ATTLIST_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ATTLIST_ATTR_NAME_STATE, B_ATTLIST_ATTR_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+        $Attr = {di => $DI, index => $Offset + pos $Input};
+        push @{$Token->{attr_list} ||= []}, $Attr;
+      
+$State = ATTLIST_ATTR_NAME_STATE;
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + (pos $Input) - length $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ATTLIST_ATTR_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ATTLIST_ATTR_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-attribute-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ATTLIST_ATTR_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ATTLIST_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ATTLIST_NAME_STATE, B_ATTLIST_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -24589,6 +29285,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -24598,18 +29302,251 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_DOCTYPE_NAME_STATE] = sub {
+$StateActions->[B_ATTLIST_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ATTLIST_NAME_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ATTLIST_NAME_STATE, B_ATTLIST_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        $Token = {type => ATTLIST_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = q@�@;
+$State = ATTLIST_NAME_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+        $Token = {type => ATTLIST_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
+$State = ATTLIST_NAME_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ATTLIST_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ATTLIST_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-attlist-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ATTLIST_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_DOCTYPE_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
@@ -24664,11 +29601,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -24676,7 +29613,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[BEFORE_DOCTYPE_PUBLIC_ID_STATE] = sub {
+$StateActions->[B_DOCTYPE_PUBLIC_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
@@ -24711,11 +29648,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -24723,7 +29660,7 @@ return 1;
 }
 return 0;
 };
-$StateActions->[BEFORE_DOCTYPE_SYSTEM_ID_STATE] = sub {
+$StateActions->[B_DOCTYPE_SYSTEM_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
@@ -24764,11 +29701,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -24776,40 +29713,43 @@ return 1;
 }
 return 0;
 };
-$StateActions->[BEFORE_ELEMENT_CONTENT_STATE] = sub {
+$StateActions->[B_ELEMENT_CONTENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ELEMENT_CONTENT_STATE, B_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
 my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
 $Token->{cmgroup} = $cmgroup;
 @$OpenCMGroups = ($cmgroup);
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
             push @$Errors, {type => 'before-element-content-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\*])/gcs) {
 
             push @$Errors, {type => 'before-element-content-002a', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 
             push @$Errors, {type => 'before-element-content-002b', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
 
             push @$Errors, {type => 'before-element-content-002c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-element-content-003e', level => 'm',
@@ -24821,21 +29761,29 @@ $State = DTD_STATE;
             push @$Errors, {type => 'before-element-content-003f', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
 
             push @$Errors, {type => 'before-element-content-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Token->{q<content_keyword>} = $1;
-$State = ELEMENT_CONTENT_KEYWORD_STATE;
+$State = ELEMENT_CONTENT_KWD_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -24846,22 +29794,284 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ELEMENT_NAME_STATE] = sub {
+$StateActions->[B_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ELEMENT_CONTENT_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ELEMENT_CONTENT_STATE, B_ELEMENT_CONTENT_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\(])/gcs) {
+my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
+$Token->{cmgroup} = $cmgroup;
+@$OpenCMGroups = ($cmgroup);
+$State = B_CM_ITEM_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\)])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-0029', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\*])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-002a', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\+])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-002b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\,])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-002c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G([\?])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-003f', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\|])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-007c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$Token->{q<content_keyword>} = $1;
+$State = ELEMENT_CONTENT_KWD_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ELEMENT_CONTENT_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ELEMENT_CONTENT_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-element-content-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ELEMENT_CONTENT_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ELEMENT_NAME_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ELEMENT_NAME_STATE, B_ELEMENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -24892,6 +30102,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -24901,44 +30119,68 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ENTITY_NAME_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<name>} = q@�@;
-$State = ENTITY_NAME_STATE;
-} elsif ($Input =~ /\G([\	\\ \
-\]+)/gcs) {
+$StateActions->[B_ELEMENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ELEMENT_NAME_STATE, B_ELEMENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        $Token = {type => ELEMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = q@�@;
+$State = ELEMENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
-            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+            push @$Errors, {type => 'before-element-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'dtd-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
+
+        $Token = {type => ELEMENT_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ELEMENT_NAME_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -24948,47 +30190,492 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ENTITY_PUBLIC_ID_STATE] = sub {
+$StateActions->[B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ELEMENT_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ELEMENT_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-element-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ELEMENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_NAME_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<name>} = q@�@;
+$State = ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+\]+)/gcs) {
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_NAME_STATE, B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$Token->{q<name>} = $1;
+$State = ENT_NAME_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<name>} = q@�@;
+$State = ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_NAME_STATE, B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$Token->{q<name>} = $1;
+$State = ENT_NAME_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ENT_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_PUBLIC_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = ENTITY_PUBLIC_ID__DQ__STATE;
+$State = ENT_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_PUBLIC_ID_STATE, B_ENT_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = ENTITY_PUBLIC_ID__SQ__STATE;
+$State = ENT_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
-return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-entity-public-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -24998,48 +30685,280 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ENTITY_SYSTEM_ID_STATE] = sub {
+$StateActions->[B_ENT_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ENT_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = ENT_PUBLIC_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_PUBLIC_ID_STATE, B_ENT_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = ENT_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_PUBLIC_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_PUBLIC_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ENT_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_SYSTEM_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$State = ENT_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_SYSTEM_ID_STATE, B_ENT_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-push @$Tokens, $Token;
-return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-entity-system-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25049,44 +30968,272 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ENTITY_TYPE_STATE] = sub {
+$StateActions->[B_ENT_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ENT_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = ENT_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_SYSTEM_ID_STATE, B_ENT_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = ENT_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_SYSTEM_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_SYSTEM_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ENT_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_TYPE_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<name>} = q@�@;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_AFTER_SPACE_STATE;
+$State = PE_DECL_OR_REF_AFTER_SPACE_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-entity-name-003e', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'dtd-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -25097,79 +31244,132 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ENTITY_VALUE_IN_ENTITY_STATE] = sub {
-if ($Input =~ /\G([^\ \\%\&]+)/gcs) {
-push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+$StateActions->[B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<name>} = q@�@;
+$State = ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ENT_TYPE_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$State = PE_DECL_OR_REF_AFTER_SPACE_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-entity-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$Token->{q<name>} = $1;
+$State = ENT_NAME_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
 
 } elsif ($Input =~ /\G([\ ])/gcs) {
-
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_TYPE_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
         }
       
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
-} elsif ($Input =~ /\G([\])/gcs) {
-push @{$Token->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
-$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR;
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
-        }
-      
-$Temp = q@%@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
-        }
-      
-$Temp = q@&@;
-$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
-
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
-        }
-      
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25179,82 +31379,269 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR] = sub {
+$StateActions->[B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
-
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
-        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
-        }
-      
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
-push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+$State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
 } elsif ($Input =~ /\G([\
 ])/gcs) {
-$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ENT_TYPE_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-entity-type-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ENT_TYPE_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_VALUE_IN_ENT_STATE] = sub {
+if ($Input =~ /\G([^\\!\%\&\>\ ]+)/gcs) {
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE_CR;
-} elsif ($Input =~ /\G([\%])/gcs) {
-
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
+$State = B_ENT_VALUE_IN_ENT_STATE_CR;
+} elsif ($Input =~ /\G([\!])/gcs) {
+# XXX IndexedString
         if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\%])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
         }
       
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
-
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
+# XXX IndexedString
         if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
+          warn "TEXT DECL: <$1>"; # XXXXXX
         }
       
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\ ])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} else {
+if ($EOF) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ENT_VALUE_IN_ENT_STATE_CR] = sub {
+if ($Input =~ /\G([\
+])/gcs) {
+$State = B_ENT_VALUE_IN_ENT_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+push @{$Token->{q<value>}}, [q@
+@, $DI, $Offset + (pos $Input) - length $1];
+$State = B_ENT_VALUE_IN_ENT_STATE_CR;
+} elsif ($Input =~ /\G([\!])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\%])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$Temp = q@&@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\ ])/gcs) {
+# XXX IndexedString
+        if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+$State = ENT_VALUE_IN_ENT_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = B_ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
-
-# XXX di/index
-warn "???????????? ";
-use Data::Dumper;
-warn Dumper $Token->{value};
+# XXX IndexedString
         if ($Token->{value} =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
-          warn "TEXT DECL: <$1>";
+          warn "TEXT DECL: <$1>"; # XXXXXX
         }
       
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25264,25 +31651,28 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NDATA_ID_STATE] = sub {
+$StateActions->[B_NDATA_ID_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 $Token->{q<notation_name>} = q@�@;
 $State = NDATA_ID_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
@@ -25300,7 +31690,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25310,23 +31707,248 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NDATA_KEYWORD_STATE] = sub {
+$StateActions->[B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<notation_name>} = q@�@;
+$State = NDATA_ID_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_NDATA_ID_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NDATA_ID_STATE, B_NDATA_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+push @$Tokens, $Token;
+return 1 if $Token->{type} == ENTITY_TOKEN;
+} elsif ($Input =~ /\G(.)/gcs) {
+$Token->{q<notation_name>} = $1;
+$State = NDATA_ID_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NDATA_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NDATA_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_NDATA_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NDATA_KWD_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NDATA_KWD_STATE, B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $State = DTD_STATE;
 push @$Tokens, $Token;
@@ -25334,24 +31956,31 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
 } elsif ($Input =~ /\G([N])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = BEFORE_NDATA_KEYWORD_STATE_N;
+$State = B_NDATA_KWD_STATE_N;
 } elsif ($Input =~ /\G([n])/gcs) {
 $Temp = $1;
 $TempIndex = $Offset + (pos $Input) - (length $1);
-$State = BEFORE_NDATA_KEYWORD_STATE_N;
+$State = B_NDATA_KWD_STATE_N;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25361,38 +31990,271 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NDATA_KEYWORD_STATE_N] = sub {
+$StateActions->[B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_NDATA_KWD_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NDATA_KWD_STATE, B_NDATA_KWD_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+return 1 if $Token->{type} == ENTITY_TOKEN;
+} elsif ($Input =~ /\G([N])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NDATA_KWD_STATE_N;
+} elsif ($Input =~ /\G([n])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NDATA_KWD_STATE_N;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NDATA_KWD_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NDATA_KWD_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-ndata-keyword-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_NDATA_KWD_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NDATA_KWD_STATE_N] = sub {
 if ($Input =~ /\G([D])/gcs) {
 $Temp .= $1;
-$State = BEFORE_NDATA_KEYWORD_STATE_ND;
+$State = B_NDATA_KWD_STATE_ND;
 } elsif ($Input =~ /\G([d])/gcs) {
 $Temp .= $1;
-$State = BEFORE_NDATA_KEYWORD_STATE_ND;
+$State = B_NDATA_KWD_STATE_ND;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25402,38 +32264,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NDATA_KEYWORD_STATE_ND] = sub {
+$StateActions->[B_NDATA_KWD_STATE_ND] = sub {
 if ($Input =~ /\G([A])/gcs) {
 $Temp .= $1;
-$State = BEFORE_NDATA_KEYWORD_STATE_NDA;
+$State = B_NDATA_KWD_STATE_NDA;
 } elsif ($Input =~ /\G([a])/gcs) {
 $Temp .= $1;
-$State = BEFORE_NDATA_KEYWORD_STATE_NDA;
+$State = B_NDATA_KWD_STATE_NDA;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25443,38 +32311,44 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NDATA_KEYWORD_STATE_NDA] = sub {
+$StateActions->[B_NDATA_KWD_STATE_NDA] = sub {
 if ($Input =~ /\G([T])/gcs) {
 $Temp .= $1;
-$State = BEFORE_NDATA_KEYWORD_STATE_NDAT;
+$State = B_NDATA_KWD_STATE_NDAT;
 } elsif ($Input =~ /\G([t])/gcs) {
 $Temp .= $1;
-$State = BEFORE_NDATA_KEYWORD_STATE_NDAT;
+$State = B_NDATA_KWD_STATE_NDAT;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25484,19 +32358,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NDATA_KEYWORD_STATE_NDAT] = sub {
+$StateActions->[B_NDATA_KWD_STATE_NDAT] = sub {
 if ($Input =~ /\G([A])/gcs) {
 $Temp .= $1;
 
@@ -25506,7 +32379,7 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_NDATA_KEYWORD_STATE;
+$State = A_NDATA_KWD_STATE;
 } elsif ($Input =~ /\G([a])/gcs) {
 $Temp .= $1;
 
@@ -25516,20 +32389,27 @@ $Temp .= $1;
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           
-$State = AFTER_NDATA_KEYWORD_STATE;
+$State = A_NDATA_KWD_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'before-ndata-keyword-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25539,19 +32419,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-return 1 if $Token->{type} == ENTITY_TOKEN;
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NOTATION_NAME_STATE] = sub {
+$StateActions->[B_NOTATION_NAME_STATE] = sub {
 if ($Input =~ /\G([\ ])/gcs) {
 
         $Token = {type => NOTATION_TOKEN, tn => 0,
@@ -25562,7 +32441,10 @@ $State = NOTATION_NAME_STATE;
 } elsif ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_NAME_STATE, B_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-notation-name-003e', level => 'm',
@@ -25586,6 +32468,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25595,24 +32485,260 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NOTATION_PUBLIC_ID_STATE] = sub {
+$StateActions->[B_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+
+        $Token = {type => NOTATION_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = q@�@;
+$State = NOTATION_NAME_STATE;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_NOTATION_NAME_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_NAME_STATE, B_NOTATION_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+
+            push @$Errors, {type => 'dtd-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G(.)/gcs) {
+
+        $Token = {type => NOTATION_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<name>} = $1;
+$State = NOTATION_NAME_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NOTATION_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NOTATION_NAME_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-notation-name-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_NOTATION_NAME_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_PUBLIC_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = NOTATION_PUBLIC_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_PUBLIC_ID_STATE, B_NOTATION_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = NOTATION_PUBLIC_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -25627,7 +32753,7 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'before-notation-public-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -25635,6 +32761,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25644,24 +32778,254 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_NOTATION_SYSTEM_ID_STATE] = sub {
+$StateActions->[B_NOTATION_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_NOTATION_PUBLIC_ID_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = NOTATION_PUBLIC_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_PUBLIC_ID_STATE, B_NOTATION_PUBLIC_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = NOTATION_PUBLIC_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NOTATION_PUBLIC_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NOTATION_PUBLIC_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-notation-public-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_NOTATION_PUBLIC_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_SYSTEM_ID_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = NOTATION_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_SYSTEM_ID_STATE, B_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -25676,7 +33040,7 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'before-notation-system-identifier-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -25684,6 +33048,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25693,22 +33065,252 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ALLOWED_TOKEN_STATE] = sub {
+$StateActions->[B_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_NOTATION_SYSTEM_ID_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_NOTATION_SYSTEM_ID_STATE, B_NOTATION_SYSTEM_ID_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NOTATION_SYSTEM_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_NOTATION_SYSTEM_ID_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-notation-system-identifier-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_NOTATION_SYSTEM_ID_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ALLOWED_TOKEN_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ALLOWED_TOKEN_STATE, B_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -25721,7 +33323,7 @@ $State = ALLOWED_TOKEN_STATE;
             push @$Errors, {type => 'before-allowed-token-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = AFTER_ALLOWED_TOKEN_LIST_STATE;
+$State = A_ALLOWED_TOKEN_LIST_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
@@ -25743,6 +33345,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -25752,18 +33362,256 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ATTR_NAME_STATE] = sub {
+$StateActions->[B_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ALLOWED_TOKEN_STATE, B_ALLOWED_TOKEN_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Attr->{allowed_tokens}->[-1] = q@�@;
+$State = ALLOWED_TOKEN_STATE;
+} elsif ($Input =~ /\G([\)])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-0029', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = A_ALLOWED_TOKEN_LIST_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G([\|])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE;
+
+            push @$Errors, {type => 'before-allowed-token-007c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+} elsif ($Input =~ /\G(.)/gcs) {
+push @{$Attr->{allowed_tokens} ||= []}, '';
+$Attr->{allowed_tokens}->[-1] = $1;
+$State = ALLOWED_TOKEN_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_ALLOWED_TOKEN_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-allowed-token-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_ALLOWED_TOKEN_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -25793,12 +33641,12 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -25826,8 +33674,8 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
@@ -25900,12 +33748,12 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -25933,11 +33781,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -25964,7 +33812,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $3;
 $Attr->{index} = $Offset + $-[3];
@@ -25998,12 +33846,12 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -26031,12 +33879,12 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -26062,7 +33910,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
@@ -26133,8 +33981,8 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
@@ -26205,11 +34053,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -26235,7 +34083,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $3) + 32);
 $Attr->{index} = $Offset + $-[3];
@@ -26267,7 +34115,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = $3;
 $Attr->{index} = $Offset + $-[3];
@@ -26299,11 +34147,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -26372,11 +34220,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -26445,11 +34293,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -26516,11 +34364,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -26587,11 +34435,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -26618,12 +34466,12 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
@@ -26649,11 +34497,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
 \\\ ][\	\
@@ -26680,12 +34528,12 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*([^\ \	\
@@ -26710,7 +34558,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
 $State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
@@ -26779,7 +34627,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
 $Attr->{q<name>} = chr ((ord $3) + 32);
 $Attr->{index} = $Offset + $-[3];
@@ -26810,11 +34658,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -26881,10 +34729,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -26952,11 +34800,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -27023,10 +34871,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -27094,11 +34942,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -27163,10 +35011,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -27231,10 +35079,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -27300,11 +35148,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -27370,11 +35218,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)\=[\	\
 \\\ ]*\"([^\ \\"\&]*)\"[\	\
@@ -27399,11 +35247,11 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
 \\\ \"\'\/\<\=\>A-Z]*)[\	\
@@ -27428,7 +35276,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -27496,7 +35344,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -27560,10 +35408,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -27629,10 +35477,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -27698,10 +35546,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -27765,10 +35613,10 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = BEFORE_ATTR_VALUE_STATE;
+$State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = AFTER_ATTR_VALUE__QUOTED__STATE;
+$State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -27833,7 +35681,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
@@ -27965,7 +35813,7 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = AFTER_ATTR_NAME_STATE;
+$State = A_ATTR_NAME_STATE;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -28398,18 +36246,18 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_ATTR_VALUE_STATE] = sub {
+$StateActions->[B_ATTR_VALUE_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
@@ -28505,22 +36353,25 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BEFORE_CONTENT_MODEL_ITEM_STATE] = sub {
+$StateActions->[B_CM_ITEM_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_CM_ITEM_STATE, B_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\(])/gcs) {
 my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
 push @{$OpenCMGroups->[-1]->{items}}, $cmgroup;
@@ -28535,31 +36386,31 @@ push @$OpenCMGroups, $cmgroup;
             {di => $DI, index => $Offset + pos $Input};
       
 $OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = q@�@;
-$State = CONTENT_MODEL_ELEMENT_STATE;
+$State = CM_ELEMENT_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\*])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-002a', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-002b', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-002c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
@@ -28571,25 +36422,33 @@ $State = DTD_STATE;
             push @$Errors, {type => 'before-content-model-item-003f', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
 
             push @$Errors, {type => 'before-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
         push @{$OpenCMGroups->[-1]->{items}},
             {di => $DI, index => $Offset + pos $Input};
       
 $OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = $1;
-$State = CONTENT_MODEL_ELEMENT_STATE;
+$State = CM_ELEMENT_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -28600,11 +36459,285 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = B_CM_ITEM_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_CM_ITEM_STATE, B_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\(])/gcs) {
+$State = B_CM_ITEM_STATE;
+my $cmgroup = {items => [], separators => [], di => $DI, index => $Offset + pos $Input};
+push @{$OpenCMGroups->[-1]->{items}}, $cmgroup;
+push @$OpenCMGroups, $cmgroup;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        push @{$OpenCMGroups->[-1]->{items}},
+            {di => $DI, index => $Offset + pos $Input};
+      
+$OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = q@�@;
+$State = CM_ELEMENT_STATE;
+} elsif ($Input =~ /\G([\)])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-0029', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\*])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-002a', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\+])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-002b', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\,])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-002c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+} elsif ($Input =~ /\G([\?])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-003f', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\|])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-007c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+        push @{$OpenCMGroups->[-1]->{items}},
+            {di => $DI, index => $Offset + pos $Input};
+      
+$OpenCMGroups->[-1]->{items}->[-1]->{q<name>} = $1;
+$State = CM_ELEMENT_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
         return 1;
       
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_CM_ITEM_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = B_CM_ITEM_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'before-content-model-item-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = B_CM_ITEM_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -28651,11 +36784,11 @@ $State = DATA_STATE;
 $Token->{q<force_quirks_flag>} = 1;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -28663,15 +36796,18 @@ return 1;
 }
 return 0;
 };
-$StateActions->[BETWEEN_ENTITY_PUBLIC_AND_SYSTEM_IDS_STATE] = sub {
+$StateActions->[BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \]+)/gcs) {
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = ENTITY_SYSTEM_ID__DQ__STATE;
+$State = ENT_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = ENTITY_SYSTEM_ID__SQ__STATE;
+$State = ENT_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
@@ -28685,14 +36821,21 @@ return 1 if $Token->{type} == ENTITY_TOKEN;
             push @$Errors, {type => 'between-entity-public-and-system-identifiers-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -28702,12 +36845,238 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = ENT_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = ENT_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+push @$Tokens, $Token;
+return 1 if $Token->{type} == ENTITY_TOKEN;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
         return 1;
       
-return 1 if $Token->{type} == ENTITY_TOKEN;
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'between-entity-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = BETWEEN_ENT_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -28720,7 +37089,10 @@ if ($Input =~ /\G([\	\\ \
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = NOTATION_SYSTEM_ID__DQ__STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $State = NOTATION_SYSTEM_ID__SQ__STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -28731,7 +37103,7 @@ push @$Tokens, $Token;
             push @$Errors, {type => 'between-notation-public-and-system-identifiers-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
@@ -28739,6 +37111,14 @@ if ($EOF) {
                             di => $DI, index => $Offset + (pos $Input)};
           
 push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -28748,11 +37128,234 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([\	\\ \
+\])/gcs) {
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
+} elsif ($Input =~ /\G([\"])/gcs) {
+$State = NOTATION_SYSTEM_ID__DQ__STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE, BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\'])/gcs) {
+$State = NOTATION_SYSTEM_ID__SQ__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+$Temp = $1;
+$TempIndex = $Offset + (pos $Input) - (length $1);
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = DTD_STATE;
+push @$Tokens, $Token;
+} elsif ($Input =~ /\G(.)/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+push @$Tokens, $Token;
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
         return 1;
       
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\ \\>\!\%\&\<]+)/gcs) {
+$Temp .= $1;
+
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR] = sub {
+if ($Input =~ /\G([\ ])/gcs) {
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\
+])/gcs) {
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\])/gcs) {
+$Temp .= q@
+@;
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE_CR;
+} elsif ($Input =~ /\G([\>])/gcs) {
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE;
+# XXX IndexedString
+        if ($Temp =~ s{^<\?xml(?=[\x09\x0A\x0C\x20?])(.*?)\?>}{}s) {
+          warn "TEXT DECL: <$1>"; # XXXXXX
+        }
+      
+} elsif ($Input =~ /\G([\!])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0021', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\%])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0025', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\&])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-0026', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'between-notation-public-and-system-identifiers-state-text-declaration-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = BETWEEN_NOTATION_PUBLIC_AND_SYSTEM_IDS_STATE___TEXT_DECL_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
+                        di => $DI,
+                        index => $Offset + pos $Input};
+        return 1;
+      
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -28777,11 +37380,11 @@ if ($EOF) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
 } else {
 return 1;
@@ -28810,11 +37413,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -28851,11 +37454,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -28896,18 +37499,18 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[BOGUS_MARKUP_DECLARATION_STATE] = sub {
+$StateActions->[BOGUS_MARKUP_DECL_STATE] = sub {
 if ($Input =~ /\G([^\>]+)/gcs) {
 
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -28920,6 +37523,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -28929,11 +37540,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -28977,7 +37588,7 @@ $State = DATA_STATE_CR;
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
 $Temp .= $1;
-$State = DATA_STATE___CHARREF_NUMBER_STATE;
+$State = DATA_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 1;
@@ -29075,11 +37686,11 @@ $TempIndex = $Offset + (pos $Input) - 1;
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29130,11 +37741,11 @@ if ($EOF) {
           
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29175,11 +37786,11 @@ if ($EOF) {
           
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29247,11 +37858,11 @@ if ($EOF) {
           
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29293,11 +37904,11 @@ if ($EOF) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29337,11 +37948,11 @@ if ($EOF) {
 $State = DATA_STATE;
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29379,11 +37990,11 @@ if ($EOF) {
           
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29425,65 +38036,68 @@ if ($EOF) {
           
 push @$Tokens, $Token;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[CONTENT_MODEL_ELEMENT_STATE] = sub {
+$StateActions->[CM_ELEMENT_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [A_CM_ITEM_STATE, A_CM_ITEM_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\)])/gcs) {
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-0029', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
-          $State = AFTER_CONTENT_MODEL_GROUP_STATE;
+          $State = A_CM_GROUP_STATE;
 
         }
       
 } elsif ($Input =~ /\G([\*])/gcs) {
 $OpenCMGroups->[-1]->{items}->[-1]->{q<repetition>} = $1;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\+])/gcs) {
 $OpenCMGroups->[-1]->{items}->[-1]->{q<repetition>} = $1;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\,])/gcs) {
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
           
         push @{$OpenCMGroups->[-1]->{separators}},
             {di => $DI, index => $Offset + pos $Input, type => $1};
       
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 
         }
       
 } elsif ($Input =~ /\G([\>])/gcs) {
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           $State = DTD_STATE;
@@ -29500,23 +38114,23 @@ $State = DTD_STATE;
       
 } elsif ($Input =~ /\G([\?])/gcs) {
 $OpenCMGroups->[-1]->{items}->[-1]->{q<repetition>} = $1;
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 } elsif ($Input =~ /\G([\|])/gcs) {
-$State = AFTER_CONTENT_MODEL_ITEM_STATE;
+$State = A_CM_ITEM_STATE;
 
         if (@$OpenCMGroups) {
           
             push @$Errors, {type => 'after-content-model-item-007c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 
         } else {
           
         push @{$OpenCMGroups->[-1]->{separators}},
             {di => $DI, index => $Offset + pos $Input, type => $1};
       
-$State = BEFORE_CONTENT_MODEL_ITEM_STATE;
+$State = B_CM_ITEM_STATE;
 
         }
       
@@ -29530,13 +38144,21 @@ $State = BEFORE_CONTENT_MODEL_ITEM_STATE;
             push @$Errors, {type => 'content-model-element-0028', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -29547,11 +38169,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -29599,21 +38221,21 @@ $State = IN_MSC_STATE;
 } else {
 if ($EOF) {
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = DATA_STATE___CHARREF_HEX_NUMBER_STATE;
+$State = DATA_STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -29726,18 +38348,18 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DATA_STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[DATA_STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -29996,18 +38618,18 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DATA_STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[DATA_STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -30266,11 +38888,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -30341,6 +38963,7 @@ if ($Input =~ /\G([\])/gcs) {
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -30478,6 +39101,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -30612,6 +39236,7 @@ $Temp .= $1;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -30743,6 +39368,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -30875,6 +39501,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -31013,6 +39640,7 @@ $Temp .= $1;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -31151,6 +39779,7 @@ $Temp .= $1;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -31291,6 +39920,7 @@ return 1 if $return;
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -31428,6 +40058,7 @@ if ($EOF) {
                 $TempIndex += length $Temp;
                 $Temp = '';
                 $return = 1;
+                last REF;
               }
             }
             ## </XML>
@@ -31496,11 +40127,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -31508,16 +40139,16 @@ return 1;
 }
 return 0;
 };
-$StateActions->[DATA_STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[DATA_STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = DATA_STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = DATA_STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = DATA_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DATA_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -31630,11 +40261,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -31672,7 +40303,7 @@ $State = DATA_STATE;
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = DATA_STATE___CHARREF_NUMBER_STATE;
+$State = DATA_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -31752,11 +40383,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -31797,7 +40428,7 @@ $State = DATA_STATE___CHARREF_STATE;
 $State = DATA_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = DATA_STATE___CHARREF_NUMBER_STATE;
+$State = DATA_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
         push @$Tokens, {type => TEXT_TOKEN, tn => 0,
@@ -31877,11 +40508,11 @@ if ($EOF) {
       
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -31934,11 +40565,11 @@ $State = DATA_STATE;
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -31954,7 +40585,7 @@ push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -31971,6 +40602,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -31980,21 +40619,21 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -32022,7 +40661,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -32051,6 +40690,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -32060,18 +40707,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -32176,7 +40823,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -32259,6 +40906,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -32268,18 +40923,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -32384,7 +41039,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -32467,6 +41122,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -32476,11 +41139,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -32546,6 +41209,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -32688,6 +41352,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -32768,7 +41433,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -32828,6 +41493,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -32973,6 +41639,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -33113,6 +41780,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -33258,6 +41926,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -33403,6 +42072,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -33545,6 +42215,7 @@ if ($EOF) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -33629,6 +42300,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -33638,11 +42317,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -33650,16 +42329,16 @@ return 1;
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -33687,7 +42366,7 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -33716,6 +42395,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -33725,11 +42412,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -33749,10 +42436,10 @@ push @{$Attr->{q<value>}}, [q@
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -33790,6 +42477,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -33799,11 +42494,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -33819,7 +42514,7 @@ push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
@@ -33840,6 +42535,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -33849,11 +42552,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -33873,7 +42576,7 @@ $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -33886,6 +42589,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -33895,21 +42606,21 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -33946,7 +42657,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -33966,6 +42677,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -33975,18 +42694,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -34118,7 +42837,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -34174,6 +42893,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -34183,18 +42910,18 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -34326,7 +43053,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -34382,6 +43109,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -34391,11 +43126,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -34461,6 +43196,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -34603,6 +43339,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -34745,6 +43482,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -34825,7 +43563,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
@@ -34888,6 +43626,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -35028,6 +43767,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -35173,6 +43913,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -35318,6 +44059,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -35460,6 +44202,7 @@ if ($EOF) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -35544,6 +44287,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -35553,11 +44304,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -35565,16 +44316,16 @@ return 1;
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -35611,7 +44362,7 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -35631,6 +44382,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -35640,11 +44399,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -35664,7 +44423,7 @@ push @{$Attr->{q<value>}}, [q@
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
@@ -35672,7 +44431,7 @@ $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
@@ -35705,6 +44464,14 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -35714,11 +44481,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -35738,7 +44505,7 @@ $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
-$State = BEFORE_ATTLIST_ATTR_NAME_STATE;
+$State = B_ATTLIST_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 
@@ -35755,6 +44522,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -35764,29 +44539,29 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE] = sub {
 if ($Input =~ /\G([^\\&\ ]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -35797,28 +44572,28 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -35832,7 +44607,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -35841,14 +44616,14 @@ $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -35859,18 +44634,18 @@ if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -35893,7 +44668,7 @@ $Temp .= $1;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -35918,7 +44693,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -35950,7 +44725,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -35977,7 +44752,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -36002,7 +44777,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -36031,18 +44806,18 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_HEX_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_HEX_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789ABCDEFabcdef]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\;])/gcs) {
@@ -36065,7 +44840,7 @@ $Temp .= $1;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -36090,7 +44865,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -36122,7 +44897,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -36149,7 +44924,7 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -36174,7 +44949,7 @@ $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -36203,18 +44978,18 @@ $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE] = sub {
 if ($Input =~ /\G([\])/gcs) {
 
           my $return;
@@ -36273,6 +45048,7 @@ if ($Input =~ /\G([\])/gcs) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -36355,7 +45131,7 @@ if ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -36415,6 +45191,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -36497,7 +45274,7 @@ return 1 if $return;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([0123456789]+)/gcs) {
 $Temp .= $1;
@@ -36560,6 +45337,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -36640,7 +45418,7 @@ $Temp .= $1;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 return 1 if $return;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -36700,6 +45478,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -36780,7 +45559,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
@@ -36845,6 +45624,7 @@ $Temp .= $1;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -36925,7 +45705,7 @@ $Temp .= $1;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -36990,6 +45770,7 @@ return 1 if $return;
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -37070,7 +45851,7 @@ return 1 if $return;
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
 } else {
@@ -37132,6 +45913,7 @@ if ($EOF) {
                   $TempIndex += length $Temp;
                   $Temp = '';
                   $return = 1;
+                  last REF;
                 }
               } else {
                 ## External parsed entity
@@ -37214,11 +45996,11 @@ if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 return 1 if $return;
 } else {
 return 1;
@@ -37226,23 +46008,23 @@ return 1;
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE] = sub {
 if ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_DECIMAL_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_DECIMAL_NUM_STATE;
 } elsif ($Input =~ /\G([X])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([x])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_BEFORE_HEX_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_BEFORE_HEX_NUM_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -37256,7 +46038,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -37265,14 +46047,14 @@ $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -37283,52 +46065,52 @@ if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NUMBER_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NUM_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([abcdefghjkqvwzilmnoprstuxy])/gcs) {
 $Temp .= $1;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_NAME_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
@@ -37336,55 +46118,55 @@ $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR] = sub {
+$StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR] = sub {
 if ($Input =~ /\G([\
 ])/gcs) {
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE_CR;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 
             push @$Errors, {type => 'NULL', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -37494,11 +46276,11 @@ if ($EOF) {
         
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -37516,6 +46298,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -37525,11 +46315,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -37538,7 +46328,7 @@ return 0;
 };
 $StateActions->[IN_DTD_MSC_STATE] = sub {
 if ($Input =~ /\G([\]])/gcs) {
-$State = AFTER_DTD_MSC_STATE;
+$State = A_DTD_MSC_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'in-dtd-msc-else', level => 'm',
@@ -37551,36 +46341,13 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
-$DTDMode = q{N/A};
-$State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
-} else {
-return 1;
-}
-}
-return 0;
-};
-$StateActions->[IN_IGNORED_SECTION_MSC_STATE] = sub {
-if ($Input =~ /\G([\]])/gcs) {
-$State = AFTER_IGNORED_SECTION_MSC_STATE;
-} elsif ($Input =~ /\G(.)/gcs) {
-$State = IGNORED_SECTION_STATE;
-} else {
-if ($EOF) {
-
-            push @$Errors, {type => 'parser:EOF', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input)};
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -37591,11 +46358,50 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
+} else {
+return 1;
+}
+}
+return 0;
+};
+$StateActions->[IN_IGNORED_SECTION_MSC_STATE] = sub {
+if ($Input =~ /\G([\]])/gcs) {
+$State = A_IGNORED_SECTION_MSC_STATE;
+} elsif ($Input =~ /\G(.)/gcs) {
+$State = IGNORED_SECTION_STATE;
+} else {
+if ($EOF) {
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
+$DTDMode = q{N/A};
+$State = DATA_STATE;
+
+        push @$Tokens, {type => END_OF_DOCTYPE_TOKEN, tn => 0,
                         di => $DI,
                         index => $Offset + pos $Input};
         return 1;
       
+
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -37617,7 +46423,7 @@ $State = CHARREF_IN_DATA_STATE;
 $State = TAG_OPEN_STATE;
 $AnchoredIndex = $Offset + (pos $Input) - 1;
 } elsif ($Input =~ /\G([\]])/gcs) {
-$State = AFTER_MSC_STATE;
+$State = A_MSC_STATE;
 
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $1,
@@ -37645,11 +46451,11 @@ $State = DATA_STATE;
 if ($EOF) {
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -37696,11 +46502,11 @@ $Token->{q<data>} .= q@?@;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -37804,11 +46610,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -37903,11 +46709,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38001,11 +46807,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38099,11 +46905,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38197,11 +47003,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38295,11 +47101,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38393,11 +47199,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38505,11 +47311,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38600,11 +47406,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38695,11 +47501,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38790,11 +47596,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38885,11 +47691,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -38980,11 +47786,11 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -39074,49 +47880,104 @@ push @$Tokens, $Token;
             }
           
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_AFTER_SPACE_STATE] = sub {
+$StateActions->[PE_DECL_OR_REF_AFTER_SPACE_STATE] = sub {
 if ($Input =~ /\G([\	\\ \
 \])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-$State = BEFORE_ENTITY_NAME_STATE;
+$State = B_ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_NAME_STATE, B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnMDEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      
+return 1 if $return;
 } elsif ($Input =~ /\G([\<])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\`])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\#])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 
@@ -39124,18 +47985,26 @@ $Token->{q<is_parameter_entity_flag>} = 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'dtd-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
 } else {
 if ($EOF) {
 $Token->{q<is_parameter_entity_flag>} = 1;
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -39146,26 +48015,69 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_DECLARATION_OR_REFERENCE_STATE] = sub {
-if ($Input =~ /\G([\	\\ \
+$StateActions->[PE_DECL_OR_REF_STATE] = sub {
+if ($Input =~ /\G([\;])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
+
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnMDEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      
+return 1 if $return;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-ws', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
-$State = BEFORE_ENTITY_NAME_STATE;
+$State = B_ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-0022', level => 'm',
@@ -39173,14 +48085,26 @@ $State = BEFORE_ENTITY_NAME_STATE;
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
+} elsif ($Input =~ /\G([\#])/gcs) {
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Token->{q<is_parameter_entity_flag>} = 1;
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 0;
+$OriginalState = [B_ENT_NAME_STATE, B_ENT_NAME_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-0026', level => 'm',
@@ -39188,7 +48112,7 @@ $State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-0027', level => 'm',
@@ -39196,7 +48120,7 @@ $State = ENTITY_NAME_STATE;
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-003c', level => 'm',
@@ -39204,7 +48128,7 @@ $State = ENTITY_NAME_STATE;
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\=])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-003d', level => 'm',
@@ -39212,7 +48136,7 @@ $State = ENTITY_NAME_STATE;
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-003e', level => 'm',
@@ -39224,10 +48148,6 @@ $Token->{q<is_parameter_entity_flag>} = 1;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $State = DTD_STATE;
-
-            push @$Errors, {type => 'dtd-else', level => 'm',
-                            di => $DI, index => $Offset + (pos $Input) - 1};
-          
 } elsif ($Input =~ /\G([\`])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-declaration-or-reference-0060', level => 'm',
@@ -39235,9 +48155,13 @@ $State = DTD_STATE;
           
 $Token->{q<is_parameter_entity_flag>} = 1;
 $Token->{q<name>} = $1;
-$State = ENTITY_NAME_STATE;
+$State = ENT_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
-$State = PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE;
+$Temp = q@%@;
+$TempIndex = $Offset + (pos $Input) - (length $1) - 1;
+$OriginalState = [B_ENT_TYPE_STATE, B_ENT_TYPE_STATE___BEFORE_TEXT_DECL_IN_MARKUP_DECL_STATE];
+$State = PE_NAME_IN_MARKUP_DECL_STATE;
+$Temp .= $1;
 } else {
 if ($EOF) {
 
@@ -39249,6 +48173,14 @@ $Token->{q<is_parameter_entity_flag>} = 1;
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -39258,24 +48190,22 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_NAME_IN_DTD_STATE] = sub {
-if ($Input =~ /\G([^\ \;\	\\ \
-\\"\%\&\'\<\=\>\`]+)/gcs) {
+$StateActions->[PE_NAME_IN_DTD_STATE] = sub {
+if ($Input =~ /\G([^\;\ \	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
@@ -39295,6 +48225,7 @@ $Temp .= $1;
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
+              last REF;
             }
           }
 
@@ -39304,6 +48235,13 @@ $Temp .= $1;
         } # REF
       
 $State = DTD_STATE;
+return 1 if $return;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
 
@@ -39321,16 +48259,24 @@ $State = DTD_STATE;
             push @$Errors, {type => 'dtd-else', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-dtd-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+
+            push @$Errors, {type => 'dtd-else', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-dtd-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-# XXX set-original-state
-
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_DTD_STATE;
+$State = PE_NAME_IN_DTD_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-dtd-0026', level => 'm',
@@ -39393,6 +48339,14 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -39402,24 +48356,22 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE] = sub {
-if ($Input =~ /\G([^\ \;\	\\ \
-\\"\%\&\'\<\=\>\`]+)/gcs) {
+$StateActions->[PE_NAME_IN_ENT_VALUE__DQ__STATE] = sub {
+if ($Input =~ /\G([^\;\ \	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
@@ -39439,6 +48391,7 @@ $Temp .= $1;
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
+              last REF;
             }
           }
 
@@ -39447,7 +48400,14 @@ $Temp .= $1;
                           di => $DI, index => $TempIndex};
         } # REF
       
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
+return 1 if $return;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
@@ -39455,7 +48415,7 @@ $State = ENTITY_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -39465,14 +48425,22 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__DQ__STATE_CR;
+$State = ENT_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__DQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0025', level => 'm',
@@ -39481,7 +48449,7 @@ $State = AFTER_ENTITY_PARAMETER_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0026', level => 'm',
@@ -39490,14 +48458,14 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__DQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-double-quoted-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -39505,7 +48473,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -39513,7 +48481,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -39521,7 +48489,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
@@ -39529,13 +48497,21 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__DQ__STATE;
+$State = ENT_VALUE__DQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -39546,24 +48522,22 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE] = sub {
-if ($Input =~ /\G([^\ \;\	\\ \
-\\"\%\&\'\<\=\>\`]+)/gcs) {
+$StateActions->[PE_NAME_IN_ENT_VALUE__SQ__STATE] = sub {
+if ($Input =~ /\G([^\;\ \	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
@@ -39583,6 +48557,7 @@ $Temp .= $1;
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
+              last REF;
             }
           }
 
@@ -39591,7 +48566,14 @@ $Temp .= $1;
                           di => $DI, index => $TempIndex};
         } # REF
       
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
+return 1 if $return;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
@@ -39599,7 +48581,7 @@ $State = ENTITY_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -39609,14 +48591,22 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE__SQ__STATE_CR;
+$State = ENT_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -39626,7 +48616,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
+$State = PE_NAME_IN_ENT_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0026', level => 'm',
@@ -39635,21 +48625,21 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE__SQ__STATE___CHARREF_STATE;
+$State = ENT_VALUE__SQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = AFTER_ENTITY_PARAMETER_STATE;
+$State = A_ENT_PARAMETER_STATE;
 } elsif ($Input =~ /\G([\<])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-single-quoted-003c', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -39657,7 +48647,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -39665,7 +48655,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
@@ -39673,13 +48663,21 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE__SQ__STATE;
+$State = ENT_VALUE__SQ__STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -39690,24 +48688,22 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE] = sub {
-if ($Input =~ /\G([^\ \;\	\\ \
-\\"\%\&\'\<\=\>\`]+)/gcs) {
+$StateActions->[PE_NAME_IN_ENT_VALUE_IN_ENT_STATE] = sub {
+if ($Input =~ /\G([^\;\ \	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
 $Temp .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Temp .= q@�@;
 } elsif ($Input =~ /\G([\;])/gcs) {
 $Temp .= $1;
 
@@ -39727,6 +48723,7 @@ $Temp .= $1;
               $TempIndex += length $Temp;
               $Temp = '';
               $return = 1;
+              last REF;
             }
           }
 
@@ -39735,7 +48732,14 @@ $Temp .= $1;
                           di => $DI, index => $TempIndex};
         } # REF
       
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
+return 1 if $return;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
 } elsif ($Input =~ /\G([\	\\ \
 ])/gcs) {
 
@@ -39743,7 +48747,7 @@ $State = ENTITY_VALUE_IN_ENTITY_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -39753,14 +48757,22 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 push @{$Token->{q<value>}}, [q@
 @, $DI, $Offset + (pos $Input) - length $1];
-$State = ENTITY_VALUE_IN_ENTITY_STATE_CR;
+$State = ENT_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
+push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\%])/gcs) {
 
@@ -39770,7 +48782,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@%@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
+$State = PE_NAME_IN_ENT_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0026', level => 'm',
@@ -39779,14 +48791,14 @@ $State = PARAMETER_ENTITY_NAME_IN_ENTITY_VALUE_IN_ENTITY_STATE;
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
-$State = ENTITY_VALUE_IN_ENTITY_STATE___CHARREF_STATE;
+$State = ENT_VALUE_IN_ENT_STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-entity-value-in-entity-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\<])/gcs) {
 
@@ -39794,7 +48806,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\=])/gcs) {
 
@@ -39802,7 +48814,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\>])/gcs) {
 
@@ -39810,7 +48822,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\`])/gcs) {
 
@@ -39818,7 +48830,7 @@ push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Token->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ENTITY_VALUE_IN_ENTITY_STATE;
+$State = ENT_VALUE_IN_ENT_STATE;
 push @{$Token->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
@@ -39826,6 +48838,18 @@ if ($EOF) {
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
           
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
+          
 $DTDMode = q{N/A};
 $State = DATA_STATE;
 
@@ -39835,49 +48859,137 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
 }
 return 0;
 };
-$StateActions->[PARAMETER_ENTITY_NAME_IN_MARKUP_DECLARATION_STATE] = sub {
-if ($Input =~ /\G([^\"\%\&\']+)/gcs) {
+$StateActions->[PE_NAME_IN_MARKUP_DECL_STATE] = sub {
+if ($Input =~ /\G([^\;\ \	\\ \
+\\"\#\%\&\'\<\=\>\`]+)/gcs) {
+$Temp .= $1;
 
+} elsif ($Input =~ /\G([\;])/gcs) {
+$Temp .= $1;
+
+        my $return;
+        REF: {
+          if (defined $DTDDefs->{pe}->{$Temp}) {
+            my $ent = $DTDDefs->{pe}->{$Temp};
+            if ($ent->{open}) {
+              push @$Errors, {level => 'm',
+                              type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } else {
+              push @$Callbacks, [$OnMDEntityReference,
+                                 {entity => $ent}];
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
+            }
+          }
+
+          push @$Errors, {type => 'entity not declared', value => $Temp,
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+        } # REF
+      
+return 1 if $return;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Temp .= q@�@;
+} elsif ($Input =~ /\G([\	\\ \
+\])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-ws', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0022', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\#])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0023', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\%])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0025', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0026', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
 } elsif ($Input =~ /\G([\'])/gcs) {
 
             push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0027', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BOGUS_MARKUP_DECLARATION_STATE;
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\=])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003d', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
+} elsif ($Input =~ /\G([\>])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-003e', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = DTD_STATE;
+push @$Tokens, $Token;
+return 1 if $Token->{type} == ENTITY_TOKEN;
+} elsif ($Input =~ /\G([\`])/gcs) {
+
+            push @$Errors, {type => 'parameter-entity-name-in-markup-declaration-0060', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$State = BOGUS_MARKUP_DECL_STATE;
 } else {
 if ($EOF) {
 
             push @$Errors, {type => 'parser:EOF', level => 'm',
                             di => $DI, index => $Offset + (pos $Input)};
+          
+
+            push @$Errors, {type => 'parser:EOF', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input)};
+          
+
+            if (defined $CONTEXT) {
+              push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                              di => $DI,
+                              index => $Offset + pos $Input};
+              return 1;
+            }
           
 $DTDMode = q{N/A};
 $State = DATA_STATE;
@@ -39888,11 +49000,11 @@ $State = DATA_STATE;
         return 1;
       
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -39963,7 +49075,7 @@ $State = ATTR_NAME_STATE;
             push @$Errors, {type => 'nestc has no net', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
             push @$Errors, {type => 'nestc has no net', level => 'm',
@@ -40054,11 +49166,11 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -40072,7 +49184,7 @@ $Token->{q<tag_name>} .= $1;
 
 } elsif ($Input =~ /\G([\	\\ \
 \])/gcs) {
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([\/])/gcs) {
 $State = SELF_CLOSING_START_TAG_STATE;
 } elsif ($Input =~ /\G([\>])/gcs) {
@@ -40133,11 +49245,11 @@ if ($EOF) {
           
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -40160,7 +49272,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40187,7 +49299,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40213,7 +49325,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40240,7 +49352,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40270,7 +49382,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40296,7 +49408,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40321,7 +49433,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40346,7 +49458,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -40374,7 +49486,7 @@ push @$Tokens, $Token;
 $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\/([^\ \	\
 \\\ \>])([^\ \	\
 \\\ \/\>A-Z]*)[\	\
@@ -40388,7 +49500,7 @@ $State = END_TAG_OPEN_STATE;
 $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
-$State = BEFORE_ATTR_NAME_STATE;
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\?([^\ \	\
 \\\ \?])([^\ \	\
 \\\ \?]*)([\	\
@@ -40403,7 +49515,7 @@ $Token->{q<target>} = $1;
 $Token->{q<data>} = '';
 $State = PI_TARGET_STATE;
 $Token->{q<target>} .= $2;
-$State = AFTER_PI_TARGET_STATE;
+$State = A_PI_TARGET_STATE;
 $Temp = $3;
 $TempIndex = $Offset + (pos $Input) - (length $1);
 $Temp .= $4;
@@ -41225,11 +50337,11 @@ if ($EOF) {
         
 $State = DATA_STATE;
 
-        push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
-                        di => $DI,
-                        index => $Offset + pos $Input};
-        return 1;
-      
+          push @$Tokens, {type => END_OF_FILE_TOKEN, tn => 0,
+                          di => $DI,
+                          index => $Offset + pos $Input};
+          return 1;
+        
 } else {
 return 1;
 }
@@ -41467,7 +50579,6 @@ sub dom_tree ($$) {
               (['', $data->{di}, $data->{index}]);
         }
       }
-warn 1;
       for my $data (values %{$DTDDefs->{notations} or {}}) {
         my $node = $doc->create_notation ($data->{name});
         $node->public_id ($data->{public_identifier}); # or undef
@@ -41535,7 +50646,7 @@ warn 1;
           $self->_construct_tree;
 
           if (@$Callbacks or @$Errors) {
-            $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+            $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
             {
               my $Errors = $Errors;
               my $Callbacks = $Callbacks;
@@ -41560,7 +50671,7 @@ warn 1;
                 return 1;
               }
             }
-            ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+            ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
           }
@@ -41621,7 +50732,7 @@ warn 1;
       $doc->manakai_compat_mode ('no quirks');
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -41660,7 +50771,7 @@ $Scripting = $self->{Scripting};
       $doc->remove_child ($_) for $doc->child_nodes->to_list;
       $self->{nodes} = [$doc];
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -41681,7 +50792,7 @@ $Scripting = $self->{Scripting};
       $dids->[$DI]->{map} = [[0, $source_di, 0]]; # the input stream
       $doc->manakai_set_source_location (['', $DI, 0]);
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_chars_start
   
@@ -41690,25 +50801,25 @@ $Scripting = $self->{Scripting};
       my $self = $_[0];
       my $input = [$_[1]]; # string copy
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
       $self->_feed_chars ($input) or die "Can't restart";
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_chars_feed
 
     sub parse_chars_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -41745,7 +50856,7 @@ $Scripting = $self->{Scripting};
         $self->{nodes} = [$doc];
         $doc->remove_child ($_) for $doc->child_nodes->to_list;
 
-        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+        local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
         $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -41848,7 +50959,7 @@ $Scripting = $self->{Scripting};
       $doc->manakai_is_html (0);
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -41857,7 +50968,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_start
   
@@ -41868,10 +50979,10 @@ $Scripting = $self->{Scripting};
     sub parse_bytes_feed ($$;%) {
       my ($self, undef, %args) = @_;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -41901,16 +51012,16 @@ $Scripting = $self->{Scripting};
         }
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_feed
 
     sub parse_bytes_end ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
@@ -41951,7 +51062,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -41965,9 +51076,9 @@ $Scripting = $self->{Scripting};
     {
       package Web::XML::Parser;
       if ($in->{in_default_attr}) {
-        $State = DEFAULT_ATTR_VALUE_IN_ENTITY_STATE;;
+        $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;;
       } else {
-        $State = ATTR_VALUE_IN_ENTITY_STATE;;
+        $State = ATTR_VALUE_IN_ENT_STATE;;
       }
       $IM = BEFORE_XML_DECLARATION_IM;
     }
@@ -42008,7 +51119,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -42070,7 +51181,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -42079,7 +51190,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_start
 
@@ -42144,7 +51255,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -42197,7 +51308,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -42206,7 +51317,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_start
 
@@ -42262,7 +51373,7 @@ $Scripting = $self->{Scripting};
   sub parse ($$$) {
     my ($self, $main, $in) = @_;
 
-    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
     $FRAMESET_OK = 1;
 $AnchoredIndex = 0;
 $NEXT_ID = 1;
@@ -42275,7 +51386,7 @@ $Scripting = $self->{Scripting};
     $Confident = 1; # irrelevant
     {
       package Web::XML::Parser;
-      $State = ENTITY_VALUE_IN_ENTITY_STATE;;
+      $State = ENT_VALUE_IN_ENT_STATE;;
       $IM = IN_SUBSET_IM;
     }
 
@@ -42316,7 +51427,7 @@ $Scripting = $self->{Scripting};
       $self->{main_parser} = $_[2];
       $self->{can_restart} = 1;
 
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       PARSER: {
         $self->_parse_bytes_init;
         $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
@@ -42325,7 +51436,7 @@ $Scripting = $self->{Scripting};
         };
       } # PARSER
 
-      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
       return;
     } # parse_bytes_start
 
@@ -42346,7 +51457,7 @@ $self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
 $Scripting = $self->{Scripting};
     {
       package Web::XML::Parser;
-      $State = BEFORE_ENTITY_VALUE_IN_ENTITY_STATE;;
+      $State = B_ENT_VALUE_IN_ENT_STATE;;
       $IM = IN_SUBSET_IM;
     }
 
@@ -42375,12 +51486,139 @@ $Scripting = $self->{Scripting};
   } # _parse_bytes_init
 }
 
+{
+  package XXX::MDEntityParser;
+  push our @ISA, qw(Web::XML::Parser);
+
+  sub parse ($$$) {
+    my ($self, $main, $in) = @_;
+
+    local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+    $FRAMESET_OK = 1;
+$AnchoredIndex = 0;
+$NEXT_ID = 1;
+$Offset = 0;
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
+    $IframeSrcdoc = $self->{IframeSrcdoc};
+$Scripting = $self->{Scripting};
+    $Confident = 1; # irrelevant
+    {
+      package Web::XML::Parser;
+      $State = $main->{saved_states}->{OriginalState}->[0];
+      $IM = IN_SUBSET_IM;
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [@{$in->{entity}->{value}}];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $Token = $main->{saved_states}->{Token};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+
+    $self->_run or die "Can't restart";
+    $self->_feed_eof or die "Can't restart";
+  } # parse
+
+    sub parse_bytes_start ($$$) {
+      my $self = $_[0];
+
+      $self->{byte_buffer} = '';
+      $self->{byte_buffer_orig} = '';
+      $self->{transport_encoding_label} = $_[1];
+
+      $self->{main_parser} = $_[2];
+      $self->{can_restart} = 1;
+
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      PARSER: {
+        $self->_parse_bytes_init;
+        $self->_parse_bytes_start_parsing (no_body_data_yet => 1) or do {
+          $self->{byte_buffer} = $self->{byte_buffer_orig};
+          redo PARSER;
+        };
+      } # PARSER
+
+      $self->{saved_states} = {AllDeclsProcessed => $AllDeclsProcessed, AnchoredIndex => $AnchoredIndex, Attr => $Attr, CONTEXT => $CONTEXT, Confident => $Confident, DI => $DI, DTDMode => $DTDMode, EOF => $EOF, FORM_ELEMENT => $FORM_ELEMENT, FRAMESET_OK => $FRAMESET_OK, HEAD_ELEMENT => $HEAD_ELEMENT, IM => $IM, LastStartTagName => $LastStartTagName, NEXT_ID => $NEXT_ID, ORIGINAL_IM => $ORIGINAL_IM, Offset => $Offset, OriginalState => $OriginalState, QUIRKS => $QUIRKS, State => $State, StopProcessing => $StopProcessing, Temp => $Temp, TempIndex => $TempIndex, Token => $Token, XMLStandalone => $XMLStandalone};
+      return;
+    } # parse_bytes_start
+
+  sub _parse_bytes_init ($$) {
+    my $self = $_[0];
+    my $main = $self->{main_parser};
+
+    delete $self->{parse_bytes_started};
+
+    $FRAMESET_OK = 1;
+$AnchoredIndex = 0;
+$NEXT_ID = 1;
+$Offset = 0;
+$DTDMode = q{N/A};
+$self->{saved_lists} = {AFE => ($AFE = []), Callbacks => ($Callbacks = []), Errors => ($Errors = []), OE => ($OE = []), OP => ($OP = []), OpenCMGroups => ($OpenCMGroups = []), OpenMarkedSections => ($OpenMarkedSections = []), TABLE_CHARS => ($TABLE_CHARS = []), TEMPLATE_IMS => ($TEMPLATE_IMS = []), Tokens => ($Tokens = [])};
+$self->{saved_maps} = {DTDDefs => ($DTDDefs = {})};
+    $IframeSrcdoc = $self->{IframeSrcdoc};
+$Scripting = $self->{Scripting};
+    {
+      package Web::XML::Parser;
+      $State = $main->{saved_states}->{OriginalState}->[1];
+      $IM = IN_SUBSET_IM;
+    }
+
+    my $doc = $self->{document} = $main->{document}->implementation->create_document;
+    $doc->manakai_is_html ($main->{document}->manakai_is_html);
+    $doc->manakai_compat_mode ($main->{document}->manakai_compat_mode);
+    for (qw(onerror onerrors onextentref entity_expansion_count
+            max_entity_depth max_entity_expansions)) {
+      $self->{$_} = $main->{$_};
+    }
+    $self->{nodes} = [$doc];
+
+    $self->{entity_depth} = ($main->{entity_depth} || 0) + 1;
+    ${$self->{entity_expansion_count} = $main->{entity_expansion_count} ||= \(my $v = 0)}++;
+
+    $self->{input_stream} = [];
+    $self->{di_data_set} = my $dids = $main->di_data_set;
+    $DI = $self->{di} = @$dids;
+    $dids->[$DI]->{map} = [[0, -1, 0]]; # the input stream # XXX
+
+    $Token = $main->{saved_states}->{Token};
+    $self->{saved_maps}->{DTDDefs} = $DTDDefs = $main->{saved_maps}->{DTDDefs};
+
+    $NEXT_ID++;
+    $self->{nodes}->[$CONTEXT = 1] = $main->{nodes}->[1]; # DOCTYPE
+  } # _parse_bytes_init
+
+    sub _feed_eof ($) {
+      my $self = shift;
+      push @{$self->{input_stream}}, [' ', -1, 0]; # XXX di/index
+      return $self->SUPER::_feed_eof (@_);
+    } # _feed_eof
+
+}
+
     sub _parse_sub_done ($) {
       my $self = $_[0];
-      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
+      local ($AFE, $AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Callbacks, $Confident, $DI, $DTDDefs, $DTDMode, $EOF, $Errors, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $IframeSrcdoc, $InForeign, $Input, $LastStartTagName, $NEXT_ID, $OE, $OP, $ORIGINAL_IM, $Offset, $OpenCMGroups, $OpenMarkedSections, $OriginalState, $QUIRKS, $Scripting, $State, $StopProcessing, $TABLE_CHARS, $TEMPLATE_IMS, $Temp, $TempIndex, $Token, $Tokens, $XMLStandalone);
       $IframeSrcdoc = $self->{IframeSrcdoc};
 $Scripting = $self->{Scripting};
-      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
+      ($AllDeclsProcessed, $AnchoredIndex, $Attr, $CONTEXT, $Confident, $DI, $DTDMode, $EOF, $FORM_ELEMENT, $FRAMESET_OK, $HEAD_ELEMENT, $IM, $LastStartTagName, $NEXT_ID, $ORIGINAL_IM, $Offset, $OriginalState, $QUIRKS, $State, $StopProcessing, $Temp, $TempIndex, $Token, $XMLStandalone) = @{$self->{saved_states}}{qw(AllDeclsProcessed AnchoredIndex Attr CONTEXT Confident DI DTDMode EOF FORM_ELEMENT FRAMESET_OK HEAD_ELEMENT IM LastStartTagName NEXT_ID ORIGINAL_IM Offset OriginalState QUIRKS State StopProcessing Temp TempIndex Token XMLStandalone)};
 ($AFE, $Callbacks, $Errors, $OE, $OP, $OpenCMGroups, $OpenMarkedSections, $TABLE_CHARS, $TEMPLATE_IMS, $Tokens) = @{$self->{saved_lists}}{qw(AFE Callbacks Errors OE OP OpenCMGroups OpenMarkedSections TABLE_CHARS TEMPLATE_IMS Tokens)};
 ($DTDDefs) = @{$self->{saved_maps}}{qw(DTDDefs)};
 
