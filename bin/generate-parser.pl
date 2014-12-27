@@ -938,17 +938,7 @@ sub serialize_actions ($;%) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -1118,7 +1108,6 @@ sub serialize_actions ($;%) {
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -1514,32 +1503,39 @@ my $TokenizerAbortingTagNames = {
 
   push @def_code, q{
 
-sub _tokenize_attr_value ($) {
+sub _tokenize_attr_value ($) { # IndexedString
   my $token = $_[0];
-  return 0 unless $token->{value} =~ / /;
-  my @value;
-  my @pos;
-  my $old_pos = 0;
-  my $new_pos = 0;
-  my @v = grep { length } split /( +)/, $token->{value}, -1;
-  for (@v) {
-    unless (/ /) {
-      push @value, $_;
-      push @pos, [$old_pos, $new_pos, 1 + length $_];
-      $new_pos += 1 + length $_;
+  my @v;
+  my $non_sp = 0;
+  for my $v (@{$token->{value}}) {
+    next unless length $v->[0];
+    if ($v->[0] =~ /\x20/) {
+      my $pos = $v->[2];
+      for (grep { length } split /(\x20+)/, $v->[0], -1) {
+        if (/\x20/) {
+          push @v, [' ', $v->[1], $pos] if $non_sp;
+          $non_sp = 0;
+        } else {
+          push @v, [$_, $v->[1], $pos];
+          $non_sp = 1;
+        }
+        $pos += length;
+      }
+    } else {
+      push @v, $v;
+      $non_sp = 1;
     }
-    $old_pos += length $_;
+  } # $v
+  if (@v and $v[-1]->[0] eq ' ') {
+    pop @v;
   }
-  pop @value, pop @pos if @value and $value[-1] eq '';
-  shift @value, shift @pos if @value and $value[-1] eq '';
-  $pos[-1]->[2]-- if @pos;
-
-  my $old_value = $token->{value};
-  $token->{value} = join ' ', @value;
+  return 0 if (join '', map { $_->[0] } @{$token->{value}}) eq
+              (join '', map { $_->[0] } @v);
+  $token->{value} = \@v;
+  return 1;
 } # _tokenize_attr_value
 
   } if $LANG eq 'XML';
-# XXX IndexedString
 
   my $def_code = join "\n", @def_code;
   return ($def_code, $generated);
@@ -3103,7 +3099,7 @@ sub actions_to_code ($;%) {
 
           $at->{tokenize} = (2 <= $type and $type <= 10);
 
-          if (defined $at->{value}) { # XXX IndexedString
+          if (defined $at->{value}) {
             _tokenize_attr_value $at if $at->{tokenize};
           }
 
@@ -4047,7 +4043,13 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'append') {
       $nodes->[$op->[2]]->append_child ($nodes->[$op->[1]]);
     } elsif ($op->[0] eq 'append-by-list') {
-      $nodes->[$op->[2]]->append_child ($_) for $op->[1]->to_list;
+      my @node = $op->[1]->to_list;
+      if (@node and $node[0]->node_type == $node[0]->TEXT_NODE) {
+        my $node = shift @node;
+        $nodes->[$op->[2]]->manakai_append_indexed_string
+            ($node->manakai_get_indexed_string);
+      }
+      $nodes->[$op->[2]]->append_child ($_) for @node;
     } elsif ($op->[0] eq 'append-foster') {
       my $next_sibling = $nodes->[$op->[2]];
       my $parent = $next_sibling->parent_node;
@@ -4368,8 +4370,7 @@ sub generate_api ($) {
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
-#XXXxml
-      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
+      while ($input->[0] =~ /[%s]/gc) {
         my $index = $-[0];
         my $char = ord substr $input->[0], $index, 1;
         if ($char < 0x100) {
@@ -4396,7 +4397,7 @@ sub generate_api ($) {
       push @{$self->{input_stream}}, [undef];
       return $self->_run;
     } # _feed_eof
-  };
+  }, $LANG eq 'XML' ? q{\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{FFFE}\x{FFFF}} : q{\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}};
 
   push @sub_code, sprintf q{
     sub parse_char_string ($$$) {
@@ -5550,7 +5551,7 @@ my $OnContentEntityReference = sub {
   } else {
     my $sub = XXX::ContentEntityParser->new;
     my $ops = $data->{ops};
-    my $parent_id = $data->{current_node_id};
+    my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];

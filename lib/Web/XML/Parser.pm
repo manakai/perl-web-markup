@@ -158,7 +158,7 @@ my $OnContentEntityReference = sub {
   } else {
     my $sub = XXX::ContentEntityParser->new;
     my $ops = $data->{ops};
-    my $parent_id = $data->{current_node_id};
+    my $parent_id = $main->{saved_lists}->{OE}->[-1]->{id};
     my $main2 = $main;
     $sub->onparsed (sub {
       my $sub = $_[0];
@@ -796,28 +796,36 @@ my $TokenizerAbortingTagNames = {
   
 
 
-sub _tokenize_attr_value ($) {
+sub _tokenize_attr_value ($) { # IndexedString
   my $token = $_[0];
-  return 0 unless $token->{value} =~ / /;
-  my @value;
-  my @pos;
-  my $old_pos = 0;
-  my $new_pos = 0;
-  my @v = grep { length } split /( +)/, $token->{value}, -1;
-  for (@v) {
-    unless (/ /) {
-      push @value, $_;
-      push @pos, [$old_pos, $new_pos, 1 + length $_];
-      $new_pos += 1 + length $_;
+  my @v;
+  my $non_sp = 0;
+  for my $v (@{$token->{value}}) {
+    next unless length $v->[0];
+    if ($v->[0] =~ /\x20/) {
+      my $pos = $v->[2];
+      for (grep { length } split /(\x20+)/, $v->[0], -1) {
+        if (/\x20/) {
+          push @v, [' ', $v->[1], $pos] if $non_sp;
+          $non_sp = 0;
+        } else {
+          push @v, [$_, $v->[1], $pos];
+          $non_sp = 1;
+        }
+        $pos += length;
+      }
+    } else {
+      push @v, $v;
+      $non_sp = 1;
     }
-    $old_pos += length $_;
+  } # $v
+  if (@v and $v[-1]->[0] eq ' ') {
+    pop @v;
   }
-  pop @value, pop @pos if @value and $value[-1] eq '';
-  shift @value, shift @pos if @value and $value[-1] eq '';
-  $pos[-1]->[2]-- if @pos;
-
-  my $old_value = $token->{value};
-  $token->{value} = join ' ', @value;
+  return 0 if (join '', map { $_->[0] } @{$token->{value}}) eq
+              (join '', map { $_->[0] } @v);
+  $token->{value} = \@v;
+  return 1;
 } # _tokenize_attr_value
 
   
@@ -2912,7 +2920,7 @@ return;
 
           $at->{tokenize} = (2 <= $type and $type <= 10);
 
-          if (defined $at->{value}) { # XXX IndexedString
+          if (defined $at->{value}) {
             _tokenize_attr_value $at if $at->{tokenize};
           }
 
@@ -6949,7 +6957,7 @@ return 0;
 };
 $StateActions->[DOCTYPE_NAME_STATE] = sub {
 if ($Input =~ /\G([^\ \	\\ \
-\\>\[]+)/gcs) {
+\\>ABCDEFGHJKQVWZILMNOPRSTUXY\[]+)/gcs) {
 $Token->{q<name>} .= $1;
 
 } elsif ($Input =~ /\G([\ ])/gcs) {
@@ -6961,6 +6969,8 @@ $State = A_DOCTYPE_NAME_STATE;
 $State = DATA_STATE;
 push @$Tokens, $Token;
 return 1 if $Token->{type} == DOCTYPE_TOKEN;
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
+$Token->{q<name>} .= $1;
 } elsif ($Input =~ /\G([\[])/gcs) {
 $State = DTD_STATE;
 $Token->{q<has_internal_subset_flag>} = 1;
@@ -7230,7 +7240,7 @@ return 1 if $Token->{type} == DOCTYPE_TOKEN;
         $Token = {type => DOCTYPE_TOKEN, tn => 0,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<name>} = chr ((ord $1) + 32);
+$Token->{q<name>} = $1;
 $State = DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G(.)/gcs) {
 
@@ -11783,17 +11793,21 @@ return 1;
 return 0;
 };
 $StateActions->[PI_DATA_STATE] = sub {
-if ($Input =~ /\G([^\ \\?]+)/gcs) {
+if ($Input =~ /\G([^\\?\ ]+)/gcs) {
 $Token->{q<data>} .= $1;
 
-} elsif ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 $Token->{q<data>} .= q@
 @;
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<data>} .= q@�@;
 } else {
 if ($EOF) {
 
@@ -11820,10 +11834,7 @@ return 1;
 return 0;
 };
 $StateActions->[PI_DATA_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-} elsif ($Input =~ /\G([\
+if ($Input =~ /\G([\
 ])/gcs) {
 $State = PI_DATA_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -11832,6 +11843,13 @@ $Token->{q<data>} .= q@
 $State = PI_DATA_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = PI_DATA_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
 $Token->{q<data>} .= $1;
@@ -11967,6 +11985,10 @@ push @$Tokens, $Token;
           
 $Token->{q<data>} = q@?@;
 $State = PI_DATA_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
 $Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G([\])/gcs) {
 
@@ -17230,10 +17252,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_PI_TARGET_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-} elsif ($Input =~ /\G([\	\\ \
+if ($Input =~ /\G([\	\\ \
 ]+)/gcs) {
 $Temp .= $1;
 } elsif ($Input =~ /\G([\])/gcs) {
@@ -17242,6 +17261,13 @@ $Temp .= q@
 $State = A_PI_TARGET_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = PI_DATA_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
 $Token->{q<data>} .= $1;
@@ -17271,10 +17297,7 @@ return 1;
 return 0;
 };
 $StateActions->[A_PI_TARGET_STATE_CR] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-} elsif ($Input =~ /\G([\	\\ ])/gcs) {
+if ($Input =~ /\G([\	\\ ])/gcs) {
 $State = A_PI_TARGET_STATE;
 $Temp .= $1;
 } elsif ($Input =~ /\G([\
@@ -17286,6 +17309,13 @@ $Temp .= q@
 $State = A_PI_TARGET_STATE_CR;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $State = IN_PIC_STATE;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$State = PI_DATA_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = PI_DATA_STATE;
 $Token->{q<data>} .= $1;
@@ -18211,7 +18241,7 @@ $State = ATTR_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
@@ -19981,8 +20011,8 @@ push @$Tokens, $Token;
             return 1 if @$OE <= 1;
           }
         
-} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
-$Attr->{q<name>} .= chr ((ord $1) + 32);
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
+$Attr->{q<name>} .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -20040,12 +20070,15 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__DQ__STATE] = sub {
-if ($Input =~ /\G([^\\"\&\ ]+)/gcs) {
+if ($Input =~ /\G([^\	\\ \
+\\"\&\ \<]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = A_ATTR_VALUE__QUOTED__STATE;
@@ -20059,6 +20092,12 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -20094,14 +20133,22 @@ $State = ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -20119,6 +20166,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -20205,6 +20264,33 @@ $State = ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -20229,8 +20315,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -20284,6 +20369,36 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -20406,6 +20521,33 @@ $State = ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -20430,8 +20572,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -20485,6 +20626,36 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -20554,7 +20725,8 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
 
           my $return;
           REF: {
@@ -20572,17 +20744,7 @@ if ($Input =~ /\G([\])/gcs) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -20693,8 +20855,139 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 0}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
@@ -20715,17 +21008,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -20856,17 +21139,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -21002,17 +21275,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -21143,17 +21406,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -21289,17 +21542,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -21417,6 +21660,142 @@ $State = ATTR_VALUE__DQ__STATE;
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 0}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           my $return;
@@ -21435,17 +21814,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -21578,17 +21947,7 @@ if ($EOF) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -21739,14 +22098,22 @@ $State = ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -21764,6 +22131,18 @@ push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $Temp = q@&@;
 $TempIndex = $Offset + (pos $Input) - (length $1) - 0;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -21801,11 +22180,10 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -21821,10 +22199,6 @@ $State = ATTR_VALUE__DQ__STATE___CHARREF_STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G([\<])/gcs) {
-push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE;
@@ -21839,6 +22213,14 @@ $State = ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__DQ__STATE;
@@ -21864,12 +22246,14 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__DQ__STATE_CR] = sub {
-if ($Input =~ /\G([\
+if ($Input =~ /\G([\	\\ ])/gcs) {
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = A_ATTR_VALUE__QUOTED__STATE;
@@ -21884,6 +22268,13 @@ $State = ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+$State = ATTR_VALUE__DQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-double-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ATTR_VALUE__DQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -21907,12 +22298,15 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__SQ__STATE] = sub {
-if ($Input =~ /\G([^\\&\'\ ]+)/gcs) {
+if ($Input =~ /\G([^\	\\ \
+\\&\'\ \<]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -21926,6 +22320,12 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } else {
 if ($EOF) {
 
@@ -21961,14 +22361,22 @@ $State = ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -21986,6 +22394,18 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = A_ATTR_VALUE__QUOTED__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
@@ -22072,6 +22492,33 @@ $State = ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -22096,8 +22543,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -22151,6 +22597,36 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = A_ATTR_VALUE__QUOTED__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -22273,6 +22749,33 @@ $State = ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -22297,8 +22800,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -22352,6 +22854,36 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = A_ATTR_VALUE__QUOTED__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -22421,7 +22953,8 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
 
           my $return;
           REF: {
@@ -22439,17 +22972,7 @@ if ($Input =~ /\G([\])/gcs) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -22560,8 +23083,139 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 0}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -22582,17 +23236,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -22725,17 +23369,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -22869,17 +23503,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -23010,17 +23634,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -23156,17 +23770,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -23284,6 +23888,142 @@ $State = ATTR_VALUE__SQ__STATE;
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
 return 1 if $return;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 0}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
 } elsif ($Input =~ /\G(.)/gcs) {
 
           my $return;
@@ -23302,17 +24042,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -23445,17 +24175,7 @@ if ($EOF) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -23606,14 +24326,22 @@ $State = ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -23631,6 +24359,18 @@ $State = ATTR_VALUE__SQ__STATE___CHARREF_STATE;
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = A_ATTR_VALUE__QUOTED__STATE;
+} elsif ($Input =~ /\G([\<])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
@@ -23668,11 +24408,10 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
@@ -23688,10 +24427,6 @@ $State = A_ATTR_VALUE__QUOTED__STATE;
 } elsif ($Input =~ /\G([0123456789])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
-} elsif ($Input =~ /\G([\<])/gcs) {
-push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Temp .= $1;
 $State = ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE;
@@ -23706,6 +24441,14 @@ $State = ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE__SQ__STATE;
@@ -23731,12 +24474,14 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE__SQ__STATE_CR] = sub {
-if ($Input =~ /\G([\
+if ($Input =~ /\G([\	\\ ])/gcs) {
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = ATTR_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -23751,6 +24496,13 @@ $State = ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\<])/gcs) {
+$State = ATTR_VALUE__SQ__STATE;
+
+            push @$Errors, {type => 'attribute-value-single-quoted-003c', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G(.)/gcs) {
 $State = ATTR_VALUE__SQ__STATE;
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
@@ -24911,17 +25663,7 @@ if ($Input =~ /\G([\	\\ \
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -25052,17 +25794,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -25193,17 +25925,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -25339,17 +26061,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -25480,17 +26192,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -25665,17 +26367,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -25811,17 +26503,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -25957,17 +26639,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -26103,17 +26775,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -26249,17 +26911,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -26395,17 +27047,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -26541,17 +27183,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -26684,17 +27316,7 @@ if ($EOF) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -27267,12 +27889,15 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE_IN_ENT_STATE] = sub {
-if ($Input =~ /\G([^\\&\ ]+)/gcs) {
+if ($Input =~ /\G([^\	\\ \
+\\&\ ]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -27315,14 +27940,22 @@ $State = ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -27415,6 +28048,33 @@ $State = ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -27439,8 +28099,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -27587,6 +28246,33 @@ $State = ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -27611,8 +28297,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -27706,7 +28391,8 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
 
           my $return;
           REF: {
@@ -27724,17 +28410,7 @@ if ($Input =~ /\G([\])/gcs) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -27845,8 +28521,139 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+$State = ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 0}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -27867,17 +28674,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -28013,17 +28810,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -28154,17 +28941,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -28300,17 +29077,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -28446,17 +29213,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -28589,17 +29346,7 @@ if ($EOF) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -28746,14 +29493,22 @@ $State = ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -28797,11 +29552,10 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = ATTR_VALUE_IN_ENT_STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
@@ -28853,12 +29607,14 @@ return 1;
 return 0;
 };
 $StateActions->[ATTR_VALUE_IN_ENT_STATE_CR] = sub {
-if ($Input =~ /\G([\
+if ($Input =~ /\G([\	\\ ])/gcs) {
+$State = ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -29554,7 +30310,7 @@ if ($Input =~ /\G([\	\\ \
         $Token = {type => DOCTYPE_TOKEN, tn => 0,
                   di => $DI, index => $AnchoredIndex};
       
-$Token->{q<name>} = chr ((ord $1) + 32);
+$Token->{q<name>} = $1;
 $State = DOCTYPE_NAME_STATE;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
@@ -33614,7 +34370,7 @@ return 0;
 $StateActions->[B_ATTR_NAME_STATE] = sub {
 if ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*([^\ \	\
@@ -33628,6 +34384,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33643,13 +34400,13 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*([^\ \	\
@@ -33661,6 +34418,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33676,9 +34434,9 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -33720,8 +34478,41 @@ push @$Tokens, $Token;
             return 1 if @$OE <= 1;
           }
         
+} elsif ($Input =~ /\G([^\ \	\
+\\\ \"\'\/\<\=\>A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*([^\ \	\
+\\\ \"\&\'\<\=\>\`])([^\ \	\
+\\\ \"\&\'\<\=\>\`]*)[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
+$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = B_ATTR_VALUE_STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
+$State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*([^\ \	\
@@ -33730,11 +34521,12 @@ push @$Tokens, $Token;
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33750,55 +34542,24 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*([^\ \	\
-\\\ \"\&\'\<\=\>\`])([^\ \	\
-\\\ \"\&\'\<\=\>\`]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
-\\\ ]*/gcs) {
+\\\ ]*([^\ \	\
+\\\ \"\'\/\<\=\>A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
-push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33814,17 +34575,19 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
-$Attr->{q<name>} = $3;
-$Attr->{index} = $Offset + $-[3];
+$Attr->{q<name>} = $4;
+$Attr->{index} = $Offset + $-[4];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
+$Attr->{q<name>} .= $5;
+$Attr->{q<name>} .= $6;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
@@ -33833,6 +34596,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33849,15 +34613,16 @@ $Attr->{q<name>} .= $2;
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
@@ -33866,6 +34631,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33882,12 +34648,12 @@ $Attr->{q<name>} .= $2;
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)\>/gcs) {
@@ -33897,6 +34663,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33911,9 +34678,9 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -33956,18 +34723,19 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -33983,9 +34751,9 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -34028,18 +34796,19 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34054,22 +34823,23 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34085,23 +34855,25 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $3) + 32);
-$Attr->{index} = $Offset + $-[3];
+$Attr->{q<name>} = chr ((ord $4) + 32);
+$Attr->{index} = $Offset + $-[4];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
+$Attr->{q<name>} .= $5;
+$Attr->{q<name>} .= $6;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34117,23 +34889,26 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
-$Attr->{q<name>} = $3;
-$Attr->{index} = $Offset + $-[3];
+$Attr->{q<name>} = $4;
+$Attr->{index} = $Offset + $-[4];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
+$Attr->{q<name>} .= $5;
+$Attr->{q<name>} .= $6;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\/\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34150,7 +34925,7 @@ $Attr->{q<name>} .= $2;
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
@@ -34197,16 +34972,18 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\/\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34223,7 +35000,7 @@ $Attr->{q<name>} .= $2;
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
@@ -34270,16 +35047,18 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34295,8 +35074,8 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
@@ -34341,16 +35120,18 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34366,8 +35147,8 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
@@ -34410,10 +35191,12 @@ push @$Tokens, $Token;
             return 1 if @$OE <= 1;
           }
         
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
+} elsif ($Input =~ /\G([A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
@@ -34422,37 +35205,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = A_ATTR_VALUE__QUOTED__STATE;
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34469,13 +35222,14 @@ $Attr->{q<name>} .= $2;
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
@@ -34484,6 +35238,39 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = B_ATTR_VALUE_STATE;
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([^\ \	\
+\\\ \"\'\/\<\=\>A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
+$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34499,22 +35286,24 @@ $Attr->{q<name>} .= $2;
       
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34531,20 +35320,21 @@ $Attr->{q<name>} .= $2;
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
 \\\ ]*([^\ \	\
 \\\ \"\&\'\<\=\>\`])([^\ \	\
 \\\ \"\&\'\<\=\>\`]*)\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34559,9 +35349,9 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = B_ATTR_VALUE_STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = ATTR_VALUE__UNQUOTED__STATE;
 push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = ATTR_VALUE__UNQUOTED__STATE;
+push @{$Attr->{q<value>}}, [$5, $DI, $Offset + $-[5]];
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -34604,16 +35394,17 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34629,22 +35420,97 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $3) + 32);
-$Attr->{index} = $Offset + $-[3];
+$Attr->{q<name>} = chr ((ord $4) + 32);
+$Attr->{index} = $Offset + $-[4];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $4;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
+$Attr->{q<name>} .= $5;
+$Attr->{q<name>} .= $6;
+} elsif ($Input =~ /\G([^\ \	\
+\\\ \"\'\/\<\=\>A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\/\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = B_ATTR_VALUE_STATE;
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
+          }
+        
+} elsif ($Input =~ /\G([A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\/\>/gcs) {
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
+$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34661,7 +35527,81 @@ $Attr->{q<name>} .= $2;
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
+          }
+        
+} elsif ($Input =~ /\G([A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
+\\\ ][\	\
+\\\ ]*\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\/\>/gcs) {
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
+$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = A_ATTR_NAME_STATE;
+$State = B_ATTR_VALUE_STATE;
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
@@ -34708,14 +35648,16 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\/\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34729,81 +35671,9 @@ $Attr->{q<name>} .= $2;
           $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
         }
       
-$State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = A_ATTR_VALUE__QUOTED__STATE;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
-          }
-        
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
-\\\ ][\	\
-\\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
@@ -34850,14 +35720,16 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34872,11 +35744,9 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
 $State = DATA_STATE;
 
           if ($Token->{type} == END_TAG_TOKEN) {
@@ -34919,16 +35789,18 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -34944,8 +35816,8 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
@@ -34990,14 +35862,16 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35013,75 +35887,7 @@ $Attr->{q<name>} .= $2;
       
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = A_ATTR_VALUE__QUOTED__STATE;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = $1;
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
@@ -35125,16 +35931,18 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35150,8 +35958,8 @@ $Attr->{q<name>} .= $2;
       
 $State = A_ATTR_NAME_STATE;
 $State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
@@ -35195,45 +36003,18 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
-
-        if (defined $Token->{attrs}->{$Attr->{name}}) {
-          push @$Errors, {type => 'duplicate attribute',
-                          text => $Attr->{name},
-                          level => 'm',
-                          di => $Attr->{di},
-                          index => $Attr->{index}};
-        } else {
-          $Token->{attrs}->{$Attr->{name}} = $Attr;
-          push @{$Token->{attr_list} ||= []}, $Attr;
-          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
-        }
-      
-$State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
-$State = A_ATTR_VALUE__QUOTED__STATE;
-$State = B_ATTR_NAME_STATE;
-} elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"[\	\
-\\\ ][\	\
-\\\ ]*/gcs) {
-$Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
-$Attr->{index} = $Offset + $-[1];
-$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
-$State = ATTR_NAME_STATE;
-$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35249,12 +36030,43 @@ $Attr->{q<name>} .= $2;
       
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
+$State = A_ATTR_VALUE__QUOTED__STATE;
+$State = B_ATTR_NAME_STATE;
+} elsif ($Input =~ /\G([A-Z])([^\ \	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'[\	\
+\\\ ][\	\
+\\\ ]*/gcs) {
+$Attr = {di => $DI};
+$Attr->{q<name>} = $1;
+$Attr->{index} = $Offset + $-[1];
+$Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
+$State = ATTR_NAME_STATE;
+$Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
+
+        if (defined $Token->{attrs}->{$Attr->{name}}) {
+          push @$Errors, {type => 'duplicate attribute',
+                          text => $Attr->{name},
+                          level => 'm',
+                          di => $Attr->{di},
+                          index => $Attr->{index}};
+        } else {
+          $Token->{attrs}->{$Attr->{name}} = $Attr;
+          push @{$Token->{attr_list} ||= []}, $Attr;
+          $Attr->{name_args} = [undef, [undef, $Attr->{name}]];
+        }
+      
+$State = B_ATTR_VALUE_STATE;
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\/\>/gcs) {
 $Attr = {di => $DI};
@@ -35263,6 +36075,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35322,7 +36135,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\>/gcs) {
 $Attr = {di => $DI};
@@ -35331,6 +36144,7 @@ $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35387,14 +36201,16 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\/\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\/\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35409,8 +36225,8 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+$State = ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
@@ -35456,14 +36272,16 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\/\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\/\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35478,8 +36296,8 @@ $Attr->{q<name>} .= $2;
         }
       
 $State = B_ATTR_VALUE_STATE;
-$State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+$State = ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = SELF_CLOSING_START_TAG_STATE;
 $Token->{q<self_closing_flag>} = 1;
@@ -35525,14 +36343,16 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\'([^\ \\&\']*)\'\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\'([^\ \	\
+\\\ \&\'\<]*)\'\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35548,7 +36368,7 @@ $Attr->{q<name>} .= $2;
       
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
@@ -35592,14 +36412,16 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\=[\	\
-\\\ ]*\"([^\ \\"\&]*)\"\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\=[\	\
+\\\ ]*\"([^\ \	\
+\\\ \"\&\<]*)\"\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35615,7 +36437,7 @@ $Attr->{q<name>} .= $2;
       
 $State = B_ATTR_VALUE_STATE;
 $State = ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$3, $DI, $Offset + $-[3]];
+push @{$Attr->{q<value>}}, [$4, $DI, $Offset + $-[4]];
 $State = A_ATTR_VALUE__QUOTED__STATE;
 $State = DATA_STATE;
 
@@ -35659,15 +36481,16 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\/\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35727,13 +36550,14 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\/\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35791,15 +36615,16 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)[\	\
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35857,13 +36682,14 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \"\'\/\<\=\>A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\>/gcs) {
 $Attr = {di => $DI};
 $Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35919,13 +36745,14 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\/\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\/\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -35983,13 +36810,14 @@ push @$Tokens, $Token;
           }
         
 } elsif ($Input =~ /\G([A-Z])([^\ \	\
-\\\ \"\'\/\<\=\>A-Z]*)\>/gcs) {
+\\\ \"\'\/\<\=\>A-Z]*)([A-Z]*)\>/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + $-[1];
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
 $Attr->{q<name>} .= $2;
+$Attr->{q<name>} .= $3;
 
         if (defined $Token->{attrs}->{$Attr->{name}}) {
           push @$Errors, {type => 'duplicate attribute',
@@ -36178,7 +37006,7 @@ push @$Tokens, $Token;
         
 } elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
@@ -38958,7 +39786,6 @@ if ($Input =~ /\G([\])/gcs) {
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -39096,7 +39923,6 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -39231,7 +40057,6 @@ $Temp .= $1;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -39363,7 +40188,6 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -39496,7 +40320,6 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -39635,7 +40458,6 @@ $Temp .= $1;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -39774,7 +40596,6 @@ $Temp .= $1;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -39915,7 +40736,6 @@ return 1 if $return;
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -40053,7 +40873,6 @@ if ($EOF) {
                 ## External parsed entity
                 push @$Callbacks, [$OnContentEntityReference,
                                    {entity => $ent,
-                                    current_node_id => $OE->[-1]->{id},
                                     ops => $OP}];
                 $TempIndex += length $Temp;
                 $Temp = '';
@@ -40577,12 +41396,15 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE] = sub {
-if ($Input =~ /\G([^\\"\&\ ]+)/gcs) {
+if ($Input =~ /\G([^\	\\ \
+\\"\&\ ]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = B_ATTLIST_ATTR_NAME_STATE;
@@ -40646,14 +41468,22 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -40772,6 +41602,33 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -40796,8 +41653,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -40988,6 +41844,33 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -41012,8 +41895,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -41151,7 +42033,8 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
 
           my $return;
           REF: {
@@ -41169,17 +42052,7 @@ if ($Input =~ /\G([\])/gcs) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41290,8 +42163,139 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 1}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\"])/gcs) {
@@ -41312,17 +42316,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41453,17 +42447,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41599,17 +42583,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41740,17 +42714,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -41886,17 +42850,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -42032,17 +42986,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -42175,17 +43119,7 @@ if ($EOF) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -42351,14 +43285,22 @@ $State = DEFAULT_ATTR_VALUE__DQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 
@@ -42428,11 +43370,10 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
@@ -42506,12 +43447,14 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__DQ__STATE_CR] = sub {
-if ($Input =~ /\G([\
+if ($Input =~ /\G([\	\\ ])/gcs) {
+$State = DEFAULT_ATTR_VALUE__DQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = DEFAULT_ATTR_VALUE__DQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__DQ__STATE_CR;
 } elsif ($Input =~ /\G([\"])/gcs) {
 $State = B_ATTLIST_ATTR_NAME_STATE;
@@ -42564,12 +43507,15 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE] = sub {
-if ($Input =~ /\G([^\\&\'\ ]+)/gcs) {
+if ($Input =~ /\G([^\	\\ \
+\\&\'\ ]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -42633,14 +43579,22 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -42759,6 +43713,33 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -42783,8 +43764,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -42975,6 +43955,33 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -42999,8 +44006,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -43138,7 +44144,8 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
 
           my $return;
           REF: {
@@ -43156,17 +44163,7 @@ if ($Input =~ /\G([\])/gcs) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -43277,8 +44274,139 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 1}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -43299,17 +44427,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -43442,17 +44560,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -43586,17 +44694,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -43727,17 +44825,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -43873,17 +44961,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -44019,17 +45097,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -44162,17 +45230,7 @@ if ($EOF) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -44338,14 +45396,22 @@ $State = DEFAULT_ATTR_VALUE__SQ__STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -44415,11 +45481,10 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
@@ -44493,12 +45558,14 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE__SQ__STATE_CR] = sub {
-if ($Input =~ /\G([\
+if ($Input =~ /\G([\	\\ ])/gcs) {
+$State = DEFAULT_ATTR_VALUE__SQ__STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = DEFAULT_ATTR_VALUE__SQ__STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE__SQ__STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -44551,12 +45618,15 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE] = sub {
-if ($Input =~ /\G([^\\&\ ]+)/gcs) {
+if ($Input =~ /\G([^\	\\ \
+\\&\ ]+)/gcs) {
 push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
 
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -44599,14 +45669,22 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare hcro', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare hcro', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -44699,6 +45777,33 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -44723,8 +45828,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -44871,6 +45975,33 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'no refc', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+
+        my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
+        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = $replace;
+        } elsif ($code > 0x10FFFF) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U-%08X', $code),
+                          level => 'm',
+                          di => $DI, index => $TempIndex};
+          $code = 0xFFFD;
+        }
+        $Temp = chr $code;
+      
+$Attr->{has_ref} = 1;
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'no refc', level => 'm',
@@ -44895,8 +46026,7 @@ push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
       
 $Attr->{has_ref} = 1;
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -44990,7 +46120,8 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE___CHARREF_NAME_STATE] = sub {
-if ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\	\\ \
+])/gcs) {
 
           my $return;
           REF: {
@@ -45008,17 +46139,7 @@ if ($Input =~ /\G([\])/gcs) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -45129,8 +46250,139 @@ if ($Input =~ /\G([\])/gcs) {
           } # REF
         
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+return 1 if $return;
+} elsif ($Input =~ /\G([\])/gcs) {
+
+          my $return;
+          REF: {
+            ## <XML>
+            if (defined $DTDDefs->{ge}->{$Temp}) {
+              my $ent = $DTDDefs->{ge}->{$Temp};
+
+              if (my $ext = $ent->{external}) {
+                if (not $ext->{vc_error_reported} and $XMLStandalone) {
+                  push @$Errors, {level => 'm',
+                                  type => 'VC:Standalone Document Declaration:entity',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  $ext->{vc_error_reported} = 1;
+                }
+              }
+
+              if (defined $ent->{notation}) {
+                ## Unparsed entity
+                push @$Errors, {level => 'm',
+                                type => 'unparsed entity',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif ($ent->{open}) {
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No Recursion',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              } elsif (defined $ent->{value}) {
+                ## Internal entity with "&" and/or "<"
+                my $value = join '', map { $_->[0] } @{$ent->{value}}; # IndexedString
+                if ($value =~ /</) {
+                  push @$Errors, {level => 'm',
+                                  type => 'entref in attr has element',
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                  last REF;
+                } else {
+                  # XXX IndexedString mapping
+                  push @$Callbacks, [$OnAttrEntityReference,
+                                     {entity => $ent,
+                                      in_default_attr => 1}];
+                  $TempIndex += length $Temp;
+                  $Temp = '';
+                  $return = 1;
+                  last REF;
+                }
+              } else {
+                ## External parsed entity
+                push @$Errors, {level => 'm',
+                                type => 'WFC:No External Entity References',
+                                value => $Temp,
+                                di => $DI, index => $TempIndex};
+                last REF;
+              }
+            }
+            ## </XML>
+
+            for (reverse (2 .. length $Temp)) {
+              my $value = $Web::HTML::EntityChar->{substr $Temp, 1, $_-1};
+              if (defined $value) {
+                unless (';' eq substr $Temp, $_-1, 1) {
+                  if ((substr $Temp, $_, 1) =~ /^[A-Za-z0-9]/) {
+                    last REF;
+                  } elsif (0) { # before_equals
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                    last REF;
+                  } else {
+                    push @$Errors, {type => 'no refc',
+                                    level => 'm',
+                                    di => $DI,
+                                    index => $TempIndex + $_};
+                  }
+
+                  ## A variant of |append-to-attr|
+                  push @{$Attr->{value}},
+                      [$value, $DI, $TempIndex]; # IndexedString
+                  $TempIndex += $_;
+                  $value = '';
+                }
+
+                ## <XML>
+                if ($DTDDefs->{has_charref_decls}) {
+                  if ($DTDDefs->{charref_vc_error}) {
+                    push @$Errors, {level => 'm',
+                                    type => 'VC:Standalone Document Declaration:entity',
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                } elsif ({
+                  '&amp;' => 1, '&quot;' => 1, '&lt;' => 1, '&gt;' => 1,
+                  '&apos;' => 1,
+                }->{$Temp}) {
+                  if ($DTDDefs->{need_predefined_decls} or
+                      not $DTDMode eq 'N/A') {
+                    push @$Errors, {level => 's',
+                                    type => 'entity not declared', ## TODO: type,
+                                    value => $Temp,
+                                    di => $DI, index => $TempIndex};
+                  }
+                  ## If the document has no DOCTYPE, skip warning.
+                } else {
+                  ## Not a declared XML entity.
+                  push @$Errors, {level => 'm',
+                                  type => 'entity not declared', ## TODO: type,
+                                  value => $Temp,
+                                  di => $DI, index => $TempIndex};
+                }
+                ## </XML>
+
+                $Attr->{has_ref} = 1;
+                substr ($Temp, 0, $_) = $value;
+                last REF;
+              }
+            }
+            push @$Errors, {type => 'entity not declared',
+                            value => $Temp,
+                            level => 'm',
+                            di => $DI, index => $TempIndex}
+                if $Temp =~ /;\z/;
+          } # REF
+        
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 return 1 if $return;
 } elsif ($Input =~ /\G([\&])/gcs) {
@@ -45151,17 +46403,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -45297,17 +46539,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -45438,17 +46670,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -45584,17 +46806,7 @@ $Temp .= $1;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -45730,17 +46942,7 @@ return 1 if $return;
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -45873,17 +47075,7 @@ if ($EOF) {
                 }
               }
 
-              if ($ent->{only_text}) {
-                ## Internal entity with no "&" or "<"
-                my $value = $ent->{value}; # XXX IndexedString
-                $value =~ tr/\x09\x0A\x0D/   /; # normalization XXX
-                
-                ## A variant of |append-to-attr|
-                push @{$Attr->{value}}, @{$ent->{value}}; # XXX
-                $TempIndex += length $Temp;
-                $Temp = '';
-                last REF;
-              } elsif (defined $ent->{notation}) {
+              if (defined $ent->{notation}) {
                 ## Unparsed entity
                 push @$Errors, {level => 'm',
                                 type => 'unparsed entity',
@@ -46030,14 +47222,22 @@ $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [q@�@, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\	\\ \
+])/gcs) {
+
+            push @$Errors, {type => 'bare nero', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 
             push @$Errors, {type => 'bare nero', level => 'm',
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 
@@ -46081,11 +47281,10 @@ if ($Input =~ /\G([\	\\ \
 ])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
-push @{$Attr->{q<value>}}, [$1, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 } elsif ($Input =~ /\G([\])/gcs) {
 push @{$Attr->{q<value>}}, [$Temp, $DI, $TempIndex];
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\#])/gcs) {
 $Temp .= $1;
@@ -46137,12 +47336,14 @@ return 1;
 return 0;
 };
 $StateActions->[DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR] = sub {
-if ($Input =~ /\G([\
+if ($Input =~ /\G([\	\\ ])/gcs) {
+$State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
+} elsif ($Input =~ /\G([\
 ])/gcs) {
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE;
 } elsif ($Input =~ /\G([\])/gcs) {
-push @{$Attr->{q<value>}}, [q@
-@, $DI, $Offset + (pos $Input) - length $1];
+push @{$Attr->{q<value>}}, [q@ @, $DI, $Offset + (pos $Input) - length $1];
 $State = DEFAULT_ATTR_VALUE_IN_ENT_STATE_CR;
 } elsif ($Input =~ /\G([\&])/gcs) {
 $Temp = q@&@;
@@ -46463,11 +47664,7 @@ return 1;
 return 0;
 };
 $StateActions->[IN_PIC_STATE] = sub {
-if ($Input =~ /\G([\ ])/gcs) {
-$Token->{q<data>} .= q@?@;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-} elsif ($Input =~ /\G([\])/gcs) {
+if ($Input =~ /\G([\])/gcs) {
 $Token->{q<data>} .= q@?@;
 $Token->{q<data>} .= q@
 @;
@@ -46483,6 +47680,14 @@ $State = PI_DATA_STATE_CR;
 push @$Tokens, $Token;
 } elsif ($Input =~ /\G([\?])/gcs) {
 $Token->{q<data>} .= q@?@;
+} elsif ($Input =~ /\G([\ ])/gcs) {
+$Token->{q<data>} .= q@?@;
+$State = PI_DATA_STATE;
+
+            push @$Errors, {type => 'NULL', level => 'm',
+                            di => $DI, index => $Offset + (pos $Input) - 1};
+          
+$Token->{q<data>} .= q@�@;
 } elsif ($Input =~ /\G(.)/gcs) {
 $Token->{q<data>} .= q@?@;
 $State = PI_DATA_STATE;
@@ -49144,7 +50349,7 @@ $State = ATTR_NAME_STATE;
                             di => $DI, index => $Offset + (pos $Input) - 1};
           
 $Attr = {di => $DI};
-$Attr->{q<name>} = chr ((ord $1) + 32);
+$Attr->{q<name>} = $1;
 $Attr->{index} = $Offset + (pos $Input) - length $1;
 $Attr->{q<value>} = [['', $Attr->{di}, $Attr->{index}]];
 $State = ATTR_NAME_STATE;
@@ -49229,8 +50434,8 @@ push @$Tokens, $Token;
             return 1 if @$OE <= 1;
           }
         
-} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY])/gcs) {
-$Token->{q<tag_name>} .= chr ((ord $1) + 32);
+} elsif ($Input =~ /\G([ABCDEFGHJKQVWZILMNOPRSTUXY]+)/gcs) {
+$Token->{q<tag_name>} .= $1;
 } elsif ($Input =~ /\G([\ ])/gcs) {
 
             push @$Errors, {type => 'NULL', level => 'm',
@@ -49289,59 +50494,6 @@ $Token->{q<data>} .= $8;
 \\\ \?]*)([\	\
 \\ ])([\	\
 \\ ]*)([^\ \	\
-\\\ \?])([^\ \\?]*)\?\ ([^\ \\?]*)/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= $5;
-$Token->{q<data>} .= $6;
-$State = IN_PIC_STATE;
-$Token->{q<data>} .= q@?@;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-$Token->{q<data>} .= $7;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)\ ([^\ \\?]*)\?([^\ \\>\?])([^\ \\?]*)/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-$Token->{q<data>} .= $5;
-$State = IN_PIC_STATE;
-$Token->{q<data>} .= q@?@;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= $6;
-$Token->{q<data>} .= $7;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)([^\ \	\
 \\\ \?])([^\ \\?]*)\?\>/gcs) {
 $State = PI_STATE;
 
@@ -49372,32 +50524,6 @@ push @$Tokens, $Token;
 \\\ \?])([^\ \	\
 \\\ \?]*)([\	\
 \\ ])([\	\
-\\ ]*)\ ([^\ \\?]*)\?\ ([^\ \\?]*)/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-$Token->{q<data>} .= $5;
-$State = IN_PIC_STATE;
-$Token->{q<data>} .= q@?@;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-$Token->{q<data>} .= $6;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
 \\ ]*)\?([^\ \\>\?])([^\ \\?]*)\?/gcs) {
 $State = PI_STATE;
 
@@ -49419,64 +50545,9 @@ $State = PI_DATA_STATE;
 $Token->{q<data>} .= $5;
 $Token->{q<data>} .= $6;
 $State = IN_PIC_STATE;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)\?\ ([^\ \\?]*)\?/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$State = IN_PIC_STATE;
-$Token->{q<data>} .= q@?@;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-$Token->{q<data>} .= $5;
-$State = IN_PIC_STATE;
-} elsif ($Input =~ /\G\?([^\ \	\
-\\\ \?])([^\ \	\
-\\\ \?]*)([\	\
-\\ ])([\	\
-\\ ]*)\ ([^\ \\?]*)\?\>/gcs) {
-$State = PI_STATE;
-
-        $Token = {type => PROCESSING_INSTRUCTION_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<target>} = $1;
-$Token->{q<data>} = '';
-$State = PI_TARGET_STATE;
-$Token->{q<target>} .= $2;
-$State = A_PI_TARGET_STATE;
-$Temp = $3;
-$TempIndex = $Offset + (pos $Input) - (length $1);
-$Temp .= $4;
-$State = PI_DATA_STATE;
-$Token->{q<data>} .= q@�@;
-$Token->{q<data>} .= $5;
-$State = IN_PIC_STATE;
-
-            if ($DTDMode eq 'N/A') {
-              $State = DATA_STATE;
-            } else {
-              $State = DTD_STATE;
-            }
-          
-push @$Tokens, $Token;
 } elsif ($Input =~ /\G([^\ \	\
 \\\ \!\/\>\?])([^\ \	\
-\\\ \/\>A-Z]*)[\	\
+\\\ \/\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 
@@ -49486,10 +50557,11 @@ push @$Tokens, $Token;
 $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\/([^\ \	\
 \\\ \>])([^\ \	\
-\\\ \/\>A-Z]*)[\	\
+\\\ \/\>A-Z]*)([A-Z]*)[\	\
 \\\ ][\	\
 \\\ ]*/gcs) {
 $State = END_TAG_OPEN_STATE;
@@ -49500,6 +50572,7 @@ $State = END_TAG_OPEN_STATE;
 $Token->{q<tag_name>} = $1;
 $State = TAG_NAME_STATE;
 $Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
 $State = B_ATTR_NAME_STATE;
 } elsif ($Input =~ /\G\?([^\ \	\
 \\\ \?])([^\ \	\
@@ -49581,6 +50654,60 @@ $State = CDATA_SECTION_STATE;
                           value => $12,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
+} elsif ($Input =~ /\G([^\ \	\
+\\\ \!\/\>\?])([^\ \	\
+\\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
+
+        $Token = {type => START_TAG_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$State = TAG_NAME_STATE;
+$Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
+          }
+        
 } elsif ($Input =~ /\G\!(\-)\-\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
 
         $Temp = '';
@@ -49606,6 +50733,113 @@ $Token->{q<data>} .= q@-@;
 $Token->{q<data>} .= $4;
 $State = COMMENT_STATE;
 $Token->{q<data>} .= $5;
+} elsif ($Input =~ /\G([^\ \	\
+\\\ \!\/\>\?])([^\ \	\
+\\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
+
+        $Token = {type => START_TAG_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$State = TAG_NAME_STATE;
+$Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
+          }
+        
+} elsif ($Input =~ /\G\/([^\ \	\
+\\\ \>])([^\ \	\
+\\\ \/\>A-Z]*)([A-Z]*)\/\>/gcs) {
+$State = END_TAG_OPEN_STATE;
+
+        $Token = {type => END_TAG_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$State = TAG_NAME_STATE;
+$Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
+$State = SELF_CLOSING_START_TAG_STATE;
+$Token->{q<self_closing_flag>} = 1;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
+          }
+        
 } elsif ($Input =~ /\G\!(\-)\-([^\ \\-\>])([^\ \\-]*)\-([^\ \\-])([^\ \\-]*)/gcs) {
 
         $Temp = '';
@@ -49674,6 +50908,59 @@ $State = CDATA_SECTION_STATE;
                           value => $10,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
         
+} elsif ($Input =~ /\G\/([^\ \	\
+\\\ \>])([^\ \	\
+\\\ \/\>A-Z]*)([A-Z]*)\>/gcs) {
+$State = END_TAG_OPEN_STATE;
+
+        $Token = {type => END_TAG_TOKEN, tn => 0,
+                  di => $DI, index => $AnchoredIndex};
+      
+$Token->{q<tag_name>} = $1;
+$State = TAG_NAME_STATE;
+$Token->{q<tag_name>} .= $2;
+$Token->{q<tag_name>} .= $3;
+$State = DATA_STATE;
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            if (keys %{$Token->{attrs} or {}}) {
+              push @$Errors, {type => 'end tag attribute',
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+            if ($Token->{self_closing_flag}) {
+              push @$Errors, {type => 'nestc',
+                              text => $Token->{tag_name},
+                              level => 'm',
+                              di => $Token->{di},
+                              index => $Token->{index}};
+            }
+          }
+        
+push @$Tokens, $Token;
+
+          if ($Token->{type} == START_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            if (not defined $LastStartTagName) { # "first start tag"
+              $LastStartTagName = $Token->{tag_name};
+              return 1;
+            } else {
+              $LastStartTagName = $Token->{tag_name};
+            }
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
+          }
+        
+
+          if ($Token->{type} == END_TAG_TOKEN) {
+            undef $InForeign;
+            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
+            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
+            return 1 if @$OE <= 1;
+          }
+        
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)(\])(\]*)/gcs) {
 
         $Temp = '';
@@ -49719,110 +51006,6 @@ $State = CDATA_SECTION_STATE__5D_5D;
                           value => $12,
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
         
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \!\/\>\?])([^\ \	\
-\\\ \/\>A-Z]*)\/\>/gcs) {
-
-        $Token = {type => START_TAG_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<tag_name>} = $1;
-$State = TAG_NAME_STATE;
-$Token->{q<tag_name>} .= $2;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
-          }
-        
-} elsif ($Input =~ /\G([^\ \	\
-\\\ \!\/\>\?])([^\ \	\
-\\\ \/\>A-Z]*)\>/gcs) {
-
-        $Token = {type => START_TAG_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<tag_name>} = $1;
-$State = TAG_NAME_STATE;
-$Token->{q<tag_name>} .= $2;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
-          }
-        
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)([^\\]])([^\\]]*)/gcs) {
 
         $Temp = '';
@@ -49857,60 +51040,6 @@ $State = CDATA_SECTION_STATE;
           push @$Tokens, {type => TEXT_TOKEN, tn => 0,
                           value => $9,
                           di => $DI, index => $Offset + (pos $Input) - (length $1)};
-        
-} elsif ($Input =~ /\G\/([^\ \	\
-\\\ \>])([^\ \	\
-\\\ \/\>A-Z]*)\/\>/gcs) {
-$State = END_TAG_OPEN_STATE;
-
-        $Token = {type => END_TAG_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<tag_name>} = $1;
-$State = TAG_NAME_STATE;
-$Token->{q<tag_name>} .= $2;
-$State = SELF_CLOSING_START_TAG_STATE;
-$Token->{q<self_closing_flag>} = 1;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
-          }
         
 } elsif ($Input =~ /\G\!(\[)(C)(D)(A)(T)(A)\[([^\\]]*)(\])(\])(\]*)\/gcs) {
 
@@ -49996,58 +51125,6 @@ $State = CDATA_SECTION_STATE__5D_5D;
                           di => $DI, index => $Offset + (pos $Input) - (length $1) - 2};
         
 $State = DATA_STATE;
-} elsif ($Input =~ /\G\/([^\ \	\
-\\\ \>])([^\ \	\
-\\\ \/\>A-Z]*)\>/gcs) {
-$State = END_TAG_OPEN_STATE;
-
-        $Token = {type => END_TAG_TOKEN, tn => 0,
-                  di => $DI, index => $AnchoredIndex};
-      
-$Token->{q<tag_name>} = $1;
-$State = TAG_NAME_STATE;
-$Token->{q<tag_name>} .= $2;
-$State = DATA_STATE;
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            if (keys %{$Token->{attrs} or {}}) {
-              push @$Errors, {type => 'end tag attribute',
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-            if ($Token->{self_closing_flag}) {
-              push @$Errors, {type => 'nestc',
-                              text => $Token->{tag_name},
-                              level => 'm',
-                              di => $Token->{di},
-                              index => $Token->{index}};
-            }
-          }
-        
-push @$Tokens, $Token;
-
-          if ($Token->{type} == START_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            if (not defined $LastStartTagName) { # "first start tag"
-              $LastStartTagName = $Token->{tag_name};
-              return 1;
-            } else {
-              $LastStartTagName = $Token->{tag_name};
-            }
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if $Token->{tag_name} eq 'meta' and not $Confident;
-          }
-        
-
-          if ($Token->{type} == END_TAG_TOKEN) {
-            undef $InForeign;
-            $Token->{tn} = $TagName2Group->{$Token->{tag_name}} || 0;
-            return 1 if $TokenizerAbortingTagNames->{$Token->{tag_name}};
-            return 1 if @$OE <= 1;
-          }
-        
 } elsif ($Input =~ /\G\?([^\ \	\
 \\\ \?])([^\ \	\
 \\\ \?]*)\?\>/gcs) {
@@ -50450,7 +51527,13 @@ sub dom_tree ($$) {
     } elsif ($op->[0] eq 'append') {
       $nodes->[$op->[2]]->append_child ($nodes->[$op->[1]]);
     } elsif ($op->[0] eq 'append-by-list') {
-      $nodes->[$op->[2]]->append_child ($_) for $op->[1]->to_list;
+      my @node = $op->[1]->to_list;
+      if (@node and $node[0]->node_type == $node[0]->TEXT_NODE) {
+        my $node = shift @node;
+        $nodes->[$op->[2]]->manakai_append_indexed_string
+            ($node->manakai_get_indexed_string);
+      }
+      $nodes->[$op->[2]]->append_child ($_) for @node;
     } elsif ($op->[0] eq 'append-foster') {
       my $next_sibling = $nodes->[$op->[2]];
       my $parent = $next_sibling->parent_node;
@@ -50692,8 +51775,7 @@ sub dom_tree ($$) {
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
-#XXXxml
-      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
+      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{FFFE}\x{FFFF}]/gc) {
         my $index = $-[0];
         my $char = ord substr $input->[0], $index, 1;
         if ($char < 0x100) {
