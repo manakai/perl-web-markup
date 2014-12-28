@@ -105,6 +105,11 @@ for (keys %{$MAPS->{maps}->{'html:charref'}->{char_to_char}}) {
 for (0x80..0x9F) {
   $Data->{charref_replacements}->{$_} ||= $_;
 }
+for (keys %{$MAPS->{maps}->{'xml:charref'}->{char_to_char}}) {
+  my $from = hex $_;
+  my $to = hex $MAPS->{maps}->{'xml:charref'}->{char_to_char}->{$_};
+  $Data->{xml_charref_invalid}->{$from} = $to;
+}
 
 sub expand_range ($) {
   my $range = shift;
@@ -144,6 +149,13 @@ $Data->{nonchars} = expand_range $SETS->{sets}->{'$unicode:Noncharacter_Code_Poi
 for (keys %{expand_range $SETS->{sets}->{'$html:charref-parse-error'}->{chars}}) {
   $Data->{charref_invalid}->{$_} ||= $_;
 }
+for (keys %{expand_range $SETS->{sets}->{'$xml:charref-parse-error'}->{chars}}) {
+  $Data->{xml_charref_invalid}->{$_} ||= $_;
+}
+for (keys %{expand_range $SETS->{sets}->{'$xml10-5e:discouraged'}->{chars}}) {
+  $Data->{xml_char_discouraged}->{$_} ||= $_;
+}
+$Data->{xml_char_discouraged}->{$_} ||= $_ for 0x0085, 0x2028; # have XML 1.1 compatibility issue
 
 $Data::Dumper::Sortkeys = 1;
 $Data::Dumper::Useqq = 1;

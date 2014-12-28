@@ -543,6 +543,13 @@ sub serialize_actions ($;%) {
                               di => $DI, index => $Offset + (pos $Input) - 1};
             }
           }, $_->{expected_keyword}, $_->{error_type} // $_->{name};
+        } elsif ($_->{if} eq 'OE is empty') {
+          push @result, sprintf q{
+            unless (@$OE) {
+              push @$Errors, {type => '%s', level => 'm',
+                              di => $DI, index => $Offset + (pos $Input) - 1};
+            }
+          }, $_->{error_type} // $_->{name};
         } else {
           die "Unknown condition |$_->{if}|";
         }
@@ -883,8 +890,17 @@ sub serialize_actions ($;%) {
       push @result, sprintf q[$Token->{q<%s>} = 1;], $field;
     } elsif ($type eq 'process-temp-as-decimal') {
       push @result, q{
+        ## <XML>
+        if (not @$OE and $DTDMode eq 'N/A') {
+          push @$Errors, {level => 'm',
+                            type => 'ref outside of root element',
+                            value => $Temp,
+                            di => $DI, index => $TempIndex};
+          }
+        ## </XML>
+
         my $code = do { $Temp =~ /\A&#0*([0-9]{1,10})\z/ ? 0+$1 : 0xFFFFFFFF };
-        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+        if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
@@ -896,14 +912,31 @@ sub serialize_actions ($;%) {
                           level => 'm',
                           di => $DI, index => $TempIndex};
           $code = 0xFFFD;
+        ## <XML>
+        } elsif ($Web::HTML::_SyntaxDefs->{xml_char_discouraged}->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'w',
+                          di => $DI, index => $TempIndex};
+        ## </XML>
         }
         $Temp = chr $code;
       };
+      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
       push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-hexadecimal') {
       push @result, q{
+        ## <XML>
+        if (not @$OE and $DTDMode eq 'N/A') {
+          push @$Errors, {level => 'm',
+                            type => 'ref outside of root element',
+                            value => $Temp,
+                            di => $DI, index => $TempIndex};
+          }
+        ## </XML>
+
         my $code = do { $Temp =~ /\A&#[Xx]0*([0-9A-Fa-f]{1,8})\z/ ? hex $1 : 0xFFFFFFFF };
-        if (my $replace = $Web::HTML::ParserData::InvalidCharRefs->{$code}) {
+        if (my $replace = $InvalidCharRefs->{$code}) {
           push @$Errors, {type => 'invalid character reference',
                           text => (sprintf 'U+%04X', $code),
                           level => 'm',
@@ -915,9 +948,17 @@ sub serialize_actions ($;%) {
                           level => 'm',
                           di => $DI, index => $TempIndex};
           $code = 0xFFFD;
+        ## <XML>
+        } elsif ($Web::HTML::_SyntaxDefs->{xml_char_discouraged}->{$code}) {
+          push @$Errors, {type => 'invalid character reference',
+                          text => (sprintf 'U+%04X', $code),
+                          level => 'w',
+                          di => $DI, index => $TempIndex};
+        ## </XML>
         }
         $Temp = chr $code;
       };
+      $result[-1] =~ s{<XML>.*?</XML>}{}gs unless $LANG eq 'XML';
       push @result, q{$Attr->{has_ref} = 1;} if $_->{in_attr};
     } elsif ($type eq 'process-temp-as-named') {
       if ($_->{in_attr}) {
@@ -1056,7 +1097,7 @@ sub serialize_actions ($;%) {
           REF: {
             ## <XML>
 
-            unless (@$OE) {
+            if (not @$OE and $DTDMode eq 'N/A') {
               push @$Errors, {level => 'm',
                               type => 'ref outside of root element',
                               value => $Temp,
@@ -1190,6 +1231,17 @@ sub serialize_actions ($;%) {
                               value => $Temp,
                               di => $DI, index => $TempIndex};
               last REF;
+            } elsif (defined $ent->{public_identifier} and
+                     $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$ent->{public_identifier}}) {
+              ## Public identifier normalization is intentionally not
+              ## done (Chrome behavior).
+
+              $DTDDefs->{has_charref_decls} = 1;
+              $DTDDefs->{charref_vc_error} = 1 if $XMLStandalone;
+              $TempIndex += length $Temp;
+              $Temp = '';
+              $return = 1;
+              last REF;
             } else {
               push @$Callbacks, [$OnDTDEntityReference,
                                  {entity => $ent}];
@@ -1218,6 +1270,13 @@ sub serialize_actions ($;%) {
                               value => $Temp,
                               di => $DI, index => $TempIndex};
               last REF;
+            } elsif ($DTDMode eq 'internal subset') {
+              ## In a markup declaration in internal subset
+              push @$Errors, {level => 'm',
+                              type => 'WFC:PEs in Internal Subset',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
             } else {
               push @$Callbacks, [$OnEntityValueEntityReference,
                                  {entity => $ent}];
@@ -1243,6 +1302,13 @@ sub serialize_actions ($;%) {
             if ($ent->{open}) {
               push @$Errors, {level => 'm',
                               type => 'WFC:No Recursion',
+                              value => $Temp,
+                              di => $DI, index => $TempIndex};
+              last REF;
+            } elsif ($DTDMode eq 'internal subset') {
+              ## In a markup declaration in internal subset
+              push @$Errors, {level => 'm',
+                              type => 'WFC:PEs in Internal Subset',
                               value => $Temp,
                               di => $DI, index => $TempIndex};
               last REF;
@@ -1356,6 +1422,12 @@ sub generate_tokenizer {
   
   my $defs = $self->_expanded_tokenizer_defs->{tokenizer};
   my @def_code;
+
+  if ($LANG eq 'HTML') {
+    push @def_code, q{my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{charref_invalid};};
+  } else {
+    push @def_code, q{my $InvalidCharRefs = $Web::HTML::_SyntaxDefs->{xml_charref_invalid};};
+  }
 
   my $next_token_type_id = 1;
   for my $key (sort { $a cmp $b } keys %{$defs->{tokens}}) {
@@ -2296,6 +2368,16 @@ sub actions_to_code ($;%) {
     } elsif ($act->{type} eq 'insert a DOCTYPE') { # XML
       push @code, q{
         push @$OP, ['doctype', $token => 0];
+
+        ## Public identifier normalization is intentionally not done
+        ## (Chrome behavior).
+        if (defined $token->{public_identifier} and
+            $Web::HTML::_SyntaxDefs->{charrefs_pubids}->{$token->{public_identifier}}) {
+          $DTDDefs->{has_charref_decls} = 1;
+          $DTDDefs->{is_charref_declarations_entity};
+        } else {
+          $DTDDefs->{need_predefined_decls} = 1;
+        }
       };
     } elsif ($act->{type} eq 'append-to-document') {
       if (defined $act->{item}) {
@@ -3263,7 +3345,8 @@ sub actions_to_code ($;%) {
         push @$Callbacks, [$OnDTDEntityReference,
                            {entity => {system_identifier => $DTDDefs->{system_identifier},
                                        di => $DTDDefs->{di},
-                                       index => $DTDDefs->{index}}}];
+                                       index => $DTDDefs->{index}}}]
+            unless $DTDDefs->{is_charref_declarations_entity};
       };
     } else {
       die "Unknown tree construction action |$act->{type}|";
@@ -4366,11 +4449,13 @@ sub generate_api ($) {
       }
       return 1;
     } # _run
+  };
 
+  push @sub_code, sprintf q{
     sub _feed_chars ($$) {
       my ($self, $input) = @_;
       pos ($input->[0]) = 0;
-      while ($input->[0] =~ /[%s]/gc) {
+      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gc) {
         my $index = $-[0];
         my $char = ord substr $input->[0], $index, 1;
         if ($char < 0x100) {
@@ -4391,13 +4476,43 @@ sub generate_api ($) {
 
       return $self->_run;
     } # _feed_chars
+  } if $LANG eq 'HTML';
 
+  push @sub_code, sprintf q{
+    sub _feed_chars ($$) {
+      my ($self, $input) = @_;
+      pos ($input->[0]) = 0;
+      while ($input->[0] =~ /[\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}\x{007F}-\x{009F}\x{FDD0}-\x{FDEF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}]/gcx) {
+        my $index = $-[0];
+        my $char = ord substr $input->[0], $index, 1;
+        my $level = (substr $input->[0], $index, 1) =~ /\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{D800}-\x{DFFF}\x{FFFE}\x{FFFF}/ ? 'm' : 'w';
+        if ($char < 0x100) {
+          push @$Errors, {type => 'control char', level => $level,
+                          text => (sprintf 'U+%%04X', $char),
+                          di => $DI, index => $index};
+        } elsif ($char < 0xE000) {
+          push @$Errors, {type => 'char:surrogate', level => $level,
+                          text => (sprintf 'U+%%04X', $char),
+                          di => $DI, index => $index};
+        } else {
+          push @$Errors, {type => 'nonchar', level => $level,
+                          text => (sprintf 'U+%%04X', $char),
+                          di => $DI, index => $index};
+        }
+      }
+      push @{$self->{input_stream}}, $input;
+
+      return $self->_run;
+    } # _feed_chars
+  } if $LANG eq 'XML';
+
+  push @sub_code, sprintf q{
     sub _feed_eof ($) {
       my $self = $_[0];
       push @{$self->{input_stream}}, [undef];
       return $self->_run;
     } # _feed_eof
-  }, $LANG eq 'XML' ? q{\x{0001}-\x{0008}\x{000B}\x{000C}\x{000E}-\x{001F}\x{FFFE}\x{FFFF}} : q{\x{0001}-\x{0008}\x{000B}\x{000E}-\x{001F}\x{007F}-\x{009F}\x{D800}-\x{DFFF}\x{FDD0}-\x{FDEF}\x{FFFE}-\x{FFFF}\x{1FFFE}-\x{1FFFF}\x{2FFFE}-\x{2FFFF}\x{3FFFE}-\x{3FFFF}\x{4FFFE}-\x{4FFFF}\x{5FFFE}-\x{5FFFF}\x{6FFFE}-\x{6FFFF}\x{7FFFE}-\x{7FFFF}\x{8FFFE}-\x{8FFFF}\x{9FFFE}-\x{9FFFF}\x{AFFFE}-\x{AFFFF}\x{BFFFE}-\x{BFFFF}\x{CFFFE}-\x{CFFFF}\x{DFFFE}-\x{DFFFF}\x{EFFFE}-\x{EFFFF}\x{FFFFE}-\x{FFFFF}\x{10FFFE}-\x{10FFFF}};
+  };
 
   push @sub_code, sprintf q{
     sub parse_char_string ($$$) {
@@ -5408,6 +5523,7 @@ sub generate ($) {
     use Encode qw(decode); # XXX
     use Web::Encoding;
     use Web::HTML::ParserData;
+    use Web::HTML::_SyntaxDefs;
 
     %s
     my $TagName2Group = {};
